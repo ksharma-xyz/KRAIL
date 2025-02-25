@@ -7,6 +7,8 @@ internal class RealSandook(factory: SandookDriverFactory) : Sandook {
     private val sandook = KrailSandook(factory.createDriver())
     private val query = sandook.krailSandookQueries
 
+    private val nswStopsQueries = sandook.nswStopsQueries
+
     // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {
         query.insertOrReplaceProductClass(productClass)
@@ -79,4 +81,66 @@ internal class RealSandook(factory: SandookDriverFactory) : Sandook {
     }
 
     // endregion
+
+    // region NswStops
+
+    override fun insertNswStop(
+        stopId: String,
+        stopName: String,
+        stopLat: Double,
+        stopLon: Double,
+    ) {
+        nswStopsQueries.insertStop(
+            stopId = stopId,
+            stopName = stopName,
+            stopLat = stopLat,
+            stopLon = stopLon,
+        )
+    }
+
+    override fun insertNswStopProductClass(stopId: String, productClass: Int) {
+        nswStopsQueries.insertStopProductClass(stopId, productClass.toLong())
+    }
+
+    override fun selectStopsByPartialName(stopName: String): List<NswStops> {
+        return nswStopsQueries.selectStopsByPartialName(stopName).executeAsList()
+    }
+
+    override fun selectStopsByNameAndProductClass(
+        stopName: String,
+        includeProductClassList: List<Int>,
+    ): List<NswStops> {
+        return nswStopsQueries.selectStopsByNameAndProductClass(
+            stopName,
+            includeProductClassList.map { it.toLong() }
+        ).executeAsList()
+    }
+
+    override fun selectStopsByNameExcludingProductClass(
+        stopName: String,
+        excludeProductClassList: List<Int>
+    ): List<NswStops> {
+        return nswStopsQueries.selectStopsByNameExcludingProductClass(
+            stopName,
+            excludeProductClassList.map { it.toLong() }
+        ).executeAsList()
+    }
+
+    /**
+     * Combines exact stopId and partial [stopName] search logic while excluding stops
+     * based on the given list of product classes.
+     */
+    override fun selectStopsByNameExcludingProductClassOrExactId(
+        stopName: String,
+        excludeProductClassList: List<Int>
+    ): List<NswStops> {
+        val stopId = stopName
+        return nswStopsQueries.selectStopsByNameExcludingProductClassOrExactStopId(
+            stopId,
+            stopName,
+            excludeProductClassList.map { it.toLong() }
+        ).executeAsList()
+    }
+
+    // endregion NswStops
 }

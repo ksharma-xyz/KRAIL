@@ -1,0 +1,15 @@
+-- Create NSW Stops Table --
+CREATE TABLE IF NOT EXISTS NswStops (
+    stopId TEXT PRIMARY KEY,
+    stopName TEXT NOT NULL,
+    stopLat REAL NOT NULL,
+    stopLon REAL NOT NULL
+);
+
+-- Create NSW Stop Product Class Table --
+CREATE TABLE IF NOT EXISTS NswStopProductClass (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stopId TEXT NOT NULL,
+    productClass INTEGER NOT NULL,
+    FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
+);

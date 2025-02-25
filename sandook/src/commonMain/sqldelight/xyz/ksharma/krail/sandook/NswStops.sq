@@ -1,0 +1,65 @@
+-- Create NSW Stops Table --
+CREATE TABLE IF NOT EXISTS NswStops (
+    stopId TEXT PRIMARY KEY,
+    stopName TEXT NOT NULL,
+    stopLat REAL NOT NULL,
+    stopLon REAL NOT NULL
+);
+
+-- Create NSW Stop Product Class Table --
+-- Foregin key ensures that any stopId value inserted into NswStopProductClass must exist in
+-- NswStops, helping maintain data integrity between the two tables.
+CREATE TABLE IF NOT EXISTS NswStopProductClass (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stopId TEXT NOT NULL,
+    productClass INTEGER NOT NULL,
+    FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
+);
+
+-- Insert data into NswStops table (without productClass) --
+insertStop:
+INSERT OR IGNORE INTO NswStops(stopId, stopName, stopLat, stopLon)
+VALUES (?, ?, ?, ?);
+
+-- Insert each productClass value for a given stop into NswStopProductClass --
+insertStopProductClass:
+INSERT INTO NswStopProductClass(stopId, productClass)
+VALUES (?, ?);
+
+-- Select stops with partial match on stopName --
+selectStopsByPartialName:
+SELECT * FROM NswStops
+WHERE stopName LIKE '%' || ? || '%';
+
+-- Select stops with partial match on stopName and specific productClass values --
+selectStopsByNameAndProductClass:
+SELECT DISTINCT s.*
+FROM NswStops AS s
+JOIN NswStopProductClass AS p ON s.stopId = p.stopId
+WHERE s.stopName LIKE '%' || ? || '%'
+  AND p.productClass IN ?;
+
+selectStopsByNameExcludingProductClass:
+SELECT DISTINCT s.*
+FROM NswStops AS s
+WHERE s.stopName LIKE '%' || ? || '%'
+  AND s.stopId NOT IN (
+    SELECT p.stopId
+    FROM NswStopProductClass AS p
+    WHERE p.productClass IN ?
+  );
+
+selectStopsByNameExcludingProductClassOrExactStopId:
+SELECT DISTINCT s.*
+FROM NswStops AS s
+WHERE (
+-- Exact match scenario: returns a stop if its stopId matches the given parameter
+s.stopId = ?
+   -- Partial match scenario: returns stops whose stopName contains the given parameter
+   OR s.stopName LIKE '%' || ? || '%')
+   AND s.stopId NOT IN (
+	-- Exclusion scenario: filters out any stopIds linked to product classes in the specified list
+    SELECT p.stopId
+    FROM NswStopProductClass AS p
+    WHERE p.productClass IN ?
+  );

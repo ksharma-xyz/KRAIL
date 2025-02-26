@@ -3,7 +3,7 @@ desugar_jdk_libs = "2.1.5"
 java = "17"
 # AGP - Android API level mapping https://developer.android.com/build/releases/gradle-plugin#api-level-support
 # AGP compatability https://developer.android.com/build/releases/gradle-plugin
-agp = "8.8.1" # Android Gradle Plugin
+agp = "8.8.2" # Android Gradle Plugin
 kotlin = "2.1.10"
 core-ktx = "1.13.0"
 junit = "4.13.2"

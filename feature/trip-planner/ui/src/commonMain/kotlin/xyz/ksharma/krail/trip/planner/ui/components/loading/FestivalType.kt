@@ -21,5 +21,12 @@ enum class FestivalType {
     HOLI,
     EID,
     MARDI_GRAS,
-    VIVID_SYDNEY
+    VIVID_SYDNEY,
+    WOMENS_DAY,
+    MENS_DAY,
+    NURSES_DAY,
+    A11Y_DAY,
+    PEACE_DAY,
+    ENGINEERS_DAY,
+    FRIENDSHIP_DAY,
 }

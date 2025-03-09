@@ -53,8 +53,17 @@ object LoadingEmojiManager {
 
         FestivalType.AUSTRALIA_DAY to listOf("🇦🇺", "🎉", "🎆"),
         FestivalType.EID to listOf("🌙", "🕌", "🎁"),
-        FestivalType.MARDI_GRAS to listOf("🏳️‍🌈", "🪩"),
+        FestivalType.MARDI_GRAS to listOf("🏳️‍🌈", "🪩", "🌈"),
         FestivalType.VIVID_SYDNEY to listOf("🎆", "🌈", "🌟", "✨"),
+
+        // Human centric days
+        FestivalType.WOMENS_DAY to listOf("💜", "♀️", "👩", "👩‍🚀", "👩‍🚒", "👩‍✈️"),
+        FestivalType.MENS_DAY to listOf("💙", "♂️", "🚹", "👨‍🚒", "👨‍🌾", "👨‍🚀"),
+        FestivalType.ENGINEERS_DAY to listOf("⚙️", "🔧", "📐", "🏗️"),
+        FestivalType.NURSES_DAY to listOf("💉", "🏥", "🩺"),
+        FestivalType.FRIENDSHIP_DAY to listOf("🤝", "💛", "👫", "👭", "👬", "❤️"),
+        FestivalType.PEACE_DAY to listOf("☮️", "✌️"),
+        FestivalType.A11Y_DAY to listOf("♿️"),
     )
 
     // TODO - test logic add UT
@@ -83,27 +92,15 @@ object LoadingEmojiManager {
         MonthDay.of(2, 13) to FestivalType.KISS_DAY,
         MonthDay.of(2, 14) to FestivalType.VALENTINES_DAY,
 
+        MonthDay.of(3, 4) to FestivalType.ENGINEERS_DAY,
+        MonthDay.of(3, 8) to FestivalType.WOMENS_DAY,
+        MonthDay.of(5, 12) to FestivalType.NURSES_DAY,
+        MonthDay.of(7, 30) to FestivalType.FRIENDSHIP_DAY,
+        MonthDay.of(9, 21) to FestivalType.PEACE_DAY,
+        MonthDay.of(11, 19) to FestivalType.MENS_DAY,
+        MonthDay.of(12, 3) to FestivalType.A11Y_DAY,
+
         // Can change dates
-
-
-        // Mardi Gras 2025
-        MonthDay.of(2, 15) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 16) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 17) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 18) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 19) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 20) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 21) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 22) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 23) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 24) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 25) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 26) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 27) to FestivalType.MARDI_GRAS,
-        MonthDay.of(2, 28) to FestivalType.MARDI_GRAS,
-        MonthDay.of(3, 1) to FestivalType.MARDI_GRAS,
-        MonthDay.of(3, 2) to FestivalType.MARDI_GRAS,
-
         MonthDay.of(3, 14) to FestivalType.HOLI,
         MonthDay.of(3, 30) to FestivalType.EID,
         MonthDay.of(3, 31) to FestivalType.EID,

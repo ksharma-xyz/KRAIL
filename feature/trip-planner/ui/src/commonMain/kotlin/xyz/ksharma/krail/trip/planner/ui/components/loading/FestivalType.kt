@@ -18,7 +18,6 @@ enum class FestivalType {
     VALENTINES_DAY,
     HALLOWEEN,
     CHINESE_NEW_YEAR,
-    HOLI,
     EID,
     MARDI_GRAS,
     VIVID_SYDNEY,
@@ -29,4 +28,5 @@ enum class FestivalType {
     PEACE_DAY,
     ENGINEERS_DAY,
     FRIENDSHIP_DAY,
+    PI_DAY,
 }

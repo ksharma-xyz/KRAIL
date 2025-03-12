@@ -45,7 +45,7 @@ fun TransportModeBadge(
                 text = badgeText,
                 color = Color.White,
                 modifier = Modifier
-                    .padding(2.dp)
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
                     .wrapContentWidth(),
             )
         }

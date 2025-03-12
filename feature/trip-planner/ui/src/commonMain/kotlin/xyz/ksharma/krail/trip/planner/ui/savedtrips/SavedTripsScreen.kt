@@ -72,7 +72,7 @@ fun SavedTripsScreen(
         Column {
             TitleBar(
                 title = {
-                    Text(text = "Saved Trips")
+                    Text(text = "KRAIL")
                 },
                 actions = {
                     RoundIconButton(

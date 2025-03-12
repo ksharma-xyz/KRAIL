@@ -18,6 +18,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 
 @Suppress("ComplexCondition")
 internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.JourneyCardInfo>? =
@@ -113,9 +114,9 @@ private fun List<TripResponse.Leg>.logTransportModes() = forEachIndexed { index,
     log("Origin #$index: ${leg.origin?.disassembledName}")
     log(
         "TransportMode #$index: ${leg.transportation?.product?.productClass}, " +
-            "name: ${leg.transportation?.product?.name}, " +
-            "stops: ${leg.stopSequence?.size}, " +
-            "duration: ${leg.duration}",
+                "name: ${leg.transportation?.product?.name}, " +
+                "stops: ${leg.stopSequence?.size}, " +
+                "duration: ${leg.duration}",
     )
 }
 
@@ -134,21 +135,11 @@ private fun List<TripResponse.Leg>.getTransportModeLines() = mapNotNull { leg ->
 private fun List<TripResponse.Leg>.getLegsList() = mapNotNull { it.toUiModel() }.toImmutableList()
 
 private fun String.getTimeText() = let {
-   // log("originTime: $it :- ${calculateTimeDifferenceFromNow(utcDateString = it)}")
     calculateTimeDifferenceFromNow(utcDateString = it).toGenericFormattedTimeString()
 }
 
 @Suppress("ComplexCondition")
 private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
-/*
-    log(
-        "\tFFF Leg: ${this.duration}, " +
-            "leg: ${this.origin?.name} TO ${this.destination?.name}" +
-            " - isWalk:${this.isWalkingLeg()}, " +
-            "PClass-${this.transportation?.product?.productClass}",
-    )
-*/
-
     val transportMode =
         transportation?.product?.productClass?.toInt()
             ?.let { TransportMode.toTransportModeType(productClass = it) }
@@ -164,10 +155,6 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
     val displayDuration = duration?.seconds?.toFormattedDurationTimeString()
     val stops = stopSequence?.mapNotNull { it.toUiModel() }?.toImmutableList()
     val alerts = infos?.mapNotNull { it.toAlert() }?.toImmutableList()
-    alerts?.forEach {
-        //log("\t Alert: ${it.heading.take(5)}, ${it.message.take(5)}, ${it.priority}")
-    }
-   // log("Alert---")
 
     return when {
         // Walking Leg - Always check before public transport leg
@@ -195,9 +182,10 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
                     tripId = transportation?.id + transportation?.properties?.realtimeTripId,
                 )
             } else {
-                log("Something is null - NOT adding Transport LEG: " +
-                    "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
-                        "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
+                logError(
+                    "Something is null - NOT adding Transport LEG: " +
+                            "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
+                            "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
                 )
                 null
             }
@@ -242,7 +230,7 @@ private fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInf
     // For first leg there is no arrival time, so using departure time.
     val time =
         departureTimeEstimated ?: departureTimePlanned ?: arrivalTimeEstimated
-            ?: arrivalTimePlanned
+        ?: arrivalTimePlanned
     return if (stopName != null && time != null) {
         TimeTableState.JourneyCardInfo.Stop(
             name = stopName,
@@ -251,58 +239,6 @@ private fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInf
         )
     } else {
         null
-    }
-}
-
-internal fun TripResponse.logForUnderstandingData() {
-    log("Journeys: ${journeys?.size}")
-    journeys?.mapIndexed { jindex, j ->
-        log("JOURNEY #${jindex + 1}")
-        j.legs?.forEachIndexed { index, leg ->
-
-            val transportationProductClass =
-                leg.transportation?.product?.productClass
-
-            log(
-                " LEG#${index + 1} -- Duration: ${leg.duration} -- " +
-                    "productClass:${transportationProductClass?.toInt()}",
-            )
-            log(
-                "\t\t ORG: ${
-                    leg.origin?.departureTimeEstimated?.utcToAEST()
-                        ?.formatTo12HourTime()
-                }," +
-                    " DEST: ${
-                        leg.destination?.arrivalTimeEstimated?.utcToAEST()
-                            ?.formatTo12HourTime()
-                    }, " +
-                    //     "Duration: ${leg.duration}, " +
-                    // "transportation: ${leg.transportation?.name}",
-                    "interchange: ${leg.interchange?.run { "[desc:$desc, type:$type] " }}" +
-                    // "leg properties: ${leg.properties}" +
-                    // "leg origin properties: ${leg.origin?.properties}"
-                    "\n\t\t\t leg stopSequence: ${leg.stopSequence?.interchangeStopsList()}",
-            )
-        }
-    }
-}
-
-/**
- * Prints the stops for legs when interchange required.
- */
-private fun List<TripResponse.StopSequence>.interchangeStopsList() = this.mapNotNull {
-    // TODO - figure role of ARR vs DEP time
-    val timeArr = it.arrivalTimeEstimated?.utcToAEST()
-        ?.formatTo12HourTime() ?: it.arrivalTimePlanned?.utcToAEST()?.formatTo12HourTime()
-
-    val depTime = it.departureTimeEstimated?.utcToAEST()
-        ?.formatTo12HourTime() ?: it.departureTimePlanned?.utcToAEST()?.formatTo12HourTime()
-
-    if (timeArr == null && depTime == null) {
-        null
-    } else {
-        "\n\t\t\t\t Stop: ${it.name}," +
-            " depTime: ${timeArr ?: depTime}"
     }
 }
 

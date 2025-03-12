@@ -43,13 +43,11 @@ object LoadingEmojiManager {
         FestivalType.ROSE_DAY to listOf("🌹"),
         FestivalType.PROPOSE_DAY to listOf("💍", "💞", "💌"),
         FestivalType.CHOCOLATE_DAY to listOf("🍫", "💞"),
-        FestivalType.TEDDY_DAY to listOf("🧸", "💖"),
-        FestivalType.PROMISE_DAY to listOf("🤝", "💖"),
-        FestivalType.HUG_DAY to listOf("🤗", "💖"),
-        FestivalType.KISS_DAY to listOf("💖", "❤️", "😘"),
+        FestivalType.TEDDY_DAY to listOf("🧸"),
+        FestivalType.PROMISE_DAY to listOf("🤝"),
+        FestivalType.HUG_DAY to listOf("🤗"),
+        FestivalType.KISS_DAY to listOf("😘"),
         FestivalType.VALENTINES_DAY to listOf("❤️", "🌹"),
-
-        FestivalType.HOLI to listOf("🎨", "🌈", "🎈"),
 
         FestivalType.AUSTRALIA_DAY to listOf("🇦🇺", "🎉", "🎆"),
         FestivalType.EID to listOf("🌙", "🕌", "🎁"),
@@ -59,11 +57,12 @@ object LoadingEmojiManager {
         // Human centric days
         FestivalType.WOMENS_DAY to listOf("💜", "♀️", "👩", "👩‍🚀", "👩‍🚒", "👩‍✈️"),
         FestivalType.MENS_DAY to listOf("💙", "♂️", "🚹", "👨‍🚒", "👨‍🌾", "👨‍🚀"),
-        FestivalType.ENGINEERS_DAY to listOf("⚙️", "🔧", "📐", "🏗️"),
-        FestivalType.NURSES_DAY to listOf("💉", "🏥", "🩺"),
-        FestivalType.FRIENDSHIP_DAY to listOf("🤝", "💛", "👫", "👭", "👬", "❤️"),
+        FestivalType.ENGINEERS_DAY to listOf("⚙️", "🔧"),
+        FestivalType.NURSES_DAY to listOf("🏥", "🩺"),
+        FestivalType.FRIENDSHIP_DAY to listOf("🤝", "💛"),
         FestivalType.PEACE_DAY to listOf("☮️", "✌️"),
         FestivalType.A11Y_DAY to listOf("♿️"),
+        FestivalType.PI_DAY to listOf("🥧", "π"),
     )
 
     // TODO - test logic add UT
@@ -92,8 +91,10 @@ object LoadingEmojiManager {
         MonthDay.of(2, 13) to FestivalType.KISS_DAY,
         MonthDay.of(2, 14) to FestivalType.VALENTINES_DAY,
 
+        // Special Days
         MonthDay.of(3, 4) to FestivalType.ENGINEERS_DAY,
         MonthDay.of(3, 8) to FestivalType.WOMENS_DAY,
+        MonthDay.of(3, 14) to FestivalType.PI_DAY,
         MonthDay.of(5, 12) to FestivalType.NURSES_DAY,
         MonthDay.of(7, 30) to FestivalType.FRIENDSHIP_DAY,
         MonthDay.of(9, 21) to FestivalType.PEACE_DAY,
@@ -101,7 +102,6 @@ object LoadingEmojiManager {
         MonthDay.of(12, 3) to FestivalType.A11Y_DAY,
 
         // Can change dates
-        MonthDay.of(3, 14) to FestivalType.HOLI,
         MonthDay.of(3, 30) to FestivalType.EID,
         MonthDay.of(3, 31) to FestivalType.EID,
 

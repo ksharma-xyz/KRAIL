@@ -19,6 +19,8 @@ sealed interface TimeTableUiEvent {
 
     data object AnalyticsDateTimeSelectorClicked : TimeTableUiEvent
 
+    data class BackClick(val isPreviousBackStackEntryNull: Boolean) : TimeTableUiEvent
+
     data class JourneyLegClicked(val expanded: Boolean) : TimeTableUiEvent
 
     data class ModeSelectionChanged(val unselectedModes: Set<Int>) : TimeTableUiEvent

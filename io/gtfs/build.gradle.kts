@@ -1,10 +1,5 @@
 android {
     namespace = "xyz.ksharma.krail.io.gtfs"
-
-    buildTypes {
-        debug {}
-        release {}
-    }
 }
 
 plugins {
@@ -46,11 +41,6 @@ kotlin {
                 implementation(compose.components.resources)
 
                 api(libs.di.koinComposeViewmodel)
-            }
-        }
-
-        iosMain {
-            dependencies {
             }
         }
 

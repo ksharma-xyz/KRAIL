@@ -10,7 +10,7 @@ internal object SandookMigrationAfter3 : SandookMigration {
         sqlDriver.execute(
             identifier = null,
             sql = """
-                   CREATE TABLE app_preferences (
+                   CREATE TABLE IF NOT EXISTS KrailPref (
                        key TEXT PRIMARY KEY NOT NULL,
                        int_value INTEGER,
                        string_value TEXT,

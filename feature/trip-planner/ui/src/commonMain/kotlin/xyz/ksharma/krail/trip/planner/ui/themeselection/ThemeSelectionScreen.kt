@@ -79,17 +79,7 @@ fun ThemeSelectionScreen(
                         style = KrailTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal),
                         modifier = Modifier
                             .padding(horizontal = 24.dp)
-                            .padding(bottom = 8.dp),
-                    )
-                }
-
-                item {
-                    Text(
-                        text = "Select a color",
-                        style = KrailTheme.typography.titleSmall.copy(fontWeight = FontWeight.Normal),
-                        modifier = Modifier
-                            .padding(horizontal = 24.dp)
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = 32.dp),
                     )
                 }
 

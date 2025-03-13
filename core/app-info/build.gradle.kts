@@ -45,8 +45,5 @@ kotlin {
                 api(libs.di.koinComposeViewmodel)
             }
         }
-
-        iosMain.dependencies {
-        }
     }
 }

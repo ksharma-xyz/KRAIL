@@ -28,7 +28,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(libs.kotlinx.serialization.json)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
@@ -37,6 +36,7 @@ kotlin {
 
                 implementation(compose.runtime)
                 api(libs.di.koinComposeViewmodel)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
     }

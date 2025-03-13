@@ -5,6 +5,7 @@ import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter1
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter2
+import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter3
 
 class IosSandookDriverFactory : SandookDriverFactory {
     override fun createDriver(): SqlDriver {
@@ -18,5 +19,6 @@ class IosSandookDriverFactory : SandookDriverFactory {
     private fun getMigrationCallbacks(): Array<AfterVersion> = arrayOf(
         AfterVersion(1) { SandookMigrationAfter1.migrate(it) },
         AfterVersion(2) { SandookMigrationAfter2.migrate(it) },
+        AfterVersion(3) { SandookMigrationAfter3.migrate(it) },
     )
 }

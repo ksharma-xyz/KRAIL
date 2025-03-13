@@ -19,11 +19,9 @@ class StopsProtoParser(
 
     /**
      * Reads and decodes the NSW stops from a protobuf file, then inserts the stops into the database.
-     *
-     * @return The decoded `NswStopList` containing the NSW stops.
      */
     @OptIn(ExperimentalResourceApi::class)
-    override suspend fun parseAndInsertStops(): NswStopList = withContext(ioDispatcher) {
+    override suspend fun parseAndInsertStops() = withContext(ioDispatcher) {
         var start = Clock.System.now()
 
         sandook.clearNswStopsTable()
@@ -45,8 +43,6 @@ class StopsProtoParser(
             Clock.System.now(), DateTimeUnit.MILLISECOND, TimeZone.currentSystemDefault()
         )
         log("Inserted #Stops: ${decodedStops.nswStops.size} in duration: $duration ms")
-
-        decodedStops
     }
 
     private suspend fun insertStopsInTransaction(decoded: NswStopList) = withContext(ioDispatcher) {
@@ -72,7 +68,7 @@ class StopsProtoParser(
             Clock.System.now(), DateTimeUnit.MILLISECOND, TimeZone.currentSystemDefault(),
         )
         // Log less frequently, for example once after the transaction completes
-        println("Inserted ${decoded.nswStops.size} stops in a single transaction in $duration ms")
+        log("Inserted ${decoded.nswStops.size} stops in a single transaction in $duration ms")
         // TODO - analytics track how much time it took to insert stops.
         // Also track based on Firebase for performance.
     }

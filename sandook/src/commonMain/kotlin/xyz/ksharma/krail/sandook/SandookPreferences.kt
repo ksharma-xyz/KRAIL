@@ -20,4 +20,11 @@ interface SandookPreferences {
 
     // Delete preference
     fun deletePreference(key: String)
+
+    companion object {
+        // Increment this when bundling new stops data
+        const val NSW_STOPS_VERSION = 1L
+
+        const val KEY_NSW_STOPS_VERSION = "KEY_NSW_STOPS_VERSION"
+    }
 }

@@ -5,13 +5,14 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.remote_config.RemoteConfig
 import xyz.ksharma.krail.io.gtfs.nswstops.ProtoParser
-import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_STOPS_VERSION
 
 class RealAppStart(
     private val coroutineScope: CoroutineScope,
     private val remoteConfig: RemoteConfig,
     private val protoParser: ProtoParser,
-    private val sandook: Sandook,
+    private val preferences: SandookPreferences,
 ) : AppStart {
 
     init {
@@ -35,8 +36,13 @@ class RealAppStart(
      * Parses and inserts NSW_STOPS data in the database if they are not already inserted.
      */
     private suspend fun parseAndInsertNswStopsIfNeeded() = runCatching {
-        if (shouldInsertStops()) {
+        if (shouldInsertNswStops()) {
             protoParser.parseAndInsertStops()
+            preferences.setLong(
+                key = SandookPreferences.KEY_NSW_STOPS_VERSION,
+                value = NSW_STOPS_VERSION,
+            )
+            log("NswStops inserted in the database, new version: $NSW_STOPS_VERSION.")
         } else {
             log("Stops already inserted in the database.")
         }
@@ -45,9 +51,10 @@ class RealAppStart(
         // TODO - Firebase performance track.
     }
 
-    private fun shouldInsertStops(): Boolean {
-        log("Stop count: ${sandook.stopsCount()}, Product class count: ${sandook.productClassCount()}")
+    private fun shouldInsertNswStops(): Boolean {
+        val storedVersion = preferences.getLong(SandookPreferences.KEY_NSW_STOPS_VERSION) ?: 0
+        log("Current NSW Stops data version: $NSW_STOPS_VERSION, Stored version: $storedVersion")
 
-        return sandook.stopsCount() == 0 || sandook.productClassCount() == 0
+        return storedVersion < NSW_STOPS_VERSION
     }
 }

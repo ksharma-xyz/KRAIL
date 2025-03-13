@@ -39,6 +39,7 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(compose.runtime)
                 implementation(compose.components.resources)
+                implementation(libs.firebase.gitLivePerformance)
 
                 api(libs.di.koinComposeViewmodel)
             }

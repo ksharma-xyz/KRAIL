@@ -1,0 +1,50 @@
+-- core/app-info/src/commonMain/sqldelight/xyz/ksharma/krail/core/appinfo/AppPreferences.sq
+
+CREATE TABLE app_preferences (
+    key TEXT PRIMARY KEY NOT NULL,
+    int_value INTEGER,
+    string_value TEXT,
+    bool_value INTEGER,
+    float_value REAL
+);
+
+-- Runs when db is created, sets default value as 0 for nsw_stops_version for version tracking.
+-- will execute only once on fresh install and not when app updates.
+INSERT OR IGNORE INTO app_preferences(key, int_value)
+VALUES ('nsw_stops_version', 0);
+
+-- Integer operations
+getLongPreference:
+SELECT int_value FROM app_preferences WHERE key = ?;
+
+setLongPreference:
+INSERT OR REPLACE INTO app_preferences(key, int_value, string_value, bool_value, float_value)
+VALUES (?, ?, NULL, NULL, NULL);
+
+-- String operations
+getStringPreference:
+SELECT string_value FROM app_preferences WHERE key = ?;
+
+setStringPreference:
+INSERT OR REPLACE INTO app_preferences(key, int_value, string_value, bool_value, float_value)
+VALUES (?, NULL, ?, NULL, NULL);
+
+-- Boolean operations (stored as INTEGER 0/1)
+getBooleanPreference:
+SELECT bool_value FROM app_preferences WHERE key = ?;
+
+setBooleanPreference:
+INSERT OR REPLACE INTO app_preferences(key, int_value, string_value, bool_value, float_value)
+VALUES (?, NULL, NULL, ?, NULL);
+
+-- Float operations
+getDoublePreference:
+SELECT float_value FROM app_preferences WHERE key = ?;
+
+setDoublePreference:
+INSERT OR REPLACE INTO app_preferences(key, int_value, string_value, bool_value, float_value)
+VALUES (?, NULL, NULL, NULL, ?);
+
+-- Delete operation
+deletePreference:
+DELETE FROM app_preferences WHERE key = ?;

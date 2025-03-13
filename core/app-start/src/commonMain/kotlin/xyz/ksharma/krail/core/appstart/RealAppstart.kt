@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.core.appstart
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.remote_config.RemoteConfig

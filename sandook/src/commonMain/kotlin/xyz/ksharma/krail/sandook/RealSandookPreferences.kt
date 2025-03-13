@@ -43,7 +43,6 @@ internal class RealSandookPreferences(
     }
 
     override fun deletePreference(key: String) {
-        queries
-            .deletePreference(key)
+        queries.deletePreference(key)
     }
 }

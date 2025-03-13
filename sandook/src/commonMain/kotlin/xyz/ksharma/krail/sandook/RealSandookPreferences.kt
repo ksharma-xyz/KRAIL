@@ -19,8 +19,7 @@ internal class RealSandookPreferences(
     }
 
     override fun setString(key: String, value: String) {
-        queries
-            .setStringPreference(key, value)
+        queries.setStringPreference(key, value)
     }
 
     override fun getBoolean(key: String): Boolean? {

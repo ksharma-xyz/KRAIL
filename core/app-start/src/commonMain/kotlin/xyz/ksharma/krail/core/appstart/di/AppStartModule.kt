@@ -14,6 +14,7 @@ val appStartModule = module {
             remoteConfig = get(),
             protoParser = get(),
             preferences = get(),
+            sandook = get(),
         )
     }
 }

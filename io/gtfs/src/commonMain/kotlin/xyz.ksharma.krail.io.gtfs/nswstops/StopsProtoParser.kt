@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.io.gtfs.nswstops
 
 import app.krail.kgtfs.proto.NswStopList
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.perf.performance
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
@@ -22,6 +24,8 @@ class StopsProtoParser(
      */
     @OptIn(ExperimentalResourceApi::class)
     override suspend fun parseAndInsertStops() = withContext(ioDispatcher) {
+        val trace = Firebase.performance.newTrace("parseNswStops")
+        trace.start()
         var start = Clock.System.now()
 
         sandook.clearNswStopsTable()
@@ -29,6 +33,7 @@ class StopsProtoParser(
 
         val byteArray = Res.readBytes("files/NSW_STOPS.pb")
         val decodedStops = NswStopList.ADAPTER.decode(byteArray)
+        trace.stop()
 
         var duration = start.until(
             Clock.System.now(), DateTimeUnit.MILLISECOND,
@@ -46,6 +51,8 @@ class StopsProtoParser(
     }
 
     private suspend fun insertStopsInTransaction(decoded: NswStopList) = withContext(ioDispatcher) {
+        val trace = Firebase.performance.newTrace("insertNSWStops")
+        trace.start()
         val start = Clock.System.now()
         sandook.insertTransaction {
             decoded.nswStops.forEach { nswStop ->
@@ -67,9 +74,7 @@ class StopsProtoParser(
         val duration = start.until(
             Clock.System.now(), DateTimeUnit.MILLISECOND, TimeZone.currentSystemDefault(),
         )
-        // Log less frequently, for example once after the transaction completes
         log("Inserted ${decoded.nswStops.size} stops in a single transaction in $duration ms")
-        // TODO - analytics track how much time it took to insert stops.
-        // Also track based on Firebase for performance.
+        trace.stop()
     }
 }

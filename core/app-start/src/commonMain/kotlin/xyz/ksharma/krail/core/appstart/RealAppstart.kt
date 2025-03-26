@@ -28,10 +28,8 @@ class RealAppStart(
         }
     }
 
-    private fun setupRemoteConfig() = runCatching {
+    private fun setupRemoteConfig() {
         remoteConfig.setup()
-    }.getOrElse {
-        log("Error setting up remote config: $it")
     }
 
     /**

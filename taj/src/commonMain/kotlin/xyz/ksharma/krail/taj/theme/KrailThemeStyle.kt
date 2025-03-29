@@ -34,3 +34,4 @@ enum class KrailThemeStyle(val hexColorCode: String, val id: Int, val tagLine: S
         tagLine = "Dressed in pink, fastest link!"
     ),
 }
+// TODO - update transport mode badges color in the Mode selection

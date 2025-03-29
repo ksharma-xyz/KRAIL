@@ -9,7 +9,7 @@ val md_theme_light_errorContainer = Color(0xFFFFDAD6)
 val md_theme_light_onError = Color(0xFFFFFFFF)
 val md_theme_light_onErrorContainer = Color(0xFF410002)
 val md_theme_light_surface = Color(0xFFFFFFFF)
-val md_theme_light_onSurface = Color(0xFF1F1B16)
+val md_theme_light_onSurface = Color(0xFF010101)
 val md_theme_light_scrim = Color(0xFF000000)
 val md_theme_light_alert = Color(0xFFFFBA27)
 
@@ -19,7 +19,7 @@ val md_theme_dark_errorContainer = Color(0xFF93000A)
 val md_theme_dark_onError = Color(0xFF690005)
 val md_theme_dark_onErrorContainer = Color(0xFFFFDAD6)
 val md_theme_dark_surface = Color(0xFF1C1B1A)
-val md_theme_dark_onSurface = Color(0xFFEAE1D9)
+val md_theme_dark_onSurface = Color(0xFFFCF6F1)
 val md_theme_dark_scrim = Color(0xFF000000)
 val md_theme_dark_alert = Color(0xFFF4B400)
 
@@ -73,7 +73,6 @@ internal val KrailDarkColors = KrailColors(
 internal val LocalKrailColors = staticCompositionLocalOf {
     KrailColors(
         label = Color.Unspecified,
-
         error = Color.Unspecified,
         errorContainer = Color.Unspecified,
         onError = Color.Unspecified,

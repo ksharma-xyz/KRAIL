@@ -154,6 +154,8 @@ class TimeTableViewModel(
             is TimeTableUiEvent.ModeSelectionChanged -> onModeSelectionChanged(event.unselectedModes)
 
             is TimeTableUiEvent.ModeClicked -> trackOnModeClickEvent(event.displayModeSelectionRow)
+
+            is TimeTableUiEvent.BackClick -> trackBackClickEvent(event.isPreviousBackStackEntryNull)
         }
     }
 
@@ -489,6 +491,15 @@ class TimeTableViewModel(
             alerts = alerts.map { it.toSelectServiceAlertsByJourneyId(journey.journeyId) },
         )
         return alerts
+    }
+
+    private fun trackBackClickEvent(isPreviousBackStackEntryNull: Boolean) {
+        analytics.track(
+            AnalyticsEvent.BackClickEvent(
+                fromScreen = AnalyticsScreen.TimeTable,
+                isPreviousBackStackEntryNull = isPreviousBackStackEntryNull
+            )
+        )
     }
 
     override fun onCleared() {

@@ -33,7 +33,10 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.getForegroundColor
 
 @Composable
 fun SavedTripsScreen(
@@ -50,6 +53,7 @@ fun SavedTripsScreen(
     onEvent: (SavedTripUiEvent) -> Unit = {},
 ) {
     val themeContentColor by LocalThemeContentColor.current
+    val themeColor by LocalThemeColor.current
     // TODO -  handle colors of status bar
     /*    DisposableEffect(themeContentColor) {
             context.getActivityOrNull()?.let { activity ->
@@ -72,7 +76,7 @@ fun SavedTripsScreen(
         Column {
             TitleBar(
                 title = {
-                    Text(text = "KRAIL")
+                    Text(text = "KRAIL", color = themeColor.hexToComposeColor())
                 },
                 actions = {
                     RoundIconButton(

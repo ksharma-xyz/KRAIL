@@ -1,7 +1,15 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,11 +22,18 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import xyz.ksharma.krail.taj.LocalThemeContentColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -36,6 +51,7 @@ import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 
 @Composable
@@ -54,6 +70,10 @@ fun SavedTripsScreen(
 ) {
     val themeContentColor by LocalThemeContentColor.current
     val themeColor by LocalThemeColor.current
+
+    var showTagline by remember { mutableStateOf(false) }
+    var animationRunning by remember { mutableStateOf(false) }
+
     // TODO -  handle colors of status bar
     /*    DisposableEffect(themeContentColor) {
             context.getActivityOrNull()?.let { activity ->
@@ -76,7 +96,20 @@ fun SavedTripsScreen(
         Column {
             TitleBar(
                 title = {
-                    Text(text = "KRAIL", color = themeColor.hexToComposeColor())
+                    Text(
+                        text = "KRAIL",
+                        color = themeColor.hexToComposeColor(),
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                if (!animationRunning) {
+                                    showTagline = true
+                                    animationRunning = true
+                                }
+                            },
+                        )
+                    )
                 },
                 actions = {
                     RoundIconButton(
@@ -95,9 +128,41 @@ fun SavedTripsScreen(
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 300.dp),
             ) {
+
+                item {
+
+                    AnimatedVisibility(
+                        visible = showTagline,
+                        enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+                            initialScale = 0.8f,
+                            animationSpec = tween(500)
+                        ),
+                        exit = fadeOut(animationSpec = tween(500)) + scaleOut(
+                            targetScale = 1.2f,
+                            animationSpec = tween(500)
+                        ),
+                        modifier = Modifier.padding(vertical = 12.dp),
+                    ) {
+                        Text(
+                            text = "Ride the rail without fail!",
+                            style = KrailTheme.typography.titleSmall,
+                            color = themeColor.hexToComposeColor(),
+                        )
+                        LaunchedEffect(Unit) {
+                            delay(1500) // Wait for animation to finish
+                            showTagline = false
+                            animationRunning = false
+                        }
+                    }
+                }
+
+
                 item {
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+
+
+
 
                 if (savedTripsState.savedTrips.isEmpty() && savedTripsState.isLoading.not()) {
                     item(key = "empty_state") {

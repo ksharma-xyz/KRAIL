@@ -41,7 +41,7 @@ fun getForegroundColor(
     // If a foreground color is provided, check its contrast ratio
     foregroundColor?.let { color ->
         if (color.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) return color
-    }
+    } // TODO - Debug this for different color schemes and document in .md file.
 
     // Default to predefined light and dark theme colors
     val lightForegroundColor = md_theme_dark_onSurface

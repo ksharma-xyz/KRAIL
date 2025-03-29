@@ -28,4 +28,9 @@ enum class KrailThemeStyle(val hexColorCode: String, val id: Int, val tagLine: S
         id = 9,
         tagLine = "Smooth sail, no fail!"
     ),
+    BarbiePink(
+        hexColorCode = "#E0218A",
+        id = 100,
+        tagLine = "Dressed in pink, fastest link!"
+    ),
 }

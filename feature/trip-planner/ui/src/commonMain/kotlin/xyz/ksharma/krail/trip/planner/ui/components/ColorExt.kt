@@ -24,7 +24,6 @@ internal fun transportModeBackgroundColor(transportMode: TransportMode): Color {
     }
 }
 
-
 @Composable
 internal fun themeBackgroundColor(theme: KrailThemeStyle): Color {
     return if (isSystemInDarkTheme()) {

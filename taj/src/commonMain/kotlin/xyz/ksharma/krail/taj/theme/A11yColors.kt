@@ -2,6 +2,8 @@ package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import xyz.ksharma.krail.taj.hexToComposeColor
+import kotlin.math.log
 
 // https://www.w3.org/TR/WCAG21/#contrast-minimum
 private const val DEFAULT_TEXT_SIZE_CONTRAST_AA = 4.5f
@@ -41,7 +43,7 @@ fun getForegroundColor(
     // If a foreground color is provided, check its contrast ratio
     foregroundColor?.let { color ->
         if (color.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) return color
-    } // TODO - Debug this for different color schemes and document in .md file.
+    }
 
     // Default to predefined light and dark theme colors
     val lightForegroundColor = md_theme_dark_onSurface

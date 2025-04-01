@@ -1,35 +1,37 @@
 package xyz.ksharma.krail.taj.theme
 
+import xyz.ksharma.krail.taj.toHex
+
 val DEFAULT_THEME_STYLE = KrailThemeStyle.Train
 
 enum class KrailThemeStyle(val hexColorCode: String, val id: Int, val tagLine: String) {
     Train(
-        hexColorCode = "#F6891F",
+        hexColorCode = train_theme.toHex(),
         id = 1,
         tagLine = "On the track, no lookin' back!"
     ),
     Metro(
-        hexColorCode = "#009B77",
+        hexColorCode = metro_theme.toHex(),
         id = 2,
         tagLine = "Surf the sub, no cap!"
     ),
     Bus(
-        hexColorCode = "#00B5EF",
+        hexColorCode = bus_theme.toHex(),
         id = 5,
         tagLine = "Hoppin' the concrete jungle!"
     ),
     Coach(
-        hexColorCode = "#742282",
+        hexColorCode = coach_theme.toHex(),
         id = 7,
         tagLine = "Purple drip, endless trip!"
     ),
     Ferry(
-        hexColorCode = "#5AB031",
+        hexColorCode = ferry_theme.toHex(),
         id = 9,
         tagLine = "Smooth sail, no fail!"
     ),
     BarbiePink(
-        hexColorCode = "#E0218A",
+        hexColorCode = barbie_pink_theme.toHex(),
         id = 100,
         tagLine = "Dressed in pink, fastest link!"
     ),

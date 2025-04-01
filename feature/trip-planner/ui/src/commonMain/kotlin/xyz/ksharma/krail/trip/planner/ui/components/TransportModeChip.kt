@@ -45,13 +45,11 @@ fun TransportModeChip(
     val textColor by animateColorAsState(
         targetValue = if (selected) getForegroundColor(
             backgroundColor = transportMode.colorCode.hexToComposeColor(),
-            foregroundColor = Color.White,
         ) else Color.Gray,
         animationSpec = tween(200),
     )
 
     CompositionLocalProvider(
-        LocalTextColor provides Color.White,
         LocalTextStyle provides KrailTheme.typography.titleMedium,
     ) {
         Row(

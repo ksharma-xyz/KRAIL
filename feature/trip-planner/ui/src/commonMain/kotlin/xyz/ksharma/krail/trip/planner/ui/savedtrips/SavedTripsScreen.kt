@@ -14,12 +14,15 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.taj.LocalThemeContentColor
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_settings
+import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -29,11 +32,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_settings
-import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.components.RoundIconButton
 
 @Composable
 fun SavedTripsScreen(
@@ -49,7 +47,6 @@ fun SavedTripsScreen(
     onSettingsButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
 ) {
-    val themeContentColor by LocalThemeContentColor.current
     // TODO -  handle colors of status bar
     /*    DisposableEffect(themeContentColor) {
             context.getActivityOrNull()?.let { activity ->

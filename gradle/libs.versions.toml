@@ -3,7 +3,7 @@ desugar_jdk_libs = "2.1.5"
 java = "17"
 # AGP - Android API level mapping https://developer.android.com/build/releases/gradle-plugin#api-level-support
 # AGP compatability https://developer.android.com/build/releases/gradle-plugin
-agp = "8.9.1" # Android Gradle Plugin
+agp = "8.9.0" # Android Gradle Plugin
 kotlin = "2.1.20"
 core-ktx = "1.15.0"
 junit = "4.13.2"
@@ -16,7 +16,7 @@ lifecycleViewmodelCompose = "2.8.4"
 navigationCompose = "2.8.0-alpha13"
 kotlinxSerializationJson = "1.8.1"
 ksp = "2.1.20-1.0.32" # ksp to kotlin version mapping https://github.com/google/ksp/releases
-compose-multiplatform = "1.7.3"
+compose-multiplatform = "1.8.0-beta01"
 ktor = "3.1.2"
 androidx-lifecycle = "2.8.4"
 kotlinxCoroutines = "1.10.1"

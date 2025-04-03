@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appstart.AppStart
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.coroutines.ext.safeResult
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -61,11 +62,15 @@ class SplashViewModel(
         )
     }
 
-    private suspend fun loadKrailThemeStyle() = withContext(ioDispatcher) {
-        // First app launch there will be no product class, so use default transport mode theme.
+    private suspend fun loadKrailThemeStyle() = safeResult(ioDispatcher) {
+        // First app launch there will be no product class, so use default theme style.
         val themeId =
             sandook.getProductClass()?.toInt() ?: DEFAULT_THEME_STYLE.id
-        val themeColor = KrailThemeStyle.entries.find { it.id == themeId }
-        _uiState.value = themeColor ?: DEFAULT_THEME_STYLE
+        val themeStyle = KrailThemeStyle.entries.find { it.id == themeId }
+        _uiState.value = themeStyle ?: DEFAULT_THEME_STYLE
+    }.onFailure {
+        logError("Error loading KRAIL theme style: $it", it)
+    }.onSuccess {
+        log("Krail theme style loaded: $it")
     }
 }

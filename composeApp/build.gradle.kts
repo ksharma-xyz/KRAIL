@@ -100,6 +100,7 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.appInfo)
             implementation(projects.core.appStart)
+            implementation(projects.core.coroutinesExt)
             implementation(projects.core.di)
             implementation(projects.core.log)
             implementation(projects.core.remoteConfig)

@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
@@ -330,7 +329,6 @@ fun getPaddingValue(lastLeg: TimeTableState.JourneyCardInfo.Leg): Dp {
     ) 16.dp else 0.dp
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun DefaultJourneyCardContent(
     timeToDeparture: String,
@@ -362,7 +360,7 @@ fun DefaultJourneyCardContent(
                         .padding(end = 8.dp)
                         .align(Alignment.CenterVertically),
                 )
-                DisplayWithDensityCheck {
+                if (transportModeList.size < 4 || isFontScaleLessThanThreshold()) {
                     Row(
                         modifier = Modifier
                             .align(Alignment.CenterVertically),

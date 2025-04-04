@@ -3,13 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 
-/**
- * Display the content only if the font scale is less than the threshold.
- */
 @Composable
-fun DisplayWithDensityCheck(fontScaleThreshold: Float = 1.8f, content: @Composable () -> Unit) {
+fun isFontScaleLessThanThreshold(fontScaleThreshold: Float = 1.8f): Boolean {
     val density = LocalDensity.current
-    if (density.fontScale < fontScaleThreshold) {
-        content()
-    }
+    return density.fontScale < fontScaleThreshold
 }

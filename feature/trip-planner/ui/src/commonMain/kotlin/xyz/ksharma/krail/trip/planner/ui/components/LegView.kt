@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,17 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_a11y
-import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
@@ -56,20 +50,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
 @Composable
 fun LegView(
-    duration: String, // 1h 30m
     routeText: String, // AVC via XYZ
     transportModeLine: TransportModeLine,
     stops: ImmutableList<TimeTableState.JourneyCardInfo.Stop>,
-    displayDuration: Boolean,
     modifier: Modifier = Modifier,
     displayAllStops: Boolean = false,
     onClick: (Boolean) -> Unit = {},
 ) {
     val circleRadius = 8.dp
     val strokeWidth = 4.dp
-    val density = LocalDensity.current
-    // todo can be reusable logic for consistent icon size
-    val iconSize = with(density) { 14.sp.toDp() }
     val timelineColor =
         remember(transportModeLine) { transportModeLine.lineColorCode.hexToComposeColor() }
     var showIntermediateStops by rememberSaveable { mutableStateOf(displayAllStops) }
@@ -98,9 +87,8 @@ fun LegView(
         ) {
             RouteSummary(
                 routeText = routeText,
-                iconSize = iconSize,
-                duration = duration,
-                displayDuration = displayDuration,
+                badgeText = transportModeLine.lineName,
+                badgeColor = transportModeLine.lineColorCode.hexToComposeColor(),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -153,8 +141,6 @@ fun LegView(
                     } else {
                         TransportModeInfo(
                             transportMode = transportModeLine.transportMode,
-                            badgeText = transportModeLine.lineName,
-                            badgeColor = transportModeLine.lineColorCode.hexToComposeColor(),
                         )
                     }
                 }
@@ -221,51 +207,33 @@ fun LegView(
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 private fun RouteSummary(
     routeText: String,
-    iconSize: Dp,
-    duration: String,
-    displayDuration: Boolean = false,
+    badgeText: String,
+    badgeColor: Color,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        FlowRow(
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = routeText,
-                style = KrailTheme.typography.titleSmall,
-                modifier = Modifier
-                    .padding(end = 12.dp)
-                    .align(Alignment.CenterVertically),
-            )
-        }
-        if (displayDuration) {
-            Row(horizontalArrangement = Arrangement.End) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_clock),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-                    modifier = Modifier
-                        .padding(end = 4.dp)
-                        .align(Alignment.CenterVertically)
-                        .size(iconSize),
-                )
-                Text(
-                    text = duration,
-                    style = KrailTheme.typography.bodySmall,
-                    textAlign = TextAlign.End,
-                )
-            }
-        }
+        TransportModeBadge(
+            backgroundColor = badgeColor,
+            badgeText = badgeText,
+        )
+
+        Text(
+            text = routeText,
+            style = KrailTheme.typography.titleSmall,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 12.dp)
+                .align(Alignment.CenterVertically),
+        )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StopInfo(
     time: String,
@@ -313,7 +281,6 @@ private fun StopInfo(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StopsRow(
     stops: String,
@@ -344,8 +311,6 @@ private fun StopsRow(
 
         TransportModeInfo(
             transportMode = line.transportMode,
-            badgeText = line.lineName,
-            badgeColor = line.lineColorCode.hexToComposeColor(),
             modifier = Modifier.align(Alignment.CenterVertically),
         )
     }
@@ -358,7 +323,6 @@ private fun StopsRow(
 private fun PreviewLegView() {
     KrailTheme {
         LegView(
-            duration = "1h 30m",
             routeText = "towards AVC via XYZ Rd",
             transportModeLine = TransportModeLine(
                 transportMode = TransportMode.Bus(),
@@ -382,7 +346,6 @@ private fun PreviewLegView() {
                 ),
             ).toImmutableList(),
             modifier = Modifier.background(KrailTheme.colors.surface),
-            displayDuration = true,
         )
     }
 }
@@ -392,7 +355,6 @@ private fun PreviewLegView() {
 private fun PreviewLegViewTwoStops() {
     KrailTheme {
         LegView(
-            duration = "1h 30m",
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
                 transportMode = TransportMode.Train(),
@@ -411,7 +373,6 @@ private fun PreviewLegViewTwoStops() {
                 ),
             ).toImmutableList(),
             modifier = Modifier.background(KrailTheme.colors.surface),
-            displayDuration = true,
         )
     }
 }
@@ -421,7 +382,6 @@ private fun PreviewLegViewTwoStops() {
 private fun PreviewLegViewMetro() {
     KrailTheme {
         LegView(
-            duration = "1h 30m",
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
                 transportMode = TransportMode.Metro(),
@@ -440,7 +400,6 @@ private fun PreviewLegViewMetro() {
                 ),
             ).toImmutableList(),
             modifier = Modifier.background(KrailTheme.colors.surface),
-            displayDuration = true,
         )
     }
 }
@@ -450,7 +409,6 @@ private fun PreviewLegViewMetro() {
 private fun PreviewLegViewFerry() {
     KrailTheme {
         LegView(
-            duration = "1h 30m",
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
                 transportMode = TransportMode.Ferry(),
@@ -469,7 +427,6 @@ private fun PreviewLegViewFerry() {
                 ),
             ).toImmutableList(),
             modifier = Modifier.background(KrailTheme.colors.surface),
-            displayDuration = false,
         )
     }
 }
@@ -479,7 +436,6 @@ private fun PreviewLegViewFerry() {
 private fun PreviewLegViewLightRail() {
     KrailTheme {
         LegView(
-            duration = "1h 30m",
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
                 transportMode = TransportMode.LightRail(),
@@ -498,7 +454,6 @@ private fun PreviewLegViewLightRail() {
                 ),
             ).toImmutableList(),
             modifier = Modifier.background(KrailTheme.colors.surface),
-            displayDuration = false,
         )
     }
 }
@@ -538,10 +493,9 @@ private fun PreviewRouteSummary() {
     KrailTheme {
         RouteSummary(
             routeText = "towards AVC via XYZ Rd",
-            iconSize = 14.dp,
-            duration = "1h 30m",
             modifier = Modifier.background(KrailTheme.colors.surface),
-            displayDuration = true,
+            badgeText = "700",
+            badgeColor = "00B5EF".hexToComposeColor(),
         )
     }
 }

@@ -32,11 +32,11 @@ fun TransportModeBadge(
 
     CompositionLocalProvider(
         LocalTextColor provides Color.White,
-        LocalTextStyle provides KrailTheme.typography.titleSmall,
+        LocalTextStyle provides KrailTheme.typography.titleMedium,
     ) {
         Box(
             modifier = modifier
-                .requiredHeightIn(with(density) { 24.toDp() })
+                .requiredHeightIn(with(density) { 28.toDp() })
                 .clip(shape = RoundedCornerShape(percent = 20))
                 .background(color = backgroundColor),
             contentAlignment = Alignment.Center,

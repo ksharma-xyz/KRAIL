@@ -10,7 +10,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -107,10 +106,6 @@ fun JourneyCard(
         pastJourneyColor
     }
 
-    val density = LocalDensity.current
-    // todo can be reusable logic for consistent icon size
-    val iconSize = with(density) { 14.sp.toDp() }
-
     val horizontalCardPadding by animateDpAsState(
         targetValue = if (cardState == JourneyCardState.DEFAULT) 12.dp else 0.dp,
         label = "cardPadding",
@@ -187,7 +182,6 @@ fun JourneyCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExpandedJourneyCardContent(
     displayAllStops: Boolean,
@@ -292,9 +286,6 @@ fun ExpandedJourneyCardContent(
                         }
                     } else {
                         LegView(
-                            // legList.count { it is TimeTableState.JourneyCardInfo.Leg.TransportLeg } > 1,
-                            displayDuration = false,
-                            duration = leg.totalDuration,
                             routeText = leg.displayText,
                             transportModeLine = leg.transportModeLine,
                             stops = leg.stops,

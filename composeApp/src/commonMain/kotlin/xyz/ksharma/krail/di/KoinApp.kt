@@ -16,6 +16,7 @@ import xyz.ksharma.krail.io.gtfs.di.gtfsModule
 import xyz.ksharma.krail.sandook.di.sandookModule
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.trip.planner.network.api.di.networkModule
+import xyz.ksharma.krail.trip.planner.ui.di.shareModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 
 fun initKoin(config: KoinAppDeclaration? = null) {
@@ -33,6 +34,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             coroutineDispatchersModule,
             gtfsModule,
             appStartModule,
+            shareModule,
         )
     }
 }

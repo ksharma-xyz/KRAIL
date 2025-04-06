@@ -26,6 +26,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.appInfo)
                 implementation(projects.core.analytics)
+                implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.di)
                 implementation(projects.core.log)

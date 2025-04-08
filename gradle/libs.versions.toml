@@ -19,7 +19,7 @@ ksp = "2.1.20-1.0.32" # ksp to kotlin version mapping https://github.com/google/
 compose-multiplatform = "1.8.0-beta01"
 ktor = "3.1.2"
 androidx-lifecycle = "2.8.4"
-kotlinxCoroutines = "1.10.1"
+kotlinxCoroutines = "1.10.2"
 buildkonfigGradlePlugin = "0.17.0"
 kermit = "2.0.5"
 sqlDelight = "2.0.2"
@@ -64,7 +64,7 @@ test-composeUiTestJunit4 = { group = "androidx.compose.ui", name = "ui-test-juni
 test-junit = { group = "junit", name = "junit", version.ref = "junit" }
 test-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 test-turbine = { group = "app.cash.turbine", name = "turbine", version = "1.2.0" }
-test-kotlinxCoroutineTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version = "1.10.1" }
+test-kotlinxCoroutineTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version = "1.10.2" }
 
 #BuildLogic
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }

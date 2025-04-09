@@ -5,15 +5,15 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
-import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
-import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
-import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
+import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
 val viewModelsModule = module {
     viewModelOf(::SearchStopViewModel)

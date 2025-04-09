@@ -27,6 +27,9 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
             onBackClick = {
                 navController.popBackStack()
             },
+            onReferFriendClick = {
+                viewModel.onReferFriendClick()
+            }
         )
     }
 }

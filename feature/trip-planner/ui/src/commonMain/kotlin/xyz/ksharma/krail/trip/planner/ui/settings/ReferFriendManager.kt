@@ -26,15 +26,14 @@ object ReferFriendManager {
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
                 "KRAIL - Ride the rail without fail",
 
-        "KRAIL — Sydney trains, minus the drama \uD83E\uDEE0\n" +
-                "Get the app ya should’ve had yesterday.\n" +
+        "KRAIL - Sydney trains, minus the drama \uD83E\uDEE0\n" +
                 "Download now \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
                 "KRAIL - Ride the rail without fail",
 
         "Oi where’s my train?\n" +
-                "Use KRAIL — it’s like TripView but actually good.\n" +
+                "Use KRAIL - it’s like TripView but actually good.\n" +
                 "Download now \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
@@ -48,14 +47,13 @@ object ReferFriendManager {
                 "KRAIL - Ride the rail without fail",
 
         "Bus ghosted ya again? Rude.\n" +
-                "KRAIL tells you when and where — no cap.\n" +
+                "KRAIL tells you when and where - no cap.\n" +
                 "Download now \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
                 "KRAIL - Ride the rail without fail",
 
         "Late again? Haha, your train’s playing hide and seek.\n" +
-                "Catch it before it ghosts ya.\n" +
                 "KRAIL’s got your back.\n" +
                 "Download now \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +

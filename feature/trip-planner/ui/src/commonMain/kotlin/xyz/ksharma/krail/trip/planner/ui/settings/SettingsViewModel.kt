@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +23,7 @@ class SettingsViewModel(
     private val appInfoProvider: AppInfoProvider,
     private val analytics: Analytics,
     private val share: ContentSharing,
+    private val mainDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SettingsState> = MutableStateFlow(SettingsState())
@@ -37,7 +39,7 @@ class SettingsViewModel(
     }
 
     fun onReferFriendClick() {
-        viewModelScope.launchWithExceptionHandler<SettingsViewModel>(Dispatchers.Default) {
+        viewModelScope.launchWithExceptionHandler<SettingsViewModel>(mainDispatcher) {
             share.sharePlainText(getReferText())
             analytics.track(AnalyticsEvent.ReferAFriend)
         }

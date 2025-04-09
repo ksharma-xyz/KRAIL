@@ -4,6 +4,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
@@ -17,9 +18,17 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
 val viewModelsModule = module {
     viewModelOf(::SearchStopViewModel)
-    viewModelOf(::SettingsViewModel)
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
+
+    viewModel {
+        SettingsViewModel(
+            appInfoProvider = get(),
+            analytics = get(),
+            share = get(),
+            mainDispatcher = get(named(DispatchersComponent.MainDispatcher)),
+        )
+    }
 
     viewModel {
         SavedTripsViewModel(

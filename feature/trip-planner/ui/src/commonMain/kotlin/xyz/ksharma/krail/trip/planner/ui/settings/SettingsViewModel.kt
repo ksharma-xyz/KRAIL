@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +12,6 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
-import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.platform.ops.ContentSharing
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsState
@@ -37,9 +35,7 @@ class SettingsViewModel(
     }
 
     fun onReferFriendClick() {
-        viewModelScope.launchWithExceptionHandler<SettingsViewModel>(Dispatchers.Default) {
-            share.sharePlainText(getReferText())
-            analytics.track(AnalyticsEvent.ReferAFriend)
-        }
+        share.sharePlainText(getReferText())
+        analytics.track(AnalyticsEvent.ReferAFriend)
     }
 }

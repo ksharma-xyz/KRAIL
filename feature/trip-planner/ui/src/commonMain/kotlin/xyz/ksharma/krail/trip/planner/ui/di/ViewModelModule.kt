@@ -17,9 +17,16 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
 val viewModelsModule = module {
     viewModelOf(::SearchStopViewModel)
-    viewModelOf(::SettingsViewModel)
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
+
+    viewModel {
+        SettingsViewModel(
+            appInfoProvider = get(),
+            analytics = get(),
+            share = get(),
+        )
+    }
 
     viewModel {
         SavedTripsViewModel(

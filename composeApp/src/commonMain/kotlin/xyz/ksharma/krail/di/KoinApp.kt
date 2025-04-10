@@ -24,6 +24,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
         printLogger()
         includes(config)
         modules(
+            coroutineDispatchersModule,
             networkModule,
             viewModelsModule,
             sandookModule,
@@ -31,7 +32,6 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             appInfoModule,
             analyticsModule,
             remoteConfigModule,
-            coroutineDispatchersModule,
             gtfsModule,
             appStartModule,
             opsModule,

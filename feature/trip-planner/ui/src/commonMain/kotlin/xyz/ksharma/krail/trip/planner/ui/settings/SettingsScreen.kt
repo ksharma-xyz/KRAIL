@@ -72,7 +72,7 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = painterResource(Res.drawable.ic_heart),
-                    text = "Spread some love \uD83D\uDC95",
+                    text = "Invite your fiends \uD83D\uDC95",
                     onClick = {
                         onReferFriendClick()
                     }

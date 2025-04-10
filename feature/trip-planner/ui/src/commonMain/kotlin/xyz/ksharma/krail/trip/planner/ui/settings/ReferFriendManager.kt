@@ -12,52 +12,32 @@ object ReferFriendManager {
 
     // TODO - fetch these from Firebase.
     private val referTextOptions: List<String> = listOf(
-        "Hey mate!\n" +
-                "Try the best Sydney public transport app.\n" +
-                "Download now \uD83D\uDC47 \n" +
-                "Apple - $KRAIL_APP_STORE\n" +
-                "Android - $KRAIL_GOOGLE_PLAY\n" +
-                "KRAIL - Ride the rail without fail",
-
-        "Yo! legend,\n" +
-                "Sydney’s best public transport app is here.\n" +
-                "Download now \uD83D\uDC47 \n" +
-                "Apple - $KRAIL_APP_STORE\n" +
-                "Android - $KRAIL_GOOGLE_PLAY\n" +
-                "KRAIL - Ride the rail without fail",
-
-        "KRAIL - Sydney trains, minus the drama \uD83E\uDEE0\n" +
-                "Download now \uD83D\uDC47 \n" +
-                "Apple - $KRAIL_APP_STORE\n" +
-                "Android - $KRAIL_GOOGLE_PLAY\n" +
-                "KRAIL - Ride the rail without fail",
-
-        "Oi where’s my train?\n" +
-                "Use KRAIL - it’s like TripView but actually good.\n" +
-                "Download now \uD83D\uDC47 \n" +
+        "Hey mate,\n" +
+                "Sydney’s best public transport app is here. Like TripView but ad-free\n\n" +
+                "Download KRAIL here \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
                 "KRAIL - Ride the rail without fail",
 
         "Not all heroes wear capes.\n" +
-                "Some just show you when your bus is actually coming.\n" +
-                "Download now \uD83D\uDC47 \n" +
+                "Some just show you when your bus is actually coming.\n\n" +
+                "Download KRAIL here \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
                 "KRAIL - Ride the rail without fail",
 
         "Bus ghosted ya again? Rude.\n" +
-                "KRAIL tells you when and where - no cap.\n" +
-                "Download now \uD83D\uDC47 \n" +
+                "KRAIL tells you when and where - no cap.\n\n" +
+                "Download KRAIL here \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
                 "Android - $KRAIL_GOOGLE_PLAY\n" +
                 "KRAIL - Ride the rail without fail",
 
-        "Late again? Haha, your train’s playing hide and seek.\n" +
-                "KRAIL’s got your back.\n" +
-                "Download now \uD83D\uDC47 \n" +
+        "Your train was late again?.\n" +
+                "KRAIL App’s got your back.\n\n" +
+                "Download KRAIL here \uD83D\uDC47 \n" +
                 "Apple - $KRAIL_APP_STORE\n" +
-                "Android - $KRAIL_GOOGLE_PLAY\n" +
+                "Android - $KRAIL_GOOGLE_PLAY\n\n" +
                 "KRAIL - Ride the rail without fail",
     )
 }

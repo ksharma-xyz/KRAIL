@@ -8,6 +8,7 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.alertsDestination
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.dateTimeSelectorDestination
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsDestination
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopDestination
+import xyz.ksharma.krail.trip.planner.ui.settings.about.aboutUsDestination
 import xyz.ksharma.krail.trip.planner.ui.settings.settingsDestination
 import xyz.ksharma.krail.trip.planner.ui.timetable.timeTableDestination
 import xyz.ksharma.krail.trip.planner.ui.themeselection.themeSelectionDestination
@@ -34,6 +35,8 @@ fun NavGraphBuilder.tripPlannerDestinations(
         settingsDestination(navController)
 
         dateTimeSelectorDestination(navController)
+
+        aboutUsDestination(navController)
     }
 }
 
@@ -83,6 +86,9 @@ internal data class ServiceAlertRoute(
 
 @Serializable
 data object SettingsRoute
+
+@Serializable
+data object AboutUsRoute
 
 @Serializable
 data class DateTimeSelectorRoute(

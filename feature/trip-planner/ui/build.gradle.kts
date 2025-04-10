@@ -33,6 +33,7 @@ kotlin {
                 implementation(projects.core.remoteConfig)
                 implementation(projects.feature.tripPlanner.network)
                 implementation(projects.feature.tripPlanner.state)
+                implementation(projects.platform.ops)
                 implementation(projects.sandook)
                 implementation(projects.taj)
 

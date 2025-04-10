@@ -185,4 +185,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         )
     )
     // endregion
+
+    // region Settings
+
+    data object ReferAFriend : AnalyticsEvent(name = "refer_friend",)
+
+    // endregion
 }

@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_dev
+import krail.feature.trip_planner.ui.generated.resources.ic_smile
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import org.jetbrains.compose.resources.painterResource
@@ -40,6 +41,7 @@ fun SettingsScreen(
     onBackClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
     onReferFriendClick: () -> Unit = {},
+    onAboutUsClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -85,6 +87,17 @@ fun SettingsScreen(
                     text = "KRAIL App Version: $appVersion",
                 )
             }
+
+            item {
+                SettingsItem(
+                    icon = painterResource(Res.drawable.ic_smile),
+                    text = "About Us",
+                    onClick = {
+                        onAboutUsClick()
+                    }
+                )
+            }
+
         }
     }
 }

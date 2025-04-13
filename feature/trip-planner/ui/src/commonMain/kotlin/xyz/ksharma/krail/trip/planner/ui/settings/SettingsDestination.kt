@@ -8,6 +8,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.AboutUsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
 
@@ -30,6 +31,12 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
             },
             onReferFriendClick = {
                 viewModel.onReferFriendClick()
+            },
+            onIntroClick = {
+                navController.navigate(
+                    route = IntroRoute,
+                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                )
             },
             onAboutUsClick = {
                 navController.navigate(

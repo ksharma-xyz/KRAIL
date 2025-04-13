@@ -8,4 +8,5 @@ sealed class AnalyticsScreen(val name: String) {
     data object ThemeSelection : AnalyticsScreen(name = "ThemeSelection")
     data object SearchStop : AnalyticsScreen(name = "SearchStop")
     data object ServiceAlerts : AnalyticsScreen(name = "ServiceAlerts")
+    data object Intro : AnalyticsScreen(name = "Intro")
 }

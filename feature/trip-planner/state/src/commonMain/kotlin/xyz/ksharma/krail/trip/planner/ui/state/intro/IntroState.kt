@@ -16,7 +16,9 @@ data class IntroState(
         val title: String,
         val tagline: String,
         val emoji: String,
-        val ctaText: String
+        val ctaText: String,
+        // hexCode
+        val primaryStyle: String,
     )
 
     companion object {
@@ -34,11 +36,13 @@ data class IntroState(
                     tagline = "JUST\nONE TAP\nTHAT'S IT",
                     emoji = "\uD83C\uDF1F",
                     ctaText = "LET'S KRAIL",
+                    primaryStyle = KrailThemeStyle.Metro.hexColorCode,
                 ),
                 IntroPage(
                     id = 1,
                     colorsList = persistentListOf(
                         TransportMode.LightRail().colorCode,
+                        KrailThemeStyle.Bus.hexColorCode,
                         "#FFC800", // Yellow
                         TransportMode.LightRail().colorCode,
                     ),
@@ -46,7 +50,7 @@ data class IntroState(
                     tagline = "FASTEST\nROUTES\nEVERYTIME",
                     emoji = "\uD83D\uDE80",
                     ctaText = "LET'S KRAIL",
-
+                    primaryStyle = TransportMode.LightRail().colorCode,
                     ),
                 IntroPage(
                     id = 2,
@@ -59,7 +63,7 @@ data class IntroState(
                     tagline = "WE\nRESPECT\nYOUR TIME",
                     emoji = "⚠",
                     ctaText = "LET'S KRAIL",
-
+                    primaryStyle =  KrailThemeStyle.Bus.hexColorCode,
                     ),
                 IntroPage(
                     id = 3,
@@ -73,7 +77,7 @@ data class IntroState(
                     tagline = "WE\nCAN TELL\nTHE FUTURE",
                     emoji = "\uD83D\uDD2E",
                     ctaText = "LET'S KRAIL",
-
+                    primaryStyle =  KrailThemeStyle.Coach.hexColorCode,
                     ),
                 IntroPage(
                     id = 4,
@@ -86,6 +90,7 @@ data class IntroState(
                     tagline = "TRAIN, BUS\nOR BOTH\nYOUR CHOICE",
                     emoji = "\uD83D\uDE0E",
                     ctaText = "LET'S KRAIL",
+                    primaryStyle =  KrailThemeStyle.Train.hexColorCode,
                 ),
                 IntroPage(
                     id = 5,
@@ -98,6 +103,7 @@ data class IntroState(
                     tagline = "LET'S\nKRAIL\nTOGETHER",
                     emoji = "\uD83D\uDC95",
                     ctaText = "Invite your friends",
+                    primaryStyle =  KrailThemeStyle.BarbiePink.hexColorCode,
                 ),
             )
         )

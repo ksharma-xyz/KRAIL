@@ -25,6 +25,8 @@ kermit = "2.0.5"
 sqlDelight = "2.0.2"
 koin = "4.0.4"
 firebaseGitLive = "2.1.0"
+uiGeometryAndroid = "1.7.8"
+foundationLayoutAndroid = "1.7.8"
 
 [libraries]
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }
@@ -85,6 +87,8 @@ firebase-gitLiveAnalytics = { module = "dev.gitlive:firebase-analytics", version
 firebase-gitLivePerformance = { module = "dev.gitlive:firebase-perf", version.ref = "firebaseGitLive" }
 firebase-gitLiveRemoteConfig = { module = "dev.gitlive:firebase-config", version.ref = "firebaseGitLive" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+androidx-ui-geometry-android = { group = "androidx.compose.ui", name = "ui-geometry-android", version.ref = "uiGeometryAndroid" }
+androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

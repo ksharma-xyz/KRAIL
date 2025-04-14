@@ -2,6 +2,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -53,11 +54,24 @@ fun IntroScreen(
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
 
-    // Determine current page, offset and next page for continuous interpolation.
-    val currentPage = pagerState.currentPage
-    val offsetFraction = pagerState.currentPageOffsetFraction.absoluteValue
-    val nextPage = if (currentPage < state.pages.lastIndex) currentPage + 1 else currentPage
+    // Determine the start page and target page based on drag direction.
+    val startPage = pagerState.currentPage
+    val nextPage = if (startPage < state.pages.lastIndex) startPage + 1 else startPage
+    val dragFraction = pagerState.currentPageOffsetFraction
+    val targetPage = when {
+        dragFraction >= 0f && startPage < state.pages.lastIndex -> startPage + 1
+        dragFraction < 0f && startPage > 0 -> startPage - 1
+        else -> startPage
+    }
+    val offsetFraction = kotlin.math.abs(dragFraction)
 
+    // Compute animated alpha:
+    // For offset below 50%, alpha falls from 1 to 0.
+    // For offset above 50%, alpha rises from 0 to 1.
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (offsetFraction < 0.5f) 1f - (offsetFraction * 2f)
+        else (offsetFraction - 0.5f) * 2f
+    )
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -65,16 +79,32 @@ fun IntroScreen(
             .statusBarsPadding(),
     ) {
         Column(modifier = Modifier.align(Alignment.TopCenter)) {
-            Text(
-                text = "Intro Screen",
-                style = KrailTheme.typography.title,
-                textAlign = TextAlign.Center,
+            // Overlapped titles that fade based on the animated alphas.
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 32.dp, horizontal = 24.dp),
-            )
-
-            val pagerState = rememberPagerState(pageCount = { state.pages.size })
+                    .padding(vertical = 32.dp, horizontal = 24.dp)
+            ) {
+                if (offsetFraction < 0.5f) {
+                    Text(
+                        text = state.pages[startPage].title,
+                        style = KrailTheme.typography.title,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .alpha(animatedAlpha)
+                    )
+                } else if (offsetFraction > 0.5f) {
+                    Text(
+                        text = state.pages[targetPage].title,
+                        style = KrailTheme.typography.title,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .alpha(animatedAlpha)
+                    )
+                }
+            }
 
             BoxWithConstraints(
                 modifier = Modifier
@@ -91,7 +121,8 @@ fun IntroScreen(
                     pageSpacing = 20.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) { pageNumber ->
-                    val pageOffset = pagerState.calculateCurrentOffsetForPage(pageNumber).absoluteValue
+                    val pageOffset =
+                        pagerState.calculateCurrentOffsetForPage(pageNumber).absoluteValue
                     val animatedHeight by animateDpAsState(
                         targetValue = lerp(selectedHeight, unselectedHeight, min(1f, pageOffset)),
                         label = "cardHeight"
@@ -143,7 +174,7 @@ fun IntroScreen(
         }
 
         // Compute continuous button color by interpolating between current and next page colors.
-        val currentButtonColor = state.pages[currentPage].primaryStyle.hexToComposeColor()
+        val currentButtonColor = state.pages[startPage].primaryStyle.hexToComposeColor()
         val nextButtonColor = state.pages[nextPage].primaryStyle.hexToComposeColor()
         val animatedButtonColor = lerp(currentButtonColor, nextButtonColor, offsetFraction)
 
@@ -170,4 +201,5 @@ private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
 
 private fun lerp(start: Dp, end: Dp, fraction: Float): Dp = start + (end - start) * fraction
 
-private fun lerp(start: Float, end: Float, fraction: Float): Float = start + (end - start) * fraction
+private fun lerp(start: Float, end: Float, fraction: Float): Float =
+    start + (end - start) * fraction

@@ -64,8 +64,7 @@ fun IntroScreen(
                     .padding(vertical = 32.dp, horizontal = 24.dp),
             )
 
-            val pagerState = rememberPagerState(pageCount = { 5 })
-            val colors = listOf(Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Magenta)
+            val pagerState = rememberPagerState(pageCount = { state.pages.size })
 
             BoxWithConstraints(
                 modifier = Modifier
@@ -73,7 +72,6 @@ fun IntroScreen(
                     .padding(top = 24.dp)
             ) {
                 val screenHeight = maxHeight
-
                 val selectedHeight = screenHeight * 0.70f
                 val unselectedHeight = screenHeight * 0.6f
 
@@ -92,9 +90,11 @@ fun IntroScreen(
                     )
 
                     val scale = lerp(1f, 0.9f, min(1f, pageOffset))
-
                     val greyOverlayAlpha = min(0.6f, pageOffset * 1.2f) // Gradual tinting
                     val greyOverlay = Color(0xFF888888).copy(alpha = greyOverlayAlpha)
+
+                    // Retrieve page data from state
+                    val pageData = state.pages[pageNumber]
 
                     Column(
                         modifier = Modifier
@@ -113,10 +113,7 @@ fun IntroScreen(
 
                                 // Define a diagonal gradient from top left to bottom right
                                 val gradientBrush = Brush.linearGradient(
-                                    colors = listOf(
-                                        KrailThemeStyle.Metro.hexColorCode.hexToComposeColor(),
-                                        KrailThemeStyle.Bus.hexColorCode.hexToComposeColor(),
-                                    ),
+                                    colors = pageData.colorsList.map { it.hexToComposeColor() },
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, size.height)
                                 )
@@ -134,7 +131,10 @@ fun IntroScreen(
                             }
                             .verticalScroll(rememberScrollState())
                     ) {
-                        IntroContentSaveTrips(modifier = Modifier.padding(20.dp).fillMaxSize())
+                        IntroContentSaveTrips(
+                            tagline = pageData.tagline,
+                            modifier = Modifier.padding(20.dp).fillMaxSize(),
+                        )
                     }
                 }
             }

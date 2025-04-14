@@ -1,3 +1,4 @@
+// Kotlin
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.animation.core.animateDpAsState
@@ -21,13 +22,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -36,7 +38,6 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import kotlin.math.absoluteValue
@@ -90,8 +91,6 @@ fun IntroScreen(
                     )
 
                     val scale = lerp(1f, 0.9f, min(1f, pageOffset))
-                    val greyOverlayAlpha = min(0.6f, pageOffset * 1.2f) // Gradual tinting
-                    val greyOverlay = Color(0xFF888888).copy(alpha = greyOverlayAlpha)
 
                     // Retrieve page data from state
                     val pageData = state.pages[pageNumber]
@@ -105,35 +104,39 @@ fun IntroScreen(
                                 scaleY = scale
                             }
                             .fillMaxWidth()
-                            .drawWithCache {
-                                // Border thickness (4.dp) conversion to pixels
-                                val borderThicknessPx = 5.dp.toPx()
-                                // Define the corner radius for the rounded border
+                            .drawWithContent {
+                                // Border thickness and corner radius conversions
+                                val borderThicknessPx = 8.dp.toPx()
                                 val cornerRadiusPx = 24.dp.toPx()
-
-                                // Define a diagonal gradient from top left to bottom right
+                                // Fraction determines how much to blend from the real color to grey.
+                                // When pageOffset is 0, the page is selected and uses the actual gradient.
+                                // When pageOffset is near 1, the colors are nearly grey.
+                                val fraction = min(1f, pageOffset)
+                                val grey = Color(0xFF888888)
+                                val gradientColors = pageData.colorsList.map { it.hexToComposeColor() }
+                                    .map { originalColor ->
+                                        lerp(originalColor, grey, fraction)
+                                    }
                                 val gradientBrush = Brush.linearGradient(
-                                    colors = pageData.colorsList.map { it.hexToComposeColor() },
+                                    colors = gradientColors,
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, size.height)
                                 )
-                                // Cache the border drawing: draw the content and then draw the gradient border around it
-                                onDrawWithContent {
-                                    drawContent()
-                                    // Draw the border as a stroke over the full composable bounds
-                                    drawRoundRect(
-                                        brush = gradientBrush,
-                                        size = size,
-                                        cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
-                                        style = Stroke(width = borderThicknessPx)
-                                    )
-                                }
+                                drawContent()
+                                drawRoundRect(
+                                    brush = gradientBrush,
+                                    size = size,
+                                    cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
+                                    style = Stroke(width = borderThicknessPx)
+                                )
                             }
                             .verticalScroll(rememberScrollState())
                     ) {
                         IntroContentSaveTrips(
                             tagline = pageData.tagline,
-                            modifier = Modifier.padding(20.dp).fillMaxSize(),
+                            modifier = Modifier
+                                .padding(20.dp)
+                                .fillMaxSize(),
                         )
                     }
                 }

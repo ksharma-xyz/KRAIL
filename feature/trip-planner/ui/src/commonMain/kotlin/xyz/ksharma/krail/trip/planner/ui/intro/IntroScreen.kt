@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -49,6 +51,13 @@ fun IntroScreen(
     modifier: Modifier = Modifier,
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
+    val pagerState = rememberPagerState(pageCount = { state.pages.size })
+
+    // Determine current page, offset and next page for continuous interpolation.
+    val currentPage = pagerState.currentPage
+    val offsetFraction = pagerState.currentPageOffsetFraction.absoluteValue
+    val nextPage = if (currentPage < state.pages.lastIndex) currentPage + 1 else currentPage
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -82,17 +91,12 @@ fun IntroScreen(
                     pageSpacing = 20.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) { pageNumber ->
-
-                    val pageOffset =
-                        pagerState.calculateCurrentOffsetForPage(pageNumber).absoluteValue
+                    val pageOffset = pagerState.calculateCurrentOffsetForPage(pageNumber).absoluteValue
                     val animatedHeight by animateDpAsState(
                         targetValue = lerp(selectedHeight, unselectedHeight, min(1f, pageOffset)),
                         label = "cardHeight"
                     )
-
                     val scale = lerp(1f, 0.9f, min(1f, pageOffset))
-
-                    // Retrieve page data from state
                     val pageData = state.pages[pageNumber]
 
                     Column(
@@ -105,18 +109,13 @@ fun IntroScreen(
                             }
                             .fillMaxWidth()
                             .drawWithContent {
-                                // Border thickness and corner radius conversions
                                 val borderThicknessPx = 8.dp.toPx()
                                 val cornerRadiusPx = 24.dp.toPx()
-                                // Fraction determines how much to blend from the real color to grey.
-                                // When pageOffset is 0, the page is selected and uses the actual gradient.
-                                // When pageOffset is near 1, the colors are nearly grey.
                                 val fraction = min(1f, pageOffset)
                                 val grey = Color(0xFF888888)
-                                val gradientColors = pageData.colorsList.map { it.hexToComposeColor() }
-                                    .map { originalColor ->
-                                        lerp(originalColor, grey, fraction)
-                                    }
+                                val gradientColors = pageData.colorsList
+                                    .map { it.hexToComposeColor() }
+                                    .map { originalColor -> lerp(originalColor, grey, fraction) }
                                 val gradientBrush = Brush.linearGradient(
                                     colors = gradientColors,
                                     start = Offset(0f, 0f),
@@ -143,13 +142,20 @@ fun IntroScreen(
             }
         }
 
+        // Compute continuous button color by interpolating between current and next page colors.
+        val currentButtonColor = state.pages[currentPage].primaryStyle.hexToComposeColor()
+        val nextButtonColor = state.pages[nextPage].primaryStyle.hexToComposeColor()
+        val animatedButtonColor = lerp(currentButtonColor, nextButtonColor, offsetFraction)
+
         Column(
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
                 .padding(bottom = 10.dp)
         ) {
             Button(
                 onClick = { },
+                colors = ButtonDefaults.buttonColors(animatedButtonColor),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
             ) {
                 Text(text = "Let's #KRAIL")
@@ -162,10 +168,6 @@ private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
     return (currentPage - page) + currentPageOffsetFraction
 }
 
-private fun lerp(start: Dp, end: Dp, fraction: Float): Dp {
-    return start + (end - start) * fraction
-}
+private fun lerp(start: Dp, end: Dp, fraction: Float): Dp = start + (end - start) * fraction
 
-private fun lerp(start: Float, end: Float, fraction: Float): Float {
-    return start + (end - start) * fraction
-}
+private fun lerp(start: Float, end: Float, fraction: Float): Float = start + (end - start) * fraction

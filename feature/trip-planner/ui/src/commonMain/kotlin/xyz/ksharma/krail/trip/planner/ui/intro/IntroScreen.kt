@@ -162,12 +162,7 @@ fun IntroScreen(
                             }
                             .verticalScroll(rememberScrollState())
                     ) {
-                        IntroContentSaveTrips(
-                            tagline = pageData.tagline,
-                            modifier = Modifier
-                                .padding(20.dp)
-                                .fillMaxSize(),
-                        )
+                        IntroPageContent(pageData)
                     }
                 }
             }
@@ -191,6 +186,66 @@ fun IntroScreen(
             ) {
                 Text(text = "Let's #KRAIL")
             }
+        }
+    }
+}
+
+@Composable
+private fun IntroPageContent(pageData: IntroState.IntroPage) {
+    when (pageData.type) {
+        IntroState.IntroPageType.SAVE_TRIPS -> {
+            IntroContentSaveTrips(
+                tagline = pageData.tagline,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
+            )
+        }
+
+        IntroState.IntroPageType.REAL_TIME_DATA -> {
+            IntroContentRealTime(
+                tagline = pageData.tagline,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
+            )
+        }
+
+        IntroState.IntroPageType.ALERTS -> {
+            IntroContentAlerts(
+                tagline = pageData.tagline,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
+            )
+        }
+
+        IntroState.IntroPageType.PLAN_TRIP -> {
+            IntroContentPlanTrip(
+                tagline = pageData.tagline,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
+            )
+        }
+
+        IntroState.IntroPageType.SELECT_MODE -> {
+
+            IntroContentSelectMode(
+                tagline = pageData.tagline,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
+            )
+        }
+
+        IntroState.IntroPageType.INVITE_FRIENDS -> {
+            IntroContentInviteFriends(
+                tagline = pageData.tagline,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxSize(),
+            )
         }
     }
 }

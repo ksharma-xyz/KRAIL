@@ -17,9 +17,18 @@ data class IntroState(
         val tagline: String,
         val emoji: String,
         val ctaText: String,
-        // hexCode
-        val primaryStyle: String,
+        val primaryStyle: String,         // hexCode
+        val type: IntroPageType,
     )
+
+    enum class IntroPageType {
+        SAVE_TRIPS,
+        REAL_TIME_DATA,
+        ALERTS,
+        PLAN_TRIP,
+        SELECT_MODE,
+        INVITE_FRIENDS,
+    }
 
     companion object {
         fun default(): IntroState = IntroState(
@@ -37,6 +46,7 @@ data class IntroState(
                     emoji = "\uD83C\uDF1F",
                     ctaText = "LET'S KRAIL",
                     primaryStyle = KrailThemeStyle.Metro.hexColorCode,
+                    type = IntroPageType.SAVE_TRIPS,
                 ),
                 IntroPage(
                     id = 1,
@@ -51,6 +61,7 @@ data class IntroState(
                     emoji = "\uD83D\uDE80",
                     ctaText = "LET'S KRAIL",
                     primaryStyle = TransportMode.LightRail().colorCode,
+                    type = IntroPageType.REAL_TIME_DATA,
                     ),
                 IntroPage(
                     id = 2,
@@ -64,6 +75,7 @@ data class IntroState(
                     emoji = "⚠",
                     ctaText = "LET'S KRAIL",
                     primaryStyle =  KrailThemeStyle.Bus.hexColorCode,
+                    type = IntroPageType.ALERTS,
                     ),
                 IntroPage(
                     id = 3,
@@ -78,6 +90,7 @@ data class IntroState(
                     emoji = "\uD83D\uDD2E",
                     ctaText = "LET'S KRAIL",
                     primaryStyle =  KrailThemeStyle.Coach.hexColorCode,
+                    type = IntroPageType.PLAN_TRIP,
                     ),
                 IntroPage(
                     id = 4,
@@ -91,6 +104,7 @@ data class IntroState(
                     emoji = "\uD83D\uDE0E",
                     ctaText = "LET'S KRAIL",
                     primaryStyle =  KrailThemeStyle.Train.hexColorCode,
+                    type = IntroPageType.SELECT_MODE,
                 ),
                 IntroPage(
                     id = 5,
@@ -104,6 +118,7 @@ data class IntroState(
                     emoji = "\uD83D\uDC95",
                     ctaText = "Invite your friends",
                     primaryStyle =  KrailThemeStyle.BarbiePink.hexColorCode,
+                    type = IntroPageType.INVITE_FRIENDS,
                 ),
             )
         )

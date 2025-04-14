@@ -261,16 +261,22 @@ object ButtonDefaults {
         )
     }
 
+    // Kotlin
     @Composable
-    fun buttonColors(): ButtonColors {
+    fun buttonColors(
+        customContainerColor: Color? = null,
+        customContentColor: Color? = null
+    ): ButtonColors {
         val hexThemeColor: String by LocalThemeColor.current
         val hexContainerColor: String by rememberSaveable(hexThemeColor) {
             mutableStateOf(hexThemeColor)
         }
-        val containerColor: Color by remember(hexContainerColor) {
+        val defaultContainerColor: Color by remember(hexContainerColor) {
             mutableStateOf(hexContainerColor.hexToComposeColor())
         }
-        val contentColor: Color by remember { mutableStateOf(getForegroundColor(containerColor)) }
+        val containerColor = customContainerColor ?: defaultContainerColor
+        val defaultContentColor: Color by remember { mutableStateOf(getForegroundColor(containerColor)) }
+        val contentColor = customContentColor ?: defaultContentColor
 
         return ButtonColors(
             containerColor = containerColor,

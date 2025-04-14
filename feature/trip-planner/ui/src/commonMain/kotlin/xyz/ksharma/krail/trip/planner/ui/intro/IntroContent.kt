@@ -8,12 +8,12 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
 @Composable
-fun IntroContentSaveTrips(modifier: Modifier = Modifier) {
+fun IntroContentSaveTrips(tagline: String, modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
 
         Text(
-            text = "JUST\nONE TAP\nTHAT'S IT",
-            style = KrailTheme.typography.displayLarge,
+            text = tagline,
+            style = KrailTheme.typography.displayMedium,
             modifier = Modifier.align(Alignment.BottomStart),
         )
     }

@@ -18,11 +18,11 @@ class IntroViewModel(
     private val analytics: Analytics,
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<IntroState> = MutableStateFlow(IntroState())
+    private val _uiState: MutableStateFlow<IntroState> = MutableStateFlow(IntroState.default())
     val uiState: StateFlow<IntroState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.Intro)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntroState())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntroState.default())
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {

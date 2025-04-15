@@ -41,7 +41,7 @@ data class IntroState(
                         "#FFC800", // Yellow
                         KrailThemeStyle.Metro.hexColorCode,
                     ),
-                    title = "Save your trips",
+                    title = "Save Your Trips",
                     tagline = "JUST\nTAP STAR\nTHAT'S IT",
                     emoji = "\uD83C\uDF1F",
                     ctaText = "LET'S KRAIL",
@@ -55,13 +55,13 @@ data class IntroState(
                         "#FFC800", // Yellow
                         TransportMode.Ferry().colorCode,
                     ),
-                    title = "Real-time information",
+                    title = "Real-time Information",
                     tagline = "FASTEST\nROUTES\nEVERYTIME",
                     emoji = "\uD83D\uDE80",
                     ctaText = "LET'S KRAIL",
                     primaryStyle = TransportMode.Ferry().colorCode,
                     type = IntroPageType.REAL_TIME_DATA,
-                    ),
+                ),
                 IntroPage(
                     id = 2,
                     colorsList = persistentListOf(
@@ -73,38 +73,38 @@ data class IntroState(
                     tagline = "WE\nRESPECT\nYOUR TIME",
                     emoji = "⚠",
                     ctaText = "LET'S KRAIL",
-                    primaryStyle =  KrailThemeStyle.Bus.hexColorCode,
+                    primaryStyle = KrailThemeStyle.Bus.hexColorCode,
                     type = IntroPageType.ALERTS,
-                    ),
+                ),
                 IntroPage(
                     id = 3,
                     colorsList = persistentListOf(
                         KrailThemeStyle.Train.hexColorCode,
                         KrailThemeStyle.Bus.hexColorCode,
+                        KrailThemeStyle.PurpleDrip.hexColorCode,
                         KrailThemeStyle.Train.hexColorCode,
                     ),
-                    title = "Pick your mode",
+                    title = "Pick Your Mode",
                     tagline = "TRAIN, BUS\nOR ALL\nYOUR CHOICE",
                     emoji = "\uD83D\uDE0E",
                     ctaText = "LET'S KRAIL",
-                    primaryStyle =  KrailThemeStyle.Train.hexColorCode,
+                    primaryStyle = KrailThemeStyle.Train.hexColorCode,
                     type = IntroPageType.SELECT_MODE,
                 ),
                 IntroPage(
                     id = 4,
                     colorsList = persistentListOf(
                         KrailThemeStyle.PurpleDrip.hexColorCode,
-                        KrailThemeStyle.Bus.hexColorCode,
                         "#FFC800", // Yellow
                         KrailThemeStyle.PurpleDrip.hexColorCode,
                     ),
-                    title = "Plan your trip",
+                    title = "Plan Your Trip",
                     tagline = "WE\nCAN TELL\nTHE FUTURE",
                     emoji = "\uD83D\uDD2E",
                     ctaText = "LET'S KRAIL",
-                    primaryStyle =  KrailThemeStyle.PurpleDrip.hexColorCode,
+                    primaryStyle = KrailThemeStyle.PurpleDrip.hexColorCode,
                     type = IntroPageType.PLAN_TRIP,
-                    ),
+                ),
                 IntroPage(
                     id = 5,
                     colorsList = persistentListOf(
@@ -116,7 +116,7 @@ data class IntroState(
                     tagline = "LET'S\nKRAIL\nTOGETHER",
                     emoji = "\uD83D\uDC95",
                     ctaText = "Invite your friends",
-                    primaryStyle =  KrailThemeStyle.BarbiePink.hexColorCode,
+                    primaryStyle = KrailThemeStyle.BarbiePink.hexColorCode,
                     type = IntroPageType.INVITE_FRIENDS,
                 ),
             )

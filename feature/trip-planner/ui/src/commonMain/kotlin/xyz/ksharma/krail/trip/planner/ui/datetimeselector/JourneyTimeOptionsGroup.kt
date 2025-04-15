@@ -14,7 +14,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptio
 fun JourneyTimeOptionsGroup(
     selectedOption: JourneyTimeOptions = JourneyTimeOptions.LEAVE,
     themeColor: Color,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     onOptionSelected: (JourneyTimeOptions) -> Unit,
 ) {
     Row(

@@ -59,7 +59,7 @@ fun TransportModeChip(
                     shape = RoundedCornerShape(50),
                 )
                 .border(
-                    width = 2.dp, // is token , should be 1.dp less than the horizontal padding.
+                    width = 3.dp, // is token , should be 1.dp less than the horizontal padding.
                     color = borderColor,
                     shape = RoundedCornerShape(50),
                 )
@@ -69,7 +69,7 @@ fun TransportModeChip(
                 ) { onClick() }
                 // horizontal padding value should be same as border width of
                 // TransportModeIcon
-                .padding(horizontal = 3.dp, vertical = 4.dp) // is token
+                .padding(horizontal = 4.dp, vertical = 4.dp) // is token
                 .padding(end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),

@@ -10,12 +10,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.platform.ops.ContentSharing
+import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 
 class IntroViewModel(
     private val analytics: Analytics,
+    private val share: ContentSharing,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<IntroState> = MutableStateFlow(IntroState.default())
@@ -26,8 +30,10 @@ class IntroViewModel(
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {
-            IntroUiEvent.OnCompleteClick -> TODO()
-            IntroUiEvent.OnNextClick -> TODO()
+            IntroUiEvent.ReferFriendClick -> {
+                share.sharePlainText(getReferText())
+                analytics.track(AnalyticsEvent.ReferAFriend)
+            }
         }
     }
 

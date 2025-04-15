@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,6 +39,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import kotlin.math.absoluteValue
@@ -160,9 +159,8 @@ fun IntroScreen(
                                     style = Stroke(width = borderThicknessPx)
                                 )
                             }
-                            .verticalScroll(rememberScrollState())
                     ) {
-                        IntroPageContent(pageData)
+                        IntroPageContent(pageData, modifier = Modifier.fillMaxSize())
                     }
                 }
             }
@@ -181,7 +179,10 @@ fun IntroScreen(
         ) {
             Button(
                 onClick = { },
-                colors = ButtonDefaults.buttonColors(animatedButtonColor),
+                colors = ButtonDefaults.buttonColors(
+                    customContainerColor = animatedButtonColor,
+                    customContentColor = Color.White,
+                ),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
             ) {
                 Text(text = "Let's #KRAIL")
@@ -191,60 +192,53 @@ fun IntroScreen(
 }
 
 @Composable
-private fun IntroPageContent(pageData: IntroState.IntroPage) {
+private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier) {
     when (pageData.type) {
         IntroState.IntroPageType.SAVE_TRIPS -> {
             IntroContentSaveTrips(
                 tagline = pageData.tagline,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+                style = pageData.primaryStyle,
+                modifier = modifier,
             )
         }
 
         IntroState.IntroPageType.REAL_TIME_DATA -> {
             IntroContentRealTime(
                 tagline = pageData.tagline,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+                style = pageData.primaryStyle,
+                modifier = modifier,
             )
         }
 
         IntroState.IntroPageType.ALERTS -> {
             IntroContentAlerts(
                 tagline = pageData.tagline,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+                style = pageData.primaryStyle,
+                modifier = Modifier,
             )
         }
 
         IntroState.IntroPageType.PLAN_TRIP -> {
             IntroContentPlanTrip(
                 tagline = pageData.tagline,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+                style = pageData.primaryStyle,
+                modifier = Modifier,
             )
         }
 
         IntroState.IntroPageType.SELECT_MODE -> {
-
             IntroContentSelectMode(
                 tagline = pageData.tagline,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+                style = pageData.primaryStyle,
+                modifier = Modifier,
             )
         }
 
         IntroState.IntroPageType.INVITE_FRIENDS -> {
             IntroContentInviteFriends(
                 tagline = pageData.tagline,
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+                style = pageData.primaryStyle,
+                modifier = Modifier,
             )
         }
     }

@@ -97,8 +97,9 @@ fun IntroScreen(
                 } else if (offsetFraction > 0.5f) {
                     Text(
                         text = state.pages[targetPage].title,
-                        style = KrailTheme.typography.title,
+                        style = KrailTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
+                        color = state.pages[targetPage].primaryStyle.hexToComposeColor(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .alpha(animatedAlpha)

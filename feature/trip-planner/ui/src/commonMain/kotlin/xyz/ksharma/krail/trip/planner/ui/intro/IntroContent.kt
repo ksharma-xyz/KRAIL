@@ -294,7 +294,7 @@ fun IntroContentInviteFriends(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = "RIDING SOLO\nNAH THANKS",
-                style = KrailTheme.typography.headlineMedium,
+                style = KrailTheme.typography.introTagline,
                 color = style.hexToComposeColor(),
             )
         }
@@ -384,13 +384,13 @@ private fun TagLineWithEmoji(
     ) {
         Text(
             text = emoji,
-            style = KrailTheme.typography.displayMedium,
+            style = KrailTheme.typography.introTagline,
             color = emojiColor,
         )
 
         Text(
             text = tagline,
-            style = KrailTheme.typography.displayMedium,
+            style = KrailTheme.typography.introTagline,
             color = tagColor,
         )
     }

@@ -85,7 +85,7 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = painterResource(Res.drawable.ic_heart),
-                    text = "Intro to KRAIL",
+                    text = "How to KRAIL?",
                     onClick = onIntroClick,
                 )
             }

@@ -83,7 +83,7 @@ data class IntroState(
                         KrailThemeStyle.Bus.hexColorCode,
                         KrailThemeStyle.Train.hexColorCode,
                     ),
-                    title = "Choose your mode",
+                    title = "Pick your mode",
                     tagline = "TRAIN, BUS\nOR ALL\nYOUR CHOICE",
                     emoji = "\uD83D\uDE0E",
                     ctaText = "LET'S KRAIL",

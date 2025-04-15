@@ -78,7 +78,7 @@ fun IntroContentSaveTrips(
     style: String, // hexCode - // todo - see if it can be color instead.
 ) {
     Column(
-        modifier = modifier.padding(vertical = 20.dp, horizontal = 10.dp)
+        modifier = modifier
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -135,7 +135,6 @@ fun IntroContentRealTime(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -165,11 +164,12 @@ fun IntroContentAlerts(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
 
             var displayAlert by rememberSaveable { mutableStateOf(false) }
 
@@ -234,7 +234,6 @@ fun IntroContentPlanTrip(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -285,7 +284,6 @@ fun IntroContentInviteFriends(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -333,7 +331,6 @@ fun IntroContentSelectTransportMode(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -349,6 +346,7 @@ fun IntroContentSelectTransportMode(
                             selectedModes - mode
                         } else selectedModes + mode
                     },
+                    //modifier = Modifier.padding(horizontal = 10.dp),
                 )
             }
         }
@@ -371,7 +369,7 @@ private fun TagLineWithEmoji(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(top = 20.dp, start = 10.dp, end = 10.dp),
+        modifier = modifier.padding(top = 20.dp, end = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(

@@ -7,12 +7,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberTimePickerState
@@ -25,6 +28,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -32,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_star
+import krail.feature.trip_planner.ui.generated.resources.ic_ios_share
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime
@@ -111,7 +117,11 @@ fun IntroContentSaveTrips(
             }
         }
 
-        TagLineWithEmoji(tagline = tagline, emoji = "\uD83C\uDF1F")
+        TagLineWithEmoji(
+            tagline = tagline,
+            emoji = "\uD83C\uDF1F",
+            tagColor = style.hexToComposeColor()
+        )
     }
 }
 
@@ -138,7 +148,10 @@ fun IntroContentRealTime(
             )
         }
 
-        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+        TagLineWithEmoji(
+            tagline = tagline, emoji = "\uD83D\uDE80",
+            tagColor = style.hexToComposeColor()
+        )
     }
 }
 
@@ -166,7 +179,10 @@ fun IntroContentAlerts(
             AnimatedAlerts(displayAlert)
         }
 
-        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+        TagLineWithEmoji(
+            tagline = tagline, emoji = "⚠", emojiColor = style.hexToComposeColor(),
+            tagColor = style.hexToComposeColor()
+        )
     }
 }
 
@@ -236,8 +252,12 @@ fun IntroContentPlanTrip(
             )
             val themeColor = rememberSaveable { mutableStateOf(TransportMode.Coach().colorCode) }
             val density = LocalDensity.current
-            CompositionLocalProvider(LocalThemeColor provides themeColor,
-                LocalDensity provides Density((density.density - 0.6f).coerceIn(1.5f, 3f), fontScale = 1f),
+            CompositionLocalProvider(
+                LocalThemeColor provides themeColor,
+                LocalDensity provides Density(
+                    (density.density - 0.6f).coerceIn(1.5f, 3f),
+                    fontScale = 1f
+                ),
             ) {
                 TimeSelection(
                     timePickerState = timePickerState,
@@ -248,7 +268,10 @@ fun IntroContentPlanTrip(
             }
         }
 
-        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+        TagLineWithEmoji(
+            tagline = tagline, emoji = "\uD83D\uDD2E",
+            tagColor = style.hexToComposeColor()
+        )
     }
 }
 
@@ -266,10 +289,33 @@ fun IntroContentInviteFriends(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("RIDING SOLO\nNAH THANKS", style = KrailTheme.typography.headlineMedium)
-
         }
 
-        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(color = style.hexToComposeColor()),
+                contentAlignment = Alignment.Center,
+            ) { // TODO - show diff. image for ios / android
+                Image(
+                    painter = painterResource(Res.drawable.ic_ios_share),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier.size(48.dp),
+                )
+            }
+        }
+
+        TagLineWithEmoji(
+            tagline = tagline, emoji = "\uD83D\uDC95",
+            tagColor = style.hexToComposeColor()
+        )
     }
 }
 
@@ -289,23 +335,36 @@ fun IntroContentSelectMode(
 
         }
 
-        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+        TagLineWithEmoji(
+            tagline = tagline, emoji = "\uD83D\uDE0E",
+            tagColor = style.hexToComposeColor()
+        )
     }
 }
 
 
 @Composable
-private fun TagLineWithEmoji(tagline: String, emoji: String, modifier: Modifier = Modifier) {
+private fun TagLineWithEmoji(
+    tagline: String, emoji: String,
+    emojiColor: Color? = null,
+    tagColor: Color? = null,
+    modifier: Modifier = Modifier
+) {
     Column(
-        modifier = modifier.padding(horizontal = 12.dp),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
 
-        Text(text = emoji, style = KrailTheme.typography.displayMedium)
+        Text(
+            text = emoji,
+            style = KrailTheme.typography.displayMedium,
+            color = emojiColor,
+        )
 
         Text(
             text = tagline,
             style = KrailTheme.typography.displayMedium,
+            color = tagColor,
         )
     }
 }

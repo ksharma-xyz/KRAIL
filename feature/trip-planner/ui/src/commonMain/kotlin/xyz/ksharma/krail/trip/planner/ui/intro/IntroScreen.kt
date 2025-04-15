@@ -139,7 +139,7 @@ fun IntroScreen(
                                 scaleY = scale
                             }
                             .fillMaxWidth()
-                            .drawWithContent {
+                            .drawWithContent { // todo make a modifier
                                 val borderThicknessPx = 8.dp.toPx()
                                 val cornerRadiusPx = 24.dp.toPx()
                                 val fraction = min(1f, pageOffset)

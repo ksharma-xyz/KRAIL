@@ -42,7 +42,7 @@ fun IntroContentInviteFriends(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "TRAVELLING SOLO?\nNAH THANKS",
+                text = "TRIPS ARE\nBETTER\nWITH FRIENDS",
                 style = KrailTheme.typography.introTagline,
                 color = style.hexToComposeColor(),
             )

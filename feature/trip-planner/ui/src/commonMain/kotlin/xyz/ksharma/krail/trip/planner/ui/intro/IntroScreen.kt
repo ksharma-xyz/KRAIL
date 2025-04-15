@@ -220,7 +220,7 @@ private fun IntroPageContent(
             )
         }
 
-        IntroPageType.REAL_TIME_DATA -> {
+        IntroPageType.REAL_TIME_ROUTES -> {
             IntroContentRealTime(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,

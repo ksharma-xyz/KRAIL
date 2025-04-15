@@ -1,9 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.state.timetable
 
+import androidx.compose.runtime.Stable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 @Serializable
+@Stable
 data class Trip(
     val fromStopId: String,
     val fromStopName: String,

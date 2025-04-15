@@ -42,7 +42,7 @@ data class IntroState(
                         KrailThemeStyle.Metro.hexColorCode,
                     ),
                     title = "Save your trips",
-                    tagline = "JUST\nONE TAP\nTHAT'S IT",
+                    tagline = "JUST\nTAP STAR\nTHAT'S IT",
                     emoji = "\uD83C\uDF1F",
                     ctaText = "LET'S KRAIL",
                     primaryStyle = KrailThemeStyle.Metro.hexColorCode,

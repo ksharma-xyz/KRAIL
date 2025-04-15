@@ -42,6 +42,7 @@ fun SettingsScreen(
     onChangeThemeClick: () -> Unit = {},
     onReferFriendClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
+    onIntroClick: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -83,6 +84,14 @@ fun SettingsScreen(
 
             item {
                 SettingsItem(
+                    icon = painterResource(Res.drawable.ic_heart),
+                    text = "Intro to KRAIL",
+                    onClick = onIntroClick,
+                )
+            }
+
+            item {
+                SettingsItem(
                     icon = painterResource(Res.drawable.ic_dev),
                     text = "KRAIL App Version: $appVersion",
                 )
@@ -91,7 +100,7 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = painterResource(Res.drawable.ic_smile),
-                    text = "About Us",
+                    text = "About KRAIL",
                     onClick = {
                         onAboutUsClick()
                     }

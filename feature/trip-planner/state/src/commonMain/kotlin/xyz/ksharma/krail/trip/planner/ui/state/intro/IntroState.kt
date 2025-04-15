@@ -17,7 +17,7 @@ data class IntroState(
         val tagline: String,
         val emoji: String,
         val ctaText: String,
-        val primaryStyle: String,         // hexCode
+        val primaryStyle: String, // hexCode
         val type: IntroPageType,
     )
 
@@ -100,7 +100,7 @@ data class IntroState(
                         KrailThemeStyle.Train.hexColorCode,
                     ),
                     title = "Select transport mode",
-                    tagline = "TRAIN, BUS\nOR BOTH\nYOUR CHOICE",
+                    tagline = "TRAIN, BUS\nOR ALL\nYOUR CHOICE",
                     emoji = "\uD83D\uDE0E",
                     ctaText = "LET'S KRAIL",
                     primaryStyle =  KrailThemeStyle.Train.hexColorCode,

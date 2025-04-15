@@ -39,7 +39,6 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import kotlin.math.absoluteValue
@@ -227,7 +226,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
         }
 
         IntroState.IntroPageType.SELECT_MODE -> {
-            IntroContentSelectMode(
+            IntroContentSelectTransportMode(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier,

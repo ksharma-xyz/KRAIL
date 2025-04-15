@@ -22,6 +22,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,6 +42,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_ios_share
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -48,10 +50,10 @@ import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.alerts.CollapsibleAlert
 import xyz.ksharma.krail.trip.planner.ui.components.LegView
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
+import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.JourneyTimeOptionsGroup
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.TimeSelection
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -320,7 +322,7 @@ fun IntroContentInviteFriends(
 }
 
 @Composable
-fun IntroContentSelectMode(
+fun IntroContentSelectTransportMode(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier
@@ -332,11 +334,24 @@ fun IntroContentSelectMode(
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            var selectedModes by rememberSaveable { mutableStateOf(setOf<TransportMode>()) }
 
+            TransportMode.values().forEach { mode ->
+                TransportModeChip(
+                    transportMode = mode,
+                    selected = selectedModes.contains(mode),
+                    onClick = {
+                        selectedModes = if (selectedModes.contains(mode)) {
+                            selectedModes - mode
+                        } else selectedModes + mode
+                    },
+                )
+            }
         }
 
         TagLineWithEmoji(
-            tagline = tagline, emoji = "\uD83D\uDE0E",
+            tagline = tagline,
+            emoji = "\uD83D\uDE0E",
             tagColor = style.hexToComposeColor()
         )
     }
@@ -345,16 +360,16 @@ fun IntroContentSelectMode(
 
 @Composable
 private fun TagLineWithEmoji(
-    tagline: String, emoji: String,
+    tagline: String,
+    emoji: String,
     emojiColor: Color? = null,
     tagColor: Color? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(top = 20.dp, start = 10.dp, end = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-
         Text(
             text = emoji,
             style = KrailTheme.typography.displayMedium,

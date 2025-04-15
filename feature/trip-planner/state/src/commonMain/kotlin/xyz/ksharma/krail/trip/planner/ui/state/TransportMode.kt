@@ -81,10 +81,10 @@ sealed class TransportMode {
     companion object {
         private val productClassMap = listOf(
             Train(),
-            Metro(),
-            Ferry(),
             Bus(),
+            Metro(),
             LightRail(),
+            Ferry(),
             Coach(),
         ).associateBy { it.productClass }
 

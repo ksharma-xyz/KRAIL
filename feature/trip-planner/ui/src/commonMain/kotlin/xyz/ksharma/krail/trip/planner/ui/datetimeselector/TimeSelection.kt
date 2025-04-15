@@ -28,6 +28,7 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 fun TimeSelection(
     timePickerState: TimePickerState,
     modifier: Modifier = Modifier,
+    displayTitle: Boolean = true,
 ) {
     val themeColorHex by LocalThemeColor.current
     val themeColor = themeColorHex.hexToComposeColor()
@@ -38,11 +39,12 @@ fun TimeSelection(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         val density = LocalDensity.current
+        if(displayTitle){
         Text(
             text = "Select Time",
             style = KrailTheme.typography.title,
             color = KrailTheme.colors.onSurface,
-        )
+        )}
 
         CompositionLocalProvider(
             LocalDensity provides Density(

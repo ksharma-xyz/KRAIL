@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,19 +25,19 @@ fun IntroContentSelectTransportMode(
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val selectedModesProductClass: MutableList<Int> = remember {
-                mutableStateListOf(TransportMode.Train().productClass)
+            val selectedProductClasses: MutableSet<Int> = remember {
+                mutableStateSetOf(TransportMode.Train().productClass)
             }
 
             TransportMode.values().forEach { mode ->
                 TransportModeChip(
                     transportMode = mode,
-                    selected = selectedModesProductClass.contains(mode.productClass),
+                    selected = selectedProductClasses.contains(mode.productClass),
                     onClick = {
-                        if (selectedModesProductClass.contains(mode.productClass)) {
-                            selectedModesProductClass.removeAll(listOf(mode.productClass))
+                        if (selectedProductClasses.contains(mode.productClass)) {
+                            selectedProductClasses.removeAll(setOf(mode.productClass))
                         } else {
-                            selectedModesProductClass.add(mode.productClass)
+                            selectedProductClasses.add(mode.productClass)
                         }
                     },
                 )

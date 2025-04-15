@@ -115,14 +115,14 @@ private fun AnimatedKrailLogo(
 
         Text(
             text = "Ride the rail, without fail.",
-            style = KrailTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Normal,
+            style = KrailTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Medium,
             ),
             textAlign = TextAlign.Center,
             color = logoColor,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 0.dp),
+                .padding(horizontal = 16.dp,),
         )
     }
 }
@@ -169,14 +169,14 @@ private fun AnimatedLetter(
             style = KrailTheme.typography.displayLarge.copy(
                 fontSize = fontSize,
                 letterSpacing = 4.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
             ),
             modifier = modifier
                 .graphicsLayer {
                     scaleX = letterScale
                     scaleY = letterScale
                 }
-                .padding(4.dp),
+                .padding(horizontal = 4.dp, vertical = 2.dp),
         )
     }
 }

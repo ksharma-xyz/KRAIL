@@ -111,7 +111,7 @@ fun IntroScreen(
                     .padding(top = 24.dp)
             ) {
                 val screenHeight = maxHeight
-                val selectedHeight = screenHeight * 0.70f
+                val selectedHeight = screenHeight * 0.75f
                 val unselectedHeight = screenHeight * 0.6f
 
                 HorizontalPager(
@@ -214,7 +214,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentAlerts(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = Modifier,
+                modifier = modifier,
             )
         }
 
@@ -222,7 +222,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentPlanTrip(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = Modifier,
+                modifier = modifier,
             )
         }
 
@@ -230,7 +230,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentSelectMode(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = Modifier,
+                modifier = modifier,
             )
         }
 
@@ -238,7 +238,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentInviteFriends(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = Modifier,
+                modifier = modifier,
             )
         }
     }

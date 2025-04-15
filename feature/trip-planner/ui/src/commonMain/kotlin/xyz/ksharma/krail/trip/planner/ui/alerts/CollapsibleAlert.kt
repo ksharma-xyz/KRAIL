@@ -90,7 +90,7 @@ fun CollapsibleAlert(
                 }
             }
 
-            if (collapsed.not()) {
+            if (collapsed.not() && serviceAlert.message.isNotBlank()) {
                 val isHtml by remember {
                     mutableStateOf(
                         "<[a-z][\\s\\S]*>".toRegex().containsMatchIn(serviceAlert.message),
@@ -111,7 +111,7 @@ fun CollapsibleAlert(
                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
                     )
                 }
-            } else {
+            } else if(serviceAlert.message.isNotBlank()) {
 
                 val buttonBackgroundColor by remember {
                     mutableStateOf(getForegroundColor(backgroundColor))

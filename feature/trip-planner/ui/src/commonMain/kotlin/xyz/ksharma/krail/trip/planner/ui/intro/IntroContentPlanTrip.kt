@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,27 +15,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.JourneyTimeOptionsGroup
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.TimeSelection
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
-import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
-
-val trip = Trip(
-    fromStopName = "Wynyard Station",
-    toStopName = "Central Station",
-    fromStopId = "1",
-    toStopId = "2"
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,32 +72,6 @@ fun IntroContentPlanTrip(
         TagLineWithEmoji(
             tagline = tagline, emoji = "\uD83D\uDD2E",
             tagColor = style.hexToComposeColor()
-        )
-    }
-}
-
-@Composable
-internal  fun TagLineWithEmoji(
-    tagline: String,
-    emoji: String,
-    emojiColor: Color? = null,
-    tagColor: Color? = null,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(top = 20.dp, end = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = emoji,
-            style = KrailTheme.typography.introTagline,
-            color = emojiColor,
-        )
-
-        Text(
-            text = tagline,
-            style = KrailTheme.typography.introTagline,
-            color = tagColor,
         )
     }
 }

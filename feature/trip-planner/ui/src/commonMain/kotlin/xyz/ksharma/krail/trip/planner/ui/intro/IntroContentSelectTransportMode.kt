@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -27,18 +25,21 @@ fun IntroContentSelectTransportMode(
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            var selectedModes by rememberSaveable { mutableStateOf(setOf<TransportMode>()) }
+            val selectedModesProductClass: MutableList<Int> = remember {
+                mutableStateListOf(TransportMode.Train().productClass)
+            }
 
             TransportMode.values().forEach { mode ->
                 TransportModeChip(
                     transportMode = mode,
-                    selected = selectedModes.contains(mode),
+                    selected = selectedModesProductClass.contains(mode.productClass),
                     onClick = {
-                        selectedModes = if (selectedModes.contains(mode)) {
-                            selectedModes - mode
-                        } else selectedModes + mode
+                        if (selectedModesProductClass.contains(mode.productClass)) {
+                            selectedModesProductClass.removeAll(listOf(mode.productClass))
+                        } else {
+                            selectedModesProductClass.add(mode.productClass)
+                        }
                     },
-                    //modifier = Modifier.padding(horizontal = 10.dp),
                 )
             }
         }

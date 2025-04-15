@@ -141,10 +141,10 @@ fun IntroContentRealTime(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             LegView(
-                routeText = "Central to Dulwich Hill",
+                routeText = "Manly to Circular Quay",
                 transportModeLine = TransportModeLine(
-                    transportMode = TransportMode.LightRail(),
-                    lineName = "L1",
+                    transportMode = TransportMode.Ferry(),
+                    lineName = "MFF",
                 ),
                 stops = stopsList(),
             )
@@ -290,7 +290,11 @@ fun IntroContentInviteFriends(
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("RIDING SOLO\nNAH THANKS", style = KrailTheme.typography.headlineMedium)
+            Text(
+                text = "RIDING SOLO\nNAH THANKS",
+                style = KrailTheme.typography.headlineMedium,
+                color = style.hexToComposeColor(),
+            )
         }
 
         Column(
@@ -386,58 +390,13 @@ private fun TagLineWithEmoji(
 
 private fun stopsList() = persistentListOf(
     TimeTableState.JourneyCardInfo.Stop(
-        name = "Central Light Rail",
+        name = "Manly, Wharf 2",
         time = "10:10 AM",
         isWheelchairAccessible = true,
     ),
     TimeTableState.JourneyCardInfo.Stop(
-        "Capitol Square Light Rail",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Paddy's Market Light Rail",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Glebe Light Rail",
-        time = "10:15 AM",
+        name = "Circular Quay, Wharf 2",
+        time = "10:30 AM",
         isWheelchairAccessible = true,
     ),
 )

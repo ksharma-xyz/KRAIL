@@ -94,7 +94,7 @@ fun IntroScreen(
                 if (offsetFraction < 0.5f) {
                     Text(
                         text = state.pages[startPage].title,
-                        style = KrailTheme.typography.title,
+                        style = KrailTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
                         color = animatedButtonColor,
                         modifier = Modifier

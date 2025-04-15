@@ -1,8 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,14 +28,18 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_star
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.taj.components.AlertButton
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.alerts.CollapsibleAlert
 import xyz.ksharma.krail.trip.planner.ui.components.LegView
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
+import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.ActionButton
@@ -90,18 +99,7 @@ fun IntroContentSaveTrips(
             }
         }
 
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-
-            Text(text = "\uD83C\uDF1F", style = KrailTheme.typography.displayMedium)
-
-            Text(
-                text = tagline,
-                style = KrailTheme.typography.displayMedium,
-            )
-        }
+        TagLineWithEmoji(tagline = tagline, emoji = "\uD83C\uDF1F")
     }
 }
 
@@ -128,20 +126,9 @@ fun IntroContentRealTime(
             )
         }
 
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(text = "\uD83D\uDE80", style = KrailTheme.typography.displayMedium)
-
-            Text(
-                text = tagline,
-                style = KrailTheme.typography.displayMedium,
-            )
-        }
+        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
     }
 }
-
 
 @Composable
 fun IntroContentAlerts(
@@ -149,13 +136,62 @@ fun IntroContentAlerts(
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .padding(vertical = 16.dp, horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-        Text(
-            text = tagline,
-            style = KrailTheme.typography.displayMedium,
-            modifier = Modifier.align(Alignment.BottomStart),
-        )
+            var displayAlert by rememberSaveable { mutableStateOf(false) }
+
+            AlertButton(
+                dimensions = ButtonDefaults.smallButtonSize(),
+                onClick = { displayAlert = !displayAlert },
+            ) { Text(text = "2 Alerts") }
+
+            AnimatedAlerts(displayAlert)
+        }
+
+        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+    }
+}
+
+@Composable
+fun AnimatedAlerts(displayAlert: Boolean) {
+    AnimatedVisibility(
+        visible = displayAlert,
+        enter = fadeIn(animationSpec = tween(300)) +
+                slideInVertically(
+                    initialOffsetY = { -20 },
+                    animationSpec = tween(300),
+                ),
+        exit = fadeOut(animationSpec = tween(300)) +
+                slideOutVertically(
+                    targetOffsetY = { -20 },
+                    animationSpec = tween(300),
+                )
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CollapsibleAlert(
+                serviceAlert = ServiceAlert(
+                    heading = "Running late. Please allow extra travel time.", message = "",
+                ),
+                index = 1,
+                collapsed = false,
+                onClick = {},
+            )
+
+            CollapsibleAlert(
+                serviceAlert = ServiceAlert(
+                    heading = "Platforms may change, listen for announcements.", message = "",
+                ),
+                index = 2,
+                collapsed = false,
+                onClick = {},
+            )
+        }
     }
 }
 
@@ -165,13 +201,18 @@ fun IntroContentPlanTrip(
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .padding(vertical = 16.dp, horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-        Text(
-            text = tagline,
-            style = KrailTheme.typography.displayMedium,
-            modifier = Modifier.align(Alignment.BottomStart),
-        )
+
+        }
+
+        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
     }
 }
 
@@ -181,13 +222,18 @@ fun IntroContentInviteFriends(
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text("RIDING SOLO\nNAH THANKS")
+    Column(
+        modifier = modifier
+            .padding(vertical = 16.dp, horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("RIDING SOLO\nNAH THANKS", style = KrailTheme.typography.headlineMedium)
 
-        Text(
-            text = tagline,
-            style = KrailTheme.typography.displayMedium,
-        )
+        }
+
+        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
     }
 }
 
@@ -197,7 +243,29 @@ fun IntroContentSelectMode(
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .padding(vertical = 16.dp, horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+        }
+
+        TagLineWithEmoji(tagline = tagline, emoji = "\uD83D\uDE80")
+    }
+}
+
+
+@Composable
+private fun TagLineWithEmoji(tagline: String, emoji: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+
+        Text(text = emoji, style = KrailTheme.typography.displayMedium)
 
         Text(
             text = tagline,
@@ -206,7 +274,6 @@ fun IntroContentSelectMode(
     }
 }
 
-
 private fun stopsList() = persistentListOf(
     TimeTableState.JourneyCardInfo.Stop(
         name = "Central Light Rail",
@@ -214,12 +281,12 @@ private fun stopsList() = persistentListOf(
         isWheelchairAccessible = true,
     ),
     TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
+        "Capitol Square Light Rail",
         time = "12:00",
         isWheelchairAccessible = true,
     ),
     TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
+        "Paddy's Market Light Rail",
         time = "12:00",
         isWheelchairAccessible = true,
     ),

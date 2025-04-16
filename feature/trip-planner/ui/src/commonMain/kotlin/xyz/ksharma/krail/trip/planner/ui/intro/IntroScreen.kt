@@ -48,6 +48,7 @@ import kotlin.math.min
 fun IntroScreen(
     state: IntroState,
     modifier: Modifier = Modifier,
+    onComplete: () -> Unit = {},
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
@@ -177,14 +178,14 @@ fun IntroScreen(
                 .padding(bottom = 10.dp)
         ) {
             Button(
-                onClick = { },
+                onClick = onComplete,
                 colors = ButtonDefaults.buttonColors(
                     customContainerColor = animatedButtonColor,
                     customContentColor = Color.White,
                 ),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
             ) {
-                Text(text = "Let's #KRAIL")
+                Text(text = state.pages[startPage].ctaText)
             }
         }
     }
@@ -241,8 +242,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-
-                )
+            )
         }
     }
 }

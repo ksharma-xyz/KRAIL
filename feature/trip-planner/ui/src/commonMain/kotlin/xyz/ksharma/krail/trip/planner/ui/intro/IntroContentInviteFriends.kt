@@ -22,8 +22,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_android_share
 import krail.feature.trip_planner.ui.generated.resources.ic_ios_share
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.appinfo.DevicePlatformType
+import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -67,10 +70,14 @@ fun IntroContentInviteFriends(
                 contentAlignment = Alignment.Center,
             ) { // TODO - show diff. image for ios / android
                 Image(
-                    painter = painterResource(Res.drawable.ic_ios_share),
-                    contentDescription = null,
+                    painter = if (getAppPlatformType() == DevicePlatformType.IOS) {
+                        painterResource(Res.drawable.ic_ios_share)
+                    } else {
+                        painterResource(Res.drawable.ic_android_share)
+                    },
+                    contentDescription = "Invite Friends",
                     colorFilter = ColorFilter.tint(Color.White),
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(32.dp),
                 )
             }
         }

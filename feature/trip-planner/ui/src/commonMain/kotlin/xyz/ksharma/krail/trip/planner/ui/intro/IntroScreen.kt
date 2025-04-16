@@ -197,7 +197,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentSaveTrips(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier,
+                modifier = modifier.padding(20.dp),
             )
         }
 
@@ -205,7 +205,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentRealTime(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier,
+                modifier = modifier.padding(20.dp),
             )
         }
 
@@ -213,32 +213,36 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             IntroContentAlerts(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier,
-            )
+                modifier = modifier.padding(20.dp),
+
+                )
         }
 
         IntroState.IntroPageType.PLAN_TRIP -> {
             IntroContentPlanTrip(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier,
-            )
+                modifier = modifier.padding(20.dp),
+
+                )
         }
 
         IntroState.IntroPageType.SELECT_MODE -> {
             IntroContentSelectTransportMode(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier,
-            )
+                modifier = modifier.padding(20.dp),
+
+                )
         }
 
         IntroState.IntroPageType.INVITE_FRIENDS -> {
             IntroContentInviteFriends(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier,
-            )
+                modifier = modifier.padding(20.dp),
+
+                )
         }
     }
 }

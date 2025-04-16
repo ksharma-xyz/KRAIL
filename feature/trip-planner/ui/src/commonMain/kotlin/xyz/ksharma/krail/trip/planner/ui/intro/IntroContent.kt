@@ -78,7 +78,7 @@ fun IntroContentSaveTrips(
     style: String, // hexCode - // todo - see if it can be color instead.
 ) {
     Column(
-        modifier = modifier.padding(vertical = 20.dp, horizontal = 10.dp)
+        modifier = modifier
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -135,16 +135,15 @@ fun IntroContentRealTime(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             LegView(
-                routeText = "Central to Dulwich Hill",
+                routeText = "Manly to Circular Quay",
                 transportModeLine = TransportModeLine(
-                    transportMode = TransportMode.LightRail(),
-                    lineName = "L1",
+                    transportMode = TransportMode.Ferry(),
+                    lineName = "MFF",
                 ),
                 stops = stopsList(),
             )
@@ -165,11 +164,12 @@ fun IntroContentAlerts(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
 
             var displayAlert by rememberSaveable { mutableStateOf(false) }
 
@@ -234,7 +234,6 @@ fun IntroContentPlanTrip(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -285,12 +284,15 @@ fun IntroContentInviteFriends(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("RIDING SOLO\nNAH THANKS", style = KrailTheme.typography.headlineMedium)
+            Text(
+                text = "RIDING SOLO\nNAH THANKS",
+                style = KrailTheme.typography.headlineMedium,
+                color = style.hexToComposeColor(),
+            )
         }
 
         Column(
@@ -329,7 +331,6 @@ fun IntroContentSelectTransportMode(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 16.dp, horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -345,6 +346,7 @@ fun IntroContentSelectTransportMode(
                             selectedModes - mode
                         } else selectedModes + mode
                     },
+                    //modifier = Modifier.padding(horizontal = 10.dp),
                 )
             }
         }
@@ -367,7 +369,7 @@ private fun TagLineWithEmoji(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(top = 20.dp, start = 10.dp, end = 10.dp),
+        modifier = modifier.padding(top = 20.dp, end = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
@@ -386,58 +388,13 @@ private fun TagLineWithEmoji(
 
 private fun stopsList() = persistentListOf(
     TimeTableState.JourneyCardInfo.Stop(
-        name = "Central Light Rail",
+        name = "Manly, Wharf 2",
         time = "10:10 AM",
         isWheelchairAccessible = true,
     ),
     TimeTableState.JourneyCardInfo.Stop(
-        "Capitol Square Light Rail",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Paddy's Market Light Rail",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Central Station",
-        time = "12:00",
-        isWheelchairAccessible = true,
-    ),
-    TimeTableState.JourneyCardInfo.Stop(
-        "Glebe Light Rail",
-        time = "10:15 AM",
+        name = "Circular Quay, Wharf 2",
+        time = "10:30 AM",
         isWheelchairAccessible = true,
     ),
 )

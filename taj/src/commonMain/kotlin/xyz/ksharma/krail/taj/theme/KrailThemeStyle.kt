@@ -20,8 +20,8 @@ enum class KrailThemeStyle(val hexColorCode: String, val id: Int, val tagLine: S
         id = 5,
         tagLine = "Hoppin' the concrete jungle!"
     ),
-    Coach(
-        hexColorCode = coach_theme.toHex(),
+    PurpleDrip(
+        hexColorCode = purple_drip_theme.toHex(),
         id = 7,
         tagLine = "Purple drip, endless trip!"
     ),

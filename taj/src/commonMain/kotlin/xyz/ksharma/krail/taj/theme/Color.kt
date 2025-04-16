@@ -28,6 +28,7 @@ val train_theme = Color(0xFFF6891F)
 val metro_theme = Color(0xFF009B77)
 val ferry_theme = Color(0xFF5AB031)
 val coach_theme = Color(0xFF742282)
+val purple_drip_theme = Color(0xFFAC00C9)
 val light_rail_theme = Color(0xFFE4022D)
 val barbie_pink_theme = Color(0xFFE0218A)
 

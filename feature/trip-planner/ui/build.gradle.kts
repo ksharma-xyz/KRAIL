@@ -68,5 +68,6 @@ android {
     namespace = "xyz.ksharma.krail.trip.planner.ui"
 }
 dependencies {
+    implementation(libs.androidx.ui.geometry.android)
     testImplementation(project(":sandook"))
 }

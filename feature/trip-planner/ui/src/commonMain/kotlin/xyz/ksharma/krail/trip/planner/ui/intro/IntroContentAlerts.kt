@@ -4,19 +4,21 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
@@ -46,7 +48,7 @@ fun IntroContentAlerts(
                 onClick = { displayAlert = !displayAlert },
             ) { Text(text = "2 Alerts") }
 
-            AnimatedAlerts(displayAlert)
+            AnimatedAlertsOneByOne(displayAlert)
         }
 
         TagLineWithEmoji(
@@ -59,37 +61,67 @@ fun IntroContentAlerts(
 
 
 @Composable
-fun AnimatedAlerts(displayAlert: Boolean) {
-    AnimatedVisibility(
-        visible = displayAlert,
-        enter = fadeIn(animationSpec = tween(300)) +
-                slideInVertically(
-                    initialOffsetY = { -20 },
-                    animationSpec = tween(300),
-                ),
-        exit = fadeOut(animationSpec = tween(300)) +
-                slideOutVertically(
-                    targetOffsetY = { -20 },
-                    animationSpec = tween(300),
-                )
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+fun AnimatedAlertsOneByOne(
+    displayAlert: Boolean,
+    delayMillis: Long = 300L // delay before starting second animation
+) {
+    var showFirst by rememberSaveable { mutableStateOf(false) }
+    var showSecond by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(displayAlert) {
+        if (displayAlert) {
+            showFirst = true
+            delay(delayMillis)
+            showSecond = true
+        } else {
+            // hide second alert first then delay and hide the first alert
+            showSecond = false
+            delay(delayMillis)
+            showFirst = false
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AnimatedVisibility(
+            visible = showFirst,
+            enter = scaleIn(
+                initialScale = 0f,
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeIn(animationSpec = tween(durationMillis = 300)),
+            exit = scaleOut(
+                targetScale = 0f,
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+        ) {
             CollapsibleAlert(
                 serviceAlert = ServiceAlert(
-                    heading = "Running late. Please allow extra travel time.", message = "",
+                    heading = "Running late. Please allow extra travel time.",
+                    message = ""
                 ),
                 index = 1,
                 collapsed = false,
-                onClick = {},
+                onClick = {}
             )
-
+        }
+        AnimatedVisibility(
+            visible = showSecond,
+            enter = scaleIn(
+                initialScale = 0f,
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeIn(animationSpec = tween(durationMillis = 300)),
+            exit = scaleOut(
+                targetScale = 0f,
+                animationSpec = tween(durationMillis = 300)
+            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+        ) {
             CollapsibleAlert(
                 serviceAlert = ServiceAlert(
-                    heading = "Platforms may change, listen for announcements.", message = "",
+                    heading = "Platforms may change, listen for announcements.",
+                    message = ""
                 ),
                 index = 2,
                 collapsed = false,
-                onClick = {},
+                onClick = {}
             )
         }
     }

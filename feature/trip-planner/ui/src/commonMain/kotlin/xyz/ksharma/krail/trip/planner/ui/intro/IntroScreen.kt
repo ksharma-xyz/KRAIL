@@ -72,6 +72,12 @@ fun IntroScreen(
         targetValue = if (offsetFraction < 0.5f) 1f - (offsetFraction * 2f)
         else (offsetFraction - 0.5f) * 2f
     )
+
+    // Compute continuous button color by interpolating between current and next page colors.
+    val currentButtonColor = state.pages[startPage].primaryStyle.hexToComposeColor()
+    val nextButtonColor = state.pages[nextPage].primaryStyle.hexToComposeColor()
+    val animatedButtonColor = lerp(currentButtonColor, nextButtonColor, offsetFraction)
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -90,6 +96,7 @@ fun IntroScreen(
                         text = state.pages[startPage].title,
                         style = KrailTheme.typography.title,
                         textAlign = TextAlign.Center,
+                        color = animatedButtonColor,
                         modifier = Modifier
                             .fillMaxWidth()
                             .alpha(animatedAlpha)
@@ -97,8 +104,9 @@ fun IntroScreen(
                 } else if (offsetFraction > 0.5f) {
                     Text(
                         text = state.pages[targetPage].title,
-                        style = KrailTheme.typography.title,
+                        style = KrailTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
+                        color = animatedButtonColor,
                         modifier = Modifier
                             .fillMaxWidth()
                             .alpha(animatedAlpha)
@@ -139,7 +147,7 @@ fun IntroScreen(
                                 scaleY = scale
                             }
                             .fillMaxWidth()
-                            .drawWithContent {
+                            .drawWithContent { // todo make a modifier
                                 val borderThicknessPx = 8.dp.toPx()
                                 val cornerRadiusPx = 24.dp.toPx()
                                 val fraction = min(1f, pageOffset)
@@ -170,11 +178,6 @@ fun IntroScreen(
                 }
             }
         }
-
-        // Compute continuous button color by interpolating between current and next page colors.
-        val currentButtonColor = state.pages[startPage].primaryStyle.hexToComposeColor()
-        val nextButtonColor = state.pages[nextPage].primaryStyle.hexToComposeColor()
-        val animatedButtonColor = lerp(currentButtonColor, nextButtonColor, offsetFraction)
 
         Column(
             modifier = Modifier

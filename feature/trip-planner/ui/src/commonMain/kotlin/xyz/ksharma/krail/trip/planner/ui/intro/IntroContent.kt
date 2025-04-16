@@ -266,8 +266,7 @@ fun IntroContentPlanTrip(
                 TimeSelection(
                     timePickerState = timePickerState,
                     displayTitle = false,
-                    modifier = Modifier.padding(vertical = 12.dp)
-                        .align(Alignment.CenterHorizontally),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
             }
         }
@@ -293,8 +292,8 @@ fun IntroContentInviteFriends(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "RIDING SOLO\nNAH THANKS",
-                style = KrailTheme.typography.headlineMedium,
+                text = "TRAVELLING SOLO?\nNAH THANKS",
+                style = KrailTheme.typography.introTagline,
                 color = style.hexToComposeColor(),
             )
         }
@@ -384,13 +383,13 @@ private fun TagLineWithEmoji(
     ) {
         Text(
             text = emoji,
-            style = KrailTheme.typography.displayMedium,
+            style = KrailTheme.typography.introTagline,
             color = emojiColor,
         )
 
         Text(
             text = tagline,
-            style = KrailTheme.typography.displayMedium,
+            style = KrailTheme.typography.introTagline,
             color = tagColor,
         )
     }

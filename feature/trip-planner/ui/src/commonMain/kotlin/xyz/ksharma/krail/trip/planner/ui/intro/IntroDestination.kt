@@ -11,7 +11,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 
 fun NavGraphBuilder.introDestination(navController: NavHostController) {
-    composable<IntroRoute> { backStackEntry ->
+    composable<IntroRoute> {
         val viewModel = koinViewModel<IntroViewModel>()
         val introState by viewModel.uiState.collectAsStateWithLifecycle()
 

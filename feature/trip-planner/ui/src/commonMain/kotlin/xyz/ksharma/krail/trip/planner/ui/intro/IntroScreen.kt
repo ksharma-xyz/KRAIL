@@ -171,7 +171,7 @@ fun IntroScreen(
                     ) {
                         IntroPageContent(
                             pageData = pageData,
-                            onShareClick = { onEvent(IntroUiEvent.ReferFriendClick) },
+                            onShareClick = { onEvent(IntroUiEvent.ReferFriend) },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -188,7 +188,7 @@ fun IntroScreen(
             Button(
                 onClick = {
                     if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
-                        onEvent(IntroUiEvent.ReferFriendClick)
+                        onEvent(IntroUiEvent.ReferFriend)
                     } else {
                         onComplete()
                     }

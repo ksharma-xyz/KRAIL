@@ -8,6 +8,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
@@ -280,7 +283,8 @@ fun IntroContentPlanTrip(
 fun IntroContentInviteFriends(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
-    modifier: Modifier = Modifier
+    onShareClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
@@ -304,7 +308,13 @@ fun IntroContentInviteFriends(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(color = style.hexToComposeColor()),
+                    .background(color = style.hexToComposeColor())
+                    .clickable(
+                        indication = null,
+                        role = Role.Button,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClick = onShareClick
+                    ),
                 contentAlignment = Alignment.Center,
             ) { // TODO - show diff. image for ios / android
                 Image(

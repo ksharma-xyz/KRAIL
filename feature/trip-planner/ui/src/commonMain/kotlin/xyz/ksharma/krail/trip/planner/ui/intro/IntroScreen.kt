@@ -40,6 +40,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState.IntroPageType
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import kotlin.math.absoluteValue
 import kotlin.math.min
@@ -160,7 +161,11 @@ fun IntroScreen(
                                 )
                             }
                     ) {
-                        IntroPageContent(pageData, modifier = Modifier.fillMaxSize())
+                        IntroPageContent(
+                            pageData = pageData,
+                            onShareClick = { onEvent(IntroUiEvent.ReferFriendClick) },
+                            modifier = Modifier.fillMaxSize(),
+                        )
                     }
                 }
             }
@@ -178,7 +183,13 @@ fun IntroScreen(
                 .padding(bottom = 10.dp)
         ) {
             Button(
-                onClick = onComplete,
+                onClick = {
+                    if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
+                        onEvent(IntroUiEvent.ReferFriendClick)
+                    } else {
+                        onComplete()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     customContainerColor = animatedButtonColor,
                     customContentColor = Color.White,
@@ -192,9 +203,13 @@ fun IntroScreen(
 }
 
 @Composable
-private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier) {
+private fun IntroPageContent(
+    pageData: IntroState.IntroPage,
+    modifier: Modifier = Modifier,
+    onShareClick: () -> Unit = {}
+) {
     when (pageData.type) {
-        IntroState.IntroPageType.SAVE_TRIPS -> {
+        IntroPageType.SAVE_TRIPS -> {
             IntroContentSaveTrips(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
@@ -202,7 +217,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             )
         }
 
-        IntroState.IntroPageType.REAL_TIME_DATA -> {
+        IntroPageType.REAL_TIME_DATA -> {
             IntroContentRealTime(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
@@ -210,7 +225,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
             )
         }
 
-        IntroState.IntroPageType.ALERTS -> {
+        IntroPageType.ALERTS -> {
             IntroContentAlerts(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
@@ -219,7 +234,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
                 )
         }
 
-        IntroState.IntroPageType.PLAN_TRIP -> {
+        IntroPageType.PLAN_TRIP -> {
             IntroContentPlanTrip(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
@@ -228,7 +243,7 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
                 )
         }
 
-        IntroState.IntroPageType.SELECT_MODE -> {
+        IntroPageType.SELECT_MODE -> {
             IntroContentSelectTransportMode(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
@@ -237,10 +252,11 @@ private fun IntroPageContent(pageData: IntroState.IntroPage, modifier: Modifier)
                 )
         }
 
-        IntroState.IntroPageType.INVITE_FRIENDS -> {
+        IntroPageType.INVITE_FRIENDS -> {
             IntroContentInviteFriends(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
+                onShareClick = onShareClick,
                 modifier = modifier.padding(20.dp),
             )
         }

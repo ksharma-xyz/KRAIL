@@ -36,7 +36,7 @@ import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
-import xyz.ksharma.krail.trip.planner.ui.timetable.ActionButton
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 @Composable
 fun IntroContentSaveTrips(
@@ -106,3 +106,10 @@ fun IntroContentSaveTrips(
         )
     }
 }
+
+private val trip = Trip(
+    fromStopName = "Wynyard Station",
+    toStopName = "Central Station",
+    fromStopId = "1",
+    toStopId = "2"
+)

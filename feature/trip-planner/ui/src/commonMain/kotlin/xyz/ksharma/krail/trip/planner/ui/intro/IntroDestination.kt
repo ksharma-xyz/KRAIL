@@ -17,7 +17,7 @@ fun NavGraphBuilder.introDestination(navController: NavHostController) {
 
         IntroScreen(
             state = introState,
-            onComplete = {
+            onIntroComplete = {
                 navController.navigate(
                     route = SavedTripsRoute,
                     navOptions = NavOptions.Builder()

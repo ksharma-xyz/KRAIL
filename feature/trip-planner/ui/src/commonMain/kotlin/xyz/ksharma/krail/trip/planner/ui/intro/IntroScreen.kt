@@ -44,7 +44,7 @@ import kotlin.math.min
 fun IntroScreen(
     state: IntroState,
     modifier: Modifier = Modifier,
-    onComplete: () -> Unit = {},
+    onIntroComplete: () -> Unit = {},
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
@@ -86,27 +86,14 @@ fun IntroScreen(
                     .fillMaxWidth()
                     .padding(vertical = 32.dp, horizontal = 24.dp)
             ) {
-                if (offsetFraction < 0.5f) {
-                    Text(
-                        text = state.pages[startPage].title,
-                        style = KrailTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        color = animatedButtonColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .alpha(animatedAlpha)
-                    )
-                } else if (offsetFraction > 0.5f) {
-                    Text(
-                        text = state.pages[targetPage].title,
-                        style = KrailTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        color = animatedButtonColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .alpha(animatedAlpha)
-                    )
-                }
+                IntroTitle(
+                    offsetFraction,
+                    state,
+                    startPage,
+                    animatedButtonColor,
+                    animatedAlpha,
+                    targetPage
+                )
             }
 
             BoxWithConstraints(
@@ -176,7 +163,7 @@ fun IntroScreen(
                     if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
                         onEvent(IntroUiEvent.ReferFriend)
                     } else {
-                        onComplete()
+                        onIntroComplete()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -188,6 +175,38 @@ fun IntroScreen(
                 Text(text = state.pages[startPage].ctaText)
             }
         }
+    }
+}
+
+@Composable
+private fun IntroTitle(
+    offsetFraction: Float,
+    state: IntroState,
+    startPage: Int,
+    animatedButtonColor: Color,
+    animatedAlpha: Float,
+    targetPage: Int
+) {
+    if (offsetFraction < 0.5f) {
+        Text(
+            text = state.pages[startPage].title,
+            style = KrailTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            color = animatedButtonColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(animatedAlpha)
+        )
+    } else {
+        Text(
+            text = state.pages[targetPage].title,
+            style = KrailTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            color = animatedButtonColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(animatedAlpha)
+        )
     }
 }
 

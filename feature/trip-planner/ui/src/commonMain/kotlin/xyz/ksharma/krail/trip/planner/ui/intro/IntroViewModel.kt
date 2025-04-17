@@ -30,9 +30,9 @@ class IntroViewModel(
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {
-            IntroUiEvent.ReferFriendClick -> {
+            IntroUiEvent.ReferFriend -> {
                 share.sharePlainText(getReferText())
-                analytics.track(AnalyticsEvent.ReferAFriend)
+                analytics.track(AnalyticsEvent.ReferFriend)
             }
         }
     }

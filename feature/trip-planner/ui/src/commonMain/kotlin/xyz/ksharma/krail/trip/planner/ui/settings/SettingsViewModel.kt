@@ -36,6 +36,6 @@ class SettingsViewModel(
 
     fun onReferFriendClick() {
         share.sharePlainText(getReferText())
-        analytics.track(AnalyticsEvent.ReferAFriend)
+        analytics.track(AnalyticsEvent.ReferFriend)
     }
 }

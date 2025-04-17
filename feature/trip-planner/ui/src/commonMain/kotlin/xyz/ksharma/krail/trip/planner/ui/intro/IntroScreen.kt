@@ -22,16 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import xyz.ksharma.krail.taj.components.Button
@@ -39,6 +33,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.components.modifier.gradientBorder
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState.IntroPageType
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
@@ -49,7 +44,7 @@ import kotlin.math.min
 fun IntroScreen(
     state: IntroState,
     modifier: Modifier = Modifier,
-    onComplete: () -> Unit = {},
+    onIntroComplete: () -> Unit = {},
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
@@ -91,27 +86,14 @@ fun IntroScreen(
                     .fillMaxWidth()
                     .padding(vertical = 32.dp, horizontal = 24.dp)
             ) {
-                if (offsetFraction < 0.5f) {
-                    Text(
-                        text = state.pages[startPage].title,
-                        style = KrailTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        color = animatedButtonColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .alpha(animatedAlpha)
-                    )
-                } else if (offsetFraction > 0.5f) {
-                    Text(
-                        text = state.pages[targetPage].title,
-                        style = KrailTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        color = animatedButtonColor,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .alpha(animatedAlpha)
-                    )
-                }
+                IntroTitle(
+                    offsetFraction,
+                    state,
+                    startPage,
+                    animatedButtonColor,
+                    animatedAlpha,
+                    targetPage
+                )
             }
 
             BoxWithConstraints(
@@ -132,10 +114,18 @@ fun IntroScreen(
                     val pageOffset =
                         pagerState.calculateCurrentOffsetForPage(pageNumber).absoluteValue
                     val animatedHeight by animateDpAsState(
-                        targetValue = lerp(selectedHeight, unselectedHeight, min(1f, pageOffset)),
+                        targetValue = xyz.ksharma.krail.trip.planner.ui.components.modifier.lerp(
+                            start = selectedHeight,
+                            end = unselectedHeight,
+                            fraction = min(1f, pageOffset)
+                        ),
                         label = "cardHeight"
                     )
-                    val scale = lerp(1f, 0.9f, min(1f, pageOffset))
+                    val scale = xyz.ksharma.krail.trip.planner.ui.components.modifier.lerp(
+                        start = 1f,
+                        end = 0.9f,
+                        fraction = min(1f, pageOffset)
+                    )
                     val pageData = state.pages[pageNumber]
 
                     Column(
@@ -147,31 +137,14 @@ fun IntroScreen(
                                 scaleY = scale
                             }
                             .fillMaxWidth()
-                            .drawWithContent { // todo make a modifier
-                                val borderThicknessPx = 8.dp.toPx()
-                                val cornerRadiusPx = 24.dp.toPx()
-                                val fraction = min(1f, pageOffset)
-                                val grey = Color(0xFF888888)
-                                val gradientColors = pageData.colorsList
-                                    .map { it.hexToComposeColor() }
-                                    .map { originalColor -> lerp(originalColor, grey, fraction) }
-                                val gradientBrush = Brush.linearGradient(
-                                    colors = gradientColors,
-                                    start = Offset(0f, 0f),
-                                    end = Offset(size.width, size.height)
-                                )
-                                drawContent()
-                                drawRoundRect(
-                                    brush = gradientBrush,
-                                    size = size,
-                                    cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
-                                    style = Stroke(width = borderThicknessPx)
-                                )
-                            }
+                            .gradientBorder(
+                                pageOffset = pageOffset,
+                                colorsList = pageData.colorsList,
+                            ),
                     ) {
                         IntroPageContent(
                             pageData = pageData,
-                            onShareClick = { onEvent(IntroUiEvent.ReferFriendClick) },
+                            onShareClick = { onEvent(IntroUiEvent.ReferFriend) },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -188,9 +161,9 @@ fun IntroScreen(
             Button(
                 onClick = {
                     if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
-                        onEvent(IntroUiEvent.ReferFriendClick)
+                        onEvent(IntroUiEvent.ReferFriend)
                     } else {
-                        onComplete()
+                        onIntroComplete()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -202,6 +175,38 @@ fun IntroScreen(
                 Text(text = state.pages[startPage].ctaText)
             }
         }
+    }
+}
+
+@Composable
+private fun IntroTitle(
+    offsetFraction: Float,
+    state: IntroState,
+    startPage: Int,
+    animatedButtonColor: Color,
+    animatedAlpha: Float,
+    targetPage: Int
+) {
+    if (offsetFraction < 0.5f) {
+        Text(
+            text = state.pages[startPage].title,
+            style = KrailTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            color = animatedButtonColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(animatedAlpha)
+        )
+    } else {
+        Text(
+            text = state.pages[targetPage].title,
+            style = KrailTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            color = animatedButtonColor,
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(animatedAlpha)
+        )
     }
 }
 
@@ -233,8 +238,7 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-
-                )
+            )
         }
 
         IntroPageType.PLAN_TRIP -> {
@@ -242,8 +246,7 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-
-                )
+            )
         }
 
         IntroPageType.SELECT_MODE -> {
@@ -251,8 +254,7 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-
-                )
+            )
         }
 
         IntroPageType.INVITE_FRIENDS -> {
@@ -269,8 +271,3 @@ private fun IntroPageContent(
 private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
     return (currentPage - page) + currentPageOffsetFraction
 }
-
-private fun lerp(start: Dp, end: Dp, fraction: Float): Dp = start + (end - start) * fraction
-
-private fun lerp(start: Float, end: Float, fraction: Float): Float =
-    start + (end - start) * fraction

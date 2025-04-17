@@ -1,5 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.state.intro
 
 sealed interface IntroUiEvent {
-    data object ReferFriendClick : IntroUiEvent
+    data object ReferFriend : IntroUiEvent
 }

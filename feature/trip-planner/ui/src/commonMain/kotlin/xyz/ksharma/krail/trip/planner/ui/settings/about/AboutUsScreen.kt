@@ -11,12 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_dev
-import krail.feature.trip_planner.ui.generated.resources.ic_heart
-import krail.feature.trip_planner.ui.generated.resources.ic_paint
-import krail.feature.trip_planner.ui.generated.resources.ic_smile
-import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -36,7 +30,7 @@ fun AboutUsScreen(
             TitleBar(
                 modifier = Modifier.fillMaxWidth(),
                 onNavActionClick = onBackClick,
-                title = { Text(text = "About Us") },
+                title = { Text(text = "Our Story") },
             )
         }
 

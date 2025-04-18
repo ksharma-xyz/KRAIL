@@ -26,5 +26,6 @@ interface SandookPreferences {
         const val NSW_STOPS_VERSION = 6L
 
         const val KEY_NSW_STOPS_VERSION = "KEY_NSW_STOPS_VERSION"
+        const val KEY_HAS_SEEN_INTRO = "KEY_HAS_SEEN_INTRO"
     }
 }

@@ -47,6 +47,7 @@ val splashModule = module {
             appInfoProvider = get(),
             ioDispatcher = get(named(IODispatcher)),
             appStart = get(),
+            preferences = get(),
         )
     }
 }

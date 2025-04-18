@@ -2,6 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -29,18 +31,24 @@ fun IntroContentSelectTransportMode(
                 mutableStateSetOf(TransportMode.Train().productClass)
             }
 
-            TransportMode.values().forEach { mode ->
-                TransportModeChip(
-                    transportMode = mode,
-                    selected = selectedProductClasses.contains(mode.productClass),
-                    onClick = {
-                        if (selectedProductClasses.contains(mode.productClass)) {
-                            selectedProductClasses.removeAll(setOf(mode.productClass))
-                        } else {
-                            selectedProductClasses.add(mode.productClass)
-                        }
-                    },
-                )
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                TransportMode.values().sortedBy { it.priority }.forEach { mode ->
+                    TransportModeChip(
+                        transportMode = mode,
+                        selected = selectedProductClasses.contains(mode.productClass),
+                        onClick = {
+                            if (selectedProductClasses.contains(mode.productClass)) {
+                                selectedProductClasses.removeAll(setOf(mode.productClass))
+                            } else {
+                                selectedProductClasses.add(mode.productClass)
+                            }
+                        },
+                    )
+                }
             }
         }
 

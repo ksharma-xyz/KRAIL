@@ -47,18 +47,23 @@ fun IntroContentPlanTrip(
                 is24Hour = false,
             )
 
-            JourneyTimeOptionsGroup(
-                selectedOption = journeyTimeOption,
-                themeColor = style.hexToComposeColor(),
-                onOptionSelected = { journeyTimeOption = it },
-            )
-            val themeColor = rememberSaveable { mutableStateOf(TransportMode.Coach().colorCode) }
             val density = LocalDensity.current
+            val themeColor = rememberSaveable { mutableStateOf(TransportMode.Coach().colorCode) }
+
+            if (density.fontScale < 1.5f) {
+                // Not required to display if font size is large.
+                JourneyTimeOptionsGroup(
+                    selectedOption = journeyTimeOption,
+                    themeColor = style.hexToComposeColor(),
+                    onOptionSelected = { journeyTimeOption = it },
+                )
+            }
+
             CompositionLocalProvider(
                 LocalThemeColor provides themeColor,
                 LocalDensity provides Density(
-                    (density.density - 0.6f).coerceIn(1.5f, 3f),
-                    fontScale = 1f
+                    (density.density - 0.6f).coerceIn(1.5f, 2.5f),
+                    fontScale = 1f,
                 ),
             ) {
                 TimeSelection(

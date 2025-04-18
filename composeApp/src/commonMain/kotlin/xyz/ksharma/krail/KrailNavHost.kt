@@ -27,6 +27,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.taj.unspecifiedColor
+import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.tripPlannerDestinations
 
@@ -69,11 +70,11 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
             composable<SplashScreen> {
                 val viewModel: SplashViewModel = koinViewModel<SplashViewModel>()
                 val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-                val themeColor by viewModel.uiState.collectAsStateWithLifecycle()
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 // Set theme in CompositionLocal
-                themeId = themeColor.id
-                themeColorHexCode.value = themeColor.hexColorCode
+                themeId = uiState.themeStyle.id
+                themeColorHexCode.value = uiState.themeStyle.hexColorCode
 
                 SplashScreen(
                     logoColor = if (themeId != null && themeColorHexCode.value != unspecifiedColor) {
@@ -84,7 +85,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                     backgroundColor = KrailTheme.colors.surface,
                     onSplashComplete = {
                         navController.navigate(
-                            route = SavedTripsRoute,
+                            route = if(uiState.hasSeenIntro) SavedTripsRoute else IntroRoute,
                             navOptions = NavOptions.Builder()
                                 .setLaunchSingleTop(true)
                                 .setPopUpTo<SplashScreen>(inclusive = true)

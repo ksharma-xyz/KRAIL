@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS KrailPref (
 INSERT OR IGNORE INTO KrailPref(key, int_value)
 VALUES ('nsw_stops_version', 0);
 
+-- Runs when db is created, sets default value as 0 for has_seen_intro.
+-- will execute only once on fresh install and not when app updates.
+INSERT OR IGNORE INTO KrailPref(key, bool_value)
+VALUES ('has_seen_intro', 0);
+
 -- Integer operations
 getLongPreference:
 SELECT int_value FROM KrailPref WHERE key = ?;

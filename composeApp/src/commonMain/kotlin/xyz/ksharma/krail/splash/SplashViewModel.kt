@@ -51,7 +51,7 @@ class SplashViewModel(
     private suspend fun displayIntroScreen() = safeResult(ioDispatcher) {
         val hasSeenIntro = preferences.getBoolean(KEY_HAS_SEEN_INTRO)
         log("Has seen intro: $hasSeenIntro")
-        if (hasSeenIntro == null) {
+        if (hasSeenIntro == null || hasSeenIntro == false) {
             updateUiState { copy(hasSeenIntro = false) }
         } else {
             updateUiState { copy(hasSeenIntro = true) }

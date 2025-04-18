@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,21 +25,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
+import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
+import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
 
 @Composable
 fun SettingsScreen(
@@ -129,24 +126,7 @@ fun SettingsScreen(
                 .navigationBarsPadding()
                 .padding(bottom = 10.dp),
         ) {
-            Text(
-                text = "KRAIL",
-                style = KrailTheme.typography.displayLarge.copy(
-                    fontWeight = FontWeight.Black,
-                ),
-                color = themeColor.hexToComposeColor(),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "Ride the rail without fail",
-                style = KrailTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Normal,
-                ),
-                color = themeColor.hexToComposeColor(),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
+            AppLogo()
             Text(
                 text = "v$appVersion",
                 style = KrailTheme.typography.bodyLarge,

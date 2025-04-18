@@ -169,7 +169,7 @@ private fun AnimatedLetter(
             style = KrailTheme.typography.displayLarge.copy(
                 fontSize = fontSize,
                 letterSpacing = 4.sp,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.ExtraBold,
             ),
             modifier = modifier
                 .graphicsLayer {

@@ -236,5 +236,12 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         }
     }
 
+    data object SettingsHowToUseClickEvent : AnalyticsEvent(
+        name = "how_to_krail",
+    )
+
+    data object OurStoryClick : AnalyticsEvent(
+        name = "our_story",
+    )
     // endregion
 }

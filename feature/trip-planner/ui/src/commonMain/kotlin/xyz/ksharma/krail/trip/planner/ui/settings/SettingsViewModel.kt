@@ -40,4 +40,12 @@ class SettingsViewModel(
             entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SETTINGS,
         ))
     }
+
+    fun onIntroClick() {
+        analytics.track(AnalyticsEvent.SettingsHowToUseClickEvent)
+    }
+
+    fun onOurStoryClick() {
+        analytics.track(AnalyticsEvent.OurStoryClick)
+    }
 }

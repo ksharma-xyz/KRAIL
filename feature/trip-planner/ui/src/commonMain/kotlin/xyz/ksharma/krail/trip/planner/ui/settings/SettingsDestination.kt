@@ -1,11 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.settings
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.AboutUsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
@@ -17,6 +19,7 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
 
         val viewModel: SettingsViewModel = koinViewModel<SettingsViewModel>()
         val settingsState by viewModel.uiState.collectAsStateWithLifecycle()
+        val scope = rememberCoroutineScope()
 
         SettingsScreen(
             appVersion = settingsState.appVersion,
@@ -33,16 +36,22 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
                 viewModel.onReferFriendClick()
             },
             onIntroClick = {
-                navController.navigate(
-                    route = IntroRoute,
-                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
-                )
+                scope.launch {
+                    viewModel.onIntroClick()
+                    navController.navigate(
+                        route = IntroRoute,
+                        navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                    )
+                }
             },
             onAboutUsClick = {
-                navController.navigate(
-                    route = AboutUsRoute,
-                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
-                )
+                scope.launch {
+                    viewModel.onOurStoryClick()
+                    navController.navigate(
+                        route = AboutUsRoute,
+                        navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                    )
+                }
             },
         )
     }

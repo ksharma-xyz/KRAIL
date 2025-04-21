@@ -9,7 +9,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
-import xyz.ksharma.krail.trip.planner.ui.navigation.AboutUsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
@@ -48,7 +48,7 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
                 scope.launch {
                     viewModel.onOurStoryClick()
                     navController.navigate(
-                        route = AboutUsRoute,
+                        route = OurStoryRoute,
                         navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
                     )
                 }

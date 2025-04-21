@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.settings.about
+package xyz.ksharma.krail.trip.planner.ui.settings.story
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,9 +14,9 @@ import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.asString
-import xyz.ksharma.krail.trip.planner.ui.state.settings.about.AboutUsState
+import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryState
 
-class AboutUsViewModel(
+class OurStoryViewModel(
     private val analytics: Analytics,
     private val flag: Flag,
 ) : ViewModel() {
@@ -29,14 +29,14 @@ class AboutUsViewModel(
         flag.getFlagValue(FlagKeys.DISCLAIMER_TEXT.key).asString()
     }
 
-    private val _uiState: MutableStateFlow<AboutUsState> = MutableStateFlow(AboutUsState())
-    val uiState: StateFlow<AboutUsState> = _uiState
+    private val _uiState: MutableStateFlow<OurStoryState> = MutableStateFlow(OurStoryState())
+    val uiState: StateFlow<OurStoryState> = _uiState
         .onStart {
-            updateAboutUsState()
+            updateOurStoryState()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.OurStory)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AboutUsState())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), OurStoryState())
 
-    private fun updateAboutUsState() {
+    private fun updateOurStoryState() {
         if (storyText.isNotBlank() && disclaimerText.isNotBlank()) {
             updateUiState {
                 copy(
@@ -48,7 +48,7 @@ class AboutUsViewModel(
         }
     }
 
-    private fun updateUiState(block: AboutUsState.() -> AboutUsState) {
+    private fun updateUiState(block: OurStoryState.() -> OurStoryState) {
         _uiState.update(block)
     }
 }

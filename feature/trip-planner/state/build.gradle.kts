@@ -29,6 +29,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.dateTime)
                 implementation(projects.taj)
+                implementation(projects.core.analytics)
 
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.serialization.json)

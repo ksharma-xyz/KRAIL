@@ -41,8 +41,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 @Composable
 fun IntroContentSaveTrips(
     tagline: String,
-    modifier: Modifier = Modifier,
     style: String, // hexCode - // todo - see if it can be color instead.
+    modifier: Modifier = Modifier,
+    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -77,7 +78,10 @@ fun IntroContentSaveTrips(
                         indication = null,
                         role = Role.Button,
                         interactionSource = remember { MutableInteractionSource() },
-                        onClick = { isTripSaved = !isTripSaved }
+                        onClick = {
+                            isTripSaved = !isTripSaved
+                            onInteraction()
+                        }
                     ),
                 contentAlignment = Alignment.Center,
             ) {

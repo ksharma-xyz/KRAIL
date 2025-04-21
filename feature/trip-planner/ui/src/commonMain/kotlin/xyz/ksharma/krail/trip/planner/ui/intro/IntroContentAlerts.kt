@@ -30,7 +30,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 fun IntroContentAlerts(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -45,7 +46,10 @@ fun IntroContentAlerts(
 
             AlertButton(
                 dimensions = ButtonDefaults.smallButtonSize(),
-                onClick = { displayAlert = !displayAlert },
+                onClick = {
+                    displayAlert = !displayAlert
+                    onInteraction()
+                },
             ) { Text(text = "2 Alerts") }
 
             AnimatedAlertsOneByOne(displayAlert)

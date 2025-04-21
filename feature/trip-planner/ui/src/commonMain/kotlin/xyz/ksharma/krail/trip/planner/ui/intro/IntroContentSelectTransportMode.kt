@@ -19,7 +19,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 fun IntroContentSelectTransportMode(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -41,6 +42,7 @@ fun IntroContentSelectTransportMode(
                         transportMode = mode,
                         selected = selectedProductClasses.contains(mode.productClass),
                         onClick = {
+                            onInteraction()
                             if (selectedProductClasses.contains(mode.productClass)) {
                                 selectedProductClasses.removeAll(setOf(mode.productClass))
                             } else {

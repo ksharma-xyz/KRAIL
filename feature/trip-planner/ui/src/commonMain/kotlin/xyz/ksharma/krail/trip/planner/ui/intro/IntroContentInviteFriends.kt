@@ -37,6 +37,7 @@ fun IntroContentInviteFriends(
     style: String, // hexCode - // todo - see if it can be color instead.
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -65,10 +66,13 @@ fun IntroContentInviteFriends(
                         indication = null,
                         role = Role.Button,
                         interactionSource = remember { MutableInteractionSource() },
-                        onClick = onShareClick
+                        onClick = {
+                            onShareClick()
+                            onInteraction()
+                        }
                     ),
                 contentAlignment = Alignment.Center,
-            ) { // TODO - show diff. image for ios / android
+            ) {
                 Image(
                     painter = if (getAppPlatformType() == DevicePlatformType.IOS) {
                         painterResource(Res.drawable.ic_ios_share)

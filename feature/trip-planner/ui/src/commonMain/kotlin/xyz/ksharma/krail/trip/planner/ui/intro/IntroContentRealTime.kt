@@ -18,7 +18,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 fun IntroContentRealTime(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -33,6 +34,7 @@ fun IntroContentRealTime(
                     lineName = "MFF",
                 ),
                 stops = stopsList(),
+                onClick = { onInteraction() },
             )
         }
 

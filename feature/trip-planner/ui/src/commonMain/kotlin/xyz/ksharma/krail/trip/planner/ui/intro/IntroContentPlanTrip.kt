@@ -31,7 +31,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptio
 fun IntroContentPlanTrip(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -55,7 +56,10 @@ fun IntroContentPlanTrip(
                 JourneyTimeOptionsGroup(
                     selectedOption = journeyTimeOption,
                     themeColor = style.hexToComposeColor(),
-                    onOptionSelected = { journeyTimeOption = it },
+                    onOptionSelected = {
+                        journeyTimeOption = it
+                        onInteraction()
+                    },
                 )
             }
 

@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -189,9 +190,10 @@ fun TimeTableScreen(
             }
 
             item(key = "trip-actions-row") {
-                Row(
+                FlowRow(
                     modifier = Modifier.fillParentMaxWidth().padding(horizontal = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     SubtleButton(
                         onClick = dateTimeSelectorClicked,

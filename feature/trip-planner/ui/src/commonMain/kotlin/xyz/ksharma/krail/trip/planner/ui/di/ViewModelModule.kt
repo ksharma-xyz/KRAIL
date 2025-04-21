@@ -13,6 +13,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
+import xyz.ksharma.krail.trip.planner.ui.settings.about.AboutUsViewModel
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
@@ -21,6 +22,7 @@ val viewModelsModule = module {
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
     viewModelOf(::IntroViewModel)
+    viewModelOf(::AboutUsViewModel)
 
     viewModel {
         SettingsViewModel(

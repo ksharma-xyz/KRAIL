@@ -14,3 +14,10 @@ fun FlagValue.asBoolean(): Boolean {
         else -> false
     }
 }
+
+fun FlagValue.asString(): String {
+    return when (this) {
+        is FlagValue.StringValue -> this.value
+        else -> ""
+    }
+}

@@ -58,6 +58,7 @@ class IntroViewModel(
                         interactionPages = interactionPages,
                     )
                 )
+                interactionPages.clear()
             }
         }
     }

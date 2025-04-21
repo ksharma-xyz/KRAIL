@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
@@ -44,7 +45,7 @@ import kotlin.math.min
 fun IntroScreen(
     state: IntroState,
     modifier: Modifier = Modifier,
-    onIntroComplete: () -> Unit = {},
+    onIntroComplete: (pageType: IntroPageType, pageNumber: Int) -> Unit = { _, _ -> },
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
@@ -126,7 +127,7 @@ fun IntroScreen(
                         end = 0.9f,
                         fraction = min(1f, pageOffset)
                     )
-                    val pageData = state.pages[pageNumber]
+                    val pageData: IntroState.IntroPage = state.pages[pageNumber]
 
                     Column(
                         modifier = Modifier
@@ -144,8 +145,11 @@ fun IntroScreen(
                     ) {
                         IntroPageContent(
                             pageData = pageData,
-                            onShareClick = { onEvent(IntroUiEvent.ReferFriend) },
+                            onShareClick = { onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_CONTENT_BUTTON)) },
                             modifier = Modifier.fillMaxSize(),
+                            onInteraction = { pageType ->
+                                onEvent(IntroUiEvent.IntroElementsInteraction(pageType))
+                            }
                         )
                     }
                 }
@@ -161,9 +165,12 @@ fun IntroScreen(
             Button(
                 onClick = {
                     if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
-                        onEvent(IntroUiEvent.ReferFriend)
+                        onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_BUTTON))
                     } else {
-                        onIntroComplete()
+                        onIntroComplete(
+                            state.pages[pagerState.currentPage].type,
+                            pagerState.currentPage + 1,
+                        )
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -214,7 +221,8 @@ private fun IntroTitle(
 private fun IntroPageContent(
     pageData: IntroState.IntroPage,
     modifier: Modifier = Modifier,
-    onShareClick: () -> Unit = {}
+    onShareClick: () -> Unit = {},
+    onInteraction: (IntroPageType) -> Unit,
 ) {
     when (pageData.type) {
         IntroPageType.SAVE_TRIPS -> {
@@ -222,6 +230,9 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
             )
         }
 
@@ -230,6 +241,9 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
             )
         }
 
@@ -238,6 +252,9 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
             )
         }
 
@@ -246,6 +263,9 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
             )
         }
 
@@ -254,6 +274,9 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
             )
         }
 
@@ -263,6 +286,9 @@ private fun IntroPageContent(
                 style = pageData.primaryStyle,
                 onShareClick = onShareClick,
                 modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
             )
         }
     }

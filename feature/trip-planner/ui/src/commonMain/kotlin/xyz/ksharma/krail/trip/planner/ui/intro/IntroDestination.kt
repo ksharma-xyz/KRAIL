@@ -20,9 +20,9 @@ fun NavGraphBuilder.introDestination(navController: NavHostController) {
 
         IntroScreen(
             state = introState,
-            onIntroComplete = {
+            onIntroComplete = { pageType, pageNumber ->
                 scope.launch {
-                    viewModel.onEvent(IntroUiEvent.Complete)
+                    viewModel.onEvent(IntroUiEvent.Complete(pageType, pageNumber))
                     // Nav to SavedTripsRoute and keep clean back stack, so pressing back will exit
                     // app and not navigate to Intro Screen.
                     navController.navigate(SavedTripsRoute) {

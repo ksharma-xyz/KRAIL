@@ -171,24 +171,70 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "app_start",
         properties = mapOf(
-            "platformType" to platformType,
-            "appVersion" to appVersion,
-            "osVersion" to osVersion,
-            "deviceModel" to deviceModel,
-            "fontSize" to fontSize,
+            "platformType" to platformType.trim(),
+            "appVersion" to appVersion.trim(),
+            "osVersion" to osVersion.trim(),
+            "deviceModel" to deviceModel.trim(),
+            "fontSize" to fontSize.trim(),
             "isDarkTheme" to isDarkTheme,
             "krailTheme" to krailTheme,
             "timeStamp" to Clock.System.now().toString(),
-            "locale" to locale,
+            "locale" to locale.trim(),
             "batteryLevel" to batteryLevel,
-            "timeZone" to timeZone,
+            "timeZone" to timeZone.trim(),
         )
     )
     // endregion
 
     // region Settings
 
-    data object ReferFriend : AnalyticsEvent(name = "refer_friend",)
+    /**
+     * Analytics event for the refer friend button click.
+     *
+     * @param entryPoint The entry point from which the user referred a friend. E.g. Setting / Intro
+     * screen etc.
+     */
+    data class ReferFriend(val entryPoint: EntryPoint) : AnalyticsEvent(
+        name = "refer_friend",
+        properties = mapOf(
+            "entryPoint" to entryPoint.from,
+        )
+    ) {
+        enum class EntryPoint(val from: String) {
+            SETTINGS("settings"),
+            INTRO_BUTTON("intro_button"),
+            INTRO_CONTENT_BUTTON("intro_content_button"),
+        }
+    }
+
+    /**
+     * Analytics event for the refer friend button click in the intro screen.
+     *
+     * @param pageType The page number of the intro screen from which the user clicked Let's KRAIL button.
+     * @param interactionPages Represents pages list where interaction was performed. with the
+     * content inside the intro pages.
+     */
+    data class IntroLetsKrailClickEvent(
+        val pageType: InteractionPage,
+        val pageNumber: Int,
+        val interactionPages: Set<InteractionPage>,
+    ) : AnalyticsEvent(
+        name = "intro_lets_krail",
+        properties = mapOf(
+            "completedOnPage" to pageType.name,
+            "completedOnPageNumber" to pageNumber,
+            "interaction" to interactionPages.joinToString { it.name },
+        )
+    ) {
+        enum class InteractionPage {
+            SAVE_TRIPS,
+            REAL_TIME_ROUTES,
+            ALERTS,
+            PLAN_TRIP,
+            SELECT_MODE,
+            INVITE_FRIENDS,
+        }
+    }
 
     // endregion
 }

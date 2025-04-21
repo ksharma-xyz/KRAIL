@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.InteractionPage
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.platform.ops.ContentSharing
 import xyz.ksharma.krail.sandook.SandookPreferences
@@ -30,18 +31,46 @@ class IntroViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.Intro)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntroState.default())
 
+    // For analytics
+    private val interactionPages: MutableSet<InteractionPage> = mutableSetOf()
+
     fun onEvent(event: IntroUiEvent) {
         when (event) {
-            IntroUiEvent.ReferFriend -> {
+            is IntroUiEvent.ReferFriend -> {
                 share.sharePlainText(getReferText())
-                analytics.track(AnalyticsEvent.ReferFriend)
+                analytics.track(
+                    AnalyticsEvent.ReferFriend(
+                        entryPoint = event.analyticsEntryPoint,
+                    )
+                )
             }
 
-            IntroUiEvent.Complete -> {
+            is IntroUiEvent.IntroElementsInteraction -> {
+                event.pageType.toInteractionPage().let { interactionPages.add(it) }
+            }
+
+            is IntroUiEvent.Complete -> {
                 preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
+                analytics.track(
+                    AnalyticsEvent.IntroLetsKrailClickEvent(
+                        pageType = event.pageType.toInteractionPage(),
+                        pageNumber = event.pageNumber,
+                        interactionPages = interactionPages,
+                    )
+                )
             }
         }
     }
+
+    private fun IntroState.IntroPageType.toInteractionPage(): InteractionPage =
+        when (this) {
+            IntroState.IntroPageType.SAVE_TRIPS -> InteractionPage.SAVE_TRIPS
+            IntroState.IntroPageType.REAL_TIME_ROUTES -> InteractionPage.REAL_TIME_ROUTES
+            IntroState.IntroPageType.ALERTS -> InteractionPage.ALERTS
+            IntroState.IntroPageType.PLAN_TRIP -> InteractionPage.PLAN_TRIP
+            IntroState.IntroPageType.SELECT_MODE -> InteractionPage.SELECT_MODE
+            IntroState.IntroPageType.INVITE_FRIENDS -> InteractionPage.INVITE_FRIENDS
+        }
 
     private fun updateUiState(block: IntroState.() -> IntroState) {
         _uiState.update(block)

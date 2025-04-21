@@ -9,4 +9,5 @@ sealed class AnalyticsScreen(val name: String) {
     data object SearchStop : AnalyticsScreen(name = "SearchStop")
     data object ServiceAlerts : AnalyticsScreen(name = "ServiceAlerts")
     data object Intro : AnalyticsScreen(name = "Intro")
+    data object OurStory : AnalyticsScreen(name = "OurStory")
 }

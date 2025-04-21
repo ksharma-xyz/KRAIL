@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
-import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.asString
@@ -38,9 +37,6 @@ class AboutUsViewModel(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AboutUsState())
 
     private fun updateAboutUsState() {
-        log("story - " + storyText)
-        log("discalimer - " + disclaimerText)
-
         if (storyText.isNotBlank() && disclaimerText.isNotBlank()) {
             updateUiState {
                 copy(

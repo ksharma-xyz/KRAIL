@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.settings.about
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,32 +38,35 @@ fun AboutUsScreen(
             )
         }
 
-        AnimatedVisibility(
-            visible = state.isLoading,
-        ) {
-            LazyColumn(
-                modifier = Modifier,
-                contentPadding = PaddingValues(top = 20.dp, bottom = 104.dp),
-            ) {
+        Crossfade(
+            targetState = state.isLoading,
+            label = "OurStoryContent"
+        ) { isLoading ->
+            if (!isLoading) {
+                LazyColumn(
+                    modifier = Modifier,
+                    contentPadding = PaddingValues(top = 20.dp, bottom = 104.dp),
+                ) {
 
-                item {
-                    Text(
-                        state.story,
-                        style = KrailTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp)
-                    )
-                }
+                    item {
+                        Text(
+                            state.story,
+                            style = KrailTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp)
+                        )
+                    }
 
-                item {
-                    Text(
-                        text = state.disclaimer,
-                        style = KrailTheme.typography.labelLarge,
-                        modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)
-                    )
-                }
+                    item {
+                        Text(
+                            text = state.disclaimer,
+                            style = KrailTheme.typography.labelLarge,
+                            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)
+                        )
+                    }
 
-                item {
-                    AppLogo(modifier = Modifier.padding(top = 48.dp))
+                    item {
+                        AppLogo(modifier = Modifier.padding(top = 48.dp))
+                    }
                 }
             }
         }

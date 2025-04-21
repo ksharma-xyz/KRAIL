@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.settings.about
+package xyz.ksharma.krail.trip.planner.ui.settings.story
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
@@ -16,11 +16,11 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
-import xyz.ksharma.krail.trip.planner.ui.state.settings.about.AboutUsState
+import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryState
 
 @Composable
-fun AboutUsScreen(
-    state: AboutUsState,
+fun OurStoryScreen(
+    state: OurStoryState,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
 ) {

@@ -9,7 +9,7 @@ import xyz.ksharma.krail.trip.planner.ui.datetimeselector.dateTimeSelectorDestin
 import xyz.ksharma.krail.trip.planner.ui.intro.introDestination
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsDestination
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopDestination
-import xyz.ksharma.krail.trip.planner.ui.settings.about.aboutUsDestination
+import xyz.ksharma.krail.trip.planner.ui.settings.story.aboutUsDestination
 import xyz.ksharma.krail.trip.planner.ui.settings.settingsDestination
 import xyz.ksharma.krail.trip.planner.ui.timetable.timeTableDestination
 import xyz.ksharma.krail.trip.planner.ui.themeselection.themeSelectionDestination
@@ -91,7 +91,7 @@ internal data class ServiceAlertRoute(
 data object SettingsRoute
 
 @Serializable
-data object AboutUsRoute
+data object OurStoryRoute
 
 @Serializable
 data object IntroRoute

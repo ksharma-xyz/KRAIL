@@ -1,6 +1,6 @@
-package xyz.ksharma.krail.trip.planner.ui.state.settings.about
+package xyz.ksharma.krail.trip.planner.ui.state.settings.story
 
-data class AboutUsState(
+data class OurStoryState(
     val isLoading: Boolean = true,
     val story: String = "",
     val disclaimer: String = "",

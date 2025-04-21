@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
@@ -32,11 +33,7 @@ actual fun httpClient(
             coroutineScope.launch {
                 if (appInfoProvider.getAppInfo().isDebug) {
                     level = LogLevel.BODY
-                    logger = object : Logger {
-                        override fun log(message: String) {
-                            log(message)
-                        }
-                    }
+                    logger = Logger.DEFAULT
                     sanitizeHeader { header -> header == HttpHeaders.Authorization }
                 } else {
                     level = LogLevel.NONE

@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.log.log
 import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ServiceAlertRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
@@ -56,7 +57,18 @@ internal fun NavGraphBuilder.timeTableDestination(navController: NavHostControll
             timeTableState = timeTableState,
             expandedJourneyId = expandedJourneyId,
             onEvent = { viewModel.onEvent(it) },
-            onBackClick = { navController.popBackStack() },
+            onBackClick = {
+                viewModel.onEvent(
+                    TimeTableUiEvent.BackClick(
+                        isPreviousBackStackEntryNull = navController.previousBackStackEntry != null
+                    )
+                )
+
+                navController.navigate(
+                    route = SavedTripsRoute,
+                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                )
+            },
             onAlertClick = { journeyId ->
                 log("AlertClicked for journeyId: $journeyId")
                 viewModel.fetchAlertsForJourney(journeyId) { alerts ->

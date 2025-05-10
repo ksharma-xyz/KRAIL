@@ -148,7 +148,7 @@ fun JourneyCard(
                     isWheelchairAccessible = isWheelchairAccessible,
                     themeColor = themeColor,
                     transportModeList = transportModeList,
-                    platformNumber = platformNumber,
+                    platformText = platformText,
                     totalWalkTime = totalWalkTime,
                     modifier = Modifier
                         .semantics(mergeDescendants = true) { }
@@ -329,7 +329,7 @@ fun DefaultJourneyCardContent(
     isWheelchairAccessible: Boolean,
     themeColor: Color,
     transportModeList: ImmutableList<TransportMode>,
-    platformNumber: String?,
+    platformText: String?,
     totalWalkTime: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -370,26 +370,13 @@ fun DefaultJourneyCardContent(
                 }
             }
 
-            platformNumber?.let { platform ->
-                Box(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .align(Alignment.CenterVertically)
-                        .size(28.dp.toAdaptiveDecorativeIconSize())
-                        .border(
-                            width = 3.dp,
-                            color = themeColor,
-                            shape = CircleShape,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = platform,
-                        textAlign = TextAlign.Center,
-                        style = KrailTheme.typography.labelLarge,
-                        modifier = Modifier,
-                    )
-                }
+            platformText?.let { text ->
+                Text(
+                    text = text,
+                    textAlign = TextAlign.Center,
+                    style = KrailTheme.typography.labelLarge,
+                    modifier = Modifier,
+                )
             }
         }
 

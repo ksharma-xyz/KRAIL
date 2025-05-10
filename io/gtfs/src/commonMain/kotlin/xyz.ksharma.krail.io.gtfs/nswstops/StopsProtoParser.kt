@@ -16,7 +16,6 @@ class StopsProtoParser(
     /**
      * Reads and decodes the NSW stops from a protobuf file, then inserts the stops into the database.
      */
-    @OptIn(ExperimentalResourceApi::class)
     override suspend fun parseAndInsertStops() = withContext(ioDispatcher) {
         sandook.clearNswStopsTable()
         sandook.clearNswProductClassTable()

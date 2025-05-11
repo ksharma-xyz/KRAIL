@@ -26,11 +26,12 @@ kotlin {
     sourceSets {
         commonMain  {
             dependencies {
-                implementation(compose.foundation)
                 implementation(compose.animation)
-                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.runtime)
+                implementation(compose.ui)
             }
         }
         commonTest {

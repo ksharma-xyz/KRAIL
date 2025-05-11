@@ -1,8 +1,6 @@
 package xyz.ksharma.krail.taj.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -12,22 +10,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import krail.taj.generated.resources.Res
+import krail.taj.generated.resources.ic_arrow_back_android
+import krail.taj.generated.resources.ic_arrow_back_ios
+import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
+import xyz.ksharma.krail.taj.PlatformType
+import xyz.ksharma.krail.taj.getAppPlatformType
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
@@ -49,7 +50,15 @@ fun TitleBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         onNavActionClick?.let {
-            NavActionButton(onClick = onNavActionClick)
+            NavActionButton(
+                iconRes = if (getAppPlatformType() == PlatformType.IOS) {
+                    painterResource(Res.drawable.ic_arrow_back_ios)
+                } else {
+                    painterResource(Res.drawable.ic_arrow_back_android)
+                },
+                iconContentDescription = "Back",
+                onClick = onNavActionClick,
+            )
         }
 
         Row(
@@ -82,6 +91,8 @@ fun TitleBar(
 // TODO should be same as IconButton / RoundIconButton
 @Composable
 private fun NavActionButton(
+    iconRes: Painter,
+    iconContentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -91,12 +102,12 @@ private fun NavActionButton(
             .clip(CircleShape)
             .klickable(onClick = onClick)
             .semantics(mergeDescendants = true) {
-                this.contentDescription = "Back"
+                this.contentDescription = iconContentDescription
             },
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            painter = iconRes,
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
             modifier = Modifier.size(24.dp),

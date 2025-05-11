@@ -90,7 +90,7 @@ fun TitleBar(
 
 // TODO should be same as IconButton / RoundIconButton
 @Composable
-private fun NavActionButton(
+fun NavActionButton(
     iconRes: Painter,
     iconContentDescription: String,
     onClick: () -> Unit,

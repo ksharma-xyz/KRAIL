@@ -88,7 +88,14 @@ fun TitleBar(
     }
 }
 
-// TODO should be same as IconButton / RoundIconButton
+/**
+ * A composable button with a circular shape, typically used for navigation actions.
+ *
+ * @param iconRes The [Painter] resource for the button's icon.
+ * @param iconContentDescription A description of the icon for accessibility purposes.
+ * @param onClick The callback to be invoked when the button is clicked.
+ * @param modifier The [Modifier] to be applied to the button.
+ */
 @Composable
 fun NavActionButton(
     iconRes: Painter,

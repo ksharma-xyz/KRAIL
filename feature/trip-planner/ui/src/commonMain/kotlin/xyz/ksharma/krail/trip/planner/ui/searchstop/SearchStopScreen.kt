@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -45,19 +44,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.datetime.Clock
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_arrow_back_android
-import krail.feature.trip_planner.ui.generated.resources.ic_arrow_back_ios
-import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.PlatformType
 import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.NavActionButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
-import xyz.ksharma.krail.taj.getAppPlatformType
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -225,11 +218,7 @@ fun SearchStopScreen(
             },
             leadingIcon = {
                 NavActionButton(
-                    icon = if (getAppPlatformType() == PlatformType.IOS) {
-                        Icons.AutoMirrored.Filled.KeyboardArrowLeft
-                    } else {
-                        Icons.AutoMirrored.Filled.ArrowBack
-                    },
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
                     iconContentDescription = "Back",
                     onClick = {
                         keyboard?.hide()

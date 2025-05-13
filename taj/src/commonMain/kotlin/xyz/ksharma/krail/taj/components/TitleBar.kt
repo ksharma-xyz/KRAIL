@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -27,8 +26,6 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
-import xyz.ksharma.krail.taj.PlatformType
-import xyz.ksharma.krail.taj.getAppPlatformType
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
@@ -51,11 +48,7 @@ fun TitleBar(
     ) {
         onNavActionClick?.let {
             NavActionButton(
-                icon = if (getAppPlatformType() == PlatformType.IOS) {
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft
-                } else {
-                    Icons.AutoMirrored.Filled.ArrowBack
-                },
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
                 iconContentDescription = "Back",
                 onClick = onNavActionClick,
             )

@@ -64,7 +64,7 @@ fun ErrorMessage(
             Text(
                 text = actionData.actionText,
                 color = themeColor.hexToComposeColor(),
-                style = KrailTheme.typography.titleSmall,
+                style = KrailTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(top = 24.dp)

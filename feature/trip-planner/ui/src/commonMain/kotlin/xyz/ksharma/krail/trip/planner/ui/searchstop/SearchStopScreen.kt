@@ -255,7 +255,7 @@ fun SearchStopScreen(
             if (searchStopState.isError && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
                 item(key = "Error") {
                     ErrorMessage(
-                        title = "Eh! That's not looking right mate.",
+                        title = "Eh! That's not looking right.",
                         message = "Let's try searching again.",
                         modifier = Modifier
                             .fillMaxWidth()

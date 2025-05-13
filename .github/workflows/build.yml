@@ -38,8 +38,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          restore-keys: ""
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
@@ -54,13 +53,16 @@ jobs:
           DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
         run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
 
+      - name: Clean Gradle Build
+        run: ./gradlew clean
+
 #      - name: Detekt Checks
 #        run: ./gradlew detekt
 
       - name: Build Debug
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
-        run: ./gradlew :composeApp:assembleDebug testDebug
+        run: ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
 
       - name: Build Release
         env:

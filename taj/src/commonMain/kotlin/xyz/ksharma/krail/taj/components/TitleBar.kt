@@ -1,8 +1,6 @@
 package xyz.ksharma.krail.taj.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -16,12 +14,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -49,7 +47,11 @@ fun TitleBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         onNavActionClick?.let {
-            NavActionButton(onClick = onNavActionClick)
+            NavActionButton(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                iconContentDescription = "Back",
+                onClick = onNavActionClick,
+            )
         }
 
         Row(
@@ -79,9 +81,18 @@ fun TitleBar(
     }
 }
 
-// TODO should be same as IconButton / RoundIconButton
+/**
+ * A composable button with a circular shape, typically used for navigation actions.
+ *
+ * @param iconRes The [Painter] resource for the button's icon.
+ * @param iconContentDescription A description of the icon for accessibility purposes.
+ * @param onClick The callback to be invoked when the button is clicked.
+ * @param modifier The [Modifier] to be applied to the button.
+ */
 @Composable
-private fun NavActionButton(
+fun NavActionButton(
+    icon: ImageVector,
+    iconContentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -91,12 +102,12 @@ private fun NavActionButton(
             .clip(CircleShape)
             .klickable(onClick = onClick)
             .semantics(mergeDescendants = true) {
-                this.contentDescription = "Back"
+                this.contentDescription = iconContentDescription
             },
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            imageVector = icon,
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
             modifier = Modifier.size(24.dp),

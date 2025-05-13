@@ -4,7 +4,7 @@ java = "17"
 # AGP - Android API level mapping https://developer.android.com/build/releases/gradle-plugin#api-level-support
 # AGP compatability https://developer.android.com/build/releases/gradle-plugin
 agp = "8.10.0" # Android Gradle Plugin
-kotlin = "2.1.21"
+kotlin = "2.1.20"
 core-ktx = "1.16.0"
 junit = "4.13.2"
 android-lifecycle = "2.9.0"
@@ -13,10 +13,11 @@ kotlinxCollectionsImmutable = "0.3.8"
 kotlinxDatetime = "0.6.2"
 kotlinxIoCore = "0.7.0"
 lifecycleViewmodelCompose = "2.8.4"
+materialIconsCore = "1.7.3"
 navigationCompose = "2.8.0-alpha13"
 kotlinxSerializationJson = "1.8.1"
 ksp = "2.1.20-2.0.1" # ksp to kotlin version mapping https://github.com/google/ksp/releases
-compose-multiplatform = "1.8.0-beta02"
+compose-multiplatform = "1.8.0"
 ktor = "3.1.2"
 androidx-lifecycle = "2.8.4"
 kotlinxCoroutines = "1.10.2"
@@ -37,6 +38,7 @@ kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collec
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "android-lifecycle" }
+material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsCore" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 

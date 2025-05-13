@@ -16,7 +16,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -61,17 +65,17 @@ fun ErrorMessage(
         )
 
         actionData?.let {
-            Text(
-                text = actionData.actionText,
-                color = themeColor.hexToComposeColor(),
-                style = KrailTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
+            TextButton(
+                dimensions = ButtonDefaults.largeButtonSize(),
+                onClick = actionData.onActionClick,
                 modifier = Modifier
-                    .padding(top = 24.dp)
-                    .clickable(
-                        onClick = actionData.onActionClick,
-                    ),
-            )
+                    .padding(vertical = 16.dp, horizontal = 16.dp),
+            ) {
+                Text(
+                    text = actionData.actionText,
+                    color = themeColor.hexToComposeColor(),
+                )
+            }
         }
     }
 }

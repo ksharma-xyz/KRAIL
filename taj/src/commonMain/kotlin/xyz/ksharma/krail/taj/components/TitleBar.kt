@@ -21,8 +21,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import krail.taj.generated.resources.Res
-import krail.taj.generated.resources.ic_arrow_back_android
-import krail.taj.generated.resources.ic_arrow_back_ios
+import krail.taj.generated.resources.ic_arrow_back_a
+import krail.taj.generated.resources.ic_arrow_back_i
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -52,9 +52,9 @@ fun TitleBar(
         onNavActionClick?.let {
             NavActionButton(
                 iconRes = if (getAppPlatformType() == PlatformType.IOS) {
-                    painterResource(Res.drawable.ic_arrow_back_ios)
+                    painterResource(Res.drawable.ic_arrow_back_i)
                 } else {
-                    painterResource(Res.drawable.ic_arrow_back_android)
+                    painterResource(Res.drawable.ic_arrow_back_a)
                 },
                 iconContentDescription = "Back",
                 onClick = onNavActionClick,

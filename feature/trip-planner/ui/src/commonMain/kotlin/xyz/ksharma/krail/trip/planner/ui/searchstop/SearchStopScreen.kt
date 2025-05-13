@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -222,10 +225,10 @@ fun SearchStopScreen(
             },
             leadingIcon = {
                 NavActionButton(
-                    iconRes = if (getAppPlatformType() == PlatformType.IOS) {
-                        painterResource(Res.drawable.ic_arrow_back_ios)
+                    icon = if (getAppPlatformType() == PlatformType.IOS) {
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft
                     } else {
-                        painterResource(Res.drawable.ic_arrow_back_android)
+                        Icons.AutoMirrored.Filled.ArrowBack
                     },
                     iconContentDescription = "Back",
                     onClick = {

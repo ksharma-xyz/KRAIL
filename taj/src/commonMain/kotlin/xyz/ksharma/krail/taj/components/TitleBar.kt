@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -17,13 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import krail.taj.generated.resources.Res
-import krail.taj.generated.resources.ic_arrow_back_a
-import krail.taj.generated.resources.ic_arrow_back_i
-import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -51,10 +51,10 @@ fun TitleBar(
     ) {
         onNavActionClick?.let {
             NavActionButton(
-                iconRes = if (getAppPlatformType() == PlatformType.IOS) {
-                    painterResource(Res.drawable.ic_arrow_back_i)
+                icon = if (getAppPlatformType() == PlatformType.IOS) {
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft
                 } else {
-                    painterResource(Res.drawable.ic_arrow_back_a)
+                    Icons.AutoMirrored.Filled.ArrowBack
                 },
                 iconContentDescription = "Back",
                 onClick = onNavActionClick,
@@ -98,7 +98,7 @@ fun TitleBar(
  */
 @Composable
 fun NavActionButton(
-    iconRes: Painter,
+    icon: ImageVector,
     iconContentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -114,7 +114,7 @@ fun NavActionButton(
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = iconRes,
+            imageVector = icon,
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
             modifier = Modifier.size(24.dp),

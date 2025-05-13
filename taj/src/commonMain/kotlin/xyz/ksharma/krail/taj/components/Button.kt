@@ -214,7 +214,7 @@ private fun buttonTextStyle(dimensions: ButtonDimensions) =
     when (dimensions) {
         ButtonDefaults.extraSmallButtonSize() -> KrailTheme.typography.bodySmall
         ButtonDefaults.smallButtonSize() -> KrailTheme.typography.titleSmall
-        ButtonDefaults.mediumButtonSize() -> KrailTheme.typography.bodyMedium
+        ButtonDefaults.mediumButtonSize() -> KrailTheme.typography.titleMedium
         ButtonDefaults.largeButtonSize() -> KrailTheme.typography.titleLarge
         else -> KrailTheme.typography.titleSmall
     }

@@ -53,6 +53,9 @@ jobs:
           DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
         run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
 
+      - name: Clean Gradle Build
+        run: ./gradlew clean
+
 #      - name: Detekt Checks
 #        run: ./gradlew detekt
 

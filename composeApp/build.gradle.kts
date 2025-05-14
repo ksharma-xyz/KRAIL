@@ -5,7 +5,7 @@ android {
 
     defaultConfig {
         applicationId = "xyz.ksharma.krail"
-        versionCode = 90
+        versionCode = 91
         versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

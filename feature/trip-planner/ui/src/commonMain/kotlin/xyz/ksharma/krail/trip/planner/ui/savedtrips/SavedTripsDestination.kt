@@ -60,7 +60,10 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
             fromButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
                 //              Timber.d("fromButtonClick - nav: ${SearchStopRoute(fieldType = SearchStopFieldType.FROM)}")
-                navController.navigate(SearchStopRoute(fieldTypeKey = SearchStopFieldType.FROM.key))
+                navController.navigate(
+                    route = SearchStopRoute(fieldTypeKey = SearchStopFieldType.FROM.key),
+                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                )
             },
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
@@ -98,9 +101,6 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                         ),
                         navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
                     )
-                } else {
-                    // TODO - show message - to select both stops
-                    // logError(("Select both stops")
                 }
             },
             onSearchButtonClick = {
@@ -123,9 +123,6 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                         ),
                         navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
                     )
-                } else {
-                    // TODO - show message - to select both stops
-                    // logError(("Select both stops")
                 }
             },
             onSettingsButtonClick = {

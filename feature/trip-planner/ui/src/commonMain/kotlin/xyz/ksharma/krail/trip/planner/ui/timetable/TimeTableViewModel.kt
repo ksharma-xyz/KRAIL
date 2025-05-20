@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.timetable
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
@@ -251,63 +250,45 @@ class TimeTableViewModel(
     @VisibleForTesting
     suspend fun updateTripsCache(response: TripResponse) = withContext(ioDispatcher) {
         val newJourneyList = response.buildJourneyList()
-        log("API Data - JourneyList Size: ${newJourneyList?.size}")
-        logJourneyList(newJourneyList)
-        log("")
-        val cacheJourneyList = journeys
-        log("Cache Data - JourneyList Size: ${cacheJourneyList?.size}")
-        logJourneyList(journeys.values.toImmutableList())
-        log("")
-        log("---Filter Data Now---")
-
-        val now = Clock.System.now()
-        val journeyExpiredThresholdTime = now.minus(JOURNEY_ENDED_CACHE_THRESHOLD_TIME)
-        val apiJourneyIds = newJourneyList?.map { it.journeyId }?.toSet() ?: emptySet()
-
-        // Filter cache journeys not expired and not in API
-        val cacheJourneysNotInApi = journeys.values
-            // Remove journeys that have ended (expired), so we don't keep/display them.
-            .filterNot { Instant.parse(it.destinationUtcDateTime).isBefore(journeyExpiredThresholdTime) }
-            // Remove journeys that are already present in the new API data, to avoid duplicates.
-            .filterNot { it.journeyId in apiJourneyIds }
-
-        // Up to 2 most recent started journeys (origin time <= now)
-        val startedJourneys = cacheJourneysNotInApi
-            .filter { Instant.parse(it.originUtcDateTime) <= now }
-            .sortedBy { Instant.parse(it.originUtcDateTime) }
+        val startedJourneyList = journeys.values
+            .filter {
+                // Find list of journeys that have started.
+                it.hasJourneyStarted
+            }
+            .filterNot {
+                // If a journey has ended then remove it from the cache.
+                // This is to avoid displaying ended journeys.
+                // The threshold time is set to 10 minutes.
+                val thresholdTime = Clock.System.now().minus(JOURNEY_ENDED_CACHE_THRESHOLD_TIME)
+                Instant.parse(it.destinationUtcDateTime).isBefore(thresholdTime)
+            }
+            .filterNot {
+                // Those trips that are started / saved in cache but still part of new api data.
+                newJourneyList?.any { newJourney -> newJourney.journeyId == it.journeyId } == true
+            }
+            .sortedBy {
+                // Sort by chronological order, from earliest to latest
+                Instant.parse(it.originUtcDateTime)
+            }
             .takeLast(MAX_STARTED_JOURNEY_DISPLAY_THRESHOLD)
 
-        // Only the single earliest upcoming journey (origin time > now)
-        val upcomingJourney = cacheJourneysNotInApi
-            .filter { Instant.parse(it.originUtcDateTime) > now }
-            // minByOrNull is same as sortedBy then firstOrNull(), it unifies in 1 line.
-            .minByOrNull { Instant.parse(it.originUtcDateTime) }
-
-        val eligibleCacheJourneys = startedJourneys + listOfNotNull(upcomingJourney)
-
-        eligibleCacheJourneys.forEach {
-            log("Kept from cache: [${it.journeyId}] ${it.originUtcDateTime.utcToLocalDateTimeAEST().toHHMM()}")
-        }
-
-        // Merge: API journeys + eligible cache journeys
+        // Clear all journeys and re-create using started trips(cache) and new api data.
         journeys.clear()
         newJourneyList?.associateBy { it.journeyId }?.let { journeys.putAll(it) }
-        eligibleCacheJourneys.associateBy { it.journeyId }.let { journeys.putAll(it) }
+        journeys.putAll(startedJourneyList.associateBy { it.journeyId })
 
-        log("==FINAL==")
-        log("\tKept from cache - JourneyList Size: ${eligibleCacheJourneys.size}")
-        logJourneyList(eligibleCacheJourneys.toImmutableList())
-        log("\tNEW API - JourneyList Size: ${newJourneyList?.size}")
-        logJourneyList(newJourneyList?.toImmutableList())
-        log("========")
-    }
-
-    private fun logJourneyList(newJourneyList: ImmutableList<TimeTableState.JourneyCardInfo>?) {
-        newJourneyList?.forEachIndexed { index, journeyCardInfo ->
+        startedJourneyList.forEach {
             log(
-                "\t#$index: ${journeyCardInfo.journeyId.takeLast(6)} - ${
-                    journeyCardInfo.originUtcDateTime.utcToLocalDateTimeAEST().toHHMM()
-                } - ${journeyCardInfo.platformText}"
+                "TripsCache - Started tripCode:[${it.journeyId}], Time: ${
+                    it.originUtcDateTime.utcToLocalDateTimeAEST().toHHMM()
+                }"
+            )
+        }
+        newJourneyList?.forEach {
+            log(
+                "TripsCache - New tripCode:[${it.journeyId}], Time: ${
+                    it.originUtcDateTime.utcToLocalDateTimeAEST().toHHMM()
+                }"
             )
         }
     }

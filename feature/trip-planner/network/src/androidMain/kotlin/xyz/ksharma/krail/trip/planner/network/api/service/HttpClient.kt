@@ -33,7 +33,12 @@ actual fun httpClient(
             coroutineScope.launch {
                 if (appInfoProvider.getAppInfo().isDebug) {
                     level = LogLevel.BODY
-                    logger = Logger.ANDROID
+                    logger = object : Logger {
+                        override fun log(message: String) {
+                            // Package name is used to avoid collision with the overriden Log method
+                            xyz.ksharma.krail.core.log.log(message)
+                        }
+                    }
                     sanitizeHeader { header -> header == HttpHeaders.Authorization }
                 } else {
                     level = LogLevel.NONE

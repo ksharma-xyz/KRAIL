@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,7 +51,6 @@ fun SettingsScreen(
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
 ) {
-    val themeColor by LocalThemeColor.current
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -118,13 +119,18 @@ fun SettingsScreen(
                         onClick = { onAboutUsClick() }
                     )
                 }
+
+                item {
+                    Spacer(modifier = Modifier.fillMaxWidth().height(108.dp))
+                }
             }
         }
 
         Column(
             modifier = Modifier.align(Alignment.BottomCenter)
+                .background(KrailTheme.colors.surface)
                 .navigationBarsPadding()
-                .padding(bottom = 10.dp),
+                .padding(bottom = 10.dp, top = 16.dp),
         ) {
             AppLogo()
             Text(

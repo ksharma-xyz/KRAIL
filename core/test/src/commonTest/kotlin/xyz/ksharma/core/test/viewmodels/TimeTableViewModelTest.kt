@@ -636,4 +636,15 @@ class TimeTableViewModelTest {
         }
 
     // endregion
+
+    // region Test for ModeSelectionChanged
+    @Test
+    fun `GIVEN unselectedModes WHEN ModeSelectionChanged is called THEN UI state and analytics are updated`() = runTest {
+        val initialUnselectedModes = setOf(1, 2)
+        viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(initialUnselectedModes))
+        advanceUntilIdle()
+        assertEquals(initialUnselectedModes, viewModel.uiState.value.unselectedModes)
+        assertTrue((fakeAnalytics as FakeAnalytics).isEventTracked("mode_selection_done"))
+    }
+    // endregion
 }

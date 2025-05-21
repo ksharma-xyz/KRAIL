@@ -151,11 +151,16 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // endregion
 
     // region Generic Events
-    data class BackClickEvent(val fromScreen: String) :
-        AnalyticsEvent(
-            name = "back_click",
-            properties = mapOf("fromScreen" to fromScreen),
-        )
+    data class BackClickEvent(
+        val fromScreen: AnalyticsScreen,
+        val isPreviousBackStackEntryNull: Boolean,
+    ) : AnalyticsEvent(
+        name = "back_click",
+        properties = mapOf(
+            "fromScreen" to fromScreen.name,
+            "isPreviousBackStackEntryNull" to isPreviousBackStackEntryNull,
+        ),
+    )
 
     data class AppStart(
         val platformType: String,

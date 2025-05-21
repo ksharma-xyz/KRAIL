@@ -14,6 +14,7 @@ kotlinxDatetime = "0.6.2"
 kotlinxIoCore = "0.7.0"
 lifecycleViewmodelCompose = "2.8.4"
 materialIconsCore = "1.7.3"
+moleculeRuntime = "1.1.0"
 navigationCompose = "2.8.0-alpha13"
 kotlinxSerializationJson = "1.8.1"
 ksp = "2.1.21-2.0.1" # ksp to kotlin version mapping https://github.com/google/ksp/releases
@@ -91,6 +92,8 @@ firebase-gitLiveRemoteConfig = { module = "dev.gitlive:firebase-config", version
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 androidx-ui-geometry-android = { group = "androidx.compose.ui", name = "ui-geometry-android", version.ref = "uiGeometryAndroid" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
+
+molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref = "moleculeRuntime" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

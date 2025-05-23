@@ -27,7 +27,7 @@ kermit = "2.0.5"
 sqlDelight = "2.1.0"
 koin = "4.0.4"
 firebaseGitLive = "2.1.0"
-uiGeometryAndroid = "1.8.1"
+uiGeometryAndroid = "1.8.2"
 foundationLayoutAndroid = "1.8.2"
 
 [libraries]

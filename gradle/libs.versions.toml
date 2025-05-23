@@ -28,7 +28,7 @@ sqlDelight = "2.1.0"
 koin = "4.0.4"
 firebaseGitLive = "2.1.0"
 uiGeometryAndroid = "1.8.1"
-foundationLayoutAndroid = "1.8.1"
+foundationLayoutAndroid = "1.8.2"
 
 [libraries]
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }

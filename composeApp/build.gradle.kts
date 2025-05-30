@@ -103,6 +103,7 @@ kotlin {
             implementation(projects.core.coroutinesExt)
             implementation(projects.core.di)
             implementation(projects.core.log)
+            implementation(projects.core.network)
             implementation(projects.core.remoteConfig)
             implementation(projects.feature.tripPlanner.network)
             implementation(projects.feature.tripPlanner.state)

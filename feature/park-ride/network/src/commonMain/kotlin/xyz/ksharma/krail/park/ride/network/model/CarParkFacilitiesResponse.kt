@@ -4,13 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CarParkFacilitiesResponse(
-
-    @SerialName("facilities")
-    val facilities: Map<String, String>
-)
-
-@Serializable
 data class CarParkFacilityDetailResponse(
 
     @SerialName("tsn")

@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.park.ride.network.service
 
-import xyz.ksharma.krail.park.ride.network.model.CarParkFacilitiesResponse
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 
 /**
@@ -8,7 +7,14 @@ import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
  */
 interface ParkRideService {
 
+    /**
+     * Returns the details of a car park facility by its ID.
+     */
     suspend fun getCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse
 
-    suspend fun getCarParkFacilities(): CarParkFacilitiesResponse
+    /**
+     * Returns a map of facility ID to facility name for all car parks.
+     * Since facility ID is not specified, a list of facility names with their ID will be returned.
+     */
+    suspend fun getCarParkFacilities(): Map<String, String>
 }

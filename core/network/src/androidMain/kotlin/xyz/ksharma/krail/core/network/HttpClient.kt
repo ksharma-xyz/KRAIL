@@ -1,9 +1,8 @@
-package xyz.ksharma.krail.trip.planner.network.api.service
+package xyz.ksharma.krail.core.network
 
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
@@ -13,13 +12,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
-import xyz.ksharma.krail.trip.planner.network.BuildKonfig
+import xyz.ksharma.krail.core.log.log as krailLog
 
-actual fun httpClient(
+actual fun baseHttpClient(
     appInfoProvider: AppInfoProvider,
     coroutineScope: CoroutineScope,
 ): HttpClient {
-    return HttpClient(Darwin) {
+    return HttpClient(OkHttp) {
         expectSuccess = true
         install(ContentNegotiation) {
             json(Json {
@@ -34,8 +33,7 @@ actual fun httpClient(
                     level = LogLevel.BODY
                     logger = object : Logger {
                         override fun log(message: String) {
-                            // Package name is used to avoid collision with the overriden Log method
-                            xyz.ksharma.krail.core.log.log(message)
+                            krailLog(message)
                         }
                     }
                     sanitizeHeader { header -> header == HttpHeaders.Authorization }
@@ -43,13 +41,6 @@ actual fun httpClient(
                     level = LogLevel.NONE
                 }
             }
-        }
-
-        defaultRequest {
-            headers.append(
-                HttpHeaders.Authorization,
-                "apikey ${BuildKonfig.IOS_NSW_TRANSPORT_API_KEY}"
-            )
         }
     }
 }

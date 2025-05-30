@@ -37,7 +37,6 @@ val viewModelsModule = module {
             sandook = get(),
             analytics = get(),
             ioDispatcher = get(named(IODispatcher)),
-            parkRideService = get(),
         )
     }
 

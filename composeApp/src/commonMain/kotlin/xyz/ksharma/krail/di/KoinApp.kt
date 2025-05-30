@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.di.coroutineDispatchersModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
 import xyz.ksharma.krail.core.remote_config.di.remoteConfigModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule
+import xyz.ksharma.krail.park.ride.network.parkRideNetworkModule
 import xyz.ksharma.krail.platform.ops.di.opsModule
 import xyz.ksharma.krail.sandook.di.sandookModule
 import xyz.ksharma.krail.splash.SplashViewModel
@@ -37,6 +38,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             appStartModule,
             opsModule,
             tripPlannerNetworkModule,
+            parkRideNetworkModule,
         )
     }
 }

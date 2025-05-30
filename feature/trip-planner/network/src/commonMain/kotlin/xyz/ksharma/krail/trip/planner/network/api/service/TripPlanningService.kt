@@ -7,8 +7,6 @@ import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 /**
  * Swagger: https://opendata.transport.nsw.gov.au/dataset/trip-planner-apis/resource/917c66c3-8123-4a0f-b1b1-b4220f32585d
  */
-internal const val NSW_TRANSPORT_BASE_URL = "https://api.transport.nsw.gov.au"
-
 interface TripPlanningService {
 
     suspend fun trip(

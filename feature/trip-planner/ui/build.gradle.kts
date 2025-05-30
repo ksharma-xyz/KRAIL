@@ -31,6 +31,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.tripPlanner.network)
                 implementation(projects.feature.tripPlanner.state)
                 implementation(projects.platform.ops)

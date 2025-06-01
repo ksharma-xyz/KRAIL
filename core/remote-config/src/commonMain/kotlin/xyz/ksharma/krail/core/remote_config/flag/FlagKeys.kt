@@ -5,4 +5,5 @@ enum class FlagKeys(val key: String) {
     HIGH_PRIORITY_STOP_IDS("high_priority_stop_ids"),
     OUR_STORY_TEXT("our_story_text"),
     DISCLAIMER_TEXT("disclaimer_text"),
+    NSW_PARK_RIDE_FACILITIES("nsw_park_ride_facilities"),
 }

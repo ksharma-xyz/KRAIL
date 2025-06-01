@@ -45,7 +45,51 @@ object RemoteConfigDefaults {
                 """
     Important to note: Real-time data in KRAIL is provided by Transport for NSW. While I strive to ensure accuracy, I cannot guarantee it will always be correct. For the latest and most up-to-date information, please visit www.transportnsw.info
     """.trimMargin(),
-            )
+            ),
+            Pair(
+                FlagKeys.NSW_PARK_RIDE_FACILITIES.key,
+                """[{"stopId":"207210","parkRideFacilityId":"6","parkRideName":"Park&Ride - Gordon Henry St (north)"},
+                    |{"stopId":"253330","parkRideFacilityId":"7","parkRideName":"Park&Ride - Kiama"},
+                    |{"stopId":"225040","parkRideFacilityId":"8","parkRideName":"Park&Ride - Gosford"},
+                    |{"stopId":"221210","parkRideFacilityId":"9","parkRideName":"Park&Ride - Revesby"},
+                    |{"stopId":"210120","parkRideFacilityId":"10","parkRideName":"Park&Ride - Warriewood"},
+                    |{"stopId":"210115","parkRideFacilityId":"11","parkRideName":"Park&Ride - Narrabeen"},
+                    |{"stopId":"210318","parkRideFacilityId":"12","parkRideName":"Park&Ride - Mona Vale"},
+                    |{"stopId":"209913","parkRideFacilityId":"13","parkRideName":"Park&Ride - Dee Why"},
+                    |{"stopId":"211420","parkRideFacilityId":"14","parkRideName":"Park&Ride - West Ryde"},
+                    |{"stopId":"223210","parkRideFacilityId":"15","parkRideName":"Park&Ride - Sutherland"},
+                    |{"stopId":"2232126","parkRideFacilityId":"15","parkRideName":"Park&Ride - Sutherland"},
+                    |{"stopId":"2232254","parkRideFacilityId":"15","parkRideName":"Park&Ride - Sutherland"},
+                    |{"stopId":"217933","parkRideFacilityId":"16","parkRideName":"Park&Ride - Leppington"},
+                    |{"stopId":"217426","parkRideFacilityId":"17","parkRideName":"Park&Ride - Edmondson Park (south)"},
+                    |{"stopId":"276010","parkRideFacilityId":"18","parkRideName":"Park&Ride - St Marys"},
+                    |{"stopId":"256020","parkRideFacilityId":"19","parkRideName":"Park&Ride - Campbelltown Farrow Rd (north)"},
+                    |{"stopId":"256020","parkRideFacilityId":"20","parkRideName":"Park&Ride - Campbelltown Hurley St"},
+                    |{"stopId":"275010","parkRideFacilityId":"21","parkRideName":"Park&Ride - Penrith (at-grade)"},
+                    |{"stopId":"275010","parkRideFacilityId":"22","parkRideName":"Park&Ride - Penrith (multi-level)"},
+                    |{"stopId":"217010","parkRideFacilityId":"23","parkRideName":"Park&Ride - Warwick Farm"},
+                    |{"stopId":"276220","parkRideFacilityId":"24","parkRideName":"Park&Ride - Schofields"},
+                    |{"stopId":"207763","parkRideFacilityId":"25","parkRideName":"Park&Ride - Hornsby"},
+                    |{"stopId":"2155384","parkRideFacilityId":"26","parkRideName":"Park&Ride - Tallawong P1"},
+                    |{"stopId":"2155384","parkRideFacilityId":"27","parkRideName":"Park&Ride - Tallawong P2"},
+                    |{"stopId":"2155384","parkRideFacilityId":"28","parkRideName":"Park&Ride - Tallawong P3"},
+                    |{"stopId":"2155382","parkRideFacilityId":"29","parkRideName":"Park&Ride - Kellyville (north)"},
+                    |{"stopId":"2155382","parkRideFacilityId":"30","parkRideName":"Park&Ride - Kellyville (south)"},
+                    |{"stopId":"2153478","parkRideFacilityId":"31","parkRideName":"Park&Ride - Bella Vista"},
+                    |{"stopId":"2154392","parkRideFacilityId":"32","parkRideName":"Park&Ride - Hills Showground"},
+                    |{"stopId":"2126158","parkRideFacilityId":"33","parkRideName":"Park&Ride - Cherrybrook"},
+                    |{"stopId":"207010","parkRideFacilityId":"34","parkRideName":"Park&Ride - Lindfield Village Green"},
+                    |{"stopId":"220910","parkRideFacilityId":"35","parkRideName":"Park&Ride - Beverly Hills"},
+                    |{"stopId":"275020","parkRideFacilityId":"36","parkRideName":"Park&Ride - Emu Plains"},
+                    |{"stopId":"221010","parkRideFacilityId":"37","parkRideName":"Park&Ride - Riverwood"},
+                    |{"stopId":"213110","parkRideFacilityId":"486","parkRideName":"Park&Ride - Ashfield"},
+                    |{"stopId":"221710","parkRideFacilityId":"487","parkRideName":"Park&Ride - Kogarah"},
+                    |{"stopId":"214710","parkRideFacilityId":"488","parkRideName":"Park&Ride - Seven Hills"},
+                    |{"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
+                    |{"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
+                    |{"stopId":"210017","parkRideFacilityId":"490","parkRideName":"Park&Ride - Brookvale"}]"""
+                    .trimMargin()
+            ),
         )
     }
 }

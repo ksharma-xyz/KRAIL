@@ -36,6 +36,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.network)
+                implementation(projects.core.remoteConfig)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)

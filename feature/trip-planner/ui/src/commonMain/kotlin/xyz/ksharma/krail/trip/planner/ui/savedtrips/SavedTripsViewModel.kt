@@ -36,9 +36,9 @@ class SavedTripsViewModel(
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
+            // TODO - remove this when park and ride is not needed
             val x = nswParkRideFacilityManager.getParkRideFacilities()
             log("Park Ride Facilities: ${x.size}")
-            println("park ride fac: " + x)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
 
     fun onEvent(event: SavedTripUiEvent) {

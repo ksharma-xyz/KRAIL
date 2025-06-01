@@ -3,6 +3,7 @@ package xyz.ksharma.krail.park.ride.network
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.FlagValue
@@ -21,10 +22,9 @@ class RealNswParkRideFacilityManager(
                 jsonArray.map { element ->
                     val obj = element.jsonObject
                     NswParkRideFacility(
-                        stopId = obj["stopId"]?.toString()?.trim('"') ?: "",
-                        parkRideFacilityId = obj["parkRideFacilityId"]?.toString()?.trim('"')
-                            ?: "",
-                        parkRideName = obj["parkRideName"]?.toString()?.trim('"') ?: ""
+                        stopId = obj["stopId"]?.jsonPrimitive?.content ?: "",
+                        parkRideFacilityId = obj["parkRideFacilityId"]?.jsonPrimitive?.content ?: "",
+                        parkRideName = obj["parkRideName"]?.jsonPrimitive?.content ?: ""
                     )
                 }
             }

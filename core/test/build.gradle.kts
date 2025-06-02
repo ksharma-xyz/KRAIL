@@ -42,6 +42,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.sandook)
+                implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.tripPlanner.ui)
                 implementation(projects.feature.tripPlanner.state)
                 implementation(projects.feature.tripPlanner.network)

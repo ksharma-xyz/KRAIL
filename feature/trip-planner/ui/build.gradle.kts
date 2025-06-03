@@ -46,7 +46,6 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.ui)
 
-                implementation(libs.androidx.ui.geometry.android)
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.datetime)
@@ -74,6 +73,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.ui.geometry.android)
+
     // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio#focus=Comments-27-11400795.0-0Add commentMore actions
     debugImplementation(libs.androidx.ui.tooling)
 }

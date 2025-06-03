@@ -20,11 +20,14 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import krail.feature.park_ride.ui.generated.resources.Res
 import krail.feature.park_ride.ui.generated.resources.ic_car
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -38,7 +41,7 @@ data class ParkRideFacilityInfo(
 
 @Composable
 fun ParkRideInfoCard(
-    parkRideFacilityList: ImmutableList<ParkRideFacilityInfo>,
+    parkRideInfo: ImmutableMap<String, ImmutableList<ParkRideFacilityInfo>>,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -47,12 +50,19 @@ fun ParkRideInfoCard(
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             ParkAndRideIcon()
 
-            Column {
-                parkRideFacilityList.forEach { parkRideFacilityInfo ->
-                    ParkRideFacilityItem(
-                        parkRideFacilityInfo = parkRideFacilityInfo,
-                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-                    )
+            Column(modifier = Modifier.weight(1f)) {
+                parkRideInfo.entries.forEachIndexed { index, (stopId, parkRideFacilityList) ->
+
+                    parkRideFacilityList.forEach { parkRideFacilityInfo ->
+                        ParkRideFacilityItem(
+                            parkRideFacilityInfo = parkRideFacilityInfo,
+                            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
+                        )
+                    }
+
+                    if (index != parkRideInfo.size - 1) {
+                        Divider(modifier = Modifier.padding(vertical = 4.dp).padding(end = 16.dp))
+                    }
                 }
             }
         }
@@ -90,20 +100,39 @@ private fun ParkAndRideIcon() {
 @Composable
 private fun ParkRideInfoCardPreview() {
     KrailTheme {
-        Column(modifier = Modifier.background(color = KrailThemeStyle.Metro.hexColorCode.hexToComposeColor())) {
+        Column(
+            modifier = Modifier
+                .background(
+                    color = KrailThemeStyle.Metro.hexColorCode.hexToComposeColor(),
+                ),
+        ) {
             ParkRideInfoCard(
-                parkRideFacilityList = listOf(
-                    ParkRideFacilityInfo(
-                        facilityName = "Tallawong P1",
-                        availableSpots = "100",
-                        fullPercentage = "50%",
-                    ),
-                    ParkRideFacilityInfo(
-                        facilityName = "Tallawong P2",
-                        availableSpots = "200",
-                        fullPercentage = "75%",
-                    ),
-                ).toImmutableList(),
+                parkRideInfo = mapOf(
+                    "211" to listOf(
+                        ParkRideFacilityInfo(
+                            facilityName = "Tallawong P1",
+                            availableSpots = "100",
+                            fullPercentage = "50%",
+                        ),
+                        ParkRideFacilityInfo(
+                            facilityName = "Tallawong P2",
+                            availableSpots = "200",
+                            fullPercentage = "75%",
+                        ),
+                    ).toImmutableList(),
+                    "212" to listOf(
+                        ParkRideFacilityInfo(
+                            facilityName = "Hornsby P1",
+                            availableSpots = "100",
+                            fullPercentage = "50%",
+                        ),
+                        ParkRideFacilityInfo(
+                            facilityName = "Hornsby P2",
+                            availableSpots = "200",
+                            fullPercentage = "75%",
+                        ),
+                    ).toImmutableList()
+                ).toImmutableMap(),
             )
         }
     }
@@ -115,7 +144,7 @@ fun ParkRideFacilityItem(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
 

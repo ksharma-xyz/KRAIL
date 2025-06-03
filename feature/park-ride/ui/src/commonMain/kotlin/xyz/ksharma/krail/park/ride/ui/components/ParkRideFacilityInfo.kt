@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,12 +25,14 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import krail.feature.park_ride.ui.generated.resources.Res
+import krail.feature.park_ride.ui.generated.resources.ic_arrow_up_right
 import krail.feature.park_ride.ui.generated.resources.ic_car
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 
@@ -42,6 +45,7 @@ data class ParkRideFacilityInfo(
 @Composable
 fun ParkRideInfoCard(
     parkRideInfo: ImmutableMap<String, ImmutableList<ParkRideFacilityInfo>>,
+    onNavigateToMapsClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -53,11 +57,44 @@ fun ParkRideInfoCard(
             Column(modifier = Modifier.weight(1f)) {
                 parkRideInfo.entries.forEachIndexed { index, (stopId, parkRideFacilityList) ->
 
-                    parkRideFacilityList.forEach { parkRideFacilityInfo ->
-                        ParkRideFacilityItem(
-                            parkRideFacilityInfo = parkRideFacilityInfo,
-                            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-                        )
+                    parkRideFacilityList.forEachIndexed { facilityIndex, parkRideFacilityInfo ->
+                        if (facilityIndex == parkRideFacilityList.lastIndex) {
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                ParkRideFacilityItem(
+                                    parkRideFacilityInfo = parkRideFacilityInfo,
+                                    modifier = Modifier
+                                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                                        .align(Alignment.TopStart),
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(end = 8.dp, bottom = 8.dp)
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(color = Color.White)
+                                        .klickable {
+                                            onNavigateToMapsClick(stopId)
+                                        },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Image(
+                                        painter = painterResource(resource = Res.drawable.ic_arrow_up_right),
+                                        contentDescription = "Navigate using maps",
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
+                        } else {
+                            ParkRideFacilityItem(
+                                parkRideFacilityInfo = parkRideFacilityInfo,
+                                modifier = Modifier.padding(
+                                    start = 8.dp,
+                                    end = 8.dp,
+                                    bottom = 8.dp,
+                                ),
+                            )
+                        }
                     }
 
                     if (index != parkRideInfo.size - 1) {
@@ -133,6 +170,7 @@ private fun ParkRideInfoCardPreview() {
                         ),
                     ).toImmutableList()
                 ).toImmutableMap(),
+                onNavigateToMapsClick = { _ -> }
             )
         }
     }

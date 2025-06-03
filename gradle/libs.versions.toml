@@ -29,6 +29,7 @@ koin = "4.0.4"
 firebaseGitLive = "2.1.0"
 uiGeometryAndroid = "1.8.1"
 foundationLayoutAndroid = "1.8.1"
+ui-tooling = "1.7.6"
 
 [libraries]
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }
@@ -94,6 +95,9 @@ androidx-ui-geometry-android = { group = "androidx.compose.ui", name = "ui-geome
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
 
 molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref = "moleculeRuntime" }
+
+# Compose
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui-tooling" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
@@ -26,7 +24,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import krail.feature.park_ride.ui.generated.resources.Res
 import krail.feature.park_ride.ui.generated.resources.ic_arrow_up_right
-import krail.feature.park_ride.ui.generated.resources.ic_car
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Divider
@@ -107,31 +104,55 @@ fun ParkRideInfoCard(
 }
 
 @Composable
-private fun ParkAndRideIcon() {
-    Box(
-        modifier = Modifier
-            .size(height = 44.dp, width = 32.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(color = Color.White)
+fun ParkRideFacilityItem(
+    parkRideFacilityInfo: ParkRideFacilityInfo,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = "P",
-            style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold),
-            color = KrailThemeStyle.Metro.hexColorCode.hexToComposeColor(),
-            modifier = Modifier.padding(start = 4.dp, top = 4.dp),
-        )
 
-        Image(
-            painter = painterResource(Res.drawable.ic_car),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(KrailThemeStyle.Metro.hexColorCode.hexToComposeColor()),
-            modifier = Modifier
-                .size(24.dp)
-                .align(Alignment.Center)
-                .padding(start = 8.dp, top = 8.dp),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            ParkRideInfoText(
+                number = parkRideFacilityInfo.availableSpots,
+                description = "spots available",
+            )
+
+            ParkRideInfoText(
+                number = parkRideFacilityInfo.fullPercentage,
+                description = "full",
+            )
+        }
+
+        Text(
+            text = parkRideFacilityInfo.facilityName,
+            style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
         )
     }
 }
+
+@Composable
+fun ParkRideInfoText(
+    number: String,
+    description: String,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = number, style = KrailTheme.typography.headlineMedium,
+            modifier = Modifier.alignByBaseline(),
+        )
+        Text(
+            text = description,
+            style = KrailTheme.typography.labelMedium,
+            modifier = Modifier.alignByBaseline(),
+        )
+    }
+}
+
+// region Previews
 
 @Preview
 @Composable
@@ -230,55 +251,6 @@ private fun ParkRideInfoCardPreview_MultipleStops() {
     }
 }
 
-@Composable
-fun ParkRideFacilityItem(
-    parkRideFacilityInfo: ParkRideFacilityInfo,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            ParkRideInfoText(
-                number = parkRideFacilityInfo.availableSpots,
-                description = "spots available",
-            )
-
-            ParkRideInfoText(
-                number = parkRideFacilityInfo.fullPercentage,
-                description = "full",
-            )
-        }
-
-        Text(
-            text = parkRideFacilityInfo.facilityName,
-            style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
-        )
-    }
-}
-
-@Composable
-fun ParkRideInfoText(
-    number: String,
-    description: String,
-) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text = number, style = KrailTheme.typography.headlineMedium,
-            modifier = Modifier.alignByBaseline(),
-        )
-        Text(
-            text = description,
-            style = KrailTheme.typography.labelMedium,
-            modifier = Modifier.alignByBaseline(),
-        )
-    }
-}
-
 @Preview
 @Composable
 private fun ParkRideFacilityItemPreview() {
@@ -294,3 +266,5 @@ private fun ParkRideFacilityItemPreview() {
         }
     }
 }
+
+// endregion Previews

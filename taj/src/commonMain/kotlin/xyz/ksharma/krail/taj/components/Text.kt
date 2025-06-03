@@ -12,6 +12,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -73,6 +74,7 @@ fun Text(
 
 // region Previews
 
+@Preview
 @Composable
 private fun TextPreview() {
     KrailTheme {
@@ -85,6 +87,7 @@ private fun TextPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun TextWithColorPreview() {
     KrailTheme {

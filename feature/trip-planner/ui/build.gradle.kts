@@ -22,7 +22,7 @@ kotlin {
     }
 
     sourceSets {
-        commonMain  {
+        commonMain {
             dependencies {
                 implementation(projects.core.appInfo)
                 implementation(projects.core.analytics)
@@ -38,6 +38,7 @@ kotlin {
                 implementation(projects.sandook)
                 implementation(projects.taj)
 
+
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
                 implementation(compose.animation)
@@ -45,6 +46,7 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.ui)
 
+                implementation(libs.androidx.ui.geometry.android)
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.datetime)
@@ -70,7 +72,8 @@ kotlin {
 android {
     namespace = "xyz.ksharma.krail.trip.planner.ui"
 }
+
 dependencies {
-    implementation(libs.androidx.ui.geometry.android)
-    testImplementation(project(":sandook"))
+    // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio#focus=Comments-27-11400795.0-0Add commentMore actions
+    debugImplementation(libs.androidx.ui.tooling)
 }

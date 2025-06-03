@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -36,6 +38,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
+import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -61,16 +64,13 @@ fun SavedTripCard(
     onExpandClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val localDensity = LocalDensity.current
-    var buttonSizePx by remember { mutableStateOf(IntSize.Zero) }
-    val buttonOffsetY = with(localDensity) { (buttonSizePx.height / 2).toDp() }
 
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp)) // Apply clipping to the whole column
-                .klickable(onClick = onCardClick) // Apply klickable to the whole column
+                .clip(RoundedCornerShape(12.dp))
+                .klickable(onClick = onCardClick)
         ) {
 
             // Top part of the card (Trip Info)
@@ -83,7 +83,7 @@ fun SavedTripCard(
                     )
                     .padding(
                         top = 16.dp,
-                        bottom = 16.dp, // Standard padding
+                        bottom = 16.dp,
                         start = 12.dp,
                         end = 12.dp
                     ),
@@ -103,7 +103,6 @@ fun SavedTripCard(
                     Text(text = trip.toStopName, style = KrailTheme.typography.bodyMedium)
                 }
 
-                // Star icon Box
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -135,44 +134,67 @@ fun SavedTripCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp) // Or wrapContentHeight if dynamic content
-                    .background(color = themeColor()) // Dark green bar
-                    .padding(
-                        start = 12.dp,
-                        end = 12.dp + with(localDensity) { buttonSizePx.width.toDp() } + 8.dp // Make space for button
-                    ),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(start = 16.dp, end = 32.dp)
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+                    .background(color = themeColor()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween // If you have content here
             ) {
-                // Content for the bottom bar, e.g., "Park & Ride info here"
-                // Text(
-                //     "Park & Ride info here",
-                //     color = getForegroundColor(themeColor()),
-                //     style = KrailTheme.typography.labelSmall
-                // )
+                // Content for the bottom bar
+                // Spacer(Modifier.weight(1f)) // If you want to push content to the start
             }
+
+            Spacer(modifier = Modifier.fillMaxWidth().height(12.dp))
         }
 
         // Expand/Collapse Button (Down Arrow)
-        // Positioned to overlap and be on top
-        RoundIconButton(
-            onClick = onExpandClick,
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .onSizeChanged { buttonSizePx = it }
-                .offset(
-                    x = (-16).dp,
-                    y = buttonOffsetY // Offset by half its height
-                )
-            // No zIndex needed here if it's the last child of the Box and drawn on top
-            ,
-            color = themeColor(), // Match the bottom bar color
+                .padding(end = 16.dp, top = 8.dp)
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(themeColor())
+                .align(Alignment.BottomEnd),
+            contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(Res.drawable.ic_arrow_down),
                 contentDescription = "Expand",
-                colorFilter = ColorFilter.tint(getForegroundColor(themeColor()))
+                colorFilter = ColorFilter.tint(getForegroundColor(themeColor())),
+                modifier = Modifier.size(20.dp),
             )
         }
+    }
+}
+
+
+// Dummy TransportModeIcon if not available
+@Composable
+fun TransportModeIcon(transportMode: TransportMode, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(40.dp)
+            .background(
+                color = when (transportMode) { // Giving it some actual color based on your screenshots
+                    is TransportMode.Train -> Color(0xFFD98A26) // Orange like 'T'
+                    is TransportMode.Metro -> Color.Gray // Gray for 'M'
+                    else -> Color.LightGray
+                },
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = when (transportMode) {
+                is TransportMode.Bus -> "B"
+                is TransportMode.Train -> "T"
+                is TransportMode.Metro -> "M"
+                else -> "?"
+            },
+            color = Color.White, // Ensuring text is visible on colored backgrounds
+            style = KrailTheme.typography.bodyMedium
+        )
     }
 }
 
@@ -183,9 +205,16 @@ fun SavedTripCard(
 @Composable
 private fun SavedTripCardPreview_Fixed() {
     KrailTheme {
-        val themeColorState = remember { mutableStateOf(KrailThemeStyle.Bus.hexColorCode) }
+        // This themeColor (light blue/teal) will be used for the bottom bar/button
+        val themeColorState =
+            remember { mutableStateOf(KrailThemeStyle.Bus.hexColorCode) } // Bus theme is light blue/teal
         CompositionLocalProvider(LocalThemeColor provides themeColorState) {
-            Box(modifier = Modifier.padding(16.dp)) { // Added padding for preview visibility
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .background(KrailTheme.colors.surface) // Use theme background for the box
+            ) {
                 SavedTripCard(
                     trip = Trip(
                         fromStopId = "1",
@@ -193,11 +222,11 @@ private fun SavedTripCardPreview_Fixed() {
                         toStopId = "2",
                         toStopName = "Central Station",
                     ),
-                    primaryTransportMode = TransportMode.Metro(),
+                    primaryTransportMode = TransportMode.Metro(), // Top part BG = Metro, Icon = 'M'
                     onCardClick = {},
                     onStarClick = {},
-                    onExpandClick = {}, // Added
-                    modifier = Modifier.background(color = KrailTheme.colors.surface),
+                    onExpandClick = {},
+                    modifier = Modifier, // Modifier for SavedTripCard itself
                 )
             }
         }
@@ -207,14 +236,16 @@ private fun SavedTripCardPreview_Fixed() {
 @Preview
 @Composable
 private fun SavedTripCardListPreview_Fixed() {
-    val themeColorState = remember { mutableStateOf(KrailThemeStyle.Metro.hexColorCode) }
-    CompositionLocalProvider(LocalThemeColor provides themeColorState) {
-        KrailTheme {
+    KrailTheme {
+        // This themeColor (orange) will be used for the bottom bar/button for ALL cards in this list
+        val themeColorState =
+            remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) } // Train theme is orange
+        CompositionLocalProvider(LocalThemeColor provides themeColorState) {
             Column(
                 modifier = Modifier
-                    .background(color = KrailTheme.colors.surface)
+                    .background(color = KrailTheme.colors.surface) // Use theme surface for Column BG
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 SavedTripCard(
                     trip = Trip(
@@ -223,20 +254,21 @@ private fun SavedTripCardListPreview_Fixed() {
                         toStopId = "2",
                         toStopName = "Harris Park Station",
                     ),
-                    primaryTransportMode = TransportMode.Train(),
+                    primaryTransportMode = TransportMode.Train(), // Top part BG = Train, Icon = 'T'
                     onCardClick = {},
                     onStarClick = {},
                     onExpandClick = {}
                 )
 
+                // You can add more cards here to test list behavior
                 SavedTripCard(
                     trip = Trip(
-                        fromStopId = "1",
-                        fromStopName = "Harrington Street, Stand D",
-                        toStopId = "2",
-                        toStopName = "Albert Rd, Stand A",
+                        fromStopId = "3",
+                        fromStopName = "Another Station",
+                        toStopId = "4",
+                        toStopName = "Destination X",
                     ),
-                    primaryTransportMode = TransportMode.Bus(),
+                    primaryTransportMode = TransportMode.Bus(), // Top part BG = Bus
                     onCardClick = {},
                     onStarClick = {},
                     onExpandClick = {}

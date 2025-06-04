@@ -57,6 +57,27 @@ class RealTripPlanningService(
         }.body()
     }
 
+    override suspend fun stopFinder(
+        stopSearchQuery: String,
+        stopType: StopType,
+    ): StopFinderResponse = withContext(ioDispatcher) {
+        httpClient.get("${NSW_TRANSPORT_BASE_URL}/v1/tp/stop_finder") {
+            url {
+                parameters.append(StopFinderRequestParams.nameSf, stopSearchQuery)
+
+                parameters.append(StopFinderRequestParams.typeSf, stopType.type)
+                parameters.append(StopFinderRequestParams.coordOutputFormat, "EPSG:4326")
+                parameters.append(StopFinderRequestParams.outputFormat, "rapidJSON")
+//                parameters.append(StopFinderRequestParams.version, "10.2.1.42")
+                parameters.append(StopFinderRequestParams.tfNSWSF, "true")
+            }
+        }.body()
+    }
+
+    override fun closeHttpConnection() {
+        httpClient.close()
+    }
+
     private fun addExcludedTransportModes(
         excludeProductClassSet: Set<Int>,
         parameters: ParametersBuilder,
@@ -83,27 +104,6 @@ class RealTripPlanningService(
         if (excludeProductClassSet.contains(9)) {
             parameters.append(TripRequestParams.exclMOT9, "9")
         }
-    }
-
-    override suspend fun stopFinder(
-        stopSearchQuery: String,
-        stopType: StopType,
-    ): StopFinderResponse = withContext(ioDispatcher) {
-        httpClient.get("${NSW_TRANSPORT_BASE_URL}/v1/tp/stop_finder") {
-            url {
-                parameters.append(StopFinderRequestParams.nameSf, stopSearchQuery)
-
-                parameters.append(StopFinderRequestParams.typeSf, stopType.type)
-                parameters.append(StopFinderRequestParams.coordOutputFormat, "EPSG:4326")
-                parameters.append(StopFinderRequestParams.outputFormat, "rapidJSON")
-//                parameters.append(StopFinderRequestParams.version, "10.2.1.42")
-                parameters.append(StopFinderRequestParams.tfNSWSF, "true")
-            }
-        }.body()
-    }
-
-    override fun closeHttpConnection() {
-        httpClient.close()
     }
 }
 

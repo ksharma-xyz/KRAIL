@@ -101,6 +101,10 @@ class RealTripPlanningService(
             }
         }.body()
     }
+
+    override fun closeHttpConnection() {
+        httpClient.close()
+    }
 }
 
 enum class DepArr(val macro: String) {

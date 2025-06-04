@@ -12,38 +12,28 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
-import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -64,29 +54,25 @@ fun SavedTripCard(
     onExpandClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .klickable(onClick = onCardClick)
         ) {
 
             // Top part of the card (Trip Info)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
-                        color = primaryTransportMode?.let { transportModeBackgroundColor(it) }
-                            ?: themeBackgroundColor(),
+                        color = primaryTransportMode?.let {
+                            transportModeBackgroundColor(it)
+                        } ?: themeBackgroundColor(),
                     )
-                    .padding(
-                        top = 16.dp,
-                        bottom = 16.dp,
-                        start = 12.dp,
-                        end = 12.dp
-                    ),
+                    .klickable(onClick = onCardClick)
+                    .padding(vertical = 16.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 primaryTransportMode?.let {
@@ -137,7 +123,8 @@ fun SavedTripCard(
                     .padding(start = 16.dp, end = 32.dp)
                     .height(16.dp)
                     .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                    .background(color = themeColor()),
+                    .background(color = themeColor())
+                    .klickable { onExpandClick() },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween // If you have content here
             ) {
@@ -145,17 +132,27 @@ fun SavedTripCard(
                 // Spacer(Modifier.weight(1f)) // If you want to push content to the start
             }
 
-            Spacer(modifier = Modifier.fillMaxWidth().height(12.dp))
+            Spacer(
+                modifier = Modifier.fillMaxWidth().height(12.dp)
+                    .clickable(
+                        enabled = false,
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClick = {},
+                    )
+            )
         }
 
-        // Expand/Collapse Button (Down Arrow)
         Box(
             modifier = Modifier
                 .padding(end = 16.dp, top = 8.dp)
                 .size(44.dp)
                 .clip(CircleShape)
                 .background(themeColor())
-                .align(Alignment.BottomEnd),
+                .align(Alignment.BottomEnd)
+                .klickable {
+                    onExpandClick
+                },
             contentAlignment = Alignment.Center,
         ) {
             Image(

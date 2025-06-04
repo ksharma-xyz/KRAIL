@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,8 +19,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,9 +54,11 @@ fun SavedTripCard(
     primaryTransportMode: TransportMode? = null,
     onStarClick: () -> Unit,
     onCardClick: () -> Unit,
-    parkRideState: ParkRideState? = null,
+    parkRideState: ParkRideState? = ParkRideState(),
     modifier: Modifier = Modifier,
 ) {
+    var expandParkRideCard by remember { mutableStateOf(false) }
+
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -126,13 +131,18 @@ fun SavedTripCard(
                         .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
                         .background(color = themeColor())
                         .klickable {
-                            // Handle bottom bar click to expand.
+                            expandParkRideCard = !expandParkRideCard
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween // If you have content here
                 ) {
-                    // Content for the bottom bar
-                    // Spacer(Modifier.weight(1f)) // If you want to push content to the start
+                    AnimatedVisibility(expandParkRideCard) {
+                        Text(
+                            "Park & Ride Available",
+                            style = KrailTheme.typography.bodySmall,
+                            color = Color.White,
+                        )
+                    }
                 }
 
                 Spacer(
@@ -141,13 +151,13 @@ fun SavedTripCard(
                             enabled = false,
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
-                            onClick = {},
+                            onClick = {}, // Noop here
                         )
                 )
             }
         }
 
-        if (parkRideState != null) {
+        if (parkRideState != null && !expandParkRideCard) {
             Box(
                 modifier = Modifier
                     .padding(end = 16.dp, top = 8.dp)
@@ -157,6 +167,7 @@ fun SavedTripCard(
                     .align(Alignment.BottomEnd)
                     .klickable {
                         // Handle bottom bar click to expand.
+                        expandParkRideCard = !expandParkRideCard
                     },
                 contentAlignment = Alignment.Center,
             ) {

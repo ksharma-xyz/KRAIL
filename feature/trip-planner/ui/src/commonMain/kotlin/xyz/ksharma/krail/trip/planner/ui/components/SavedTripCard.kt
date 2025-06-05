@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -28,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -127,24 +131,22 @@ fun SavedTripCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp, end = 32.dp)
-                        .height(16.dp)
+                        .heightIn(min = 16.dp)
                         .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
                         .background(color = themeColor())
+                        .animateContentSize()
                         .klickable {
                             expandParkRideCard = !expandParkRideCard
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween // If you have content here
                 ) {
-                    AnimatedVisibility(expandParkRideCard) {
-                        Text(
-                            "Park & Ride Available",
-                            style = KrailTheme.typography.bodySmall,
-                            color = Color.White,
-                        )
+                    if (expandParkRideCard) {
+                        SavedTripParkRideContent(parkRideState)
                     }
                 }
 
+                // Empty blank area required for dropdown button bottom part.
                 Spacer(
                     modifier = Modifier.fillMaxWidth().height(12.dp)
                         .clickable(
@@ -157,7 +159,7 @@ fun SavedTripCard(
             }
         }
 
-        if (parkRideState != null && !expandParkRideCard) {
+        if (parkRideState != null) {
             Box(
                 modifier = Modifier
                     .padding(end = 16.dp, top = 8.dp)
@@ -171,14 +173,32 @@ fun SavedTripCard(
                     },
                 contentAlignment = Alignment.Center,
             ) {
+                val angle by animateFloatAsState(
+                    targetValue = 180f,
+                )
+
                 Image(
                     painter = painterResource(Res.drawable.ic_arrow_down),
                     contentDescription = "Expand",
                     colorFilter = ColorFilter.tint(getForegroundColor(themeColor())),
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp)
+                        .graphicsLayer {
+                            rotationZ = angle
+                        },
                 )
             }
         }
+    }
+}
+
+@Composable
+fun SavedTripParkRideContent(x0: ParkRideState?, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+        Text(
+            "Park & Ride Available",
+            style = KrailTheme.typography.bodySmall,
+            color = Color.White,
+        )
     }
 }
 

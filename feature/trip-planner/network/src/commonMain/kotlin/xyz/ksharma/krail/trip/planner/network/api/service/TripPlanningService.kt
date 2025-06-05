@@ -38,8 +38,6 @@ interface TripPlanningService {
         stopSearchQuery: String,
         stopType: StopType = StopType.STOP,
     ): StopFinderResponse
-
-    fun closeHttpConnection()
 }
 
 

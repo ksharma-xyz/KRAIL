@@ -30,6 +30,4 @@ class FakeTripPlanningService : TripPlanningService {
         return if (isSuccess) FakeStopFinderResponseBuilder.buildStopFinderResponse()
         else throw IllegalStateException("Failed to fetch stops")
     }
-
-    override fun closeHttpConnection() {}
 }

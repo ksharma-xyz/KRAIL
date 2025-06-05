@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -63,7 +64,6 @@ fun TransportModeIcon(
         ) {
             Text(
                 text = transportMode.name.first().toString().uppercase(),
-                modifier = Modifier.padding(2.dp),
             )
         }
     }
@@ -86,7 +86,7 @@ enum class TransportModeIconSize(val dpSize: Dp) {
 }
 
 // region Previews
-
+@Preview
 @Composable
 private fun TrainPreview() {
     KrailTheme {
@@ -97,6 +97,7 @@ private fun TrainPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun BusPreview() {
     KrailTheme {
@@ -107,6 +108,7 @@ private fun BusPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun MetroPreview() {
     KrailTheme {
@@ -117,6 +119,7 @@ private fun MetroPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun LightRailPreview() {
     KrailTheme {
@@ -127,6 +130,7 @@ private fun LightRailPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun FerryPreview() {
     KrailTheme {
@@ -137,6 +141,7 @@ private fun FerryPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun TrainWithBackgroundPreview() {
     KrailTheme {
@@ -147,6 +152,7 @@ private fun TrainWithBackgroundPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun BusWithBackgroundPreview() {
     KrailTheme {
@@ -157,6 +163,7 @@ private fun BusWithBackgroundPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun MetroWithBackgroundPreview() {
     KrailTheme {
@@ -167,6 +174,7 @@ private fun MetroWithBackgroundPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun LightRailWithBackgroundPreview() {
     KrailTheme {
@@ -177,6 +185,7 @@ private fun LightRailWithBackgroundPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun FerryWithBackgroundPreview() {
     KrailTheme {

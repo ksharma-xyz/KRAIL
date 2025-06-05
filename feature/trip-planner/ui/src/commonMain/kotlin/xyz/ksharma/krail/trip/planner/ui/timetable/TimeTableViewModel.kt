@@ -505,7 +505,6 @@ class TimeTableViewModel(
     override fun onCleared() {
         super.onCleared()
         sandook.clearAlerts()
-        tripPlanningService.closeHttpConnection()
     }
 
     companion object {

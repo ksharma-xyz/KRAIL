@@ -173,8 +173,8 @@ fun SavedTripCard(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                val angle by animateFloatAsState(
-                    targetValue = 180f,
+                val rotationAngle by animateFloatAsState(
+                    targetValue = if (expandParkRideCard) 180f else 0f,
                 )
 
                 Image(
@@ -183,7 +183,7 @@ fun SavedTripCard(
                     colorFilter = ColorFilter.tint(getForegroundColor(themeColor())),
                     modifier = Modifier.size(20.dp)
                         .graphicsLayer {
-                            rotationZ = angle
+                            rotationZ = rotationAngle
                         },
                 )
             }

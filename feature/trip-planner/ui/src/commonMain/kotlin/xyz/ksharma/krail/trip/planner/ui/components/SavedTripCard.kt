@@ -1,8 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
@@ -160,6 +163,8 @@ fun SavedTripCard(
         }
 
         if (parkRideState != null) {
+            val scope = rememberCoroutineScope()
+            val rotation = remember { Animatable(0f) }
             Box(
                 modifier = Modifier
                     .padding(end = 16.dp, top = 8.dp)
@@ -168,7 +173,19 @@ fun SavedTripCard(
                     .background(themeColor())
                     .align(Alignment.BottomEnd)
                     .klickable {
-                        // Handle bottom bar click to expand.
+                        val target = if (!expandParkRideCard) 180f else 0f
+                        scope.launch {
+                            val current = rotation.value % 360f
+                            val target =
+                                if (current == 0f) 540f else 0f // 0 -> 540 (360+180), 180 -> 0
+                            rotation.animateTo(
+                                targetValue = target,
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    easing = { fraction -> (1 - (1 - fraction) * (1 - fraction)) }
+                                )
+                            )
+                        }
                         expandParkRideCard = !expandParkRideCard
                     },
                 contentAlignment = Alignment.Center,

@@ -30,15 +30,21 @@ fun KrailTimePicker(
             selectorColor = themeColor, // Set selector color to themeColor
             periodSelectorBorderColor = themeColor, // Set period selector border color to themeColor
             clockDialSelectedContentColor = themeContentColor, // Set selected clock dial content color to themeColor
-            clockDialUnselectedContentColor = KrailTheme.colors.onSurface.copy(alpha = 0.6f), // Set unselected clock dial content color to onSurface with reduced alpha
+            clockDialUnselectedContentColor = KrailTheme.colors.onSurface.copy(
+                alpha = 0.6f
+            ), // Set unselected clock dial content color to onSurface with reduced alpha
             periodSelectorSelectedContainerColor = themeColor, // Set selected period selector container color to themeColor
             periodSelectorUnselectedContainerColor = KrailTheme.colors.surface, // Set unselected period selector container color to surface
             periodSelectorSelectedContentColor = themeContentColor, // Set selected period selector content color to onSurface
-            periodSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(alpha = 0.6f), // Set unselected period selector content color to onSurface with reduced alpha
+            periodSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(
+                alpha = 0.6f
+            ), // Set unselected period selector content color to onSurface with reduced alpha
             timeSelectorSelectedContainerColor = themeColor, // Set selected time selector container color to themeColor
             timeSelectorUnselectedContainerColor = KrailTheme.colors.surface, // Set unselected time selector container color to surface
             timeSelectorSelectedContentColor = themeContentColor, // Set selected time selector content color to onSurface
-            timeSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(alpha = 0.6f) // Set unselected time selector content color to onSurface with reduced alpha
+            timeSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(
+                alpha = 0.6f
+            ) // Set unselected time selector content color to onSurface with reduced alpha
         ),
         modifier = Modifier.fillMaxWidth()
     )

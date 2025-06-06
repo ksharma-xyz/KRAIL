@@ -112,7 +112,6 @@ fun ParkRideFacilityItem(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -141,7 +140,8 @@ fun ParkRideInfoText(
 ) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = number, style = KrailTheme.typography.headlineMedium,
+            text = number,
+            style = KrailTheme.typography.headlineMedium,
             modifier = Modifier.alignByBaseline(),
         )
         Text(

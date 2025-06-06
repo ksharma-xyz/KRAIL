@@ -111,8 +111,7 @@ fun CollapsibleAlert(
                         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
                     )
                 }
-            } else if(serviceAlert.message.isNotBlank()) {
-
+            } else if (serviceAlert.message.isNotBlank()) {
                 val buttonBackgroundColor by remember {
                     mutableStateOf(getForegroundColor(backgroundColor))
                 }

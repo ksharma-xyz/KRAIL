@@ -86,17 +86,21 @@ fun SearchStopRow(
                 AnimatedContent(
                     targetState = fromStopItem?.stopName ?: "Starting from",
                     transitionSpec = {
-                        (fadeIn(
-                            animationSpec = tween(200),
-                        ) + slideInVertically(
-                            initialOffsetY = { it / 2 },
-                            animationSpec = tween(500, easing = EaseOutBounce),
-                        )) togetherWith (fadeOut(
-                            animationSpec = tween(200),
-                        ) + slideOutVertically(
-                            targetOffsetY = { -it / 2 },
-                            animationSpec = tween(500),
-                        ))
+                        (
+                            fadeIn(
+                                animationSpec = tween(200),
+                            ) + slideInVertically(
+                                initialOffsetY = { it / 2 },
+                                animationSpec = tween(500, easing = EaseOutBounce),
+                            )
+                            ) togetherWith (
+                            fadeOut(
+                                animationSpec = tween(200),
+                            ) + slideOutVertically(
+                                targetOffsetY = { -it / 2 },
+                                animationSpec = tween(500),
+                            )
+                            )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "startingFromText",
@@ -112,17 +116,21 @@ fun SearchStopRow(
                 AnimatedContent(
                     targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
-                        (fadeIn(
-                            animationSpec = tween(200),
-                        ) + slideInVertically(
-                            initialOffsetY = { -it / 2 },
-                            animationSpec = tween(500, easing = EaseOutBounce),
-                        )) togetherWith (fadeOut(
-                            animationSpec = tween(200),
-                        ) + slideOutVertically(
-                            targetOffsetY = { it / 2 },
-                            animationSpec = tween(500),
-                        ))
+                        (
+                            fadeIn(
+                                animationSpec = tween(200),
+                            ) + slideInVertically(
+                                initialOffsetY = { -it / 2 },
+                                animationSpec = tween(500, easing = EaseOutBounce),
+                            )
+                            ) togetherWith (
+                            fadeOut(
+                                animationSpec = tween(200),
+                            ) + slideOutVertically(
+                                targetOffsetY = { it / 2 },
+                                animationSpec = tween(500),
+                            )
+                            )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "destinationText",

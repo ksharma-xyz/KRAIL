@@ -98,9 +98,9 @@ fun DateTimeSelectorScreen(
         // Should be true - when time and date is same even after updates, coz reset click
         // triggered this change.
         reset = now.hour == timePickerState.hour &&
-                now.minute == timePickerState.minute &&
-                selectedDate == now.date &&
-                journeyTimeOption == JourneyTimeOptions.LEAVE
+            now.minute == timePickerState.minute &&
+            selectedDate == now.date &&
+            journeyTimeOption == JourneyTimeOptions.LEAVE
     }
 
     Column(
@@ -109,7 +109,8 @@ fun DateTimeSelectorScreen(
             .background(color = KrailTheme.colors.surface)
             .systemBarsPadding(),
     ) {
-        TitleBar(title = { Text(text = "Plan your trip") },
+        TitleBar(
+            title = { Text(text = "Plan your trip") },
             onNavActionClick = onBackClick,
             actions = {
                 TextButton(
@@ -127,7 +128,8 @@ fun DateTimeSelectorScreen(
                 ) {
                     Text("Reset")
                 }
-            })
+            }
+        )
 
         LazyColumn(
             contentPadding = PaddingValues(vertical = 16.dp),
@@ -172,12 +174,12 @@ fun DateTimeSelectorScreen(
             }
 
             item {
-
                 Button(
                     onClick = {
                         onDateTimeSelected(
-                            if (reset) null
-                            else {
+                            if (reset) {
+                                null
+                            } else {
                                 DateTimeSelectionItem(
                                     option = journeyTimeOption,
                                     hour = timePickerState.hour,
@@ -191,7 +193,9 @@ fun DateTimeSelectorScreen(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                 ) {
                     Text(
-                        text = if (reset) "Leave Now" else {
+                        text = if (reset) {
+                            "Leave Now"
+                        } else {
                             DateTimeSelectionItem(
                                 option = journeyTimeOption,
                                 hour = timePickerState.hour,

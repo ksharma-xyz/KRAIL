@@ -36,9 +36,11 @@ class SettingsViewModel(
 
     fun onReferFriendClick() {
         share.sharePlainText(getReferText())
-        analytics.track(AnalyticsEvent.ReferFriend(
-            entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SETTINGS,
-        ))
+        analytics.track(
+            AnalyticsEvent.ReferFriend(
+                entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SETTINGS,
+            )
+        )
     }
 
     fun onIntroClick() {

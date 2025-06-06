@@ -87,7 +87,8 @@ fun IntroContentInviteFriends(
         }
 
         TagLineWithEmoji(
-            tagline = tagline, emoji = "\uD83D\uDC95",
+            tagline = tagline,
+            emoji = "\uD83D\uDC95",
             tagColor = style.hexToComposeColor()
         )
     }

@@ -23,9 +23,11 @@ internal fun NavGraphBuilder.alertsDestination(navController: NavHostController)
                 viewModel.fetchAlerts(journeyId = route.journeyId)
             )
         }
-        ServiceAlertScreen(serviceAlerts = alerts?.toImmutableSet() ?: persistentSetOf(),
+        ServiceAlertScreen(
+            serviceAlerts = alerts?.toImmutableSet() ?: persistentSetOf(),
             onBackClick = {
                 navController.popBackStack()
-            })
+            }
+        )
     }
 }

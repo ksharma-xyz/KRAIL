@@ -124,7 +124,8 @@ fun TimeTableScreen(
                             exit = fadeOut(),
                         ) {
                             AnimatedDots(
-                                color = themeColor, modifier = Modifier.padding(start = 24.dp)
+                                color = themeColor,
+                                modifier = Modifier.padding(start = 24.dp)
                             )
                         }
                     }
@@ -211,7 +212,7 @@ fun TimeTableScreen(
                         dimensions = ButtonDefaults.mediumButtonSize(),
                     ) {
                         Row(
-                            //todo -  handle in Button
+                            // todo -  handle in Button
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -239,7 +240,8 @@ fun TimeTableScreen(
                     ) {
                         items(
                             items = TransportMode.values().toList(),
-                            key = { item -> item.productClass }) {
+                            key = { item -> item.productClass }
+                        ) {
                             TransportModeChip(
                                 transportMode = it,
                                 selected = !unselectedModesProductClass.contains(it.productClass),
@@ -268,7 +270,7 @@ fun TimeTableScreen(
                             .padding(vertical = 8.dp, horizontal = 12.dp)
                             .animateItem()
                     ) {
-                        //todo -  handle in Button
+                        // todo -  handle in Button
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically,

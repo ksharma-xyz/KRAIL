@@ -35,7 +35,7 @@ fun replaceHtmlTags(html: String): String {
             .replace(Regex("<a href=\"[^\"]*\">"), " ")
             .replace("&nbsp;", " ")
             .replace(Regex("<[^>]*>"), "") // Remove all other HTML tags
-            .replace(Regex("\n{3,}"), "\n\n")  // Replace multiple new lines with a single new line
+            .replace(Regex("\n{3,}"), "\n\n") // Replace multiple new lines with a single new line
             .trim()
     }.getOrElse {
         html // Return the original text if an exception occurs

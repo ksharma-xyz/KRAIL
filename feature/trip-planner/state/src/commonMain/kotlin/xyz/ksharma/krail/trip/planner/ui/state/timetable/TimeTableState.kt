@@ -34,7 +34,6 @@ data class TimeTableState(
         val destinationTime: String, // "11:40pm"
         val destinationUtcDateTime: String, // "2024-09-24T19:00:00Z" Use for calculations.
 
-
         // legs.sumBy { it.duration } - seconds
         val travelTime: String, // "(10 min)"
 

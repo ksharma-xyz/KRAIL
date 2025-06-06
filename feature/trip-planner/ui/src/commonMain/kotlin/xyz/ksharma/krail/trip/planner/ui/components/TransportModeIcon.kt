@@ -3,9 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,10 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -48,8 +44,11 @@ fun TransportModeIcon(
         Box(
             modifier = modifier
                 .size(
-                    if (adaptiveSize) size.dpSize.toAdaptiveSize()
-                    else size.dpSize.toAdaptiveDecorativeIconSize()
+                    if (adaptiveSize) {
+                        size.dpSize.toAdaptiveSize()
+                    } else {
+                        size.dpSize.toAdaptiveDecorativeIconSize()
+                    }
                 )
                 .clip(CircleShape)
                 .background(
@@ -79,7 +78,9 @@ private fun Modifier.borderIfEnabled(enabled: Boolean, color: Color): Modifier =
                 shape = CircleShape,
             )
         )
-    } else this
+    } else {
+        this
+    }
 
 enum class TransportModeIconSize(val dpSize: Dp) {
     XSmall(20.dp), Small(22.dp), Medium(28.dp), Large(32.dp)

@@ -59,7 +59,7 @@ fun ThemeSelectionScreen(
         }
         val buttonBackgroundColor by animateColorAsState(
             targetValue = selectedThemeColorId?.let { themeId ->
-               KrailThemeStyle.entries.find { it.id == themeId }?.hexColorCode?.hexToComposeColor()
+                KrailThemeStyle.entries.find { it.id == themeId }?.hexColorCode?.hexToComposeColor()
             } ?: KrailTheme.colors.surface,
             label = "buttonBackgroundColor",
             animationSpec = tween(durationMillis = 300, easing = LinearEasing),
@@ -106,7 +106,9 @@ fun ThemeSelectionScreen(
                         containerColor = buttonBackgroundColor,
                         contentColor = getForegroundColor(buttonBackgroundColor),
                         disabledContainerColor = buttonBackgroundColor.copy(alpha = DisabledContentAlpha),
-                        disabledContentColor = getForegroundColor(buttonBackgroundColor).copy(alpha = DisabledContentAlpha),
+                        disabledContentColor = getForegroundColor(
+                            buttonBackgroundColor
+                        ).copy(alpha = DisabledContentAlpha),
                     ),
                     onClick = {
                         selectedThemeColorId?.let { productClass ->

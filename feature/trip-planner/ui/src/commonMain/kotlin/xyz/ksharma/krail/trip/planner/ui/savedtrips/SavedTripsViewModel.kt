@@ -94,7 +94,7 @@ class SavedTripsViewModel(
 
             trips.addAll(savedTrips.map { savedTrip -> savedTrip.toTrip() })
 
-            //log("SavedTrips: ${trips.size} number")
+            // log("SavedTrips: ${trips.size} number")
             trips.forEachIndexed { index, trip ->
                 log("\t SavedTrip: #$index ${trip.fromStopName} -> ${trip.toStopName}")
             }

@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>InvalidPackageDeclaration:GtfsModule.kt$package xyz.ksharma.krail.io.gtfs.di</ID>
+    <ID>InvalidPackageDeclaration:ProtoParser.kt$package xyz.ksharma.krail.io.gtfs.nswstops</ID>
+    <ID>InvalidPackageDeclaration:StopsProtoParser.kt$package xyz.ksharma.krail.io.gtfs.nswstops</ID>
+  </CurrentIssues>
+</SmellBaseline>

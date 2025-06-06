@@ -4,7 +4,6 @@ import app.krail.kgtfs.proto.NswStopList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import krail.io.gtfs.generated.resources.Res
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.sandook.Sandook
 

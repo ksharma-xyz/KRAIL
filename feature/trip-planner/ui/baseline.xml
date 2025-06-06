@@ -1,0 +1,297 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CascadingCallWrapping:DateTimeSelectorViewModel.kt$DateTimeSelectorViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Unit)</ID>
+    <ID>CascadingCallWrapping:IntroViewModel.kt$IntroViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntroState.default())</ID>
+    <ID>CascadingCallWrapping:RealStopResultsManager.kt$RealStopResultsManager$second</ID>
+    <ID>CascadingCallWrapping:SavedTripCard.kt$primaryTransportMode?.colorCode ?.hexToComposeColor() ?: themeColor.hexToComposeColor()</ID>
+    <ID>CascadingCallWrapping:SavedTripsViewModel.kt$SavedTripsViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())</ID>
+    <ID>CascadingCallWrapping:SearchStopScreen.kt$collectLatest {}</ID>
+    <ID>CascadingCallWrapping:SearchStopViewModel.kt$SearchStopViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())</ID>
+    <ID>CascadingCallWrapping:ServiceAlertsViewModel.kt$ServiceAlertsViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ServiceAlertState())</ID>
+    <ID>CascadingCallWrapping:SettingsViewModel.kt$SettingsViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsState())</ID>
+    <ID>CascadingCallWrapping:TimeTableViewModel.kt$TimeTableViewModel$dayOfWeek</ID>
+    <ID>CascadingCallWrapping:TimeTableViewModel.kt$TimeTableViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), true)</ID>
+    <ID>CascadingCallWrapping:TimeTableViewModel.kt$TimeTableViewModel$toHHMM()</ID>
+    <ID>ClassOrdering:ReferFriendManager.kt$ReferFriendManager$fun getReferText(): String</ID>
+    <ID>CommentOverPrivateProperty:TimeTableViewModel.kt$TimeTableViewModel.Companion$/** * Maximum number of started journeys to display. */ // TODO - UT - at-least these many should remain in past all the time once initial // past trips are starting to show. private const val MAX_STARTED_JOURNEY_DISPLAY_THRESHOLD = 2</ID>
+    <ID>ComposableParamOrder:HtmlText.kt$HtmlText</ID>
+    <ID>ComposableParamOrder:JourneyTimeOptionsGroup.kt$JourneyTimeOptionsGroup</ID>
+    <ID>ComposableParamOrder:TagLineWithEmoji.kt$TagLineWithEmoji</ID>
+    <ID>CyclomaticComplexMethod:JourneyCard.kt$@Composable fun ExpandedJourneyCardContent( displayAllStops: Boolean, timeToDeparture: String, themeColor: Color, platformText: String?, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>CyclomaticComplexMethod:SearchStopScreen.kt$@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class) @Composable fun SearchStopScreen( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>CyclomaticComplexMethod:TripResponseMapper.kt$@Suppress("ComplexCondition") private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg?</ID>
+    <ID>EmptyFunctionBlock:PlanTripCard.kt${ }</ID>
+    <ID>FunctionNaming:AnimatedDots.kt$@Composable fun AnimatedDots(modifier: Modifier = Modifier, color: Color = KrailTheme.colors.onSurface)</ID>
+    <ID>FunctionNaming:AppLogo.kt$@Composable fun AppLogo(modifier: Modifier = Modifier)</ID>
+    <ID>FunctionNaming:CollapsibleAlert.kt$@Composable fun CollapsibleAlert( serviceAlert: ServiceAlert, index: Int, onClick: () -&gt; Unit, modifier: Modifier = Modifier, collapsed: Boolean = true, )</ID>
+    <ID>FunctionNaming:CollapsibleAlert.kt$@Preview @Composable private fun PreviewCollapsibleAlertCollapsed()</ID>
+    <ID>FunctionNaming:CollapsibleAlert.kt$@Preview @Composable private fun PreviewCollapsibleAlertExpanded()</ID>
+    <ID>FunctionNaming:DateSelection.kt$@Composable fun DateSelection( themeColor: Color, date: String, modifier: Modifier = Modifier, onNextClicked: () -&gt; Unit = {}, onPreviousClicked: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:DateTimeSelectorScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DateTimeSelectorScreen( dateTimeSelection: DateTimeSelectionItem?, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onDateTimeSelected: (DateTimeSelectionItem?) -&gt; Unit = {}, onResetClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:ErrorMessage.kt$@Composable fun ErrorMessage( title: String, message: String, modifier: Modifier = Modifier, emoji: String = "\uD83D\uDC36", actionData: ActionData? = null, )</ID>
+    <ID>FunctionNaming:ErrorMessage.kt$@Composable private fun PreviewErrorMessage()</ID>
+    <ID>FunctionNaming:HtmlText.kt$@Composable actual fun HtmlText( text: String, modifier: Modifier, onClick: () -&gt; Unit, color: Color, urlColor: Color, )</ID>
+    <ID>FunctionNaming:HtmlText.kt$@Composable expect fun HtmlText( text: String, modifier: Modifier = Modifier, onClick: () -&gt; Unit, color: Color, urlColor: Color, )</ID>
+    <ID>FunctionNaming:IconButton.kt$@Composable fun IconButton( painter: Painter, color: Color, modifier: Modifier = Modifier, onClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroContentAlerts.kt$@Composable fun AnimatedAlertsOneByOne( displayAlert: Boolean, delayMillis: Long = 300L // delay before starting second animation )</ID>
+    <ID>FunctionNaming:IntroContentAlerts.kt$@Composable fun IntroContentAlerts( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroContentInviteFriends.kt$@Composable fun IntroContentInviteFriends( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. onShareClick: () -&gt; Unit, modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroContentPlanTrip.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun IntroContentPlanTrip( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroContentRealTime.kt$@Composable fun IntroContentRealTime( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroContentSaveTrips.kt$@Composable fun IntroContentSaveTrips( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroContentSelectTransportMode.kt$@Composable fun IntroContentSelectTransportMode( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroScreen.kt$@Composable fun IntroScreen( state: IntroState, modifier: Modifier = Modifier, onIntroComplete: (pageType: IntroPageType, pageNumber: Int) -&gt; Unit = { _, _ -&gt; }, onEvent: (IntroUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:IntroScreen.kt$@Composable private fun IntroPageContent( pageData: IntroState.IntroPage, modifier: Modifier = Modifier, onShareClick: () -&gt; Unit = {}, onInteraction: (IntroPageType) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:IntroScreen.kt$@Composable private fun IntroTitle( offsetFraction: Float, state: IntroState, startPage: Int, animatedButtonColor: Color, animatedAlpha: Float, targetPage: Int )</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable fun DefaultJourneyCardContent( timeToDeparture: String, originTime: String, destinationTime: String, totalTravelTime: String, isWheelchairAccessible: Boolean, themeColor: Color, transportModeList: ImmutableList&lt;TransportMode&gt;, platformText: String?, totalWalkTime: String?, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable fun ExpandedJourneyCardContent( displayAllStops: Boolean, timeToDeparture: String, themeColor: Color, platformText: String?, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable fun JourneyCard( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, destinationTime: String, totalTravelTime: String, isWheelchairAccessible: Boolean, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, transportModeList: ImmutableList&lt;TransportMode&gt;, onClick: () -&gt; Unit, cardState: JourneyCardState, totalWalkTime: String?, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, onAlertClick: () -&gt; Unit = {}, onLegClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable private fun PreviewJourneyCard()</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable private fun PreviewJourneyCardCollapsed()</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable private fun PreviewJourneyCardExpanded()</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable private fun PreviewJourneyCardLongData()</ID>
+    <ID>FunctionNaming:JourneyCard.kt$@Composable private fun TextWithIcon( painter: Painter, text: String, modifier: Modifier = Modifier, textStyle: TextStyle = KrailTheme.typography.bodyMedium, color: Color = KrailTheme.colors.onSurface, )</ID>
+    <ID>FunctionNaming:JourneyTimeOptionsGroup.kt$@Composable fun JourneyTimeOptionsGroup( selectedOption: JourneyTimeOptions = JourneyTimeOptions.LEAVE, themeColor: Color, modifier: Modifier = Modifier, onOptionSelected: (JourneyTimeOptions) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:LegView.kt$@Composable fun LegView( routeText: String, // AVC via XYZ transportModeLine: TransportModeLine, stops: ImmutableList&lt;TimeTableState.JourneyCardInfo.Stop&gt;, modifier: Modifier = Modifier, displayAllStops: Boolean = false, onClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:LegView.kt$@Composable private fun RouteSummary( routeText: String, badgeText: String, badgeColor: Color, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:LegView.kt$@Composable private fun StopInfo( time: String, name: String, isProminent: Boolean, isWheelchairAccessible: Boolean, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:LegView.kt$@Composable private fun StopsRow( stops: String, line: TransportModeLine, modifier: Modifier = Modifier, onClick: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewLegView()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewLegViewFerry()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewLegViewLightRail()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewLegViewMetro()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewLegViewTwoStops()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewProminentStopInfo()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewRouteSummary()</ID>
+    <ID>FunctionNaming:LegView.kt$@Preview @Composable private fun PreviewStopsRow()</ID>
+    <ID>FunctionNaming:LoadingEmojiAnim.kt$@Composable fun LoadingEmojiAnim(modifier: Modifier = Modifier, emoji: String? = null)</ID>
+    <ID>FunctionNaming:LoadingEmojiAnim.kt$@Composable private fun Preview()</ID>
+    <ID>FunctionNaming:OriginDestination.kt$@Composable internal fun OriginDestination( trip: Trip, timeLineColor: Color, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:OurStoryScreen.kt$@Composable fun OurStoryScreen( state: OurStoryState, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:OutlineRadioButton.kt$@Composable fun OutlineRadioButton( text: String, themeColor: Color, modifier: Modifier = Modifier, type: RadioButtonType = RadioButtonType.DEFAULT, selected: Boolean = false, enabled: Boolean = true, onClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:PlanTripCard.kt$@Composable fun PlanTripCard(modifier: Modifier = Modifier)</ID>
+    <ID>FunctionNaming:SavedTripCard.kt$@Composable fun SavedTripCard( trip: Trip, primaryTransportMode: TransportMode?, onStarClick: () -&gt; Unit, onCardClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:SavedTripCard.kt$@Composable private fun SavedTripCardListPreview()</ID>
+    <ID>FunctionNaming:SavedTripCard.kt$@Composable private fun SavedTripCardPreview()</ID>
+    <ID>FunctionNaming:SavedTripsScreen.kt$@Composable fun SavedTripsScreen( savedTripsState: SavedTripsState, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, fromButtonClick: () -&gt; Unit = {}, toButtonClick: () -&gt; Unit = {}, onReverseButtonClick: () -&gt; Unit = {}, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, onSearchButtonClick: () -&gt; Unit = {}, onSettingsButtonClick: () -&gt; Unit = {}, onEvent: (SavedTripUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:SavedTripsScreen.kt$@Composable private fun SavedTripsScreenPreview()</ID>
+    <ID>FunctionNaming:SearchStopRow.kt$@Composable fun SearchStopRow( fromButtonClick: () -&gt; Unit, toButtonClick: () -&gt; Unit, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, onReverseButtonClick: () -&gt; Unit = {}, onSearchButtonClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:SearchStopRow.kt$@Composable private fun SearchStopColumnPreview()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable fun AnimatedPlaceholderTextField(modifier: Modifier)</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenBus()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenCoach()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenEmpty()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenError()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenFerry()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenLightRail()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenLoading()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenMetro()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenTrain()</ID>
+    <ID>FunctionNaming:SearchStopScreen.kt$@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class) @Composable fun SearchStopScreen( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:ServiceAlertScreen.kt$@Composable fun ServiceAlertScreen( serviceAlerts: ImmutableSet&lt;ServiceAlert&gt;, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:ServiceAlertScreen.kt$@Composable private fun PreviewServiceAlertScreen()</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable fun SettingsScreen( appVersion: String, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onChangeThemeClick: () -&gt; Unit = {}, onReferFriendClick: () -&gt; Unit = {}, onAboutUsClick: () -&gt; Unit = {}, onIntroClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun SettingsItem( icon: Painter, text: String, modifier: Modifier = Modifier, showDivider: Boolean = true, onClick: (() -&gt; Unit)? = null, )</ID>
+    <ID>FunctionNaming:StopSearchListItem.kt$@Composable fun StopSearchListItem( stopName: String, stopId: String, transportModeSet: ImmutableSet&lt;TransportMode&gt;, textColor: Color, modifier: Modifier = Modifier, onClick: (StopItem) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:StopSearchListItem.kt$@Composable private fun StopSearchListItemLongNamePreview()</ID>
+    <ID>FunctionNaming:StopSearchListItem.kt$@Composable private fun StopSearchListItemPreview()</ID>
+    <ID>FunctionNaming:TagLineWithEmoji.kt$@Composable internal fun TagLineWithEmoji( tagline: String, emoji: String, emojiColor: Color? = null, tagColor: Color? = null, modifier: Modifier = Modifier )</ID>
+    <ID>FunctionNaming:ThemeSelectionScreen.kt$@Composable fun ThemeSelectionScreen( selectedThemeStyle: KrailThemeStyle?, onThemeSelected: (Int) -&gt; Unit, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ThemeSelectionScreen.kt$@Composable private fun ThemeSelectionRadioButton( themeStyle: KrailThemeStyle, onClick: (KrailThemeStyle) -&gt; Unit, modifier: Modifier = Modifier, selected: Boolean = false, )</ID>
+    <ID>FunctionNaming:TimePicker.kt$@Composable @OptIn(ExperimentalMaterial3Api::class) fun KrailTimePicker( timePickerState: TimePickerState, )</ID>
+    <ID>FunctionNaming:TimeSelection.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TimeSelection( timePickerState: TimePickerState, modifier: Modifier = Modifier, displayTitle: Boolean = true, )</ID>
+    <ID>FunctionNaming:TimeTableScreen.kt$@Composable // todo - probably don't need this private fun JourneyCardItem( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, durationText: String, totalWalkTime: String?, destinationTime: String, onClick: () -&gt; Unit, cardState: JourneyCardState, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, onAlertClick: () -&gt; Unit, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, transportModeLineList: ImmutableList&lt;TransportModeLine&gt;? = null, onLegClick: (Boolean) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:TimeTableScreen.kt$@Composable fun ActionButton( onClick: () -&gt; Unit, contentDescription: String, modifier: Modifier = Modifier, content: @Composable () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:TimeTableScreen.kt$@Composable fun TimeTableScreen( timeTableState: TimeTableState, expandedJourneyId: String?, dateTimeSelectionItem: DateTimeSelectionItem?, onEvent: (TimeTableUiEvent) -&gt; Unit, onAlertClick: (String) -&gt; Unit, onBackClick: () -&gt; Unit, onJourneyLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, dateTimeSelectorClicked: () -&gt; Unit = {}, onModeSelectionChanged: (Set&lt;Int&gt;) -&gt; Unit = {}, onModeClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:TimeTableScreen.kt$@Composable private fun PreviewTimeTableScreen()</ID>
+    <ID>FunctionNaming:TimeTableScreen.kt$@Composable private fun PreviewTimeTableScreenError()</ID>
+    <ID>FunctionNaming:TimeTableScreen.kt$@Composable private fun PreviewTimeTableScreenNoResults()</ID>
+    <ID>FunctionNaming:TransportModeBadge.kt$@Composable fun TransportModeBadge( badgeText: String, backgroundColor: Color, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:TransportModeBadge.kt$@Composable private fun TransportModeBadgeFerryPreview()</ID>
+    <ID>FunctionNaming:TransportModeBadge.kt$@Composable private fun TransportModeBadgeTrainPreview()</ID>
+    <ID>FunctionNaming:TransportModeBadge.kt$@Preview @Composable private fun TransportModeBadgeBusPreview()</ID>
+    <ID>FunctionNaming:TransportModeChip.kt$@Composable fun TransportModeChip( transportMode: TransportMode, selected: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Composable fun TransportModeIcon( transportMode: TransportMode, modifier: Modifier = Modifier, borderColor: Color = Color.White, adaptiveSize: Boolean = false, displayBorder: Boolean = false, size: TransportModeIconSize = TransportModeIconSize.Medium, )</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun BusPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun BusWithBackgroundPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun FerryPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun FerryWithBackgroundPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun LightRailPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun LightRailWithBackgroundPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun MetroPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun MetroWithBackgroundPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun TrainPreview()</ID>
+    <ID>FunctionNaming:TransportModeIcon.kt$@Preview @Composable private fun TrainWithBackgroundPreview()</ID>
+    <ID>FunctionNaming:TransportModeInfo.kt$@Composable fun TransportModeInfo( transportMode: TransportMode, modifier: Modifier = Modifier, borderEnabled: Boolean = false, )</ID>
+    <ID>FunctionNaming:TransportModeInfo.kt$@Composable private fun TransportModeInfoPreview()</ID>
+    <ID>FunctionNaming:WalkingLeg.kt$@Composable fun WalkingLeg( duration: String, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:WalkingLeg.kt$@Preview @Composable private fun PreviewWalkingLeg()</ID>
+    <ID>LambdaParameterEventTrailing:IntroScreen.kt$onInteraction</ID>
+    <ID>LambdaParameterEventTrailing:JourneyTimeOptionsGroup.kt$onOptionSelected</ID>
+    <ID>LambdaParameterEventTrailing:LegView.kt$onClick</ID>
+    <ID>LambdaParameterEventTrailing:TimeTableScreen.kt$onLegClick</ID>
+    <ID>LongMethod:CollapsibleAlert.kt$@Composable fun CollapsibleAlert( serviceAlert: ServiceAlert, index: Int, onClick: () -&gt; Unit, modifier: Modifier = Modifier, collapsed: Boolean = true, )</ID>
+    <ID>LongMethod:DateTimeSelectorScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun DateTimeSelectorScreen( dateTimeSelection: DateTimeSelectionItem?, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onDateTimeSelected: (DateTimeSelectionItem?) -&gt; Unit = {}, onResetClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:IntroContentSaveTrips.kt$@Composable fun IntroContentSaveTrips( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, onInteraction: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:IntroScreen.kt$@Composable fun IntroScreen( state: IntroState, modifier: Modifier = Modifier, onIntroComplete: (pageType: IntroPageType, pageNumber: Int) -&gt; Unit = { _, _ -&gt; }, onEvent: (IntroUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:IntroScreen.kt$@Composable private fun IntroPageContent( pageData: IntroState.IntroPage, modifier: Modifier = Modifier, onShareClick: () -&gt; Unit = {}, onInteraction: (IntroPageType) -&gt; Unit, )</ID>
+    <ID>LongMethod:JourneyCard.kt$@Composable fun DefaultJourneyCardContent( timeToDeparture: String, originTime: String, destinationTime: String, totalTravelTime: String, isWheelchairAccessible: Boolean, themeColor: Color, transportModeList: ImmutableList&lt;TransportMode&gt;, platformText: String?, totalWalkTime: String?, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:JourneyCard.kt$@Composable fun ExpandedJourneyCardContent( displayAllStops: Boolean, timeToDeparture: String, themeColor: Color, platformText: String?, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:JourneyCard.kt$@Composable fun JourneyCard( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, destinationTime: String, totalTravelTime: String, isWheelchairAccessible: Boolean, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, transportModeList: ImmutableList&lt;TransportMode&gt;, onClick: () -&gt; Unit, cardState: JourneyCardState, totalWalkTime: String?, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, onAlertClick: () -&gt; Unit = {}, onLegClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:LegView.kt$@Composable fun LegView( routeText: String, // AVC via XYZ transportModeLine: TransportModeLine, stops: ImmutableList&lt;TimeTableState.JourneyCardInfo.Stop&gt;, modifier: Modifier = Modifier, displayAllStops: Boolean = false, onClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:OriginDestination.kt$@Composable internal fun OriginDestination( trip: Trip, timeLineColor: Color, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:SavedTripsScreen.kt$@Composable fun SavedTripsScreen( savedTripsState: SavedTripsState, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, fromButtonClick: () -&gt; Unit = {}, toButtonClick: () -&gt; Unit = {}, onReverseButtonClick: () -&gt; Unit = {}, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, onSearchButtonClick: () -&gt; Unit = {}, onSettingsButtonClick: () -&gt; Unit = {}, onEvent: (SavedTripUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:SearchStopRow.kt$@Composable fun SearchStopRow( fromButtonClick: () -&gt; Unit, toButtonClick: () -&gt; Unit, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, onReverseButtonClick: () -&gt; Unit = {}, onSearchButtonClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:SearchStopScreen.kt$@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class) @Composable fun SearchStopScreen( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:SettingsScreen.kt$@Composable fun SettingsScreen( appVersion: String, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onChangeThemeClick: () -&gt; Unit = {}, onReferFriendClick: () -&gt; Unit = {}, onAboutUsClick: () -&gt; Unit = {}, onIntroClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:ThemeSelectionScreen.kt$@Composable fun ThemeSelectionScreen( selectedThemeStyle: KrailThemeStyle?, onThemeSelected: (Int) -&gt; Unit, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:TimeTableDestination.kt$internal fun NavGraphBuilder.timeTableDestination(navController: NavHostController)</ID>
+    <ID>LongMethod:TimeTableScreen.kt$@Composable fun TimeTableScreen( timeTableState: TimeTableState, expandedJourneyId: String?, dateTimeSelectionItem: DateTimeSelectionItem?, onEvent: (TimeTableUiEvent) -&gt; Unit, onAlertClick: (String) -&gt; Unit, onBackClick: () -&gt; Unit, onJourneyLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, dateTimeSelectorClicked: () -&gt; Unit = {}, onModeSelectionChanged: (Set&lt;Int&gt;) -&gt; Unit = {}, onModeClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:IntroScreen.kt$( offsetFraction: Float, state: IntroState, startPage: Int, animatedButtonColor: Color, animatedAlpha: Float, targetPage: Int )</ID>
+    <ID>LongParameterList:JourneyCard.kt$( displayAllStops: Boolean, timeToDeparture: String, themeColor: Color, platformText: String?, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:JourneyCard.kt$( timeToDeparture: String, originTime: String, destinationTime: String, totalTravelTime: String, isWheelchairAccessible: Boolean, themeColor: Color, transportModeList: ImmutableList&lt;TransportMode&gt;, platformText: String?, totalWalkTime: String?, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:JourneyCard.kt$( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, destinationTime: String, totalTravelTime: String, isWheelchairAccessible: Boolean, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, transportModeList: ImmutableList&lt;TransportMode&gt;, onClick: () -&gt; Unit, cardState: JourneyCardState, totalWalkTime: String?, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, onAlertClick: () -&gt; Unit = {}, onLegClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:LegView.kt$( routeText: String, // AVC via XYZ transportModeLine: TransportModeLine, stops: ImmutableList&lt;TimeTableState.JourneyCardInfo.Stop&gt;, modifier: Modifier = Modifier, displayAllStops: Boolean = false, onClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:OutlineRadioButton.kt$( text: String, themeColor: Color, modifier: Modifier = Modifier, type: RadioButtonType = RadioButtonType.DEFAULT, selected: Boolean = false, enabled: Boolean = true, onClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:SavedTripsScreen.kt$( savedTripsState: SavedTripsState, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, fromButtonClick: () -&gt; Unit = {}, toButtonClick: () -&gt; Unit = {}, onReverseButtonClick: () -&gt; Unit = {}, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, onSearchButtonClick: () -&gt; Unit = {}, onSettingsButtonClick: () -&gt; Unit = {}, onEvent: (SavedTripUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:SearchStopRow.kt$( fromButtonClick: () -&gt; Unit, toButtonClick: () -&gt; Unit, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, onReverseButtonClick: () -&gt; Unit = {}, onSearchButtonClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:SearchStopScreen.kt$( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:SettingsScreen.kt$( appVersion: String, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onChangeThemeClick: () -&gt; Unit = {}, onReferFriendClick: () -&gt; Unit = {}, onAboutUsClick: () -&gt; Unit = {}, onIntroClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:StopSearchListItem.kt$( stopName: String, stopId: String, transportModeSet: ImmutableSet&lt;TransportMode&gt;, textColor: Color, modifier: Modifier = Modifier, onClick: (StopItem) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:TimeTableScreen.kt$( timeTableState: TimeTableState, expandedJourneyId: String?, dateTimeSelectionItem: DateTimeSelectionItem?, onEvent: (TimeTableUiEvent) -&gt; Unit, onAlertClick: (String) -&gt; Unit, onBackClick: () -&gt; Unit, onJourneyLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, dateTimeSelectorClicked: () -&gt; Unit = {}, onModeSelectionChanged: (Set&lt;Int&gt;) -&gt; Unit = {}, onModeClick: (Boolean) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:TimeTableScreen.kt$( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, durationText: String, totalWalkTime: String?, destinationTime: String, onClick: () -&gt; Unit, cardState: JourneyCardState, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, onAlertClick: () -&gt; Unit, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, transportModeLineList: ImmutableList&lt;TransportModeLine&gt;? = null, onLegClick: (Boolean) -&gt; Unit, )</ID>
+    <ID>LongParameterList:TransportModeIcon.kt$( transportMode: TransportMode, modifier: Modifier = Modifier, borderColor: Color = Color.White, adaptiveSize: Boolean = false, displayBorder: Boolean = false, size: TransportModeIconSize = TransportModeIconSize.Medium, )</ID>
+    <ID>MagicNumber:AnimatedDots.kt$10f</ID>
+    <ID>MagicNumber:AnimatedDots.kt$40f</ID>
+    <ID>MagicNumber:AnimatedDots.kt$600</ID>
+    <ID>MagicNumber:DateTimeSelectorScreen.kt$7</ID>
+    <ID>MagicNumber:GradientBorder.kt$0xFF888888</ID>
+    <ID>MagicNumber:IntroContentPlanTrip.kt$0.6f</ID>
+    <ID>MagicNumber:IntroContentPlanTrip.kt$1.5f</ID>
+    <ID>MagicNumber:IntroContentPlanTrip.kt$2.5f</ID>
+    <ID>MagicNumber:IntroScreen.kt$0.5f</ID>
+    <ID>MagicNumber:IntroScreen.kt$0.6f</ID>
+    <ID>MagicNumber:IntroScreen.kt$0.75f</ID>
+    <ID>MagicNumber:JourneyCard.kt$0.5f</ID>
+    <ID>MagicNumber:JourneyCard.kt$4</ID>
+    <ID>MagicNumber:LoadingEmojiAnim.kt$200</ID>
+    <ID>MagicNumber:LoadingEmojiAnim.kt$2000</ID>
+    <ID>MagicNumber:LoadingEmojiAnim.kt$3</ID>
+    <ID>MagicNumber:LoadingEmojiAnim.kt$360f</ID>
+    <ID>MagicNumber:LoadingEmojiManager.kt$LoadingEmojiManager$99</ID>
+    <ID>MagicNumber:OriginDestination.kt$200</ID>
+    <ID>MagicNumber:OriginDestination.kt$500</ID>
+    <ID>MagicNumber:OurStoryViewModel.kt$OurStoryViewModel$10</ID>
+    <ID>MagicNumber:RealStopResultsManager.kt$RealStopResultsManager$50</ID>
+    <ID>MagicNumber:SearchStopRow.kt$200</ID>
+    <ID>MagicNumber:SearchStopRow.kt$500</ID>
+    <ID>MagicNumber:SearchStopScreen.kt$1500</ID>
+    <ID>MagicNumber:SearchStopScreen.kt$250</ID>
+    <ID>MagicNumber:SearchStopScreen.kt$3</ID>
+    <ID>MagicNumber:SearchStopScreen.kt$4</ID>
+    <ID>MagicNumber:SearchStopScreen.kt$500</ID>
+    <ID>MagicNumber:TimeSelection.kt$0.6f</ID>
+    <ID>MagicNumber:TimeSelection.kt$1.5f</ID>
+    <ID>MagicNumber:TimeSelection.kt$3f</ID>
+    <ID>MagicNumber:TransportModeChip.kt$200</ID>
+    <ID>MagicNumber:TransportModeChip.kt$50</ID>
+    <ID>MagicNumber:TripResponseMapper.kt$99L</ID>
+    <ID>MaxLineLength:TimePicker.kt$periodSelectorSelectedContainerColor = themeColor</ID>
+    <ID>MaxLineLength:TimePicker.kt$periodSelectorSelectedContentColor = themeContentColor</ID>
+    <ID>MaxLineLength:TimePicker.kt$periodSelectorUnselectedContainerColor = KrailTheme.colors.surface</ID>
+    <ID>MaxLineLength:TimePicker.kt$timeSelectorSelectedContentColor = themeContentColor</ID>
+    <ID>MaxLineLength:TimePicker.kt$timeSelectorUnselectedContainerColor = KrailTheme.colors.surface</ID>
+    <ID>MaximumLineLength:TimePicker.kt$ </ID>
+    <ID>ModifierComposable:TransportModeIcon.kt$borderIfEnabled</ID>
+    <ID>ModifierMissing:IntroContentAlerts.kt$AnimatedAlertsOneByOne</ID>
+    <ID>ModifierMissing:TimePicker.kt$KrailTimePicker</ID>
+    <ID>ModifierWithoutDefault:SearchStopScreen.kt$modifier</ID>
+    <ID>MultipleEmitters:SettingsScreen.kt$SettingsItem</ID>
+    <ID>MutableStateAutoboxing:SearchStopScreen.kt$mutableStateOf(0)</ID>
+    <ID>ParameterNaming:DateSelection.kt$onNextClicked</ID>
+    <ID>ParameterNaming:DateSelection.kt$onPreviousClicked</ID>
+    <ID>ParameterNaming:DateTimeSelectorScreen.kt$onDateTimeSelected</ID>
+    <ID>ParameterNaming:JourneyTimeOptionsGroup.kt$onOptionSelected</ID>
+    <ID>ParameterNaming:ThemeSelectionScreen.kt$onThemeSelected</ID>
+    <ID>ParameterNaming:TimeTableScreen.kt$onModeSelectionChanged</ID>
+    <ID>SpreadOperator:TimeTableScreen.kt$(*timeTableState.unselectedModes.toTypedArray())</ID>
+    <ID>StringLiteralDuplication:JourneyCard.kt$"10 mins"</ID>
+    <ID>StringLiteralDuplication:JourneyCard.kt$"15 mins"</ID>
+    <ID>StringLiteralDuplication:JourneyCard.kt$"8:25am"</ID>
+    <ID>StringLiteralDuplication:JourneyCard.kt$"8:40am"</ID>
+    <ID>StringLiteralDuplication:JourneyCard.kt$"in 5 mins"</ID>
+    <ID>StringLiteralDuplication:LegView.kt$"01:00 am"</ID>
+    <ID>StringLiteralDuplication:LegView.kt$"12:00 am"</ID>
+    <ID>StringLiteralDuplication:LegView.kt$"DEF Station, Platform 3"</ID>
+    <ID>StringLiteralDuplication:LegView.kt$"XYZ Station, Platform 1"</ID>
+    <ID>StringLiteralDuplication:LegView.kt$"towards AVC via XYZ"</ID>
+    <ID>StringLiteralDuplication:SearchStopScreen.kt$"Search Query"</ID>
+    <ID>StringLiteralDuplication:SearchStopScreen.kt$"Search here"</ID>
+    <ID>StringLiteralDuplication:SearchStopScreen.kt$"Stop Name"</ID>
+    <ID>StringLiteralDuplication:TimeTableScreen.kt$"From Stop"</ID>
+    <ID>StringLiteralDuplication:TimeTableScreen.kt$"To Stop"</ID>
+    <ID>TooManyFunctions:LegView.kt$xyz.ksharma.krail.trip.planner.ui.components.LegView.kt</ID>
+    <ID>TooManyFunctions:SearchStopScreen.kt$xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen.kt</ID>
+    <ID>TooManyFunctions:TimeTableViewModel.kt$TimeTableViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:TransportModeIcon.kt$xyz.ksharma.krail.trip.planner.ui.components.TransportModeIcon.kt</ID>
+    <ID>TooManyFunctions:TripResponseMapper.kt$xyz.ksharma.krail.trip.planner.ui.timetable.business.TripResponseMapper.kt</ID>
+    <ID>UnusedParameter:JourneyCard.kt$platformNumber: String?</ID>
+    <ID>UnusedParameter:OurStoryViewModel.kt$OurStoryViewModel$events: Flow&lt;OurStoryEvent&gt;</ID>
+    <ID>UnusedParameter:PlanTripCard.kt$modifier: Modifier = Modifier</ID>
+    <ID>UnusedPrivateMember:CollapsibleAlert.kt$@Preview @Composable private fun PreviewCollapsibleAlertCollapsed()</ID>
+    <ID>UnusedPrivateMember:CollapsibleAlert.kt$@Preview @Composable private fun PreviewCollapsibleAlertExpanded()</ID>
+    <ID>UnusedPrivateMember:ErrorMessage.kt$@Composable private fun PreviewErrorMessage()</ID>
+    <ID>UnusedPrivateMember:IntroViewModel.kt$IntroViewModel$private fun updateUiState(block: IntroState.() -&gt; IntroState)</ID>
+    <ID>UnusedPrivateMember:JourneyCard.kt$@Composable private fun PreviewJourneyCard()</ID>
+    <ID>UnusedPrivateMember:JourneyCard.kt$@Composable private fun PreviewJourneyCardCollapsed()</ID>
+    <ID>UnusedPrivateMember:JourneyCard.kt$@Composable private fun PreviewJourneyCardExpanded()</ID>
+    <ID>UnusedPrivateMember:JourneyCard.kt$@Composable private fun PreviewJourneyCardLongData()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewLegView()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewLegViewFerry()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewLegViewLightRail()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewLegViewMetro()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewLegViewTwoStops()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewProminentStopInfo()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewRouteSummary()</ID>
+    <ID>UnusedPrivateMember:LegView.kt$@Preview @Composable private fun PreviewStopsRow()</ID>
+    <ID>UnusedPrivateMember:LoadingEmojiAnim.kt$@Composable private fun Preview()</ID>
+    <ID>UnusedPrivateMember:RealStopResultsManager.kt$RealStopResultsManager$private fun filterProductClasses( stopResults: List&lt;SearchStopState.StopResult&gt;, excludedProductClasses: List&lt;Int&gt; = emptyList(), ): List&lt;SearchStopState.StopResult&gt;</ID>
+    <ID>UnusedPrivateMember:SavedTripCard.kt$@Composable private fun SavedTripCardListPreview()</ID>
+    <ID>UnusedPrivateMember:SavedTripCard.kt$@Composable private fun SavedTripCardPreview()</ID>
+    <ID>UnusedPrivateMember:SavedTripsScreen.kt$@Composable private fun SavedTripsScreenPreview()</ID>
+    <ID>UnusedPrivateMember:SearchStopRow.kt$@Composable private fun SearchStopColumnPreview()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenBus()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenCoach()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenEmpty()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenError()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenFerry()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenLightRail()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenLoading()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenMetro()</ID>
+    <ID>UnusedPrivateMember:SearchStopScreen.kt$@Composable private fun PreviewSearchStopScreenTrain()</ID>
+    <ID>UnusedPrivateMember:ServiceAlertScreen.kt$@Composable private fun PreviewServiceAlertScreen()</ID>
+    <ID>UnusedPrivateMember:StopSearchListItem.kt$@Composable private fun StopSearchListItemLongNamePreview()</ID>
+    <ID>UnusedPrivateMember:StopSearchListItem.kt$@Composable private fun StopSearchListItemPreview()</ID>
+    <ID>UnusedPrivateMember:TimeTableScreen.kt$@Composable private fun PreviewTimeTableScreen()</ID>
+    <ID>UnusedPrivateMember:TimeTableScreen.kt$@Composable private fun PreviewTimeTableScreenError()</ID>
+    <ID>UnusedPrivateMember:TimeTableScreen.kt$@Composable private fun PreviewTimeTableScreenNoResults()</ID>
+    <ID>UnusedPrivateMember:TransportModeBadge.kt$@Composable private fun TransportModeBadgeFerryPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeBadge.kt$@Composable private fun TransportModeBadgeTrainPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeBadge.kt$@Preview @Composable private fun TransportModeBadgeBusPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun BusPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun BusWithBackgroundPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun FerryPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun FerryWithBackgroundPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun LightRailPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun LightRailWithBackgroundPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun MetroPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun MetroWithBackgroundPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun TrainPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeIcon.kt$@Preview @Composable private fun TrainWithBackgroundPreview()</ID>
+    <ID>UnusedPrivateMember:TransportModeInfo.kt$@Composable private fun TransportModeInfoPreview()</ID>
+    <ID>UnusedPrivateMember:WalkingLeg.kt$@Preview @Composable private fun PreviewWalkingLeg()</ID>
+    <ID>UnusedPrivateProperty:AlertsDestination.kt$val serviceAlertState by viewModel.uiState.collectAsStateWithLifecycle()</ID>
+  </CurrentIssues>
+</SmellBaseline>

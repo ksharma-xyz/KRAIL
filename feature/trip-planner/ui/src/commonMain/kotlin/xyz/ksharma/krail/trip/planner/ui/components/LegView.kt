@@ -145,7 +145,6 @@ fun LegView(
                     }
                 }
 
-
                 if (showIntermediateStops) {
                     stops.drop(1).dropLast(1).forEach { stop ->
 

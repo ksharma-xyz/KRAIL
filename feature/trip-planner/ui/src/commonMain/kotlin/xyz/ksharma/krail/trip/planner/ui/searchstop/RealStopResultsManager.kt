@@ -58,17 +58,19 @@ class RealStopResultsManager(
             transportMode.productClass to index
         }.toMap()
 
-        return stopResults.sortedWith(compareBy(
-            { stopResult ->
-                if (stopResult.stopId in highPriorityStopIdList) 0 else 1
-            },
-            { stopResult ->
-                stopResult.transportModeType.minOfOrNull {
-                    transportModePriorityMap[it.productClass] ?: Int.MAX_VALUE
-                } ?: Int.MAX_VALUE
-            },
-            { it.stopName }
-        ))
+        return stopResults.sortedWith(
+            compareBy(
+                { stopResult ->
+                    if (stopResult.stopId in highPriorityStopIdList) 0 else 1
+                },
+                { stopResult ->
+                    stopResult.transportModeType.minOfOrNull {
+                        transportModePriorityMap[it.productClass] ?: Int.MAX_VALUE
+                    } ?: Int.MAX_VALUE
+                },
+                { it.stopName }
+            )
+        )
     }
 
     private fun filterProductClasses(

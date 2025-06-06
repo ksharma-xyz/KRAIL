@@ -39,12 +39,13 @@ fun TimeSelection(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         val density = LocalDensity.current
-        if(displayTitle){
-        Text(
-            text = "Select Time",
-            style = KrailTheme.typography.title,
-            color = KrailTheme.colors.onSurface,
-        )}
+        if (displayTitle) {
+            Text(
+                text = "Select Time",
+                style = KrailTheme.typography.title,
+                color = KrailTheme.colors.onSurface,
+            )
+        }
 
         CompositionLocalProvider(
             LocalDensity provides Density(

@@ -18,7 +18,7 @@ internal fun NavGraphBuilder.dateTimeSelectorDestination(navController: NavHostC
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         DateTimeSelectorScreen(
-            dateTimeSelection = route.dateTimeSelectionItemJson?.let{
+            dateTimeSelection = route.dateTimeSelectionItemJson?.let {
                 DateTimeSelectionItem.fromJsonString(it)
             },
             onBackClick = {

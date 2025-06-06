@@ -140,9 +140,12 @@ fun SearchStopScreen(
             )
             .imePadding(),
     ) {
-
         var runPlaceholderAnimation by rememberSaveable { mutableStateOf(true) }
-        var currentModePriority by rememberSaveable { mutableStateOf(TransportMode.Train().priority) } // Start with Train's priority
+        var currentModePriority by rememberSaveable {
+            mutableStateOf(
+                TransportMode.Train().priority
+            )
+        } // Start with Train's priority
         var placeholderText by rememberSaveable { mutableStateOf("Search here") }
         var isDeleting by rememberSaveable { mutableStateOf(false) }
 
@@ -228,7 +231,7 @@ fun SearchStopScreen(
                 )
             }
         ) { value ->
-            //log(("value: $value")
+            // log(("value: $value")
             log("value: $value")
             if (value.isNotBlank()) runPlaceholderAnimation = false
             textFieldText = value.toString()
@@ -446,7 +449,6 @@ private val searchStopState = SearchStopState(
 )
 
 // endregion
-
 
 @Composable
 fun AnimatedPlaceholderTextField(modifier: Modifier) {

@@ -93,7 +93,9 @@ fun SavedTripCard(
                     if (isSystemInDarkTheme().not()) {
                         primaryTransportMode?.colorCode
                             ?.hexToComposeColor() ?: themeColor.hexToComposeColor()
-                    } else KrailTheme.colors.onSurface,
+                    } else {
+                        KrailTheme.colors.onSurface
+                    },
                 ),
             )
         }

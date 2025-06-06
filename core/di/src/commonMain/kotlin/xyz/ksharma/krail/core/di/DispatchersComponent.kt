@@ -18,7 +18,7 @@ open class DispatchersComponent : KoinComponent {
 
     val ioDispatcher: CoroutineDispatcher by inject(named(IODispatcher))
 
-    companion object{
+    companion object {
         const val IODispatcher = "IODispatcher"
         const val DefaultDispatcher = "DefaultDispatcher"
     }

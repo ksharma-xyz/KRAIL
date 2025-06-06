@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:IntroState.kt$IntroState.Companion$fun default(): IntroState</ID>
+    <ID>StringLiteralDuplication:IntroState.kt$IntroState.Companion$"#FFC800"</ID>
+    <ID>StringLiteralDuplication:IntroState.kt$IntroState.Companion$"LET'S KRAIL"</ID>
+  </CurrentIssues>
+</SmellBaseline>

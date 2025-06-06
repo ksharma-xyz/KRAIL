@@ -39,7 +39,7 @@ class NetworkRateLimiter : RateLimiter {
                 interval
             }
             .flatMapLatest {
-                //log(("flatmapLatest: Triggered")
+                // log(("flatmapLatest: Triggered")
                 isFirstTime.update { true } // Mark the first trigger
                 flow {
                     //   log(("Inside flow -emitting block")

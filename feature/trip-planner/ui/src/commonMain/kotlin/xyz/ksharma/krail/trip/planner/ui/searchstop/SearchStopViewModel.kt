@@ -44,7 +44,7 @@ class SearchStopViewModel(
     }
 
     private fun onSearchTextChanged(query: String) {
-        //log(("onSearchTextChanged: $query")
+        // log(("onSearchTextChanged: $query")
         updateUiState { displayLoading() }
         searchJob?.cancel()
         searchJob = viewModelScope.launch {

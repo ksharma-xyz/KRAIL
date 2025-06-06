@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:RemoteConfigDefaults.kt$RemoteConfigDefaults$fun getDefaults(): Array&lt;Pair&lt;String, Any?&gt;&gt;</ID>
+    <ID>MaxLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$"""["200060", "200070", "200080", "206010", "2150106", "200017", "200039", "201016", "201039", "201080", "200066", "200030", "200046", "200050"]""".trimMargin()</ID>
+    <ID>MaximumLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$ </ID>
+    <ID>PackageName:Flag.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageName:FlagKeys.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageName:FlagValue.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageName:RealRemoteConfig.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageName:RemoteConfig.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageName:RemoteConfigDefaults.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageName:RemoteConfigFlag.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageName:RemoteConfigModule.kt$package xyz.ksharma.krail.core.remote_config.di</ID>
+    <ID>PackageName:RemoteConfigValue.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageNaming:Flag.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageNaming:FlagKeys.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageNaming:FlagValue.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageNaming:RealRemoteConfig.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageNaming:RemoteConfig.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageNaming:RemoteConfigDefaults.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>PackageNaming:RemoteConfigFlag.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
+    <ID>PackageNaming:RemoteConfigModule.kt$package xyz.ksharma.krail.core.remote_config.di</ID>
+    <ID>PackageNaming:RemoteConfigValue.kt$package xyz.ksharma.krail.core.remote_config</ID>
+    <ID>SpreadOperator:RealRemoteConfig.kt$RealRemoteConfig$(*RemoteConfigDefaults.getDefaults())</ID>
+  </CurrentIssues>
+</SmellBaseline>

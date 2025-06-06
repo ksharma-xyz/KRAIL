@@ -1,5 +1,6 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
+import org.gradle.kotlin.dsl.detektPlugins
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 android {
@@ -145,6 +146,7 @@ dependencies {
     // Required when using Firebase GitLive RemoteConfig.
     // https://developer.android.com/studio/write/java8-support#library-desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    detektPlugins(libs.detekt.formatting)
 }
 
 detekt {

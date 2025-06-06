@@ -11,6 +11,8 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 apply("io.gitlab.arturbosch.detekt")
             }
             configureAndroid()
+
+            configureDetekt()
         }
     }
 }

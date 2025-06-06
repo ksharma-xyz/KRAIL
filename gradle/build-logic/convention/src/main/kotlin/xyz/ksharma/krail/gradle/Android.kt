@@ -9,8 +9,7 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-fun Project.configureAndroid(
-) {
+fun Project.configureAndroid() {
     extensions.configure<BaseExtension> {
         compileSdkVersion(AndroidVersion.COMPILE_SDK)
 

@@ -13,6 +13,7 @@ fun Project.configureDetekt() {
     dependencies.add("detektPlugins", libs.findLibrary("detekt-formatting").get())
 
     extensions.configure<DetektExtension>("detekt") {
+        autoCorrect = true
         buildUponDefaultConfig = true
         allRules = false
         // Use rootProject.projectDir for the shared config

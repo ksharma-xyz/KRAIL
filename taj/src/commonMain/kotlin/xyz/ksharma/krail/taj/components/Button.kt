@@ -35,7 +35,6 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.modifier.scalingKlickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.EnabledContentAlpha
@@ -82,7 +81,6 @@ fun Button(
         }
     }
 }
-
 
 @Composable
 fun SubtleButton(

@@ -12,6 +12,9 @@ fun Project.configureDetekt() {
     // Add the formatting plugin
     dependencies.add("detektPlugins", libs.findLibrary("detekt-formatting").get())
 
+    // Compose specific rules
+    dependencies.add("detektPlugins", libs.findLibrary("detekt-compose").get())  //  }
+
     extensions.configure<DetektExtension>("detekt") {
         autoCorrect = true
         buildUponDefaultConfig = true

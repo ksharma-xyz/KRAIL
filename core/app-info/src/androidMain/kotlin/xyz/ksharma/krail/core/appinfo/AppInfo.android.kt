@@ -67,10 +67,10 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
         get() = java.util.TimeZone.getDefault().id
 
     override fun toString() =
-        "AndroidAppInfo(type=$devicePlatformType, isDebug=${isDebug}, appVersion=$appVersion, osVersion=$osVersion, " +
-                "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
-                "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
-                "timeZone=$timeZone)"
+        "AndroidAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
+            "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
+            "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
+            "timeZone=$timeZone)"
 }
 
 class AndroidAppInfoProvider(

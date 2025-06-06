@@ -16,7 +16,7 @@ internal object SandookMigrationAfter1 : SandookMigration {
                             heading TEXT NOT NULL,
                             message TEXT NOT NULL
                         );
-                """.trimIndent(),
+            """.trimIndent(),
             parameters = 0,
         )
     }

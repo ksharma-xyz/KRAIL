@@ -2,15 +2,12 @@ package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import xyz.ksharma.krail.taj.hexToComposeColor
-import kotlin.math.log
 
 // https://www.w3.org/TR/WCAG21/#contrast-minimum
 private const val DEFAULT_TEXT_SIZE_CONTRAST_AA = 4.5f
 
 // when font scale greater than 1.2f. Text size is 18dp default and 14dp bold.
 private const val LARGE_TEXT_SIZE_CONTRAST_AA = 3.0f
-
 
 /**
  * Calculates the contrast ratio between two colors

@@ -17,7 +17,7 @@ internal object SandookMigrationAfter3 : SandookMigration {
                        bool_value INTEGER,
                        float_value REAL
                    );
-                """.trimIndent(),
+            """.trimIndent(),
             parameters = 0,
         )
     }

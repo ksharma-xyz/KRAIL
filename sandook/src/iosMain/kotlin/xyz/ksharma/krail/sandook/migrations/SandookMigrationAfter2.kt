@@ -23,7 +23,7 @@ internal object SandookMigrationAfter2 : SandookMigration {
                         productClass INTEGER NOT NULL,
                         FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
                     );
-                """.trimIndent(),
+            """.trimIndent(),
             parameters = 0,
         )
     }

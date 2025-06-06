@@ -27,7 +27,7 @@ object ScalingIndication : IndicationNodeFactory {
 /**
  * https://developer.android.com/develop/ui/compose/touch-input/user-interactions/migrate-indication-ripple
  */
- class ScaleIndicationNode(
+class ScaleIndicationNode(
     private val interactionSource: InteractionSource
 ) : Modifier.Node(), DrawModifierNode {
     private var currentPressPosition: Offset = Offset.Zero

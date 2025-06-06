@@ -99,7 +99,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         )
 
     data class ModeSelectionDoneEvent(
-        val fromStopId: String, val toStopId: String,
+        val fromStopId: String,
+        val toStopId: String,
         val unselectedProductClasses: Set<Int>,
     ) : AnalyticsEvent(
         name = "mode_selection_done",

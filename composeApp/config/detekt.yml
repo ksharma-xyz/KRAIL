@@ -14,12 +14,10 @@ complexity:
   StringLiteralDuplication:
     active: true
     excludes: ['**/test/**', '**/*Test.kt', '**/*Spec.kt']
-    allowedDuplications: 4
     ignoreAnnotation: true
     ignoreStringsRegex: '$^'
   ComplexInterface:
     active: true
-    allowedDefinitions: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
   CyclomaticComplexMethod:
@@ -63,42 +61,6 @@ exceptions:
     active: true
   ThrowingNewInstanceOfSameException:
     active: true
-
-formatting:
-  active: true
-  android: false
-  autoCorrect: true
-  BlankLineBeforeDeclaration:
-    active: false
-  ChainMethodContinuation:
-    active: false
-  ClassSignature:
-    active: false
-  EnumEntryNameCase:
-    active: false
-  Filename:
-    active: false
-  FunctionSignature:
-    active: false
-  Kdoc:
-    active: true
-    excludes: ['**/*.kts']
-  MaximumLineLength:
-    active: false
-  MultilineExpressionWrapping:
-    active: false
-  NoEmptyFirstLineInClassBody:
-    active: false
-  SpacingAroundSquareBrackets:
-    active: true
-  StringTemplateIndent:
-    active: false
-  TrailingCommaOnCallSite:
-    active: false
-  TrailingCommaOnDeclarationSite:
-    active: true
-  ValueArgumentComment:
-    active: false
 
 naming:
   ClassNaming:
@@ -170,8 +132,6 @@ style:
   EqualsOnSignatureLine:
     active: true
   ExplicitCollectionElementAccessMethod:
-    active: true
-  ExplicitItLambdaMultipleParameters:
     active: true
   ExplicitItLambdaParameter:
     active: true
@@ -250,21 +210,13 @@ style:
     active: true
   PreferToOverPairSyntax:
     active: true
-  RangeUntilInsteadOfRangeTo:
-    active: true
-  RedundantConstructorKeyword:
-    active: true
   RedundantExplicitType:
     active: true
   RedundantHigherOrderMapUsage:
     active: true
-  RedundantVisibilityModifier:
-    active: true
   ReturnCount:
     active: true
     excludeGuardClauses: true
-  SpacingAfterPackageDeclaration:
-    active: true
   TrimMultilineRawString:
     active: true
   UnderscoresInNumericLiterals:
@@ -280,8 +232,6 @@ style:
   UnnecessaryInnerClass:
     active: true
     ignoreAnnotated: ['Nested']
-  UnusedImport:
-    active: false # formatting already have this rule enabled
   UseAnyOrNoneInsteadOfFind:
     active: true
   UseCheckOrError:
@@ -306,18 +256,3 @@ style:
   WildcardImport:
     active: true
     excludeImports: []
-
-libraries:
-  ForbiddenPublicDataClass:
-    active: false
-  LibraryEntitiesShouldNotBePublic:
-    active: false
-  LibraryCodeMustSpecifyReturnType:
-    active: true
-    excludes: ['**/*.kt']
-    includes: ['**/detekt-api/src/main/**/api/*.kt']
-
-ruleauthors:
-  ViolatesTypeResolutionRequirements:
-    active: true
-    excludes: ['**/test/**', '**/*Test.kt', '**/*Spec.kt']

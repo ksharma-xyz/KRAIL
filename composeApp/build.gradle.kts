@@ -167,8 +167,8 @@ tasks.withType<Detekt>().configureEach {
 }
 
 tasks.withType<Detekt>().configureEach {
-    jvmTarget = JvmTarget.JVM_17.toString()
+    jvmTarget = JvmTarget.JVM_17.target
 }
 tasks.withType<DetektCreateBaselineTask>().configureEach {
-    jvmTarget = JvmTarget.JVM_17.toString()
+    jvmTarget = JvmTarget.JVM_17.target
 }

@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation
 
-import    androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.navigation
 import kotlinx.serialization.Serializable
@@ -9,10 +9,10 @@ import xyz.ksharma.krail.trip.planner.ui.datetimeselector.dateTimeSelectorDestin
 import xyz.ksharma.krail.trip.planner.ui.intro.introDestination
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsDestination
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopDestination
-import xyz.ksharma.krail.trip.planner.ui.settings.story.aboutUsDestination
 import xyz.ksharma.krail.trip.planner.ui.settings.settingsDestination
-import xyz.ksharma.krail.trip.planner.ui.timetable.timeTableDestination
+import xyz.ksharma.krail.trip.planner.ui.settings.story.aboutUsDestination
 import xyz.ksharma.krail.trip.planner.ui.themeselection.themeSelectionDestination
+import xyz.ksharma.krail.trip.planner.ui.timetable.timeTableDestination
 
 /**
  * Nested navigation graph for the trip planner feature.

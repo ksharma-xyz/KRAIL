@@ -5,5 +5,4 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun PlanTripCard(modifier: Modifier = Modifier) {
-
 }

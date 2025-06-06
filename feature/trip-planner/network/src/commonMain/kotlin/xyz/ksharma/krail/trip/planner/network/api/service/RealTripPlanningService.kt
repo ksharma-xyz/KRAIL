@@ -27,7 +27,6 @@ class RealTripPlanningService(
         time: String?,
         excludeProductClassSet: Set<Int>,
     ): TripResponse = withContext(ioDispatcher) {
-
         httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/tp/trip") {
             url {
                 parameters.append(TripRequestParams.nameOrigin, originStopId)

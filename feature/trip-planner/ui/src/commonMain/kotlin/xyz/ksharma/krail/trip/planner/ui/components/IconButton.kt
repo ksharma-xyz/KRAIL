@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.modifier.klickable
 
-//TODO - Should be RoundIconButton
+// TODO - Should be RoundIconButton
 @Composable
 fun IconButton(
     painter: Painter,

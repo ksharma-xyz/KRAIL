@@ -39,7 +39,8 @@ fun IntroContentRealTime(
         }
 
         TagLineWithEmoji(
-            tagline = tagline, emoji = "\uD83D\uDE80",
+            tagline = tagline,
+            emoji = "\uD83D\uDE80",
             tagColor = style.hexToComposeColor()
         )
     }

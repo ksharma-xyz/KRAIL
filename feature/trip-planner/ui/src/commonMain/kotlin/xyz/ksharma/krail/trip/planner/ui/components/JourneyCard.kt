@@ -8,7 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -54,7 +52,6 @@ import xyz.ksharma.krail.taj.components.SeparatorIcon
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
 import xyz.ksharma.krail.taj.toAdaptiveSize
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -138,7 +135,6 @@ fun JourneyCard(
                 )
                 .animateContentSize(),
         ) {
-
             when (cardState) {
                 JourneyCardState.DEFAULT -> DefaultJourneyCardContent(
                     timeToDeparture = timeToDeparture,
@@ -291,9 +287,13 @@ fun ExpandedJourneyCardContent(
                             stops = leg.stops,
                             displayAllStops = displayAllStops,
                             modifier = Modifier.padding(
-                                top = if (index > 0) getPaddingValue(
-                                    lastLeg = legList[(index - 1).coerceAtLeast(0)]
-                                ) else 0.dp
+                                top = if (index > 0) {
+                                    getPaddingValue(
+                                        lastLeg = legList[(index - 1).coerceAtLeast(0)]
+                                    )
+                                } else {
+                                    0.dp
+                                }
                             ),
                             onClick = onLegClick,
                         )
@@ -317,7 +317,11 @@ fun getPaddingValue(lastLeg: TimeTableState.JourneyCardInfo.Leg): Dp {
     return if (
         lastLeg is TimeTableState.JourneyCardInfo.Leg.TransportLeg &&
         lastLeg.walkInterchange?.position != TimeTableState.JourneyCardInfo.WalkPosition.AFTER
-    ) 16.dp else 0.dp
+    ) {
+        16.dp
+    } else {
+        0.dp
+    }
 }
 
 @Composable
@@ -477,8 +481,7 @@ internal fun List<TransportMode>?.toColors(onSurface: Color): List<Color> = when
 
 // region Previews
 
-
-//@Preview(fontScale = 2f)
+// @Preview(fontScale = 2f)
 @Composable
 private fun PreviewJourneyCard() {
     KrailTheme {
@@ -504,8 +507,7 @@ private fun PreviewJourneyCard() {
     }
 }
 
-
-//@Preview(fontScale = 2f)
+// @Preview(fontScale = 2f)
 @Composable
 private fun PreviewJourneyCardCollapsed() {
     KrailTheme {
@@ -546,7 +548,7 @@ private fun PreviewJourneyCardCollapsed() {
                     tripId = "700",
                 ),
 
-                ),
+            ),
             cardState = JourneyCardState.EXPANDED,
             totalWalkTime = "10 mins",
             totalUniqueServiceAlerts = 1,

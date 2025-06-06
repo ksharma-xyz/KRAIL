@@ -355,8 +355,10 @@ class TimeTableViewModel(
                     // Trip is not saved, so save it
                     sandook.insertOrReplaceTrip(
                         tripId = trip.tripId,
-                        fromStopId = trip.fromStopId, fromStopName = trip.fromStopName,
-                        toStopId = trip.toStopId, toStopName = trip.toStopName
+                        fromStopId = trip.fromStopId,
+                        fromStopName = trip.fromStopName,
+                        toStopId = trip.toStopId,
+                        toStopName = trip.toStopName
                     )
                     log("Saved Trip (Pref): $trip")
                     updateUiState { copy(isTripSaved = true) }

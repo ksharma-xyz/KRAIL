@@ -41,7 +41,6 @@ fun IntroContentAlerts(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-
             var displayAlert by rememberSaveable { mutableStateOf(false) }
 
             AlertButton(
@@ -56,13 +55,13 @@ fun IntroContentAlerts(
         }
 
         TagLineWithEmoji(
-            tagline = tagline, emoji = "⚠",
+            tagline = tagline,
+            emoji = "⚠",
             emojiColor = style.hexToComposeColor(),
             tagColor = style.hexToComposeColor(),
         )
     }
 }
-
 
 @Composable
 fun AnimatedAlertsOneByOne(

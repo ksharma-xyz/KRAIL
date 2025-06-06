@@ -65,8 +65,11 @@ fun IntroScreen(
     // For offset below 50%, alpha falls from 1 to 0.
     // For offset above 50%, alpha rises from 0 to 1.
     val animatedAlpha by animateFloatAsState(
-        targetValue = if (offsetFraction < 0.5f) 1f - (offsetFraction * 2f)
-        else (offsetFraction - 0.5f) * 2f
+        targetValue = if (offsetFraction < 0.5f) {
+            1f - (offsetFraction * 2f)
+        } else {
+            (offsetFraction - 0.5f) * 2f
+        }
     )
 
     // Compute continuous button color by interpolating between current and next page colors.
@@ -145,7 +148,11 @@ fun IntroScreen(
                     ) {
                         IntroPageContent(
                             pageData = pageData,
-                            onShareClick = { onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_CONTENT_BUTTON)) },
+                            onShareClick = {
+                                onEvent(
+                                    IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_CONTENT_BUTTON)
+                                )
+                            },
                             modifier = Modifier.fillMaxSize(),
                             onInteraction = { pageType ->
                                 onEvent(IntroUiEvent.IntroElementsInteraction(pageType))

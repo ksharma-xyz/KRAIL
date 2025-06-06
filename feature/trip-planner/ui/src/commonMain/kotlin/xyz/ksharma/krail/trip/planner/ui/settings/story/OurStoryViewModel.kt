@@ -29,7 +29,7 @@ class OurStoryViewModel(
                 updateOurStoryState()
                 analytics.trackScreenViewEvent(screen = AnalyticsScreen.OurStory)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), OurStoryState())
-    */
+     */
 
     /*
         private fun updateOurStoryState() {
@@ -43,13 +43,13 @@ class OurStoryViewModel(
                 }
             }
         }
-    */
+     */
 
     /*
         private fun updateUiState(block: OurStoryState.() -> OurStoryState) {
             _uiState.update(block)
         }
-    */
+     */
 
     @Composable
     override fun models(events: Flow<OurStoryEvent>): OurStoryState {

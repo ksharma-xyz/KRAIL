@@ -3,8 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.state.datetimeselector
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import xyz.ksharma.krail.core.datetime.toReadableDate
 import xyz.ksharma.krail.core.datetime.to12HourTimeString
+import xyz.ksharma.krail.core.datetime.toReadableDate
 
 @Serializable
 data class DateTimeSelectionItem(

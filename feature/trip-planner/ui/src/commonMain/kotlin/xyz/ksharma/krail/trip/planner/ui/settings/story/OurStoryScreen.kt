@@ -47,7 +47,6 @@ fun OurStoryScreen(
                     modifier = Modifier,
                     contentPadding = PaddingValues(top = 20.dp, bottom = 104.dp),
                 ) {
-
                     item {
                         Text(
                             state.story,

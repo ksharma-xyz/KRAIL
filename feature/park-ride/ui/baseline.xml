@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>FunctionNaming:ParkAndRideIcon.kt$@Composable fun ParkAndRideIcon()</ID>
+    <ID>FunctionNaming:ParkAndRideIcon.kt$@Preview @Composable private fun ParkAndRideIconPreview()</ID>
+    <ID>FunctionNaming:ParkAndRideIcon.kt$@Preview @Composable private fun ParkAndRideIconThemedPreview()</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Composable fun ParkRideFacilityItem( parkRideFacilityInfo: ParkRideFacilityInfo, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Composable fun ParkRideInfoCard( parkRideInfo: ImmutableMap&lt;String, ImmutableList&lt;ParkRideFacilityInfo&gt;&gt;, onNavigateToMapsClick: (String) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Composable fun ParkRideInfoText( number: String, description: String, )</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideFacilityItemPreview()</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideInfoCardPreview_MultipleStops()</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideInfoCardPreview_SingleStop()</ID>
+    <ID>FunctionNaming:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideInfoCardPreview_SingleStopMultipleFacilities()</ID>
+    <ID>ModifierMissing:ParkAndRideIcon.kt$ParkAndRideIcon</ID>
+    <ID>ModifierMissing:ParkRideFacilityInfo.kt$ParkRideInfoText</ID>
+    <ID>StringLiteralDuplication:ParkRideFacilityInfo.kt$"Tallawong P1"</ID>
+    <ID>UnusedPrivateMember:ParkAndRideIcon.kt$@Preview @Composable private fun ParkAndRideIconPreview()</ID>
+    <ID>UnusedPrivateMember:ParkAndRideIcon.kt$@Preview @Composable private fun ParkAndRideIconThemedPreview()</ID>
+    <ID>UnusedPrivateMember:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideFacilityItemPreview()</ID>
+    <ID>UnusedPrivateMember:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideInfoCardPreview_MultipleStops()</ID>
+    <ID>UnusedPrivateMember:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideInfoCardPreview_SingleStop()</ID>
+    <ID>UnusedPrivateMember:ParkRideFacilityInfo.kt$@Preview @Composable private fun ParkRideInfoCardPreview_SingleStopMultipleFacilities()</ID>
+  </CurrentIssues>
+</SmellBaseline>

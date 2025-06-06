@@ -19,7 +19,7 @@ fun NavGraphBuilder.searchStopDestination(navController: NavHostController) {
         SearchStopScreen(
             searchStopState = searchStopState,
             onStopSelect = { stopItem ->
-                //log(("onStopSelected: fieldTypeKey=${route.fieldType.key} and stopItem: $stopItem")
+                // log(("onStopSelected: fieldTypeKey=${route.fieldType.key} and stopItem: $stopItem")
                 viewModel.onEvent(SearchStopUiEvent.StopSelected(stopItem))
 
                 navController.previousBackStackEntry?.savedStateHandle?.set(

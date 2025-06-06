@@ -4,7 +4,6 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Project
-import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 fun Project.configureDetekt() {
@@ -37,13 +36,5 @@ fun Project.configureDetekt() {
     }
     tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
         jvmTarget = JvmTarget.JVM_17.target
-    }
-
-    tasks.register("generateAllDetektBaselines") {
-        group = "verification"
-        description = "Generates Detekt baselines for all modules"
-        dependsOn(
-            subprojects.mapNotNull { it.tasks.findByName("detektBaseline") }
-        )
     }
 }

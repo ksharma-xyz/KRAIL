@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongParameterList:TripPlanningService.kt$TripPlanningService$( originStopId: String, destinationStopId: String, depArr: DepArr = DepArr.DEP, /** * YYYYMMDD format. * E.g. 20160901 refers to 1 September 2016. */ date: String? = null, /** * HHMM 24-hour format. * E.g. 0830 means 8:30am and 2030 means 8:30pm. */ time: String? = null, /** * List of product classes to exclude from the response. * Only those journeys will be returned which are different modes of transport to the excluded * product classes. */ excludeProductClassSet: Set&lt;Int&gt;, )</ID>
+    <ID>MagicNumber:RealTripPlanningService.kt$RealTripPlanningService$11</ID>
+    <ID>MagicNumber:RealTripPlanningService.kt$RealTripPlanningService$4</ID>
+    <ID>MagicNumber:RealTripPlanningService.kt$RealTripPlanningService$5</ID>
+    <ID>MagicNumber:RealTripPlanningService.kt$RealTripPlanningService$7</ID>
+    <ID>MagicNumber:RealTripPlanningService.kt$RealTripPlanningService$9</ID>
+    <ID>PackageName:StopFinderRequestParams.kt$package xyz.ksharma.krail.trip.planner.network.api.service.stop_finder</ID>
+    <ID>PackageNaming:StopFinderRequestParams.kt$package xyz.ksharma.krail.trip.planner.network.api.service.stop_finder</ID>
+  </CurrentIssues>
+</SmellBaseline>

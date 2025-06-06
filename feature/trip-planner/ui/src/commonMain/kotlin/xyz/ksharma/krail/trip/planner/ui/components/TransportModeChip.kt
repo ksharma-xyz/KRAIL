@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -32,8 +31,11 @@ fun TransportModeChip(
     modifier: Modifier = Modifier,
 ) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (selected) transportMode.colorCode.hexToComposeColor()
-        else KrailTheme.colors.surface,
+        targetValue = if (selected) {
+            transportMode.colorCode.hexToComposeColor()
+        } else {
+            KrailTheme.colors.surface
+        },
         animationSpec = tween(200),
     )
 
@@ -43,9 +45,13 @@ fun TransportModeChip(
     )
 
     val textColor by animateColorAsState(
-        targetValue = if (selected) getForegroundColor(
-            backgroundColor = transportMode.colorCode.hexToComposeColor(),
-        ) else Color.Gray,
+        targetValue = if (selected) {
+            getForegroundColor(
+                backgroundColor = transportMode.colorCode.hexToComposeColor(),
+            )
+        } else {
+            Color.Gray
+        },
         animationSpec = tween(200),
     )
 

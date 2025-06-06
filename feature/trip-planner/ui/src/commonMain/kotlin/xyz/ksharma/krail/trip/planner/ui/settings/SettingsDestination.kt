@@ -9,14 +9,13 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
-import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
 
 internal fun NavGraphBuilder.settingsDestination(navController: NavHostController) {
     composable<SettingsRoute> {
-
         val viewModel: SettingsViewModel = koinViewModel<SettingsViewModel>()
         val settingsState by viewModel.uiState.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()

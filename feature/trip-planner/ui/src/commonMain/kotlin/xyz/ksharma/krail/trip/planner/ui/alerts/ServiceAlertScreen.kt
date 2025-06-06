@@ -74,7 +74,7 @@ fun ServiceAlertScreen(
     }
 }
 
-//@Preview
+// @Preview
 @Composable
 private fun PreviewServiceAlertScreen() {
     KrailTheme {

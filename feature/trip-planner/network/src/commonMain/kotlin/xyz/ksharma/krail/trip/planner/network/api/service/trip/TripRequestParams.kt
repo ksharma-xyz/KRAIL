@@ -112,7 +112,7 @@ internal object TripRequestParams {
      *
      * Available values : on
      */
-    const val wheelchair: String = "wheelchair"// Optional, used for wheelchair accessible trips
+    const val wheelchair: String = "wheelchair" // Optional, used for wheelchair accessible trips
 
     /**
      * This parameter which means of transport to exclude from the trip plan.
@@ -159,7 +159,6 @@ internal object TripRequestParams {
      */
     const val exclMOT5 = "exclMOT_5" // Optional, to exclude bus
 
-
     /**
      * Excludes coach services from the trip plan. Must be used in conjunction with
      * [excludedMeans]=checkbox
@@ -174,7 +173,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT9 = "exclMOT_9"// Optional, to exclude bus
+    const val exclMOT9 = "exclMOT_9" // Optional, to exclude bus
 
     /**
      * Excludes school bus services from the trip plan. Must be used in conjunction with

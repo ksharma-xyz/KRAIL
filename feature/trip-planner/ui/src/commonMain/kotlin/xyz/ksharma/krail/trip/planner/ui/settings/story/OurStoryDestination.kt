@@ -11,7 +11,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryState
 
 internal fun NavGraphBuilder.aboutUsDestination(navController: NavHostController) {
     composable<OurStoryRoute> {
-
         val viewModel: OurStoryViewModel = koinViewModel<OurStoryViewModel>()
         val ourStoryState: OurStoryState by viewModel.models.collectAsState()
 

@@ -79,7 +79,8 @@ fun IntroContentPlanTrip(
         }
 
         TagLineWithEmoji(
-            tagline = tagline, emoji = "\uD83D\uDD2E",
+            tagline = tagline,
+            emoji = "\uD83D\uDD2E",
             tagColor = style.hexToComposeColor()
         )
     }

@@ -128,7 +128,7 @@ object LoadingEmojiManager {
             .firstOrNull {
                 log(
                     "Checking festival date[${it.key.dayOfMonth} / ${it.key.month}] " +
-                            "| Comparing to ${today.dayOfMonth} / ${today.month.number}"
+                        "| Comparing to ${today.dayOfMonth} / ${today.month.number}"
                 )
                 it.key.month == today.month.number && it.key.dayOfMonth == today.dayOfMonth
             }

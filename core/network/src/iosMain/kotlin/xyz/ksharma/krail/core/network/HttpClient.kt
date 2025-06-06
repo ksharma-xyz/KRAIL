@@ -21,11 +21,13 @@ actual fun baseHttpClient(
     return HttpClient(Darwin) {
         expectSuccess = true
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-                prettyPrint = true
-            })
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                    prettyPrint = true
+                }
+            )
         }
         install(Logging) {
             coroutineScope.launch {

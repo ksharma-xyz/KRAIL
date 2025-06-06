@@ -38,13 +38,13 @@ object RemoteConfigDefaults {
     If you've found KRAIL helpful, I hope you'll share it with someone else, just like someone once shared it with you \uD83D\uDC96.
 
     Thanks again for being a part of this journey.
-    """.trimMargin(),
+                """.trimMargin(),
             ),
             Pair(
                 FlagKeys.DISCLAIMER_TEXT.key,
                 """
     Important to note: Real-time data in KRAIL is provided by Transport for NSW. While I strive to ensure accuracy, I cannot guarantee it will always be correct. For the latest and most up-to-date information, please visit www.transportnsw.info
-    """.trimMargin(),
+                """.trimMargin(),
             ),
             Pair(
                 FlagKeys.NSW_PARK_RIDE_FACILITIES.key,

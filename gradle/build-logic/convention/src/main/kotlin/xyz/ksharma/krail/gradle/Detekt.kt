@@ -38,4 +38,12 @@ fun Project.configureDetekt() {
     tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
         jvmTarget = JvmTarget.JVM_17.target
     }
+
+    tasks.register("generateAllDetektBaselines") {
+        group = "verification"
+        description = "Generates Detekt baselines for all modules"
+        dependsOn(
+            subprojects.mapNotNull { it.tasks.findByName("detektBaseline") }
+        )
+    }
 }

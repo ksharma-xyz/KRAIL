@@ -1,3 +1,5 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 android {
@@ -62,6 +64,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlyticsPlugin)
     alias(libs.plugins.firebase.performancePlugin)
+    alias(libs.plugins.detekt)
 }
 
 kotlin {
@@ -142,4 +145,30 @@ dependencies {
     // Required when using Firebase GitLive RemoteConfig.
     // https://developer.android.com/studio/write/java8-support#library-desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+}
+
+detekt {
+    buildUponDefaultConfig = true // preconfigure defaults
+    allRules = false // activate all available (even unstable) rules.
+    config.setFrom("$projectDir/config/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
+    baseline = file("$projectDir/config/baseline.xml") // a way of suppressing issues before introducing detekt
+    source.setFrom(
+        "src/commonMain/kotlin",
+        "src/androidMain/kotlin",
+        "src/iosMain/kotlin"
+    )
+}
+
+tasks.withType<Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+        md.required.set(true)
+    }
+}
+
+tasks.withType<Detekt>().configureEach {
+    jvmTarget = JvmTarget.JVM_17.toString()
+}
+tasks.withType<DetektCreateBaselineTask>().configureEach {
+    jvmTarget = JvmTarget.JVM_17.toString()
 }

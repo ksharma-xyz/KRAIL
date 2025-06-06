@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>Filename:FileStorage.android.kt$xyz.ksharma.krail.gtfs_static.FileStorage.android.kt</ID>
+    <ID>Filename:FileStorage.ios.kt$xyz.ksharma.krail.gtfs_static.FileStorage.ios.kt</ID>
+    <ID>MagicNumber:RealNswGtfsService.kt$RealNswGtfsService$200</ID>
+    <ID>MatchingDeclarationName:FileStorage.android.kt$AndroidFileStorage : FileStorage</ID>
+    <ID>MatchingDeclarationName:FileStorage.ios.kt$IosFileStorage : FileStorage</ID>
+    <ID>PackageName:FileStorage.android.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageName:FileStorage.ios.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageName:FileStorage.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageName:FileStorageModule.android.kt$package xyz.ksharma.krail.gtfs_static.di</ID>
+    <ID>PackageName:FileStorageModule.ios.kt$package xyz.ksharma.krail.gtfs_static.di</ID>
+    <ID>PackageName:GtfsModule.kt$package xyz.ksharma.krail.gtfs_static.di</ID>
+    <ID>PackageName:NswGtfsService.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageName:RealNswGtfsService.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageNaming:FileStorage.android.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageNaming:FileStorage.ios.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageNaming:FileStorage.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageNaming:FileStorageModule.android.kt$package xyz.ksharma.krail.gtfs_static.di</ID>
+    <ID>PackageNaming:FileStorageModule.ios.kt$package xyz.ksharma.krail.gtfs_static.di</ID>
+    <ID>PackageNaming:GtfsModule.kt$package xyz.ksharma.krail.gtfs_static.di</ID>
+    <ID>PackageNaming:NswGtfsService.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>PackageNaming:RealNswGtfsService.kt$package xyz.ksharma.krail.gtfs_static</ID>
+    <ID>TooGenericExceptionThrown:RealNswGtfsService.kt$RealNswGtfsService$throw Exception("Failed to download file: ${response.status}")</ID>
+  </CurrentIssues>
+</SmellBaseline>

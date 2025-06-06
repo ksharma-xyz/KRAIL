@@ -15,8 +15,9 @@ fun Project.configureDetekt() {
     extensions.configure<DetektExtension>("detekt") {
         buildUponDefaultConfig = true
         allRules = false
-        config.setFrom("$projectDir/config/detekt.yml")
-        baseline = file("$projectDir/config/baseline.xml")
+        // Use rootProject.projectDir for the shared config
+        config.setFrom("${rootProject.projectDir}/config/detekt.yml")
+        baseline = file("$projectDir/baseline.xml")
         source.setFrom(
             "src/commonMain/kotlin",
             "src/androidMain/kotlin",

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexInterface:AppInfo.kt$AppInfo</ID>
+    <ID>Indentation:AppInfo.android.kt$AndroidAppInfo$ </ID>
+    <ID>Indentation:AppInfo.ios.kt$IOSAppInfo$ </ID>
+    <ID>StringTemplate:AppInfo.android.kt$AndroidAppInfo$${isDebug}</ID>
+    <ID>StringTemplate:AppInfo.ios.kt$IOSAppInfo$${isDebug}</ID>
+  </CurrentIssues>
+</SmellBaseline>

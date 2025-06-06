@@ -31,7 +31,7 @@ uiGeometryAndroid = "1.8.1"
 foundationLayoutAndroid = "1.8.1"
 ui-tooling = "1.7.6"
 detekt = "1.23.8"
-detektCompose = "0.4.17"
+detektCompose = "0.4.22"
 
 [libraries]
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }

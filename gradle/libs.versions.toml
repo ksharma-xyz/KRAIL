@@ -113,6 +113,7 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight" }
 firebase-crashlyticsPlugin = { id = "com.google.firebase.crashlytics", version = "3.0.3" }
 firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version = "1.4.2" }
 wire = { id = "com.squareup.wire", version = "5.3.2" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 
 #Convention Plugins
 krail-android-application = { id = "krail.android.application", version = "unspecified" }

@@ -13,4 +13,5 @@ plugins {
     alias(libs.plugins.firebase.crashlyticsPlugin) apply false
     alias(libs.plugins.firebase.performancePlugin) apply false
     alias(libs.plugins.wire) apply false
+    alias(libs.plugins.detekt) apply false
 }

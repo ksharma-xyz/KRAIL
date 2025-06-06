@@ -4,9 +4,14 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Project
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 fun Project.configureDetekt() {
+
+    // Add the formatting plugin
+    dependencies.add("detektPlugins", libs.findLibrary("detekt-formatting").get())
+
     extensions.configure<DetektExtension>("detekt") {
         buildUponDefaultConfig = true
         allRules = false

@@ -67,10 +67,10 @@ class IOSAppInfo : AppInfo {
         get() = NSTimeZone.localTimeZone.name
 
     override fun toString() =
-        "iOSAppInfo(type=$devicePlatformType, isDebug=${isDebug}, appVersion=$appVersion, osVersion=$osVersion, " +
-                "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
-                "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
-                "timeZone=$timeZone)"
+        "iOSAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
+            "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
+            "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
+            "timeZone=$timeZone)"
 }
 
 class IosAppInfoProvider : AppInfoProvider {

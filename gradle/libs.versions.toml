@@ -31,6 +31,7 @@ uiGeometryAndroid = "1.8.1"
 foundationLayoutAndroid = "1.8.1"
 ui-tooling = "1.7.6"
 detekt = "1.23.8"
+detektCompose = "0.4.17"
 
 [libraries]
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }
@@ -101,8 +102,10 @@ molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref 
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui-tooling" }
 
 ## Formatting
+### Formatting is required by configureDetekt() in build-logic
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-compose = { group = "io.nlopez.compose.rules", name = "detekt", version.ref = "detektCompose" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

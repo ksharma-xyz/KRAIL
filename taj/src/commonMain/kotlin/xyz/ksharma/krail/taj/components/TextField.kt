@@ -155,7 +155,6 @@ private fun TextFieldPlaceholder(placeholder: String? = null) {
 
 // region Previews
 
-
 @Composable
 private fun TextFieldEnabledPreview() {
     KrailTheme {

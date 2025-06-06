@@ -158,7 +158,6 @@ private fun hsvToColor(hsv: FloatArray): Int {
     return (255 shl 24) or (red shl 16) or (green shl 8) or blue
 }
 
-
 @Composable
 fun themeContentColor(): Color {
     val themeContentColor by LocalThemeContentColor.current

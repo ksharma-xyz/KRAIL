@@ -3,7 +3,9 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>CascadingCallWrapping:Button.kt$klickable( enabled = enabled, onClick = onClick, )</ID>
-    <ID>FinalNewline:PlatformType.kt$xyz.ksharma.krail.taj.PlatformType.kt</ID>
+    <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalContainerColor</ID>
+    <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalThemeColor</ID>
+    <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalThemeContentColor</ID>
     <ID>FunctionNaming:Button.kt$@Composable fun AlertButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, dimensions: ButtonDimensions = ButtonDefaults.smallButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:Button.kt$@Composable fun Button( onClick: () -&gt; Unit, modifier: Modifier = Modifier, colors: ButtonColors = ButtonDefaults.buttonColors(), dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, // RowScope and place )</ID>
     <ID>FunctionNaming:Button.kt$@Composable fun SubtleButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
@@ -28,7 +30,6 @@
     <ID>FunctionNaming:Theme.kt$@Composable fun KrailTheme( darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:TitleBar.kt$@Composable fun NavActionButton( icon: ImageVector, iconContentDescription: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:TitleBar.kt$@Composable fun TitleBar( title: @Composable () -&gt; Unit, modifier: Modifier = Modifier, onNavActionClick: (() -&gt; Unit)? = null, actions: @Composable (() -&gt; Unit)? = null, )</ID>
-    <ID>Indentation:ScalingIndication.kt$ScaleIndicationNode$ </ID>
     <ID>LongMethod:TextField.kt$@Composable fun TextField( modifier: Modifier = Modifier, placeholder: String? = null, initialText: String? = null, enabled: Boolean = true, textStyle: TextStyle? = null, readOnly: Boolean = false, leadingIcon: (@Composable () -&gt; Unit)? = null, imeAction: ImeAction = ImeAction.Default, filter: (CharSequence) -&gt; CharSequence = { it }, maxLength: Int = Int.MAX_VALUE, onTextChange: (CharSequence) -&gt; Unit = {}, )</ID>
     <ID>LongParameterList:Button.kt$( onClick: () -&gt; Unit, modifier: Modifier = Modifier, colors: ButtonColors = ButtonDefaults.buttonColors(), dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, // RowScope and place )</ID>
     <ID>LongParameterList:Text.kt$( text: AnnotatedString, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, fontFamily: FontFamily? = null, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, )</ID>
@@ -53,15 +54,8 @@
     <ID>MagicNumber:DpExt.kt$1.5f</ID>
     <ID>MagicNumber:ScalingIndication.kt$ScaleIndicationNode$0.9f</ID>
     <ID>MagicNumber:TextFieldButton.kt$50</ID>
-    <ID>NewLineAtEndOfFile:PlatformType.kt$xyz.ksharma.krail.taj.PlatformType.kt</ID>
-    <ID>NoConsecutiveBlankLines:A11yColors.kt$ </ID>
-    <ID>NoConsecutiveBlankLines:Button.kt$ </ID>
-    <ID>NoConsecutiveBlankLines:ColorsExt.kt$ </ID>
-    <ID>NoConsecutiveBlankLines:TextField.kt$ </ID>
-    <ID>NoUnusedImports:A11yColors.kt$xyz.ksharma.krail.taj.theme.A11yColors.kt</ID>
-    <ID>NoUnusedImports:Button.kt$xyz.ksharma.krail.taj.components.Button.kt</ID>
-    <ID>NoUnusedImports:KrailTypography.kt$xyz.ksharma.krail.taj.theme.KrailTypography.kt</ID>
-    <ID>NoUnusedImports:TextFieldButton.kt$xyz.ksharma.krail.taj.components.TextFieldButton.kt</ID>
+    <ID>ModifierComposable:Klickable.kt$klickable</ID>
+    <ID>ModifierComposable:Klickable.kt$scalingKlickable</ID>
     <ID>TooManyFunctions:ColorsExt.kt$xyz.ksharma.krail.taj.ColorsExt.kt</ID>
     <ID>UnusedParameter:RoundIconButton.kt$onClickLabel: String? = null</ID>
     <ID>UnusedPrivateMember:Divider.kt$@Composable private fun DividerPreview()</ID>

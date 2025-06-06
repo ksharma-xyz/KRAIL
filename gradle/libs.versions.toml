@@ -117,7 +117,7 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight" }
 firebase-crashlyticsPlugin = { id = "com.google.firebase.crashlytics", version = "3.0.3" }
 firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version = "1.4.2" }
-wire = { id = "com.squareup.wire", version = "5.3.2" }
+wire = { id = "com.squareup.wire", version = "5.3.3" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 
 #Convention Plugins

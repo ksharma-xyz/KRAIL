@@ -85,7 +85,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                     backgroundColor = KrailTheme.colors.surface,
                     onSplashComplete = {
                         navController.navigate(
-                            route = if(uiState.hasSeenIntro) SavedTripsRoute else IntroRoute,
+                            route = if (uiState.hasSeenIntro) SavedTripsRoute else IntroRoute,
                             navOptions = NavOptions.Builder()
                                 .setLaunchSingleTop(true)
                                 .setPopUpTo<SplashScreen>(inclusive = true)

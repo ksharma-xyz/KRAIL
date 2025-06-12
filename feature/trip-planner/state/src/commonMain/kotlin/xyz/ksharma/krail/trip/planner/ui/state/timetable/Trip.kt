@@ -11,6 +11,7 @@ data class Trip(
     val fromStopName: String,
     val toStopId: String,
     val toStopName: String,
+    val hasParkRide: Boolean = false,
 ) {
     val tripId: String
         get() = "$fromStopId$toStopId"

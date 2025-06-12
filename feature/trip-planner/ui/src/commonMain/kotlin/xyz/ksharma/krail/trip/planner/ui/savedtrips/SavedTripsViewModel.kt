@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import parkRideStopIds
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -21,6 +23,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
+import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
@@ -41,6 +44,7 @@ class SavedTripsViewModel(
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
+            loadParkRideFacilitiesForSavedTripCardItems()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
 
     fun onEvent(event: SavedTripUiEvent) {
@@ -91,22 +95,23 @@ class SavedTripsViewModel(
             val trips = mutableSetOf<Trip>()
 
             val savedTrips = sandook.selectAllTrips()
-//            log("SavedTrips: $savedTrips")
-            savedTrips.forEachIndexed { index, savedTrip ->
-                trips.add(savedTrip.toTrip())
-            }
+            savedTrips.forEach { trips.add(it.toTrip()) }
 
-            trips.addAll(savedTrips.map { savedTrip -> savedTrip.toTrip() })
+            // Fetch Park&Ride facilities and build a set of stopIds
+            val facilities = nswParkRideFacilityManager.getParkRideFacilities()
+            val parkRideStopIds = facilities.map { it.stopId }.toSet()
 
-            // log("SavedTrips: ${trips.size} number")
-            trips.forEachIndexed { index, trip ->
-                log("\t SavedTrip: #$index ${trip.fromStopName} -> ${trip.toStopName}")
+            // Update hasParkRide for each trip
+            val updatedTrips = trips.map { trip ->
+                trip.copy(
+                    hasParkRide = trip.fromStopId in parkRideStopIds || trip.toStopId in parkRideStopIds
+                )
             }
 
             updateUiState {
                 copy(
-                    savedTrips = trips.toImmutableList(),
-                    isSavedTripsLoading = false
+                    savedTrips = updatedTrips.toImmutableList(),
+                    isSavedTripsLoading = false,
                 )
             }
         }
@@ -185,6 +190,24 @@ class SavedTripsViewModel(
             percentageFull = percentFull,
             stopId = tsn,
         )
+    }
+
+    private suspend fun loadParkRideFacilitiesForSavedTripCardItems() {
+        val facilities: List<NswParkRideFacility> =
+            nswParkRideFacilityManager.getParkRideFacilities()
+
+        val parkRideStopIds = facilities.map { it.stopId }.toSet()
+        val updatedTrips = savedTrips.map { trip ->
+            trip.copy(
+                hasParkRide = trip.fromStopId in parkRideStopIds || trip.toStopId in parkRideStopIds
+            )
+        }
+
+        updateUiState {
+            copy(
+                isParkRideLoading = false
+            )
+        }
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

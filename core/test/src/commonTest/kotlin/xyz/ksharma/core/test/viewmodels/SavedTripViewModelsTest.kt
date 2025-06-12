@@ -8,20 +8,26 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import xyz.ksharma.core.test.data.buildCarParkFacilityDetailResponse
+import xyz.ksharma.core.test.data.buildOccupancy
 import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.core.test.fakes.FakeParkRideService
+import xyz.ksharma.core.test.fakes.FakeParkRideService.Companion.facilityResponses
+import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
+import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -241,4 +247,208 @@ class SavedTripsViewModelTest {
             val eventName = AnalyticsEvent.ToFieldClickEvent.name
             assertTrue(fakeAnalytics.isEventTracked(eventName))
         }
+
+    // region Park&Ride Facilities Tests
+
+    @Test
+    fun `GIVEN a saved trip with ParkRide stop WHEN LoadParkRideFacilities event is triggered THEN ParkRideUiState should update to Loaded`() =
+        runTest {
+            // Arrange: Insert a saved trip with a stopId matching a Park&Ride facility
+            sandook.insertOrReplaceTrip(
+                tripId = "1",
+                fromStopId = "2153478", // matches mockFacilityResponses key
+                fromStopName = "Bella Vista",
+                toStopId = "2153471",
+                toStopName = "XYZ station",
+            )
+
+            val fakeParkRideService = FakeParkRideService()
+            val viewModel = SavedTripsViewModel(
+                sandook = sandook,
+                analytics = fakeAnalytics,
+                ioDispatcher = testDispatcher,
+                nswParkRideFacilityManager = fakeParkRideManager,
+                parkRideService = fakeParkRideService,
+            )
+
+            // Act: Load saved trips and trigger LoadParkRideFacilities event
+            viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
+            advanceUntilIdle()
+            viewModel.onEvent(
+                SavedTripUiEvent.LoadParkRideFacilities(
+                    fromStopId = "2153478",
+                    toStopId = "2153471"
+                )
+            )
+            advanceUntilIdle()
+
+            // Assert: The trip's parkRideUiState should be Loaded with correct ParkRideState
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                val state = awaitItem()
+                val trip = state.savedTrips.first()
+                assertTrue(trip.parkRideUiState is ParkRideUiState.Loaded)
+
+                val loaded = trip.parkRideUiState as ParkRideUiState.Loaded
+                assertEquals(1, loaded.parkRideList.size)
+
+                val parkRideState = loaded.parkRideList.first()
+                assertEquals(774, parkRideState.totalSpots)
+                assertEquals(674, parkRideState.spotsAvailable)
+                assertEquals("Park&Ride - Bella Vista", parkRideState.facilityName)
+                assertEquals(12, parkRideState.percentageFull) // 100/774 ≈ 12%
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN ParkRideService throws WHEN LoadParkRideFacilities event is triggered THEN ParkRideUiState should update to Error`() =
+        runTest {
+            sandook.insertOrReplaceTrip(
+                tripId = "1",
+                fromStopId = "2153478",
+                fromStopName = "Bella Vista",
+                toStopId = "2153471",
+                toStopName = "XYZ station",
+            )
+
+            val errorService = object : ParkRideService {
+                override suspend fun getCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
+                    throw RuntimeException("Network error")
+                }
+
+                override suspend fun getCarParkFacilities(): Map<String, String> {
+                    throw RuntimeException("Network error")
+                }
+            }
+            val viewModel = SavedTripsViewModel(
+                sandook = sandook,
+                analytics = fakeAnalytics,
+                ioDispatcher = testDispatcher,
+                nswParkRideFacilityManager = fakeParkRideManager,
+                parkRideService = errorService,
+            )
+
+            viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
+            advanceUntilIdle()
+            viewModel.onEvent(
+                SavedTripUiEvent.LoadParkRideFacilities(
+                    fromStopId = "2153478",
+                    toStopId = "2153471"
+                )
+            )
+            advanceUntilIdle()
+
+            viewModel.uiState.test {
+                skipItems(1)
+                val state = awaitItem()
+                val trip = state.savedTrips.first()
+                assertTrue(trip.parkRideUiState is ParkRideUiState.Error)
+                val error = trip.parkRideUiState as ParkRideUiState.Error
+                assertTrue(error.message.contains("Network error"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a saved trip WHEN LoadParkRideFacilities event is triggered THEN ParkRideUiState should be Loading before result`() =
+        runTest {
+            sandook.insertOrReplaceTrip(
+                tripId = "1",
+                fromStopId = "2153478",
+                fromStopName = "Bella Vista",
+                toStopId = "2153471",
+                toStopName = "XYZ station",
+            )
+
+            val slowService = object : ParkRideService {
+                override suspend fun getCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
+                    kotlinx.coroutines.delay(100)
+                    return facilityResponses.values.first()
+                }
+
+                override suspend fun getCarParkFacilities(): Map<String, String> {
+                    return mapOf()
+                }
+            }
+            val viewModel = SavedTripsViewModel(
+                sandook = sandook,
+                analytics = fakeAnalytics,
+                ioDispatcher = testDispatcher,
+                nswParkRideFacilityManager = fakeParkRideManager,
+                parkRideService = slowService,
+            )
+
+            viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
+            advanceUntilIdle()
+            viewModel.onEvent(
+                SavedTripUiEvent.LoadParkRideFacilities(
+                    fromStopId = "2153478",
+                    toStopId = "2153471"
+                )
+            )
+
+            viewModel.uiState.test {
+                skipItems(1) // Initial state
+
+                val state = awaitItem()
+                val trip = state.savedTrips.first()
+                assertTrue(trip.parkRideUiState is ParkRideUiState.Loading)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN CarParkFacilityDetailResponse with valid data WHEN toParkRideState is called THEN ParkRideState is correct`() {
+        val facilityResponse = buildCarParkFacilityDetailResponse(
+            facilityName = "Park&Ride - Bella Vista",
+            spots = "774",
+            occupancy = buildOccupancy(transients = "100")
+        )
+
+        val parkRideState = facilityResponse.toParkRideState()
+
+        assertEquals(774, parkRideState.totalSpots)
+        assertEquals(674, parkRideState.spotsAvailable)
+        assertEquals(12, parkRideState.percentageFull) // 100/774 ≈ 12%
+        assertEquals("Park&Ride - Bella Vista", parkRideState.facilityName)
+    }
+
+    @Test
+    fun `GIVEN saved trips with and without ParkRide stops WHEN loadSavedTrips is called THEN ParkRideUiState is set correctly`() =
+        runTest {
+            sandook.insertOrReplaceTrip(
+                tripId = "1",
+                fromStopId = "2153478", // Park&Ride stop
+                fromStopName = "Bella Vista",
+                toStopId = "TO_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            sandook.insertOrReplaceTrip(
+                tripId = "2",
+                fromStopId = "NON_PARKRIDE_STOP",
+                fromStopName = "No ParkRide",
+                toStopId = "TO_ID_2",
+                toStopName = "STOP_NAME_3",
+            )
+
+            viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
+            advanceUntilIdle()
+
+            viewModel.uiState.test {
+                skipItems(1)
+
+                val state = awaitItem()
+                val tripWithParkRide = state.savedTrips.first { it.fromStopId == "2153478" }
+                val tripWithoutParkRide =
+                    state.savedTrips.first { it.fromStopId == "NON_PARKRIDE_STOP" }
+
+                assertTrue(tripWithParkRide.parkRideUiState is ParkRideUiState.Available)
+                assertTrue(tripWithoutParkRide.parkRideUiState is ParkRideUiState.NotAvailable)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion
 }

@@ -20,6 +20,45 @@ class FakeParkRideService(
     }
 
     companion object {
+        val facilityResponse = CarParkFacilityDetailResponse(
+            tsn = "2153478",
+            time = "803037917",
+            spots = "774",
+            zones = listOf(
+                Zone(
+                    spots = "774",
+                    zoneId = "1",
+                    occupancy = Occupancy(
+                        loop = "32707",
+                        total = "200",
+                        monthlies = null,
+                        openGate = null,
+                        transients = "100"
+                    ),
+                    zoneName = "SYD392 Bella Vista Car Park",
+                    parentZoneId = "0"
+                )
+            ),
+            parkID = 1,
+            location = Location(
+                suburb = "Bella Vista",
+                address = "Byles Place",
+                latitude = "-33.727438",
+                longitude = "150.941761"
+            ),
+            occupancy = Occupancy(
+                loop = "32707",
+                total = "200",
+                monthlies = null,
+                openGate = null,
+                transients = "100"
+            ),
+            messageDate = "2025-06-12T20:05:17",
+            facilityId = "31",
+            facilityName = "Park&Ride - Bella Vista",
+            tfnswFacilityId = "2153478TPR001"
+        )
+
         val facilityResponses = mapOf(
             "31" to CarParkFacilityDetailResponse(
                 tsn = "2153478",

@@ -21,4 +21,8 @@ sealed interface SavedTripUiEvent {
     data object AnalyticsFromButtonClick : SavedTripUiEvent
 
     data object AnalyticsToButtonClick : SavedTripUiEvent
+
+    data class LoadParkRideFacilities(
+        val fromStopId: String, val toStopId: String
+    ) : SavedTripUiEvent
 }

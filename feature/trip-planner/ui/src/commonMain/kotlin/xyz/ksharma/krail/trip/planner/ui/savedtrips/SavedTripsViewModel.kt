@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -18,11 +19,16 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
+import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
+import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
+import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 class SavedTripsViewModel(
@@ -30,15 +36,13 @@ class SavedTripsViewModel(
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
     private val nswParkRideFacilityManager: NswParkRideFacilityManager,
+    private val parkRideService: ParkRideService
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
-            // TODO - remove this when park and ride is not needed
-            val x = nswParkRideFacilityManager.getParkRideFacilities()
-            log("Park Ride Facilities: ${x.size}")
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
 
     fun onEvent(event: SavedTripUiEvent) {
@@ -76,30 +80,40 @@ class SavedTripsViewModel(
             SavedTripUiEvent.AnalyticsToButtonClick -> {
                 analytics.track(AnalyticsEvent.ToFieldClickEvent)
             }
+
+            is SavedTripUiEvent.LoadParkRideFacilities -> {
+                onLoadParkRideFacilities(event.fromStopId, event.toStopId)
+            }
         }
     }
 
     private fun loadSavedTrips() {
         viewModelScope.launch(ioDispatcher) {
-            updateUiState { copy(isLoading = true) }
-            val trips = mutableSetOf<Trip>()
+            updateUiState { copy(isSavedTripsLoading = true) }
 
             val savedTrips = sandook.selectAllTrips()
-//            log("SavedTrips: $savedTrips")
-            savedTrips.forEachIndexed { index, savedTrip ->
+            val facilities = nswParkRideFacilityManager.getParkRideFacilities()
+            val parkRideStopIds = facilities.map { it.stopId }.toSet()
+
+            val updatedTrips = savedTrips.map { savedTrip ->
                 val trip = savedTrip.toTrip()
-                log("Trip: #$index $trip")
-                trips.add(savedTrip.toTrip())
+                val hasParkRide =
+                    trip.fromStopId in parkRideStopIds || trip.toStopId in parkRideStopIds
+                trip.copy(
+                    parkRideUiState = if (hasParkRide) {
+                        ParkRideUiState.Available
+                    } else {
+                        ParkRideUiState.NotAvailable
+                    },
+                )
             }
 
-            trips.addAll(savedTrips.map { savedTrip -> savedTrip.toTrip() })
-
-            // log("SavedTrips: ${trips.size} number")
-            trips.forEachIndexed { index, trip ->
-                log("\t SavedTrip: #$index ${trip.fromStopName} -> ${trip.toStopName}")
+            updateUiState {
+                copy(
+                    savedTrips = updatedTrips.toImmutableList(),
+                    isSavedTripsLoading = false,
+                )
             }
-
-            updateUiState { copy(savedTrips = trips.toImmutableList(), isLoading = false) }
         }
     }
 
@@ -113,6 +127,104 @@ class SavedTripsViewModel(
                 toStopId = savedTrip.toStopId,
             )
         }
+    }
+
+    private fun onLoadParkRideFacilities(fromStopId: String, toStopId: String) {
+        log("onLoadParkRideFacilities: fromStopId=$fromStopId, toStopId=$toStopId")
+        // TODO - analytics event for loading Park&Ride facilities
+
+        // Set the relevant trip's parkRideUiState to Loading
+        updateUiState {
+            copy(
+                savedTrips = savedTrips.map { trip ->
+                    if (trip.fromStopId == fromStopId && trip.toStopId == toStopId) {
+                        trip.copy(parkRideUiState = ParkRideUiState.Loading)
+                    } else trip
+                }.toImmutableList()
+            )
+        }
+
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            try {
+                val parkRideFacilityList = nswParkRideFacilityManager.getParkRideFacilities()
+                log("Park Ride Facilities: ${parkRideFacilityList.size}")
+
+                val facilityIdList = parkRideFacilityList
+                    .filter { it.stopId == fromStopId || it.stopId == toStopId }
+                    .map { it.parkRideFacilityId }
+                    .toSet()
+
+                val parkRideList: ImmutableList<ParkRideState> = facilityIdList.map { facilityId ->
+                    parkRideService
+                        .getCarParkFacilities(facilityId = facilityId)
+                        .toParkRideState()
+                }.toImmutableList()
+
+                updateUiState {
+                    copy(
+                        savedTrips = savedTrips.map { trip ->
+                            if (trip.fromStopId == fromStopId && trip.toStopId == toStopId) {
+                                trip.copy(parkRideUiState = ParkRideUiState.Loaded(parkRideList))
+                            } else trip
+                        }.toImmutableList()
+                    )
+                }
+            } catch (e: Exception) {
+                updateUiState {
+                    copy(
+                        savedTrips = savedTrips.map { trip ->
+                            if (trip.fromStopId == fromStopId && trip.toStopId == toStopId) {
+                                trip.copy(
+                                    parkRideUiState = ParkRideUiState.Error(
+                                        e.message ?: "Unknown error"
+                                    )
+                                )
+                            } else trip
+                        }.toImmutableList()
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Converts a [CarParkFacilityDetailResponse] to a [ParkRideState] for UI display.
+     *
+     * This method calculates the number of available spots, total spots, and percentage full
+     * for a Park&Ride facility using the occupancy data from all zones.
+     *
+     * Occupied spots are determined by summing the `transients` field from each zone's occupancy.
+     * If `transients` is `null` or missing, it is treated as 0.
+     *
+     * @return [ParkRideState] containing available spots, total spots, facility name, percentage
+     * full, and stop ID
+     **/
+    private fun CarParkFacilityDetailResponse.toParkRideState(): ParkRideState {
+        val totalSpots = spots.toIntOrNull() ?: 0
+
+        // Sum occupied spots from all zones (using loop sensor)
+        val occupiedSpots = zones.sumOf { it.occupancy.transients?.toIntOrNull() ?: 0 }
+
+        val spotsAvailable = totalSpots - occupiedSpots
+        val percentFull = if (totalSpots > 0) {
+            (occupiedSpots * 100) / totalSpots
+        } else {
+            0
+        }
+
+        log(
+            "[$facilityName - $facilityId] \nTotal spots: $totalSpots, " +
+                    "Occupied spots: $occupiedSpots, Spots available: $spotsAvailable, " +
+                    "Percentage full: $percentFull%"
+        )
+
+        return ParkRideState(
+            spotsAvailable = spotsAvailable,
+            totalSpots = totalSpots,
+            facilityName = facilityName,
+            percentageFull = percentFull,
+            stopId = tsn,
+        )
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

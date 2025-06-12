@@ -15,6 +15,11 @@ class FakeParkRideFacilityManager : NswParkRideFacilityManager {
             stopId = "207211",
             parkRideFacilityId = "7",
             parkRideName = "Sample Park & Ride 2"
+        ),
+        NswParkRideFacility(
+            stopId = "2153478",
+            parkRideFacilityId = "31",
+            parkRideName = "Park and Ride - Bella Vista"
         )
     )
 

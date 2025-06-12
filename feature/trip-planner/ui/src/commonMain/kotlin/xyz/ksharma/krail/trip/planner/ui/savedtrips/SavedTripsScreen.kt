@@ -125,7 +125,14 @@ fun SavedTripsScreen(
                                 )
                             },
                             primaryTransportMode = null, // TODO
-                            parkRideState = savedTripsState.parkRideList.firstOrNull { it.stopId == trip.fromStopId || it.stopId == trip.toStopId },
+                            onLoadParkRideClick = {
+                                onEvent(
+                                    SavedTripUiEvent.LoadParkRideFacilities(
+                                        fromStopId = trip.fromStopId,
+                                        toStopId = trip.toStopId,
+                                    )
+                                )
+                            },
                             modifier = Modifier
                                 .padding(horizontal = 16.dp),
                         )

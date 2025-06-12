@@ -8,6 +8,4 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 data class SavedTripsState(
     val savedTrips: ImmutableList<Trip> = persistentListOf(),
     val isSavedTripsLoading: Boolean = true,
-    val parkRideList: ImmutableList<ParkRideState> = persistentListOf(),
-    val isParkRideLoading: Boolean = false,
 )

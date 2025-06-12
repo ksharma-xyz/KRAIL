@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
@@ -54,6 +55,7 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 @Composable
@@ -62,7 +64,7 @@ fun SavedTripCard(
     primaryTransportMode: TransportMode? = null,
     onStarClick: () -> Unit,
     onCardClick: () -> Unit,
-    parkRideState: ParkRideState? = null,
+    onLoadParkRideClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var expandParkRideCard by remember { mutableStateOf(false) }
@@ -129,7 +131,11 @@ fun SavedTripCard(
                 }
             }
 
-            if (parkRideState != null) {
+            if (trip.parkRideUiState is ParkRideUiState.Available ||
+                trip.parkRideUiState is ParkRideUiState.Loading ||
+                trip.parkRideUiState is ParkRideUiState.Loaded ||
+                trip.parkRideUiState is ParkRideUiState.Error
+            ) {
                 // Bottom bar part
                 Row(
                     modifier = Modifier
@@ -141,12 +147,15 @@ fun SavedTripCard(
                         .animateContentSize()
                         .klickable {
                             expandParkRideCard = !expandParkRideCard
+                            if (expandParkRideCard) {
+                                onLoadParkRideClick()
+                            }
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween // If you have content here
                 ) {
                     if (expandParkRideCard) {
-                        SavedTripParkRideContent(parkRideState)
+                        SavedTripParkRideContent(trip.parkRideUiState)
                     }
                 }
 
@@ -163,7 +172,11 @@ fun SavedTripCard(
             }
         }
 
-        if (parkRideState != null) {
+        if (trip.parkRideUiState is ParkRideUiState.Available ||
+            trip.parkRideUiState is ParkRideUiState.Loading ||
+            trip.parkRideUiState is ParkRideUiState.Loaded ||
+            trip.parkRideUiState is ParkRideUiState.Error
+        ) {
             val scope = rememberCoroutineScope()
             val rotation = remember { Animatable(0f) }
             Box(
@@ -174,7 +187,6 @@ fun SavedTripCard(
                     .background(themeColor())
                     .align(Alignment.BottomEnd)
                     .klickable {
-                        val target = if (!expandParkRideCard) 180f else 0f
                         scope.launch {
                             val current = rotation.value % 360f
                             val target =
@@ -187,7 +199,11 @@ fun SavedTripCard(
                                 )
                             )
                         }
+                        // TODO - should be a single lambda and reuse the same onClick for both
                         expandParkRideCard = !expandParkRideCard
+                        if (expandParkRideCard) {
+                            onLoadParkRideClick()
+                        }
                     },
                 contentAlignment = Alignment.Center,
             ) {
@@ -210,13 +226,45 @@ fun SavedTripCard(
 }
 
 @Composable
-fun SavedTripParkRideContent(parkRideState: ParkRideState?, modifier: Modifier = Modifier) {
+private fun SavedTripParkRideContent(
+    parkRideUiState: ParkRideUiState,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
-        Text(
-            "Park & Ride Available",
-            style = KrailTheme.typography.bodySmall,
-            color = Color.White,
-        )
+        when (parkRideUiState) {
+            is ParkRideUiState.Loading -> {
+                Text("Loading Park & Ride...", color = Color.White)
+            }
+
+            is ParkRideUiState.Error -> {
+                Text("Error: ${parkRideUiState.message}", color = Color.Red)
+            }
+
+            is ParkRideUiState.Loaded -> {
+                Text("Park & Ride Available", color = Color.White)
+                parkRideUiState.parkRideList.forEach {
+                    Text(
+                        text = it.facilityName,
+                        color = Color.White,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                    Text(
+                        text = "Total Spots: ${it.totalSpots}, " +
+                                "Percentage Full: ${it.percentageFull}%",
+                        color = Color.White,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+            }
+
+            is ParkRideUiState.Available -> {
+                Text("Tap to load Park & Ride details", color = Color.White)
+            }
+
+            is ParkRideUiState.NotAvailable -> {
+                // Should not be shown, but you can handle if needed
+            }
+        }
     }
 }
 
@@ -227,7 +275,7 @@ fun SavedTripParkRideContent(parkRideState: ParkRideState?, modifier: Modifier =
 private fun SavedTripCardPreview_Single() {
     KrailTheme {
         val themeColorState =
-            remember { mutableStateOf(KrailThemeStyle.Bus.hexColorCode) } // Bus theme is light blue/teal
+            remember { mutableStateOf(KrailThemeStyle.Bus.hexColorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColorState) {
             Box(
                 modifier = Modifier
@@ -245,8 +293,6 @@ private fun SavedTripCardPreview_Single() {
                     primaryTransportMode = TransportMode.Metro(),
                     onCardClick = {},
                     onStarClick = {},
-                    parkRideState = null,
-                    modifier = Modifier,
                 )
             }
         }
@@ -285,6 +331,9 @@ private fun SavedTripCardListPreview_List() {
                         fromStopName = "Another Station",
                         toStopId = "4",
                         toStopName = "Destination X",
+                        parkRideUiState = ParkRideUiState.Loaded(
+                            parkRideList = listOf(parkRideStatePreview).toImmutableList()
+                        ),
                     ),
                     primaryTransportMode = TransportMode.Bus(),
                     onCardClick = {},
@@ -314,13 +363,13 @@ private fun SavedTripCardPreview_Single_ParkRideAvailable() {
                         fromStopName = "Tallawong Station",
                         toStopId = "2",
                         toStopName = "Central Station",
+                        parkRideUiState = ParkRideUiState.Loaded(
+                            parkRideList = listOf(parkRideStatePreview).toImmutableList()
+                        ),
                     ),
                     primaryTransportMode = TransportMode.Metro(),
                     onCardClick = {},
                     onStarClick = {},
-                    parkRideState = parkRideStatePreview,
-                    modifier = Modifier,
-                    // Modifier for SavedTripCard itself
                 )
             }
         }

@@ -71,7 +71,7 @@ test-composeUiTestManifest = { group = "androidx.compose.ui", name = "ui-test-ma
 test-composeUiTestJunit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 test-junit = { group = "junit", name = "junit", version.ref = "junit" }
 test-kotlin = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
-test-turbine = { group = "app.cash.turbine", name = "turbine", version = "1.2.0" }
+test-turbine = { group = "app.cash.turbine", name = "turbine", version = "1.2.1" }
 test-kotlinxCoroutineTest = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version = "1.10.2" }
 
 #BuildLogic

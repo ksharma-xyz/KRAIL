@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
@@ -23,7 +24,7 @@ fun CarParkFacilityDetailResponse.toParkRideState(): ParkRideState {
     val totalSpots = spots.toIntOrNull() ?: 0
 
     // Sum occupied spots from all zones (using loop sensor)
-    val occupiedSpots = zones.sumOf { it.occupancy.transients?.toIntOrNull() ?: 0 }
+    val occupiedSpots = zones.sumOf { it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0}
 
     val spotsAvailable = totalSpots - occupiedSpots
     val percentFull = if (totalSpots > 0) {
@@ -38,11 +39,14 @@ fun CarParkFacilityDetailResponse.toParkRideState(): ParkRideState {
                 "Percentage full: $percentFull%"
     )
 
+    val time = messageDate.toSimple12HourTime()
+
     return ParkRideState(
         spotsAvailable = spotsAvailable,
         totalSpots = totalSpots,
         facilityName = facilityName,
         percentageFull = percentFull,
         stopId = tsn,
+        timeText = time,
     )
 }

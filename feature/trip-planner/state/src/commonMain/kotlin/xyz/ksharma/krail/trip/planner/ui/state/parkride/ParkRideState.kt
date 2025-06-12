@@ -11,5 +11,6 @@ data class ParkRideState(
     val facilityName: String,
     val percentageFull: Int,
     val stopId: String,
+    val timeText: String,
     // TODO - add location details.
 )

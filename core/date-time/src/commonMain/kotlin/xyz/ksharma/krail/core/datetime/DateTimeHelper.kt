@@ -13,6 +13,13 @@ import kotlin.time.DurationUnit
 
 object DateTimeHelper {
 
+    /**
+     * Converts a UTC ISO 8601 date-time string (e.g., "2025-06-13T06:48:13Z")
+     * to a 12-hour time format string (e.g., "6:48 am").
+     *
+     * @receiver String The UTC date-time string in ISO 8601 format.
+     * @return String The formatted 12-hour time string.
+     */
     fun String.formatTo12HourTime(): String {
         val localDateTime = Instant.parse(this).toLocalDateTime(TimeZone.UTC)
         val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
@@ -105,4 +112,18 @@ object DateTimeHelper {
 
     fun Instant.isBefore(other: Instant): Boolean = this < other
     fun Instant.isAfter(other: Instant): Boolean = this > other
+
+    /**
+     * Parses a date-time string in the format "yyyy-MM-dd'T'HH:mm:ss"
+     * and returns the time in "h:mm AM/PM" (12-hour) format.
+     *
+     * Example: "2025-06-13T07:05:55" -> "7:05 AM"
+     */
+    fun String.toSimple12HourTime(): String {
+        val localDateTime = LocalDateTime.parse(this)
+        val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12
+        val minute = localDateTime.minute.toString().padStart(2, '0')
+        val amPm = if (localDateTime.hour < 12) "AM" else "PM"
+        return "$hour:$minute $amPm"
+    }
 }

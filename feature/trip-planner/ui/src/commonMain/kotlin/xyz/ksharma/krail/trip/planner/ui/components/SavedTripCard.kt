@@ -233,7 +233,7 @@ private fun SavedTripParkRideContent(
     Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
         when (parkRideUiState) {
             is ParkRideUiState.Loading -> {
-                Text("Loading Park & Ride...", color = Color.White)
+                Text("Loading Park & Ride...", color = Color.Black)
             }
 
             is ParkRideUiState.Error -> {
@@ -241,7 +241,6 @@ private fun SavedTripParkRideContent(
             }
 
             is ParkRideUiState.Loaded -> {
-                Text("Park & Ride Available", color = Color.White)
                 parkRideUiState.parkRideList.forEach {
                     Text(
                         text = it.facilityName,
@@ -250,15 +249,17 @@ private fun SavedTripParkRideContent(
                     )
                     Text(
                         text = "Total Spots: ${it.totalSpots}, " +
-                                "Percentage Full: ${it.percentageFull}%",
-                        color = Color.White,
+                                "\nAvailable Spots: ${it.spotsAvailable}, " +
+                                "\nPercentage Full: ${it.percentageFull}%, " +
+                                "\nLast updated: ${it.timeText}, ",
+                                color = Color.Black,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
             }
 
             is ParkRideUiState.Available -> {
-                Text("Tap to load Park & Ride details", color = Color.White)
+                Text("Tap to load Park & Ride details", color = Color.Black)
             }
 
             is ParkRideUiState.NotAvailable -> {
@@ -382,6 +383,7 @@ private val parkRideStatePreview = ParkRideState(
     totalSpots = 100,
     percentageFull = 50,
     stopId = "12345",
+    timeText = "10:30 AM",
 )
 
 // endregion

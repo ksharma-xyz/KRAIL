@@ -1,6 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.state.parkride
 
+import androidx.compose.runtime.Stable
+
+@Stable
 data class ParkRideState(
-    val stopId: String = "",
-    val stopName: String = "",
+    val spotsAvailable: Int,
+    val totalSpots: Int,
+    val facilityName: String,
+    val percentageFull: Int,
+    val stopId: String,
+    // TODO - add location details.
 )

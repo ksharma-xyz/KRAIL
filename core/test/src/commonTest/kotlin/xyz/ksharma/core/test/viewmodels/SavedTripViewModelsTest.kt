@@ -104,7 +104,7 @@ class SavedTripsViewModelTest {
                 val item = awaitItem()
 
                 // THEN Verify that the state is updated after loading trips
-                assertFalse(item.isLoading)
+                assertFalse(item.isSavedTripsLoading)
                 assertTrue(item.savedTrips.isNotEmpty())
 
                 cancelAndIgnoreRemainingEvents()
@@ -140,7 +140,7 @@ class SavedTripsViewModelTest {
 
                 // THEN verify that the trip is deleted and the state is updated
                 val item = awaitItem()
-                assertFalse(item.isLoading)
+                assertFalse(item.isSavedTripsLoading)
                 assertTrue(item.savedTrips.isEmpty())
                 cancelAndIgnoreRemainingEvents()
             }

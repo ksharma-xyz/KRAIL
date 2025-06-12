@@ -92,7 +92,7 @@ fun SavedTripsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                if (savedTripsState.savedTrips.isEmpty() && savedTripsState.isLoading.not()) {
+                if (savedTripsState.savedTrips.isEmpty() && savedTripsState.isSavedTripsLoading.not()) {
                     item(key = "empty_state") {
                         ErrorMessage(
                             emoji = "🌟",
@@ -125,6 +125,7 @@ fun SavedTripsScreen(
                                 )
                             },
                             primaryTransportMode = null, // TODO
+                            parkRideState = savedTripsState.parkRideList.firstOrNull { it.stopId == trip.fromStopId || it.stopId == trip.toStopId },
                             modifier = Modifier
                                 .padding(horizontal = 16.dp),
                         )

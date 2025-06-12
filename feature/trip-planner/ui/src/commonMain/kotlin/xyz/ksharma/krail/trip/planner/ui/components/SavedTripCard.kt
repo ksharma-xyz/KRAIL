@@ -318,7 +318,7 @@ private fun SavedTripCardPreview_Single_ParkRideAvailable() {
                     primaryTransportMode = TransportMode.Metro(),
                     onCardClick = {},
                     onStarClick = {},
-                    parkRideState = ParkRideState(),
+                    parkRideState = parkRideStatePreview,
                     modifier = Modifier,
                     // Modifier for SavedTripCard itself
                 )
@@ -326,5 +326,13 @@ private fun SavedTripCardPreview_Single_ParkRideAvailable() {
         }
     }
 }
+
+private val parkRideStatePreview = ParkRideState(
+    facilityName = "Park & Ride Facility",
+    spotsAvailable = 50,
+    totalSpots = 100,
+    percentageFull = 50,
+    stopId = "12345",
+)
 
 // endregion

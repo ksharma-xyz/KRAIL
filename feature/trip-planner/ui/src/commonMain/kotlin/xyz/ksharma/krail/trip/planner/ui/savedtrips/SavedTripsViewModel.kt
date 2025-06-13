@@ -7,6 +7,8 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +23,7 @@ import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
+import xyz.ksharma.krail.park.ride.network.NswParkRideRepository
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
@@ -29,13 +32,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import kotlin.time.Duration.Companion.minutes
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
     private val nswParkRideFacilityManager: NswParkRideFacilityManager,
-    private val parkRideService: ParkRideService
+    private val parkRideService: ParkRideService,
+    private val nswParkRideRepository: NswParkRideRepository,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
@@ -43,6 +48,8 @@ class SavedTripsViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
+
+    private var parkRideAvailabilityJob: Job? = null
 
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
@@ -132,6 +139,9 @@ class SavedTripsViewModel(
         log("onLoadParkRideFacilities: fromStopId=$fromStopId, toStopId=$toStopId")
         // TODO - analytics event for loading Park&Ride facilities
 
+        // Cancel any existing parkRideAvailabilityJob to avoid multiple concurrent jobs
+        parkRideAvailabilityJob?.cancel()
+
         // Set the relevant trip's parkRideUiState to Loading
         updateUiState {
             copy(
@@ -143,47 +153,48 @@ class SavedTripsViewModel(
             )
         }
 
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            try {
-                val parkRideFacilityList = nswParkRideFacilityManager.getParkRideFacilities()
-                log("Park Ride Facilities: ${parkRideFacilityList.size}")
+        parkRideAvailabilityJob =
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                observeParkRideFacilities(stopIdList = listOf(fromStopId, toStopId))
+            }
+    }
 
-                val facilityIdList = parkRideFacilityList
-                    .filter { it.stopId == fromStopId || it.stopId == toStopId }
-                    .map { it.parkRideFacilityId }
-                    .toSet()
-
-                val parkRideList: ImmutableList<ParkRideState> = facilityIdList.map { facilityId ->
+    private suspend fun observeParkRideFacilities(stopIdList: List<String>) {
+        val facilityIdList = getFacilityIdListToObserve(stopIdList)
+        while (true) { // TODO will go away when flow  is used instead to observe changes from local DB.
+            val parkRideList: ImmutableList<ParkRideState> =
+                facilityIdList.map { facilityId ->
                     parkRideService
                         .getCarParkFacilities(facilityId = facilityId)
                         .toParkRideState()
                 }.toImmutableList()
 
-                updateUiState {
-                    copy(
-                        savedTrips = savedTrips.map { trip ->
-                            if (trip.fromStopId == fromStopId && trip.toStopId == toStopId) {
-                                trip.copy(parkRideUiState = ParkRideUiState.Loaded(parkRideList))
-                            } else trip
-                        }.toImmutableList()
-                    )
-                }
-            } catch (e: Exception) {
-                updateUiState {
-                    copy(
-                        savedTrips = savedTrips.map { trip ->
-                            if (trip.fromStopId == fromStopId && trip.toStopId == toStopId) {
-                                trip.copy(
-                                    parkRideUiState = ParkRideUiState.Error(
-                                        e.message ?: "Unknown error"
-                                    )
-                                )
-                            } else trip
-                        }.toImmutableList()
-                    )
-                }
+            updateUiState {
+                copy(
+                    savedTrips = savedTrips.map { trip ->
+                        // Update the parkRideUiState for those trips that exist in stopIdList
+                        if (trip.fromStopId in stopIdList || trip.toStopId in stopIdList) {
+                            trip.copy(parkRideUiState = ParkRideUiState.Loaded(parkRideList))
+                        } else trip
+                    }.toImmutableList()
+                )
             }
+
+            delay(1.minutes) // Execute update every minute.
         }
+    }
+
+    fun getFacilityIdListToObserve(stopIdList: List<String>): Set<String> {
+        val parkRideFacilityList = nswParkRideFacilityManager.getParkRideFacilities()
+        log("All Park Ride Facilities: ${parkRideFacilityList.size}")
+
+        val facilityIdList = parkRideFacilityList
+            .filter { it.stopId in stopIdList }
+            .map { it.parkRideFacilityId }
+            .toSet()
+
+        log("Facility IDs to observe: $facilityIdList")
+        return facilityIdList
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

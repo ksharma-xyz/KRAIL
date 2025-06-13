@@ -14,7 +14,7 @@ import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.service.stop_finder.StopFinderRequestParams
 import xyz.ksharma.krail.trip.planner.network.api.service.trip.TripRequestParams
 
-class RealTripPlanningService(
+internal class RealTripPlanningService(
     private val httpClient: HttpClient,
     private val ioDispatcher: CoroutineDispatcher,
 ) : TripPlanningService {

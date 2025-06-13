@@ -5,7 +5,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
+import xyz.ksharma.krail.park.ride.network.NswParkRideRepository
 import xyz.ksharma.krail.park.ride.network.RealNswParkRideFacilityManager
+import xyz.ksharma.krail.park.ride.network.RealNswParkRideRepository
 import xyz.ksharma.krail.park.ride.network.parkRideHttpClient
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.park.ride.network.service.RealParkRideService
@@ -21,6 +23,13 @@ val parkRideNetworkModule = module {
     single<NswParkRideFacilityManager> {
         RealNswParkRideFacilityManager(
             flag = get(),
+        )
+    }
+
+    single<NswParkRideRepository> {
+        RealNswParkRideRepository(
+            parkRideService = get(),
+            sandook = get(),
         )
     }
 }

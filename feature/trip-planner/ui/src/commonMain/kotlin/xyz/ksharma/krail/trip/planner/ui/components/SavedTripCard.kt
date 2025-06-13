@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -37,14 +38,18 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
+import krail.feature.trip_planner.ui.generated.resources.ic_car
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -238,20 +243,8 @@ private fun SavedTripParkRideContent(
             }
 
             is ParkRideUiState.Loaded -> {
-                parkRideUiState.parkRideList.forEach {
-                    Text(
-                        text = it.facilityName,
-                        color = Color.Black,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                    Text(
-                        text = "Total Spots: ${it.totalSpots}, " +
-                                "\nAvailable Spots: ${it.spotsAvailable}, " +
-                                "\nPercentage Full: ${it.percentageFull}%, " +
-                                "\nLast updated: ${it.timeText}, ",
-                        color = Color.Black,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                parkRideUiState.parkRideList.forEach { parkRideState ->
+                    ParkRideLoadedContent(parkRideState)
                 }
             }
 
@@ -262,6 +255,98 @@ private fun SavedTripParkRideContent(
             is ParkRideUiState.NotAvailable -> {
                 // Should not be shown, but you can handle if needed
             }
+        }
+    }
+}
+
+@Composable
+fun ParkRideLoadedContent(
+    parkRideState: ParkRideState,
+    modifier: Modifier = Modifier
+) {
+    val contentColor = getForegroundColor(themeColor()) // Color for text based on the green background
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp), // Add some vertical padding to the whole item
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Icon Box (P with car)
+        Box(
+            modifier = Modifier
+                .size(width = 56.dp, height = 56.dp) // Square size based on screenshot
+                .background(
+                    color = themeColor(), // Using the provided theme color (dark green)
+                    shape = RoundedCornerShape(8.dp) // Rounded corners for the icon background
+                )
+                .padding(4.dp), // Inner padding
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "P",
+                    style = KrailTheme.typography.displayLarge.copy(fontWeight = FontWeight.Black),
+                    color = Color.White,
+                )
+                Image(
+                    painter = painterResource(Res.drawable.ic_car), // Replace with your car icon resource
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(color = Color.White),
+                    modifier = Modifier.size(20.dp), // Adjust size as needed
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier.weight(1f), // Take remaining space
+            verticalArrangement = Arrangement.spacedBy(4.dp) // Space between facility name and spots info
+        ) {
+            // Facility Name
+            Text(
+                text = parkRideState.facilityName, // e.g., "Tallawong P1"
+                style = KrailTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), // Your theme's typography
+            )
+
+            // Spots Information
+            Row(
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = "${parkRideState.spotsAvailable}",
+                    style = KrailTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = LocalContentColor.current
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "spots available",
+                    style = KrailTheme.typography.bodySmall,
+                    color = LocalContentColor.current.copy(alpha = 0.7f) // Slightly muted
+                )
+
+                Spacer(modifier = Modifier.width(16.dp)) // Space between the two stats
+
+                Text(
+                    text = "${parkRideState.percentageFull}%",
+                    style = KrailTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = LocalContentColor.current
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "full",
+                    style = KrailTheme.typography.bodySmall,
+                    color = LocalContentColor.current.copy(alpha = 0.7f) // Slightly muted
+                )
+            }
+             if (parkRideState.timeText.isNotBlank()) {
+                 Spacer(modifier = Modifier.height(2.dp))
+                 Text(
+                     text = "Last updated: ${parkRideState.timeText}",
+                     style = KrailTheme.typography.labelSmall,
+                     color = LocalContentColor.current.copy(alpha = 0.6f)
+                 )
+             }
         }
     }
 }

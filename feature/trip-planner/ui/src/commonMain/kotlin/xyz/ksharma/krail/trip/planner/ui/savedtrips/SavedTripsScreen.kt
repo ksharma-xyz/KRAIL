@@ -114,9 +114,8 @@ fun SavedTripsScreen(
                 } else {
                     items(
                         items = savedTripsState.savedTrips,
-                        key = { it.fromStopId + it.toStopId },
+                        key = { trip -> trip.tripId },
                     ) { trip ->
-
                         SavedTripCard(
                             trip = trip,
                             onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },

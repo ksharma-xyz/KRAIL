@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,7 +69,31 @@ fun SavedTripCard(
     onCollapseParkRideClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var expandParkRideCard by remember { mutableStateOf(false) }
+    var expandParkRideCard by rememberSaveable { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+    val rotation = remember { Animatable(0f) }
+    val onExpandCollapseParkRide = {
+        scope.launch {
+            val current = rotation.value % 360f
+            val target =
+                if (current == 0f) 540f else 0f // 0 -> 540 (360+180), 180 -> 0
+            rotation.animateTo(
+                targetValue = target,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = { fraction -> (1 - (1 - fraction) * (1 - fraction)) }
+                )
+            )
+        }
+        // TODO - should be a single lambda and reuse the same onClick for both
+        expandParkRideCard = !expandParkRideCard
+        if (expandParkRideCard) {
+            onLoadParkRideClick()
+        } else {
+            onCollapseParkRideClick()
+        }
+    }
 
     Box(modifier = modifier) {
         Column(
@@ -132,11 +157,7 @@ fun SavedTripCard(
                 }
             }
 
-            if (trip.parkRideUiState is ParkRideUiState.Available ||
-                trip.parkRideUiState is ParkRideUiState.Loading ||
-                trip.parkRideUiState is ParkRideUiState.Loaded ||
-                trip.parkRideUiState is ParkRideUiState.Error
-            ) {
+            if (trip.parkRideUiState !is ParkRideUiState.NotAvailable) {
                 // Bottom bar part
                 Row(
                     modifier = Modifier
@@ -147,12 +168,7 @@ fun SavedTripCard(
                         .background(color = themeColor())
                         .animateContentSize()
                         .klickable {
-                            expandParkRideCard = !expandParkRideCard
-                            if (expandParkRideCard) {
-                                onLoadParkRideClick()
-                            } else {
-                                onCollapseParkRideClick()
-                            }
+                            onExpandCollapseParkRide.invoke()
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween // If you have content here
@@ -175,13 +191,7 @@ fun SavedTripCard(
             }
         }
 
-        if (trip.parkRideUiState is ParkRideUiState.Available ||
-            trip.parkRideUiState is ParkRideUiState.Loading ||
-            trip.parkRideUiState is ParkRideUiState.Loaded ||
-            trip.parkRideUiState is ParkRideUiState.Error
-        ) {
-            val scope = rememberCoroutineScope()
-            val rotation = remember { Animatable(0f) }
+        if (trip.parkRideUiState !is ParkRideUiState.NotAvailable) {
             Box(
                 modifier = Modifier
                     .padding(end = 16.dp, top = 8.dp)
@@ -190,25 +200,7 @@ fun SavedTripCard(
                     .background(themeColor())
                     .align(Alignment.BottomEnd)
                     .klickable {
-                        scope.launch {
-                            val current = rotation.value % 360f
-                            val target =
-                                if (current == 0f) 540f else 0f // 0 -> 540 (360+180), 180 -> 0
-                            rotation.animateTo(
-                                targetValue = target,
-                                animationSpec = tween(
-                                    durationMillis = 500,
-                                    easing = { fraction -> (1 - (1 - fraction) * (1 - fraction)) }
-                                )
-                            )
-                        }
-                        // TODO - should be a single lambda and reuse the same onClick for both
-                        expandParkRideCard = !expandParkRideCard
-                        if (expandParkRideCard) {
-                            onLoadParkRideClick()
-                        } else {
-                            onCollapseParkRideClick()
-                        }
+                        onExpandCollapseParkRide.invoke()
                     },
                 contentAlignment = Alignment.Center,
             ) {
@@ -249,7 +241,7 @@ private fun SavedTripParkRideContent(
                 parkRideUiState.parkRideList.forEach {
                     Text(
                         text = it.facilityName,
-                        color = Color.White,
+                        color = Color.Black,
                         modifier = Modifier.padding(vertical = 4.dp)
                     )
                     Text(

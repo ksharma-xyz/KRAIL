@@ -39,6 +39,7 @@ val viewModelsModule = module {
             ioDispatcher = get(named(IODispatcher)),
             nswParkRideFacilityManager = get(),
             parkRideService = get(),
+            parkRideSandook = get(),
         )
     }
 

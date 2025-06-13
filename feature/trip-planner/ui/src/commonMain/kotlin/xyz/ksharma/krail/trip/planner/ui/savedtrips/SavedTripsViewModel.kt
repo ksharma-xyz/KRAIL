@@ -23,8 +23,8 @@ import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
-import xyz.ksharma.krail.park.ride.network.NswParkRideRepository
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
+import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
@@ -40,7 +40,7 @@ class SavedTripsViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val nswParkRideFacilityManager: NswParkRideFacilityManager,
     private val parkRideService: ParkRideService,
-    private val nswParkRideRepository: NswParkRideRepository,
+    private val parkRideSandook: NswParkRideSandook,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())

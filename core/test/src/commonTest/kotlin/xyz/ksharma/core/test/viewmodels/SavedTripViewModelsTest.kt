@@ -275,7 +275,7 @@ class SavedTripsViewModelTest {
             viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
             advanceUntilIdle()
             viewModel.onEvent(
-                SavedTripUiEvent.LoadParkRideFacilities(
+                SavedTripUiEvent.DisplayParkRideFacilitiesClick(
                     fromStopId = "2153478",
                     toStopId = "2153471"
                 )
@@ -333,7 +333,7 @@ class SavedTripsViewModelTest {
             viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
             advanceUntilIdle()
             viewModel.onEvent(
-                SavedTripUiEvent.LoadParkRideFacilities(
+                SavedTripUiEvent.DisplayParkRideFacilitiesClick(
                     fromStopId = "2153478",
                     toStopId = "2153471"
                 )
@@ -383,7 +383,7 @@ class SavedTripsViewModelTest {
             viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
             advanceUntilIdle()
             viewModel.onEvent(
-                SavedTripUiEvent.LoadParkRideFacilities(
+                SavedTripUiEvent.DisplayParkRideFacilitiesClick(
                     fromStopId = "2153478",
                     toStopId = "2153471"
                 )

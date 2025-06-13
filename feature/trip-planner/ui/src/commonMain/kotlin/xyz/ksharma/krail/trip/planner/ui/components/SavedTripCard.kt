@@ -65,6 +65,7 @@ fun SavedTripCard(
     onStarClick: () -> Unit,
     onCardClick: () -> Unit,
     onLoadParkRideClick: () -> Unit = {},
+    onCollapseParkRideClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var expandParkRideCard by remember { mutableStateOf(false) }
@@ -149,6 +150,8 @@ fun SavedTripCard(
                             expandParkRideCard = !expandParkRideCard
                             if (expandParkRideCard) {
                                 onLoadParkRideClick()
+                            } else {
+                                onCollapseParkRideClick()
                             }
                         },
                     verticalAlignment = Alignment.CenterVertically,
@@ -203,6 +206,8 @@ fun SavedTripCard(
                         expandParkRideCard = !expandParkRideCard
                         if (expandParkRideCard) {
                             onLoadParkRideClick()
+                        } else {
+                            onCollapseParkRideClick()
                         }
                     },
                 contentAlignment = Alignment.Center,
@@ -252,7 +257,7 @@ private fun SavedTripParkRideContent(
                                 "\nAvailable Spots: ${it.spotsAvailable}, " +
                                 "\nPercentage Full: ${it.percentageFull}%, " +
                                 "\nLast updated: ${it.timeText}, ",
-                                color = Color.Black,
+                        color = Color.Black,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }

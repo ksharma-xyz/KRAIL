@@ -25,4 +25,6 @@ sealed interface SavedTripUiEvent {
     data class LoadParkRideFacilities(
         val fromStopId: String, val toStopId: String
     ) : SavedTripUiEvent
+
+    data object StopObservingParkRide : SavedTripUiEvent
 }

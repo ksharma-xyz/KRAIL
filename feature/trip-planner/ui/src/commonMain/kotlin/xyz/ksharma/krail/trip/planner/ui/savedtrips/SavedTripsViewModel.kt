@@ -90,6 +90,10 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.LoadParkRideFacilities -> {
                 onLoadParkRideFacilities(event.fromStopId, event.toStopId)
             }
+
+            SavedTripUiEvent.StopObservingParkRide ->  {
+                parkRideAvailabilityJob?.cancel()
+            }
         }
     }
 
@@ -170,6 +174,7 @@ class SavedTripsViewModel(
                 }.toImmutableList()
 
             updateUiState {
+                // TODO - haptic feedback when parkRideUiState is updated
                 copy(
                     savedTrips = savedTrips.map { trip ->
                         // Update the parkRideUiState for those trips that exist in stopIdList

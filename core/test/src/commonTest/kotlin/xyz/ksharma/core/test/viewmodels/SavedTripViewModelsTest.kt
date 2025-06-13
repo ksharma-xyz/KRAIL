@@ -423,7 +423,7 @@ class SavedTripsViewModelTest {
         assertEquals(774, parkRideState.totalSpots)
         assertEquals(574, parkRideState.spotsAvailable)
         assertEquals(25, parkRideState.percentageFull) // 100/774 ≈ 12%
-        assertEquals("Park&Ride - Bella Vista", parkRideState.facilityName)
+        assertEquals("Bella Vista", parkRideState.facilityName)
     }
 
     @Test

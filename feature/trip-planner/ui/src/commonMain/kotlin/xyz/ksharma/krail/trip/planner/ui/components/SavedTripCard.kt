@@ -12,6 +12,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,6 +57,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
@@ -232,7 +234,7 @@ private fun SavedTripParkRideContent(
     parkRideUiState: ParkRideUiState,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(10.dp)) {
         when (parkRideUiState) {
             is ParkRideUiState.Loading -> {
                 Text("Loading Park & Ride...", color = Color.Black)
@@ -245,11 +247,12 @@ private fun SavedTripParkRideContent(
             is ParkRideUiState.Loaded -> {
                 parkRideUiState.parkRideList.forEach { parkRideState ->
                     ParkRideLoadedContent(parkRideState)
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
 
             is ParkRideUiState.Available -> {
-                Text("Tap to load Park & Ride details", color = Color.Black)
+                Text("Loading....", color = Color.Black)
             }
 
             is ParkRideUiState.NotAvailable -> {
@@ -264,94 +267,77 @@ fun ParkRideLoadedContent(
     parkRideState: ParkRideState,
     modifier: Modifier = Modifier
 ) {
-    val contentColor = getForegroundColor(themeColor()) // Color for text based on the green background
-
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp), // Add some vertical padding to the whole item
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Icon Box (P with car)
-        Box(
-            modifier = Modifier
-                .size(width = 56.dp, height = 56.dp) // Square size based on screenshot
-                .background(
-                    color = themeColor(), // Using the provided theme color (dark green)
-                    shape = RoundedCornerShape(8.dp) // Rounded corners for the icon background
-                )
-                .padding(4.dp), // Inner padding
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "P",
-                    style = KrailTheme.typography.displayLarge.copy(fontWeight = FontWeight.Black),
-                    color = Color.White,
-                )
-                Image(
-                    painter = painterResource(Res.drawable.ic_car), // Replace with your car icon resource
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(color = Color.White),
-                    modifier = Modifier.size(20.dp), // Adjust size as needed
-                )
-            }
+        if (parkRideState.displayParkRideIcon) {
+            ParkRideIcon()
+        } else {
+            ParkRideIconContainer(foregroundColor = themeColor(), content = {})
         }
 
         Column(
-            modifier = Modifier.weight(1f), // Take remaining space
             verticalArrangement = Arrangement.spacedBy(4.dp) // Space between facility name and spots info
         ) {
             // Facility Name
             Text(
                 text = parkRideState.facilityName, // e.g., "Tallawong P1"
-                style = KrailTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), // Your theme's typography
+                style = KrailTheme.typography.displayMedium, // Your theme's typography
+                color = getForegroundColor(themeColor()),
+                modifier = Modifier,
             )
 
             // Spots Information
-            Row(
-                verticalAlignment = Alignment.Bottom
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    text = "${parkRideState.spotsAvailable}",
-                    style = KrailTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = LocalContentColor.current
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "spots available",
-                    style = KrailTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = 0.7f) // Slightly muted
-                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "${parkRideState.spotsAvailable}",
+                        style = KrailTheme.typography.displayMedium,
+                        color = getForegroundColor(themeColor()),
+                        modifier = Modifier.alignByBaseline(),
+                    )
+                    Text(
+                        text = "spots empty",
+                        style = KrailTheme.typography.bodyMedium,
+                        color = getForegroundColor(themeColor()),
+                        modifier = Modifier.alignByBaseline(),
+                    )
+                }
 
-                Spacer(modifier = Modifier.width(16.dp)) // Space between the two stats
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = "${parkRideState.percentageFull}%",
+                        style = KrailTheme.typography.displayMedium,
+                        color = getForegroundColor(themeColor()),
+                        modifier = Modifier.alignByBaseline(),
+                    )
+                    Text(
+                        text = "FULL",
+                        style = KrailTheme.typography.bodyMedium,
+                        modifier = Modifier.alignByBaseline(),
+                        color = getForegroundColor(themeColor())
+                    )
+                }
+            }
 
+            if (parkRideState.timeText.isNotBlank()) {
                 Text(
-                    text = "${parkRideState.percentageFull}%",
-                    style = KrailTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = LocalContentColor.current
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "full",
+                    text = "Last updated at\u00A0${parkRideState.timeText}",
                     style = KrailTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = 0.7f) // Slightly muted
+                    color = getForegroundColor(themeColor()),
                 )
             }
-             if (parkRideState.timeText.isNotBlank()) {
-                 Spacer(modifier = Modifier.height(2.dp))
-                 Text(
-                     text = "Last updated: ${parkRideState.timeText}",
-                     style = KrailTheme.typography.labelSmall,
-                     color = LocalContentColor.current.copy(alpha = 0.6f)
-                 )
-             }
         }
     }
 }
 
-// region Previews
+// region SavedTripCard Preview
 
 @Preview
 @Composable
@@ -466,6 +452,31 @@ private val parkRideStatePreview = ParkRideState(
     percentageFull = 50,
     stopId = "12345",
     timeText = "10:30 AM",
+    displayParkRideIcon = true,
 )
+
+// endregion
+
+// region ParkRideLoadedContentPreviews
+
+@Preview
+@Composable
+private fun ParkRideLoadedContentPreview() {
+    PreviewTheme(KrailThemeStyle.Bus) {
+        ParkRideLoadedContent(
+            parkRideState = ParkRideState(
+                facilityName = "Tallawong P1",
+                spotsAvailable = 42,
+                totalSpots = 100,
+                percentageFull = 58,
+                stopId = "12345",
+                timeText = "11:45 AM",
+                displayParkRideIcon = true,
+
+                ),
+            modifier = Modifier.background(themeColor()),
+        )
+    }
+}
 
 // endregion

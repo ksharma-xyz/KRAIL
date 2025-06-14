@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleStartEffect
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
@@ -59,6 +60,13 @@ fun SavedTripsScreen(
             }
             onDispose {}
         }*/
+
+    LifecycleStartEffect(Unit) {
+        onEvent(SavedTripUiEvent.LifecycleStarted)
+        onStopOrDispose {
+            onEvent(SavedTripUiEvent.LifecycleStopped)
+        }
+    }
 
     Box(
         modifier = modifier
@@ -106,9 +114,8 @@ fun SavedTripsScreen(
                 } else {
                     items(
                         items = savedTripsState.savedTrips,
-                        key = { it.fromStopId + it.toStopId },
+                        key = { trip -> trip.tripId },
                     ) { trip ->
-
                         SavedTripCard(
                             trip = trip,
                             onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
@@ -127,7 +134,15 @@ fun SavedTripsScreen(
                             primaryTransportMode = null, // TODO
                             onLoadParkRideClick = {
                                 onEvent(
-                                    SavedTripUiEvent.LoadParkRideFacilities(
+                                    SavedTripUiEvent.DisplayParkRideFacilitiesClick(
+                                        fromStopId = trip.fromStopId,
+                                        toStopId = trip.toStopId,
+                                    )
+                                )
+                            },
+                            onCollapseParkRideClick = {
+                                onEvent(
+                                    SavedTripUiEvent.CollapseParkRideForTripClick(
                                         fromStopId = trip.fromStopId,
                                         toStopId = trip.toStopId,
                                     )

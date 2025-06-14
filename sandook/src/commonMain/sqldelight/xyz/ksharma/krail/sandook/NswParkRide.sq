@@ -1,0 +1,29 @@
+CREATE TABLE NSWParkRide (
+    facilityId TEXT NOT NULL PRIMARY KEY,
+    spotsAvailable INTEGER NOT NULL,
+    totalSpots INTEGER NOT NULL,
+    facilityName TEXT NOT NULL,
+    percentageFull INTEGER NOT NULL,
+    stopId TEXT NOT NULL,
+    timeText TEXT NOT NULL,
+    suburb TEXT NOT NULL,
+    address TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL
+);
+
+selectAll:
+SELECT * FROM NSWParkRide;
+
+insertOrReplace:
+INSERT OR REPLACE INTO NSWParkRide(
+    facilityId, spotsAvailable, totalSpots, facilityName, percentageFull, stopId, timeText,
+    suburb, address, latitude, longitude
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectByStopIds:
+SELECT * FROM NSWParkRide
+WHERE stopId IN ?;
+
+deleteAll:
+DELETE FROM NSWParkRide;

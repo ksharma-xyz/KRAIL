@@ -86,6 +86,7 @@ composeCompiler-gradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler
 db-sqlAndroidDriver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqlDelight" }
 db-sqlNativeDriver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqlDelight" }
 db-sqlRuntime = { module = "app.cash.sqldelight:runtime", version.ref = "sqlDelight" }
+db-sqlCoroutinesExtensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqlDelight" }
 
 # Firebase
 firebase-gitLiveCrashlytics = { module = "dev.gitlive:firebase-crashlytics", version.ref = "firebaseGitLive" }

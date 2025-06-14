@@ -61,13 +61,6 @@ fun SavedTripsScreen(
             onDispose {}
         }*/
 
-    LifecycleStartEffect(Unit) {
-        onEvent(SavedTripUiEvent.LifecycleStarted)
-        onStopOrDispose {
-            onEvent(SavedTripUiEvent.LifecycleStopped)
-        }
-    }
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -133,20 +126,8 @@ fun SavedTripsScreen(
                             },
                             primaryTransportMode = null, // TODO
                             onLoadParkRideClick = {
-                                onEvent(
-                                    SavedTripUiEvent.DisplayParkRideFacilitiesClick(
-                                        fromStopId = trip.fromStopId,
-                                        toStopId = trip.toStopId,
-                                    )
-                                )
                             },
                             onCollapseParkRideClick = {
-                                onEvent(
-                                    SavedTripUiEvent.CollapseParkRideForTripClick(
-                                        fromStopId = trip.fromStopId,
-                                        toStopId = trip.toStopId,
-                                    )
-                                )
                             },
                             modifier = Modifier
                                 .padding(horizontal = 16.dp),

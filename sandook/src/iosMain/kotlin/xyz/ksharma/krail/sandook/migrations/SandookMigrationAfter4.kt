@@ -23,6 +23,12 @@ internal object SandookMigrationAfter4 : SandookMigration {
                     latitude REAL NOT NULL,
                     longitude REAL NOT NULL
                 );
+                
+                CREATE TABLE SavedParkRide (
+                    stopId TEXT NOT NULL,
+                    facilityId TEXT NOT NULL,
+                    PRIMARY KEY (stopId, facilityId)
+                );
             """.trimIndent(),
             parameters = 0,
         )

@@ -244,7 +244,7 @@ class SavedTripsViewModel(
     }
 
     private suspend fun fetchParkRideFacilities() {
-        val stopIdList = listOf("221710").toImmutableSet() // uiState.value.observeParkRideStopIdSet
+        val stopIdList = listOf("221710").toImmutableSet() // TODO uiState.value.observeParkRideStopIdSet
         if (stopIdList.isEmpty()) {
             log("No Park Ride stop IDs are expanded, therefore skipping API Call.")
             return

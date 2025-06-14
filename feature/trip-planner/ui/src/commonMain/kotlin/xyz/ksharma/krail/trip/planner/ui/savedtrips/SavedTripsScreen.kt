@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,7 +28,9 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
+import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -70,7 +73,7 @@ fun SavedTripsScreen(
         Column {
             TitleBar(
                 title = {
-                    Text(text = "KRAIL")
+                    Text(text = "KRAIL", color = themeColor())
                 },
                 actions = {
                     RoundIconButton(
@@ -89,10 +92,6 @@ fun SavedTripsScreen(
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 300.dp),
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
                 if (savedTripsState.savedTrips.isEmpty() && savedTripsState.isSavedTripsLoading.not()) {
                     item(key = "empty_state") {
                         ErrorMessage(
@@ -105,6 +104,54 @@ fun SavedTripsScreen(
                         )
                     }
                 } else {
+
+                    if (savedTripsState.parkRideUiState.items.isNotEmpty()) {
+                        stickyHeader(key = "park_ride_title") {
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                                    .background(color = KrailTheme.colors.surface)
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                contentAlignment = Alignment.CenterStart,
+                            ) {
+                                Text(
+                                    text = "Park & Ride",
+                                    style = KrailTheme.typography.titleMedium,
+                                )
+                            }
+                        }
+
+                        items(
+                            items = savedTripsState.parkRideUiState.items,
+                            key = { parkRide -> parkRide.stopId },
+                        ) { parkRide ->
+                            ParkRideCard(
+                                modifier = Modifier.padding(bottom = 12.dp),
+                                onNavigateToDetails = {},
+                                item = parkRide,
+                                onToggleExpansion = {}
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
+
+                    stickyHeader(key = "saved_trips_title") {
+                        Box(
+                            modifier = Modifier.fillMaxWidth()
+                                .background(color = KrailTheme.colors.surface)
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+
+                            Text(
+                                text = "Saved Trips",
+                                style = KrailTheme.typography.titleMedium,
+                            )
+                        }
+                    }
+
                     items(
                         items = savedTripsState.savedTrips,
                         key = { trip -> trip.tripId },
@@ -125,10 +172,6 @@ fun SavedTripsScreen(
                                 )
                             },
                             primaryTransportMode = null, // TODO
-                            onLoadParkRideClick = {
-                            },
-                            onCollapseParkRideClick = {
-                            },
                             modifier = Modifier
                                 .padding(horizontal = 16.dp),
                         )

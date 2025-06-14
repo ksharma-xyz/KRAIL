@@ -1,8 +1,15 @@
 package xyz.ksharma.krail.sandook
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import xyz.ksharma.krail.core.log.log
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 
-internal class RealSandook(factory: SandookDriverFactory) : Sandook {
+internal class RealSandook(
+    factory: SandookDriverFactory,
+    private val ioDispatcher: CoroutineDispatcher,
+) : Sandook {
 
     private val sandook = KrailSandook(factory.createDriver())
     private val query = sandook.krailSandookQueries
@@ -49,6 +56,12 @@ internal class RealSandook(factory: SandookDriverFactory) : Sandook {
         return query.selectAllTrips().executeAsList()
     }
 
+    override fun observeAllTrips(): Flow<List<SavedTrip>> {
+        return query.selectAllTrips()
+            .asFlow()
+            .mapToList(ioDispatcher)
+    }
+
     override fun selectTripById(tripId: String): SavedTrip? {
         return query.selectTripById(tripId).executeAsOneOrNull()
     }
@@ -56,6 +69,7 @@ internal class RealSandook(factory: SandookDriverFactory) : Sandook {
     override fun clearSavedTrips() {
         query.clearSavedTrips()
     }
+
     // endregion
 
     // region Alerts

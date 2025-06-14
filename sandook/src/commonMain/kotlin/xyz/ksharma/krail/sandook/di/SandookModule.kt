@@ -14,12 +14,18 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 
 val sandookModule = module {
-    singleOf(::RealSandook) { bind<Sandook>() }
     includes(sqlDriverModule)
     singleOf(::RealSandookPreferences) { bind<SandookPreferences>() }
 
     single<NswParkRideSandook> {
         RealNswParkRideSandook(
+            factory = get(),
+            ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
+        )
+    }
+
+    single<Sandook> {
+        RealSandook(
             factory = get(),
             ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
         )

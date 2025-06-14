@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -31,9 +32,12 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
         val toArg: String? =
             backStackEntry.savedStateHandle.get<String>(SearchStopFieldType.TO.key)
 
-        LaunchedEffect(Unit) {
-            viewModel.onEvent(SavedTripUiEvent.LoadSavedTrips)
-        }
+/*        LifecycleStartEffect(Unit, backStackEntry) {
+            viewModel.onEvent(SavedTripUiEvent.LifecyleStarted)
+            onStopOrDispose {
+                viewModel.onEvent(SavedTripUiEvent.LifecycleStopped)
+            }
+        }*/
 
         // Cannot use 'rememberSaveable' here because StopItem is not Parcelable.
         // But it's saved in backStackEntry.savedStateHandle as json, so it's able to

@@ -77,8 +77,7 @@ class SavedTripsViewModel(
             pollParkRideFacilities()
         }
         .onCompletion {
-            expandedParkRideCardObserveJob?.cancel()
-            expandedParkRideCardObserveJob = null
+            cleanupJobs()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
 
@@ -282,12 +281,13 @@ class SavedTripsViewModel(
     fun cleanupJobs() {
         expandedParkRideCardObserveJob?.cancel()
         expandedParkRideCardObserveJob = null
-        observeSavedTripsJob?.cancel()
-        observeSavedTripsJob = null
+        pollParkRideFacilitiesJob?.cancel()
+        pollParkRideFacilitiesJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob = null
         pollParkRideFacilitiesJob?.cancel()
         pollParkRideFacilitiesJob = null
+        log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }
 

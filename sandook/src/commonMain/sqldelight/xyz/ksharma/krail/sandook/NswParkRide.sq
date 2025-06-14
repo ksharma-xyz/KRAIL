@@ -45,7 +45,7 @@ CREATE TABLE SavedParkRide (
 
 -- Insert or update a mapping between a stop and a facility, updating source if exists
 insertOrReplaceSavedParkRide:
-INSERT OR IGNORE INTO SavedParkRide(stopId, facilityId, source)
+INSERT OR REPLACE INTO SavedParkRide(stopId, facilityId, source)
 VALUES (?, ?, ?);
 
 -- Delete a specific mapping

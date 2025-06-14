@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class CarParkFacilityDetailResponse(
 
     /**
-     * This respresents the  GTFS Stop ID.
+     * This represents the  GTFS Stop ID.
      */
     @SerialName("tsn")
     val tsn: String,
@@ -112,14 +112,14 @@ data class Occupancy(
 data class Location(
 
     @SerialName("suburb")
-    val suburb: String,
+    val suburb: String? = null,
 
     @SerialName("address")
-    val address: String,
+    val address: String? = null,
 
     @SerialName("latitude")
-    val latitude: String,
+    val latitude: String? = null,
 
     @SerialName("longitude")
-    val longitude: String
+    val longitude: String? = null,
 )

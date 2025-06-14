@@ -15,11 +15,40 @@ interface NswParkRideSandook {
     suspend fun deleteAll()
 
     // SavedParkRide Table methods
-    fun getAllSavedParkRides(): Flow<List<SavedParkRide>>
-    fun getFacilitiesByStopId(stopId: String): Flow<List<String>>
-    suspend fun insertOrReplaceSavedParkRide(stopId: String, facilityId: String)
+
+    fun observeSavedParkRides(): Flow<List<SavedParkRide>>
+
     suspend fun deleteSavedParkRide(stopId: String, facilityId: String)
-    suspend fun clearSavedParkRides()
+
+    fun getFacilitiesByStopIdAndSource(
+        stopId: String,
+        source: SavedParkRideSource
+    ): Flow<List<String>>
+
+    /**
+     * Inserts or replaces saved park rides with the given pairs of stopId and facilityId.
+     * If a pair already exists, it will be replaced with the new value.
+     */
+    suspend fun insertOrReplaceSavedParkRides(
+        pairs: Set<Pair<String, String>>,
+        source: SavedParkRideSource = SavedParkRideSource.SavedTrips
+    )
+
+    /**
+     * Clears all saved park rides where source is matching.
+     */
+    suspend fun clearAllSavedParkRidesBySource(source: SavedParkRideSource)
+
+    companion object {
+        /**
+         * Represents the source of the saved park ride.
+         * This is used to differentiate between saved trips and user-added Park and Ride facility.
+         */
+        sealed class SavedParkRideSource(val value: String) {
+            data object SavedTrips : SavedParkRideSource("saved_trip")
+            data object UserAdded : SavedParkRideSource("user")
+        }
+    }
 }
 
 internal class RealNswParkRideSandook(
@@ -82,22 +111,34 @@ internal class RealNswParkRideSandook(
     // endregion
 
     // region SavedParkRide Table methods
-    override fun getAllSavedParkRides(): Flow<List<SavedParkRide>> =
+
+    override fun observeSavedParkRides(): Flow<List<SavedParkRide>> =
         parkRideQueries.selectAllSavedParkRides().asFlow().mapToList(ioDispatcher)
 
-    override fun getFacilitiesByStopId(stopId: String): Flow<List<String>> =
-        parkRideQueries.selectFacilitiesByStopId(stopId).asFlow().mapToList(ioDispatcher)
+    override fun getFacilitiesByStopIdAndSource(
+        stopId: String,
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
+    ): Flow<List<String>> =
+        parkRideQueries.selectFacilitiesByStopIdAndSource(stopId, source.value).asFlow()
+            .mapToList(ioDispatcher)
 
-    override suspend fun insertOrReplaceSavedParkRide(stopId: String, facilityId: String) {
-        parkRideQueries.insertOrReplaceSavedParkRide(stopId, facilityId)
+    override suspend fun insertOrReplaceSavedParkRides(
+        pairs: Set<Pair<String, String>>,
+        source: NswParkRideSandook.Companion.SavedParkRideSource
+    ) {
+        parkRideQueries.transaction {
+            pairs.forEach { (stopId, facilityId) ->
+                parkRideQueries.insertOrReplaceSavedParkRide(stopId, facilityId, source.value)
+            }
+        }
     }
 
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
         parkRideQueries.deleteSavedParkRide(stopId, facilityId)
     }
 
-    override suspend fun clearSavedParkRides() {
-        parkRideQueries.clearSavedParkRides()
+    override suspend fun clearAllSavedParkRidesBySource(source: NswParkRideSandook.Companion.SavedParkRideSource) {
+        parkRideQueries.clearSavedParkRidesBySource(source.value)
     }
 
     // endregion

@@ -15,5 +15,6 @@ CREATE TABLE NSWParkRide (
 CREATE TABLE SavedParkRide (
     stopId TEXT NOT NULL,
     facilityId TEXT NOT NULL,
+    source TEXT NOT NULL,
     PRIMARY KEY (stopId, facilityId)
 );

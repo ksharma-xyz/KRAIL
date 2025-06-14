@@ -4,11 +4,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 data class SavedTripsState(
     val savedTrips: ImmutableList<Trip> = persistentListOf(),
     val isSavedTripsLoading: Boolean = true,
-    val observeParkRideStopIdList: ImmutableSet<String> = persistentSetOf(),
+    val observeParkRideStopIdSet: ImmutableSet<String> = persistentSetOf(),
 )

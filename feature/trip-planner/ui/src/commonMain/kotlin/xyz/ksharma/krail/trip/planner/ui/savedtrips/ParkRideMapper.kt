@@ -5,6 +5,7 @@ import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
+import xyz.ksharma.krail.sandook.NSWParkRide
 import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
 
 /**
@@ -62,4 +63,40 @@ fun List<CarParkFacilityDetailResponse>.toParkRideStates(): List<ParkRideState> 
         val isFirst = seenStopIds.add(response.tsn)
         response.toParkRideState(displayParkRideIcon = isFirst)
     }
+}
+
+/**
+ * Converts a [CarParkFacilityDetailResponse] to a [NSWParkRide] for database storage.
+ *
+ * This method calculates the number of available spots, total spots, and percentage full
+ * for a Park&Ride facility using the occupancy data from all zones.
+ *
+ * Occupied spots are determined by summing the `transients` field from each zone's occupancy.
+ * If `transients` is `null` or missing, it is treated as 0.
+ *
+ * @return [NSWParkRide] containing facility details for database storage
+ **/
+@VisibleForTesting(otherwise = PACKAGE_PRIVATE)
+fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
+    val totalSpots = spots.toIntOrNull() ?: 0
+    val occupiedSpots = zones.sumOf {
+        it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
+    }
+    val spotsAvailable = totalSpots - occupiedSpots
+    val percentageFull = if (totalSpots > 0) (occupiedSpots * 100) / totalSpots else 0
+    val timeText = messageDate.toSimple12HourTime().replace(" ", "\u00A0")
+
+    return NSWParkRide(
+        facilityId = facilityId,
+        spotsAvailable = spotsAvailable.toLong(),
+        totalSpots = totalSpots.toLong(),
+        facilityName = facilityName.removePrefix("Park&Ride - ").trim(),
+        percentageFull = percentageFull.toLong(),
+        stopId = tsn,
+        timeText = timeText,
+        suburb = location.suburb ?: "",
+        address = location.address ?: "",
+        latitude = location.latitude?.toDoubleOrNull() ?: 0.0,
+        longitude = location.longitude?.toDoubleOrNull() ?: 0.0,
+    )
 }

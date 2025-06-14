@@ -10,12 +10,12 @@ class FakeParkRideService(
     private val facilityResponses: Map<String, CarParkFacilityDetailResponse> = Companion.facilityResponses,
 ) : ParkRideService {
 
-    override suspend fun getCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
+    override suspend fun fetchCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
         return this@FakeParkRideService.facilityResponses[facilityId]
             ?: error("No fake response for facilityId: $facilityId")
     }
 
-    override suspend fun getCarParkFacilities(): Map<String, String> {
+    override suspend fun fetchCarParkFacilities(): Map<String, String> {
         return this@FakeParkRideService.facilityResponses.mapValues { it.value.facilityName }
     }
 

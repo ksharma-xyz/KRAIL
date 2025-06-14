@@ -35,30 +35,31 @@ DELETE FROM NSWParkRide;
 
 
 -- SavedParkRide Table
--- Table for mapping between stops and facilities (many-to-many relationship).
+-- Table for mapping between stops and facilities (many-to-many relationship), with source info.
 CREATE TABLE SavedParkRide (
     stopId TEXT NOT NULL,                 -- Stop identifier
     facilityId TEXT NOT NULL,             -- Facility identifier
-    PRIMARY KEY (stopId, facilityId)      -- Composite primary key to prevent duplicates
+    source TEXT NOT NULL,                 -- Source is saved trips or user added see SavedParkRideSource
+    PRIMARY KEY (stopId, facilityId)      -- Uniqueness only on stopId + facilityId
 );
 
--- Insert or update a mapping between a stop and a facility
+-- Insert or update a mapping between a stop and a facility, updating source if exists
 insertOrReplaceSavedParkRide:
-INSERT OR REPLACE INTO SavedParkRide(stopId, facilityId)
-VALUES (?, ?);
+INSERT OR REPLACE INTO SavedParkRide(stopId, facilityId, source)
+VALUES (?, ?, ?);
 
 -- Delete a specific mapping
 deleteSavedParkRide:
 DELETE FROM SavedParkRide WHERE stopId = ? AND facilityId = ?;
 
--- Delete all mappings
-clearSavedParkRides:
-DELETE FROM SavedParkRide;
+-- Delete all mappings for a given source
+clearSavedParkRidesBySource:
+DELETE FROM SavedParkRide WHERE source = ?;
 
 -- Select all mappings
 selectAllSavedParkRides:
-SELECT stopId, facilityId FROM SavedParkRide;
+SELECT stopId, facilityId, source FROM SavedParkRide;
 
--- Select all unique facilities for a given stop
-selectFacilitiesByStopId:
-SELECT DISTINCT facilityId FROM SavedParkRide WHERE stopId = ?;
+-- Select all unique facilities for a given stop and source
+selectFacilitiesByStopIdAndSource:
+SELECT DISTINCT facilityId FROM SavedParkRide WHERE stopId = ? AND source = ?;

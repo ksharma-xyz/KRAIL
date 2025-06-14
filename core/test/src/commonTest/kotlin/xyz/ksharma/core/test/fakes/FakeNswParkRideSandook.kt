@@ -10,11 +10,11 @@ import xyz.ksharma.krail.sandook.SavedParkRide
 
 class FakeNswParkRideSandook : NswParkRideSandook {
     private val data = MutableStateFlow<List<NSWParkRide>>(emptyList())
-
     private val savedParkRides = MutableStateFlow<List<SavedParkRide>>(emptyList())
+
     override fun observeSavedParkRides(): Flow<List<SavedParkRide>> = savedParkRides.asStateFlow()
 
-    override fun getAll(): Flow<List<NSWParkRide>> = data
+    override fun getAll(): Flow<List<NSWParkRide>> = data.asStateFlow()
 
     override fun getByStopIds(stopIds: List<String>): Flow<List<NSWParkRide>> =
         data.map { list -> list.filter { it.stopId in stopIds } }
@@ -32,26 +32,35 @@ class FakeNswParkRideSandook : NswParkRideSandook {
         data.value = emptyList()
     }
 
-
-    override fun getFacilitiesByStopId(stopId: String): Flow<List<String>> =
+    override fun getFacilitiesByStopIdAndSource(
+        stopId: String,
+        source: NswParkRideSandook.Companion.SavedParkRideSource
+    ): Flow<List<String>> =
         savedParkRides.map { list ->
-            list.filter { it.stopId == stopId }.map { it.facilityId }
+            list.filter { it.stopId == stopId && it.source == source.value }
+                .map { it.facilityId }
         }
 
-    override suspend fun insertOrReplaceSavedParkRide(stopId: String, facilityId: String) {
-        val current = savedParkRides.value.toMutableList()
-        current.removeAll { it.stopId == stopId && it.facilityId == facilityId }
-        current.add(SavedParkRide(stopId, facilityId))
-        savedParkRides.value = current
+    override suspend fun insertOrReplaceSavedParkRides(
+        pairs: Set<Pair<String, String>>,
+        source: NswParkRideSandook.Companion.SavedParkRideSource
+    ) {
+        val newRides = pairs.map { (stopId, facilityId) ->
+            SavedParkRide(stopId, facilityId, source.value)
+        }
+        val filtered = savedParkRides.value.filterNot { ride ->
+            newRides.any { it.stopId == ride.stopId && it.facilityId == ride.facilityId && it.source == ride.source }
+        }
+        savedParkRides.value = filtered + newRides
+    }
+
+    override suspend fun clearAllSavedParkRidesBySource(source: NswParkRideSandook.Companion.SavedParkRideSource) {
+        savedParkRides.value = savedParkRides.value.filterNot { it.source == source.value }
     }
 
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
         savedParkRides.value = savedParkRides.value.filterNot {
             it.stopId == stopId && it.facilityId == facilityId
         }
-    }
-
-    override suspend fun clearSavedParkRides() {
-        savedParkRides.value = emptyList()
     }
 }

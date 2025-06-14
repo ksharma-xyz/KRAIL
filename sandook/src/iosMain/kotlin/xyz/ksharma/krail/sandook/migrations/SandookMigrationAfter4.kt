@@ -27,6 +27,7 @@ internal object SandookMigrationAfter4 : SandookMigration {
                 CREATE TABLE SavedParkRide (
                     stopId TEXT NOT NULL,
                     facilityId TEXT NOT NULL,
+                    source TEXT NOT NULL,
                     PRIMARY KEY (stopId, facilityId)
                 );
             """.trimIndent(),

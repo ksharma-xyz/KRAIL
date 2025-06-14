@@ -6,11 +6,20 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 
 interface NswParkRideSandook {
+
+    // NSWParkRide Table methods
     fun getAll(): Flow<List<NSWParkRide>>
     fun getByStopIds(stopIds: List<String>): Flow<List<NSWParkRide>>
     suspend fun insertOrReplace(parkRide: NSWParkRide)
     suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>)
     suspend fun deleteAll()
+
+    // SavedParkRide Table methods
+    fun getAllSavedParkRides(): Flow<List<SavedParkRide>>
+    fun getFacilitiesByStopId(stopId: String): Flow<List<String>>
+    suspend fun insertOrReplaceSavedParkRide(stopId: String, facilityId: String)
+    suspend fun deleteSavedParkRide(stopId: String, facilityId: String)
+    suspend fun clearSavedParkRides()
 }
 
 internal class RealNswParkRideSandook(
@@ -18,20 +27,21 @@ internal class RealNswParkRideSandook(
     private val ioDispatcher: CoroutineDispatcher,
 ) : NswParkRideSandook {
 
-    private val queries: NswParkRideQueries by lazy {
+    private val parkRideQueries: NswParkRideQueries by lazy {
         NswParkRideQueries(factory.createDriver())
     }
 
+    // region NSWParkRide Table methods
     override fun getAll(): Flow<List<NSWParkRide>> =
-        queries.selectAll().asFlow().mapToList(ioDispatcher)
+        parkRideQueries.selectAll().asFlow().mapToList(ioDispatcher)
 
     override fun getByStopIds(stopIds: List<String>): Flow<List<NSWParkRide>> =
-        queries.selectByStopIds(stopIds)
+        parkRideQueries.selectByStopIds(stopIds)
             .asFlow()
             .mapToList(ioDispatcher)
 
     override suspend fun insertOrReplace(parkRide: NSWParkRide) {
-        queries.insertOrReplace(
+        parkRideQueries.insertOrReplace(
             facilityId = parkRide.facilityId,
             spotsAvailable = parkRide.spotsAvailable,
             totalSpots = parkRide.totalSpots,
@@ -47,9 +57,9 @@ internal class RealNswParkRideSandook(
     }
 
     override suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>) {
-        queries.transaction {
+        parkRideQueries.transaction {
             parkRides.forEach { parkRide ->
-                queries.insertOrReplace(
+                parkRideQueries.insertOrReplace(
                     facilityId = parkRide.facilityId,
                     spotsAvailable = parkRide.spotsAvailable,
                     totalSpots = parkRide.totalSpots,
@@ -67,6 +77,28 @@ internal class RealNswParkRideSandook(
     }
 
     override suspend fun deleteAll() {
-        queries.deleteAll()
+        parkRideQueries.deleteAll()
     }
+    // endregion
+
+    // region SavedParkRide Table methods
+    override fun getAllSavedParkRides(): Flow<List<SavedParkRide>> =
+        parkRideQueries.selectAllSavedParkRides().asFlow().mapToList(ioDispatcher)
+
+    override fun getFacilitiesByStopId(stopId: String): Flow<List<String>> =
+        parkRideQueries.selectFacilitiesByStopId(stopId).asFlow().mapToList(ioDispatcher)
+
+    override suspend fun insertOrReplaceSavedParkRide(stopId: String, facilityId: String) {
+        parkRideQueries.insertOrReplaceSavedParkRide(stopId, facilityId)
+    }
+
+    override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
+        parkRideQueries.deleteSavedParkRide(stopId, facilityId)
+    }
+
+    override suspend fun clearSavedParkRides() {
+        parkRideQueries.clearSavedParkRides()
+    }
+
+    // endregion
 }

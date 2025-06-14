@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -50,7 +52,13 @@ class SavedTripsViewModel(
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
+            // TODO - call api once and save data in db.
+        }
+        .onCompletion {
+            expandedParkRideCardObserveJob?.cancel()
+            expandedParkRideCardObserveJob = null
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
 
     // 1. Use StateFlow for expanded cards
     private val _expandedParkRideCards = MutableStateFlow<Set<String>>(emptySet())
@@ -92,65 +100,42 @@ class SavedTripsViewModel(
                 analytics.track(AnalyticsEvent.ToFieldClickEvent)
             }
 
-            is SavedTripUiEvent.DisplayParkRideFacilitiesClick -> {
-                log("Expand Park Ride for trip: ${event.fromStopId} to ${event.toStopId}")
-                _expandedParkRideCards.value =
-                    _expandedParkRideCards.value + event.fromStopId + event.toStopId
-                log("After expand expandedParkRideCards: $expandedParkRideCards in obj:${this@SavedTripsViewModel}")
+            is SavedTripUiEvent.ExpandParkRideFacilityClick -> {
+                log("Expand Park Ride : ${event.stopId}")
+                updateUiState {
+                    copy(
+                        observeParkRideStopIdList = (observeParkRideStopIdList + event.stopId).toImmutableSet(),
+                    )
+                }
             }
 
             is SavedTripUiEvent.CollapseParkRideForTripClick -> {
-                log("Collapse Park Ride for trip: ${event.fromStopId} to ${event.toStopId}")
-                _expandedParkRideCards.value =
-                    _expandedParkRideCards.value - event.fromStopId - event.toStopId
-                log("After collapse expandedParkRideCards: $expandedParkRideCards in obj:${this@SavedTripsViewModel}")
-            }
-
-            SavedTripUiEvent.LifecycleStarted -> {
-                onLifecycleStarted()
-            }
-
-            SavedTripUiEvent.LifecycleStopped -> {
-                log("Lifecycle stopped, cancelling expandedParkRideCardObserveJob")
-                expandedParkRideCardObserveJob?.cancel()
-                expandedParkRideCardObserveJob = null
+                log("Collapse Park Ride : ${event.stopId}")
+                updateUiState {
+                    copy(
+                        observeParkRideStopIdList = (observeParkRideStopIdList - event.stopId).toImmutableSet(),
+                    )
+                }
             }
         }
     }
 
     private fun loadSavedTrips() {
+        log("loadSavedTrips called")
         viewModelScope.launch(ioDispatcher) {
             updateUiState { copy(isSavedTripsLoading = true) }
-
             val savedTrips = sandook.selectAllTrips()
-            val facilities = nswParkRideFacilityManager.getParkRideFacilities()
-            val parkRideStopIds = facilities.map { it.stopId }.toSet()
+            val trips = savedTrips.map { it.toTrip() }.toImmutableList()
+            updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-            val updatedTrips = savedTrips.map { savedTrip ->
-                val trip = savedTrip.toTrip()
-                val hasParkRide =
-                    trip.fromStopId in parkRideStopIds || trip.toStopId in parkRideStopIds
-                trip.copy(
-                    parkRideUiState = if (hasParkRide) {
-                        ParkRideUiState.Available
-                    } else {
-                        ParkRideUiState.NotAvailable
-                    },
-                )
-            }
-
-            updateUiState {
-                copy(
-                    savedTrips = updatedTrips.toImmutableList(),
-                    isSavedTripsLoading = false,
-                )
-            }
+            // Fetch Park Ride facilities for the saved trips
+//            fetchParkRideFacilities()
         }
     }
 
     private fun onDeleteSavedTrip(savedTrip: Trip) {
         log("onDeleteSavedTrip: $savedTrip")
-        viewModelScope.launch(context = Dispatchers.IO) {
+        viewModelScope.launch(context = ioDispatcher) {
             sandook.deleteTrip(tripId = savedTrip.tripId)
             loadSavedTrips()
             analytics.trackDeleteSavedTrip(
@@ -160,9 +145,10 @@ class SavedTripsViewModel(
         }
     }
 
-    private suspend fun fetchParkRideFacilities(stopIdList: Set<String>) {
-        val facilityIdList = getFacilityIdListToObserve(stopIdList)
-        log("Fetch Park Ride for stopIDs: $stopIdList and facilityIDs: $facilityIdList")
+    private suspend fun fetchParkRideFacilities() {
+
+
+        val facilityIdList = getFacilityIdListToObserve()
 
         val parkRideList: ImmutableList<ParkRideState> =
             facilityIdList.map { facilityId ->
@@ -173,6 +159,7 @@ class SavedTripsViewModel(
                 .toParkRideStates()
                 .toImmutableList()
 
+/*
         updateUiState {
             copy(
                 savedTrips = savedTrips.map { trip ->
@@ -186,9 +173,12 @@ class SavedTripsViewModel(
                 }.toImmutableList()
             )
         }
+*/
     }
 
-    fun getFacilityIdListToObserve(stopIdList: Set<String>): Set<String> {
+    fun getFacilityIdListToObserve(): Set<String> {
+        val stopIdList = uiState.value.savedTrips.map { it.fromStopId }.toSet()
+
         val parkRideFacilityList = nswParkRideFacilityManager.getParkRideFacilities()
 
         val facilityIdList = parkRideFacilityList
@@ -199,11 +189,7 @@ class SavedTripsViewModel(
         return facilityIdList
     }
 
-    private fun onLifecycleStarted() {
-        observeExpandedParkRideCards()
-    }
-
-    private fun observeExpandedParkRideCards() {
+/*    private fun observeExpandedParkRideCards() {
         var parkRidePollingJob: Job? = null
         expandedParkRideCardObserveJob?.cancel()
         expandedParkRideCardObserveJob =
@@ -226,7 +212,7 @@ class SavedTripsViewModel(
                     }
                 }
             }
-    }
+    }*/
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {
         _uiState.update(block)
@@ -235,6 +221,7 @@ class SavedTripsViewModel(
     override fun onCleared() {
         super.onCleared()
         expandedParkRideCardObserveJob?.cancel()
+        expandedParkRideCardObserveJob = null
     }
 }
 

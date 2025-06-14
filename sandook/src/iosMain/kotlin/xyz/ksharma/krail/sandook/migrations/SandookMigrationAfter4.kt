@@ -20,8 +20,8 @@ internal object SandookMigrationAfter4 : SandookMigration {
                     timeText TEXT NOT NULL,
                     suburb TEXT NOT NULL,
                     address TEXT NOT NULL,
-                    latitude TEXT NOT NULL,
-                    longitude TEXT NOT NULL
+                    latitude REAL NOT NULL,
+                    longitude REAL NOT NULL
                 );
             """.trimIndent(),
             parameters = 0,

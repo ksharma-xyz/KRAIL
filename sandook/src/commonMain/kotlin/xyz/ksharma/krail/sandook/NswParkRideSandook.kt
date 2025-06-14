@@ -47,7 +47,23 @@ internal class RealNswParkRideSandook(
     }
 
     override suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>) {
-        parkRides.forEach { insertOrReplace(it) }
+        queries.transaction {
+            parkRides.forEach { parkRide ->
+                queries.insertOrReplace(
+                    facilityId = parkRide.facilityId,
+                    spotsAvailable = parkRide.spotsAvailable,
+                    totalSpots = parkRide.totalSpots,
+                    facilityName = parkRide.facilityName,
+                    percentageFull = parkRide.percentageFull,
+                    stopId = parkRide.stopId,
+                    timeText = parkRide.timeText,
+                    suburb = parkRide.suburb,
+                    address = parkRide.address,
+                    latitude = parkRide.latitude,
+                    longitude = parkRide.longitude
+                )
+            }
+        }
     }
 
     override suspend fun deleteAll() {

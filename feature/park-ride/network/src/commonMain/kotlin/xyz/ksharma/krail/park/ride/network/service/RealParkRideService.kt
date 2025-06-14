@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 
@@ -16,6 +17,9 @@ internal class RealParkRideService(
     override suspend fun fetchCarParkFacilities(
         facilityId: String
     ): CarParkFacilityDetailResponse = withContext(ioDispatcher) {
+        require(facilityId.isNotBlank()) { "Facility ID must not be blank" }
+
+        log("API Call: Fetching car park details for facility ID: $facilityId")
         httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/carpark") {
             url {
                 parameters.append("facility", facilityId)

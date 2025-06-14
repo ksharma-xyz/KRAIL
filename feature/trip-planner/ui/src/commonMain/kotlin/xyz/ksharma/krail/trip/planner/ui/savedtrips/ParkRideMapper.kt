@@ -86,6 +86,10 @@ fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
     val percentageFull = if (totalSpots > 0) (occupiedSpots * 100) / totalSpots else 0
     val timeText = messageDate.toSimple12HourTime().replace(" ", "\u00A0")
 
+    log("[$facilityName - $facilityId - $tsn] " +
+        "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
+        "Spots available: $spotsAvailable, Percentage full: $percentageFull%")
+
     return NSWParkRide(
         facilityId = facilityId,
         spotsAvailable = spotsAvailable.toLong(),

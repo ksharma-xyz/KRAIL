@@ -19,6 +19,10 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock.System
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -28,7 +32,6 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
-import xyz.ksharma.krail.sandook.NSWParkRide
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
@@ -36,7 +39,9 @@ import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -68,10 +73,13 @@ class SavedTripsViewModel(
      */
     private var pollParkRideFacilitiesJob: Job? = null
 
+    private val lastApiCallTimeMap: MutableMap<String, Instant> = mutableMapOf()
+
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
+            log("")
             observeSavedTrips()
             observeParkRideFacilityDatabase()
             pollParkRideFacilities()
@@ -80,10 +88,6 @@ class SavedTripsViewModel(
             cleanupJobs()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
-
-    // 1. Use StateFlow for expanded cards
-    private val _expandedParkRideCards = MutableStateFlow<Set<String>>(emptySet())
-    val expandedParkRideCards: StateFlow<Set<String>> = _expandedParkRideCards
 
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
@@ -210,6 +214,7 @@ class SavedTripsViewModel(
     }
 
     private fun observeParkRideFacilityDatabase() {
+        log("observeParkRideFacilityDatabase called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
@@ -217,7 +222,7 @@ class SavedTripsViewModel(
                     .observeSavedParkRides()
                     .distinctUntilChanged()
                     .collectLatest { savedParkRides ->
-                        log("Saved Park Ride facilities in database: ${savedParkRides.size}")
+//                        log("Saved Park Ride facilities in database: ${savedParkRides.size}")
                         savedParkRides.forEach {
                             log("\tSaved Park Ride StopID: ${it.stopId}, FacilityId: ${it.facilityId}")
                         }
@@ -226,33 +231,53 @@ class SavedTripsViewModel(
     }
 
     private fun pollParkRideFacilities() {
+        log("pollParkRideFacilities called")
         pollParkRideFacilitiesJob?.cancel()
         pollParkRideFacilitiesJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
                 while (true) {
                     fetchParkRideFacilities()
-                    delay(2.minutes)
+
+                    delay(getApiCooldownDuration())
                 }
             }
     }
 
     private suspend fun fetchParkRideFacilities() {
-        val stopIdList = uiState.value.observeParkRideStopIdSet
+        val stopIdList = listOf("221710").toImmutableSet() // uiState.value.observeParkRideStopIdSet
         if (stopIdList.isEmpty()) {
             log("No Park Ride stop IDs are expanded, therefore skipping API Call.")
             return
         }
 
         val facilityIdList = convertStopIdListToFacilityIdList(stopIdList)
+        val cooldownDuration = getApiCooldownDuration()
 
-        log("Fetching Park Ride facilities for stopIDs: $stopIdList, and FacilityIdList: $facilityIdList")
-        val parkRideDbList: List<NSWParkRide> = facilityIdList.map { facilityId ->
+        val facilitiesDueForRefresh = facilityIdList.filter { facilityId ->
+            val lastCall = lastApiCallTimeMap[facilityId] ?: Instant.DISTANT_PAST
+            System.now() - lastCall >= cooldownDuration
+        }
+
+        val facilitiesOnCooldown = facilityIdList - facilitiesDueForRefresh.toSet()
+        facilitiesOnCooldown.forEach { facilityId ->
+            val lastCall = lastApiCallTimeMap[facilityId] ?: Instant.DISTANT_PAST
+            val timeLeft = cooldownDuration - (System.now() - lastCall)
+            log("Facility $facilityId is on cooldown for another ${timeLeft.inWholeSeconds} seconds")
+        }
+
+        if (facilitiesDueForRefresh.isEmpty()) {
+            log("API call skipped for all facilities due to cooldown.")
+            return
+        }
+
+        log("Fetching Park Ride facilities for FacilityIdList: $facilitiesDueForRefresh")
+        val parkRideDbList = facilitiesDueForRefresh.map { facilityId ->
+            lastApiCallTimeMap[facilityId] = System.now()
             parkRideService
                 .fetchCarParkFacilities(facilityId = facilityId)
                 .toDbNSWParkRide()
         }.toImmutableList()
 
-        // Save to database
         parkRideSandook.insertOrReplaceAll(parkRideDbList)
     }
 
@@ -266,6 +291,25 @@ class SavedTripsViewModel(
             .toSet()
 
         return facilityIdList
+    }
+
+    /**
+     * Checks if the current time is not peak time.
+     * Peak time is defined as 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am.
+     */
+    private fun isNotPeakTime(): Boolean {
+        val now = System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val hour = now.hour
+        // Peak time: 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am
+        return hour < 5 || hour >= 10
+    }
+
+    private fun getApiCooldownDuration(): Duration {
+        return if (isNotPeakTime()) {
+            5.minutes
+        } else {
+            2.minutes // TODO -  firebase controls this value.
+        }
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

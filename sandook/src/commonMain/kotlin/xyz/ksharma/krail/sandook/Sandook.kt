@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.sandook
 
+import kotlinx.coroutines.flow.Flow
+
 interface Sandook {
 
     // region Theme
@@ -19,6 +21,9 @@ interface Sandook {
 
     fun deleteTrip(tripId: String)
     fun selectAllTrips(): List<SavedTrip>
+
+    fun observeAllTrips(): Flow<List<SavedTrip>>
+
     fun selectTripById(tripId: String): SavedTrip?
     fun clearSavedTrips()
     // endregion

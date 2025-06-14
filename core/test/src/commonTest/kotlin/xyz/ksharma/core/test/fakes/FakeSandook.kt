@@ -1,5 +1,8 @@
 package xyz.ksharma.core.test.fakes
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import xyz.ksharma.krail.sandook.NswStops
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
@@ -9,11 +12,12 @@ import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 class FakeSandook : Sandook {
 
     private var productClass: Long? = null
-    private val trips = mutableListOf<SavedTrip>()
+    private val tripsFlow = MutableStateFlow<List<SavedTrip>>(emptyList())
     private val alerts = mutableMapOf<String, List<SelectServiceAlertsByJourneyId>>()
     private val stops = mutableListOf<NswStops>()
     private val stopProductClasses = mutableMapOf<String, MutableList<Int>>()
 
+    // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {
         this.productClass = productClass
     }
@@ -25,7 +29,9 @@ class FakeSandook : Sandook {
     override fun clearTheme() {
         productClass = null
     }
+    // endregion
 
+    // region SavedTrip
     override fun insertOrReplaceTrip(
         tripId: String,
         fromStopId: String,
@@ -41,29 +47,37 @@ class FakeSandook : Sandook {
             toStopName,
             timestamp = null,
         )
-        if (trip.tripId == tripId) {
-            trips.remove(trip)
-        }
-        trips.add(trip)
+        val current = tripsFlow.value.toMutableList()
+        current.removeAll { it.tripId == tripId }
+        current.add(trip)
+        tripsFlow.value = current
     }
 
     override fun deleteTrip(tripId: String) {
-        trips.find { it.tripId == tripId }?.let { trip ->
-            trips.remove(trip)
-        }
+        val current = tripsFlow.value.toMutableList()
+        current.removeAll { it.tripId == tripId }
+        tripsFlow.value = current
     }
 
     override fun selectAllTrips(): List<SavedTrip> {
-        return trips.toList()
+        return tripsFlow.value
+    }
+
+    override fun observeAllTrips(): Flow<List<SavedTrip>> {
+        return tripsFlow.asStateFlow()
     }
 
     override fun selectTripById(tripId: String): SavedTrip? {
-        return trips.find { it.tripId == tripId }
+        return tripsFlow.value.find { it.tripId == tripId }
     }
 
     override fun clearSavedTrips() {
-        trips.clear()
+        tripsFlow.value = emptyList()
     }
+
+    // endregion
+
+    // region Service Alerts
 
     override fun getAlerts(journeyId: String): List<SelectServiceAlertsByJourneyId> {
         return alerts[journeyId] ?: emptyList()
@@ -76,6 +90,7 @@ class FakeSandook : Sandook {
     override fun insertAlerts(journeyId: String, alerts: List<SelectServiceAlertsByJourneyId>) {
         this.alerts[journeyId] = alerts
     }
+    // endregion
 
     override fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double) {
         stops.add(NswStops(stopId, stopName, stopLat, stopLon))

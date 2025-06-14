@@ -169,8 +169,9 @@ class SavedTripsViewModel(
                 log("Fetching Park Ride facility for ID: $facilityId")
                 parkRideService
                     .getCarParkFacilities(facilityId = facilityId)
-                    .toParkRideState()
-            }.toImmutableList()
+            }
+                .toParkRideStates()
+                .toImmutableList()
 
         updateUiState {
             copy(
@@ -216,7 +217,7 @@ class SavedTripsViewModel(
                         parkRidePollingJob = launch {
                             while (true) {
                                 fetchParkRideFacilities(expandedIds)
-                                delay(10.seconds)
+                                delay(60.seconds)
                             }
                         }
                     } else {

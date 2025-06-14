@@ -20,11 +20,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
  * full, and stop ID
  **/
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toParkRideState(): ParkRideState {
+fun CarParkFacilityDetailResponse.toParkRideState(
+    displayParkRideIcon: Boolean = true,
+): ParkRideState {
     val totalSpots = spots.toIntOrNull() ?: 0
 
     // Sum occupied spots from all zones (using loop sensor)
-    val occupiedSpots = zones.sumOf { it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0}
+    val occupiedSpots = zones.sumOf {
+        it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
+    }
 
     val spotsAvailable = totalSpots - occupiedSpots
     val percentFull = if (totalSpots > 0) {
@@ -39,14 +43,23 @@ fun CarParkFacilityDetailResponse.toParkRideState(): ParkRideState {
                 "Percentage full: $percentFull%"
     )
 
-    val time = messageDate.toSimple12HourTime()
+    val time = messageDate.toSimple12HourTime().replace(" ", "\u00A0") // Non-breaking space for better display
 
     return ParkRideState(
         spotsAvailable = spotsAvailable,
         totalSpots = totalSpots,
-        facilityName = facilityName,
+        facilityName = facilityName.removePrefix("Park&Ride - ").trim(),
         percentageFull = percentFull,
         stopId = tsn,
         timeText = time,
+        displayParkRideIcon = displayParkRideIcon,
     )
+}
+
+fun List<CarParkFacilityDetailResponse>.toParkRideStates(): List<ParkRideState> {
+    val seenStopIds = mutableSetOf<String>()
+    return this.map { response ->
+        val isFirst = seenStopIds.add(response.tsn)
+        response.toParkRideState(displayParkRideIcon = isFirst)
+    }
 }

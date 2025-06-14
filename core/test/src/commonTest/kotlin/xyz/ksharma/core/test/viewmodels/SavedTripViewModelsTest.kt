@@ -317,11 +317,11 @@ class SavedTripsViewModelTest {
             )
 
             val errorService = object : ParkRideService {
-                override suspend fun getCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
+                override suspend fun fetchCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
                     throw RuntimeException("Network error")
                 }
 
-                override suspend fun getCarParkFacilities(): Map<String, String> {
+                override suspend fun fetchCarParkFacilities(): Map<String, String> {
                     throw RuntimeException("Network error")
                 }
             }
@@ -366,12 +366,12 @@ class SavedTripsViewModelTest {
             )
 
             val slowService = object : ParkRideService {
-                override suspend fun getCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
+                override suspend fun fetchCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse {
                     kotlinx.coroutines.delay(100)
                     return facilityResponses.values.first()
                 }
 
-                override suspend fun getCarParkFacilities(): Map<String, String> {
+                override suspend fun fetchCarParkFacilities(): Map<String, String> {
                     return mapOf()
                 }
             }

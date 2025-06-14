@@ -12,7 +12,7 @@ class FakeNswParkRideSandook : NswParkRideSandook {
     private val data = MutableStateFlow<List<NSWParkRide>>(emptyList())
 
     private val savedParkRides = MutableStateFlow<List<SavedParkRide>>(emptyList())
-    override fun getAllSavedParkRides(): Flow<List<SavedParkRide>> = savedParkRides.asStateFlow()
+    override fun observeSavedParkRides(): Flow<List<SavedParkRide>> = savedParkRides.asStateFlow()
 
     override fun getAll(): Flow<List<NSWParkRide>> = data
 

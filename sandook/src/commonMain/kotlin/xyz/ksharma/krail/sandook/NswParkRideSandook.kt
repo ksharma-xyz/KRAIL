@@ -15,7 +15,7 @@ interface NswParkRideSandook {
     suspend fun deleteAll()
 
     // SavedParkRide Table methods
-    fun getAllSavedParkRides(): Flow<List<SavedParkRide>>
+    fun observeSavedParkRides(): Flow<List<SavedParkRide>>
     fun getFacilitiesByStopId(stopId: String): Flow<List<String>>
     suspend fun insertOrReplaceSavedParkRide(stopId: String, facilityId: String)
     suspend fun deleteSavedParkRide(stopId: String, facilityId: String)
@@ -82,7 +82,7 @@ internal class RealNswParkRideSandook(
     // endregion
 
     // region SavedParkRide Table methods
-    override fun getAllSavedParkRides(): Flow<List<SavedParkRide>> =
+    override fun observeSavedParkRides(): Flow<List<SavedParkRide>> =
         parkRideQueries.selectAllSavedParkRides().asFlow().mapToList(ioDispatcher)
 
     override fun getFacilitiesByStopId(stopId: String): Flow<List<String>> =

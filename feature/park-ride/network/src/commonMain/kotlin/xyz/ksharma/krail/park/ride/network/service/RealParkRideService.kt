@@ -13,7 +13,7 @@ internal class RealParkRideService(
     private val ioDispatcher: CoroutineDispatcher
 ) : ParkRideService {
 
-    override suspend fun getCarParkFacilities(
+    override suspend fun fetchCarParkFacilities(
         facilityId: String
     ): CarParkFacilityDetailResponse = withContext(ioDispatcher) {
         httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/carpark") {
@@ -23,7 +23,7 @@ internal class RealParkRideService(
         }.body()
     }
 
-    override suspend fun getCarParkFacilities(): Map<String, String> =
+    override suspend fun fetchCarParkFacilities(): Map<String, String> =
         withContext(ioDispatcher) {
             httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/carpark") {}.body()
         }

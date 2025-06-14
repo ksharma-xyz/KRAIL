@@ -22,7 +22,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
  **/
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
 fun CarParkFacilityDetailResponse.toParkRideState(
-    displayParkRideIcon: Boolean = true,
 ): ParkRideState {
     val totalSpots = spots.toIntOrNull() ?: 0
 
@@ -44,7 +43,8 @@ fun CarParkFacilityDetailResponse.toParkRideState(
                 "Percentage full: $percentFull%"
     )
 
-    val time = messageDate.toSimple12HourTime().replace(" ", "\u00A0") // Non-breaking space for better display
+    val time = messageDate.toSimple12HourTime()
+        .replace(" ", "\u00A0") // Non-breaking space for better display
 
     return ParkRideState(
         spotsAvailable = spotsAvailable,
@@ -53,7 +53,6 @@ fun CarParkFacilityDetailResponse.toParkRideState(
         percentageFull = percentFull,
         stopId = tsn,
         timeText = time,
-        displayParkRideIcon = displayParkRideIcon,
     )
 }
 
@@ -61,7 +60,7 @@ fun List<CarParkFacilityDetailResponse>.toParkRideStates(): List<ParkRideState> 
     val seenStopIds = mutableSetOf<String>()
     return this.map { response ->
         val isFirst = seenStopIds.add(response.tsn)
-        response.toParkRideState(displayParkRideIcon = isFirst)
+        response.toParkRideState()
     }
 }
 
@@ -86,9 +85,11 @@ fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
     val percentageFull = if (totalSpots > 0) (occupiedSpots * 100) / totalSpots else 0
     val timeText = messageDate.toSimple12HourTime().replace(" ", "\u00A0")
 
-    log("[$facilityName - $facilityId - $tsn] " +
-        "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
-        "Spots available: $spotsAvailable, Percentage full: $percentageFull%")
+    log(
+        "[$facilityName - $facilityId - $tsn] " +
+                "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
+                "Spots available: $spotsAvailable, Percentage full: $percentageFull%"
+    )
 
     return NSWParkRide(
         facilityId = facilityId,
@@ -104,3 +105,12 @@ fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
         longitude = location.longitude?.toDoubleOrNull() ?: 0.0,
     )
 }
+
+internal fun NSWParkRide.toParkRideState(): ParkRideState = ParkRideState(
+    spotsAvailable = spotsAvailable.toInt(),
+    totalSpots = totalSpots.toInt(),
+    facilityName = facilityName,
+    percentageFull = percentageFull.toInt(),
+    timeText = timeText,
+    stopId = stopId,
+)

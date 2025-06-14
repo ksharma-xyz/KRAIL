@@ -38,11 +38,13 @@ fun ParkRideLoadedContent(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+/*
         if (parkRideState.displayParkRideIcon) {
             ParkRideIcon()
         } else {
             ParkRideIconContainer(backgroundColor = themeBackgroundColor(), content = {})
         }
+*/
 
         Column(
             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -113,7 +115,6 @@ val parkRideStatePreview = ParkRideState(
     timeText = "2 min ago",
     totalSpots = 800,
     stopId = "212000",
-    displayParkRideIcon = true,
 )
 
 @Preview

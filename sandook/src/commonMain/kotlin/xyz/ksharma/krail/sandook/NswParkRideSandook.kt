@@ -9,7 +9,8 @@ interface NswParkRideSandook {
 
     // NSWParkRide Table methods
     fun getAll(): Flow<List<NSWParkRide>>
-    fun getByStopIds(stopIds: List<String>): Flow<List<NSWParkRide>>
+    fun getByStopIds(stopIds: List<String>): List<NSWParkRide>
+
     suspend fun insertOrReplace(parkRide: NSWParkRide)
     suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>)
     suspend fun deleteAll()
@@ -22,7 +23,7 @@ interface NswParkRideSandook {
 
     fun getFacilitiesByStopIdAndSource(
         stopId: String,
-        source: SavedParkRideSource
+        source: SavedParkRideSource = SavedParkRideSource.SavedTrips
     ): Flow<List<String>>
 
     /**
@@ -64,10 +65,8 @@ internal class RealNswParkRideSandook(
     override fun getAll(): Flow<List<NSWParkRide>> =
         parkRideQueries.selectAll().asFlow().mapToList(ioDispatcher)
 
-    override fun getByStopIds(stopIds: List<String>): Flow<List<NSWParkRide>> =
-        parkRideQueries.selectByStopIds(stopIds)
-            .asFlow()
-            .mapToList(ioDispatcher)
+    override fun getByStopIds(stopIds: List<String>): List<NSWParkRide> =
+        parkRideQueries.selectByStopIds(stopIds).executeAsList()
 
     override suspend fun insertOrReplace(parkRide: NSWParkRide) {
         parkRideQueries.insertOrReplace(

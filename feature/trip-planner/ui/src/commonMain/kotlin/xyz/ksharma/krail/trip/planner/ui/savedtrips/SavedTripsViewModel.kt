@@ -199,6 +199,10 @@ class SavedTripsViewModel(
     }
 
     private fun onLifecycleStarted() {
+        observeExpandedParkRideCards()
+    }
+
+    private fun observeExpandedParkRideCards() {
         var parkRidePollingJob: Job? = null
         expandedParkRideCardObserveJob?.cancel()
         expandedParkRideCardObserveJob =

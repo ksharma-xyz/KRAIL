@@ -41,7 +41,7 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(): NSWParkRideFaci
         facilityId = facilityId,
         spotsAvailable = spotsAvailable.toLong(),
         totalSpots = totalSpots.toLong(),
-        facilityName = facilityName.removePrefix("Park&Ride - ").trim(),
+        facilityName = facilityName.toDisplayFacilityName(),
         percentageFull = percentageFull.toLong(),
         stopId = tsn,
         timeText = timeText,
@@ -103,3 +103,6 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
         }
         .filterNotNull()
 }
+
+internal fun String.toDisplayFacilityName(): String = removePrefix("Park&Ride - ").trim()
+

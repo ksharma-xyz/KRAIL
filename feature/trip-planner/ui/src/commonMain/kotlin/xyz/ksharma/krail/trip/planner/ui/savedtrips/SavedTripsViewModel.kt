@@ -44,6 +44,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
+import kotlin.text.get
+
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -224,45 +229,74 @@ class SavedTripsViewModel(
     }
 
     /**
-     * Observes Park & Ride facility data from the database and updates the UI state accordingly.
+     * Observes and merges Park & Ride facility mapping and detailed data, updating the UI state.
      *
-     * This method listens for changes in the database containing Park & Ride facilities.
+     * This method combines two sources:
+     * 1. The mapping of stopId to facilityId (from `SavedParkRide`), which is always available for all saved trips.
+     * 2. The detailed facility data (from `NSWParkRide`), which is only available after an API call for that facility.
+     *
      * For each update:
-     * - If no facilities are found, it clears the Park & Ride UI state.
-     * - If facilities are present, it maps the database entities to UI state objects,
-     *   including available spots, percentage full, last updated time, and location details if available.
+     * - If no facilities are found in the mapping, the Park & Ride UI state is cleared.
+     * - For each mapped facility, if detailed data is available, it is used; otherwise, a placeholder is created with only mapping info.
+     * - This ensures the UI always lists all Park & Ride facilities relevant to the user's saved trips, even if detailed data is not yet fetched.
      *
-     * The resulting UI state is updated to reflect the latest facility information for display.
+     * Edge case:
+     * - If a facility mapping exists (stopId ↔ facilityId) but no detailed data is present (because the user hasn't interacted with the card),
+     *   a placeholder entry is shown in the UI. The detailed data will appear automatically once fetched via API.
+     *
+     * The resulting UI state always reflects the latest merged facility information for display.
      */
     private fun observeFacilitySpotsAvailability() {
         log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                combine(
+                    parkRideSandook.observeSavedParkRides()
+                        .distinctUntilChanged(), // mapping: List<SavedParkRide>
+                    parkRideSandook.getAll().distinctUntilChanged() // details: List<NSWParkRide>
+                ) { savedParkRides, nswParkRides ->
 
-                parkRideSandook.getAll()
-                    .distinctUntilChanged()
-                    .collectLatest { parkRideDb: List<NSWParkRideFacilityDetail> ->
-                        if (parkRideDb.isEmpty()) {
-                            log("No Park Ride facilities found in the database.")
-                            updateUiState {
-                                copy(parkRideUiState = persistentListOf())
-                            }
-                            return@collectLatest
-                        } else {
-                            log("New Park Ride data received[DB]: ${parkRideDb.size}")
-                            parkRideDb.forEach {
-                                println("\t ${it.facilityId} - ${it.facilityName}, Spots Available: ${it.spotsAvailable}, ${it.timeText} ")
-                            }
-                            updateUiState {
-                                copy(
-                                    parkRideUiState = parkRideDb
-                                        .toParkRideUiState()
-                                        .toImmutableList()
-                                )
-                            }
+                    log(" - ID Mapping Table: ${savedParkRides.map { it.facilityId }.toSet()}")
+                    log(" - Facility Detail Table: ${nswParkRides.map { it.facilityName }.toSet()}")
+
+                    // Map details by facilityId for quick lookup
+                    val detailsByFacilityId = nswParkRides.associateBy { it.facilityId }
+                    // Merge: for every mapping, fill with details if present, else use minimal info
+                    savedParkRides.map { mapping ->
+                        val detail: NSWParkRideFacilityDetail? = detailsByFacilityId[mapping.facilityId]
+
+                        detail ?: NSWParkRideFacilityDetail(
+                            facilityId = mapping.facilityId,
+                            facilityName = nswParkRideFacilityManager.getParkRideFacilityById(
+                                facilityId = mapping.facilityId
+                            )?.parkRideName.orEmpty(),
+                            stopId = mapping.stopId,
+                            spotsAvailable = 0,
+                            totalSpots = 0,
+                            percentageFull = 0,
+                            timeText = "",
+                            suburb = "",
+                            address = "",
+                            latitude = 0.0,
+                            longitude = 0.0,
+                        )
+                    }
+                }.collectLatest { mergedList ->
+                    if (mergedList.isEmpty()) {
+                        log("No Park Ride facilities found in the database.")
+                        updateUiState { copy(parkRideUiState = persistentListOf()) }
+                    } else {
+                        log("Merged Park Ride data: ${mergedList.size}")
+                        updateUiState {
+                            copy(
+                                parkRideUiState = mergedList
+                                    .toParkRideUiState()
+                                    .toImmutableList()
+                            )
                         }
                     }
+                }
             }
     }
 

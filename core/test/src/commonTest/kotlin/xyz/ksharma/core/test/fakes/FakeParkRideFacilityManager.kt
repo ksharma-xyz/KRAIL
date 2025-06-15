@@ -26,4 +26,8 @@ class FakeParkRideFacilityManager : NswParkRideFacilityManager {
     override fun getParkRideFacilities(): List<NswParkRideFacility> {
         return facilities
     }
+
+    override fun getParkRideFacilityById(facilityId: String): NswParkRideFacility? {
+        return facilities.find { it.parkRideFacilityId == facilityId }
+    }
 }

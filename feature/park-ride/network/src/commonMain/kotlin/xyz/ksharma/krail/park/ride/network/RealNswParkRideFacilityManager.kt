@@ -32,4 +32,9 @@ class RealNswParkRideFacilityManager(
             else -> emptyList()
         }
     }
+
+    override fun getParkRideFacilityById(facilityId: String): NswParkRideFacility? {
+        val facilities = getParkRideFacilities()
+        return facilities.find { it.parkRideFacilityId == facilityId }
+    }
 }

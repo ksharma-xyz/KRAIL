@@ -6,12 +6,12 @@ import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
-import xyz.ksharma.krail.sandook.NSWParkRide
+import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
 
 /**
- * Converts a [CarParkFacilityDetailResponse] to a [NSWParkRide] for database storage.
+ * Converts a [CarParkFacilityDetailResponse] to a [NSWParkRideFacilityDetail] for database storage.
  *
  * This method calculates the number of available spots, total spots, and percentage full
  * for a Park&Ride facility using the occupancy data from all zones.
@@ -19,10 +19,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRid
  * Occupied spots are determined by summing the `transients` field from each zone's occupancy.
  * If `transients` is `null` or missing, it is treated as 0.
  *
- * @return [NSWParkRide] containing facility details for database storage
+ * @return [NSWParkRideFacilityDetail] containing facility details for database storage
  **/
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
+fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0
     val occupiedSpots = zones.sumOf {
         it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
@@ -37,7 +37,7 @@ fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
                 "Spots available: $spotsAvailable, Percentage full: $percentageFull%, time: $timeText"
     )
 
-    return NSWParkRide(
+    return NSWParkRideFacilityDetail(
         facilityId = facilityId,
         spotsAvailable = spotsAvailable.toLong(),
         totalSpots = totalSpots.toLong(),
@@ -52,7 +52,7 @@ fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
     )
 }
 
-internal fun NSWParkRide.toParkRideState(): ParkRideFacilityDetail =
+internal fun NSWParkRideFacilityDetail.toParkRideState(): ParkRideFacilityDetail =
     ParkRideFacilityDetail(
         spotsAvailable = spotsAvailable.toInt(),
         totalSpots = totalSpots.toInt(),
@@ -64,15 +64,15 @@ internal fun NSWParkRide.toParkRideState(): ParkRideFacilityDetail =
     )
 
 /**
- * Maps a list of [NSWParkRide] entities to a list of [ParkRideUiState]s for UI display.
+ * Maps a list of [NSWParkRideFacilityDetail] entities to a list of [ParkRideUiState]s for UI display.
  *
  * Each [ParkRideUiState] represents a stop and contains unique facilities for that stop.
  * Each facility (by `facilityId`) appears only once across all stops (first occurrence is used).
  *
- * @receiver List of [NSWParkRide] entities, possibly with duplicate facilities across stops.
+ * @receiver List of [NSWParkRideFacilityDetail] entities, possibly with duplicate facilities across stops.
  * @return List of [ParkRideUiState], one per stop, each with unique facilities.
  */
-fun List<NSWParkRide>.toParkRideUiState(): List<ParkRideUiState> {
+fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
     val seenFacilityIds = mutableSetOf<String>()
     return groupBy { it.stopId }
         .map { (stopId, facilitiesForStop) ->

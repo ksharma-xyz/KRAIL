@@ -70,6 +70,12 @@ kotlin {
 
 android {
     namespace = "xyz.ksharma.krail.trip.planner.ui"
+
+    // Required when using Firebase GitLive RemoteConfig. Adding here for running previews on device.
+    // https://developer.android.com/studio/write/java8-support#library-desugaring
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+    }
 }
 
 dependencies {
@@ -77,4 +83,8 @@ dependencies {
 
     // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio#focus=Comments-27-11400795.0-0Add commentMore actions
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Required when using Firebase GitLive RemoteConfig.
+    // https://developer.android.com/studio/write/java8-support#library-desugaring
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

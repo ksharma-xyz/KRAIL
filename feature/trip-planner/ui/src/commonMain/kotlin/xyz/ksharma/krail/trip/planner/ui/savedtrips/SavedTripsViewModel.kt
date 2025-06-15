@@ -28,10 +28,12 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
+import xyz.ksharma.krail.sandook.NSWParkRide
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
@@ -41,7 +43,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -81,7 +82,7 @@ class SavedTripsViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             log("")
             observeSavedTrips()
-            observeParkRideFacilityDatabase()
+            observeFacilitySpotsAvailability()
             pollParkRideFacilities()
         }
         .onCompletion {
@@ -155,51 +156,59 @@ class SavedTripsViewModel(
                     val trips = savedTrips.map { it.toTrip() }.toImmutableList()
                     updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-                    insertSavedParkRideFacilitiesForTrips(
-                        savedTrips = savedTrips,
-                        facilityList = nswParkRideFacilityManager.getParkRideFacilities()
-                    )
+                    updateParkRideStopIdsInDb(savedTrips)
                 }
         }
     }
 
     /**
-     * Inserts or replaces saved park ride facilities for the given trips.
+     * Handles the logic for updating Park & Ride stop IDs in the database based on saved trips.
+     * Updates the database with (stopId, facilityId) pairs for all saved trips.
      *
-     * For each trip, this method creates all possible pairs of stop IDs and facility IDs
-     * (handling both from and to stops). It then inserts these pairs into the database.
+     * For each unique stop ID found in the list of saved trips (from both `fromStopId` and `toStopId`),
+     * this method finds all associated Park & Ride facility IDs using the facility manager.
      *
-     * Edge cases handled:
-     * - Multiple facilities for a single stop: All facility IDs for a stop are paired and inserted.
-     * - A single facility mapped to multiple stops: Each (stopId, facilityId) pair is inserted separately.
+     * Only stop IDs that have at least one facility are included.
+     * The resulting set of (stopId, facilityId) pairs is then inserted or replaced in the database.
      *
-     * This ensures that all valid stop-facility associations are stored, covering one-to-many
-     * and many-to-one relationships between stops and facilities.
+     * In short:
+     *      StopId -> FacilityId Mapping for StopIds in SavedTrips
+     *
+     * TODO:
+     * Think of solving edge case, where multiple stop Ids have same facility Ids.
+     * {"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
+     * {"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
+     *
+     * @param savedTrips List of saved trips to extract stop IDs from.
      */
-    private suspend fun insertSavedParkRideFacilitiesForTrips(
-        savedTrips: List<SavedTrip>,
-        facilityList: List<NswParkRideFacility>
-    ) {
-        val stopFacilityPairs = mutableSetOf<Pair<String, String>>()
-        savedTrips.forEach { trip ->
-            listOf(trip.fromStopId, trip.toStopId).forEach { stopId ->
-                val facilityIds = facilityList
-                    .filter { it.stopId == stopId }
-                    .map { it.parkRideFacilityId }
-                facilityIds.forEach { facilityId ->
-                    stopFacilityPairs.add(Pair(stopId, facilityId))
-                }
+    @VisibleForTesting // TODO - write unit tests for this function.
+    suspend fun updateParkRideStopIdsInDb(savedTrips: List<SavedTrip>) {
+        // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
+        val uniqueSavedTripStopIds: Set<String> = savedTrips
+            .flatMap { listOf(it.fromStopId, it.toStopId) }
+            .toSet()
+
+        // 2. Build a map from stopId to a list of associated park & ride facility IDs
+        val facilityMap: Map<String, List<String>> = nswParkRideFacilityManager
+            .getParkRideFacilities()
+            .groupBy { it.stopId }
+            .mapValues { entry -> entry.value.map { it.parkRideFacilityId } }
+
+        // 3. For each unique stopId, pair it with all its facility IDs (if any), and collect as
+        // a set of (stopId, facilityId) pairs
+        val stopFacilityPairs: Set<Pair<String, String>> = uniqueSavedTripStopIds
+            .flatMap { stopId ->
+                facilityMap[stopId]?.map { facilityId -> stopId to facilityId }
+                    ?: emptyList()
             }
-        }
+            .toSet()
 
-        // Delete all trip-linked Park&Ride pairs, then insert new ones.
+        log("StopId -> FacilityId Mapping for StopIds in SavedTrips: \n $stopFacilityPairs")
+        // clear all existing saved park rides linked to saved trips for accuracy.
         parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
-
-        log("Inserting/Updating Park Ride facilities for trips: $stopFacilityPairs")
-        parkRideSandook.insertOrReplaceSavedParkRides(
-            pairs = stopFacilityPairs,
-            source = SavedTrips,
-        )
+        if (stopFacilityPairs.isNotEmpty()) {
+            parkRideSandook.insertOrReplaceSavedParkRides(pairs = stopFacilityPairs)
+        }
     }
 
     private fun onDeleteSavedTrip(savedTrip: Trip) {
@@ -213,18 +222,45 @@ class SavedTripsViewModel(
         }
     }
 
-    private fun observeParkRideFacilityDatabase() {
-        log("observeParkRideFacilityDatabase called")
+    /**
+     * Observes Park & Ride facility data from the database and updates the UI state accordingly.
+     *
+     * This method listens for changes in the database containing Park & Ride facilities.
+     * For each update:
+     * - If no facilities are found, it clears the Park & Ride UI state.
+     * - If facilities are present, it maps the database entities to UI state objects,
+     *   including available spots, percentage full, last updated time, and location details if available.
+     *
+     * The resulting UI state is updated to reflect the latest facility information for display.
+     */
+    private fun observeFacilitySpotsAvailability() {
+        log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                parkRideSandook
-                    .observeSavedParkRides()
+
+                parkRideSandook.getAll()
                     .distinctUntilChanged()
-                    .collectLatest { savedParkRides ->
-//                        log("Saved Park Ride facilities in database: ${savedParkRides.size}")
-                        savedParkRides.forEach {
-                            log("\tSaved Park Ride StopID: ${it.stopId}, FacilityId: ${it.facilityId}")
+                    .collectLatest { parkRideDb: List<NSWParkRide> ->
+                        if (parkRideDb.isEmpty()) {
+                            log("No Park Ride facilities found in the database.")
+                            updateUiState {
+                                copy(parkRideUiState = null)
+                            }
+                            return@collectLatest
+                        } else {
+                            log("New Park Ride data received[DB]: ${parkRideDb.size}")
+                            parkRideDb.forEach {
+                                println("\t ${it.facilityId} - ${it.facilityName}, Spots Available: ${it.spotsAvailable}, ${it.timeText} ")
+
+                            }
+                            updateUiState {
+                                copy(
+                                    parkRideUiState = parkRideDb
+                                        .toParkRideUiState()
+                                        .toImmutableList()
+                                )
+                            }
                         }
                     }
             }
@@ -244,7 +280,8 @@ class SavedTripsViewModel(
     }
 
     private suspend fun fetchParkRideFacilities() {
-        val stopIdList = listOf("221710").toImmutableSet() // uiState.value.observeParkRideStopIdSet
+        val stopIdList = listOf("221710").toImmutableSet() // TODO uiState.value.observeParkRideStopIdSet
+        // testing data listOf("221710").toImmutableSet()
         if (stopIdList.isEmpty()) {
             log("No Park Ride stop IDs are expanded, therefore skipping API Call.")
             return
@@ -271,13 +308,18 @@ class SavedTripsViewModel(
         }
 
         log("Fetching Park Ride facilities for FacilityIdList: $facilitiesDueForRefresh")
-        val parkRideDbList = facilitiesDueForRefresh.map { facilityId ->
+        val parkRideDbList = facilitiesDueForRefresh.mapNotNull { facilityId ->
             lastApiCallTimeMap[facilityId] = System.now()
             parkRideService
                 .fetchCarParkFacilities(facilityId = facilityId)
-                .toDbNSWParkRide()
-        }.toImmutableList()
+                .getOrNull() // Only get the value if successful, else null
+        }.map { it.toDbNSWParkRide() }
 
+        if (parkRideDbList.isEmpty()) {
+            logError("No Park Ride facilities fetched from API, skipping DB update.")
+            return
+        }
+        log("Got API Response - Saving Park Ride facilities to DB now: $parkRideDbList")
         parkRideSandook.insertOrReplaceAll(parkRideDbList)
     }
 
@@ -306,7 +348,8 @@ class SavedTripsViewModel(
 
     private fun getApiCooldownDuration(): Duration {
         return if (isNotPeakTime()) {
-            5.minutes
+            1.minutes
+// TODO - for testing            5.minutes
         } else {
             2.minutes // TODO -  firebase controls this value.
         }

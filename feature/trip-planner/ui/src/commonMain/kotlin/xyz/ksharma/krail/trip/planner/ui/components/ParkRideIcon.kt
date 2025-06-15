@@ -31,13 +31,13 @@ internal fun ParkRideIcon(
     modifier: Modifier = Modifier,
 ) {
     ParkRideIconContainer(
-        foregroundColor = getForegroundColor(themeColor()),
+        backgroundColor = themeColor(),
         modifier = modifier,
     ) {
         Text(
             text = "P",
             style = KrailTheme.typography.displayLarge,
-            color = themeColor(),
+            color = Color.White,
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .padding(start = 4.dp, bottom = 4.dp),
@@ -45,7 +45,7 @@ internal fun ParkRideIcon(
 
         Image(
             painter = painterResource(Res.drawable.car_icon),
-            colorFilter = ColorFilter.tint(color = themeColor()),
+            colorFilter = ColorFilter.tint(color = Color.White),
             contentDescription = null,
             modifier = Modifier
                 .size(16.dp)
@@ -57,7 +57,7 @@ internal fun ParkRideIcon(
 
 @Composable
 internal fun ParkRideIconContainer(
-    foregroundColor: Color,
+    backgroundColor: Color,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -65,7 +65,7 @@ internal fun ParkRideIconContainer(
         modifier = modifier
             .size(width = 36.dp, height = 48.dp)
             .clip(RoundedCornerShape(6.dp))
-            .background(color = foregroundColor)
+            .background(color = backgroundColor)
             .clearAndSetSemantics {}
     ) {
         content()
@@ -121,7 +121,6 @@ private fun ParkRideIconTrainThemePreview() {
 
 
 // region ParkRideIconContainer Previews
-
 
 
 //endregion

@@ -29,6 +29,11 @@ selectByStopIds:
 SELECT * FROM NSWParkRide
 WHERE stopId IN ?;
 
+-- Select all facilities for a specific stopId
+selectFacilitiesByStopId:
+SELECT * FROM NSWParkRide
+WHERE stopId = ?;
+
 -- Delete all facility records
 deleteAll:
 DELETE FROM NSWParkRide;

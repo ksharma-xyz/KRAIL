@@ -3,6 +3,8 @@ package xyz.ksharma.krail.coroutines.ext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 import kotlin.Result
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -26,6 +28,7 @@ suspend fun <T, R> T.safeResult(
     try {
         Result.success(block())
     } catch (e: Throwable) {
+        logError("error executing safeResult", e)
         // Should not catch CancellationException
         coroutineContext.ensureActive()
         Result.failure(e)
@@ -47,11 +50,12 @@ suspend fun <T, R> T.safeResult(
 @Suppress("TooGenericExceptionCaught")
 suspend fun <T, R> T.suspendSafeResult(
     dispatcher: CoroutineDispatcher,
-    block: suspend T.() -> Result<R>,
+    block: suspend T.() -> R,
 ): Result<R> = withContext(dispatcher) {
     try {
-        block()
+        Result.success(block())
     } catch (e: Throwable) {
+        logError("error executing suspendSafeResult", e)
         // Should not catch CancellationException
         coroutineContext.ensureActive()
         Result.failure(e)

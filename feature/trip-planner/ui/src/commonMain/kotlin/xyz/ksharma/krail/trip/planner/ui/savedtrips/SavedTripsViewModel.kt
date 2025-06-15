@@ -242,7 +242,7 @@ class SavedTripsViewModel(
 
                 parkRideSandook.getAll()
                     .distinctUntilChanged()
-                    .collectLatest { parkRideDb: List<NSWParkRide> ->
+                    .collectLatest { parkRideDb: List<NSWParkRideFacilityDetail> ->
                         if (parkRideDb.isEmpty()) {
                             log("No Park Ride facilities found in the database.")
                             updateUiState {
@@ -313,7 +313,7 @@ class SavedTripsViewModel(
             parkRideService
                 .fetchCarParkFacilities(facilityId = facilityId)
                 .getOrNull() // Only get the value if successful, else null
-        }.map { it.toDbNSWParkRide() }
+        }.map { it.toNSWParkRideFacilityDetail() }
 
         if (parkRideDbList.isEmpty()) {
             logError("No Park Ride facilities fetched from API, skipping DB update.")

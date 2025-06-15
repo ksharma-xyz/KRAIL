@@ -22,7 +22,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRid
  * @return [NSWParkRideFacilityDetail] containing facility details for database storage
  **/
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRideFacilityDetail {
+fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0
     val occupiedSpots = zones.sumOf {
         it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0

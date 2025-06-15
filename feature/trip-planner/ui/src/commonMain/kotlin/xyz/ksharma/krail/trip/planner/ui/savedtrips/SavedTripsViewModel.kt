@@ -81,7 +81,7 @@ class SavedTripsViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             log("")
             observeSavedTrips()
-            observeParkRideFacilityDatabase()
+            observeFacilitySpotsAvailability()
             pollParkRideFacilities()
         }
         .onCompletion {
@@ -221,8 +221,13 @@ class SavedTripsViewModel(
         }
     }
 
-    private fun observeParkRideFacilityDatabase() {
-        log("observeParkRideFacilityDatabase called")
+    /**
+     * - observe data inside the database for park ride facilities.,
+     * it will tell how many spots are available for which facility id and how much %is full.
+     * it will also have last updated time and location details if available.
+     */
+    private fun observeFacilitySpotsAvailability() {
+        log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {

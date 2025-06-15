@@ -28,7 +28,7 @@ internal class RealParkRideService(
                 }
             }.body()
 
-        Result.success(response)
+        response
     }
 
     override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> =
@@ -36,6 +36,6 @@ internal class RealParkRideService(
         {
             val response: Map<String, String> =
                 httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/carpark") {}.body()
-            Result.success(response)
+            response
         }
 }

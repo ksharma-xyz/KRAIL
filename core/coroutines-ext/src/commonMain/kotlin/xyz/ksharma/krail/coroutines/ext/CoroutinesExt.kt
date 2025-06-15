@@ -28,6 +28,7 @@ suspend fun <T, R> T.safeResult(
     try {
         Result.success(block())
     } catch (e: Throwable) {
+        logError("error executing safeResult", e)
         // Should not catch CancellationException
         coroutineContext.ensureActive()
         Result.failure(e)
@@ -49,10 +50,10 @@ suspend fun <T, R> T.safeResult(
 @Suppress("TooGenericExceptionCaught")
 suspend fun <T, R> T.suspendSafeResult(
     dispatcher: CoroutineDispatcher,
-    block: suspend T.() -> Result<R>,
+    block: suspend T.() -> R,
 ): Result<R> = withContext(dispatcher) {
     try {
-        block()
+        Result.success(block())
     } catch (e: Throwable) {
         logError("error executing suspendSafeResult", e)
         // Should not catch CancellationException

@@ -7,12 +7,12 @@ import kotlinx.coroutines.flow.Flow
 
 interface NswParkRideSandook {
 
-    // NSWParkRide Table methods
-    fun getAll(): Flow<List<NSWParkRide>>
-    fun getByStopIds(stopIds: List<String>): List<NSWParkRide>
+    // NSWParkRideFacilityDetail Table methods
+    fun getAll(): Flow<List<NSWParkRideFacilityDetail>>
+    fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail>
 
-    suspend fun insertOrReplace(parkRide: NSWParkRide)
-    suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>)
+    suspend fun insertOrReplace(parkRide: NSWParkRideFacilityDetail)
+    suspend fun insertOrReplaceAll(parkRides: List<NSWParkRideFacilityDetail>)
     suspend fun deleteAll()
 
     // SavedParkRide Table methods
@@ -61,14 +61,14 @@ internal class RealNswParkRideSandook(
         NswParkRideQueries(factory.createDriver())
     }
 
-    // region NSWParkRide Table methods
-    override fun getAll(): Flow<List<NSWParkRide>> =
+    // region NSWParkRideFacilityDetail Table methods
+    override fun getAll(): Flow<List<NSWParkRideFacilityDetail>> =
         parkRideQueries.selectAll().asFlow().mapToList(ioDispatcher)
 
-    override fun getByStopIds(stopIds: List<String>): List<NSWParkRide> =
+    override fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail> =
         parkRideQueries.selectByStopIds(stopIds).executeAsList()
 
-    override suspend fun insertOrReplace(parkRide: NSWParkRide) {
+    override suspend fun insertOrReplace(parkRide: NSWParkRideFacilityDetail) {
         parkRideQueries.insertOrReplace(
             facilityId = parkRide.facilityId,
             spotsAvailable = parkRide.spotsAvailable,
@@ -84,7 +84,7 @@ internal class RealNswParkRideSandook(
         )
     }
 
-    override suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>) {
+    override suspend fun insertOrReplaceAll(parkRides: List<NSWParkRideFacilityDetail>) {
         parkRideQueries.transaction {
             parkRides.forEach { parkRide ->
                 parkRideQueries.insertOrReplace(

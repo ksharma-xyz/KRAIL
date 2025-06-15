@@ -34,7 +34,7 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
-import xyz.ksharma.krail.sandook.NSWParkRide
+import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
@@ -253,7 +253,6 @@ class SavedTripsViewModel(
                             log("New Park Ride data received[DB]: ${parkRideDb.size}")
                             parkRideDb.forEach {
                                 println("\t ${it.facilityId} - ${it.facilityName}, Spots Available: ${it.spotsAvailable}, ${it.timeText} ")
-
                             }
                             updateUiState {
                                 copy(

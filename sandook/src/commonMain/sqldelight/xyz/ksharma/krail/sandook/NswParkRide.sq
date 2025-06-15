@@ -1,5 +1,5 @@
 -- Table for storing detailed information about each Park & Ride facility.
-CREATE TABLE NSWParkRide (
+CREATE TABLE NSWParkRideFacilityDetail (
     facilityId TEXT NOT NULL PRIMARY KEY, -- Unique facility identifier
     spotsAvailable INTEGER NOT NULL,      -- Number of available spots
     totalSpots INTEGER NOT NULL,          -- Total number of spots
@@ -15,28 +15,28 @@ CREATE TABLE NSWParkRide (
 
 -- Select all facility records
 selectAll:
-SELECT * FROM NSWParkRide;
+SELECT * FROM NSWParkRideFacilityDetail;
 
 -- Insert or update a facility record
 insertOrReplace:
-INSERT OR REPLACE INTO NSWParkRide(
+INSERT OR REPLACE INTO NSWParkRideFacilityDetail(
     facilityId, spotsAvailable, totalSpots, facilityName, percentageFull, stopId, timeText,
     suburb, address, latitude, longitude
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- Select all facilities for a list of stop IDs
 selectByStopIds:
-SELECT * FROM NSWParkRide
+SELECT * FROM NSWParkRideFacilityDetail
 WHERE stopId IN ?;
 
 -- Select all facilities for a specific stopId
 selectFacilitiesByStopId:
-SELECT * FROM NSWParkRide
+SELECT * FROM NSWParkRideFacilityDetail
 WHERE stopId = ?;
 
 -- Delete all facility records
 deleteAll:
-DELETE FROM NSWParkRide;
+DELETE FROM NSWParkRideFacilityDetail;
 
 
 -- SavedParkRide Table

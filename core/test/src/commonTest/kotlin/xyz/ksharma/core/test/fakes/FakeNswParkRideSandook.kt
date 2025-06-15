@@ -4,26 +4,26 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import xyz.ksharma.krail.sandook.NSWParkRide
+import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.SavedParkRide
 
 class FakeNswParkRideSandook : NswParkRideSandook {
-    private val data = MutableStateFlow<List<NSWParkRide>>(emptyList())
+    private val data = MutableStateFlow<List<NSWParkRideFacilityDetail>>(emptyList())
     private val savedParkRides = MutableStateFlow<List<SavedParkRide>>(emptyList())
 
     override fun observeSavedParkRides(): Flow<List<SavedParkRide>> = savedParkRides.asStateFlow()
 
-    override fun getAll(): Flow<List<NSWParkRide>> = data.asStateFlow()
+    override fun getAll(): Flow<List<NSWParkRideFacilityDetail>> = data.asStateFlow()
 
-    override fun getByStopIds(stopIds: List<String>): List<NSWParkRide> =
+    override fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail> =
         data.value.filter { it.stopId in stopIds }
 
-    override suspend fun insertOrReplace(parkRide: NSWParkRide) {
+    override suspend fun insertOrReplace(parkRide: NSWParkRideFacilityDetail) {
         data.value = data.value.filterNot { it.facilityId == parkRide.facilityId } + parkRide
     }
 
-    override suspend fun insertOrReplaceAll(parkRides: List<NSWParkRide>) {
+    override suspend fun insertOrReplaceAll(parkRides: List<NSWParkRideFacilityDetail>) {
         val ids = parkRides.map { it.facilityId }.toSet()
         data.value = data.value.filterNot { it.facilityId in ids } + parkRides
     }

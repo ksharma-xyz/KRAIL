@@ -12,5 +12,5 @@ data class SavedTripsState(
     val savedTrips: ImmutableList<Trip> = persistentListOf(),
     val isSavedTripsLoading: Boolean = true,
     val observeParkRideStopIdSet: ImmutableSet<String> = persistentSetOf(),
-    val parkRideUiState: ImmutableList<ParkRideUiState>? = null,
+    val parkRideUiState: ImmutableList<ParkRideUiState> = persistentListOf(),
 )

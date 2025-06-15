@@ -29,6 +29,7 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
+import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -103,38 +104,6 @@ fun SavedTripsScreen(
                     }
                 } else {
 
-/*                    if (savedTripsState.parkRideUiState.items.isNotEmpty()) {
-                        stickyHeader(key = "park_ride_title") {
-                            Box(
-                                modifier = Modifier.fillMaxWidth()
-                                    .background(color = KrailTheme.colors.surface)
-                                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                                contentAlignment = Alignment.CenterStart,
-                            ) {
-                                Text(
-                                    text = "Park & Ride",
-                                    style = KrailTheme.typography.titleMedium,
-                                )
-                            }
-                        }
-
-                        items(
-                            items = savedTripsState.parkRideUiState.items,
-                            key = { parkRide -> parkRide.stopId },
-                        ) { parkRide ->
-                            *//*ParkRideCard(
-                                modifier = Modifier.padding(bottom = 12.dp),
-                                onNavigateToDetails = {},
-                                item = parkRide,
-                                onToggleExpansion = {}
-                            )*//*
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }*/
-
                     stickyHeader(key = "saved_trips_title") {
                         Box(
                             modifier = Modifier.fillMaxWidth()
@@ -174,7 +143,44 @@ fun SavedTripsScreen(
                                 .padding(horizontal = 16.dp),
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    if (savedTripsState.parkRideUiState.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        stickyHeader(key = "park_ride_title") {
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                                    .background(color = KrailTheme.colors.surface)
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                contentAlignment = Alignment.CenterStart,
+                            ) {
+                                Text(
+                                    text = "Park & Ride",
+                                    style = KrailTheme.typography.titleMedium,
+                                )
+                            }
+                        }
+
+                        items(
+                            items = savedTripsState.parkRideUiState,
+                            key = { parkRide -> parkRide.stopId },
+
+                        ) { parkRide ->
+                            ParkRideCard(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                parkRideUiState = parkRide,
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
                     }
                 }
             }

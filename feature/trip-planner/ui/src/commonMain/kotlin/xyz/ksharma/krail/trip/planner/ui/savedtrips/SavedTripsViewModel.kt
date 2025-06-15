@@ -155,70 +155,59 @@ class SavedTripsViewModel(
                     val trips = savedTrips.map { it.toTrip() }.toImmutableList()
                     updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-                    // TODO - only insert the stopId - facilityId mapping.
-                    //   filter saved trip stops by the ones that have park ride facilities.
-                    //   stopsWithParkRideFacilities
-
-                    val uniqueSavedTripStopIds: Set<String> = savedTrips
-                        .flatMap { listOf(it.fromStopId, it.toStopId) }
-                        .toSet()
-
-                    val facilityMap: Map<String, List<String>> = nswParkRideFacilityManager
-                        .getParkRideFacilities()
-                        .groupBy { it.stopId }
-                        .mapValues { entry -> entry.value.map { it.parkRideFacilityId } }
-
-                    val stopFacilityPairs: Set<Pair<String, String>> = uniqueSavedTripStopIds
-                        .flatMap { stopId ->
-                            facilityMap[stopId]?.map { facilityId -> stopId to facilityId }
-                                ?: emptyList()
-                        }
-                        .toSet()
-
-                    log("These are uniquely saved trip stops filtered by which have park ride facility and their facility ids : \n $stopFacilityPairs")
-
-//                    parkRideSandook.insertOrReplaceSavedParkRides(pairs = stopFacilityPairs)
+                    updateParkRideStopIdsInDb(savedTrips)
                 }
         }
     }
 
     /**
-     * Inserts or replaces saved park ride facilities for the given trips.
+     * Handles the logic for updating Park & Ride stop IDs in the database based on saved trips.
+     * Updates the database with (stopId, facilityId) pairs for all saved trips.
      *
-     * For each trip, this method creates all possible pairs of stop IDs and facility IDs
-     * (handling both from and to stops). It then inserts these pairs into the database.
+     * For each unique stop ID found in the list of saved trips (from both `fromStopId` and `toStopId`),
+     * this method finds all associated Park & Ride facility IDs using the facility manager.
      *
-     * Edge cases handled:
-     * - Multiple facilities for a single stop: All facility IDs for a stop are paired and inserted.
-     * - A single facility mapped to multiple stops: Each (stopId, facilityId) pair is inserted separately.
+     * Only stop IDs that have at least one facility are included.
+     * The resulting set of (stopId, facilityId) pairs is then inserted or replaced in the database.
      *
-     * This ensures that all valid stop-facility associations are stored, covering one-to-many
-     * and many-to-one relationships between stops and facilities.
+     * In short:
+     *      StopId -> FacilityId Mapping for StopIds in SavedTrips
+     *
+     * TODO:
+     * Think of solving edge case, where multiple stop Ids have same facility Ids.
+     * {"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
+     * {"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
+     *
+     * @param savedTrips List of saved trips to extract stop IDs from.
      */
-    private suspend fun insertSavedParkRideFacilitiesForTrips(
-        savedTrips: List<SavedTrip>,
-        facilityList: List<NswParkRideFacility>
-    ) {
-        val stopFacilityPairs = mutableSetOf<Pair<String, String>>()
-        savedTrips.forEach { trip ->
-            listOf(trip.fromStopId, trip.toStopId).forEach { stopId ->
-                val facilityIds = facilityList
-                    .filter { it.stopId == stopId }
-                    .map { it.parkRideFacilityId }
-                facilityIds.forEach { facilityId ->
-                    stopFacilityPairs.add(Pair(stopId, facilityId))
-                }
+    @VisibleForTesting // TODO - write unit tests for this function.
+    suspend fun updateParkRideStopIdsInDb(savedTrips: List<SavedTrip>) {
+        // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
+        val uniqueSavedTripStopIds: Set<String> = savedTrips
+            .flatMap { listOf(it.fromStopId, it.toStopId) }
+            .toSet()
+
+        // 2. Build a map from stopId to a list of associated park & ride facility IDs
+        val facilityMap: Map<String, List<String>> = nswParkRideFacilityManager
+            .getParkRideFacilities()
+            .groupBy { it.stopId }
+            .mapValues { entry -> entry.value.map { it.parkRideFacilityId } }
+
+        // 3. For each unique stopId, pair it with all its facility IDs (if any), and collect as
+        // a set of (stopId, facilityId) pairs
+        val stopFacilityPairs: Set<Pair<String, String>> = uniqueSavedTripStopIds
+            .flatMap { stopId ->
+                facilityMap[stopId]?.map { facilityId -> stopId to facilityId }
+                    ?: emptyList()
             }
-        }
+            .toSet()
 
-        // Delete all trip-linked Park&Ride pairs, then insert new ones.
+        log("StopId -> FacilityId Mapping for StopIds in SavedTrips: \n $stopFacilityPairs")
+        // clear all existing saved park rides linked to saved trips for accuracy.
         parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
-
-        log("Inserting/Updating Park Ride facilities for trips: $stopFacilityPairs")
-        parkRideSandook.insertOrReplaceSavedParkRides(
-            pairs = stopFacilityPairs,
-            source = SavedTrips,
-        )
+        if (stopFacilityPairs.isNotEmpty()) {
+            parkRideSandook.insertOrReplaceSavedParkRides(pairs = stopFacilityPairs)
+        }
     }
 
     private fun onDeleteSavedTrip(savedTrip: Trip) {
@@ -310,6 +299,7 @@ class SavedTripsViewModel(
                 .fetchCarParkFacilities(facilityId = facilityId)
                 .toDbNSWParkRide()
         }.toImmutableList()
+        log("Fetched Park Ride facilities: $parkRideDbList")
 
         parkRideSandook.insertOrReplaceAll(parkRideDbList)
     }

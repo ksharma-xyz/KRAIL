@@ -11,11 +11,11 @@ interface ParkRideService {
     /**
      * Returns the details of a car park facility by its ID.
      */
-    suspend fun fetchCarParkFacilities(facilityId: String): CarParkFacilityDetailResponse
+    suspend fun fetchCarParkFacilities(facilityId: String): Result<CarParkFacilityDetailResponse>
 
     /**
      * Returns a map of facility ID to facility name for all car parks.
      * Since facility ID is not specified, a list of facility names with their ID will be returned.
      */
-    suspend fun fetchCarParkFacilities(): Map<String, String>
+    suspend fun fetchCarParkFacilities(): Result<Map<String, String>>
 }

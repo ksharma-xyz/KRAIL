@@ -2,6 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.collections.immutable.toPersistentList
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
@@ -9,62 +11,6 @@ import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.sandook.NSWParkRide
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
-
-/**
- * Converts a [CarParkFacilityDetailResponse] to a [ParkRideFacilityDetail] for UI display.
- *
- * This method calculates the number of available spots, total spots, and percentage full
- * for a Park&Ride facility using the occupancy data from all zones.
- *
- * Occupied spots are determined by summing the `transients` field from each zone's occupancy.
- * If `transients` is `null` or missing, it is treated as 0.
- *
- * @return [ParkRideFacilityDetail] containing available spots, total spots, facility name, percentage
- * full, and stop ID
- **/
-@VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toParkRideState(
-): ParkRideFacilityDetail {
-    val totalSpots = spots.toIntOrNull() ?: 0
-
-    // Sum occupied spots from all zones (using loop sensor)
-    val occupiedSpots = zones.sumOf {
-        it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
-    }
-
-    val spotsAvailable = totalSpots - occupiedSpots
-    val percentFull = if (totalSpots > 0) {
-        (occupiedSpots * 100) / totalSpots
-    } else {
-        0
-    }
-
-    log(
-        "[$facilityName - $facilityId] \nTotal spots: $totalSpots, " +
-                "Occupied spots: $occupiedSpots, Spots available: $spotsAvailable, " +
-                "Percentage full: $percentFull%"
-    )
-
-    val time = messageDate.toSimple12HourTime()
-        .replace(" ", "\u00A0") // Non-breaking space for better display
-
-    return ParkRideFacilityDetail(
-        spotsAvailable = spotsAvailable,
-        totalSpots = totalSpots,
-        facilityName = facilityName.removePrefix("Park&Ride - ").trim(),
-        percentageFull = percentFull,
-        stopId = tsn,
-        timeText = time,
-    )
-}
-
-fun List<CarParkFacilityDetailResponse>.toParkRideStates(): List<ParkRideFacilityDetail> {
-    val seenStopIds = mutableSetOf<String>()
-    return this.map { response ->
-        val isFirst = seenStopIds.add(response.tsn)
-        response.toParkRideState()
-    }
-}
 
 /**
  * Converts a [CarParkFacilityDetailResponse] to a [NSWParkRide] for database storage.
@@ -90,7 +36,7 @@ fun CarParkFacilityDetailResponse.toDbNSWParkRide(): NSWParkRide {
     log(
         "[$facilityName - $facilityId - $tsn] " +
                 "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
-                "Spots available: $spotsAvailable, Percentage full: $percentageFull%"
+                "Spots available: $spotsAvailable, Percentage full: $percentageFull%, time: $timeText"
     )
 
     return NSWParkRide(
@@ -116,40 +62,46 @@ internal fun NSWParkRide.toParkRideState(): ParkRideFacilityDetail =
         percentageFull = percentageFull.toInt(),
         timeText = timeText,
         stopId = stopId,
+        facilityId = facilityId,
     )
 
 /**
- * Maps a list of [NSWParkRide] entities to a [ParkRideUiState] for UI display.
+ * Maps a list of [NSWParkRide] entities to a list of [ParkRideUiState]s for UI display.
  *
- * Ensures that each facility (by `facilityId`) appears only once in the resulting UI state,
- * even if it is associated with multiple stops. Only the first occurrence of each facility is included.
- *
- * The returned [ParkRideUiState] uses the `stopId` and `suburb` from the first item in the list
- * as the main stop information. All unique facilities are mapped to [ParkRideFacilityDetail]s.
+ * Each [ParkRideUiState] represents a stop and contains unique facilities for that stop.
+ * Each facility (by `facilityId`) appears only once across all stops (first occurrence is used).
  *
  * @receiver List of [NSWParkRide] entities, possibly with duplicate facilities across stops.
- * @return [ParkRideUiState] containing unique facilities for display.
+ * @return List of [ParkRideUiState], one per stop, each with unique facilities.
  */
-fun List<NSWParkRide>.toParkRideUiState(): ParkRideUiState {
+fun List<NSWParkRide>.toParkRideUiState(): List<ParkRideUiState> {
     val seenFacilityIds = mutableSetOf<String>()
-    // Only keep first occurrence of each facilityId
-    val facilities = filter { seenFacilityIds.add(it.facilityId) }
-        .map {
-            ParkRideFacilityDetail(
-                spotsAvailable = it.spotsAvailable.toInt(),
-                totalSpots = it.totalSpots.toInt(),
-                facilityName = it.facilityName,
-                percentageFull = it.percentageFull.toInt(),
-                stopId = it.stopId,
-                timeText = it.timeText
-            )
-        }
-        .toPersistentList()
+    return groupBy { it.stopId }
+        .map { (stopId, facilitiesForStop) ->
 
-    // Use the first stop's info for stopId and stopName (adjust as needed)
-    return ParkRideUiState(
-        stopId = firstOrNull()?.stopId.orEmpty(),
-        stopName = firstOrNull()?.suburb.orEmpty(),
-        facilities = facilities
-    )
+            val uniqueFacilities = facilitiesForStop
+                .filter { seenFacilityIds.add(it.facilityId) }
+                .map {
+                    ParkRideFacilityDetail(
+                        spotsAvailable = it.spotsAvailable.toInt(),
+                        totalSpots = it.totalSpots.toInt(),
+                        facilityName = it.facilityName,
+                        percentageFull = it.percentageFull.toInt(),
+                        stopId = it.stopId,
+                        timeText = it.timeText,
+                        facilityId = it.facilityId,
+                    )
+                }
+                .toImmutableSet()
+
+            if (uniqueFacilities.isNotEmpty()) {
+                ParkRideUiState(
+                    stopId = stopId,
+                    stopName = facilitiesForStop.firstOrNull()?.suburb.orEmpty(),
+                    facilities = uniqueFacilities,
+                    error = null,
+                )
+            } else null
+        }
+        .filterNotNull()
 }

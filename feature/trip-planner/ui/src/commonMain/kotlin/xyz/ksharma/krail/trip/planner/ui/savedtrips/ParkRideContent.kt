@@ -21,7 +21,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideFacilityDetail
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
 
 @Composable
 fun ParkRideLoadedContent(
@@ -113,6 +113,7 @@ val parkRideFacilityDetailPreview = ParkRideFacilityDetail(
     timeText = "2 min ago",
     totalSpots = 800,
     stopId = "212000",
+    facilityId = "1234567890",
 )
 
 @Preview

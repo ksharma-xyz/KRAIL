@@ -28,6 +28,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
@@ -37,7 +38,6 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -223,9 +223,15 @@ class SavedTripsViewModel(
     }
 
     /**
-     * - observe data inside the database for park ride facilities.,
-     * it will tell how many spots are available for which facility id and how much %is full.
-     * it will also have last updated time and location details if available.
+     * Observes Park & Ride facility data from the database and updates the UI state accordingly.
+     *
+     * This method listens for changes in the database containing Park & Ride facilities.
+     * For each update:
+     * - If no facilities are found, it clears the Park & Ride UI state.
+     * - If facilities are present, it maps the database entities to UI state objects,
+     *   including available spots, percentage full, last updated time, and location details if available.
+     *
+     * The resulting UI state is updated to reflect the latest facility information for display.
      */
     private fun observeFacilitySpotsAvailability() {
         log("observeFacilitySpotsAvailability called")
@@ -235,32 +241,30 @@ class SavedTripsViewModel(
 
                 parkRideSandook.getAll()
                     .distinctUntilChanged()
-                    .collectLatest { parkRideDb ->
-                        parkRideDb.toParkRideUiState()
+                    .collectLatest { parkRideDb: List<NSWParkRide> ->
+                        if (parkRideDb.isEmpty()) {
+                            log("No Park Ride facilities found in the database.")
+                            updateUiState {
+                                copy(parkRideUiState = null)
+                            }
+                            return@collectLatest
+                        } else {
+                            log("New Park Ride data received[DB]: ${parkRideDb.size}")
+                            parkRideDb.forEach {
+                                println("\t ${it.facilityId} - ${it.facilityName}, Spots Available: ${it.spotsAvailable}, ${it.timeText} ")
 
-
-                        val facilitiesByStop = parkRideDb.groupBy { it.stopId }
-                        // For each stop, update the UI state individually
-
-                        facilitiesByStop.forEach { (stopId, facilities) ->
+                            }
                             updateUiState {
                                 copy(
-                                    parkRideUiState = ParkRideUiState(
-                                        stopId = stopId,
-                                        stopName = facilities.firstOrNull()?.facilityName.orEmpty(),
-                                        facilities = facilities.map { it.toParkRideState() }
-                                            .toImmutableList(),
-                                        isLoading = false,
-                                        error = null,
-                                    )
+                                    parkRideUiState = parkRideDb
+                                        .toParkRideUiState()
+                                        .toImmutableList()
                                 )
                             }
                         }
                     }
             }
     }
-
-
 
     private fun pollParkRideFacilities() {
         log("pollParkRideFacilities called")
@@ -276,8 +280,8 @@ class SavedTripsViewModel(
     }
 
     private suspend fun fetchParkRideFacilities() {
-        val stopIdList =
-            listOf("221710").toImmutableSet() // TODO uiState.value.observeParkRideStopIdSet
+        val stopIdList = listOf("221710").toImmutableSet() // TODO uiState.value.observeParkRideStopIdSet
+        // testing data listOf("221710").toImmutableSet()
         if (stopIdList.isEmpty()) {
             log("No Park Ride stop IDs are expanded, therefore skipping API Call.")
             return
@@ -304,14 +308,18 @@ class SavedTripsViewModel(
         }
 
         log("Fetching Park Ride facilities for FacilityIdList: $facilitiesDueForRefresh")
-        val parkRideDbList = facilitiesDueForRefresh.map { facilityId ->
+        val parkRideDbList = facilitiesDueForRefresh.mapNotNull { facilityId ->
             lastApiCallTimeMap[facilityId] = System.now()
             parkRideService
                 .fetchCarParkFacilities(facilityId = facilityId)
-                .toDbNSWParkRide()
-        }.toImmutableList()
-        log("Fetched Park Ride facilities: $parkRideDbList")
+                .getOrNull() // Only get the value if successful, else null
+        }.map { it.toDbNSWParkRide() }
 
+        if (parkRideDbList.isEmpty()) {
+            logError("No Park Ride facilities fetched from API, skipping DB update.")
+            return
+        }
+        log("Got API Response - Saving Park Ride facilities to DB now: $parkRideDbList")
         parkRideSandook.insertOrReplaceAll(parkRideDbList)
     }
 
@@ -340,7 +348,8 @@ class SavedTripsViewModel(
 
     private fun getApiCooldownDuration(): Duration {
         return if (isNotPeakTime()) {
-            5.minutes
+            1.minutes
+// TODO - for testing            5.minutes
         } else {
             2.minutes // TODO -  firebase controls this value.
         }

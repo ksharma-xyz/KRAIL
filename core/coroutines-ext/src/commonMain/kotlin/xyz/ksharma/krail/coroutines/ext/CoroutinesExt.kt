@@ -3,6 +3,8 @@ package xyz.ksharma.krail.coroutines.ext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 import kotlin.Result
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -52,6 +54,7 @@ suspend fun <T, R> T.suspendSafeResult(
     try {
         block()
     } catch (e: Throwable) {
+        logError("error executing suspendSafeResult", e)
         // Should not catch CancellationException
         coroutineContext.ensureActive()
         Result.failure(e)

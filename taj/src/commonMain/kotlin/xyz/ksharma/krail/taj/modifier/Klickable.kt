@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.taj.modifier
 
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import xyz.ksharma.krail.taj.themeColor
 fun Modifier.klickable(
     role: Role = Role.Button,
     enabled: Boolean = true,
+    indication: Indication? = krailRipple(color = themeColor()),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     onClick: () -> Unit,
 ): Modifier {
@@ -30,7 +32,7 @@ fun Modifier.klickable(
         role = role,
         interactionSource = interactionSource,
         enabled = enabled,
-        indication = krailRipple(color = themeColor()),
+        indication = indication,
         onClick = onClick,
     )
 }

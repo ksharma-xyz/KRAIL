@@ -4,6 +4,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
@@ -245,7 +246,7 @@ class SavedTripsViewModel(
                         if (parkRideDb.isEmpty()) {
                             log("No Park Ride facilities found in the database.")
                             updateUiState {
-                                copy(parkRideUiState = null)
+                                copy(parkRideUiState = persistentListOf())
                             }
                             return@collectLatest
                         } else {
@@ -280,7 +281,7 @@ class SavedTripsViewModel(
     }
 
     private suspend fun fetchParkRideFacilities() {
-        val stopIdList = listOf("221710").toImmutableSet() // TODO uiState.value.observeParkRideStopIdSet
+        val stopIdList = uiState.value.observeParkRideStopIdSet
         // testing data listOf("221710").toImmutableSet()
         if (stopIdList.isEmpty()) {
             log("No Park Ride stop IDs are expanded, therefore skipping API Call.")
@@ -348,7 +349,7 @@ class SavedTripsViewModel(
 
     private fun getApiCooldownDuration(): Duration {
         return if (isNotPeakTime()) {
-            1.minutes
+            2.minutes
 // TODO - for testing            5.minutes
         } else {
             2.minutes // TODO -  firebase controls this value.

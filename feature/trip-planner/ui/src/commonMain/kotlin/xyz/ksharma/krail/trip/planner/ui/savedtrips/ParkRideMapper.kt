@@ -100,6 +100,7 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
                     stopName = stopName,
                     facilities = uniqueFacilities,
                     error = null,
+                    isLoading = false,
                 )
             } else null
         }

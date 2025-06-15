@@ -21,13 +21,11 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.ParkRideIcon
-import xyz.ksharma.krail.trip.planner.ui.components.ParkRideIconContainer
-import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideState
+import xyz.ksharma.krail.trip.planner.ui.state.parkride.ParkRideFacilityDetail
 
 @Composable
 fun ParkRideLoadedContent(
-    parkRideState: ParkRideState,
+    parkRideFacilityDetail: ParkRideFacilityDetail,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -51,7 +49,7 @@ fun ParkRideLoadedContent(
         ) {
             // Facility Name
             Text(
-                text = parkRideState.facilityName,
+                text = parkRideFacilityDetail.facilityName,
                 style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
                 color = getForegroundColor(themeBackgroundColor()),
                 modifier = Modifier,
@@ -64,7 +62,7 @@ fun ParkRideLoadedContent(
             ) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "${parkRideState.spotsAvailable}",
+                        text = "${parkRideFacilityDetail.spotsAvailable}",
                         style = KrailTheme.typography.headlineLarge,
                         color = getForegroundColor(themeBackgroundColor()),
                         modifier = Modifier.alignByBaseline(),
@@ -81,7 +79,7 @@ fun ParkRideLoadedContent(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        text = "${parkRideState.percentageFull}%",
+                        text = "${parkRideFacilityDetail.percentageFull}%",
                         style = KrailTheme.typography.headlineLarge,
                         color = getForegroundColor(themeBackgroundColor()),
                         modifier = Modifier.alignByBaseline(),
@@ -95,9 +93,9 @@ fun ParkRideLoadedContent(
                 }
             }
 
-            if (parkRideState.timeText.isNotBlank()) {
+            if (parkRideFacilityDetail.timeText.isNotBlank()) {
                 Text(
-                    text = "Last updated at\u00A0${parkRideState.timeText}",
+                    text = "Last updated at\u00A0${parkRideFacilityDetail.timeText}",
                     style = KrailTheme.typography.bodySmall,
                     color = getForegroundColor(themeColor()),
                 )
@@ -108,7 +106,7 @@ fun ParkRideLoadedContent(
 
 // region Previews
 
-val parkRideStatePreview = ParkRideState(
+val parkRideFacilityDetailPreview = ParkRideFacilityDetail(
     facilityName = "Tallawong P1",
     spotsAvailable = 120,
     percentageFull = 60,
@@ -122,7 +120,7 @@ val parkRideStatePreview = ParkRideState(
 fun ParkRideLoadedContentPreview_Default() {
     PreviewTheme(KrailThemeStyle.Train) {
         ParkRideLoadedContent(
-            parkRideState = parkRideStatePreview,
+            parkRideFacilityDetail = parkRideFacilityDetailPreview,
         )
     }
 }
@@ -132,7 +130,7 @@ fun ParkRideLoadedContentPreview_Default() {
 fun ParkRideLoadedContentPreview_Full() {
     PreviewTheme(KrailThemeStyle.Metro) {
         ParkRideLoadedContent(
-            parkRideState = parkRideStatePreview.copy(
+            parkRideFacilityDetail = parkRideFacilityDetailPreview.copy(
                 spotsAvailable = 0,
                 percentageFull = 100,
                 timeText = "Just now",
@@ -146,7 +144,7 @@ fun ParkRideLoadedContentPreview_Full() {
 fun ParkRideLoadedContentPreview_Barbie() {
     PreviewTheme(KrailThemeStyle.BarbiePink, darkTheme = true) {
         ParkRideLoadedContent(
-            parkRideState = parkRideStatePreview.copy(
+            parkRideFacilityDetail = parkRideFacilityDetailPreview.copy(
                 spotsAvailable = 130,
                 percentageFull = 10,
                 timeText = "Just now"

@@ -32,11 +32,12 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
+import xyz.ksharma.krail.sandook.NSWParkRide
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideStopsUiState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -234,14 +235,17 @@ class SavedTripsViewModel(
 
                 parkRideSandook.getAll()
                     .distinctUntilChanged()
-                    .collectLatest { parkRides ->
-                        val facilitiesByStop = parkRides.groupBy { it.stopId }
+                    .collectLatest { parkRideDb ->
+                        parkRideDb.toParkRideUiState()
+
+
+                        val facilitiesByStop = parkRideDb.groupBy { it.stopId }
                         // For each stop, update the UI state individually
 
                         facilitiesByStop.forEach { (stopId, facilities) ->
                             updateUiState {
                                 copy(
-                                    parkRideUiState = ParkRideStopsUiState(
+                                    parkRideUiState = ParkRideUiState(
                                         stopId = stopId,
                                         stopName = facilities.firstOrNull()?.facilityName.orEmpty(),
                                         facilities = facilities.map { it.toParkRideState() }
@@ -255,6 +259,8 @@ class SavedTripsViewModel(
                     }
             }
     }
+
+
 
     private fun pollParkRideFacilities() {
         log("pollParkRideFacilities called")

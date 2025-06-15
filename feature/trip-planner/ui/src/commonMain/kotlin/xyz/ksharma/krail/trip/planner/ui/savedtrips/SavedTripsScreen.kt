@@ -168,10 +168,17 @@ fun SavedTripsScreen(
                         items(
                             items = savedTripsState.parkRideUiState,
                             key = { parkRide -> parkRide.stopId },
-
                         ) { parkRide ->
                             ParkRideCard(
                                 modifier = Modifier.padding(horizontal = 16.dp),
+                                onClick = { isExpanded ->
+                                    onEvent(
+                                        SavedTripUiEvent.ParkRideCardClick(
+                                            parkRideState = parkRide,
+                                            isExpanded = isExpanded,
+                                        ),
+                                    )
+                                },
                                 parkRideUiState = parkRide,
                             )
 

@@ -9,7 +9,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +40,7 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSourc
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -56,12 +56,6 @@ class SavedTripsViewModel(
     private val parkRideSandook: NswParkRideSandook,
     private val stopResultsManager: StopResultsManager,
 ) : ViewModel() {
-
-    /**
-     * Will observe expanded park ride cards.
-     * This is used to fetch park ride facilities for the expanded cards only.
-     */
-    private var expandedParkRideCardObserveJob: Job? = null
 
     /**
      * Will observe saved trips from the database.
@@ -87,7 +81,6 @@ class SavedTripsViewModel(
             log("")
             observeSavedTrips()
             observeFacilitySpotsAvailability()
-            pollParkRideFacilities()
         }
         .onCompletion {
             cleanupJobs()
@@ -144,6 +137,50 @@ class SavedTripsViewModel(
                         observeParkRideStopIdSet = (observeParkRideStopIdSet - event.stopId).toImmutableSet(),
                     )
                 }
+            }
+
+            is SavedTripUiEvent.ParkRideCardClick -> onParkRideCardClick(
+                parkRideState = event.parkRideState,
+                isExpanded = event.isExpanded
+            )
+        }
+    }
+
+    // TODO - if card stays open, it won't refresh automatically.
+    private fun onParkRideCardClick(
+        parkRideState: ParkRideUiState,
+        isExpanded: Boolean,
+    ) {
+        if (isExpanded) {
+            updateUiState {
+                copy(
+                    observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
+                    parkRideUiState = parkRideUiState.map { uiState ->
+                        // Loading is dictated by totalspots being -1 because, when we do not have
+                        // any facility detail data for first time, we set totalSpots to -1.
+                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
+                            uiState.copy(isLoading = true)
+                        } else {
+                            uiState.copy(isLoading = false)
+                        }
+                    }.toImmutableList()
+                )
+            }
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                fetchAndSaveParkRideFacilityIfNeeded(stopId = parkRideState.stopId)
+            }
+        } else {
+            updateUiState {
+                copy(
+                    observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
+                    parkRideUiState = parkRideUiState.map { uiState ->
+                        if (uiState.stopId == parkRideState.stopId) {
+                            uiState.copy(isLoading = false)
+                        } else {
+                            uiState
+                        }
+                    }.toImmutableList()
+                )
             }
         }
     }
@@ -273,7 +310,7 @@ class SavedTripsViewModel(
                             stopId = mapping.stopId,
                             spotsAvailable = -1,
                             totalSpots = -1,
-                            percentageFull = 0,
+                            percentageFull = -1,
                             timeText = "",
                             suburb = "",
                             address = "",
@@ -301,66 +338,32 @@ class SavedTripsViewModel(
             }
     }
 
-    private fun pollParkRideFacilities() {
-        log("pollParkRideFacilities called")
-        pollParkRideFacilitiesJob?.cancel()
-        pollParkRideFacilitiesJob =
-            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                while (true) {
-                    fetchParkRideFacilities()
+    suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
+        val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
+        val cooldown = getApiCooldownDuration()
+        val now = System.now()
 
-                    delay(getApiCooldownDuration())
+        facilityIds.forEach { facilityId ->
+            val lastCall = lastApiCallTimeMap[facilityId] ?: Instant.DISTANT_PAST
+            if (now - lastCall >= cooldown) {
+                log("Fetching facility $facilityId for stop $stopId")
+                val apiResult = parkRideService.fetchCarParkFacilities(facilityId).getOrNull()
+                if (apiResult != null) {
+                    lastApiCallTimeMap[facilityId] = now
+                    val detail = apiResult.toNSWParkRideFacilityDetail(
+                        stopName = stopResultsManager.fetchStopResults(apiResult.tsn)
+                            .firstOrNull()?.stopName ?: apiResult.tsn
+                    )
+                    parkRideSandook.insertOrReplaceAll(listOf(detail))
+                    log("Fetched and saved facility $facilityId for stop $stopId")
+                } else {
+                    logError("API call failed for facility $facilityId")
                 }
+            } else {
+                val timeLeft = cooldown - (now - lastCall)
+                log("Facility $facilityId is on cooldown for another ${timeLeft.inWholeSeconds} seconds")
             }
-    }
-
-    private suspend fun fetchParkRideFacilities() {
-        val stopIdList = uiState.value.observeParkRideStopIdSet
-        // testing data listOf("221710").toImmutableSet()
-        if (stopIdList.isEmpty()) {
-            log("No Park Ride stop IDs are expanded, therefore skipping API Call.")
-            return
         }
-
-        val facilityIdList = convertStopIdListToFacilityIdList(stopIdList)
-        val cooldownDuration = getApiCooldownDuration()
-
-        val facilitiesDueForRefresh = facilityIdList.filter { facilityId ->
-            val lastCall = lastApiCallTimeMap[facilityId] ?: Instant.DISTANT_PAST
-            System.now() - lastCall >= cooldownDuration
-        }
-
-        val facilitiesOnCooldown = facilityIdList - facilitiesDueForRefresh.toSet()
-        facilitiesOnCooldown.forEach { facilityId ->
-            val lastCall = lastApiCallTimeMap[facilityId] ?: Instant.DISTANT_PAST
-            val timeLeft = cooldownDuration - (System.now() - lastCall)
-            log("Facility $facilityId is on cooldown for another ${timeLeft.inWholeSeconds} seconds")
-        }
-
-        if (facilitiesDueForRefresh.isEmpty()) {
-            log("API call skipped for all facilities due to cooldown.")
-            return
-        }
-
-        log("Fetching Park Ride facilities for FacilityIdList: $facilitiesDueForRefresh")
-        val parkRideDbList = facilitiesDueForRefresh.mapNotNull { facilityId ->
-            lastApiCallTimeMap[facilityId] = System.now()
-            parkRideService
-                .fetchCarParkFacilities(facilityId = facilityId)
-                .getOrNull() // Only get the value if successful, else null
-        }.map {
-            it.toNSWParkRideFacilityDetail(
-                stopName = stopResultsManager.fetchStopResults(query = it.tsn)
-                    .firstOrNull()?.stopName ?: it.tsn
-            )
-        }
-
-        if (parkRideDbList.isEmpty()) {
-            logError("No Park Ride facilities fetched from API, skipping DB update.")
-            return
-        }
-        log("Got API Response - Saving Park Ride facilities to DB now: $parkRideDbList")
-        parkRideSandook.insertOrReplaceAll(parkRideDbList)
     }
 
     private fun convertStopIdListToFacilityIdList(stopIdList: ImmutableSet<String>): Set<String> {
@@ -386,12 +389,12 @@ class SavedTripsViewModel(
         return hour < 5 || hour >= 10
     }
 
+    // TODO - dictate these times from Firebase.
     private fun getApiCooldownDuration(): Duration {
         return if (isNotPeakTime()) {
-            2.minutes
-// TODO - for testing            5.minutes
+            10.minutes
         } else {
-            2.minutes // TODO -  firebase controls this value.
+            5.minutes
         }
     }
 
@@ -406,8 +409,6 @@ class SavedTripsViewModel(
 
     @VisibleForTesting
     fun cleanupJobs() {
-        expandedParkRideCardObserveJob?.cancel()
-        expandedParkRideCardObserveJob = null
         pollParkRideFacilitiesJob?.cancel()
         pollParkRideFacilitiesJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
@@ -424,3 +425,11 @@ private fun SavedTrip.toTrip(): Trip = Trip(
     toStopId = toStopId,
     toStopName = toStopName,
 )
+
+/*
+TODO
+ - save time stamp also when saving data to db for park ride detail.
+    - if time is within cooldown then dont call api.
+    - otherwise call api.
+
+*/

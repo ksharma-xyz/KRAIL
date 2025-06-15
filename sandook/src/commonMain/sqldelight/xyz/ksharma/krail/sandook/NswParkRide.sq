@@ -5,7 +5,8 @@ CREATE TABLE NSWParkRideFacilityDetail (
     totalSpots INTEGER NOT NULL,          -- Total number of spots
     facilityName TEXT NOT NULL,           -- Name of the facility
     percentageFull INTEGER NOT NULL,      -- Percentage of spots filled
-    stopId TEXT NOT NULL,                 -- Associated stop ID (for reference)
+    stopId TEXT NOT NULL,                 -- Associated stop ID
+    stopName TEXT NOT NULL,               -- Associated stop name
     timeText TEXT NOT NULL,               -- Time information as text
     suburb TEXT NOT NULL,                 -- Suburb location
     address TEXT NOT NULL,                -- Facility address
@@ -20,9 +21,9 @@ SELECT * FROM NSWParkRideFacilityDetail;
 -- Insert or update a facility record
 insertOrReplace:
 INSERT OR REPLACE INTO NSWParkRideFacilityDetail(
-    facilityId, spotsAvailable, totalSpots, facilityName, percentageFull, stopId, timeText,
-    suburb, address, latitude, longitude
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    facilityId, spotsAvailable, totalSpots, facilityName, percentageFull, stopId, stopName,
+    timeText, suburb, address, latitude, longitude
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
 
 -- Select all facilities for a list of stop IDs
 selectByStopIds:

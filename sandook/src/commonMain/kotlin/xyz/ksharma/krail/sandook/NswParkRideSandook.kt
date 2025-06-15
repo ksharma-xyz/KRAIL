@@ -80,7 +80,8 @@ internal class RealNswParkRideSandook(
             suburb = parkRide.suburb,
             address = parkRide.address,
             latitude = parkRide.latitude,
-            longitude = parkRide.longitude
+            longitude = parkRide.longitude,
+            stopName = parkRide.stopName
         )
     }
 
@@ -98,7 +99,8 @@ internal class RealNswParkRideSandook(
                     suburb = parkRide.suburb,
                     address = parkRide.address,
                     latitude = parkRide.latitude,
-                    longitude = parkRide.longitude
+                    longitude = parkRide.longitude,
+                    stopName = parkRide.stopName,
                 )
             }
         }

@@ -22,7 +22,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRid
  * @return [NSWParkRideFacilityDetail] containing facility details for database storage
  **/
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(): NSWParkRideFacilityDetail {
+fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0
     val occupiedSpots = zones.sumOf {
         it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
@@ -49,6 +49,7 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(): NSWParkRideFaci
         address = location.address ?: "",
         latitude = location.latitude?.toDoubleOrNull() ?: 0.0,
         longitude = location.longitude?.toDoubleOrNull() ?: 0.0,
+        stopName = stopName,
     )
 }
 
@@ -76,6 +77,7 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
     val seenFacilityIds = mutableSetOf<String>()
     return groupBy { it.stopId }
         .map { (stopId, facilitiesForStop) ->
+            val stopName = facilitiesForStop.firstOrNull()?.stopName ?: ""
 
             val uniqueFacilities = facilitiesForStop
                 .filter { seenFacilityIds.add(it.facilityId) }
@@ -95,7 +97,7 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
             if (uniqueFacilities.isNotEmpty()) {
                 ParkRideUiState(
                     stopId = stopId,
-                    stopName = facilitiesForStop.firstOrNull()?.suburb.orEmpty(),
+                    stopName = stopName,
                     facilities = uniqueFacilities,
                     error = null,
                 )
@@ -105,4 +107,3 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
 }
 
 internal fun String.toDisplayFacilityName(): String = removePrefix("Park&Ride - ").trim()
-

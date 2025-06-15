@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -39,16 +40,12 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
+import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.collectLatest
-import kotlin.text.get
-
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -57,6 +54,7 @@ class SavedTripsViewModel(
     private val nswParkRideFacilityManager: NswParkRideFacilityManager,
     private val parkRideService: ParkRideService,
     private val parkRideSandook: NswParkRideSandook,
+    private val stopResultsManager: StopResultsManager,
 ) : ViewModel() {
 
     /**
@@ -264,7 +262,8 @@ class SavedTripsViewModel(
                     val detailsByFacilityId = nswParkRides.associateBy { it.facilityId }
                     // Merge: for every mapping, fill with details if present, else use minimal info
                     savedParkRides.map { mapping ->
-                        val detail: NSWParkRideFacilityDetail? = detailsByFacilityId[mapping.facilityId]
+                        val detail: NSWParkRideFacilityDetail? =
+                            detailsByFacilityId[mapping.facilityId]
 
                         detail ?: NSWParkRideFacilityDetail(
                             facilityId = mapping.facilityId,
@@ -272,14 +271,16 @@ class SavedTripsViewModel(
                                 facilityId = mapping.facilityId
                             )?.parkRideName.orEmpty(),
                             stopId = mapping.stopId,
-                            spotsAvailable = 0,
-                            totalSpots = 0,
+                            spotsAvailable = -1,
+                            totalSpots = -1,
                             percentageFull = 0,
                             timeText = "",
                             suburb = "",
                             address = "",
                             latitude = 0.0,
                             longitude = 0.0,
+                            stopName = stopResultsManager.fetchStopResults(mapping.stopId)
+                                .firstOrNull()?.stopName ?: mapping.stopId,
                         )
                     }
                 }.collectLatest { mergedList ->
@@ -347,7 +348,12 @@ class SavedTripsViewModel(
             parkRideService
                 .fetchCarParkFacilities(facilityId = facilityId)
                 .getOrNull() // Only get the value if successful, else null
-        }.map { it.toNSWParkRideFacilityDetail() }
+        }.map {
+            it.toNSWParkRideFacilityDetail(
+                stopName = stopResultsManager.fetchStopResults(query = it.tsn)
+                    .firstOrNull()?.stopName ?: it.tsn
+            )
+        }
 
         if (parkRideDbList.isEmpty()) {
             logError("No Park Ride facilities fetched from API, skipping DB update.")

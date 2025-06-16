@@ -148,7 +148,7 @@ fun SavedTripsScreen(
 
                     if (savedTripsState.parkRideUiState.isNotEmpty()) {
                         item {
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
 
                         stickyHeader(key = "park_ride_title") {
@@ -168,10 +168,17 @@ fun SavedTripsScreen(
                         items(
                             items = savedTripsState.parkRideUiState,
                             key = { parkRide -> parkRide.stopId },
-
                         ) { parkRide ->
                             ParkRideCard(
                                 modifier = Modifier.padding(horizontal = 16.dp),
+                                onClick = { isExpanded ->
+                                    onEvent(
+                                        SavedTripUiEvent.ParkRideCardClick(
+                                            parkRideState = parkRide,
+                                            isExpanded = isExpanded,
+                                        ),
+                                    )
+                                },
                                 parkRideUiState = parkRide,
                             )
 

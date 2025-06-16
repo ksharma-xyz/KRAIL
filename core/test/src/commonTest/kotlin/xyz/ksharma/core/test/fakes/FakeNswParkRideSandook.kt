@@ -14,7 +14,7 @@ class FakeNswParkRideSandook : NswParkRideSandook {
 
     override fun observeSavedParkRides(): Flow<List<SavedParkRide>> = savedParkRides.asStateFlow()
 
-    override fun getAll(): Flow<List<NSWParkRideFacilityDetail>> = data.asStateFlow()
+    override fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>> = data.asStateFlow()
 
     override fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail> =
         data.value.filter { it.stopId in stopIds }
@@ -56,6 +56,16 @@ class FakeNswParkRideSandook : NswParkRideSandook {
 
     override suspend fun clearAllSavedParkRidesBySource(source: NswParkRideSandook.Companion.SavedParkRideSource) {
         savedParkRides.value = savedParkRides.value.filterNot { it.source == source.value }
+    }
+
+    override suspend fun getLastApiCallTimestamp(facilityId: String): Long? {
+        return data.value.firstOrNull { it.facilityId == facilityId }?.timestamp
+    }
+
+    override suspend fun updateApiCallTimestamp(facilityId: String, timestamp: Long) {
+        data.value = data.value.map { detail ->
+            if (detail.facilityId == facilityId) detail.copy(timestamp = timestamp) else detail
+        }
     }
 
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {

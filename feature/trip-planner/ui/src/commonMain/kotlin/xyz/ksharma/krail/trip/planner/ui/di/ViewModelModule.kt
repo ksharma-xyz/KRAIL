@@ -40,6 +40,7 @@ val viewModelsModule = module {
             nswParkRideFacilityManager = get(),
             parkRideService = get(),
             parkRideSandook = get(),
+            stopResultsManager = get(),
         )
     }
 

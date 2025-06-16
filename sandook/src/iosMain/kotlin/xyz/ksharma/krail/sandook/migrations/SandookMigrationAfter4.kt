@@ -17,11 +17,13 @@ internal object SandookMigrationAfter4 : SandookMigration {
                     facilityName TEXT NOT NULL,
                     percentageFull INTEGER NOT NULL,
                     stopId TEXT NOT NULL,
+                    stopName TEXT NOT NULL,
                     timeText TEXT NOT NULL,
                     suburb TEXT NOT NULL,
                     address TEXT NOT NULL,
                     latitude REAL NOT NULL,
-                    longitude REAL NOT NULL
+                    longitude REAL NOT NULL,
+                    timestamp INTEGER NOT NULL
                 );
                 
                 CREATE TABLE SavedParkRide (

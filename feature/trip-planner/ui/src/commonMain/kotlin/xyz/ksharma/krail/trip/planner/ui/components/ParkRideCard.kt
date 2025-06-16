@@ -39,6 +39,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 fun ParkRideCard(
     parkRideUiState: ParkRideUiState,
     modifier: Modifier = Modifier,
+    onClick: (Boolean) -> Unit = {},
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -48,6 +49,7 @@ fun ParkRideCard(
             .background(themeBackgroundColor())
             .klickable {
                 isExpanded = !isExpanded
+                onClick(isExpanded)
             }
             .animateContentSize()
             .padding(top = 20.dp, start = 16.dp, end = 12.dp, bottom = 20.dp),
@@ -61,60 +63,67 @@ fun ParkRideCard(
                 enter = expandVertically() + fadeIn(spring(stiffness = Spring.StiffnessVeryLow)),
                 exit = shrinkVertically() + fadeOut(spring(stiffness = Spring.StiffnessVeryLow)),
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    parkRideUiState.facilities.forEach { facility ->
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            // Facility Name
-                            Text(
-                                text = facility.facilityName,
-                                style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
-                            )
-
-                            // Spots Information
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                if (parkRideUiState.facilities.any { it.spotsAvailable >= 0 }) {
+                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                        parkRideUiState.facilities.forEach { facility ->
+                            Column(
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(
-                                        text = "${facility.spotsAvailable}",
-                                        style = KrailTheme.typography.headlineLarge,
-                                        modifier = Modifier.alignByBaseline(),
-                                    )
-                                    Text(
-                                        text = "spots empty",
-                                        style = KrailTheme.typography.bodyMedium,
-                                        modifier = Modifier.alignByBaseline(),
-                                    )
-                                }
-
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    Text(
-                                        text = "${facility.percentageFull}%",
-                                        style = KrailTheme.typography.headlineLarge,
-                                        modifier = Modifier.alignByBaseline(),
-                                    )
-                                    Text(
-                                        text = "full",
-                                        style = KrailTheme.typography.bodyMedium,
-                                        modifier = Modifier.alignByBaseline(),
-                                    )
-                                }
-                            }
-
-                            // Time Information
-                            if (facility.timeText.isNotBlank()) {
+                                // Facility Name
                                 Text(
-                                    text = "Last updated at\u00A0${facility.timeText}",
-                                    style = KrailTheme.typography.bodySmall,
+                                    text = facility.facilityName,
+                                    style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
                                 )
+
+                                // Spots Information
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(
+                                            text = "${facility.spotsAvailable}",
+                                            style = KrailTheme.typography.headlineLarge,
+                                            modifier = Modifier.alignByBaseline(),
+                                        )
+                                        Text(
+                                            text = "spots available",
+                                            style = KrailTheme.typography.bodyMedium,
+                                            modifier = Modifier.alignByBaseline(),
+                                        )
+                                    }
+
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        Text(
+                                            text = "${facility.percentageFull}%",
+                                            style = KrailTheme.typography.headlineLarge,
+                                            modifier = Modifier.alignByBaseline(),
+                                        )
+                                        Text(
+                                            text = "full",
+                                            style = KrailTheme.typography.bodyMedium,
+                                            modifier = Modifier.alignByBaseline(),
+                                        )
+                                    }
+                                }
+
+                                // Time Information
+                                if (facility.timeText.isNotBlank()) {
+                                    Text(
+                                        text = "Last updated at\u00A0${facility.timeText}",
+                                        style = KrailTheme.typography.bodySmall,
+                                    )
+                                }
                             }
                         }
                     }
+                } else {
+                    Text(
+                        text = "Loading...",
+                        style = KrailTheme.typography.bodyMedium,
+                    )
                 }
             }
 

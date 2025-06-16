@@ -16,7 +16,7 @@ import xyz.ksharma.krail.sandook.SandookPreferences
 val sandookModule = module {
     includes(sqlDriverModule)
     // Provide the database driver factory
-    single<SandookDriverFactory> { get() } // Or your implementation
+    single<SandookDriverFactory> { get() }
 
     // Create a single shared database instance
     single {

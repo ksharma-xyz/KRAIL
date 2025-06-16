@@ -60,12 +60,6 @@ internal class RealNswParkRideSandook(
     private val ioDispatcher: CoroutineDispatcher,
 ) : NswParkRideSandook {
 
-    /*
-        private val parkRideQueries: NswParkRideQueries by lazy {
-            NswParkRideQueries(factory.createDriver())
-        }
-    */
-
     // region NSWParkRideFacilityDetail Table methods
     override fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>> =
         parkRideQueries.selectAll().asFlow().mapToList(ioDispatcher)

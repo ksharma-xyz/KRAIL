@@ -72,8 +72,6 @@ class SavedTripsViewModel(
      */
     private var pollParkRideFacilitiesJob: Job? = null
 
-    private val lastApiCallTimeMap: MutableMap<String, Instant> = mutableMapOf()
-
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
@@ -146,7 +144,7 @@ class SavedTripsViewModel(
         }
     }
 
-    // TODO - if card stays open, it won't refresh automatically.
+    // TODO - if card stays open, it won't refresh automatically. - okay for now.
     private fun onParkRideCardClick(
         parkRideState: ParkRideUiState,
         isExpanded: Boolean,
@@ -160,8 +158,10 @@ class SavedTripsViewModel(
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
                             uiState.copy(isLoading = true)
-                        } else {
+                        } else if (parkRideState.facilities.any { it.totalSpots >= 0 }) {
                             uiState.copy(isLoading = false)
+                        } else {
+                            uiState
                         }
                     }.toImmutableList()
                 )
@@ -174,8 +174,10 @@ class SavedTripsViewModel(
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
-                        if (uiState.stopId == parkRideState.stopId) {
-                            uiState.copy(isLoading = false)
+                        // Loading is dictated by totalspots being -1 because, when we do not have
+                        // any facility detail data for first time, we set totalSpots to -1.
+                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
+                            uiState.copy(isLoading = true)
                         } else {
                             uiState
                         }
@@ -215,8 +217,7 @@ class SavedTripsViewModel(
      * In short:
      *      StopId -> FacilityId Mapping for StopIds in SavedTrips
      *
-     * TODO:
-     * Think of solving edge case, where multiple stop Ids have same facility Ids.
+     * edge case solved, where multiple stop Ids have same facility Ids.
      * {"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
      * {"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
      *
@@ -225,9 +226,7 @@ class SavedTripsViewModel(
     @VisibleForTesting // TODO - write unit tests for this function.
     suspend fun updateParkRideStopIdsInDb(savedTrips: List<SavedTrip>) {
         // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
-        val uniqueSavedTripStopIds: Set<String> = savedTrips
-            .flatMap { listOf(it.fromStopId, it.toStopId) }
-            .toSet()
+        val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
 
         // 2. Build a map from stopId to a list of associated park & ride facility IDs
         val facilityMap: Map<String, List<String>> = nswParkRideFacilityManager
@@ -237,7 +236,7 @@ class SavedTripsViewModel(
 
         // 3. For each unique stopId, pair it with all its facility IDs (if any), and collect as
         // a set of (stopId, facilityId) pairs
-        val stopFacilityPairs: Set<Pair<String, String>> = uniqueSavedTripStopIds
+        val stopFacilityPairs: Set<Pair<String, String>> = uniqueStopIds
             .flatMap { stopId ->
                 facilityMap[stopId]?.map { facilityId -> stopId to facilityId }
                     ?: emptyList()
@@ -250,6 +249,13 @@ class SavedTripsViewModel(
         if (stopFacilityPairs.isNotEmpty()) {
             parkRideSandook.insertOrReplaceSavedParkRides(pairs = stopFacilityPairs)
         }
+    }
+
+    private fun uniqueSavedTripStopIds(savedTrips: List<SavedTrip>): Set<String> {
+        val uniqueSavedTripStopIds: Set<String> = savedTrips
+            .flatMap { listOf(it.fromStopId, it.toStopId) }
+            .toSet()
+        return uniqueSavedTripStopIds
     }
 
     private fun onDeleteSavedTrip(savedTrip: Trip) {
@@ -287,16 +293,19 @@ class SavedTripsViewModel(
         observeParkRideFacilityFromDatabaseJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
                 combine(
-                    parkRideSandook.observeSavedParkRides()
-                        .distinctUntilChanged(), // mapping: List<SavedParkRide>
-                    parkRideSandook.getAll().distinctUntilChanged() // details: List<NSWParkRide>
-                ) { savedParkRides, nswParkRides ->
+                    flow = parkRideSandook.observeSavedParkRides().distinctUntilChanged(),
+                    flow2 = parkRideSandook.getAllParkRideFacilityDetail().distinctUntilChanged(),
+                ) { savedParkRides, facilityDetails ->
 
                     log(" - ID Mapping Table: ${savedParkRides.map { it.facilityId }.toSet()}")
-                    log(" - Facility Detail Table: ${nswParkRides.map { it.facilityName }.toSet()}")
+                    log(
+                        " - Facility Detail Table: ${
+                            facilityDetails.map { it.facilityName }.toSet()
+                        }"
+                    )
 
                     // Map details by facilityId for quick lookup
-                    val detailsByFacilityId = nswParkRides.associateBy { it.facilityId }
+                    val detailsByFacilityId = facilityDetails.associateBy { it.facilityId }
                     // Merge: for every mapping, fill with details if present, else use minimal info
                     savedParkRides.map { mapping ->
                         val detail: NSWParkRideFacilityDetail? =
@@ -318,6 +327,7 @@ class SavedTripsViewModel(
                             longitude = 0.0,
                             stopName = stopResultsManager.fetchStopResults(mapping.stopId)
                                 .firstOrNull()?.stopName ?: mapping.stopId,
+                            timestamp = Instant.DISTANT_PAST.epochSeconds,
                         )
                     }
                 }.collectLatest { mergedList ->
@@ -341,26 +351,36 @@ class SavedTripsViewModel(
     suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
         val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
         val cooldown = getApiCooldownDuration()
-        val now = System.now()
+        val now = System.now().epochSeconds
 
         facilityIds.forEach { facilityId ->
-            val lastCall = lastApiCallTimeMap[facilityId] ?: Instant.DISTANT_PAST
-            if (now - lastCall >= cooldown) {
+            val lastCallEpoch = parkRideSandook.getLastApiCallTimestamp(facilityId)
+                ?: Instant.DISTANT_PAST.epochSeconds
+            val lastCall = Instant.fromEpochSeconds(lastCallEpoch)
+            val nowInstant = Instant.fromEpochSeconds(now)
+            if (nowInstant - lastCall >= cooldown) {
                 log("Fetching facility $facilityId for stop $stopId")
                 val apiResult = parkRideService.fetchCarParkFacilities(facilityId).getOrNull()
+
                 if (apiResult != null) {
-                    lastApiCallTimeMap[facilityId] = now
+                    parkRideSandook.updateApiCallTimestamp(facilityId, now)
                     val detail = apiResult.toNSWParkRideFacilityDetail(
+                        // TODO - handle edge case, where tsn is not present in stop results.
                         stopName = stopResultsManager.fetchStopResults(apiResult.tsn)
                             .firstOrNull()?.stopName ?: apiResult.tsn
                     )
                     parkRideSandook.insertOrReplaceAll(listOf(detail))
                     log("Fetched and saved facility $facilityId for stop $stopId")
                 } else {
+                    //  reset timestamp to DISTANT_PAST
+                    parkRideSandook.updateApiCallTimestamp(
+                        facilityId = facilityId,
+                        timestamp = Instant.DISTANT_PAST.epochSeconds,
+                    )
                     logError("API call failed for facility $facilityId")
                 }
             } else {
-                val timeLeft = cooldown - (now - lastCall)
+                val timeLeft = cooldown - (nowInstant - lastCall)
                 log("Facility $facilityId is on cooldown for another ${timeLeft.inWholeSeconds} seconds")
             }
         }
@@ -394,7 +414,7 @@ class SavedTripsViewModel(
         return if (isNotPeakTime()) {
             10.minutes
         } else {
-            5.minutes
+            2.minutes
         }
     }
 
@@ -425,11 +445,3 @@ private fun SavedTrip.toTrip(): Trip = Trip(
     toStopId = toStopId,
     toStopName = toStopName,
 )
-
-/*
-TODO
- - save time stamp also when saving data to db for park ride detail.
-    - if time is within cooldown then dont call api.
-    - otherwise call api.
-
-*/

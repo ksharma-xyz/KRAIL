@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface NswParkRideSandook {
 
     // NSWParkRideFacilityDetail Table methods
-    fun getAll(): Flow<List<NSWParkRideFacilityDetail>>
+    fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>>
     fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail>
 
     suspend fun insertOrReplace(parkRide: NSWParkRideFacilityDetail)
@@ -50,6 +50,9 @@ interface NswParkRideSandook {
             data object UserAdded : SavedParkRideSource("user")
         }
     }
+
+    suspend fun getLastApiCallTimestamp(facilityId: String): Long?
+    suspend fun updateApiCallTimestamp(facilityId: String, timestamp: Long)
 }
 
 internal class RealNswParkRideSandook(
@@ -62,7 +65,7 @@ internal class RealNswParkRideSandook(
     }
 
     // region NSWParkRideFacilityDetail Table methods
-    override fun getAll(): Flow<List<NSWParkRideFacilityDetail>> =
+    override fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>> =
         parkRideQueries.selectAll().asFlow().mapToList(ioDispatcher)
 
     override fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail> =
@@ -81,7 +84,8 @@ internal class RealNswParkRideSandook(
             address = parkRide.address,
             latitude = parkRide.latitude,
             longitude = parkRide.longitude,
-            stopName = parkRide.stopName
+            stopName = parkRide.stopName,
+            timestamp = parkRide.timestamp,
         )
     }
 
@@ -101,9 +105,18 @@ internal class RealNswParkRideSandook(
                     latitude = parkRide.latitude,
                     longitude = parkRide.longitude,
                     stopName = parkRide.stopName,
+                    timestamp = parkRide.timestamp,
                 )
             }
         }
+    }
+
+    override suspend fun getLastApiCallTimestamp(facilityId: String): Long? {
+        return parkRideQueries.getTimestampByFacilityId(facilityId).executeAsOneOrNull()
+    }
+
+    override suspend fun updateApiCallTimestamp(facilityId: String, timestamp: Long) {
+        parkRideQueries.updateTimestampByFacilityId(timestamp, facilityId)
     }
 
     override suspend fun deleteAll() {

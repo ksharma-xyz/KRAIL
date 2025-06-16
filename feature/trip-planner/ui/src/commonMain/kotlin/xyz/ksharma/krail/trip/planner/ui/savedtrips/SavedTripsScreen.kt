@@ -148,7 +148,7 @@ fun SavedTripsScreen(
 
                     if (savedTripsState.parkRideUiState.isNotEmpty()) {
                         item {
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
 
                         stickyHeader(key = "park_ride_title") {

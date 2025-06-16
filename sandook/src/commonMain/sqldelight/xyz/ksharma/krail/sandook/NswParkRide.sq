@@ -11,7 +11,8 @@ CREATE TABLE NSWParkRideFacilityDetail (
     suburb TEXT NOT NULL,                 -- Suburb location
     address TEXT NOT NULL,                -- Facility address
     latitude REAL NOT NULL,               -- Latitude coordinate
-    longitude REAL NOT NULL               -- Longitude coordinate
+    longitude REAL NOT NULL,              -- Longitude coordinate
+    timestamp INTEGER NOT NULL            -- Timestamp of the last update, defaults to current time
 );
 
 -- Select all facility records
@@ -22,8 +23,8 @@ SELECT * FROM NSWParkRideFacilityDetail;
 insertOrReplace:
 INSERT OR REPLACE INTO NSWParkRideFacilityDetail(
     facilityId, spotsAvailable, totalSpots, facilityName, percentageFull, stopId, stopName,
-    timeText, suburb, address, latitude, longitude
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
+    timeText, suburb, address, latitude, longitude, timestamp
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?);
 
 -- Select all facilities for a list of stop IDs
 selectByStopIds:
@@ -38,6 +39,14 @@ WHERE stopId = ?;
 -- Delete all facility records
 deleteAll:
 DELETE FROM NSWParkRideFacilityDetail;
+
+-- Get the last API call timestamp for a facility
+getTimestampByFacilityId:
+SELECT timestamp FROM NSWParkRideFacilityDetail WHERE facilityId = ?;
+
+-- Update the timestamp for a facility
+updateTimestampByFacilityId:
+UPDATE NSWParkRideFacilityDetail SET timestamp = ? WHERE facilityId = ?;
 
 
 -- SavedParkRide Table

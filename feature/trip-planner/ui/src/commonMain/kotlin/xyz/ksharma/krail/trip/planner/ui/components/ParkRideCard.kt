@@ -63,9 +63,7 @@ fun ParkRideCard(
                 enter = expandVertically() + fadeIn(spring(stiffness = Spring.StiffnessVeryLow)),
                 exit = shrinkVertically() + fadeOut(spring(stiffness = Spring.StiffnessVeryLow)),
             ) {
-                if (parkRideUiState.isLoading) {
-                    Text("Loading...", style = KrailTheme.typography.displaySmall)
-                } else {
+                if (parkRideUiState.facilities.any { it.spotsAvailable >= 0 }) {
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                         parkRideUiState.facilities.forEach { facility ->
                             Column(
@@ -89,7 +87,7 @@ fun ParkRideCard(
                                             modifier = Modifier.alignByBaseline(),
                                         )
                                         Text(
-                                            text = "spots empty",
+                                            text = "spots available",
                                             style = KrailTheme.typography.bodyMedium,
                                             modifier = Modifier.alignByBaseline(),
                                         )
@@ -121,6 +119,11 @@ fun ParkRideCard(
                             }
                         }
                     }
+                } else {
+                    Text(
+                        text = "Loading...",
+                        style = KrailTheme.typography.bodyMedium,
+                    )
                 }
             }
 

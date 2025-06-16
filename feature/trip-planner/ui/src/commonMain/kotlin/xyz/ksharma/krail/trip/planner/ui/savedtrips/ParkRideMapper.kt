@@ -3,6 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
 import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
@@ -50,6 +52,7 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String):
         latitude = location.latitude?.toDoubleOrNull() ?: 0.0,
         longitude = location.longitude?.toDoubleOrNull() ?: 0.0,
         stopName = stopName,
+        timestamp = Clock.System.now().epochSeconds,
     )
 }
 

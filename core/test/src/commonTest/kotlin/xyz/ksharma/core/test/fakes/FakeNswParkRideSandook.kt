@@ -58,6 +58,16 @@ class FakeNswParkRideSandook : NswParkRideSandook {
         savedParkRides.value = savedParkRides.value.filterNot { it.source == source.value }
     }
 
+    override suspend fun getLastApiCallTimestamp(facilityId: String): Long? {
+        return data.value.firstOrNull { it.facilityId == facilityId }?.timestamp
+    }
+
+    override suspend fun updateApiCallTimestamp(facilityId: String, timestamp: Long) {
+        data.value = data.value.map { detail ->
+            if (detail.facilityId == facilityId) detail.copy(timestamp = timestamp) else detail
+        }
+    }
+
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
         savedParkRides.value = savedParkRides.value.filterNot {
             it.stopId == stopId && it.facilityId == facilityId

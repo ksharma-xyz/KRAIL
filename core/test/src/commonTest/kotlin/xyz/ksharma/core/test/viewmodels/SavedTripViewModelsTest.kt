@@ -12,6 +12,7 @@ import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.core.test.fakes.FakeParkRideService
 import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
@@ -19,6 +20,7 @@ import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.test.AfterTest
@@ -38,6 +40,8 @@ class SavedTripsViewModelTest {
 
     private val fakeParkRideService: ParkRideService = FakeParkRideService()
 
+    private val fakeStopResultsManager: StopResultsManager = FakeStopResultsManager()
+
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
@@ -50,6 +54,7 @@ class SavedTripsViewModelTest {
             nswParkRideFacilityManager = fakeParkRideManager,
             parkRideService = fakeParkRideService,
             parkRideSandook = fakeNswParkRideSandook,
+            stopResultsManager = fakeStopResultsManager,
         )
     }
 

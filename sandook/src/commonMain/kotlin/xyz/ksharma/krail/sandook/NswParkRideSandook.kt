@@ -56,13 +56,15 @@ interface NswParkRideSandook {
 }
 
 internal class RealNswParkRideSandook(
-    private val factory: SandookDriverFactory,
+    private val parkRideQueries: NswParkRideQueries,
     private val ioDispatcher: CoroutineDispatcher,
 ) : NswParkRideSandook {
 
-    private val parkRideQueries: NswParkRideQueries by lazy {
-        NswParkRideQueries(factory.createDriver())
-    }
+    /*
+        private val parkRideQueries: NswParkRideQueries by lazy {
+            NswParkRideQueries(factory.createDriver())
+        }
+    */
 
     // region NSWParkRideFacilityDetail Table methods
     override fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>> =

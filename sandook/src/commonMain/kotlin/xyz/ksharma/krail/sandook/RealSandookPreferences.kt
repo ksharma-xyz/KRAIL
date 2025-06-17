@@ -1,10 +1,8 @@
 package xyz.ksharma.krail.sandook
 
 internal class RealSandookPreferences(
-    factory: SandookDriverFactory
+    private val queries: AppPreferencesQueries,
 ) : SandookPreferences {
-
-    private val queries = AppPreferencesQueries(factory.createDriver())
 
     override fun getLong(key: String): Long? {
         return queries.getLongPreference(key).executeAsOneOrNull()?.int_value

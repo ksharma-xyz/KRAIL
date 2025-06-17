@@ -16,6 +16,8 @@ internal class RealSandook(
 
     private val nswStopsQueries = sandook.nswStopsQueries
 
+    private val nswParkRideQueries = sandook.nswParkRideQueries
+
     // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {
         query.insertOrReplaceProductClass(productClass)

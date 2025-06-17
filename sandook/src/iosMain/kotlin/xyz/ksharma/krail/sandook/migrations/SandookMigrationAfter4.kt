@@ -10,7 +10,7 @@ internal object SandookMigrationAfter4 : SandookMigration {
         sqlDriver.execute(
             identifier = null,
             sql = """
-                CREATE TABLE NSWParkRideFacilityDetail (
+                CREATE TABLE IF NOT EXISTS NSWParkRideFacilityDetail (
                     facilityId TEXT NOT NULL PRIMARY KEY,
                     spotsAvailable INTEGER NOT NULL,
                     totalSpots INTEGER NOT NULL,
@@ -26,7 +26,7 @@ internal object SandookMigrationAfter4 : SandookMigration {
                     timestamp INTEGER NOT NULL
                 );
                 
-                CREATE TABLE SavedParkRide (
+                CREATE TABLE IF NOT EXISTS SavedParkRide (
                     stopId TEXT NOT NULL,
                     facilityId TEXT NOT NULL,
                     source TEXT NOT NULL,

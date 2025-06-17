@@ -30,6 +30,9 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.remote_config.flag.Flag
+import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
+import xyz.ksharma.krail.core.remote_config.flag.asNumber
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
@@ -46,7 +49,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -56,7 +59,18 @@ class SavedTripsViewModel(
     private val parkRideService: ParkRideService,
     private val parkRideSandook: NswParkRideSandook,
     private val stopResultsManager: StopResultsManager,
+    private val flag: Flag,
 ) : ViewModel() {
+
+    private val nonPeakTimeCooldownSeconds: Long by lazy {
+        flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key)
+            .asNumber(600)
+    }
+
+    private val peakTimeCooldownSeconds: Long by lazy {
+        flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_PEAK_TIME_COOLDOWN.key)
+            .asNumber(fallback = 120)
+    }
 
     /**
      * Will observe saved trips from the database.
@@ -451,12 +465,11 @@ class SavedTripsViewModel(
         return hour < 5 || hour >= 10
     }
 
-    // TODO - dictate these times from Firebase.
     private fun getApiCooldownDuration(): Duration {
         return if (isNotPeakTime()) {
-            10.minutes
+            nonPeakTimeCooldownSeconds.seconds
         } else {
-            2.minutes
+            peakTimeCooldownSeconds.seconds
         }
     }
 

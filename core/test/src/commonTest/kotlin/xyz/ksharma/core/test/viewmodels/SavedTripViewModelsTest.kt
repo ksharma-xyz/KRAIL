@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
+import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.core.test.fakes.FakeParkRideService
@@ -15,6 +16,7 @@ import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
@@ -44,6 +46,8 @@ class SavedTripsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val fakeFlag: Flag = FakeFlag()
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -55,6 +59,7 @@ class SavedTripsViewModelTest {
             parkRideService = fakeParkRideService,
             parkRideSandook = fakeNswParkRideSandook,
             stopResultsManager = fakeStopResultsManager,
+            flag = fakeFlag,
         )
     }
 

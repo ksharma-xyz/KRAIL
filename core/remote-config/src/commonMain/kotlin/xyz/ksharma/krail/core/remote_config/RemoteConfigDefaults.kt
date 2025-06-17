@@ -90,6 +90,8 @@ object RemoteConfigDefaults {
                     |{"stopId":"210017","parkRideFacilityId":"490","parkRideName":"Park&Ride - Brookvale"}]"""
                     .trimMargin()
             ),
+            Pair(FlagKeys.NSW_PARK_RIDE_PEAK_TIME_COOLDOWN.key, 120),
+            Pair(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key, 600),
         )
     }
 }

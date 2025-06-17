@@ -229,17 +229,19 @@ class SavedTripsViewModel(
         val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
 
         // 2. Build a map from stopId to a list of associated park & ride facilities
-        val facilityMap: Map<String, List<NswParkRideFacility>> = nswParkRideFacilityManager
+        val facilityDetailMap: Map<String, List<NswParkRideFacility>> = nswParkRideFacilityManager
             .getParkRideFacilities()
             .groupBy { it.stopId }
 
         // 3. For each unique stopId, create SavedParkRide objects with all required data
         val savedParkRideList: Set<SavedParkRide> = uniqueStopIds
             .flatMap { stopId ->
-                val stopName = stopResultsManager.fetchStopResults(stopId)
-                    .firstOrNull()?.stopName ?: stopId
+                // should ideally always have a stopName here and never fallback to stopID
+                // because, we are operating on data from Saved Trips so , it should be present in db
+                // unless some other issue with Db.
+                val stopName = stopResultsManager.fetchLocalStopName(stopId) ?: stopId
 
-                facilityMap[stopId]?.map { facility ->
+                facilityDetailMap[stopId]?.map { facility ->
                     SavedParkRide(
                         stopId = stopId,
                         facilityId = facility.parkRideFacilityId,

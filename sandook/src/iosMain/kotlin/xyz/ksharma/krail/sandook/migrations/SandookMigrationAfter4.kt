@@ -29,6 +29,8 @@ internal object SandookMigrationAfter4 : SandookMigration {
                 CREATE TABLE IF NOT EXISTS SavedParkRide (
                     stopId TEXT NOT NULL,
                     facilityId TEXT NOT NULL,
+                    stopName TEXT NOT NULL,
+                    facilityName TEXT NOT NULL,
                     source TEXT NOT NULL,
                     PRIMARY KEY (stopId, facilityId)
                 );

@@ -32,7 +32,9 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
+import xyz.ksharma.krail.core.remote_config.flag.asBoolean
 import xyz.ksharma.krail.core.remote_config.flag.asNumber
+import xyz.ksharma.krail.core.remote_config.flag.asString
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
@@ -72,6 +74,16 @@ class SavedTripsViewModel(
             .asNumber(fallback = 120)
     }
 
+    private val isParkRideInBeta: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_BETA.key)
+            .asBoolean()
+    }
+
+    private val parkRideBetaInfoDesc: String by lazy {
+        flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_BETA_MESSAGE_DESC.key)
+            .asString()
+    }
+
     /**
      * Will observe saved trips from the database.
      */
@@ -86,7 +98,7 @@ class SavedTripsViewModel(
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
-            log("")
+            updateParkRideBetaState()
             observeSavedTrips()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
@@ -472,6 +484,17 @@ class SavedTripsViewModel(
             nonPeakTimeCooldownSeconds.seconds
         } else {
             peakTimeCooldownSeconds.seconds
+        }
+    }
+
+    private fun updateParkRideBetaState() {
+        updateUiState {
+            copy(
+                isParkRideBeta = isParkRideInBeta,
+                parkRideBetaInfo = SavedTripsState.ParkRideBetaInfo(
+                    message = parkRideBetaInfoDesc,
+                )
+            )
         }
     }
 

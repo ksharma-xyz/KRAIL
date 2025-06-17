@@ -10,4 +10,8 @@ enum class FlagKeys(val key: String) {
     NSW_PARK_RIDE_PEAK_TIME_COOLDOWN("nsw_park_ride_peak_time_cooldown"),
 
     NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN("nsw_park_ride_non_peak_time_cooldown"),
+
+    NSW_PARK_RIDE_BETA("nsw_park_ride_beta"),
+
+    NSW_PARK_RIDE_BETA_MESSAGE_DESC("nsw_park_ride_beta_message_desc"),
 }

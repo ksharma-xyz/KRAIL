@@ -250,4 +250,29 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "our_story",
     )
     // endregion
+
+    // region Park and Ride
+
+    /**
+     * Analytics event for the Park and Ride card click.
+     * @param stopId The ID of the stop associated with the Park and Ride facility.
+     * @param facilityId The ID of the Park and Ride facility.
+     * @param expand Indicates whether the card is being expanded or collapsed.
+     * @param time - when the card was clicked, format - epoch time in seconds.
+     */
+    data class ParkRideCardClickEvent(
+        val stopId: String,
+        val facilityId: String,
+        val expand: Boolean,
+        val time: Long = Clock.System.now().epochSeconds,
+    ) : AnalyticsEvent(
+        name = "park_ride_card_click",
+        properties = mapOf(
+            "stopId" to stopId.trim(),
+            "facilityId" to facilityId.trim(),
+            "expand" to expand.toString().trim(),
+            "time" to time.toString().trim(),
+        ),
+    )
+    // endregion
 }

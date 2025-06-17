@@ -123,11 +123,18 @@ class SavedTripsViewModel(
         }
     }
 
-    // TODO - if card stays open, it won't refresh automatically. - okay for now.
     private fun onParkRideCardClick(
         parkRideState: ParkRideUiState,
         isExpanded: Boolean,
     ) {
+        analytics.track(
+            event = AnalyticsEvent.ParkRideCardClickEvent(
+                stopId = parkRideState.stopId,
+                expand = isExpanded,
+                facilityId = parkRideState.facilities.joinToString(),
+            )
+        )
+
         if (isExpanded) {
             updateUiState {
                 copy(

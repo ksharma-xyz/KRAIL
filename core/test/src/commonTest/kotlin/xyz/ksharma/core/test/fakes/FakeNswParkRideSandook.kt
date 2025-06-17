@@ -42,15 +42,27 @@ class FakeNswParkRideSandook : NswParkRideSandook {
         }
 
     override suspend fun insertOrReplaceSavedParkRides(
-        pairs: Set<Pair<String, String>>,
+        parkRideInfoList: Set<SavedParkRide>,
         source: NswParkRideSandook.Companion.SavedParkRideSource
     ) {
-        val newRides = pairs.map { (stopId, facilityId) ->
-            SavedParkRide(stopId, facilityId, source.value)
+        val newRides = parkRideInfoList.map { info ->
+            SavedParkRide(
+                stopId = info.stopId,
+                facilityId = info.facilityId,
+                stopName = info.stopName,
+                facilityName = info.facilityName,
+                source = source.value
+            )
         }
+
         val filtered = savedParkRides.value.filterNot { ride ->
-            newRides.any { it.stopId == ride.stopId && it.facilityId == ride.facilityId && it.source == ride.source }
+            newRides.any {
+                it.stopId == ride.stopId &&
+                        it.facilityId == ride.facilityId &&
+                        it.source == ride.source
+            }
         }
+
         savedParkRides.value = filtered + newRides
     }
 

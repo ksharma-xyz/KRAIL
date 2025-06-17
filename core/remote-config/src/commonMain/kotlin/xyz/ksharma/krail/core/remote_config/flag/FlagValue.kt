@@ -21,3 +21,10 @@ fun FlagValue.asString(): String {
         else -> ""
     }
 }
+
+fun FlagValue.asNumber(fallback: Long): Long {
+    return when (this) {
+        is FlagValue.NumberValue -> this.value
+        else -> fallback
+    }
+}

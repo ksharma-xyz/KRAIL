@@ -73,6 +73,15 @@ class RealStopResultsManager(
         )
     }
 
+    override fun fetchLocalStopName(stopId: String): String? {
+        val resultsDb = sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())
+        return resultsDb
+            .firstOrNull { it.stopId == stopId }
+            ?.toStopResult()
+            ?.stopName
+    }
+
+
     private fun filterProductClasses(
         stopResults: List<SearchStopState.StopResult>,
         excludedProductClasses: List<Int> = emptyList(),

@@ -50,4 +50,8 @@ class FakeStopResultsManager : StopResultsManager {
     override fun prioritiseStops(stopResults: List<SearchStopState.StopResult>): List<SearchStopState.StopResult> {
         return stopResults.sortedByDescending { it.transportModeType.size }
     }
+
+    override fun fetchLocalStopName(stopId: String): String? {
+        return testStopResults.firstOrNull { it.stopId == stopId }?.stopName
+    }
 }

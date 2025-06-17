@@ -79,3 +79,10 @@ SELECT * FROM SavedParkRide;
 -- Select all unique facilities for a given stop and source
 selectFacilitiesByStopIdAndSource:
 SELECT DISTINCT facilityId FROM SavedParkRide WHERE stopId = ? AND source = ?;
+
+-- Select all details for a given facilityId
+getSavedParkRideByFacilityId:
+SELECT *
+FROM SavedParkRide
+WHERE facilityId = ?
+LIMIT 1;

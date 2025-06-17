@@ -68,18 +68,14 @@ class SavedTripsViewModel(
      */
     private var observeParkRideFacilityFromDatabaseJob: Job? = null
 
-    /**
-     * Will fetch data from API every 60 seconds and update in DB.
-     */
-    private var pollParkRideFacilitiesJob: Job? = null
-
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             log("")
             observeSavedTrips()
-            observeFacilitySpotsAvailability()
+            observeFacilityDetailsFromDb()
+            refreshFacilityDetails()
         }
         .onCompletion {
             cleanupJobs()
@@ -120,24 +116,6 @@ class SavedTripsViewModel(
                 analytics.track(AnalyticsEvent.ToFieldClickEvent)
             }
 
-            is SavedTripUiEvent.ExpandParkRideFacilityClick -> {
-                log("Expand Park Ride : ${event.stopId}")
-                updateUiState {
-                    copy(
-                        observeParkRideStopIdSet = (observeParkRideStopIdSet + event.stopId).toImmutableSet(),
-                    )
-                }
-            }
-
-            is SavedTripUiEvent.CollapseParkRideForTripClick -> {
-                log("Collapse Park Ride : ${event.stopId}")
-                updateUiState {
-                    copy(
-                        observeParkRideStopIdSet = (observeParkRideStopIdSet - event.stopId).toImmutableSet(),
-                    )
-                }
-            }
-
             is SavedTripUiEvent.ParkRideCardClick -> onParkRideCardClick(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded
@@ -155,7 +133,7 @@ class SavedTripsViewModel(
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
-                        // Loading is dictated by totalspots being -1 because, when we do not have
+                        // Loading is dictated by totalSpots being -1 because, when we do not have
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
                             uiState.copy(isLoading = true)
@@ -175,7 +153,7 @@ class SavedTripsViewModel(
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
-                        // Loading is dictated by totalspots being -1 because, when we do not have
+                        // Loading is dictated by totalSpots being -1 because, when we do not have
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
                             uiState.copy(isLoading = true)
@@ -301,7 +279,7 @@ class SavedTripsViewModel(
      *
      * The resulting UI state always reflects the latest merged facility information for display.
      */
-    private fun observeFacilitySpotsAvailability() {
+    private fun observeFacilityDetailsFromDb() {
         log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
@@ -378,15 +356,21 @@ class SavedTripsViewModel(
 
                 if (apiResult != null) {
                     parkRideSandook.updateApiCallTimestamp(facilityId, now)
+
+                    // Get the stop name from the saved park ride mapping for this facility
+                    val stopName =
+                        parkRideSandook.getSavedParkRideByFacilityId(facilityId)?.stopName
+                            ?: stopId // Fall back to stopId if mapping is somehow missing
+
                     val detail = apiResult.toNSWParkRideFacilityDetail(
-                        // TODO - handle edge case, where tsn is not present in stop results.
-                        stopName = stopResultsManager.fetchStopResults(apiResult.tsn)
-                            .firstOrNull()?.stopName ?: apiResult.tsn
+                        stopName = stopName,
                     )
+
                     parkRideSandook.insertOrReplaceAll(listOf(detail))
                     log("Fetched and saved facility $facilityId for stop $stopId")
                 } else {
-                    //  reset timestamp to DISTANT_PAST
+                    // reset timestamp to DISTANT_PAST as API call failed, so we can retry
+                    // earlier than cooldown would end.
                     parkRideSandook.updateApiCallTimestamp(
                         facilityId = facilityId,
                         timestamp = Instant.DISTANT_PAST.epochSeconds,
@@ -410,6 +394,43 @@ class SavedTripsViewModel(
             .toSet()
 
         return facilityIdList
+    }
+
+    /**
+     * Refreshes Park & Ride facility data for all currently expanded stops.
+     *
+     * Business Logic:
+     * 1. Ensures fresh data is displayed for stops that users are actively viewing (expanded cards)
+     * 2. Provides automatic background updates without requiring user interaction
+     * 3. Handles several important scenarios:
+     *    - When a card is already expanded and the API cooldown period has elapsed
+     *    - When previous API calls failed and need to be retried
+     *    - When users navigate between different screens and return to expanded cards
+     *
+     * This method complements the on-demand updates triggered by card expansion, creating
+     * a dual refresh strategy:
+     * - Immediate refresh on user interaction (card expansion)
+     * - Background refresh for already-expanded cards
+     *
+     * API calls are managed with cooldown periods to prevent excessive network requests,
+     * with shorter cooldowns during peak hours and longer ones during off-peak times.
+     */
+    private suspend fun refreshFacilityDetails() {
+        // Retrieve the set of stop IDs with currently expanded UI cards
+        val expandedStopIds = _uiState.value.observeParkRideStopIdSet
+        log("Refreshing Park Ride facilities for expanded stops: $expandedStopIds")
+
+        // Early return if no stops are currently expanded
+        if (expandedStopIds.isEmpty()) {
+            log("No expanded Park Ride stops to refresh.")
+            return
+        }
+
+        // For each expanded stop, fetch and update its facility data if needed
+        // (respecting cooldown periods and handling API failures)
+        expandedStopIds.forEach { stopId ->
+            fetchAndSaveParkRideFacilityIfNeeded(stopId = stopId)
+        }
     }
 
     /**
@@ -443,12 +464,10 @@ class SavedTripsViewModel(
 
     @VisibleForTesting
     fun cleanupJobs() {
-        pollParkRideFacilitiesJob?.cancel()
-        pollParkRideFacilitiesJob = null
+        observeSavedTripsJob?.cancel()
+        observeSavedTripsJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob = null
-        pollParkRideFacilitiesJob?.cancel()
-        pollParkRideFacilitiesJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

@@ -53,6 +53,7 @@ interface NswParkRideSandook {
 
     suspend fun getLastApiCallTimestamp(facilityId: String): Long?
     suspend fun updateApiCallTimestamp(facilityId: String, timestamp: Long)
+    fun getSavedParkRideByFacilityId(facilityId: String): SavedParkRide?
 }
 
 internal class RealNswParkRideSandook(
@@ -155,6 +156,11 @@ internal class RealNswParkRideSandook(
 
     override suspend fun clearAllSavedParkRidesBySource(source: NswParkRideSandook.Companion.SavedParkRideSource) {
         parkRideQueries.clearSavedParkRidesBySource(source.value)
+    }
+
+    // Add to NswParkRideSandook
+    override fun getSavedParkRideByFacilityId(facilityId: String): SavedParkRide? {
+        return parkRideQueries.getSavedParkRideByFacilityId(facilityId).executeAsOneOrNull()
     }
 
     // endregion

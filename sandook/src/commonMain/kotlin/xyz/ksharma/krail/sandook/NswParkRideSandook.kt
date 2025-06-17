@@ -31,8 +31,8 @@ interface NswParkRideSandook {
      * If a pair already exists, it will be replaced with the new value.
      */
     suspend fun insertOrReplaceSavedParkRides(
-        pairs: Set<Pair<String, String>>,
-        source: SavedParkRideSource = SavedParkRideSource.SavedTrips
+        parkRideInfoList: Set<SavedParkRide>,
+        source: SavedParkRideSource
     )
 
     /**
@@ -133,12 +133,18 @@ internal class RealNswParkRideSandook(
             .mapToList(ioDispatcher)
 
     override suspend fun insertOrReplaceSavedParkRides(
-        pairs: Set<Pair<String, String>>,
+        parkRideInfoList: Set<SavedParkRide>,
         source: NswParkRideSandook.Companion.SavedParkRideSource
     ) {
         parkRideQueries.transaction {
-            pairs.forEach { (stopId, facilityId) ->
-                parkRideQueries.insertOrReplaceSavedParkRide(stopId, facilityId, source.value)
+            parkRideInfoList.forEach { info ->
+                parkRideQueries.insertOrReplaceSavedParkRide(
+                    stopId = info.stopId,
+                    facilityId = info.facilityId,
+                    stopName = info.stopName,
+                    facilityName = info.facilityName,
+                    source = source.value
+                )
             }
         }
     }

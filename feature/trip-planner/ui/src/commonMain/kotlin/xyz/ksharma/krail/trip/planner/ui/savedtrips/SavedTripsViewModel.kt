@@ -38,6 +38,7 @@ import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
@@ -228,26 +229,39 @@ class SavedTripsViewModel(
         // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
         val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
 
-        // 2. Build a map from stopId to a list of associated park & ride facility IDs
-        val facilityMap: Map<String, List<String>> = nswParkRideFacilityManager
+        // 2. Build a map from stopId to a list of associated park & ride facilities
+        val facilityMap: Map<String, List<NswParkRideFacility>> = nswParkRideFacilityManager
             .getParkRideFacilities()
             .groupBy { it.stopId }
-            .mapValues { entry -> entry.value.map { it.parkRideFacilityId } }
 
-        // 3. For each unique stopId, pair it with all its facility IDs (if any), and collect as
-        // a set of (stopId, facilityId) pairs
-        val stopFacilityPairs: Set<Pair<String, String>> = uniqueStopIds
+        // 3. For each unique stopId, create SavedParkRide objects with all required data
+        val savedParkRideList: Set<SavedParkRide> = uniqueStopIds
             .flatMap { stopId ->
-                facilityMap[stopId]?.map { facilityId -> stopId to facilityId }
-                    ?: emptyList()
+                val stopName = stopResultsManager.fetchStopResults(stopId)
+                    .firstOrNull()?.stopName ?: stopId
+
+                facilityMap[stopId]?.map { facility ->
+                    SavedParkRide(
+                        stopId = stopId,
+                        facilityId = facility.parkRideFacilityId,
+                        stopName = stopName,
+                        facilityName = facility.parkRideName,
+                        source = SavedTrips.value,
+                    )
+                } ?: emptyList()
             }
             .toSet()
 
-        log("StopId -> FacilityId Mapping for StopIds in SavedTrips: \n $stopFacilityPairs")
-        // clear all existing saved park rides linked to saved trips for accuracy.
+        log("StopId -> FacilityId Mapping for StopIds in SavedTrips: \n $savedParkRideList")
+
+        // Clear all existing saved park rides linked to saved trips for accuracy
         parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
-        if (stopFacilityPairs.isNotEmpty()) {
-            parkRideSandook.insertOrReplaceSavedParkRides(pairs = stopFacilityPairs)
+
+        if (savedParkRideList.isNotEmpty()) {
+            parkRideSandook.insertOrReplaceSavedParkRides(
+                parkRideInfoList = savedParkRideList,
+                source = SavedTrips
+            )
         }
     }
 

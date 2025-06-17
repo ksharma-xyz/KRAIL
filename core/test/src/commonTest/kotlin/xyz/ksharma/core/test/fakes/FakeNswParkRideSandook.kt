@@ -80,6 +80,10 @@ class FakeNswParkRideSandook : NswParkRideSandook {
         }
     }
 
+    override fun getSavedParkRideByFacilityId(facilityId: String): SavedParkRide? {
+        return savedParkRides.value.firstOrNull { it.facilityId == facilityId }
+    }
+
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
         savedParkRides.value = savedParkRides.value.filterNot {
             it.stopId == stopId && it.facilityId == facilityId

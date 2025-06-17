@@ -103,7 +103,6 @@ fun SavedTripsScreen(
                         )
                     }
                 } else {
-
                     stickyHeader(key = "saved_trips_title") {
                         Box(
                             modifier = Modifier.fillMaxWidth()

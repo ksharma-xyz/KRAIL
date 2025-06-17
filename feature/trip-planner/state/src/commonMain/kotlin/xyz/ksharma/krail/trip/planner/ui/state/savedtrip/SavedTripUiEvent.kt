@@ -20,10 +20,6 @@ sealed interface SavedTripUiEvent {
 
     data object AnalyticsToButtonClick : SavedTripUiEvent
 
-    data class ExpandParkRideFacilityClick(val stopId: String) : SavedTripUiEvent
-
-    data class CollapseParkRideForTripClick(val stopId: String) : SavedTripUiEvent
-
     data class ParkRideCardClick(
         val parkRideState: ParkRideUiState, val isExpanded: Boolean
     ) : SavedTripUiEvent

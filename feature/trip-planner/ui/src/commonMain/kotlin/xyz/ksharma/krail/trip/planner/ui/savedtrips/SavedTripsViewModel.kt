@@ -68,11 +68,6 @@ class SavedTripsViewModel(
      */
     private var observeParkRideFacilityFromDatabaseJob: Job? = null
 
-    /**
-     * Will fetch data from API every 60 seconds and update in DB.
-     */
-    private var pollParkRideFacilitiesJob: Job? = null
-
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
@@ -80,6 +75,7 @@ class SavedTripsViewModel(
             log("")
             observeSavedTrips()
             observeFacilityDetailsFromDb()
+            refreshFacilityDetails()
         }
         .onCompletion {
             cleanupJobs()
@@ -120,24 +116,6 @@ class SavedTripsViewModel(
                 analytics.track(AnalyticsEvent.ToFieldClickEvent)
             }
 
-            is SavedTripUiEvent.ExpandParkRideFacilityClick -> {
-                log("Expand Park Ride : ${event.stopId}")
-                updateUiState {
-                    copy(
-                        observeParkRideStopIdSet = (observeParkRideStopIdSet + event.stopId).toImmutableSet(),
-                    )
-                }
-            }
-
-            is SavedTripUiEvent.CollapseParkRideForTripClick -> {
-                log("Collapse Park Ride : ${event.stopId}")
-                updateUiState {
-                    copy(
-                        observeParkRideStopIdSet = (observeParkRideStopIdSet - event.stopId).toImmutableSet(),
-                    )
-                }
-            }
-
             is SavedTripUiEvent.ParkRideCardClick -> onParkRideCardClick(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded
@@ -155,7 +133,7 @@ class SavedTripsViewModel(
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
-                        // Loading is dictated by totalspots being -1 because, when we do not have
+                        // Loading is dictated by totalSpots being -1 because, when we do not have
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
                             uiState.copy(isLoading = true)
@@ -175,7 +153,7 @@ class SavedTripsViewModel(
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
-                        // Loading is dictated by totalspots being -1 because, when we do not have
+                        // Loading is dictated by totalSpots being -1 because, when we do not have
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
                             uiState.copy(isLoading = true)
@@ -419,6 +397,43 @@ class SavedTripsViewModel(
     }
 
     /**
+     * Refreshes Park & Ride facility data for all currently expanded stops.
+     *
+     * Business Logic:
+     * 1. Ensures fresh data is displayed for stops that users are actively viewing (expanded cards)
+     * 2. Provides automatic background updates without requiring user interaction
+     * 3. Handles several important scenarios:
+     *    - When a card is already expanded and the API cooldown period has elapsed
+     *    - When previous API calls failed and need to be retried
+     *    - When users navigate between different screens and return to expanded cards
+     *
+     * This method complements the on-demand updates triggered by card expansion, creating
+     * a dual refresh strategy:
+     * - Immediate refresh on user interaction (card expansion)
+     * - Background refresh for already-expanded cards
+     *
+     * API calls are managed with cooldown periods to prevent excessive network requests,
+     * with shorter cooldowns during peak hours and longer ones during off-peak times.
+     */
+    private suspend fun refreshFacilityDetails() {
+        // Retrieve the set of stop IDs with currently expanded UI cards
+        val expandedStopIds = _uiState.value.observeParkRideStopIdSet
+        log("Refreshing Park Ride facilities for expanded stops: $expandedStopIds")
+
+        // Early return if no stops are currently expanded
+        if (expandedStopIds.isEmpty()) {
+            log("No expanded Park Ride stops to refresh.")
+            return
+        }
+
+        // For each expanded stop, fetch and update its facility data if needed
+        // (respecting cooldown periods and handling API failures)
+        expandedStopIds.forEach { stopId ->
+            fetchAndSaveParkRideFacilityIfNeeded(stopId = stopId)
+        }
+    }
+
+    /**
      * Checks if the current time is not peak time.
      * Peak time is defined as 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am.
      */
@@ -449,8 +464,6 @@ class SavedTripsViewModel(
 
     @VisibleForTesting
     fun cleanupJobs() {
-        pollParkRideFacilitiesJob?.cancel()
-        pollParkRideFacilitiesJob = null
         observeSavedTripsJob?.cancel()
         observeSavedTripsJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()

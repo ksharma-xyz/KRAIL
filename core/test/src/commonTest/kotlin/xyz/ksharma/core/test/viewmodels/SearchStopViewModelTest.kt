@@ -109,8 +109,6 @@ class SearchStopViewModelTest {
 
             // Set the flag to throw an error in FakeStopResultsManager
             fakeStopResultsManager.shouldThrowError = true
-
-            // This line is not affecting the FakeStopResultsManager
             tripPlanningService.isSuccess = false
 
             viewModel.uiState.test {

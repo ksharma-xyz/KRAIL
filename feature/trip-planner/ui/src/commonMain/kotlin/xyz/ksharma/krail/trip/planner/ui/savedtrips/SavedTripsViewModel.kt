@@ -79,7 +79,7 @@ class SavedTripsViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             log("")
             observeSavedTrips()
-            observeFacilitySpotsAvailability()
+            observeFacilityDetailsFromDb()
         }
         .onCompletion {
             cleanupJobs()
@@ -301,7 +301,7 @@ class SavedTripsViewModel(
      *
      * The resulting UI state always reflects the latest merged facility information for display.
      */
-    private fun observeFacilitySpotsAvailability() {
+    private fun observeFacilityDetailsFromDb() {
         log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
@@ -378,15 +378,21 @@ class SavedTripsViewModel(
 
                 if (apiResult != null) {
                     parkRideSandook.updateApiCallTimestamp(facilityId, now)
+
+                    // Get the stop name from the saved park ride mapping for this facility
+                    val stopName =
+                        parkRideSandook.getSavedParkRideByFacilityId(facilityId)?.stopName
+                            ?: stopId // Fall back to stopId if mapping is somehow missing
+
                     val detail = apiResult.toNSWParkRideFacilityDetail(
-                        // TODO - handle edge case, where tsn is not present in stop results.
-                        stopName = stopResultsManager.fetchStopResults(apiResult.tsn)
-                            .firstOrNull()?.stopName ?: apiResult.tsn
+                        stopName = stopName,
                     )
+
                     parkRideSandook.insertOrReplaceAll(listOf(detail))
                     log("Fetched and saved facility $facilityId for stop $stopId")
                 } else {
-                    //  reset timestamp to DISTANT_PAST
+                    // reset timestamp to DISTANT_PAST as API call failed, so we can retry
+                    // earlier than cooldown would end.
                     parkRideSandook.updateApiCallTimestamp(
                         facilityId = facilityId,
                         timestamp = Instant.DISTANT_PAST.epochSeconds,
@@ -445,10 +451,10 @@ class SavedTripsViewModel(
     fun cleanupJobs() {
         pollParkRideFacilitiesJob?.cancel()
         pollParkRideFacilitiesJob = null
+        observeSavedTripsJob?.cancel()
+        observeSavedTripsJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob = null
-        pollParkRideFacilitiesJob?.cancel()
-        pollParkRideFacilitiesJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

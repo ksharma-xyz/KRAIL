@@ -17,7 +17,7 @@ class FakeNswParkRideSandook : NswParkRideSandook {
     override fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>> = data.asStateFlow()
 
     override fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail> =
-        data.value.filter { it.stopId in stopIds }
+        data.value.filter { it.carParkTsnId in stopIds }
 
     override suspend fun insertOrReplace(parkRide: NSWParkRideFacilityDetail) {
         data.value = data.value.filterNot { it.facilityId == parkRide.facilityId } + parkRide

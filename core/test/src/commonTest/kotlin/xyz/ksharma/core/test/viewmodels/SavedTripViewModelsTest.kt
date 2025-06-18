@@ -117,7 +117,7 @@ class SavedTripsViewModelTest {
 
             // Observe state
             viewModel.uiState.test {
-                skipItems(1)
+                skipItems(2)
 
                 val item = awaitItem()
 
@@ -150,7 +150,7 @@ class SavedTripsViewModelTest {
 
             // Ensure initial state
             viewModel.uiState.test {
-                skipItems(1)
+                skipItems(3)
 
                 // WHEN the DeleteSavedTrip event is triggered
                 viewModel.onEvent(

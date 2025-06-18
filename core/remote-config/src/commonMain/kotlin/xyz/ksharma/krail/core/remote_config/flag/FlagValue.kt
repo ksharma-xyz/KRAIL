@@ -7,11 +7,11 @@ sealed class FlagValue {
     data class NumberValue(val value: Long) : FlagValue()
 }
 
-fun FlagValue.asBoolean(): Boolean {
+fun FlagValue.asBoolean(fallback: Boolean = false): Boolean {
     return when (this) {
         is FlagValue.BooleanValue -> this.value
         is FlagValue.StringValue -> this.value.toBoolean()
-        else -> false
+        else -> fallback
     }
 }
 

@@ -11,19 +11,15 @@ object ReferFriendManager {
         return referTextOptions[randomIndex]
     }
 
-    private const val SUFFIX = "Download KRAIL here \uD83D\uDC47 \n" +
+    private const val SUFFIX = "\n\nDownload KRAIL here \uD83D\uDC47 \n" +
         "Apple - $KRAIL_APP_STORE\n" +
         "Android - $KRAIL_GOOGLE_PLAY\n\n" +
         "KRAIL - Ride the rail without fail"
 
     // TODO - fetch these from Firebase.
     private val referTextOptions: List<String> = listOf(
-        "Hey mate,\n" +
-            "Sydney’s best public transport app is here. Like TripView but ad-free\n\n" +
-            SUFFIX,
-
         "Not all heroes wear capes.\n" +
-            "Some just show you when your bus is actually coming.\n\n" +
+            "Some just show you when your bus is actually coming." +
             SUFFIX,
 
         "With great power, comes great public transport.\n" +
@@ -35,11 +31,11 @@ object ReferFriendManager {
             SUFFIX,
 
         "I’m not the transport app Sydney deserves. \n" +
-            "I’m the one it needs - KRAIL App. \uD83D\uDE87" +
+            "I’m the one it needs. \uD83D\uDE87" +
             SUFFIX,
 
-        "\uD83D\uDCA3 Your mission, should you choose to accept it is to \n" +
-            "Invite two mates to KRAIL App and upgrade their Sydney experience.\n" +
+        "\uD83D\uDCA3 Your mission, should you choose to accept it is to " +
+            "invite two mates to KRAIL App and upgrade their Sydney experience.\n\n" +
             "⏱\uFE0F This message will self-destruct in 2 minutes." +
             SUFFIX,
 

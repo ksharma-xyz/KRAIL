@@ -92,6 +92,12 @@ object RemoteConfigDefaults {
             ),
             Pair(FlagKeys.NSW_PARK_RIDE_PEAK_TIME_COOLDOWN.key, 120),
             Pair(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key, 600),
+            Pair(first = FlagKeys.NSW_PARK_RIDE_BETA.key, false),
+            Pair(
+                first = FlagKeys.NSW_PARK_RIDE_BETA_MESSAGE_DESC.key,
+                second = "🅿️\uD83D\uDE99 Park & Ride is in beta! We’ve just rolled it out and we’d love your help making it better. " +
+                        "If something’s not quite right (or you just have thoughts), email us anytime at hey@krail.app or reach out via LinkedIn. 💕",
+            ),
         )
     }
 }

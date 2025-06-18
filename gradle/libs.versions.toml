@@ -29,7 +29,7 @@ koin = "4.0.4"
 firebaseGitLive = "2.1.0"
 uiGeometryAndroid = "1.8.1"
 foundationLayoutAndroid = "1.8.1"
-ui-tooling = "1.7.6"
+ui-tooling = "1.8.3"
 detekt = "1.23.8"
 detektCompose = "0.4.22"
 

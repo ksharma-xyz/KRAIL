@@ -4,7 +4,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
@@ -21,10 +20,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRid
  * Occupied spots are determined by summing the `transients` field from each zone's occupancy.
  * If `transients` is `null` or missing, it is treated as 0.
  *
+ * @param stopId - needs to be passed because tsn provided by cark park is sometimes not from the
+ * latest gtfs updates=d data.
+ * @param stopName - similarly, stopName can also not be relied upon form the car park api, therefore,
+ * using stop name provided separately using saved trips data.
+ *
  * @return [NSWParkRideFacilityDetail] containing facility details for database storage
  **/
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String): NSWParkRideFacilityDetail {
+fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String, stopId: String): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0
     val occupiedSpots = zones.sumOf {
         it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
@@ -45,7 +49,7 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String):
         totalSpots = totalSpots.toLong(),
         facilityName = facilityName.toDisplayFacilityName(),
         percentageFull = percentageFull.toLong(),
-        stopId = tsn,
+        stopId = stopId,
         timeText = timeText,
         suburb = location.suburb ?: "",
         address = location.address ?: "",

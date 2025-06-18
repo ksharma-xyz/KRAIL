@@ -162,6 +162,7 @@ class SavedTripsViewModel(
         )
 
         if (isExpanded) {
+            log("Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}")
             updateUiState {
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
@@ -179,9 +180,12 @@ class SavedTripsViewModel(
                 )
             }
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                log("Fetching Park Ride facility for stopId: ${parkRideState.stopId}")
                 fetchAndSaveParkRideFacilityIfNeeded(stopId = parkRideState.stopId)
             }
+            log("Park Ride card expanded done")
         } else {
+            log("Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}")
             updateUiState {
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
@@ -239,11 +243,13 @@ class SavedTripsViewModel(
     suspend fun updateParkRideStopIdsInDb(savedTrips: List<SavedTrip>) {
         // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
         val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
+        log("Unique Stop IDs from Saved Trips: $uniqueStopIds")
 
         // 2. Build a map from stopId to a list of associated park & ride facilities
         val facilityDetailMap: Map<String, List<NswParkRideFacility>> = nswParkRideFacilityManager
             .getParkRideFacilities()
             .groupBy { it.stopId }
+        log("Facility Detail Map: $facilityDetailMap")
 
         // 3. For each unique stopId, create SavedParkRide objects with all required data
         val savedParkRideList: Set<SavedParkRide> = uniqueStopIds
@@ -265,7 +271,11 @@ class SavedTripsViewModel(
             }
             .toSet()
 
-        log("StopId -> FacilityId Mapping for StopIds in SavedTrips: \n $savedParkRideList")
+        savedParkRideList.map {
+            it.stopId to it.facilityId + " (${it.stopName})"
+        }.let{
+            log("StopId -> FacilityId Mapping: \n${it.joinToString("\n")}")
+        }
 
         // Clear all existing saved park rides linked to saved trips for accuracy
         parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
@@ -377,6 +387,10 @@ class SavedTripsViewModel(
 
     suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
         val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
+        if (facilityIds.isEmpty()) {
+            logError("No Park Ride facilities found for stopId: $stopId")
+            return
+        }
         val cooldown = getApiCooldownDuration()
         val now = System.now().epochSeconds
 
@@ -399,6 +413,7 @@ class SavedTripsViewModel(
 
                     val detail = apiResult.toNSWParkRideFacilityDetail(
                         stopName = stopName,
+                        stopId = stopId,
                     )
 
                     parkRideSandook.insertOrReplaceAll(listOf(detail))
@@ -464,6 +479,7 @@ class SavedTripsViewModel(
         // For each expanded stop, fetch and update its facility data if needed
         // (respecting cooldown periods and handling API failures)
         expandedStopIds.forEach { stopId ->
+            log("Checking Park Ride facility for stopId: $stopId")
             fetchAndSaveParkRideFacilityIfNeeded(stopId = stopId)
         }
     }

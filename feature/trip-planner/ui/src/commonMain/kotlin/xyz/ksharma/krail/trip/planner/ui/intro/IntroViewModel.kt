@@ -13,7 +13,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.InteractionPage
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
-import xyz.ksharma.krail.platform.ops.ContentSharing
+import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -21,7 +21,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 
 class IntroViewModel(
     private val analytics: Analytics,
-    private val share: ContentSharing,
+    private val platformOps: PlatformOps,
     private val preferences: SandookPreferences,
 ) : ViewModel() {
 
@@ -37,7 +37,7 @@ class IntroViewModel(
     fun onEvent(event: IntroUiEvent) {
         when (event) {
             is IntroUiEvent.ReferFriend -> {
-                share.sharePlainText(getReferText())
+                platformOps.sharePlainText(getReferText())
                 analytics.track(
                     AnalyticsEvent.ReferFriend(
                         entryPoint = event.analyticsEntryPoint,

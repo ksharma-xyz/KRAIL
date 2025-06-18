@@ -1,9 +1,9 @@
 package xyz.ksharma.krail.platform.ops.di
 
 import org.koin.dsl.module
-import xyz.ksharma.krail.platform.ops.AndroidContentSharing
-import xyz.ksharma.krail.platform.ops.ContentSharing
+import xyz.ksharma.krail.platform.ops.AndroidPlatformOps
+import xyz.ksharma.krail.platform.ops.PlatformOps
 
 actual val opsModule = module {
-    single<ContentSharing> { AndroidContentSharing(context = get()) }
+    single<PlatformOps> { AndroidPlatformOps(context = get()) }
 }

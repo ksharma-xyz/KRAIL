@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
+import krail.feature.trip_planner.ui.generated.resources.ic_linkedin
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import org.jetbrains.compose.resources.painterResource
@@ -50,6 +51,7 @@ fun SettingsScreen(
     onReferFriendClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
+    onLinkedInLogoClick: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -70,7 +72,7 @@ fun SettingsScreen(
 
             LazyColumn(
                 modifier = Modifier,
-                contentPadding = PaddingValues(top = 20.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(bottom = 104.dp),
             ) {
                 item {
                     SettingsItem(
@@ -121,6 +123,37 @@ fun SettingsScreen(
                 }
 
                 item {
+                    SettingsItem(
+                        icon = painterResource(Res.drawable.ic_pen),
+                        text = "Stay connected",
+                        detailContent = {
+                            Row(
+                                modifier = Modifier
+                                    .padding(start = (24 + 16 + 16).dp, end = 16.dp, top = 8.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .klickable(
+                                            indication = null,
+                                            onClick = {
+                                               onLinkedInLogoClick()
+                                            },
+                                        )
+                                        .semantics(mergeDescendants = true) {}
+                                ) {
+                                    Image(
+                                        painter = painterResource(Res.drawable.ic_linkedin),
+                                        contentDescription = "LinkedIn Page for KRAIL App",
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
+                            }
+                        },
+                    )
+                }
+
+                item {
                     Spacer(modifier = Modifier.fillMaxWidth().height(108.dp))
                 }
             }
@@ -150,31 +183,40 @@ private fun SettingsItem(
     text: String,
     modifier: Modifier = Modifier,
     showDivider: Boolean = true,
+    detailContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val themeColor by LocalThemeColor.current
+    Column {
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .klickable(enabled = onClick != null, onClick = onClick ?: {})
+                .padding(horizontal = 16.dp)
+                .semantics(mergeDescendants = true) {},
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                contentDescription = null,
+                painter = icon,
+                colorFilter = ColorFilter.tint(color = themeColor.hexToComposeColor()),
+                modifier = Modifier.size(24.dp),
+            )
+            Text(
+                text = text,
+                style = KrailTheme.typography.bodyLarge,
+            )
+        }
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .klickable(enabled = onClick != null, onClick = onClick ?: {})
-            .padding(horizontal = 16.dp, vertical = 24.dp)
-            .semantics(mergeDescendants = true) {},
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            contentDescription = null,
-            painter = icon,
-            colorFilter = ColorFilter.tint(color = themeColor.hexToComposeColor()),
-            modifier = Modifier.size(24.dp),
-        )
-        Text(
-            text = text,
-            style = KrailTheme.typography.bodyLarge,
-        )
-    }
-    if (showDivider) {
-        Divider(modifier = Modifier.padding(horizontal = 16.dp))
+        if (detailContent != null) {
+            detailContent.invoke()
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+        if (showDivider) {
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+        }
     }
 }

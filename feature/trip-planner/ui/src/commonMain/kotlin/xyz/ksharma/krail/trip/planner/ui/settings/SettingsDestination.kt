@@ -13,6 +13,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
+import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 
 internal fun NavGraphBuilder.settingsDestination(navController: NavHostController) {
     composable<SettingsRoute> {
@@ -52,6 +53,9 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
                     )
                 }
             },
+            onLinkedInLogoClick = {
+                viewModel.onEvent(SettingsEvent.LinkedInLogoClick)
+            }
         )
     }
 }

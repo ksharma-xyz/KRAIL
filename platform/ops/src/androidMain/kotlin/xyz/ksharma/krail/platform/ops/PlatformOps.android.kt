@@ -2,17 +2,29 @@ package xyz.ksharma.krail.platform.ops
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.net.toUri
 import xyz.ksharma.krail.core.log.log
 
-class AndroidContentSharing(private val context: Context) : ContentSharing {
+class AndroidPlatformOps(private val context: Context) : PlatformOps {
 
     override fun sharePlainText(text: String) {
         handleShareClick(context = context, text = text, mimeType = "text/plain")
     }
+
+    override fun openUrl(url: String) {
+        log("openUrl: $url")
+        if (url.isBlank()) return
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = url.toUri()
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
 }
 
 // https://developer.android.com/training/sharing/send#why-to-use-system-sharesheet
-fun handleShareClick(context: Context, text: String, mimeType: String) {
+private fun handleShareClick(context: Context, text: String, mimeType: String) {
     log("handleShareClick: $text")
 
     // Create and start the share intent

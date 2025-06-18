@@ -28,7 +28,8 @@ val viewModelsModule = module {
         SettingsViewModel(
             appInfoProvider = get(),
             analytics = get(),
-            share = get(),
+            platformOps = get(),
+            flag = get(),
         )
     }
 

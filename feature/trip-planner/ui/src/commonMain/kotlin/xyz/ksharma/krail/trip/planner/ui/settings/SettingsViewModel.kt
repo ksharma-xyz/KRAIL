@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.stateIn
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialPlatform.LINKEDIN
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.remote_config.flag.Flag
@@ -42,6 +43,9 @@ class SettingsViewModel(
         when (event) {
             SettingsEvent.LinkedInLogoClick -> {
                 platformOps.openUrl(linkedInProfileLink)
+                analytics.track(
+                    event = AnalyticsEvent.SocialConnectionLinkClickEvent(socialPlatform = LINKEDIN)
+                )
             }
         }
     }

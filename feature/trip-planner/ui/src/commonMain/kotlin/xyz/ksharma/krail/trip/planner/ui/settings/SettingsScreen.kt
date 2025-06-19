@@ -127,7 +127,7 @@ fun SettingsScreen(
                         detailContent = {
                             Row(
                                 modifier = Modifier
-                                    .padding(start = (24 + 16 + 4).dp, end = 16.dp,),
+                                    .padding(start = (24 + 16 + 4).dp, end = 16.dp),
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -186,13 +186,15 @@ private fun SettingsItem(
     onClick: (() -> Unit)? = null,
 ) {
     val themeColor by LocalThemeColor.current
-    Column {
+    Column(
+        modifier = modifier.fillMaxWidth()
+            .klickable(enabled = onClick != null, onClick = onClick ?: {})
+            .semantics(mergeDescendants = true) {},
+    ) {
         Spacer(modifier = Modifier.height(24.dp))
         Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .klickable(enabled = onClick != null, onClick = onClick ?: {})
-                .padding(horizontal = 16.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp,)
                 .semantics(mergeDescendants = true) {},
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,

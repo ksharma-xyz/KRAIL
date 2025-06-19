@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
@@ -32,6 +31,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_linkedin
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
+import krail.feature.trip_planner.ui.generated.resources.ic_wifi
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
@@ -97,9 +97,7 @@ fun SettingsScreen(
                 item {
                     Text(
                         text = "About",
-                        style = KrailTheme.typography.title.copy(
-                            fontWeight = FontWeight.Normal,
-                        ),
+                        style = KrailTheme.typography.title,
                         modifier = Modifier
                             .padding(top = 24.dp, bottom = 16.dp)
                             .padding(horizontal = 26.dp),
@@ -124,7 +122,7 @@ fun SettingsScreen(
 
                 item {
                     SettingsItem(
-                        icon = painterResource(Res.drawable.ic_pen),
+                        icon = painterResource(Res.drawable.ic_wifi),
                         text = "Stay connected",
                         detailContent = {
                             Row(

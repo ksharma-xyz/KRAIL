@@ -249,6 +249,20 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data object OurStoryClick : AnalyticsEvent(
         name = "our_story",
     )
+
+    data class SocialConnectionLinkClickEvent(
+        val socialPlatform: SocialPlatform,
+    ) : AnalyticsEvent(
+        name = "social_connection_link_click",
+        properties = mapOf(
+            "socialPlatform" to socialPlatform.platform,
+        ),
+    ) {
+        enum class SocialPlatform(val platform: String) {
+            LINKEDIN("linkedin"),
+        }
+    }
+
     // endregion
 
     // region Park and Ride

@@ -10,6 +10,7 @@ import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 import platform.UIKit.popoverPresentationController
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 
 class IosPlatformOps : PlatformOps {
     override fun sharePlainText(text: String) {
@@ -17,11 +18,21 @@ class IosPlatformOps : PlatformOps {
     }
 
     override fun openUrl(url: String) {
-        if (url.isBlank()) return
+        if (url.isBlank()) {
+            logError("Cannot open URL: URL is blank")
+            return
+        }
 
         val nsUrl = NSURL.URLWithString(url)
         if (nsUrl != null) {
-            UIApplication.sharedApplication.openURL(nsUrl)
+            // openUrl() is deprecated so using other overload
+            // https://developer.apple.com/documentation/uikit/uiapplication/openurl(_:)
+            UIApplication.sharedApplication.openURL(
+                nsUrl,
+                options = mapOf<Any?, Any?>(),
+                completionHandler = { result: Boolean ->
+                    log("Attempted to open URL: $url, result: $result")
+                })
         }
     }
 

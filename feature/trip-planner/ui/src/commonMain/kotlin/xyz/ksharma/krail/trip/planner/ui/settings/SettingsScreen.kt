@@ -127,18 +127,19 @@ fun SettingsScreen(
                         detailContent = {
                             Row(
                                 modifier = Modifier
-                                    .padding(start = (24 + 16 + 16).dp, end = 16.dp, top = 8.dp),
+                                    .padding(start = (24 + 16 + 4).dp, end = 16.dp,),
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(32.dp)
+                                        .size(44.dp)
                                         .klickable(
                                             indication = null,
                                             onClick = {
-                                               onLinkedInLogoClick()
+                                                onLinkedInLogoClick()
                                             },
                                         )
-                                        .semantics(mergeDescendants = true) {}
+                                        .semantics(mergeDescendants = true) {},
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Image(
                                         painter = painterResource(Res.drawable.ic_linkedin),

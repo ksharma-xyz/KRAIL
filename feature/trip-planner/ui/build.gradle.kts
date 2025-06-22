@@ -34,6 +34,7 @@ kotlin {
                 implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.tripPlanner.network)
                 implementation(projects.feature.tripPlanner.state)
+                implementation(projects.io.gtfs)
                 implementation(projects.platform.ops)
                 implementation(projects.sandook)
                 implementation(projects.taj)

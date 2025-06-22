@@ -39,11 +39,9 @@ class SplashViewModel(
     val isLoading: StateFlow<Boolean> = _isLoading
         .onStart {
             coroutineScope {
-                appStart.start()
-            }
-            coroutineScope {
                 loadKrailThemeStyle()
                 displayIntroScreen()
+                appStart.start()
                 trackAppStartEvent()
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
@@ -51,10 +49,10 @@ class SplashViewModel(
     private suspend fun displayIntroScreen() = safeResult(ioDispatcher) {
         val hasSeenIntro = preferences.getBoolean(KEY_HAS_SEEN_INTRO)
         log("Has seen intro: $hasSeenIntro")
-        if (hasSeenIntro == null || hasSeenIntro == false) {
-            updateUiState { copy(hasSeenIntro = false) }
-        } else {
+        if (hasSeenIntro == true) {
             updateUiState { copy(hasSeenIntro = true) }
+        } else {
+            updateUiState { copy(hasSeenIntro = false) }
         }
     }
 

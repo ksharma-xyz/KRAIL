@@ -21,8 +21,16 @@ val viewModelsModule = module {
     viewModelOf(::SearchStopViewModel)
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
-    viewModelOf(::IntroViewModel)
     viewModelOf(::OurStoryViewModel)
+
+    viewModel {
+        IntroViewModel(
+            analytics = get(),
+            platformOps = get(),
+            preferences = get(),
+            stopsManager = get(),
+        )
+    }
 
     viewModel {
         SettingsViewModel(

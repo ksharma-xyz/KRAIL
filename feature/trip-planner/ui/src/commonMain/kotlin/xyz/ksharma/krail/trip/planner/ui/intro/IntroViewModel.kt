@@ -8,11 +8,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.InteractionPage
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
@@ -23,6 +25,7 @@ class IntroViewModel(
     private val analytics: Analytics,
     private val platformOps: PlatformOps,
     private val preferences: SandookPreferences,
+    private val stopsManager: StopsManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<IntroState> = MutableStateFlow(IntroState.default())
@@ -50,15 +53,18 @@ class IntroViewModel(
             }
 
             is IntroUiEvent.Complete -> {
-                preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
-                analytics.track(
-                    AnalyticsEvent.IntroLetsKrailClickEvent(
-                        pageType = event.pageType.toInteractionPage(),
-                        pageNumber = event.pageNumber,
-                        interactionPages = interactionPages,
+                viewModelScope.launch {
+                    stopsManager.insertStops()
+                    preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
+                    analytics.track(
+                        AnalyticsEvent.IntroLetsKrailClickEvent(
+                            pageType = event.pageType.toInteractionPage(),
+                            pageNumber = event.pageNumber,
+                            interactionPages = interactionPages,
+                        )
                     )
-                )
-                interactionPages.clear()
+                    interactionPages.clear()
+                }
             }
         }
     }

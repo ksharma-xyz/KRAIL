@@ -1,8 +1,13 @@
 // Kotlin
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,7 +23,12 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,6 +38,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.delay
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -40,6 +51,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState.IntroPageType
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import kotlin.math.absoluteValue
 import kotlin.math.min
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun IntroScreen(
@@ -76,6 +88,12 @@ fun IntroScreen(
     val currentButtonColor = state.pages[startPage].primaryStyle.hexToComposeColor()
     val nextButtonColor = state.pages[nextPage].primaryStyle.hexToComposeColor()
     val animatedButtonColor = lerp(currentButtonColor, nextButtonColor, offsetFraction)
+
+    var displayKRAILButton by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(1.5.seconds)
+        displayKRAILButton = true
+    }
 
     Box(
         modifier = modifier
@@ -169,24 +187,30 @@ fun IntroScreen(
                 .navigationBarsPadding()
                 .padding(bottom = 10.dp)
         ) {
-            Button(
-                onClick = {
-                    if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
-                        onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_BUTTON))
-                    } else {
-                        onIntroComplete(
-                            state.pages[pagerState.currentPage].type,
-                            pagerState.currentPage + 1,
-                        )
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    customContainerColor = animatedButtonColor,
-                    customContentColor = Color.White,
-                ),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+            AnimatedVisibility(
+                visible = displayKRAILButton,
+                enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)),
+                exit = fadeOut(),
             ) {
-                Text(text = state.pages[startPage].ctaText)
+                Button(
+                    onClick = {
+                        if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
+                            onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_BUTTON))
+                        } else {
+                            onIntroComplete(
+                                state.pages[pagerState.currentPage].type,
+                                pagerState.currentPage + 1,
+                            )
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        customContainerColor = animatedButtonColor,
+                        customContentColor = Color.White,
+                    ),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+                ) {
+                    Text(text = state.pages[startPage].ctaText)
+                }
             }
         }
     }

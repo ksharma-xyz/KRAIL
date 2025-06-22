@@ -25,7 +25,13 @@ class RealAnalytics(
     }
 
     override fun setUserId(userId: String) {
-        TODO("Not yet implemented")
+        coroutineScope.launch {
+            if (appInfoProvider.getAppInfo().isDebug) {
+                firebaseAnalytics.setUserId("KRAIL-TEST-123")
+            } else {
+                firebaseAnalytics.setUserId(userId)
+            }
+        }
     }
 
     override fun setUserProperty(name: String, value: String) {

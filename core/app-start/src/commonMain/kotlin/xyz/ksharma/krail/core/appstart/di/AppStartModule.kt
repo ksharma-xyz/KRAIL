@@ -12,9 +12,7 @@ val appStartModule = module {
         RealAppStart(
             coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
             remoteConfig = get(),
-            protoParser = get(),
-            preferences = get(),
-            sandook = get(),
+            stopsManager = get(),
         )
     }
 }

@@ -126,8 +126,8 @@ internal class RealSandook(
         nswStopsQueries.insertStopProductClass(stopId, productClass.toLong())
     }
 
-    override fun insertTransaction(block: () -> Unit) {
-        nswStopsQueries.transaction { block() }
+    override fun <R> insertTransaction(block: () -> R): R {
+        return nswStopsQueries.transactionWithResult { block() }
     }
 
     override fun clearNswStopsTable() {

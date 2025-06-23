@@ -109,8 +109,8 @@ class FakeSandook : Sandook {
         productClasses.add(productClass)
     }
 
-    override fun insertTransaction(block: () -> Unit) {
-        block()
+    override fun <R> insertTransaction(block: () -> R): R {
+        return block()
     }
 
     override fun clearNswStopsTable() {

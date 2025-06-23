@@ -50,7 +50,7 @@ interface Sandook {
     /**
      * Inserts a list of stops in a single transaction.
      */
-    fun insertTransaction(block: () -> Unit)
+    fun <R> insertTransaction(block: () -> R): R
 
     fun clearNswStopsTable()
 

@@ -20,8 +20,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock.System
-import kotlinx.datetime.Instant
+import kotlin.time.Clock.System
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -52,6 +52,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -324,6 +325,7 @@ class SavedTripsViewModel(
      *
      * The resulting UI state always reflects the latest merged facility information for display.
      */
+    @OptIn(ExperimentalTime::class)
     private fun observeFacilityDetailsFromDb() {
         log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
@@ -385,6 +387,7 @@ class SavedTripsViewModel(
             }
     }
 
+    @OptIn(ExperimentalTime::class)
     suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
         val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
         if (facilityIds.isEmpty()) {
@@ -488,6 +491,7 @@ class SavedTripsViewModel(
      * Checks if the current time is not peak time.
      * Peak time is defined as 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am.
      */
+    @OptIn(ExperimentalTime::class)
     private fun isNotPeakTime(): Boolean {
         val now = System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val hour = now.hour

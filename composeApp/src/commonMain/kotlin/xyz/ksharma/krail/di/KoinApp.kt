@@ -23,7 +23,6 @@ import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 
 fun initKoin(config: KoinAppDeclaration? = null) {
     startKoin {
-        printLogger()
         includes(config)
         modules(
             coroutineDispatchersModule,

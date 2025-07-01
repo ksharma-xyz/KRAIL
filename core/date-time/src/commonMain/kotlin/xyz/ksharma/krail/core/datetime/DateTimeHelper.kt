@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.core.datetime
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -10,6 +10,7 @@ import kotlin.math.absoluteValue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 
 object DateTimeHelper {
 
@@ -20,6 +21,7 @@ object DateTimeHelper {
      * @receiver String The UTC date-time string in ISO 8601 format.
      * @return String The formatted 12-hour time string.
      */
+    @OptIn(ExperimentalTime::class)
     fun String.formatTo12HourTime(): String {
         val localDateTime = Instant.parse(this).toLocalDateTime(TimeZone.UTC)
         val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
@@ -28,6 +30,7 @@ object DateTimeHelper {
         return "$hour:$minute $amPm"
     }
 
+    @OptIn(ExperimentalTime::class)
     fun String.utcToAEST(): String {
         val instant = Instant.parse(this)
         val aestZone = TimeZone.of("Australia/Sydney")
@@ -35,6 +38,7 @@ object DateTimeHelper {
         return localDateTime.toString()
     }
 
+    @OptIn(ExperimentalTime::class)
     fun String.utcToLocalDateTimeAEST(): LocalDateTime {
         val instant = Instant.parse(this)
         val aestZone = TimeZone.of("Australia/Sydney")
@@ -58,6 +62,7 @@ object DateTimeHelper {
         return "$hour:$minute $amPm"
     }*/
 
+    @OptIn(ExperimentalTime::class)
     fun calculateTimeDifferenceFromNow(
         utcDateString: String,
         now: Instant = Clock.System.now(),
@@ -92,6 +97,7 @@ object DateTimeHelper {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun calculateTimeDifference(
         utcDateString1: String,
         utcDateString2: String,
@@ -104,13 +110,17 @@ object DateTimeHelper {
     /**
      * Returns true if the given date is in the future, false otherwise.
      */
+    @OptIn(ExperimentalTime::class)
     fun LocalDate?.isFuture(): Boolean {
         return this?.let {
             it > Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         } ?: false
     }
 
+    @OptIn(ExperimentalTime::class)
     fun Instant.isBefore(other: Instant): Boolean = this < other
+
+    @OptIn(ExperimentalTime::class)
     fun Instant.isAfter(other: Instant): Boolean = this > other
 
     /**

@@ -1,12 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.components.loading
 
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.todayIn
 import xyz.ksharma.krail.core.log.log
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
 
 // TODO - Add better logic
 //  1. should be able to create range of dates with exhaustive statements.
@@ -118,6 +120,7 @@ object LoadingEmojiManager {
         MonthDay.of(5, 29) to FestivalType.VIVID_SYDNEY, // till 14 June
     )
 
+    @OptIn(ExperimentalTime::class)
     internal fun getRandomEmoji(overrideEmoji: String? = null): String {
         if (overrideEmoji != null) return overrideEmoji
 
@@ -128,9 +131,9 @@ object LoadingEmojiManager {
             .firstOrNull {
                 log(
                     "Checking festival date[${it.key.dayOfMonth} / ${it.key.month}] " +
-                        "| Comparing to ${today.dayOfMonth} / ${today.month.number}"
+                        "| Comparing to ${today.day} / ${today.month.number}"
                 )
-                it.key.month == today.month.number && it.key.dayOfMonth == today.dayOfMonth
+                it.key.month == today.month.number && it.key.dayOfMonth == today.day
             }
             ?.let {
                 log("Filter result: $it")

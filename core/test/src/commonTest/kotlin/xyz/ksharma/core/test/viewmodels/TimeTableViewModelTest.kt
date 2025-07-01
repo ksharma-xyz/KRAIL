@@ -10,7 +10,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.core.test.fakes.FakeAnalytics
@@ -44,6 +44,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TimeTableViewModelTest {
@@ -321,6 +322,7 @@ class TimeTableViewModelTest {
      *  Also factoring in the threshold time for journey completion i.e [JOURNEY_ENDED_CACHE_THRESHOLD_TIME].
      * @return A map of journey IDs to JourneyCardInfo objects.
      */
+    @OptIn(ExperimentalTime::class)
     private fun buildStartedJourneysList(
         numberOfStartedJourneys: Int,
         distortSortOrder: Boolean = false,
@@ -544,6 +546,7 @@ class TimeTableViewModelTest {
 
     // region Test for DateTimeSelectionChanged
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun `GIVEN different dateTimeSelectionItem WHEN onDateTimeSelectionChanged is called THEN uiState is updated and analytics event is tracked`() =
         runTest {
@@ -565,6 +568,7 @@ class TimeTableViewModelTest {
             assertTrue(analytics.isEventTracked("date_time_select"))
         }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun `GIVEN same dateTimeSelectionItem WHEN onDateTimeSelectionUnchanged is called THEN no action is taken`() =
         runTest {

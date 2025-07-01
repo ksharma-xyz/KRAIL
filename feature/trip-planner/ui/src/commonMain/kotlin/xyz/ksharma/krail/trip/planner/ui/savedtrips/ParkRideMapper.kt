@@ -3,13 +3,14 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
 import kotlinx.collections.immutable.toImmutableSet
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
+import kotlin.time.ExperimentalTime
 
 /**
  * Converts a [CarParkFacilityDetailResponse] to a [NSWParkRideFacilityDetail] for database storage.
@@ -27,6 +28,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRid
  *
  * @return [NSWParkRideFacilityDetail] containing facility details for database storage
  **/
+@OptIn(ExperimentalTime::class)
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
 fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String, stopId: String): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0

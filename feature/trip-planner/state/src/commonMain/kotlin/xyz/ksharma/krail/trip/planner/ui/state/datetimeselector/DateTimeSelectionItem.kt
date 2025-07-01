@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.datetimeselector
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.datetime.to12HourTimeString
@@ -33,8 +34,8 @@ data class DateTimeSelectionItem(
 
     fun toYYYYMMDD(): String {
         val yyyy = date.year.toString()
-        val mm = date.monthNumber.toString().padStart(2, '0')
-        val dd = date.dayOfMonth.toString().padStart(2, '0')
+        val mm = date.month.number.toString().padStart(2, '0')
+        val dd = date.day.toString().padStart(2, '0')
         return "$yyyy$mm$dd"
     }
 

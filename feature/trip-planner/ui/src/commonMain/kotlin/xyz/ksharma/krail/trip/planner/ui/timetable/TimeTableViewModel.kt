@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -49,6 +49,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyList
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 class TimeTableViewModel(
     private val tripPlanningService: TripPlanningService,
@@ -202,6 +203,7 @@ class TimeTableViewModel(
         return this.unselectedModes != unselectedModes
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun onDateTimeSelectionChanged(item: DateTimeSelectionItem?) {
         log("DateTimeSelectionChanged: $item")
         // Verify if date time selection has actually changed, otherwise, api will be called unnecessarily.
@@ -249,6 +251,7 @@ class TimeTableViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     @VisibleForTesting
     suspend fun updateTripsCache(response: TripResponse) = withContext(ioDispatcher) {
         val newJourneyList = response.buildJourneyList()
@@ -443,6 +446,7 @@ class TimeTableViewModel(
      * This will be called when the screen is visible and the time is progressing and also when the
      * API returned with new data.
      */
+    @OptIn(ExperimentalTime::class)
     private fun updateJourneyCardInfoTimeText(
         journeyList: List<TimeTableState.JourneyCardInfo>,
     ): List<TimeTableState.JourneyCardInfo> {

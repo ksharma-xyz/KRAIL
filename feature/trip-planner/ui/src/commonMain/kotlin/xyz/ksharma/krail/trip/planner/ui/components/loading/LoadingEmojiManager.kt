@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.components.loading
 
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.todayIn

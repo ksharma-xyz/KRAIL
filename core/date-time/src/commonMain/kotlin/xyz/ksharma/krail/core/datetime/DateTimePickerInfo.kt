@@ -2,12 +2,13 @@ package xyz.ksharma.krail.core.datetime
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 data class DateTimePickerInfo(
     val date: String,
@@ -15,6 +16,7 @@ data class DateTimePickerInfo(
     val minute: Int,
 )
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun rememberCurrentDateTime(): DateTimePickerInfo {
     val currentTime = Clock.System.now()
@@ -55,6 +57,7 @@ fun to12HourTimeString(hour: Int, minute: Int): String {
 /**
  * Formats the date in a human-readable format (e.g., Today, Tomorrow, Mon 1 Jan)
  */
+@OptIn(ExperimentalTime::class)
 fun toReadableDate(date: LocalDate): String {
     val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val tomorrow = today.plus(1, DateTimeUnit.DAY)
@@ -65,7 +68,7 @@ fun toReadableDate(date: LocalDate): String {
         else -> {
             val dayOfWeek = date.dayOfWeek.name.substring(0, 3) // Short day name (e.g., Mon, Tue)
             val month = date.month.name.substring(0, 3) // Short month name (e.g., Jan, Feb)
-            "$dayOfWeek, ${date.dayOfMonth} ${month.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}"
+            "$dayOfWeek, ${date.day} ${month.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}"
         }
     }
 }

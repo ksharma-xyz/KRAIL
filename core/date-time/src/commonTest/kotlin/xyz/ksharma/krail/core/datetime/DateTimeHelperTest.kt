@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.core.datetime
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString

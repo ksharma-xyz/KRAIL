@@ -1,7 +1,8 @@
 package xyz.ksharma.krail.core.analytics.event
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import kotlin.time.ExperimentalTime
 
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
@@ -163,6 +164,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     )
 
+    @OptIn(ExperimentalTime::class)
     data class AppStart(
         val platformType: String,
         val appVersion: String,
@@ -274,7 +276,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * @param expand Indicates whether the card is being expanded or collapsed.
      * @param time - when the card was clicked, format - epoch time in seconds.
      */
-    data class ParkRideCardClickEvent(
+    data class ParkRideCardClickEvent @OptIn(ExperimentalTime::class) constructor(
         val stopId: String,
         val facilityId: String,
         val expand: Boolean,

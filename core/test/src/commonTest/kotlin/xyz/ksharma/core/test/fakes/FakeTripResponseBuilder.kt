@@ -1,6 +1,6 @@
 package xyz.ksharma.core.test.fakes
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse.StopSequence

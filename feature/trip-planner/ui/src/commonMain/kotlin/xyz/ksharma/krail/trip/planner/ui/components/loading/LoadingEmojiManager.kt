@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.components.loading
 
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
@@ -130,9 +131,9 @@ object LoadingEmojiManager {
             .firstOrNull {
                 log(
                     "Checking festival date[${it.key.dayOfMonth} / ${it.key.month}] " +
-                        "| Comparing to ${today.dayOfMonth} / ${today.month.number}"
+                        "| Comparing to ${today.day} / ${today.month.number}"
                 )
-                it.key.month == today.month.number && it.key.dayOfMonth == today.dayOfMonth
+                it.key.month == today.month.number && it.key.dayOfMonth == today.day
             }
             ?.let {
                 log("Filter result: $it")

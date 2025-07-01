@@ -5,6 +5,7 @@ import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse.StopSequence
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
 
 object FakeTripResponseBuilder {
     private var originStopSequence: StopSequence = buildStopSequence()
@@ -71,6 +72,7 @@ object FakeTripResponseBuilder {
         description = "Transportation Description",
     )
 
+    @OptIn(ExperimentalTime::class)
     private fun buildJourneyLeg(legIndex: Int, stops: Int, journeyIndex: Int = 0) =
         TripResponse.Leg(
         origin = buildStopSequence(

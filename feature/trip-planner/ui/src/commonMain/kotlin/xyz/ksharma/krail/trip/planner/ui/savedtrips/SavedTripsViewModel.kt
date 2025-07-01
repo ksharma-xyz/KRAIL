@@ -387,6 +387,7 @@ class SavedTripsViewModel(
             }
     }
 
+    @OptIn(ExperimentalTime::class)
     suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
         val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
         if (facilityIds.isEmpty()) {
@@ -490,6 +491,7 @@ class SavedTripsViewModel(
      * Checks if the current time is not peak time.
      * Peak time is defined as 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am.
      */
+    @OptIn(ExperimentalTime::class)
     private fun isNotPeakTime(): Boolean {
         val now = System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val hour = now.hour

@@ -8,9 +8,11 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToAEST
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
 
 class DateTimeHelperTest {
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun testCalculateTimeDifferenceFromNow() {
         val difference = DateTimeHelper.calculateTimeDifferenceFromNow(
@@ -20,6 +22,7 @@ class DateTimeHelperTest {
         assertEquals(40L, difference.inWholeMinutes)
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun testCalculateTimeDifferenceNextDay() {
         val difference = DateTimeHelper.calculateTimeDifferenceFromNow(
@@ -29,6 +32,7 @@ class DateTimeHelperTest {
         assertEquals(1480L, difference.inWholeMinutes)
     }
 
+    @OptIn(ExperimentalTime::class)
     @Test
     fun testCalculateTimeDifferencePreviousDay() {
         val difference = DateTimeHelper.calculateTimeDifferenceFromNow(

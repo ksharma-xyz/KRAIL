@@ -251,6 +251,7 @@ class TimeTableViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     @VisibleForTesting
     suspend fun updateTripsCache(response: TripResponse) = withContext(ioDispatcher) {
         val newJourneyList = response.buildJourneyList()
@@ -445,6 +446,7 @@ class TimeTableViewModel(
      * This will be called when the screen is visible and the time is progressing and also when the
      * API returned with new data.
      */
+    @OptIn(ExperimentalTime::class)
     private fun updateJourneyCardInfoTimeText(
         journeyList: List<TimeTableState.JourneyCardInfo>,
     ): List<TimeTableState.JourneyCardInfo> {

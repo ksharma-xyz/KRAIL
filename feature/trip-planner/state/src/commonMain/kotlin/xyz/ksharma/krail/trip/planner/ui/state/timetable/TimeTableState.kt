@@ -8,6 +8,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
+import kotlin.time.ExperimentalTime
 
 data class TimeTableState(
     val isLoading: Boolean = true,
@@ -18,6 +19,7 @@ data class TimeTableState(
     val isError: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
 ) {
+    @OptIn(ExperimentalTime::class)
     data class JourneyCardInfo(
         val timeText: String, // "in x mins"
 

@@ -7,6 +7,7 @@ import kotlinx.datetime.number
 import kotlinx.datetime.todayIn
 import xyz.ksharma.krail.core.log.log
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
 
 // TODO - Add better logic
 //  1. should be able to create range of dates with exhaustive statements.
@@ -118,6 +119,7 @@ object LoadingEmojiManager {
         MonthDay.of(5, 29) to FestivalType.VIVID_SYDNEY, // till 14 June
     )
 
+    @OptIn(ExperimentalTime::class)
     internal fun getRandomEmoji(overrideEmoji: String? = null): String {
         if (overrideEmoji != null) return overrideEmoji
 

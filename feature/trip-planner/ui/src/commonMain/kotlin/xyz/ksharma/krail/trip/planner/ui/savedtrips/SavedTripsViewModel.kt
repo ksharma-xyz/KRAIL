@@ -52,6 +52,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -324,6 +325,7 @@ class SavedTripsViewModel(
      *
      * The resulting UI state always reflects the latest merged facility information for display.
      */
+    @OptIn(ExperimentalTime::class)
     private fun observeFacilityDetailsFromDb() {
         log("observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()

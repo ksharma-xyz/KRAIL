@@ -16,6 +16,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
 
 @Suppress("ComplexCondition")
@@ -135,6 +136,7 @@ private fun List<TripResponse.Leg>.getTransportModeLines() = mapNotNull { leg ->
 
 private fun List<TripResponse.Leg>.getLegsList() = mapNotNull { it.toUiModel() }.toImmutableList()
 
+@OptIn(ExperimentalTime::class)
 private fun String.getTimeText() = let {
     calculateTimeDifferenceFromNow(utcDateString = it).toGenericFormattedTimeString()
 }

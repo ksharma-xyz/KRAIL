@@ -49,6 +49,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyList
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 class TimeTableViewModel(
     private val tripPlanningService: TripPlanningService,
@@ -202,6 +203,7 @@ class TimeTableViewModel(
         return this.unselectedModes != unselectedModes
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun onDateTimeSelectionChanged(item: DateTimeSelectionItem?) {
         log("DateTimeSelectionChanged: $item")
         // Verify if date time selection has actually changed, otherwise, api will be called unnecessarily.

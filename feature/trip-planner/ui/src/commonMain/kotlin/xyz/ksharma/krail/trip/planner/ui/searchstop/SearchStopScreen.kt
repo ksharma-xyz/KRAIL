@@ -60,8 +60,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.time.ExperimentalTime
 
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 @Composable
 fun SearchStopScreen(
     searchStopState: SearchStopState,

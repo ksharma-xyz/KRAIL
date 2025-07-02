@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui
 
+import androidx.annotation.VisibleForTesting
+import androidx.annotation.VisibleForTesting.Companion.PROTECTED
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,5 +34,6 @@ abstract class MoleculeViewModel<Event, Model> : ViewModel() {
     }
 
     @Composable
-    protected abstract fun models(events: Flow<Event>): Model
+    @VisibleForTesting(otherwise = PROTECTED)
+    abstract fun models(events: Flow<Event>): Model
 }

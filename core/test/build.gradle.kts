@@ -9,6 +9,10 @@ plugins {
 
 android {
     namespace = "xyz.ksharma.krail.core.test"
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 kotlin {
@@ -54,6 +58,7 @@ kotlin {
                 implementation(libs.test.turbine)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.molecule.runtime)
             }
         }
     }

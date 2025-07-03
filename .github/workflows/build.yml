@@ -64,6 +64,27 @@ jobs:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
         run: ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
 
+     ## Firebase App Distribution Start
+      - name: Download Firebase CLI
+        run: curl -sL https://firebase.tools | upgrade=true bash
+
+      - name: Authenticate with Firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > gcloud.json
+          export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/gcloud.json"
+
+      - name: Distribute APK to Firebase App Distribution
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
+          FIREBASE_APP_ID_DEBUG: ${{ secrets.FIREBASE_APP_ID_DEBUG }}
+        run: |
+          firebase appdistribution:distribute composeApp/build/outputs/apk/debug/composeApp-debug.apk \
+            --app "$FIREBASE_APP_ID_DEBUG" \
+            --release-notes "Test notes"
+      ## Firebase App Distribution End
+
       - name: Build Release
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}

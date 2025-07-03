@@ -65,6 +65,10 @@ class SavedTripsViewModel(
     private val flag: Flag,
 ) : ViewModel() {
 
+    init {
+        log("Temp log for CI builds")
+    }
+
     private val nonPeakTimeCooldownSeconds: Long by lazy {
         flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key)
             .asNumber(600)

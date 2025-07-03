@@ -75,7 +75,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: |
-            ${{ inputs.variant == 'debug' && format('composeApp-{0}-apk', inputs.variant) || 'composeApp-release-aab' }}
+            ${{ inputs.variant == 'debug' && format('composeApp-{0}-apk-{1}', inputs.variant, github.run_id) || format('composeApp-release-aab-{0}', github.run_id) }}
           path: |
             ${{ inputs.variant == 'debug' && format('composeApp/build/outputs/apk/{0}/composeApp-{0}.apk', inputs.variant) || steps.signed_release_aab.outputs.signedReleaseFile }}
-

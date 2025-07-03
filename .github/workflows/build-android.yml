@@ -57,11 +57,25 @@ jobs:
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
             ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease testRelease
+            ./gradlew :composeApp:bundleRelease
           fi
 
-      - name: Upload APK
+      - name: Sign Android Release AAB
+        if: ${{ inputs.variant == 'release' }}
+        id: signed_release_aab
+        uses: r0adkll/sign-android-release@v1.0.4
+        with:
+          releaseDirectory: composeApp/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: composeApp-${{ inputs.variant }}-apk
-          path: composeApp/build/outputs/apk/${{ inputs.variant }}/composeApp-${{ inputs.variant }}.apk
+          name: |
+            ${{ inputs.variant == 'debug' && format('composeApp-{0}-apk', inputs.variant) || 'composeApp-release-aab' }}
+          path: |
+            ${{ inputs.variant == 'debug' && format('composeApp/build/outputs/apk/{0}/composeApp-{0}.apk', inputs.variant) || steps.signed_release_aab.outputs.signedReleaseFile }}
+

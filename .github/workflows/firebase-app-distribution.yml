@@ -2,10 +2,10 @@ name: Firebase App Distribution
 
 on:
   pull_request:
-    #types: [closed] -temporarily disabled to test
+    types: [closed]
     branches: [main]
     # Only run if PR is merged
-    #if: github.event.pull_request.merged == true - temporarily disabled to test
+    if: github.event.pull_request.merged == true
 
 jobs:
   build-android-debug:

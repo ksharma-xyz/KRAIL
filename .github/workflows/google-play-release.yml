@@ -12,72 +12,22 @@ concurrency:
 jobs:
   android:
     if: ${{ github.event.pull_request.draft == false }}
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: release
+    secrets: inherit
+
+  deploy:
+    needs: android
     runs-on: ubuntu-latest
     environment: Firebase
-    timeout-minutes: 60
-
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup environment variables
-        run: |
-          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
-          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
-
-      - name: Extract Version Name
-        run: |
-          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' composeApp/build.gradle.kts)
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV          
-
-      - name: set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: zulu
-          java-version: 21
-
-      - name: Setup firebase
-        run: |
-          curl -sL https://firebase.tools | bash
-
-      - name: Cache Gradle and wrapper
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
-
-      - name: Firebase Android (Release) - Google Services.json file
-        env:
-          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_RELEASE }}
-        run: echo $DATA | base64 -di > composeApp/src/release/google-services.json
-
-      - name: Build Android Release
-        env:
-          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
-        run: ./gradlew :composeApp:bundleRelease
-
-      - name: Sign Android Release AAB
-        id: signed_release_aab
-        uses: r0adkll/sign-android-release@v1.0.4
-        with:
-          releaseDirectory: composeApp/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-
-      # Uploading Signed AAB to internal track of PlayConsole
       - name: Deploy to Play Store (Internal)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: xyz.ksharma.krail
-          releaseFiles: ${{steps.signed_release_aab.outputs.signedReleaseFile}}
+          releaseFiles: ${{ needs.android.outputs.signed_aab }}
           track: internal
 
       - name: Create Github Release
@@ -85,6 +35,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
         with:
-          tag_name: v${{ env.VERSION_NAME }}
+          tag_name: v${{ needs.android.outputs.version_name }}
           generate_release_notes: true
           draft: true

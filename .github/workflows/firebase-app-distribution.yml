@@ -29,9 +29,6 @@ jobs:
       - name: List files in extracted artifact
         run: ls
 
-      - name: Extract APK artifact
-        run: unzip -o composeApp-debug-apk-${{ github.run_id }}.zip -d composeApp-debug-apk
-
       - name: Download Firebase CLI
         run: curl -sL https://firebase.tools | upgrade=true bash
 
@@ -41,14 +38,11 @@ jobs:
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT" > gcloud.json
 
-      - name: List files in extracted artifact
-        run: ls -R composeApp-debug-apk
-
       - name: Distribute APK to Firebase App Distribution
         env:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
           FIREBASE_APP_ID_DEBUG: ${{ secrets.FIREBASE_APP_ID_DEBUG }}
         run: |
-          firebase appdistribution:distribute composeApp-debug-apk/composeApp-debug.apk \
+          firebase appdistribution:distribute composeApp-debug.apk \
             --app "$FIREBASE_APP_ID_DEBUG" \
             --release-notes "${{ github.event.pull_request.title }}"

@@ -1,0 +1,45 @@
+name: Firebase App Distribution
+
+on:
+  pull_request:
+    #types: [closed] -temporarily disabled to test
+    branches: [main]
+    # Only run if PR is merged
+    #if: github.event.pull_request.merged == true - temporarily disabled to test
+
+jobs:
+  build-android-debug:
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: debug
+    secrets: inherit
+
+  distribute-apk:
+    needs: build-android-debug
+    runs-on: ubuntu-latest
+    environment: Firebase
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: composeApp-debug-apk
+
+      - name: Download Firebase CLI
+        run: curl -sL https://firebase.tools | upgrade=true bash
+
+      - name: Authenticate with Firebase
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > gcloud.json
+
+      - name: Distribute APK to Firebase App Distribution
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
+          FIREBASE_APP_ID_DEBUG: ${{ secrets.FIREBASE_APP_ID_DEBUG }}
+        run: |
+          firebase appdistribution:distribute composeApp-debug.apk \
+            --app "$FIREBASE_APP_ID_DEBUG" \
+            --release-notes "Test notes"

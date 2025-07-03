@@ -1,0 +1,67 @@
+name: Build Android
+
+on:
+  workflow_call:
+    inputs:
+      variant:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: Firebase
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Cache Gradle and wrapper
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ""
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Firebase Android (Release) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_RELEASE }}
+        run: echo $DATA | base64 -di > composeApp/src/release/google-services.json
+
+      - name: Firebase (Debug) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
+        run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
+
+      - name: Clean Gradle Build
+        run: ./gradlew clean
+
+      - name: Build ${{ inputs.variant }}
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+        run: |
+          if [[ "${{ inputs.variant }}" == "debug" ]]; then
+            ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
+          elif [[ "${{ inputs.variant }}" == "release" ]]; then
+            ./gradlew :composeApp:assembleRelease testRelease
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: composeApp-${{ inputs.variant }}-apk
+          path: composeApp/build/outputs/apk/${{ inputs.variant }}/composeApp-${{ inputs.variant }}.apk

@@ -1,0 +1,51 @@
+name: Build iOS
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: macos-14
+    environment: Firebase
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment variables
+        run: |
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - run: brew install swiftlint
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+
+      - name: Firebase iOS - GoogleService-Info.plist file
+        env:
+          DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
+        run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Build iOS App - Debug (Without Code Signing)
+        env:
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj \
+                     -scheme iosApp \
+                     -configuration Debug \
+                     OBJROOT=$GITHUB_WORKSPACE/build/ios \
+                     SYMROOT=$GITHUB_WORKSPACE/build/ios \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     -destination 'platform=iOS Simulator,name=iPhone 12,OS=latest'

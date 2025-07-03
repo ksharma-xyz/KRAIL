@@ -2,10 +2,10 @@ name: Firebase App Distribution
 
 on:
   pull_request:
-    types: [closed]
+    #types: [closed]
     branches: [main]
     # Only run if PR is merged
-    if: github.event.pull_request.merged == true
+    #if: github.event.pull_request.merged == true
 
 jobs:
   build-android-debug:
@@ -26,6 +26,12 @@ jobs:
         with:
           name: composeApp-debug-apk-${{ github.run_id }}
 
+      - name: List files in extracted artifact
+        run: ls
+
+      - name: Extract APK artifact
+        run: unzip -o composeApp-debug-apk-${{ github.run_id }}.zip -d composeApp-debug-apk
+
       - name: Download Firebase CLI
         run: curl -sL https://firebase.tools | upgrade=true bash
 
@@ -34,6 +40,9 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: |
           echo "$FIREBASE_SERVICE_ACCOUNT" > gcloud.json
+
+      - name: List files in extracted artifact
+        run: ls -R composeApp-debug-apk
 
       - name: Distribute APK to Firebase App Distribution
         env:

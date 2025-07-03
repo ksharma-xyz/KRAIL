@@ -55,9 +55,9 @@ jobs:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
         run: |
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
+            ./gradlew :composeApp:assembleDebug -PversionCode="${{ github.run_number }}" testDebug --rerun-tasks
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:bundleRelease
+            ./gradlew :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi
 
       - name: Sign Android Release AAB

@@ -1,0 +1,81 @@
+name: Build Android
+
+on:
+  workflow_call:
+    inputs:
+      variant:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: Firebase
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Cache Gradle and wrapper
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ""
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Firebase Android (Release) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_RELEASE }}
+        run: echo $DATA | base64 -di > composeApp/src/release/google-services.json
+
+      - name: Firebase (Debug) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
+        run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
+
+      - name: Clean Gradle Build
+        run: ./gradlew clean
+
+      - name: Build ${{ inputs.variant }}
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+        run: |
+          if [[ "${{ inputs.variant }}" == "debug" ]]; then
+            ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
+          elif [[ "${{ inputs.variant }}" == "release" ]]; then
+            ./gradlew :composeApp:bundleRelease
+          fi
+
+      - name: Sign Android Release AAB
+        if: ${{ inputs.variant == 'release' }}
+        id: signed_release_aab
+        uses: r0adkll/sign-android-release@v1.0.4
+        with:
+          releaseDirectory: composeApp/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: |
+            ${{ inputs.variant == 'debug' && format('composeApp-{0}-apk', inputs.variant) || 'composeApp-release-aab' }}
+          path: |
+            ${{ inputs.variant == 'debug' && format('composeApp/build/outputs/apk/{0}/composeApp-{0}.apk', inputs.variant) || steps.signed_release_aab.outputs.signedReleaseFile }}
+

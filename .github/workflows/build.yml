@@ -12,110 +12,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  android:
-    if: ${{ github.event.pull_request.draft == false }}
-    runs-on: ubuntu-latest
-    environment: Firebase
-    timeout-minutes: 60
+  build-android-debug:
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: debug
+    secrets: inherit
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup environment variables
-        run: |
-          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
-          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+  build-android-release:
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: release
+    secrets: inherit
 
-      - name: set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: zulu
-          java-version: 21
-
-      - name: Cache Gradle and wrapper
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: ""
-
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
-
-      - name: Firebase Android (Release) - Google Services.json file
-        env:
-          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_RELEASE }}
-        run: echo $DATA | base64 -di > composeApp/src/release/google-services.json
-
-      - name: Firebase (Debug) - Google Services.json file
-        env:
-          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
-        run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
-
-      - name: Clean Gradle Build
-        run: ./gradlew clean
-
-#      - name: Detekt Checks
-#        run: ./gradlew detekt
-
-      - name: Build Debug
-        env:
-          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
-        run: ./gradlew :composeApp:assembleDebug testDebug --rerun-tasks
-
-      - name: Build Release
-        env:
-          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
-        run: ./gradlew :composeApp:assembleRelease testRelease
-
-  iOS:
-    if: ${{ github.event.pull_request.draft == false }}
-    runs-on: macos-14
-    environment: Firebase
-    timeout-minutes: 60
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup environment variables
-        run: |
-          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
-          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 21
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-
-      - run: brew install swiftlint
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-disabled: true
-
-      - name: Firebase iOS - GoogleService-Info.plist file
-        env:
-          DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
-        run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
-
-      - name: Build iOS App - Debug (Without Code Signing)
-        env:
-          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
-        run: |
-          xcodebuild -project iosApp/iosApp.xcodeproj \
-                     -scheme iosApp \
-                     -configuration Debug \
-                     OBJROOT=$GITHUB_WORKSPACE/build/ios \
-                     SYMROOT=$GITHUB_WORKSPACE/build/ios \
-                     CODE_SIGN_IDENTITY="" \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO \
-                     -destination 'platform=iOS Simulator,name=iPhone 12,OS=latest'
+  build-ios:
+    uses: ./.github/workflows/build-ios.yml
+    secrets: inherit

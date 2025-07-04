@@ -26,6 +26,9 @@ jobs:
         with:
           name: composeApp-debug-apk-${{ github.run_id }}
 
+      - name: List files in extracted artifact
+        run: ls
+
       - name: Download Firebase CLI
         run: curl -sL https://firebase.tools | upgrade=true bash
 
@@ -40,6 +43,6 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
           FIREBASE_APP_ID_DEBUG: ${{ secrets.FIREBASE_APP_ID_DEBUG }}
         run: |
-          firebase appdistribution:distribute composeApp-debug-apk/composeApp-debug.apk \
+          firebase appdistribution:distribute composeApp-debug.apk \
             --app "$FIREBASE_APP_ID_DEBUG" \
             --release-notes "${{ github.event.pull_request.title }}"

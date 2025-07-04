@@ -27,3 +27,9 @@ jobs:
   build-ios:
     uses: ./.github/workflows/build-ios.yml
     secrets: inherit
+
+  distribute-debug-apk:
+    needs: build-android-debug
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/firebase-app-distribution.yml
+    secrets: inherit

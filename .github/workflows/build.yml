@@ -13,23 +13,26 @@ concurrency:
 
 jobs:
   build-android-debug:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/build-android.yml
     with:
       variant: debug
     secrets: inherit
 
   build-android-release:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/build-android.yml
     with:
       variant: release
     secrets: inherit
 
   build-ios:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/build-ios.yml
     secrets: inherit
 
   distribute-debug-apk:
-    needs: build-android-debug
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-android-debug
     uses: ./.github/workflows/firebase-app-distribution.yml
     secrets: inherit

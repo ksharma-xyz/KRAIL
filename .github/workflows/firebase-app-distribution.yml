@@ -1,21 +1,10 @@
 name: Firebase App Distribution
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
-    # Only run if PR is merged
-    if: github.event.pull_request.merged == true
+  workflow_call:
 
 jobs:
-  build-android-debug:
-    uses: ./.github/workflows/build-android.yml
-    with:
-      variant: debug
-    secrets: inherit
-
   distribute-apk:
-    needs: build-android-debug
     runs-on: ubuntu-latest
     environment: Firebase
     steps:
@@ -45,4 +34,5 @@ jobs:
         run: |
           firebase appdistribution:distribute composeApp-debug.apk \
             --app "$FIREBASE_APP_ID_DEBUG" \
+            --groups "Friends"
             --release-notes "${{ github.event.pull_request.title }}"

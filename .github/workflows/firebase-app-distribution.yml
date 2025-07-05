@@ -35,4 +35,4 @@ jobs:
           firebase appdistribution:distribute composeApp-debug.apk \
             --app "$FIREBASE_APP_ID_DEBUG" \
             --groups "Friends" \
-            --release-notes "${{ github.event.pull_request.title }}"
+            --release-notes "${{ github.event.head_commit.message }}"

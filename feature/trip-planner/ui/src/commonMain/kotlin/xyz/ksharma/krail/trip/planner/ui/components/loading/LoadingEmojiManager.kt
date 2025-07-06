@@ -104,20 +104,6 @@ object LoadingEmojiManager {
         MonthDay.of(12, 3) to FestivalType.A11Y_DAY,
 
         // Can change dates
-        MonthDay.of(3, 30) to FestivalType.EID,
-        MonthDay.of(3, 31) to FestivalType.EID,
-
-        // Easter 2025
-        MonthDay.of(4, 20) to FestivalType.EASTER,
-
-        // Vivid Sydney 2025
-        MonthDay.of(5, 23) to FestivalType.VIVID_SYDNEY,
-        MonthDay.of(5, 24) to FestivalType.VIVID_SYDNEY,
-        MonthDay.of(5, 25) to FestivalType.VIVID_SYDNEY,
-        MonthDay.of(5, 26) to FestivalType.VIVID_SYDNEY,
-        MonthDay.of(5, 27) to FestivalType.VIVID_SYDNEY,
-        MonthDay.of(5, 28) to FestivalType.VIVID_SYDNEY,
-        MonthDay.of(5, 29) to FestivalType.VIVID_SYDNEY, // till 14 June
     )
 
     @OptIn(ExperimentalTime::class)

@@ -5,5 +5,9 @@ import xyz.ksharma.krail.core.festival.FestivalManager
 import xyz.ksharma.krail.core.festival.RealFestivalManager
 
 val festivalModule = module {
-    single<FestivalManager> { RealFestivalManager() }
+    single<FestivalManager> {
+        RealFestivalManager(
+            flag = get(),
+        )
+    }
 }

@@ -1,8 +1,9 @@
 package xyz.ksharma.krail.core.festival
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import xyz.ksharma.krail.core.festival.model.Festival
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -10,26 +11,53 @@ import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.FlagValue
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 
-    /**
-     * festival dates will be a json object with the following structure, it will be array of objects:
-     *
-     * ```json
-     * [
-     * startDate: "2023-10-01",
-     * endDate: "2023-10-31",
-     * emoji: "🎃",
-     * description: "Halloween"
-     * ]
-     * ```
-     *
-     * 1. read if there is any festival inside remote config, get it's start date, end date and emoji.
-     * 2. if the current date is between start date and end date, then return the emoji.
-     * 3. if the current date is not between start date and end date, then return null.
-     *
-     */
+    @OptIn(ExperimentalTime::class)
+
+    override fun festivalToday(): Festival? {
+        log("Checking for today's festival")
+        val festivals = getFestivals() ?: return null
+
+        val now = Clock.System.now()
+        val today: LocalDate = Instant.fromEpochMilliseconds(now.toEpochMilliseconds())
+            .toLocalDateTime(currentSystemDefault()).date
+        log("Today's date: $today")
+
+        return festivals.firstOrNull { festival ->
+            val startDate = runCatching { LocalDate.parse(festival.startDate) }.getOrNull()
+            val endDate = runCatching { LocalDate.parse(festival.endDate) }.getOrNull()
+            if (startDate == null || endDate == null) {
+                logError("Invalid date for festival: ${festival.description}")
+                false
+            } else {
+                log("Checking festival: ${festival.description} from $startDate to $endDate")
+                (today >= startDate && today <= endDate)
+            }
+        }?.also { festival ->
+            log("Festival found for today: ${festival.description} with emoji: ${festival.emojiList}")
+        } ?: run {
+            log("No festival found for today.")
+            null
+        }
+    }
+
+    override fun getFestivals(): List<Festival>? {
+        log("Fetching festivals from remote config")
+        val flagValue = flag.getFlagValue(FlagKeys.FESTIVALS.key)
+
+        return flagValue.toFestivalList().also { festivals ->
+            if (festivals == null) {
+                logError("No festivals found or error decoding festivals.")
+            } else {
+                log("Festivals fetched successfully: ${festivals.size} festivals found.")
+            }
+        }
+    }
 
     /**
      * Returns a list of festivals from the remote config.

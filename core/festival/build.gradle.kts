@@ -29,9 +29,11 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.di)
+                implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
 
                 implementation(compose.runtime)
+                implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
             }
         }

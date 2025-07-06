@@ -105,7 +105,7 @@ object RemoteConfigDefaults {
             ),
             Pair(
                 first = FlagKeys.FESTIVALS.key,
-                second = "",
+                second = "[]",
             ),
         )
     }

@@ -101,6 +101,7 @@ kotlin {
             implementation(projects.core.appStart)
             implementation(projects.core.coroutinesExt)
             implementation(projects.core.di)
+            implementation(projects.core.festival)
             implementation(projects.core.log)
             implementation(projects.core.network)
             implementation(projects.core.remoteConfig)

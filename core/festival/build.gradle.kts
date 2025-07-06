@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.krail.android.library)
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -27,8 +29,10 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.di)
+                implementation(projects.core.remoteConfig)
 
                 implementation(compose.runtime)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
     }

@@ -103,6 +103,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.LINKED_IN_KRAIL_APP_URL.key,
                 second = "https://www.linkedin.com/company/krail/",
             ),
+            Pair(
+                first = FlagKeys.FESTIVALS.key,
+                second = "",
+            ),
         )
     }
 }

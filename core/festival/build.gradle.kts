@@ -37,5 +37,15 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
             }
         }
+
+        commonTest {
+            dependencies {
+                implementation(libs.test.junit)
+                implementation(libs.test.kotlin)
+                implementation(libs.test.kotlinxCoroutineTest)
+                implementation(libs.kotlinx.collections.immutable)
+                implementation(libs.kotlinx.datetime)
+            }
+        }
     }
 }

@@ -28,6 +28,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.dateTime)
+                implementation(projects.core.festival)
                 implementation(projects.taj)
                 implementation(projects.core.analytics)
 

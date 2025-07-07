@@ -18,6 +18,7 @@ data class TimeTableState(
     val trip: Trip? = null,
     val isError: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
+    val emoji: String? = null,
 ) {
     @OptIn(ExperimentalTime::class)
     data class JourneyCardInfo(

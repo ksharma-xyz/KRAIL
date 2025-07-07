@@ -306,9 +306,13 @@ fun TimeTableScreen(
             } else if (timeTableState.isLoading) {
                 item(key = "loading") {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        LoadingEmojiAnim(
-                            modifier = Modifier.padding(vertical = 60.dp).animateItem(),
-                        )
+
+                        timeTableState.emoji?.let{ emoji ->
+                            LoadingEmojiAnim(
+                                emoji = emoji,
+                                modifier = Modifier.padding(vertical = 60.dp).animateItem(),
+                            )
+                        }
 
                         Text(
                             text = "Hop on, mate!",

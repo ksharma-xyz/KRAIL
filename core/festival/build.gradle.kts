@@ -33,6 +33,7 @@ kotlin {
                 implementation(projects.core.remoteConfig)
 
                 implementation(compose.runtime)
+                implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
             }

@@ -10,10 +10,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.core.test.fakes.FakeAnalytics
+import xyz.ksharma.core.test.fakes.FakeFestivalManager
 import xyz.ksharma.core.test.fakes.FakeRateLimiter
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
@@ -43,6 +43,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 
@@ -53,6 +54,7 @@ class TimeTableViewModelTest {
     private val fakeAnalytics: Analytics = FakeAnalytics()
     private val tripPlanningService = FakeTripPlanningService()
     private val rateLimiter = FakeRateLimiter()
+    private val festivalManager = FakeFestivalManager()
     private lateinit var viewModel: TimeTableViewModel
 
     private val testDispatcher = StandardTestDispatcher()
@@ -66,6 +68,7 @@ class TimeTableViewModelTest {
             sandook = sandook,
             analytics = fakeAnalytics,
             ioDispatcher = testDispatcher,
+            festivalManager = festivalManager,
         )
     }
 
@@ -643,12 +646,13 @@ class TimeTableViewModelTest {
 
     // region Test for ModeSelectionChanged
     @Test
-    fun `GIVEN unselectedModes WHEN ModeSelectionChanged is called THEN UI state and analytics are updated`() = runTest {
-        val initialUnselectedModes = setOf(1, 2)
-        viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(initialUnselectedModes))
-        advanceUntilIdle()
-        assertEquals(initialUnselectedModes, viewModel.uiState.value.unselectedModes)
-        assertTrue((fakeAnalytics as FakeAnalytics).isEventTracked("mode_selection_done"))
-    }
+    fun `GIVEN unselectedModes WHEN ModeSelectionChanged is called THEN UI state and analytics are updated`() =
+        runTest {
+            val initialUnselectedModes = setOf(1, 2)
+            viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(initialUnselectedModes))
+            advanceUntilIdle()
+            assertEquals(initialUnselectedModes, viewModel.uiState.value.unselectedModes)
+            assertTrue((fakeAnalytics as FakeAnalytics).isEventTracked("mode_selection_done"))
+        }
     // endregion
 }

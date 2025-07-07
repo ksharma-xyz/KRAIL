@@ -29,6 +29,7 @@ kotlin {
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.di)
+                implementation(projects.core.festival)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.feature.parkRide.network)
@@ -38,7 +39,6 @@ kotlin {
                 implementation(projects.platform.ops)
                 implementation(projects.sandook)
                 implementation(projects.taj)
-
 
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)

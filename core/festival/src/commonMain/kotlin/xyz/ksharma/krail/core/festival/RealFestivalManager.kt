@@ -14,6 +14,11 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagValue
 
 internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 
+    val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
+
     override fun emojiForDate(date: LocalDate): String {
         log("Fetching emoji for date: $date")
         val festival = festivalOnDate(date)
@@ -38,10 +43,20 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
         // Check variable date festivals
         data.variableDates.firstOrNull { festival ->
             val startDate = runCatching { LocalDate.parse(festival.startDate) }
-                .onFailure { logError("Failed to parse startDate '${festival.startDate}' for festival '${festival.greeting}': ${it.message}") }
+                .onFailure { error ->
+                    logError(
+                        "Failed to parse startDate '${festival.startDate}' for festival '${festival.greeting}': ${error.message}",
+                        error,
+                    )
+                }
                 .getOrNull()
             val endDate = runCatching { LocalDate.parse(festival.endDate) }
-                .onFailure { logError("Failed to parse endDate '${festival.endDate}' for festival '${festival.greeting}': ${it.message}") }
+                .onFailure { error ->
+                    logError(
+                        "Failed to parse endDate '${festival.endDate}' for festival '${festival.greeting}': ${error.message}",
+                        error,
+                    )
+                }
                 .getOrNull()
 
             if (startDate == null || endDate == null) {
@@ -66,7 +81,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
         val flagValue = flag.getFlagValue(FlagKeys.FESTIVALS.key)
         log("Flag value for festivals: $flagValue")
         return flagValue.toFestivalData().also {
-            if (it == null) logError("No festivals found or error decoding festivals.")
+            if (it == null) log("No festivals found or error decoding festivals.")
             else log("Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates.")
         }
     }
@@ -74,7 +89,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
     private fun FlagValue.toFestivalData(): FestivalData? = when (this) {
         is FlagValue.JsonValue -> {
             try {
-                Json.decodeFromString<FestivalData>(this.value)
+                json.decodeFromString<FestivalData>(this.value)
             } catch (e: Exception) {
                 logError("Error decoding festivals: ${e.message}", e)
                 null
@@ -85,7 +100,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
             val defaultJson: String = RemoteConfigDefaults.getDefaults()
                 .firstOrNull { it.first == FlagKeys.FESTIVALS.key }?.second as? String ?: "{}"
             try {
-                Json.decodeFromString<FestivalData>(defaultJson)
+                json.decodeFromString<FestivalData>(defaultJson)
             } catch (e: Exception) {
                 logError("Error decoding fallback, default festivals: ${e.message}", e)
                 null

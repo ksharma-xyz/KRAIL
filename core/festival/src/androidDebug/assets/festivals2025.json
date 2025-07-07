@@ -173,7 +173,7 @@
     {
       "type": "CHINESE_NEW_YEAR",
       "startDate": "2026-02-17",
-      "endDate": "2026-03-3",
+      "endDate": "2026-03-03",
       "emojiList": ["🧧"],
       "greeting": "Chinese New Year"
     },
@@ -187,7 +187,7 @@
     {
       "type": "MARDI_GRAS",
       "startDate": "2026-02-13",
-      "endDate": "2026-03-1",
+      "endDate": "2026-03-01",
       "emojiList": ["🏳️‍🌈", "🪩", "🌈"],
       "greeting": "Happy Mardi Gras"
     }

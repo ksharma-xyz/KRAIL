@@ -175,6 +175,19 @@ class RealFestivalManagerTest {
         assertEquals("One Day Festival", (result as VariableDateFestival).greeting)
     }
 
+    @Test
+    fun testFestivalOnDate_withMalformedDateFormat_ignoresFestival() {
+        val data = FestivalData(
+            variableDates = listOf(
+                VariableDateFestival("MALFORMED", "20205-01-1", "20205-01-2", listOf("❌"), "Malformed Date")
+            )
+        )
+        val json = Json.encodeToString(data)
+        fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
+        val result = manager.festivalOnDate(LocalDate.parse("2024-06-05"))
+        assertNull(result)
+    }
+
     private class FakeFlag : Flag {
         private val flagValues = mutableMapOf<String, FlagValue>()
         fun setFlagValue(key: String, value: FlagValue) {

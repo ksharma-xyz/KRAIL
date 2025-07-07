@@ -1,27 +1,49 @@
 package xyz.ksharma.krail.core.festival.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Festival(
+sealed class Festival {
+    abstract val type: String
+    abstract val emojiList: List<String>
+    abstract val greeting: String
+}
+
+@Serializable
+data class FestivalData(
+    @SerialName("confirmedDates")
+    val confirmedDates: List<FixedDateFestival> = emptyList(),
+
+    @SerialName("variableDates")
+    val variableDates: List<VariableDateFestival> = emptyList(),
+)
+
+@Serializable
+data class FixedDateFestival(
+    @SerialName("type") override val type: String,
+    @SerialName("month") val month: Int,
+    @SerialName("day") val day: Int,
+    @SerialName("emojiList") override val emojiList: List<String>,
+    @SerialName("greeting") override val greeting: String,
+) : Festival()
+
+@Serializable
+data class VariableDateFestival(
+    @SerialName("type") override val type: String,
+
     /**
      * Festival start date in ISO 8601 format (YYYY-MM-DD). ISO 8601 format
      * see [kotlinx.datetime.LocalDate.Formats.ISO]
      */
-    val startDate: String,
+    @SerialName("startDate") val startDate: String,
 
     /**
      * Festival end date in ISO 8601 format (YYYY-MM-DD). ISO 8601 format
      */
-    val endDate: String,
+    @SerialName("endDate") val endDate: String,
 
-    /**
-     * Emoji list representing the festival.
-     */
-    val emojiList: List<String>,
+    @SerialName("emojiList") override val emojiList: List<String>,
 
-    /**
-     * Description of the festival.
-     */
-    val description: String
-)
+    @SerialName("greeting") override val greeting: String,
+) : Festival()

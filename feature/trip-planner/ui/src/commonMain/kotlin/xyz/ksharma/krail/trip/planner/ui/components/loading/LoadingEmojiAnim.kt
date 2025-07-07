@@ -13,22 +13,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiManager.getRandomEmoji
 
 @Composable
-fun LoadingEmojiAnim(modifier: Modifier = Modifier, emoji: String? = null) {
+fun LoadingEmojiAnim(
+    emoji: String,
+    modifier: Modifier = Modifier,
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "333")
-    val randomEmoji by rememberSaveable {
-        mutableStateOf(getRandomEmoji(overrideEmoji = emoji))
-    }
 
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -62,7 +60,7 @@ fun LoadingEmojiAnim(modifier: Modifier = Modifier, emoji: String? = null) {
 
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
-            text = randomEmoji,
+            text = emoji,
             style = KrailTheme.typography.headlineLarge.copy(fontSize = 64.sp),
             modifier = Modifier
                 .graphicsLayer {
@@ -74,12 +72,12 @@ fun LoadingEmojiAnim(modifier: Modifier = Modifier, emoji: String? = null) {
     }
 }
 
-// @Preview
+@Preview
 @Composable
 private fun Preview() {
     KrailTheme {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            LoadingEmojiAnim()
+            LoadingEmojiAnim(emoji = "\uD83D\uDE80")
         }
     }
 }

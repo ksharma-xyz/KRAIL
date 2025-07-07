@@ -14,6 +14,14 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagValue
 
 internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 
+    override fun emojiForDate(date: LocalDate): String {
+        log("Fetching emoji for date: $date")
+        val festival = festivalOnDate(date)
+        return festival?.emojiList?.random() ?: FestivalManager.commonEmojiList.random().also {
+            log("No festival for date:$date, returning common emoji: $it")
+        }
+    }
+
     override fun festivalOnDate(date: LocalDate): Festival? {
         log("Checking festival for date: $date")
         val data = getFestivalData() ?: return null

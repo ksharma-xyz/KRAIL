@@ -32,6 +32,7 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.isFuture
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
+import xyz.ksharma.krail.core.festival.FestivalManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.sandook.Sandook
@@ -57,6 +58,7 @@ class TimeTableViewModel(
     private val sandook: Sandook,
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
+    private val festivalManager: FestivalManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
@@ -69,6 +71,7 @@ class TimeTableViewModel(
         // Probably good to have data up to date.
         .onStart {
             log("onStart: Fetching Trip")
+            updateLoadingEmoji()
             fetchTrip()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTable)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), true)
@@ -506,6 +509,12 @@ class TimeTableViewModel(
                 isPreviousBackStackEntryNull = isPreviousBackStackEntryNull
             )
         )
+    }
+
+    private fun updateLoadingEmoji() {
+        festivalManager.emojiForDate().let { emoji ->
+            updateUiState { copy(emoji = emoji) }
+        }
     }
 
     override fun onCleared() {

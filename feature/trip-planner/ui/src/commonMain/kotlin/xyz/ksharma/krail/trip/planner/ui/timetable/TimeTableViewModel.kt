@@ -18,8 +18,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -33,6 +31,7 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeStri
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.festival.FestivalManager
+import xyz.ksharma.krail.core.festival.model.NoFestival
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.sandook.Sandook
@@ -48,9 +47,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyList
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class TimeTableViewModel(
     private val tripPlanningService: TripPlanningService,
@@ -512,8 +513,16 @@ class TimeTableViewModel(
     }
 
     private fun updateLoadingEmoji() {
-        festivalManager.emojiForDate().let { emoji ->
-            updateUiState { copy(emoji = emoji) }
+        festivalManager.festivalOnDate().let { festival ->
+            if (festival != null) {
+                updateUiState { copy(festival = festival) }
+            } else {
+                val festival = NoFestival(
+                    emojiList = FestivalManager.commonEmojiList.toList(),
+                    greeting = "Hop on, mate!",
+                )
+                updateUiState { copy(festival = festival) }
+            }
         }
     }
 

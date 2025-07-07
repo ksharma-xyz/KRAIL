@@ -4,6 +4,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import xyz.ksharma.krail.core.festival.model.Festival
 import kotlin.time.Clock
 import kotlin.time.Instant
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -18,7 +19,7 @@ data class TimeTableState(
     val trip: Trip? = null,
     val isError: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
-    val emoji: String? = null,
+    val festival: Festival? = null,
 ) {
     @OptIn(ExperimentalTime::class)
     data class JourneyCardInfo(

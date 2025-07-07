@@ -47,3 +47,9 @@ data class VariableDateFestival(
 
     @SerialName("greeting") override val greeting: String,
 ) : Festival()
+
+data class NoFestival(
+    override val type: String = "NoFestival",
+    override val emojiList: List<String>,
+    override val greeting: String,
+) : Festival()

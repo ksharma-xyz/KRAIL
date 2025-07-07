@@ -43,6 +43,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.analytics)
                 implementation(projects.core.dateTime)
+                implementation(projects.core.festival)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.sandook)

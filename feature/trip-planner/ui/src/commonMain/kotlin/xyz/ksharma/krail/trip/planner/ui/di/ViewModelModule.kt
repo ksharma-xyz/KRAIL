@@ -72,5 +72,5 @@ val viewModelsModule = module {
         )
     }
 
-    single<StopResultsManager> { RealStopResultsManager(get(), get(), get()) }
+    single<StopResultsManager> { RealStopResultsManager(get(), get()) }
 }

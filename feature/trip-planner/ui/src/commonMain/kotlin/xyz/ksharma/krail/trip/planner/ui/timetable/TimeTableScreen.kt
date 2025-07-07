@@ -307,20 +307,18 @@ fun TimeTableScreen(
                 item(key = "loading") {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
-                        timeTableState.festival?.let { festival ->
-                            LoadingEmojiAnim(
-                                emoji = festival.emojiList.first(),
-                                modifier = Modifier.padding(vertical = 60.dp).animateItem(),
-                            )
+                        LoadingEmojiAnim(
+                            emoji = timeTableState.festival?.emojiList?.first() ?: "♠",
+                            modifier = Modifier.padding(vertical = 60.dp).animateItem(),
+                        )
 
-                            Text(
-                                text = festival.greeting,
-                                style = KrailTheme.typography.bodyLarge,
-                                textAlign = TextAlign.Center,
-                                color = KrailTheme.colors.onSurface,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            )
-                        }
+                        Text(
+                            text = timeTableState.festival?.greeting ?: "Hop on, mate!",
+                            style = KrailTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                            color = KrailTheme.colors.onSurface,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        )
                     }
                 }
             } else if (timeTableState.journeyList.isNotEmpty()) {

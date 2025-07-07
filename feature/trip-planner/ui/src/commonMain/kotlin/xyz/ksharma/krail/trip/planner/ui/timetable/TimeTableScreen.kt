@@ -51,6 +51,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_star
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.festival.FestivalManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
@@ -306,14 +307,13 @@ fun TimeTableScreen(
             } else if (timeTableState.isLoading) {
                 item(key = "loading") {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
                         LoadingEmojiAnim(
-                            emoji = timeTableState.festival?.emojiList?.first() ?: "♠",
+                            emoji = timeTableState.festival.emojiList.first(),
                             modifier = Modifier.padding(vertical = 60.dp).animateItem(),
                         )
 
                         Text(
-                            text = timeTableState.festival?.greeting ?: "Hop on, mate!",
+                            text = timeTableState.festival.greeting,
                             style = KrailTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             color = KrailTheme.colors.onSurface,

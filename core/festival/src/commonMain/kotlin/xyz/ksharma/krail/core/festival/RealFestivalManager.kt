@@ -37,9 +37,21 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 
         // Check variable date festivals
         data.variableDates.firstOrNull { festival ->
-            val startDate = runCatching { LocalDate.parse(festival.startDate) }.getOrNull()
-            val endDate = runCatching { LocalDate.parse(festival.endDate) }.getOrNull()
-            startDate != null && endDate != null && (date >= startDate && date <= endDate)
+            val startDate = runCatching { LocalDate.parse(festival.startDate) }
+                .onFailure { logError("Failed to parse startDate '${festival.startDate}' for festival '${festival.greeting}': ${it.message}") }
+                .getOrNull()
+            val endDate = runCatching { LocalDate.parse(festival.endDate) }
+                .onFailure { logError("Failed to parse endDate '${festival.endDate}' for festival '${festival.greeting}': ${it.message}") }
+                .getOrNull()
+
+            if (startDate == null || endDate == null) {
+                log("Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate")
+                return@firstOrNull false
+            }
+
+            val inRange = date >= startDate && date <= endDate
+            log("Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange")
+            inRange
         }?.also { festival ->
             log("Variable date festival found: ${festival.greeting}")
             return festival
@@ -52,9 +64,10 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
     private fun getFestivalData(): FestivalData? {
         log("Fetching festivals from remote config")
         val flagValue = flag.getFlagValue(FlagKeys.FESTIVALS.key)
+        log("Flag value for festivals: $flagValue")
         return flagValue.toFestivalData().also {
             if (it == null) logError("No festivals found or error decoding festivals.")
-            else log("Festivals fetched successfully.")
+            else log("Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates.")
         }
     }
 

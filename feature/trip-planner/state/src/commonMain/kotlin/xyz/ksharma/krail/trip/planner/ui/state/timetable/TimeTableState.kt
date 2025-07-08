@@ -21,10 +21,7 @@ data class TimeTableState(
     val trip: Trip? = null,
     val isError: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
-    val festival: Festival = NoFestival(
-        emojiList = FestivalManager.commonEmojiList.toList(),
-        greeting = "Hop on, mate!",
-    ),
+    val festival: Festival = NoFestival(),
 ) {
     @OptIn(ExperimentalTime::class)
     data class JourneyCardInfo(

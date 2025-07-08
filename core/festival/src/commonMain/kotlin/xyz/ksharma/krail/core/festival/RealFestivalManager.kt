@@ -42,31 +42,34 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 
         // Check variable date festivals
         data.variableDates.firstOrNull { festival ->
-            val startDate = runCatching { LocalDate.parse(festival.startDate) }
-                .onFailure { error ->
-                    logError(
-                        "Failed to parse startDate '${festival.startDate}' for festival '${festival.greeting}': ${error.message}",
-                        error,
-                    )
-                }
-                .getOrNull()
-            val endDate = runCatching { LocalDate.parse(festival.endDate) }
-                .onFailure { error ->
-                    logError(
-                        "Failed to parse endDate '${festival.endDate}' for festival '${festival.greeting}': ${error.message}",
-                        error,
-                    )
-                }
-                .getOrNull()
+            val startDate = parseDateOrNull(
+                date = festival.startDate,
+                greeting = festival.greeting,
+                tag = "startDate",
+            )
+            val endDate = parseDateOrNull(
+                date = festival.endDate,
+                greeting = festival.greeting,
+                tag = "endDate",
+            )
 
-            if (startDate == null || endDate == null) {
-                log("Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate")
-                return@firstOrNull false
+            when {
+                startDate == null || endDate == null -> {
+                    log("Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate")
+                    false
+                }
+
+                startDate > endDate -> {
+                    logError("Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate")
+                    false
+                }
+
+                else -> {
+                    val inRange = date >= startDate && date <= endDate
+                    log("Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange")
+                    inRange
+                }
             }
-
-            val inRange = date >= startDate && date <= endDate
-            log("Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange")
-            inRange
         }?.also { festival ->
             log("Variable date festival found: ${festival.greeting}")
             return festival
@@ -107,4 +110,14 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
             }
         }
     }
+
+    private fun parseDateOrNull(date: String, greeting: String, tag: String) =
+        runCatching { LocalDate.parse(date) }
+            .onFailure { error ->
+                logError(
+                    "Failed to parse $tag:'${date}' for festival '${greeting}",
+                    error,
+                )
+            }
+            .getOrNull()
 }

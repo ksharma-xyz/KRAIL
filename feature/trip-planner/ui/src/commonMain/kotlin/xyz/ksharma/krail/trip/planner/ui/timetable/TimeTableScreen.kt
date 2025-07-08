@@ -308,7 +308,7 @@ fun TimeTableScreen(
                 item(key = "loading") {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LoadingEmojiAnim(
-                            emoji = timeTableState.festival.emojiList.first(),
+                            emoji = timeTableState.festival.emojiList.random(),
                             modifier = Modifier.padding(vertical = 60.dp).animateItem(),
                         )
 

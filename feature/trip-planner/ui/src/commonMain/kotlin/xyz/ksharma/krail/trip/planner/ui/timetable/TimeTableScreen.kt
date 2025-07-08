@@ -306,14 +306,13 @@ fun TimeTableScreen(
             } else if (timeTableState.isLoading) {
                 item(key = "loading") {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
                         LoadingEmojiAnim(
-                            emoji = timeTableState.festival?.emojiList?.first() ?: "♠",
+                            emoji = timeTableState.festival.emojiList.random(),
                             modifier = Modifier.padding(vertical = 60.dp).animateItem(),
                         )
 
                         Text(
-                            text = timeTableState.festival?.greeting ?: "Hop on, mate!",
+                            text = timeTableState.festival.greeting,
                             style = KrailTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             color = KrailTheme.colors.onSurface,

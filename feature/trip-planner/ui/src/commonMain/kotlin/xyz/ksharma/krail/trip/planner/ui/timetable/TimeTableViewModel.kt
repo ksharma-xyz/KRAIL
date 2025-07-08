@@ -513,17 +513,8 @@ class TimeTableViewModel(
     }
 
     private fun updateLoadingEmoji() {
-        festivalManager.festivalOnDate().let { festival ->
-            if (festival != null) {
-                updateUiState { copy(festival = festival) }
-            } else {
-                val festival = NoFestival(
-                    emojiList = FestivalManager.commonEmojiList.toList(),
-                    greeting = "Hop on, mate!",
-                )
-                updateUiState { copy(festival = festival) }
-            }
-        }
+        val festival = festivalManager.festivalOnDate() ?: NoFestival()
+        updateUiState { copy(festival = festival) }
     }
 
     override fun onCleared() {

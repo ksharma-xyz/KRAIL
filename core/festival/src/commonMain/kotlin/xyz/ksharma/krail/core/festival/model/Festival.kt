@@ -2,6 +2,7 @@ package xyz.ksharma.krail.core.festival.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import xyz.ksharma.krail.core.festival.FestivalManager
 
 @Serializable
 sealed class Festival {
@@ -50,6 +51,6 @@ data class VariableDateFestival(
 
 data class NoFestival(
     override val type: String = "NoFestival",
-    override val emojiList: List<String>,
-    override val greeting: String,
+    override val emojiList: List<String> = FestivalManager.commonEmojiList.toList(),
+    override val greeting: String = "Hop on, mate!",
 ) : Festival()

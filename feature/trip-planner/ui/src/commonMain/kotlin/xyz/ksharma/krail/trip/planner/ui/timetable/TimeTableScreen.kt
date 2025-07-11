@@ -99,6 +99,7 @@ fun TimeTableScreen(
         mutableStateListOf(*timeTableState.unselectedModes.toTypedArray())
     }
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
+    val loadingEmoji by rememberSaveable { mutableStateOf(timeTableState.festival.emojiList.random()) }
 
     Column(
         modifier = modifier.fillMaxSize().background(color = KrailTheme.colors.surface),
@@ -307,7 +308,7 @@ fun TimeTableScreen(
                 item(key = "loading") {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LoadingEmojiAnim(
-                            emoji = timeTableState.festival.emojiList.random(),
+                            emoji = loadingEmoji,
                             modifier = Modifier.padding(vertical = 60.dp).animateItem(),
                         )
 

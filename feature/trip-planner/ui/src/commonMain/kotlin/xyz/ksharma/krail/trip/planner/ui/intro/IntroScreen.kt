@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +44,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.modifier.gradientBorder
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState.IntroPageType
@@ -209,7 +209,10 @@ fun IntroScreen(
                     ),
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
                 ) {
-                    Text(text = state.pages[startPage].ctaText)
+                    Text(
+                        text = state.pages[startPage].ctaText,
+                        color = getForegroundColor(backgroundColor = animatedButtonColor),
+                    )
                 }
             }
         }
@@ -316,6 +319,17 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 onShareClick = onShareClick,
+                modifier = modifier.padding(20.dp),
+                onInteraction = {
+                    onInteraction(pageData.type)
+                }
+            )
+        }
+
+        IntroPageType.PARK_RIDE -> {
+            IntroParkRide(
+                tagline = pageData.tagline,
+                style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
                 onInteraction = {
                     onInteraction(pageData.type)

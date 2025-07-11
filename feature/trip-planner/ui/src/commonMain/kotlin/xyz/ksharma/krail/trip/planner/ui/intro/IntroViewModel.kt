@@ -77,6 +77,7 @@ class IntroViewModel(
             IntroState.IntroPageType.PLAN_TRIP -> InteractionPage.PLAN_TRIP
             IntroState.IntroPageType.SELECT_MODE -> InteractionPage.SELECT_MODE
             IntroState.IntroPageType.INVITE_FRIENDS -> InteractionPage.INVITE_FRIENDS
+            IntroState.IntroPageType.PARK_RIDE -> InteractionPage.PARK_RIDE
         }
 
     private fun updateUiState(block: IntroState.() -> IntroState) {

@@ -28,6 +28,8 @@ data class IntroState(
         PLAN_TRIP,
         SELECT_MODE,
         INVITE_FRIENDS,
+
+        PARK_RIDE,
     }
 
     companion object {
@@ -69,12 +71,12 @@ data class IntroState(
                         "#FFC800", // Yellow
                         KrailThemeStyle.Bus.hexColorCode,
                     ),
-                    title = "Service Alerts",
-                    tagline = "DELAYS?\nDETOURS?\nWE'LL TELL YOU.",
-                    emoji = "⚠",
+                    title = "Park & Ride",
+                    tagline = "PARKING?\nTOTAL PAIN\nWE GOT YOU",
+                    emoji = "\uD83C\uDD7F\uFE0F",
                     ctaText = "LET'S KRAIL",
                     primaryStyle = KrailThemeStyle.Bus.hexColorCode,
-                    type = IntroPageType.ALERTS,
+                    type = IntroPageType.PARK_RIDE,
                 ),
                 IntroPage(
                     id = 3,
@@ -94,6 +96,20 @@ data class IntroState(
                 IntroPage(
                     id = 4,
                     colorsList = persistentListOf(
+                        KrailThemeStyle.Ferry.hexColorCode,
+                        TransportMode.LightRail().colorCode,
+                        KrailThemeStyle.Ferry.hexColorCode,
+                    ),
+                    title = "Service Alerts",
+                    tagline = "DELAYS?\nDETOURS?\nWE'LL TELL YOU.",
+                    emoji = "⚠",
+                    ctaText = "LET'S KRAIL",
+                    primaryStyle = TransportMode.LightRail().colorCode,
+                    type = IntroPageType.ALERTS,
+                ),
+                IntroPage(
+                    id = 5,
+                    colorsList = persistentListOf(
                         KrailThemeStyle.PurpleDrip.hexColorCode,
                         "#FFC800", // Yellow
                         KrailThemeStyle.PurpleDrip.hexColorCode,
@@ -106,7 +122,7 @@ data class IntroState(
                     type = IntroPageType.PLAN_TRIP,
                 ),
                 IntroPage(
-                    id = 5,
+                    id = 6,
                     colorsList = persistentListOf(
                         KrailThemeStyle.BarbiePink.hexColorCode,
                         "#FFC800", // Yellow

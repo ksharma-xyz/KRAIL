@@ -262,6 +262,9 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) {
         enum class SocialPlatform(val platform: String) {
             LINKEDIN("linkedin"),
+            REDDIT("reddit"),
+            INSTAGRAM("instagram"),
+            FACEBOOK("facebook"),
         }
     }
 

@@ -241,6 +241,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             PLAN_TRIP,
             SELECT_MODE,
             INVITE_FRIENDS,
+            PARK_RIDE,
         }
     }
 

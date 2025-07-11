@@ -26,12 +26,16 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_facebook
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
+import krail.feature.trip_planner.ui.generated.resources.ic_instagram
 import krail.feature.trip_planner.ui.generated.resources.ic_linkedin
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
+import krail.feature.trip_planner.ui.generated.resources.ic_reddit
 import krail.feature.trip_planner.ui.generated.resources.ic_wifi
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
@@ -41,6 +45,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
+import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType
 
 @Composable
 fun SettingsScreen(
@@ -51,7 +56,7 @@ fun SettingsScreen(
     onReferFriendClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
-    onLinkedInLogoClick: () -> Unit = {},
+    onSocialLinkClick: (SocialType) -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -127,25 +132,27 @@ fun SettingsScreen(
                         detailContent = {
                             Row(
                                 modifier = Modifier
-                                    .padding(start = (24 + 16 + 4).dp, end = 16.dp),
+                                    .padding(start = (24 + 16 + 6).dp, end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .klickable(
-                                            indication = null,
-                                            onClick = {
-                                                onLinkedInLogoClick()
-                                            },
+                                SocialType.entries.forEach { socialType ->
+                                    SocialConnectionBox(
+                                        type = socialType,
+                                        onSocialLinkClick = {
+                                            onSocialLinkClick(socialType)
+                                        },
+                                        modifier = Modifier.padding(
+                                            top = 4.dp,
+                                            bottom = 4.dp,
+                                        ),
+                                    ) {
+                                        Image(
+                                            painter = painterResource(resource = socialType.resource()),
+                                            contentDescription = "${socialType.displayName} Page for KRAIL App",
+                                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                                            modifier = Modifier.size(24.dp),
                                         )
-                                        .semantics(mergeDescendants = true) {},
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Image(
-                                        painter = painterResource(Res.drawable.ic_linkedin),
-                                        contentDescription = "LinkedIn Page for KRAIL App",
-                                        modifier = Modifier.size(24.dp),
-                                    )
+                                    }
                                 }
                             }
                         },
@@ -176,6 +183,36 @@ fun SettingsScreen(
     }
 }
 
+private fun SocialType.resource(): DrawableResource = when (this) {
+    SocialType.LinkedIn -> Res.drawable.ic_linkedin
+    SocialType.Reddit -> Res.drawable.ic_reddit
+    SocialType.Instagram -> Res.drawable.ic_instagram
+    SocialType.Facebook -> Res.drawable.ic_facebook
+}
+
+@Composable
+private fun SocialConnectionBox(
+    type: SocialType,
+    onSocialLinkClick: (SocialType) -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {},
+) {
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .klickable(
+                indication = null,
+                onClick = {
+                    onSocialLinkClick(type)
+                },
+            )
+            .semantics(mergeDescendants = true) {},
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
 @Composable
 private fun SettingsItem(
     icon: Painter,
@@ -194,7 +231,7 @@ private fun SettingsItem(
         Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp,)
+                .padding(horizontal = 16.dp)
                 .semantics(mergeDescendants = true) {},
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,

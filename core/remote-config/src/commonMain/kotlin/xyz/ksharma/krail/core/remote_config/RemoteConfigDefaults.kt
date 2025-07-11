@@ -100,10 +100,6 @@ object RemoteConfigDefaults {
                         "If something’s not quite right (or you just have thoughts), email us anytime at hey@krail.app or reach out via LinkedIn. 💕",
             ),
             Pair(
-                first = FlagKeys.LINKED_IN_KRAIL_APP_URL.key,
-                second = "https://www.linkedin.com/company/krail/",
-            ),
-            Pair(
                 first = FlagKeys.FESTIVALS.key,
                 second = "[]",
             ),

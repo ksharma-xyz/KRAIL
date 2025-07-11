@@ -53,8 +53,8 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
                     )
                 }
             },
-            onLinkedInLogoClick = {
-                viewModel.onEvent(SettingsEvent.LinkedInLogoClick)
+            onSocialLinkClick = { socialType ->
+                viewModel.onEvent(SettingsEvent.SocialLinkClick(socialType))
             }
         )
     }

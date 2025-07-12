@@ -35,4 +35,14 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-android-debug
     uses: ./.github/workflows/firebase-app-distribution.yml
+    with:
+      variant: debug
+    secrets: inherit
+
+  distribute-release-apk:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-android-release
+    uses: ./.github/workflows/firebase-app-distribution.yml
+    with:
+      variant: release
     secrets: inherit

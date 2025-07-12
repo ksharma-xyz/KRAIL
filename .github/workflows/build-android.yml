@@ -56,7 +56,7 @@ jobs:
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug -PversionCode="${{ github.run_number }}" testDebug --rerun-tasks
+            ./gradlew :composeApp:assembleDebug :composeApp:testDebug -PversionCode="${{ github.run_number }}" --rerun-tasks --stacktrace
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
             ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi

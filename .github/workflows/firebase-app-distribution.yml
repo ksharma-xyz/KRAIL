@@ -37,7 +37,7 @@ jobs:
           FIREBASE_APP_ID: ${{
               (inputs.variant == 'debug' && secrets.FIREBASE_ANDROID_DEBUG_APP_ID) ||
               (inputs.variant == 'release' && secrets.FIREBASE_ANDROID_PROD_APP_ID)
-          } }
+          }}
         run: |
           firebase appdistribution:distribute composeApp-${{ inputs.variant }}.apk \
             --app "$FIREBASE_APP_ID" \

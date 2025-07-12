@@ -61,6 +61,15 @@ jobs:
             ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi
 
+      - name: List files in composeApp/release
+        run: ls -lR composeApp/release || echo "Directory not found"
+
+      - name: List files in composeApp/build/outputs/apk/release
+        run: ls -lR composeApp/build/outputs/apk/release || echo "Directory not found"
+
+      - name: List files in composeApp/build/outputs/bundle/release
+        run: ls -lR composeApp/build/outputs/bundle/release || echo "Directory not found"
+
       - name: Sign Android Release AAB
         if: ${{ inputs.variant == 'release' }}
         id: signed_release_aab

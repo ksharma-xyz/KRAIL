@@ -44,7 +44,14 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
           FIREBASE_APP_ID: ${{ env.FIREBASE_APP_ID }}
         run: |
-          firebase appdistribution:distribute composeApp-${{ inputs.variant }}.apk \
-            --app "$FIREBASE_APP_ID" \
-            --groups "Friends" \
-            --release-notes "${{ github.event.head_commit.message }}"
+          if [ "${{ inputs.variant }}" = "debug" ]; then
+            firebase appdistribution:distribute composeApp-debug.apk \
+              --app "$FIREBASE_APP_ID" \
+              --groups "Internal" \
+              --release-notes "Debug: ${{ github.event.head_commit.message }}"
+          else
+            firebase appdistribution:distribute composeApp-release.apk \
+              --app "$FIREBASE_APP_ID" \
+              --groups "Friends" \
+              --release-notes "Release: ${{ github.event.head_commit.message }}"
+          fi

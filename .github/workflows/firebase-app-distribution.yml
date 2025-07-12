@@ -2,6 +2,10 @@ name: Firebase App Distribution
 
 on:
   workflow_call:
+    inputs:
+      variant:
+        required: true
+        type: string
 
 jobs:
   distribute-apk:
@@ -13,7 +17,7 @@ jobs:
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: composeApp-debug-apk-${{ github.run_id }}
+          name: composeApp-${{ inputs.variant }}-apk-${{ github.run_id }}
 
       - name: List files in extracted artifact
         run: ls
@@ -30,9 +34,12 @@ jobs:
       - name: Distribute APK to Firebase App Distribution
         env:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
-          FIREBASE_APP_ID_DEBUG: ${{ secrets.FIREBASE_APP_ID_DEBUG }}
+          FIREBASE_APP_ID: ${{
+              (inputs.variant == 'debug' && secrets.FIREBASE_ANDROID_DEBUG_APP_ID) ||
+              (inputs.variant == 'release' && secrets.FIREBASE_ANDROID_PROD_APP_ID)
+          } }
         run: |
-          firebase appdistribution:distribute composeApp-debug.apk \
-            --app "$FIREBASE_APP_ID_DEBUG" \
+          firebase appdistribution:distribute composeApp-${{ inputs.variant }}.apk \
+            --app "$FIREBASE_APP_ID" \
             --groups "Friends" \
             --release-notes "${{ github.event.head_commit.message }}"

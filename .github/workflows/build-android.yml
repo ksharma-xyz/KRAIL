@@ -54,10 +54,11 @@ jobs:
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
         run: |
+          set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
             ./gradlew :composeApp:assembleDebug -PversionCode="${{ github.run_number }}" testDebug --rerun-tasks
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
+            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi
 
       - name: Sign Android Release AAB
@@ -71,10 +72,23 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: Upload Artifact
+      - name: Upload Debug APK
+        if: ${{ inputs.variant == 'debug' }}
         uses: actions/upload-artifact@v4
         with:
-          name: |
-            ${{ inputs.variant == 'debug' && format('composeApp-{0}-apk-{1}', inputs.variant, github.run_id) || format('composeApp-release-aab-{0}', github.run_id) }}
-          path: |
-            ${{ inputs.variant == 'debug' && format('composeApp/build/outputs/apk/{0}/composeApp-{0}.apk', inputs.variant) || steps.signed_release_aab.outputs.signedReleaseFile }}
+          name: composeApp-debug-apk-${{ github.run_id }}
+          path: composeApp/build/outputs/apk/debug/composeApp-debug.apk
+
+      - name: Upload Release APK
+        if: ${{ inputs.variant == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: composeApp-release-apk-${{ github.run_id }}
+          path: composeApp/build/outputs/apk/release/composeApp-release.apk
+
+      - name: Upload Release AAB
+        if: ${{ inputs.variant == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: composeApp-release-aab-${{ github.run_id }}
+          path: ${{ steps.signed_release_aab.outputs.signedReleaseFile }}

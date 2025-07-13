@@ -114,7 +114,7 @@ jobs:
       - name: Sign Android Release AAB
         if: ${{ inputs.variant == 'release' }}
         id: signed_release_aab
-        uses: r0adkll/sign-android-release@v1.0.4
+        uses: filippoLeporati93/android-release-signer@v1
         with:
           releaseDirectory: composeApp/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE }}

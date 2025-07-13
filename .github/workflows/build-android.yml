@@ -114,3 +114,6 @@ jobs:
         with:
           name: composeApp-release-aab-${{ github.run_id }}
           path: ${{ steps.signed_release_aab.outputs.signedReleaseFile }}
+
+      - name: Cleanup sensitive files
+        run: rm -f keystore.jks

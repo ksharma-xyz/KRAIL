@@ -55,3 +55,6 @@ jobs:
               --groups "Friends" \
               --release-notes "Release: ${{ github.event.head_commit.message }}"
           fi
+
+      - name: Cleanup sensitive files
+        run: rm -f gcloud.json

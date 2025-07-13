@@ -61,15 +61,42 @@ jobs:
             ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi
 
-      - name: List files in composeApp/release
-        run: ls -lR composeApp/release || echo "Directory not found"
+      - name: Upload Debug APK
+        if: ${{ inputs.variant == 'debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: composeApp-debug-apk-${{ github.run_id }}
+          path: composeApp/build/outputs/apk/debug/composeApp-debug.apk
 
+      # Release APK Signing and Uploading
       - name: List files in composeApp/build/outputs/apk/release
         run: ls -lR composeApp/build/outputs/apk/release || echo "Directory not found"
 
-      - name: List files in composeApp/build/outputs/bundle/release
-        run: ls -lR composeApp/build/outputs/bundle/release || echo "Directory not found"
+      - name: Check jarsigner
+        run: jarsigner -help
 
+      - name: Decode Keystore
+        if: ${{ inputs.variant == 'release' }}
+        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > keystore.jks
+
+      - name: Sign Release APK
+        if: ${{ inputs.variant == 'release' }}
+        run: |
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore keystore.jks \
+            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
+            composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk ${{ secrets.ANDROID_KEY_ALIAS }}
+          mv composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk composeApp/build/outputs/apk/release/composeApp-release.apk
+
+      - name: Upload Release APK
+        if: ${{ inputs.variant == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: composeApp-release-apk-${{ github.run_id }}
+          path: composeApp/build/outputs/apk/release/composeApp-release.apk
+
+      # Release AAB Signing and Uploading
       - name: Sign Android Release AAB
         if: ${{ inputs.variant == 'release' }}
         id: signed_release_aab
@@ -81,23 +108,12 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: Upload Debug APK
-        if: ${{ inputs.variant == 'debug' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: composeApp-debug-apk-${{ github.run_id }}
-          path: composeApp/build/outputs/apk/debug/composeApp-debug.apk
-
-      - name: Upload Release APK
-        if: ${{ inputs.variant == 'release' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: composeApp-release-apk-${{ github.run_id }}
-          path: composeApp/release/composeApp-release.apk
-
       - name: Upload Release AAB
         if: ${{ inputs.variant == 'release' }}
         uses: actions/upload-artifact@v4
         with:
           name: composeApp-release-aab-${{ github.run_id }}
           path: ${{ steps.signed_release_aab.outputs.signedReleaseFile }}
+
+      - name: Cleanup sensitive files
+        run: rm -f keystore.jks

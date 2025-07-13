@@ -75,11 +75,15 @@ jobs:
       - name: Check jarsigner
         run: jarsigner -help
 
+      - name: Decode Keystore
+        if: ${{ inputs.variant == 'release' }}
+        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > keystore.jks
+
       - name: Sign Release APK
         if: ${{ inputs.variant == 'release' }}
         run: |
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore ${{ secrets.ANDROID_KEYSTORE_FILE }} \
+            -keystore keystore.jks \
             -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
             -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
             composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk ${{ secrets.ANDROID_KEY_ALIAS }}

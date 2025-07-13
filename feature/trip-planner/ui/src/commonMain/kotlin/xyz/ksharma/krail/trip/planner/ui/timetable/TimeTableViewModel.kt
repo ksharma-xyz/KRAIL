@@ -514,7 +514,14 @@ class TimeTableViewModel(
 
     private fun updateLoadingEmoji() {
         val festival = festivalManager.festivalOnDate() ?: NoFestival()
-        updateUiState { copy(festival = festival) }
+        updateUiState {
+            copy(
+                loadingEmoji = TimeTableState.LoadingEmoji(
+                    emoji = festival.emojiList.random(),
+                    greeting = festival.greeting,
+                )
+            )
+        }
     }
 
     override fun onCleared() {

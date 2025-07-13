@@ -1,18 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.state.timetable
 
+import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import xyz.ksharma.krail.core.festival.FestivalManager
-import xyz.ksharma.krail.core.festival.model.Festival
-import xyz.ksharma.krail.core.festival.model.NoFestival
 import kotlin.time.Clock
 import kotlin.time.Instant
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import kotlin.time.ExperimentalTime
 
+@Stable
 data class TimeTableState(
     val isLoading: Boolean = true,
     val silentLoading: Boolean = false, // Loading anim while still displaying TimeTable results.
@@ -21,9 +20,12 @@ data class TimeTableState(
     val trip: Trip? = null,
     val isError: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
-    val festival: Festival = NoFestival(),
+    // has to be null, otherwise it will switch from default to a festival.
+    // It should load only once whether it is a festival or not.
+    val loadingEmoji: LoadingEmoji? = null,
 ) {
     @OptIn(ExperimentalTime::class)
+    @Stable
     data class JourneyCardInfo(
         val timeText: String, // "in x mins"
 
@@ -82,6 +84,7 @@ data class TimeTableState(
         val hasJourneyEnded: Boolean
             get() = Instant.parse(destinationUtcDateTime) < Clock.System.now()
 
+        @Stable
         sealed class Leg {
             data class WalkingLeg(
                 val duration: String, // "10mins"
@@ -137,10 +140,17 @@ data class TimeTableState(
             IDEST("IDEST"),
         }
 
+        @Stable
         data class Stop(
             val name: String, // "xx Station, Platform 1" - stopSequence.disassembledName ?: stopSequence.name
             val time: String, // "12:00pm" - stopSequence.departureTimeEstimated ?: stopSequence.departureTimePlanned
             val isWheelchairAccessible: Boolean,
         )
     }
+
+    @Stable
+    data class LoadingEmoji(
+        val emoji: String,
+        val greeting: String,
+    )
 }

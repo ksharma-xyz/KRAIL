@@ -304,20 +304,23 @@ fun TimeTableScreen(
                     )
                 }
             } else if (timeTableState.isLoading) {
-                item(key = "loading") {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        LoadingEmojiAnim(
-                            emoji = timeTableState.festival.emojiList.random(),
-                            modifier = Modifier.padding(vertical = 60.dp).animateItem(),
-                        )
 
-                        Text(
-                            text = timeTableState.festival.greeting,
-                            style = KrailTheme.typography.bodyLarge,
-                            textAlign = TextAlign.Center,
-                            color = KrailTheme.colors.onSurface,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        )
+                timeTableState.loadingEmoji?.let { emoji ->
+                    item(key = "loading") {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            LoadingEmojiAnim(
+                                emoji = emoji.emoji,
+                                modifier = Modifier.padding(vertical = 60.dp).animateItem(),
+                            )
+
+                            Text(
+                                text = emoji.greeting,
+                                style = KrailTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                color = KrailTheme.colors.onSurface,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            )
+                        }
                     }
                 }
             } else if (timeTableState.journeyList.isNotEmpty()) {

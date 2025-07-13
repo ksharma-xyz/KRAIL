@@ -55,6 +55,7 @@ jobs:
         run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > keystore.jks
 
       - name: Export signing secrets for Gradle
+        if: ${{ inputs.variant == 'release' }}
         run: |
           echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
           echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV

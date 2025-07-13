@@ -50,6 +50,17 @@ jobs:
       - name: Clean Gradle Build
         run: ./gradlew clean
 
+      - name: Decode Keystore
+        if: ${{ inputs.variant == 'release' }}
+        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > keystore.jks
+
+      - name: Export signing secrets for Gradle
+        if: ${{ inputs.variant == 'release' }}
+        run: |
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV
+
       - name: Build ${{ inputs.variant }}
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
@@ -72,35 +83,6 @@ jobs:
       # Release APK Signing and Uploading
       - name: List files in composeApp/build/outputs/apk/release
         run: ls -lR composeApp/build/outputs/apk/release || echo "Directory not found"
-
-      - name: Check jarsigner
-        run: jarsigner -help
-
-      - name: Decode Keystore
-        if: ${{ inputs.variant == 'release' }}
-        run: echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > keystore.jks
-
-      - name: Sign Release APK
-        if: ${{ inputs.variant == 'release' }}
-        run: |
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore keystore.jks \
-            -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
-            -keypass ${{ secrets.ANDROID_KEY_PASSWORD }} \
-            composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk ${{ secrets.ANDROID_KEY_ALIAS }}
-          mv composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk composeApp/build/outputs/apk/release/composeApp-release.apk
-
-      - name: Install Android Build Tools (for zipalign)
-        if: ${{ inputs.variant == 'release' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zipalign || true
-
-      - name: Zipalign Release APK
-        if: ${{ inputs.variant == 'release' }}
-        run: |
-          zipalign -v -p 4 composeApp/build/outputs/apk/release/composeApp-release.apk composeApp/build/outputs/apk/release/composeApp-release-aligned.apk
-          mv composeApp/build/outputs/apk/release/composeApp-release-aligned.apk composeApp/build/outputs/apk/release/composeApp-release.apk
 
       - name: Upload Release APK
         if: ${{ inputs.variant == 'release' }}

@@ -65,6 +65,7 @@ jobs:
         if: ${{ inputs.variant == 'debug' }}
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 1
           name: composeApp-debug-apk-${{ github.run_id }}
           path: composeApp/build/outputs/apk/debug/composeApp-debug.apk
 
@@ -89,10 +90,23 @@ jobs:
             composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk ${{ secrets.ANDROID_KEY_ALIAS }}
           mv composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk composeApp/build/outputs/apk/release/composeApp-release.apk
 
+      - name: Install Android Build Tools (for zipalign)
+        if: ${{ inputs.variant == 'release' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zipalign || true
+
+      - name: Zipalign Release APK
+        if: ${{ inputs.variant == 'release' }}
+        run: |
+          zipalign -v -p 4 composeApp/build/outputs/apk/release/composeApp-release.apk composeApp/build/outputs/apk/release/composeApp-release-aligned.apk
+          mv composeApp/build/outputs/apk/release/composeApp-release-aligned.apk composeApp/build/outputs/apk/release/composeApp-release.apk
+
       - name: Upload Release APK
         if: ${{ inputs.variant == 'release' }}
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 1
           name: composeApp-release-apk-${{ github.run_id }}
           path: composeApp/build/outputs/apk/release/composeApp-release.apk
 
@@ -112,6 +126,7 @@ jobs:
         if: ${{ inputs.variant == 'release' }}
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 1
           name: composeApp-release-aab-${{ github.run_id }}
           path: ${{ steps.signed_release_aab.outputs.signedReleaseFile }}
 

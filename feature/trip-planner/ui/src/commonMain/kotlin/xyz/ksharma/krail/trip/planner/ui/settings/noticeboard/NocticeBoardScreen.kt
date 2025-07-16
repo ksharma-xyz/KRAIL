@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -34,7 +35,8 @@ fun VerticalCardStack(
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val density = LocalDensity.current
 
-    val screenHeight = with(density) { LocalDensity.current.run { 600.dp.toPx() } } // adjust as needed
+    val screenHeight =
+        with(density) { LocalDensity.current.run { 480.dp.toPx() } } // adjust as needed
     val selectedHeight = 0.75f * screenHeight
     val unselectedHeight = 0.6f * screenHeight
 
@@ -46,7 +48,9 @@ fun VerticalCardStack(
     ) {
         VerticalPager(
             state = pagerState,
-            pageSpacing = 20.dp,
+            pageSpacing = 10.dp,
+            pageSize = PageSize.Fixed(480.dp),
+            key = { pages[it] },
             contentPadding = PaddingValues(vertical = 64.dp),
             modifier = Modifier.fillMaxSize()
         ) { page ->

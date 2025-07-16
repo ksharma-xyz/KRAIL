@@ -32,11 +32,15 @@ fun VerticalCardStack(
     pages: List<String>,
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState(pageCount = { pages.size })
+    val initialPage = Int.MAX_VALUE / 2
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { Int.MAX_VALUE }
+    )
     val density = LocalDensity.current
 
     val screenHeight =
-        with(density) { LocalDensity.current.run { 480.dp.toPx() } } // adjust as needed
+        with(density) { LocalDensity.current.run { 480.dp.toPx() } }
     val selectedHeight = 0.75f * screenHeight
     val unselectedHeight = 0.6f * screenHeight
 
@@ -50,10 +54,11 @@ fun VerticalCardStack(
             state = pagerState,
             pageSpacing = 10.dp,
             pageSize = PageSize.Fixed(480.dp),
-            key = { pages[it] },
+            key = { (it % pages.size).let { idx -> pages[idx] } },
             contentPadding = PaddingValues(vertical = 64.dp),
             modifier = Modifier.fillMaxSize()
         ) { page ->
+            val actualPage = page % pages.size
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
             val height by animateDpAsState(
                 targetValue = lerpDp(
@@ -77,7 +82,7 @@ fun VerticalCardStack(
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp)
                     .background(
-                        color = when (page % 4) {
+                        color = when (actualPage % 4) {
                             0 -> Color(0xFFE57373)
                             1 -> Color(0xFF64B5F6)
                             2 -> Color(0xFF81C784)
@@ -88,7 +93,7 @@ fun VerticalCardStack(
                     .zIndex(1f - pageOffset)
             ) {
                 Text(
-                    text = pages[page],
+                    text = pages[actualPage],
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(24.dp),

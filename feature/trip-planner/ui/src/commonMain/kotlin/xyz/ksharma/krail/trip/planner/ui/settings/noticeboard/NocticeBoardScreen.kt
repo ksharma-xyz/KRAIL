@@ -3,12 +3,13 @@ package xyz.ksharma.krail.trip.planner.ui.settings.noticeboard
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
@@ -19,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -37,38 +37,37 @@ fun VerticalCardStack(
         initialPage = initialPage,
         pageCount = { Int.MAX_VALUE }
     )
-    val density = LocalDensity.current
 
-    val screenHeight =
-        with(density) { LocalDensity.current.run { 480.dp.toPx() } }
-    val selectedHeight = 0.75f * screenHeight
-    val unselectedHeight = 0.6f * screenHeight
-
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
             .statusBarsPadding()
     ) {
+        val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
+        val selectedWidth = 1f * maxCardWidth.value
+        val unselectedWidth = 0.9f * maxCardWidth.value
+        val cardHeight = 480.dp
+
         VerticalPager(
             state = pagerState,
             pageSpacing = 10.dp,
-            pageSize = PageSize.Fixed(480.dp),
+            pageSize = PageSize.Fixed(cardHeight),
             key = { (it % pages.size).let { idx -> pages[idx] } },
             contentPadding = PaddingValues(vertical = 64.dp),
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val actualPage = page % pages.size
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
-            val height by animateDpAsState(
+            val width by animateDpAsState(
                 targetValue = lerpDp(
-                    selectedHeight.dp,
-                    unselectedHeight.dp,
+                    selectedWidth.dp,
+                    unselectedWidth.dp,
                     pageOffset.coerceIn(0f, 1f)
                 ),
-                label = "cardHeight"
+                label = "cardWidth"
             )
-            val scale = lerp(1f, 0.9f, pageOffset.coerceIn(0f, 1f))
+            val scale = lerp(1f, 0.95f, pageOffset.coerceIn(0f, 1f))
             val alpha = lerp(1f, 0.2f, pageOffset.coerceIn(0f, 1f))
 
             Box(
@@ -78,9 +77,9 @@ fun VerticalCardStack(
                         scaleY = scale
                         this.alpha = alpha
                     }
-                    .height(height)
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
+                    .height(cardHeight)
+                    .width(width)
+                    .padding(horizontal = 0.dp)
                     .background(
                         color = when (actualPage % 4) {
                             0 -> Color(0xFFE57373)
@@ -103,7 +102,6 @@ fun VerticalCardStack(
         }
     }
 }
-
 fun lerp(start: Float, end: Float, fraction: Float): Float {
     return start + (end - start) * fraction
 }

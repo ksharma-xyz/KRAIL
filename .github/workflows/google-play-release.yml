@@ -10,24 +10,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  android:
+  build-android-release:
     if: ${{ github.event.pull_request.draft == false }}
     uses: ./.github/workflows/build-android.yml
     with:
       variant: release
     secrets: inherit
 
-  deploy:
+  distribute-google-play:
     needs: android
     runs-on: ubuntu-latest
     environment: Firebase
     steps:
+      - name: Download Release AAB artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: composeApp-release-aab-${{ github.run_id }}
+          path: aab
+
       - name: Deploy to Play Store (Internal)
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: xyz.ksharma.krail
-          releaseFiles: ${{ needs.android.outputs.signed_aab }}
+          releaseFiles: aab/*.aab
           track: internal
 
       - name: Create Github Release

@@ -11,6 +11,9 @@ sealed class Festival {
     abstract val greeting: String
 }
 
+val Festival.greetingAndEmoji: Pair<String, String>
+    get() = Pair(greeting, emojiList.random())
+
 @Serializable
 data class FestivalData(
     @SerialName("confirmedDates")

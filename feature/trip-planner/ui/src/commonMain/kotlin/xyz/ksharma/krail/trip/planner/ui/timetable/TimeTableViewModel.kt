@@ -32,6 +32,7 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.festival.FestivalManager
 import xyz.ksharma.krail.core.festival.model.NoFestival
+import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.sandook.Sandook
@@ -117,6 +118,10 @@ class TimeTableViewModel(
     var dateTimeSelectionItem: DateTimeSelectionItem? = null
 
     private var fetchTripJob: Job? = null
+
+    private val greetingAndEmoji: Pair<String, String> by lazy {
+        (festivalManager.festivalOnDate() ?: NoFestival()).greetingAndEmoji
+    }
 
     /**
      * Cache of trips. Key is [TimeTableState.JourneyCardInfo.journeyId] and value is
@@ -513,12 +518,11 @@ class TimeTableViewModel(
     }
 
     private fun updateLoadingEmoji() {
-        val festival = festivalManager.festivalOnDate() ?: NoFestival()
         updateUiState {
             copy(
                 loadingEmoji = TimeTableState.LoadingEmoji(
-                    emoji = festival.emojiList.random(),
-                    greeting = festival.greeting,
+                    emoji = greetingAndEmoji.second,
+                    greeting = greetingAndEmoji.first,
                 )
             )
         }

@@ -31,18 +31,26 @@ jobs:
     uses: ./.github/workflows/build-ios.yml
     secrets: inherit
 
-  distribute-debug-apk:
+  distribute-debug-apk-firebase:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-android-debug
-    uses: ./.github/workflows/firebase-app-distribution.yml
+    uses: ./.github/workflows/distribute-firebase.yml
     with:
       variant: debug
     secrets: inherit
 
-  distribute-release-apk:
+  distribute-release-apk-firebase:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-android-release
-    uses: ./.github/workflows/firebase-app-distribution.yml
+    uses: ./.github/workflows/distribute-firebase.yml
     with:
       variant: release
+    secrets: inherit
+
+  distribute-google-play:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/prod/')
+    needs: build-android-release
+    uses: ./.github/workflows/distribute-google-play.yml
+    with:
+      artifact-name: composeApp-release-aab-${{ github.run_id }}
     secrets: inherit

@@ -13,10 +13,4 @@ data class SavedTripsState(
     val isSavedTripsLoading: Boolean = true,
     val observeParkRideStopIdSet: ImmutableSet<String> = persistentSetOf(),
     val parkRideUiState: ImmutableList<ParkRideUiState> = persistentListOf(),
-    val isParkRideBeta: Boolean = false,
-    val parkRideBetaInfo: ParkRideBetaInfo? = null,
-) {
-    data class ParkRideBetaInfo(
-        val message: String,
-    )
-}
+)

@@ -1,10 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,25 +17,17 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
-import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -75,8 +64,6 @@ fun SavedTripsScreen(
             }
             onDispose {}
         }*/
-
-    var displayParkRideBetaInfo by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -169,56 +156,15 @@ fun SavedTripsScreen(
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                                     .background(color = KrailTheme.colors.surface)
-                                    .padding(vertical = 12.dp, horizontal = 16.dp)
-                                    .clickable(
-                                        enabled = savedTripsState.isParkRideBeta,
-                                        indication = null,
-                                        interactionSource = remember { MutableInteractionSource() }) {
-                                        displayParkRideBetaInfo =
-                                            if (savedTripsState.parkRideBetaInfo != null) {
-                                                !displayParkRideBetaInfo
-                                            } else false
-                                    },
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = "Park & Ride ${if (savedTripsState.isParkRideBeta) "(Beta)" else ""}",
+                                    text = "Park & Ride",
                                     style = KrailTheme.typography.titleMedium,
                                     modifier = Modifier.align(Alignment.CenterVertically),
                                 )
-
-                                if (savedTripsState.isParkRideBeta) {
-                                    Image(
-                                        painter = painterResource(Res.drawable.ic_info),
-                                        contentDescription = "Park & Ride Beta Info",
-                                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                        modifier = Modifier
-                                            .align(Alignment.CenterVertically)
-                                            .size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        item {
-                            AnimatedVisibility(
-                                visible = displayParkRideBetaInfo,
-                            ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                        .klickable(indication = null) {
-                                            displayParkRideBetaInfo = false
-                                        }
-                                        .padding(bottom = 24.dp, top = 12.dp),
-                                ) {
-                                    Text(
-                                        text = savedTripsState.parkRideBetaInfo?.message!!,
-                                        style = KrailTheme.typography.bodySmall,
-                                    )
-                                }
                             }
                         }
 

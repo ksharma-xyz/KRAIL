@@ -20,8 +20,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock.System
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -32,9 +30,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.asBoolean
 import xyz.ksharma.krail.core.remote_config.flag.asNumber
-import xyz.ksharma.krail.core.remote_config.flag.asString
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
@@ -50,9 +46,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import kotlin.time.Clock.System
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -79,16 +77,6 @@ class SavedTripsViewModel(
             .asNumber(fallback = 120)
     }
 
-    private val isParkRideInBeta: Boolean by lazy {
-        flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_BETA.key)
-            .asBoolean()
-    }
-
-    private val parkRideBetaInfoDesc: String by lazy {
-        flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_BETA_MESSAGE_DESC.key)
-            .asString()
-    }
-
     /**
      * Will observe saved trips from the database.
      */
@@ -103,7 +91,6 @@ class SavedTripsViewModel(
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
-            updateParkRideBetaState()
             observeSavedTrips()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
@@ -508,17 +495,6 @@ class SavedTripsViewModel(
             nonPeakTimeCooldownSeconds.seconds
         } else {
             peakTimeCooldownSeconds.seconds
-        }
-    }
-
-    private fun updateParkRideBetaState() {
-        updateUiState {
-            copy(
-                isParkRideBeta = isParkRideInBeta,
-                parkRideBetaInfo = SavedTripsState.ParkRideBetaInfo(
-                    message = parkRideBetaInfoDesc,
-                )
-            )
         }
     }
 

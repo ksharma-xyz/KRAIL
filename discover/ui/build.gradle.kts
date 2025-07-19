@@ -32,6 +32,9 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.runtime)
                 implementation(compose.ui)
+
+                implementation(projects.discover.network.api)
+                implementation(projects.taj)
             }
         }
         commonTest {

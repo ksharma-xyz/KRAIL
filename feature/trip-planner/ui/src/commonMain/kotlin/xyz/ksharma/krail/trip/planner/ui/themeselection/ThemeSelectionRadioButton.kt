@@ -1,15 +1,15 @@
 package xyz.ksharma.krail.trip.planner.ui.themeselection
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,15 +45,34 @@ fun ThemeSelectionRadioButton(
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val highlightColor = themeBackgroundColor(themeStyle)
-    val animationProgress = remember { Animatable(0f) }
+    val density = LocalDensity.current
 
-    // Animate the highlight when selected
-    LaunchedEffect(selected) {
-        if (selected) {
-            animationProgress.snapTo(0f)
-            animationProgress.animateTo(1f, animationSpec = tween(600))
+    // Calculate total path length (sum of all line widths)
+    val lineWidths = remember(textLayoutResult) {
+        textLayoutResult?.let { layout ->
+            List(layout.lineCount) { line ->
+                layout.getLineRight(line) - layout.getLineLeft(line)
+            }
+        } ?: emptyList()
+    }
+    val totalPathLength = lineWidths.sum()
+
+    // Animate currentPathLength at a constant speed
+    var currentPathLength by remember { mutableStateOf(0f) }
+    LaunchedEffect(selected, textLayoutResult) {
+        if (selected && textLayoutResult != null && totalPathLength > 0f) {
+            val speedPxPerMs = 1.2f
+            val duration = (totalPathLength / speedPxPerMs).toInt()
+            currentPathLength = 0f
+            animate(
+                initialValue = 0f,
+                targetValue = totalPathLength,
+                animationSpec = tween(durationMillis = duration)
+            ) { value, _ ->
+                currentPathLength = value
+            }
         } else {
-            animationProgress.snapTo(0f)
+            currentPathLength = 0f
         }
     }
 
@@ -74,44 +94,64 @@ fun ThemeSelectionRadioButton(
         Box(
             modifier = Modifier
                 .padding(start = 16.dp)
-                .height(32.dp)
         ) {
-            // Draw the animated sketch highlight behind the text
             if (selected && textLayoutResult != null) {
+                val textWidth = with(density) { textLayoutResult!!.size.width.toDp() }
+                val textHeight = with(density) { textLayoutResult!!.size.height.toDp() }
                 Canvas(
                     modifier = Modifier
-                        .matchParentSize()
+                        .width(textWidth)
+                        .padding(horizontal = 12.dp)
+                    // Height is not fixed, so it matches text height
                 ) {
-                    val width = textLayoutResult!!.size.width.toFloat()
-                    val height = size.height
-                    val strokeWidth = 20.dp.toPx()
-                    val zigZagAmplitude = 8.dp.toPx()
-                    val zigZagStep = 16.dp.toPx()
-                    val path = Path()
-                    var x = 0f
-                    var up = true
-                    path.moveTo(x, height / 2)
-                    while (x < width * animationProgress.value) {
-                        val y =
-                            if (up) (height / 2 - zigZagAmplitude) else (height / 2 + zigZagAmplitude)
-                        path.lineTo(x, y)
-                        x += zigZagStep
-                        up = !up
-                    }
-                    // Ensure the path ends at the current progress
-                    path.lineTo(width * animationProgress.value, height / 2)
-                    drawPath(
-                        path = path,
-                        color = highlightColor,
-                        style = Stroke(
-                            width = strokeWidth,
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round,
+                    val layout = textLayoutResult!!
+                    val lineCount = layout.lineCount
+                    val strokeWidth = 40.dp.toPx()
+                    val amplitude = 14.dp.toPx()
+                    val waveLength = 36.dp.toPx()
+                    var remaining = currentPathLength
+
+                    for (line in 0 until lineCount) {
+                        val left = layout.getLineLeft(line)
+                        val right = layout.getLineRight(line)
+                        val lineWidth = right - left
+                        if (remaining <= 0f) break
+                        val highlightEnd = left + remaining.coerceAtMost(lineWidth)
+                        val top = layout.getLineTop(line)
+                        val bottom = layout.getLineBottom(line)
+                        val centerY = (top + bottom) / 2f
+
+                        val path = Path()
+                        var x = left
+                        var up = true
+                        path.moveTo(x, centerY)
+                        while (x < highlightEnd) {
+                            val nextX = (x + waveLength).coerceAtMost(highlightEnd)
+                            val controlX1 = x + waveLength / 3
+                            val controlX2 = x + 2 * waveLength / 3
+                            val endY = if (up) centerY - amplitude else centerY + amplitude
+                            path.cubicTo(
+                                controlX1, centerY,
+                                controlX2, endY,
+                                nextX, endY
+                            )
+                            x = nextX
+                            up = !up
+                        }
+                        drawPath(
+                            path = path,
+                            color = highlightColor,
+                            style = Stroke(
+                                width = strokeWidth,
+                                cap = StrokeCap.Round,
+                                join = StrokeJoin.Round,
+                            )
                         )
-                    )
+                        remaining -= lineWidth
+                    }
                 }
             }
-            // The text itself
+
             Text(
                 text = themeStyle.tagLine,
                 style = KrailTheme.typography.title.copy(fontWeight = FontWeight.Normal),

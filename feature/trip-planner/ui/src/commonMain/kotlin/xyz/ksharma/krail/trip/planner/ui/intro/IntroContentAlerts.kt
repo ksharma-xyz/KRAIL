@@ -33,6 +33,17 @@ fun IntroContentAlerts(
     modifier: Modifier = Modifier,
     onInteraction: () -> Unit = {},
 ) {
+    var displayAlert by rememberSaveable { mutableStateOf(false) }
+
+    // Auto-toggle every 3 seconds
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2000)
+            displayAlert = !displayAlert
+            onInteraction()
+        }
+    }
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState()),
@@ -41,8 +52,6 @@ fun IntroContentAlerts(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            var displayAlert by rememberSaveable { mutableStateOf(false) }
-
             AlertButton(
                 dimensions = ButtonDefaults.smallButtonSize(),
                 onClick = {

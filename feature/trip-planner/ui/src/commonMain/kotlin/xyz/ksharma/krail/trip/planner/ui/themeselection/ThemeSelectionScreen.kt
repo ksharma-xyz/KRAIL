@@ -148,6 +148,7 @@ fun ThemeSelectionScreen(
     }
 }
 
+/*
 @Composable
 private fun ThemeSelectionRadioButton(
     themeStyle: KrailThemeStyle,
@@ -184,3 +185,4 @@ private fun ThemeSelectionRadioButton(
         )
     }
 }
+*/

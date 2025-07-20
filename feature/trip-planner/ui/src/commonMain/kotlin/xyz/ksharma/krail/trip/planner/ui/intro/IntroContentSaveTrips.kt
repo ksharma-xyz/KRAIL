@@ -37,6 +37,14 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 @Composable
 fun IntroContentSaveTrips(
@@ -63,12 +71,30 @@ fun IntroContentSaveTrips(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // TODO if tapped more than 5 times, show confetti of stars.
             var isTripSaved by rememberSaveable { mutableStateOf(false) }
-            val rotation by animateFloatAsState(
-                targetValue = if (isTripSaved) 360f else 0f,
-                animationSpec = tween(durationMillis = 500)
-            )
+            val rotation = remember { Animatable(0f) }
+            val coroutineScope = rememberCoroutineScope()
+            var autoRotationDir by rememberSaveable { mutableStateOf(1f) }
+            var rotationJob by remember { mutableStateOf<Job?>(null) }
+
+            fun startAutoRotation() {
+                rotationJob?.cancel()
+                rotationJob = coroutineScope.launch {
+                    while (isActive) {
+                        rotation.animateTo(
+                            targetValue = rotation.value + 360f * autoRotationDir,
+                            animationSpec = tween(durationMillis = 2000)
+                        )
+                        autoRotationDir *= -1f
+                        delay(200) // Small pause between rotations
+                    }
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                startAutoRotation()
+            }
+
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -79,6 +105,14 @@ fun IntroContentSaveTrips(
                         role = Role.Button,
                         interactionSource = remember { MutableInteractionSource() },
                         onClick = {
+                            rotationJob?.cancel()
+                            coroutineScope.launch {
+                                rotation.animateTo(
+                                    targetValue = rotation.value + 360f,
+                                    animationSpec = tween(durationMillis = 500)
+                                )
+                                startAutoRotation()
+                            }
                             isTripSaved = !isTripSaved
                             onInteraction()
                         }
@@ -98,7 +132,7 @@ fun IntroContentSaveTrips(
                     },
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(48.dp)
-                        .graphicsLayer(rotationZ = rotation),
+                        .graphicsLayer(rotationZ = rotation.value),
                 )
             }
         }

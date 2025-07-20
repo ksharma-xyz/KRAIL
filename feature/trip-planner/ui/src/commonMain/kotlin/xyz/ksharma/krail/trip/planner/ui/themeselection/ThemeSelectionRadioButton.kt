@@ -1,6 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.themeselection
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -20,10 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +83,27 @@ fun ThemeSelectionRadioButton(
         }
     }
 
+    // Pulse animation for glow
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -86,10 +114,29 @@ fun ThemeSelectionRadioButton(
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(color = themeStyle.hexColorCode.hexToComposeColor()),
-        )
+                .size(40.dp)
+                .then(
+                    if (selected) Modifier.drawBehind {
+                        val color = themeStyle.hexColorCode.hexToComposeColor()
+                        withTransform({
+                            scale(pulseScale, pulseScale, pivot = center)
+                        }) {
+                            drawCircle(
+                                color = color.copy(alpha = pulseAlpha),
+                                radius = size.minDimension / 2
+                            )
+                        }
+                    } else Modifier
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(color = themeStyle.hexColorCode.hexToComposeColor())
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -97,12 +144,10 @@ fun ThemeSelectionRadioButton(
         ) {
             if (selected && textLayoutResult != null) {
                 val textWidth = with(density) { textLayoutResult!!.size.width.toDp() }
-                val textHeight = with(density) { textLayoutResult!!.size.height.toDp() }
                 Canvas(
                     modifier = Modifier
                         .width(textWidth)
                         .padding(horizontal = 12.dp)
-                    // Height is not fixed, so it matches text height
                 ) {
                     val layout = textLayoutResult!!
                     val lineCount = layout.lineCount

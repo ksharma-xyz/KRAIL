@@ -38,18 +38,19 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 @Composable
 fun ParkRideCard(
     parkRideUiState: ParkRideUiState,
+    isExpanded: Boolean,
     modifier: Modifier = Modifier,
-    onClick: (Boolean) -> Unit = {},
+    onClick: () -> Unit = {},
 ) {
-    var isExpanded by rememberSaveable { mutableStateOf(false) }
+//    var isExpanded by rememberSaveable { mutableStateOf(false) }
 
     Row(
         modifier = modifier.fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(themeBackgroundColor())
             .klickable {
-                isExpanded = !isExpanded
-                onClick(isExpanded)
+                //isExpanded = !isExpanded
+                onClick()
             }
             .animateContentSize()
             .padding(top = 20.dp, start = 16.dp, end = 12.dp, bottom = 20.dp),
@@ -146,7 +147,11 @@ fun ParkRideCard(
 @Composable
 private fun ParkRideCardPreview() {
     PreviewTheme(KrailThemeStyle.BarbiePink) {
-        ParkRideCard(previewParkRideUiState)
+        ParkRideCard(
+            parkRideUiState = previewParkRideUiState,
+            isExpanded = false,
+            onClick = { }
+        )
     }
 }
 

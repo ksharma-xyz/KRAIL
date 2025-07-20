@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -89,6 +91,8 @@ fun SavedTripsScreen(
                     }
                 }
             )
+
+            val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 300.dp),
@@ -172,13 +176,18 @@ fun SavedTripsScreen(
                             items = savedTripsState.parkRideUiState,
                             key = { parkRide -> parkRide.stopId },
                         ) { parkRide ->
+
+                            val isExpanded = expandedMap[parkRide.stopId] ?: false
                             ParkRideCard(
+                                isExpanded = isExpanded,
                                 modifier = Modifier.padding(horizontal = 16.dp),
-                                onClick = { isExpanded ->
+                                onClick = {
+                                    val newExpanded = !isExpanded
+                                    expandedMap[parkRide.stopId] = newExpanded
                                     onEvent(
                                         SavedTripUiEvent.ParkRideCardClick(
                                             parkRideState = parkRide,
-                                            isExpanded = isExpanded,
+                                            isExpanded = newExpanded,
                                         ),
                                     )
                                 },

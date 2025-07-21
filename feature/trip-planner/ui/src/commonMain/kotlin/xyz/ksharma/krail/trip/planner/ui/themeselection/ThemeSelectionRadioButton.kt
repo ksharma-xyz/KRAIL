@@ -36,6 +36,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.scalingKlickable
@@ -107,9 +108,8 @@ fun ThemeSelectionRadioButton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .scalingKlickable { onClick(themeStyle) }
-            .padding(vertical = 24.dp, horizontal = 24.dp),
+            .padding(horizontal = 12.dp, vertical = 24.dp)
+            .scalingKlickable { onClick(themeStyle) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -151,9 +151,9 @@ fun ThemeSelectionRadioButton(
                 ) {
                     val layout = textLayoutResult!!
                     val lineCount = layout.lineCount
-                    val strokeWidth = 40.dp.toPx()
+                    val strokeWidth = 32.dp.toPx()
                     val amplitude = 14.dp.toPx()
-                    val waveLength = 36.dp.toPx()
+                    val waveLength = 32.dp.toPx()
                     var remaining = currentPathLength
 
                     for (line in 0 until lineCount) {
@@ -208,5 +208,29 @@ fun ThemeSelectionRadioButton(
                 textAlign = TextAlign.Start,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ThemeSelectionRadioButtonPreview() {
+    KrailTheme {
+        ThemeSelectionRadioButton(
+            themeStyle = KrailThemeStyle.Bus,
+            onClick = {},
+            selected = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ThemeSelectionRadioButtonUnselectedPreview() {
+    KrailTheme {
+        ThemeSelectionRadioButton(
+            themeStyle = KrailThemeStyle.Bus,
+            onClick = {},
+            selected = false,
+        )
     }
 }

@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,13 +54,12 @@ fun LegView(
     stops: ImmutableList<TimeTableState.JourneyCardInfo.Stop>,
     modifier: Modifier = Modifier,
     displayAllStops: Boolean = false,
-    onClick: (Boolean) -> Unit = {},
+    onClick: () -> Unit = {},
 ) {
     val circleRadius = 8.dp
     val strokeWidth = 4.dp
     val timelineColor =
         remember(transportModeLine) { transportModeLine.lineColorCode.hexToComposeColor() }
-    var showIntermediateStops by rememberSaveable { mutableStateOf(displayAllStops) }
 
     // Content alpha to be 100% always, as it's only visible in the expanded state.
     // If it's visible, it should be full alpha
@@ -78,8 +76,7 @@ fun LegView(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                        showIntermediateStops = !showIntermediateStops
-                        onClick(showIntermediateStops)
+                        onClick()
                     },
                     role = Role.Button,
                 )
@@ -134,8 +131,7 @@ fun LegView(
                             stops = "$stopsCount stops",
                             line = transportModeLine,
                             onClick = {
-                                showIntermediateStops = !showIntermediateStops
-                                onClick(showIntermediateStops)
+                                onClick()
                             },
                         )
                     } else {
@@ -145,7 +141,7 @@ fun LegView(
                     }
                 }
 
-                if (showIntermediateStops) {
+                if (displayAllStops) {
                     stops.drop(1).dropLast(1).forEach { stop ->
 
                         Spacer(

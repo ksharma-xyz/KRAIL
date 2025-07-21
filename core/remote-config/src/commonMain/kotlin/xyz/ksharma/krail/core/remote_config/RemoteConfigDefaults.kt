@@ -103,6 +103,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.FESTIVALS.key,
                 second = "[]",
             ),
+            Pair(
+                first = FlagKeys.DISCOVER_SYDNEY.key,
+                second = "[]",
+            ),
         )
     }
 }

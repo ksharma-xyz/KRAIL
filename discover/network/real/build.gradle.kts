@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.krail.android.library)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -28,8 +30,10 @@ kotlin {
             dependencies {
                 implementation(compose.runtime)
 
+                implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.discover.network.api)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
         commonTest {

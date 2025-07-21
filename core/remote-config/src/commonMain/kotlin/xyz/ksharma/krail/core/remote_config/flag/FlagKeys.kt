@@ -15,4 +15,6 @@ enum class FlagKeys(val key: String) {
     NSW_PARK_RIDE_BETA_MESSAGE_DESC("nsw_park_ride_beta_message_desc"),
 
     FESTIVALS("festivals"),
+
+    DISCOVER_SYDNEY("discover_sydney"),
 }

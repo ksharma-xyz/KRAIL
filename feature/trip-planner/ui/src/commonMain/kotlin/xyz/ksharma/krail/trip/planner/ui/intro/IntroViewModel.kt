@@ -34,9 +34,6 @@ class IntroViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.Intro)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntroState.default())
 
-    // For analytics
-    private val interactionPages: MutableSet<InteractionPage> = mutableSetOf()
-
     fun onEvent(event: IntroUiEvent) {
         when (event) {
             is IntroUiEvent.ReferFriend -> {
@@ -48,10 +45,6 @@ class IntroViewModel(
                 )
             }
 
-            is IntroUiEvent.IntroElementsInteraction -> {
-                event.pageType.toInteractionPage().let { interactionPages.add(it) }
-            }
-
             is IntroUiEvent.Complete -> {
                 viewModelScope.launch {
                     stopsManager.insertStops()
@@ -60,10 +53,8 @@ class IntroViewModel(
                         AnalyticsEvent.IntroLetsKrailClickEvent(
                             pageType = event.pageType.toInteractionPage(),
                             pageNumber = event.pageNumber,
-                            interactionPages = interactionPages,
                         )
                     )
-                    interactionPages.clear()
                 }
             }
         }

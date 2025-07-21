@@ -298,7 +298,7 @@ fun ExpandedJourneyCardContent(
                             ),
                             onClick = {
                                 displayAllStops = !displayAllStops
-                                onLegClick.invoke(displayAllStops)
+                                onLegClick(displayAllStops)
                             },
                         )
                     }

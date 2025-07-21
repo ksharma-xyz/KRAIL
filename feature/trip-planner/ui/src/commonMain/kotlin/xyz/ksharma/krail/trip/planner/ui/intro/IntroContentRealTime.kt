@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,16 +26,19 @@ fun IntroContentRealTime(
     tagline: String,
     style: String,
     modifier: Modifier = Modifier,
-    onInteraction: () -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val isActive = remember { mutableStateOf(true) }
 
-    // Auto-toggle every 2 seconds
-    LaunchedEffect(Unit) {
-        while (true) {
+    LaunchedEffect(isActive.value) {
+        while (isActive.value) {
             expanded = !expanded
-            onInteraction()
             delay(2000)
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            isActive.value = false
         }
     }
 
@@ -51,7 +55,9 @@ fun IntroContentRealTime(
                 ),
                 stops = stopsList(),
                 displayAllStops = expanded,
-                onClick = { expanded = !expanded }, // keep in sync if user clicks
+                onClick = {
+                    expanded = !expanded
+                },
             )
         }
 

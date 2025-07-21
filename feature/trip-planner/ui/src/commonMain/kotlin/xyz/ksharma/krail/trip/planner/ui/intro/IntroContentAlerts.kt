@@ -31,7 +31,6 @@ fun IntroContentAlerts(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier,
-    onInteraction: () -> Unit = {},
 ) {
     var displayAlert by rememberSaveable { mutableStateOf(false) }
 
@@ -40,7 +39,6 @@ fun IntroContentAlerts(
         while (true) {
             delay(2000)
             displayAlert = !displayAlert
-            onInteraction()
         }
     }
 
@@ -56,7 +54,6 @@ fun IntroContentAlerts(
                 dimensions = ButtonDefaults.smallButtonSize(),
                 onClick = {
                     displayAlert = !displayAlert
-                    onInteraction()
                 },
             ) { Text(text = "2 Alerts") }
 

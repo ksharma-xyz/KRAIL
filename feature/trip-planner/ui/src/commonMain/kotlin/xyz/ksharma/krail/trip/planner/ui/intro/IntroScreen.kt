@@ -172,9 +172,6 @@ fun IntroScreen(
                                 )
                             },
                             modifier = Modifier.fillMaxSize(),
-                            onInteraction = { pageType ->
-                                onEvent(IntroUiEvent.IntroElementsInteraction(pageType))
-                            }
                         )
                     }
                 }
@@ -256,7 +253,6 @@ private fun IntroPageContent(
     pageData: IntroState.IntroPage,
     modifier: Modifier = Modifier,
     onShareClick: () -> Unit = {},
-    onInteraction: (IntroPageType) -> Unit,
 ) {
     when (pageData.type) {
         IntroPageType.SAVE_TRIPS -> {
@@ -264,9 +260,6 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
 
@@ -275,9 +268,6 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
 
@@ -286,9 +276,6 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
 
@@ -297,9 +284,6 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
 
@@ -308,9 +292,6 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
 
@@ -320,9 +301,6 @@ private fun IntroPageContent(
                 style = pageData.primaryStyle,
                 onShareClick = onShareClick,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
 
@@ -331,9 +309,6 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 modifier = modifier.padding(20.dp),
-                onInteraction = {
-                    onInteraction(pageData.type)
-                }
             )
         }
     }

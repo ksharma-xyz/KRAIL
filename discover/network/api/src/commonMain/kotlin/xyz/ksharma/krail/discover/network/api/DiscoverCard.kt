@@ -10,6 +10,7 @@ data class DiscoverCard(
         val type: ButtonType,
         val label: String? = null,
         val url: String? = null,
+        val shareUrl: String? = null,
     )
 
     enum class ButtonType(val type: String) {

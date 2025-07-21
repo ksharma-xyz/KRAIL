@@ -5,9 +5,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.delay
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.trip.planner.ui.components.LegView
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -17,24 +24,40 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 @Composable
 fun IntroContentRealTime(
     tagline: String,
-    style: String, // hexCode - // todo - see if it can be color instead.
+    style: String,
     modifier: Modifier = Modifier,
-    onInteraction: () -> Unit = {},
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    val isActive = remember { mutableStateOf(true) }
+
+    LaunchedEffect(isActive.value) {
+        while (isActive.value) {
+            expanded = !expanded
+            delay(2000)
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            isActive.value = false
+        }
+    }
+
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             LegView(
-                routeText = "Manly to Circular Quay",
+                routeText = "Circular Quay to Mosman Bay",
                 transportModeLine = TransportModeLine(
                     transportMode = TransportMode.Ferry(),
-                    lineName = "MFF",
+                    lineName = "F6",
                 ),
                 stops = stopsList(),
-                onClick = { onInteraction() },
+                displayAllStops = expanded,
+                onClick = {
+                    expanded = !expanded
+                },
             )
         }
 
@@ -48,13 +71,23 @@ fun IntroContentRealTime(
 
 private fun stopsList() = persistentListOf(
     TimeTableState.JourneyCardInfo.Stop(
-        name = "Manly, Wharf 2",
-        time = "10:10 AM",
+        name = "Circular Quay, Wharf 4, Side B",
+        time = "9:00 PM",
         isWheelchairAccessible = true,
     ),
     TimeTableState.JourneyCardInfo.Stop(
-        name = "Circular Quay, Wharf 2",
-        time = "10:30 AM",
+        name = "South Mosman Wharf",
+        time = "9:15 PM",
+        isWheelchairAccessible = true,
+    ),
+    TimeTableState.JourneyCardInfo.Stop(
+        name = "Old Cremorne Wharf",
+        time = "9:18 PM",
+        isWheelchairAccessible = true,
+    ),
+    TimeTableState.JourneyCardInfo.Stop(
+        name = "Mosman Bay Wharf",
+        time = "9:20 PM",
         isWheelchairAccessible = true,
     ),
 )

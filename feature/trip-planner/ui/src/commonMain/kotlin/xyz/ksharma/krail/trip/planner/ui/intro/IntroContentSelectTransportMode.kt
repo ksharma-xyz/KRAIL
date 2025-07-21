@@ -22,7 +22,6 @@ fun IntroContentSelectTransportMode(
     tagline: String,
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier,
-    onInteraction: () -> Unit = {},
 ) {
     val allModes = TransportMode.values().sortedBy { it.priority }
     val selectedProductClasses = remember { mutableStateSetOf<String>() }
@@ -76,7 +75,6 @@ fun IntroContentSelectTransportMode(
                         transportMode = mode,
                         selected = selectedProductClasses.contains(mode.productClass.toString()),
                         onClick = {
-                            onInteraction()
                             if (selectedProductClasses.contains(mode.productClass.toString())) {
                                 selectedProductClasses.remove(mode.productClass.toString())
                             } else {

@@ -225,13 +225,11 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class IntroLetsKrailClickEvent(
         val pageType: InteractionPage,
         val pageNumber: Int,
-        val interactionPages: Set<InteractionPage>,
     ) : AnalyticsEvent(
         name = "intro_lets_krail",
         properties = mapOf(
             "completedOnPage" to pageType.name,
             "completedOnPageNumber" to pageNumber,
-            "interaction" to interactionPages.joinToString { it.name },
         )
     ) {
         enum class InteractionPage {

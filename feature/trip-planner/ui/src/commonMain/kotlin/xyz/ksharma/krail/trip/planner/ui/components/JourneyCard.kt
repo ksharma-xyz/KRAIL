@@ -22,6 +22,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -157,7 +159,6 @@ fun JourneyCard(
                 )
 
                 JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
-                    displayAllStops = false,
                     timeToDeparture = timeToDeparture,
                     themeColor = themeColor,
                     platformText = platformText,
@@ -180,7 +181,6 @@ fun JourneyCard(
 
 @Composable
 fun ExpandedJourneyCardContent(
-    displayAllStops: Boolean,
     timeToDeparture: String,
     themeColor: Color,
     platformText: String?,
@@ -281,6 +281,7 @@ fun ExpandedJourneyCardContent(
                             )
                         }
                     } else {
+                        var displayAllStops by rememberSaveable { mutableStateOf(false) }
                         LegView(
                             routeText = leg.displayText,
                             transportModeLine = leg.transportModeLine,
@@ -295,7 +296,10 @@ fun ExpandedJourneyCardContent(
                                     0.dp
                                 }
                             ),
-                            onClick = onLegClick,
+                            onClick = {
+                                displayAllStops = !displayAllStops
+                                onLegClick(displayAllStops)
+                            },
                         )
                     }
 

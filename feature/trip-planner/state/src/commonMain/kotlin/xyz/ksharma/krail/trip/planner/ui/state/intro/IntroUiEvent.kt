@@ -13,7 +13,4 @@ sealed interface IntroUiEvent {
         val pageType: IntroState.IntroPageType,
         val pageNumber: Int,
     ) : IntroUiEvent
-
-    // Represents the interaction with ui elements displayed for app usage / decoration in intro screen.
-    data class IntroElementsInteraction(val pageType: IntroState.IntroPageType) : IntroUiEvent
 }

@@ -21,7 +21,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
 
 @Composable
-fun IntroParkRide(tagline: String, style: String, modifier: Modifier, onInteraction: () -> Unit) {
+fun IntroParkRide(tagline: String, style: String, modifier: Modifier) {
     val themeColor = remember { mutableStateOf(style) }
     var isExpanded by remember { mutableStateOf(false) }
 
@@ -61,7 +61,6 @@ fun IntroParkRide(tagline: String, style: String, modifier: Modifier, onInteract
                     ),
                     onClick = {
                         isExpanded = !isExpanded
-                        onInteraction()
                     },
                 )
             }

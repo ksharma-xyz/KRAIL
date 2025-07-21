@@ -34,10 +34,9 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 @Composable
 fun IntroContentInviteFriends(
     tagline: String,
-    style: String, // hexCode - // todo - see if it can be color instead.
+    style: String,
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onInteraction: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -68,7 +67,6 @@ fun IntroContentInviteFriends(
                         interactionSource = remember { MutableInteractionSource() },
                         onClick = {
                             onShareClick()
-                            onInteraction()
                         }
                     ),
                 contentAlignment = Alignment.Center,

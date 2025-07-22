@@ -40,7 +40,9 @@ kotlin {
                 implementation(compose.ui)
                 implementation(libs.coil3.compose)
                 implementation(libs.coil3.networkKtor)
+                implementation(libs.kotlinx.collections.immutable)
 
+                implementation(projects.core.log)
                 implementation(projects.discover.network.api)
                 implementation(projects.taj)
             }

@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.discover.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,9 +9,11 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -24,9 +25,15 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
+import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
+import xyz.ksharma.krail.discover.network.api.toButtonRowState
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
@@ -36,9 +43,8 @@ fun DiscoverCard(
         title = "The title of the Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageUrl = "https://i0.wp.com/spacenews.com/wp-content/uploads/2025/01/Thuraya-4-scaled.jpg",
-        buttons = listOf(
-            DiscoverCardModel.Button(
-                type = DiscoverCardModel.ButtonType.CTA,
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Cta(
                 label = "Click Me",
                 url = "https://example.com/cta",
             ),
@@ -81,22 +87,83 @@ fun DiscoverCard(
             style = KrailTheme.typography.bodyLarge,
         )
 
-        DiscoverCardButtonRow(discoverCardModel.buttons)
+        discoverCardModel.buttons?.let { buttonsList ->
+            DiscoverCardButtonRow(buttonsList)
+        }
     }
 }
 
 @Composable
-private fun DiscoverCardButtonRow(cardList: List<DiscoverCardModel.Button>?) {
-    if (cardList.isNullOrEmpty()) return
+private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
+    val state = buttonsList.toButtonRowState()
+    if (state == null) {
+        logError("Invalid button combination or no buttons provided: ${buttonsList.map { it::class.simpleName }}")
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        when (val left = state.left) {
+            is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
+                Button(
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                    onClick = {}
+                ) {
+                    Text(text = left.button.label)
+                }
+            }
 
+            is DiscoverCardButtonRowState.LeftButtonType.Social -> {
+                SocialConnectionBox()
+            }
+
+            is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
+                horizontalArrangement = Arrangement.spacedBy(
+                    12.dp
+                )
+            ) {
+                FeedbackCircleBox()
+                FeedbackCircleBox()
+            }
+
+            null -> Unit
+        }
+
+        when (val right = state.right) {
+            is DiscoverCardButtonRowState.RightButtonType.Share -> {
+
+            }
+
+            null -> Unit
+        }
     }
 }
+
+@Composable
+private fun SocialConnectionBox() {
+    // Replace with your SocialConnectionBox implementation
+    Box(
+        modifier = Modifier.size(40.dp).background(Color.Blue, shape = CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("S", color = Color.White)
+    }
+}
+
+@Composable
+private fun FeedbackCircleBox() {
+    Box(
+        modifier = Modifier.size(40.dp).background(Color.Yellow, shape = CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("F", color = Color.Black)
+    }
+}
+
 
 @OptIn(ExperimentalCoilApi::class)
 @Preview
@@ -118,34 +185,27 @@ private fun DiscoverCardPreview(
     }
 }
 
-class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
+private class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
     override val values: Sequence<DiscoverCardModel>
         get() = sequenceOf(
             DiscoverCardModel(
                 title = "Discover Card Title",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
-                buttons = emptyList(),
+                buttons = persistentListOf(),
             ),
             DiscoverCardModel(
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
-                buttons = listOf(
-                    DiscoverCardModel.Button(
-                        type = DiscoverCardModel.ButtonType.SOCIAL,
-                    ),
-                )
+                buttons = persistentListOf(DiscoverCardModel.Button.Social)
             ),
             DiscoverCardModel(
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
-                buttons = listOf(
-                    DiscoverCardModel.Button(
-                        type = DiscoverCardModel.ButtonType.SHARE,
-                        label = "Read More",
-                        url = "https://example.com/readmore",
+                buttons = persistentListOf(
+                    DiscoverCardModel.Button.Share(
                         shareUrl = "https://example.com/share",
                     ),
                 )
@@ -154,9 +214,8 @@ class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
-                buttons = listOf(
-                    DiscoverCardModel.Button(
-                        type = DiscoverCardModel.ButtonType.FEEDBACK,
+                buttons = persistentListOf(
+                    DiscoverCardModel.Button.Feedback(
                         label = "Feedback",
                         url = "https://example.com/feedback",
                     ),
@@ -166,9 +225,8 @@ class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
-                buttons = listOf(
-                    DiscoverCardModel.Button(
-                        type = DiscoverCardModel.ButtonType.CTA,
+                buttons = persistentListOf(
+                    DiscoverCardModel.Button.Cta(
                         label = "Click Me",
                         url = "https://example.com/cta",
                     ),

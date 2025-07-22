@@ -27,6 +27,7 @@ kotlin {
         commonMain  {
             dependencies {
                 implementation(compose.runtime)
+                implementation(libs.kotlinx.collections.immutable)
             }
         }
         commonTest {

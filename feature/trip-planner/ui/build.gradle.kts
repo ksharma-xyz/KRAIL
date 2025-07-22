@@ -40,6 +40,7 @@ kotlin {
                 implementation(projects.platform.ops)
                 implementation(projects.sandook)
                 implementation(projects.taj)
+                implementation(projects.discover.network.api) // todo - temp
 
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)

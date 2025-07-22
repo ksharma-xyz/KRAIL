@@ -27,6 +27,7 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.discover.ui.DiscoverCard
+import xyz.ksharma.krail.discover.ui.discoverCardList
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
@@ -110,12 +111,15 @@ fun SavedTripsScreen(
                         )
                     }
                 } else {
-                    item {
+                    items(discoverCardList, key = { it.title.takeLast(9) }) { model ->
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            DiscoverCard(modifier = Modifier)
+                            DiscoverCard(
+                                discoverCardModel = model,
+                                modifier = Modifier.padding(vertical = 16.dp),
+                            )
                         }
                     }
 

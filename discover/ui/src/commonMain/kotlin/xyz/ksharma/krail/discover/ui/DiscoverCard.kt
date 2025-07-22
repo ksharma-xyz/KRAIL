@@ -17,15 +17,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
-import xyz.ksharma.krail.discover.network.api.DiscoverCard
+import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
 @Composable
 fun DiscoverCard(
-    discoverCard: DiscoverCard,
+    discoverCardModel: DiscoverCardModel,
     modifier: Modifier = Modifier,
-    onClick: (DiscoverCard) -> Unit = {},
+    onClick: (DiscoverCardModel) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -42,24 +42,24 @@ fun DiscoverCard(
         ) {}
 
         Text(
-            text = discoverCard.title,
+            text = discoverCardModel.title,
             modifier = Modifier.padding(horizontal = 16.dp),
             maxLines = 2,
             style = KrailTheme.typography.displayMedium,
         )
         Text(
-            text = discoverCard.title,
+            text = discoverCardModel.title,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             maxLines = 2,
             style = KrailTheme.typography.bodyLarge,
         )
 
-        DiscoverCardButtonRow(discoverCard.buttons)
+        DiscoverCardButtonRow(discoverCardModel.buttons)
     }
 }
 
 @Composable
-private fun DiscoverCardButtonRow(cardList: List<DiscoverCard.Button>?) {
+private fun DiscoverCardButtonRow(cardList: List<DiscoverCardModel.Button>?) {
     if (cardList.isNullOrEmpty()) return
     Row(
         modifier = Modifier
@@ -79,63 +79,63 @@ private fun DiscoverCardPreview(
     KrailTheme {
         DiscoverCardProvider().values.forEach { discoverCard ->
             Column(modifier = Modifier.background(color = KrailTheme.colors.surface)) {
-                DiscoverCard(discoverCard = discoverCard)
+                DiscoverCard(discoverCardModel = discoverCard)
             }
         }
     }
 }
 
-class DiscoverCardProvider : PreviewParameterProvider<DiscoverCard> {
-    override val values: Sequence<DiscoverCard>
+class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
+    override val values: Sequence<DiscoverCardModel>
         get() = sequenceOf(
-            DiscoverCard(
+            DiscoverCardModel(
                 title = "Discover Card Title",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
                 buttons = emptyList(),
             ),
-            DiscoverCard(
+            DiscoverCardModel(
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
                 buttons = listOf(
-                    DiscoverCard.Button(
-                        type = DiscoverCard.ButtonType.SOCIAL,
+                    DiscoverCardModel.Button(
+                        type = DiscoverCardModel.ButtonType.SOCIAL,
                     ),
                 )
             ),
-            DiscoverCard(
+            DiscoverCardModel(
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
                 buttons = listOf(
-                    DiscoverCard.Button(
-                        type = DiscoverCard.ButtonType.SHARE,
+                    DiscoverCardModel.Button(
+                        type = DiscoverCardModel.ButtonType.SHARE,
                         label = "Read More",
                         url = "https://example.com/readmore",
                         shareUrl = "https://example.com/share",
                     ),
                 )
             ),
-            DiscoverCard(
+            DiscoverCardModel(
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
                 buttons = listOf(
-                    DiscoverCard.Button(
-                        type = DiscoverCard.ButtonType.FEEDBACK,
+                    DiscoverCardModel.Button(
+                        type = DiscoverCardModel.ButtonType.FEEDBACK,
                         label = "Feedback",
                         url = "https://example.com/feedback",
                     ),
                 )
             ),
-            DiscoverCard(
+            DiscoverCardModel(
                 title = "Social Card",
                 description = "This is a sample description for the Discover Card. It can be used to display additional information.",
                 imageUrl = "https://example.com/image.jpg",
                 buttons = listOf(
-                    DiscoverCard.Button(
-                        type = DiscoverCard.ButtonType.CTA,
+                    DiscoverCardModel.Button(
+                        type = DiscoverCardModel.ButtonType.CTA,
                         label = "Click Me",
                         url = "https://example.com/cta",
                     ),

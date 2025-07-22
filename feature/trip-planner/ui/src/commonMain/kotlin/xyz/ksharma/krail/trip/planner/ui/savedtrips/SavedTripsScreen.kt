@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
@@ -109,6 +110,15 @@ fun SavedTripsScreen(
                         )
                     }
                 } else {
+                    item {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            DiscoverCard(modifier = Modifier)
+                        }
+                    }
+
                     stickyHeader(key = "saved_trips_title") {
                         Box(
                             modifier = Modifier.fillMaxWidth()

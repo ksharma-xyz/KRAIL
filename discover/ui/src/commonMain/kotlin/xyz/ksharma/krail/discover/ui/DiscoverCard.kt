@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -39,17 +40,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 
 @Composable
 fun DiscoverCard(
-    discoverCardModel: DiscoverCardModel = DiscoverCardModel(
-        title = "The title of the Card",
-        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://i0.wp.com/spacenews.com/wp-content/uploads/2025/01/Thuraya-4-scaled.jpg",
-        buttons = persistentListOf(
-            DiscoverCardModel.Button.Cta(
-                label = "Click Me",
-                url = "https://example.com/cta",
-            ),
-        )
-    ),
+    discoverCardModel: DiscoverCardModel,
     modifier: Modifier = Modifier,
     onClick: (DiscoverCardModel) -> Unit = {},
 ) {
@@ -76,13 +67,13 @@ fun DiscoverCard(
 
         Text(
             text = discoverCardModel.title,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             maxLines = 2,
             style = KrailTheme.typography.displayMedium,
         )
         Text(
             text = discoverCardModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             maxLines = 2,
             style = KrailTheme.typography.bodyLarge,
         )
@@ -100,13 +91,14 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
         logError("Invalid button combination or no buttons provided: ${buttonsList.map { it::class.simpleName }}")
         return
     }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Left button (always left-aligned)
         when (val left = state.left) {
             is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
                 Button(
@@ -116,29 +108,27 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
                     Text(text = left.button.label)
                 }
             }
-
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
                 SocialConnectionBox()
             }
-
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
-                horizontalArrangement = Arrangement.spacedBy(
-                    12.dp
-                )
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 FeedbackCircleBox()
                 FeedbackCircleBox()
             }
-
-            null -> Unit
+            null -> Box(modifier = Modifier) // Empty box to keep slot
         }
 
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Right button (always right-aligned)
         when (val right = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
-
+                // Replace with your Share button UI
+                FeedbackCircleBox()
             }
-
-            null -> Unit
+            null -> Box(modifier = Modifier) // Empty box to keep slot
         }
     }
 }
@@ -187,50 +177,77 @@ private fun DiscoverCardPreview(
 
 private class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
     override val values: Sequence<DiscoverCardModel>
-        get() = sequenceOf(
-            DiscoverCardModel(
-                title = "Discover Card Title",
-                description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-                imageUrl = "https://example.com/image.jpg",
-                buttons = persistentListOf(),
+        get() = discoverCardList.asSequence()
+}
+
+val discoverCardList = listOf(
+    DiscoverCardModel(
+        title = "Cta only card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://images.unsplash.com/photo-1749751234397-41ee8a7887c2",
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Cta(
+                label = "Click Me",
+                url = "https://example.com/cta",
             ),
-            DiscoverCardModel(
-                title = "Social Card",
-                description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-                imageUrl = "https://example.com/image.jpg",
-                buttons = persistentListOf(DiscoverCardModel.Button.Social)
-            ),
-            DiscoverCardModel(
-                title = "Social Card",
-                description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-                imageUrl = "https://example.com/image.jpg",
-                buttons = persistentListOf(
-                    DiscoverCardModel.Button.Share(
-                        shareUrl = "https://example.com/share",
-                    ),
-                )
-            ),
-            DiscoverCardModel(
-                title = "Social Card",
-                description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-                imageUrl = "https://example.com/image.jpg",
-                buttons = persistentListOf(
-                    DiscoverCardModel.Button.Feedback(
-                        label = "Feedback",
-                        url = "https://example.com/feedback",
-                    ),
-                )
-            ),
-            DiscoverCardModel(
-                title = "Social Card",
-                description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-                imageUrl = "https://example.com/image.jpg",
-                buttons = persistentListOf(
-                    DiscoverCardModel.Button.Cta(
-                        label = "Click Me",
-                        url = "https://example.com/cta",
-                    ),
-                )
+        ),
+    ),
+    DiscoverCardModel(
+        title = "No Buttons Card Title 2",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f",
+        buttons = persistentListOf(),
+    ),
+    DiscoverCardModel(
+        title = "Social Card 3",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b",
+        buttons = persistentListOf(DiscoverCardModel.Button.Social)
+    ),
+    DiscoverCardModel(
+        title = "Share Only Card 4",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014",
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Share(
+                shareUrl = "https://example.com/share",
             ),
         )
-}
+    ),
+    DiscoverCardModel(
+        title = "Cta + Share Card 8",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://images.unsplash.com/photo-1752939124510-e444139e6404",
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Cta(
+                label = "Click Me",
+                url = "https://example.com/cta",
+            ),
+            DiscoverCardModel.Button.Share(
+                shareUrl = "https://example.com/share",
+            ),
+        )
+    ),
+    DiscoverCardModel(
+        title = "Feedback Card 5",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7",
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Feedback(
+                label = "Feedback",
+                url = "https://example.com/feedback",
+            ),
+        )
+    ),
+    DiscoverCardModel(
+        title = "Cta Card 6",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageUrl = "https://images.unsplash.com/photo-1752350434901-e1754a4784fe?q=80&w=830",
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Cta(
+                label = "Click Me",
+                url = "https://example.com/cta",
+            ),
+        )
+    ),
+)

@@ -61,7 +61,6 @@ fun List<DiscoverCardModel.Button>.toButtonRowState(): DiscoverCardButtonRowStat
 fun List<DiscoverCardModel.Button>.isValidButtonCombo(): Boolean {
     val types = this.map { it::class }
 
-    // Only one button allowed on the left (Cta, Feedback, Social)
     val leftTypes = listOf(
         DiscoverCardModel.Button.Cta::class,
         DiscoverCardModel.Button.Feedback::class,
@@ -69,12 +68,12 @@ fun List<DiscoverCardModel.Button>.isValidButtonCombo(): Boolean {
     )
     if (types.count { it in leftTypes } > 1) return false
 
-    // Only one Share allowed, and only with Cta
+    // Only one Share allowed, can be alone or with Cta
     if (types.count { it == DiscoverCardModel.Button.Share::class } > 1) return false
     if (types.contains(DiscoverCardModel.Button.Share::class)) {
-        // If Share is present, only Cta can be present on the left
-        if (!types.contains(DiscoverCardModel.Button.Cta::class)) return false
-        if (types.any { it == DiscoverCardModel.Button.Feedback::class || it == DiscoverCardModel.Button.Social::class }) return false
+        val leftCount = types.count { it in leftTypes }
+        if (leftCount > 1) return false
+        if (leftCount == 1 && !types.contains(DiscoverCardModel.Button.Cta::class)) return false
     }
 
     // Cta cannot be combined with Social or Feedback
@@ -84,18 +83,14 @@ fun List<DiscoverCardModel.Button>.isValidButtonCombo(): Boolean {
         ))
     ) return false
 
-    // Social cannot be combined with Share or Feedback or Cta
+    // Social cannot be combined with Feedback or Cta
     if (types.contains(DiscoverCardModel.Button.Social::class) &&
-        (types.contains(DiscoverCardModel.Button.Share::class) || types.contains(
-            DiscoverCardModel.Button.Feedback::class
-        ) || types.contains(DiscoverCardModel.Button.Cta::class))
+        (types.contains(DiscoverCardModel.Button.Feedback::class) || types.contains(DiscoverCardModel.Button.Cta::class))
     ) return false
 
-    // Feedback cannot be combined with Social or Share or Cta
+    // Feedback cannot be combined with Social or Cta
     if (types.contains(DiscoverCardModel.Button.Feedback::class) &&
-        (types.contains(DiscoverCardModel.Button.Social::class) || types.contains(
-            DiscoverCardModel.Button.Share::class
-        ) || types.contains(DiscoverCardModel.Button.Cta::class))
+        (types.contains(DiscoverCardModel.Button.Social::class) || types.contains(DiscoverCardModel.Button.Cta::class))
     ) return false
 
     // Only one of each type allowed

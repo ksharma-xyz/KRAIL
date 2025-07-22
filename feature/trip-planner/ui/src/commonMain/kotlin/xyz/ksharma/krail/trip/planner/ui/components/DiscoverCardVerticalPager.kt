@@ -17,6 +17,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -24,14 +25,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.discover.ui.DiscoverCard
+import xyz.ksharma.krail.discover.ui.discoverCardList
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.absoluteValue
 
 @Composable
-fun DiscoverCardVerticalPager(
-    pages: List<String>,
+fun <T> DiscoverCardVerticalPager(
+    items: List<T>,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+    content: @Composable (T) -> Unit,
 ) {
     val initialPage = Int.MAX_VALUE / 2
     val pagerState = rememberPagerState(
@@ -45,7 +49,7 @@ fun DiscoverCardVerticalPager(
             .background(Color.Black)
             .statusBarsPadding()
     ) {
-        val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
+        val maxCardWidth = 320.dp
         val selectedWidth = 1f * maxCardWidth.value
         val unselectedWidth = 0.9f * maxCardWidth.value
         val cardHeight = 480.dp
@@ -54,11 +58,11 @@ fun DiscoverCardVerticalPager(
             state = pagerState,
             pageSpacing = 10.dp,
             pageSize = PageSize.Fixed(cardHeight),
-            key = { (it % pages.size).let { idx -> pages[idx] } },
+            key = { (it % items.size) },
             contentPadding = PaddingValues(vertical = 64.dp),
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            val actualPage = page % pages.size
+            val actualPage = page % items.size
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
             val width by animateDpAsState(
                 targetValue = lerpDp(
@@ -80,19 +84,14 @@ fun DiscoverCardVerticalPager(
                     }
                     .height(cardHeight)
                     .width(width)
-                    .padding(horizontal = 0.dp)
                     .background(
-                        color = when (actualPage % 4) {
-                            0 -> Color(0xFFE57373)
-                            1 -> Color(0xFF64B5F6)
-                            2 -> Color(0xFF81C784)
-                            else -> Color(0xFFFFB74D)
-                        },
+                        color = Color.LightGray,
                         shape = RoundedCornerShape(16.dp)
                     )
-                    .zIndex(1f - pageOffset)
+                    .zIndex(1f - pageOffset),
+                contentAlignment = Alignment.Center,
             ) {
-                content()
+                content(items[actualPage])
             }
         }
     }
@@ -113,9 +112,12 @@ fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
 @Preview
 @Composable
 private fun VerticalCardStackPreview() {
-    val sampleCards = listOf("Notice 1", "Notice 2", "Notice 3", "Notice 4")
-    DiscoverCardVerticalPager(
-        pages = sampleCards,
-        content = {
-        })
+    KrailTheme {
+        DiscoverCardVerticalPager(
+            items = discoverCardList,
+            content = { cardModel ->
+                DiscoverCard(discoverCardModel = cardModel)
+            }
+        )
+    }
 }

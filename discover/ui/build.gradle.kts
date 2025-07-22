@@ -24,6 +24,12 @@ kotlin {
     }
 
     sourceSets {
+        androidMain {
+            dependencies {
+                implementation(libs.ktor.client.okhttp)
+            }
+        }
+
         commonMain  {
             dependencies {
                 implementation(compose.animation)
@@ -32,15 +38,24 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.runtime)
                 implementation(compose.ui)
+                implementation(libs.coil3.compose)
+                implementation(libs.coil3.networkKtor)
 
                 implementation(projects.discover.network.api)
                 implementation(projects.taj)
             }
         }
+
         commonTest {
             dependencies {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
+            }
+        }
+
+        iosMain {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
             }
         }
     }

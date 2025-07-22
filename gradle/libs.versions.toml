@@ -32,6 +32,7 @@ foundationLayoutAndroid = "1.8.3"
 ui-tooling = "1.8.3"
 detekt = "1.23.8"
 detektCompose = "0.4.26"
+coil3 = "3.3.0"
 
 [libraries]
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }
@@ -52,9 +53,9 @@ lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifec
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
 # DI
-di-koinAndroid = {module = "io.insert-koin:koin-android", version.ref = "koin"}
-di-koinComposeViewmodel = {module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin"}
-di-koinComposeViewmodelNav = {module = "io.insert-koin:koin-compose-viewmodel-navigation", version.ref = "koin"}
+di-koinAndroid = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+di-koinComposeViewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+di-koinComposeViewmodelNav = { module = "io.insert-koin:koin-compose-viewmodel-navigation", version.ref = "koin" }
 
 #Network
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
@@ -98,6 +99,10 @@ androidx-ui-geometry-android = { group = "androidx.compose.ui", name = "ui-geome
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
 
 molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref = "moleculeRuntime" }
+
+# Image Loading
+coil3-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil3" }
+coil3-networkKtor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil3" }
 
 # Compose
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui-tooling" }

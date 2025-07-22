@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.discover.network.api
 
-data class DiscoverCard(
+data class DiscoverCardModel(
     val title: String,
     val description: String,
     val imageUrl: String,

@@ -71,18 +71,22 @@ fun DiscoverCard(
             )
         }
 
+        // todo - auto suze to fit one line
+        // text can be max 5-6 words
         Text(
             text = discoverCardModel.title,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             maxLines = 2,
-            style = KrailTheme.typography.displayMedium,
+            style = KrailTheme.typography.titleLarge,
         )
 
+        // max 18-20 words
         Text(
             text = discoverCardModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             maxLines = 2,
-            style = KrailTheme.typography.bodyMedium,
+
+            style = KrailTheme.typography.bodySmall,
         )
 
         Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to bottom

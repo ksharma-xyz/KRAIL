@@ -3,13 +3,16 @@ package xyz.ksharma.krail.discover.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -47,19 +50,26 @@ fun DiscoverCard(
 ) {
     Column(
         modifier = modifier
-            .height(520.dp)
+            .height(550.dp) // todo - common var
             .clip(RoundedCornerShape(24.dp))
             .background(color = themeBackgroundColor()),
     ) {
-        AsyncImage(
-            model = discoverCardModel.imageUrl,
-            contentDescription = null,
-            contentScale = ContentScale.None,
-            modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp)
-                .height(300.dp)
-                .clip(RoundedCornerShape(16.dp)),
-        )
+        BoxWithConstraints {
+            val maxCardWidth = maxWidth
+            val isTablet = maxWidth > 600.dp
+            val imageRatio = if (isTablet) 1.2f else 1f // Slightly wider on tablets
+
+            AsyncImage(
+                model = discoverCardModel.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .width(maxCardWidth)
+                    .aspectRatio(imageRatio) // Maintains 1:1 ratio for square images
+                    .padding(horizontal = 12.dp, vertical = 12.dp)
+                    .clip(RoundedCornerShape(16.dp)),
+            )
+        }
 
         Text(
             text = discoverCardModel.title,
@@ -67,12 +77,15 @@ fun DiscoverCard(
             maxLines = 2,
             style = KrailTheme.typography.displayMedium,
         )
+
         Text(
             text = discoverCardModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             maxLines = 2,
-            style = KrailTheme.typography.bodyLarge,
+            style = KrailTheme.typography.bodyMedium,
         )
+
+        Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to bottom
 
         discoverCardModel.buttons?.let { buttonsList ->
             DiscoverCardButtonRow(buttonsList)
@@ -91,7 +104,7 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left button (always left-aligned)

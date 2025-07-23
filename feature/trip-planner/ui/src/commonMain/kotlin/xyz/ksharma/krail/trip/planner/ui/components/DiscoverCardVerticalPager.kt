@@ -44,7 +44,7 @@ fun <T> DiscoverCardVerticalPager(
         val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
         val selectedWidth = 1f * maxCardWidth.value
         val unselectedWidth = 0.9f * maxCardWidth.value
-        val cardHeight = 520.dp
+        val cardHeight = 550.dp // todo - common var
 
         // Calculate padding to center the selected item
         val screenHeight = maxHeight

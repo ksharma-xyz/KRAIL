@@ -22,8 +22,12 @@ jobs:
       - name: List files in extracted artifact
         run: ls
 
-      - name: Download Firebase CLI
-        run: curl -sL https://firebase.tools | upgrade=true bash
+      - name: Install Firebase CLI
+        run: |
+          sudo rm -f /usr/local/bin/firebase
+          curl -sL https://firebase.tools | bash
+          ls -l /usr/local/bin/firebase
+          /usr/local/bin/firebase --version
 
       - name: Authenticate with Firebase
         env:

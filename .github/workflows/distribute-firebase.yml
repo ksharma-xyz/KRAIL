@@ -44,7 +44,8 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
           FIREBASE_APP_ID: ${{ env.FIREBASE_APP_ID }}
         run: |
-          COMMIT_TITLE="$(echo "${{ github.event.head_commit.message }}" | head -n1)"
+          COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n1 | tr -d '\n' | tr -d '\r')
+
           if [ "${{ inputs.variant }}" = "debug" ]; then
             firebase appdistribution:distribute composeApp-debug.apk \
               --app "$FIREBASE_APP_ID" \
@@ -54,7 +55,7 @@ jobs:
             firebase appdistribution:distribute composeApp-release.apk \
               --app "$FIREBASE_APP_ID" \
               --groups "Friends" \
-              ---release-notes "Release: $COMMIT_TITLE"
+              --release-notes "Release: $COMMIT_TITLE"
           fi
 
       - name: Cleanup sensitive files

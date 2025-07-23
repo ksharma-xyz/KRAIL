@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.settings.noticeboard
+package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
@@ -28,9 +28,10 @@ import xyz.ksharma.krail.taj.components.Text
 import kotlin.math.absoluteValue
 
 @Composable
-fun VerticalCardStack(
+fun DiscoverCardVerticalPager(
     pages: List<String>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
 ) {
     val initialPage = Int.MAX_VALUE / 2
     val pagerState = rememberPagerState(
@@ -91,17 +92,12 @@ fun VerticalCardStack(
                     )
                     .zIndex(1f - pageOffset)
             ) {
-                Text(
-                    text = pages[actualPage],
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    color = Color.White
-                )
+                content()
             }
         }
     }
 }
+
 fun lerp(start: Float, end: Float, fraction: Float): Float {
     return start + (end - start) * fraction
 }
@@ -118,5 +114,8 @@ fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
 @Composable
 private fun VerticalCardStackPreview() {
     val sampleCards = listOf("Notice 1", "Notice 2", "Notice 3", "Notice 4")
-    VerticalCardStack(pages = sampleCards)
+    DiscoverCardVerticalPager(
+        pages = sampleCards,
+        content = {
+        })
 }

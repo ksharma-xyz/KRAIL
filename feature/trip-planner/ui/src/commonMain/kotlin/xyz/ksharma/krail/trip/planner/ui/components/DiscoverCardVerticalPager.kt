@@ -1,19 +1,16 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,7 +23,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.discover.ui.discoverCardList
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import kotlin.math.absoluteValue
 
 @Composable
@@ -50,12 +46,17 @@ fun <T> DiscoverCardVerticalPager(
         val unselectedWidth = 0.9f * maxCardWidth.value
         val cardHeight = 480.dp
 
+        // Calculate padding to center the selected item
+        val screenHeight = maxHeight
+        // 33% of height for top padding
+        val topPadding = (screenHeight - cardHeight) / 3
+
         VerticalPager(
             state = pagerState,
             pageSpacing = 10.dp,
             pageSize = PageSize.Fixed(cardHeight),
             key = { (it % items.size) },
-            contentPadding = PaddingValues(vertical = 64.dp),
+            contentPadding = PaddingValues(vertical = topPadding),
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val actualPage = page % items.size

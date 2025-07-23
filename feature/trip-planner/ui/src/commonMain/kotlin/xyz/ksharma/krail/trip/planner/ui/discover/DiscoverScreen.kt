@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.discover
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,10 +12,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.discover.ui.discoverCardList
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.trip.planner.ui.state.discover.DiscoverState
 
@@ -40,20 +45,24 @@ fun DiscoverScreen(
             )
         }
 
-        TitleBar(
-            modifier = Modifier.fillMaxWidth()
-                .align(Alignment.TopCenter),
-            onNavActionClick = onBackClick,
-            title = { },
-        )
-
-        /*Text(
-            text = "What's On, Sydney!",
-            style = KrailTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal),
+        Column(
             modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .background(color = Color.Transparent),
-        )*/
+                .align(Alignment.TopCenter),
+        ) {
+            TitleBar(
+                modifier = Modifier.fillMaxWidth(),
+                onNavActionClick = onBackClick,
+                title = { },
+            )
+
+            Text(
+                text = "What's On, Sydney!",
+                style = KrailTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp)
+                    .background(color = Color.Transparent),
+            )
+        }
     }
 }

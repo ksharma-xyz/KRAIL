@@ -22,22 +22,8 @@ jobs:
       - name: List files in extracted artifact
         run: ls
 
-      - name: Install Firebase CLI
-        run: |
-          uname_out="$(uname -s)"
-          case "${uname_out}" in
-              Linux*)     platform=linux;;
-              Darwin*)    platform=mac;;
-              *)          echo "Unsupported OS: ${uname_out}"; exit 1;;
-          esac
-
-          echo "Detected platform: $platform"
-
-          curl -Lo firebase "https://firebase.tools/bin/${platform}/latest"
-          chmod +x firebase
-          sudo mv firebase /usr/local/bin/firebase
-
-          firebase --version
+      - name: Download Firebase CLI
+        run: curl -sL https://firebase.tools | upgrade=true bash
 
       - name: Authenticate with Firebase
         env:

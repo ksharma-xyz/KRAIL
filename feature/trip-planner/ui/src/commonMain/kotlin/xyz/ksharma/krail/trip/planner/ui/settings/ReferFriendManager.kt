@@ -34,11 +34,6 @@ object ReferFriendManager {
             "I’m the one it needs. \uD83D\uDE87" +
             SUFFIX,
 
-        "\uD83D\uDCA3 Your mission, should you choose to accept it is to " +
-            "invite two mates to KRAIL App and upgrade their Sydney experience.\n\n" +
-            "⏱\uFE0F This message will self-destruct in 2 minutes." +
-            SUFFIX,
-
         "\uD83E\uDDF3 Still stuck at Platform 9¾?\n" +
             "Cast the real spell, say “KRAILiosa Commuta!” \uD83E\uDE84 ✨" +
             SUFFIX,

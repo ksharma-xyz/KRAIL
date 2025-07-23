@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,7 +48,17 @@ fun DiscoverScreen(
 
         Column(
             modifier = Modifier
-                .align(Alignment.TopCenter),
+                .align(Alignment.TopCenter)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            KrailTheme.colors.surface.copy(alpha = 0.8f),
+                            KrailTheme.colors.surface.copy(alpha = 0.95f)
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY,
+                    )
+                ),
         ) {
             TitleBar(
                 modifier = Modifier.fillMaxWidth(),

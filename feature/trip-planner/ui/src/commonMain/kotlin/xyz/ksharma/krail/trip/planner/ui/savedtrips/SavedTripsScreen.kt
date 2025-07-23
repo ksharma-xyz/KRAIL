@@ -25,9 +25,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
+import krail.feature.trip_planner.ui.generated.resources.ic_sydney
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.discover.ui.DiscoverCard
-import xyz.ksharma.krail.discover.ui.discoverCardList
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
@@ -54,6 +53,7 @@ fun SavedTripsScreen(
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
+    onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
 ) {
     // TODO -  handle colors of status bar
@@ -81,6 +81,17 @@ fun SavedTripsScreen(
                     Text(text = "KRAIL", color = themeColor())
                 },
                 actions = {
+                    RoundIconButton(
+                        onClick = onDiscoverButtonClick,
+                    ) {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_sydney),
+                            contentDescription = "Discover Sydney",
+                            colorFilter = ColorFilter.tint(LocalContentColor.current),
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
+
                     RoundIconButton(
                         onClick = onSettingsButtonClick,
                     ) {
@@ -111,18 +122,6 @@ fun SavedTripsScreen(
                         )
                     }
                 } else {
-                    items(discoverCardList, key = { it.title.takeLast(9) }) { model ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            DiscoverCard(
-                                discoverCardModel = model,
-                                modifier = Modifier.padding(vertical = 16.dp),
-                            )
-                        }
-                    }
-
                     stickyHeader(key = "saved_trips_title") {
                         Box(
                             modifier = Modifier.fillMaxWidth()

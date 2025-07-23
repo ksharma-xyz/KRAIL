@@ -6,6 +6,7 @@ import androidx.navigation.compose.navigation
 import kotlinx.serialization.Serializable
 import xyz.ksharma.krail.trip.planner.ui.alerts.alertsDestination
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.dateTimeSelectorDestination
+import xyz.ksharma.krail.trip.planner.ui.discover.discoverDestination
 import xyz.ksharma.krail.trip.planner.ui.intro.introDestination
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsDestination
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopDestination
@@ -40,6 +41,8 @@ fun NavGraphBuilder.tripPlannerDestinations(
         aboutUsDestination(navController)
 
         introDestination(navController)
+
+        discoverDestination(navController)
     }
 }
 
@@ -105,3 +108,6 @@ data class DateTimeSelectorRoute(
         const val DATE_TIME_TEXT_KEY = "DateTimeSelectionKey"
     }
 }
+
+@Serializable
+data object DiscoverRoute

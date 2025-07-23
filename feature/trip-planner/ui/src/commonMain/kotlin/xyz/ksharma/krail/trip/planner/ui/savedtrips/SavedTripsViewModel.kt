@@ -138,6 +138,10 @@ class SavedTripsViewModel(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded
             )
+
+            SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
+                // todo
+            }
         }
     }
 

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PageSize
@@ -19,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -27,8 +25,8 @@ import androidx.compose.ui.zIndex
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.discover.ui.discoverCardList
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import kotlin.math.absoluteValue
 
 @Composable
@@ -46,8 +44,6 @@ fun <T> DiscoverCardVerticalPager(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .statusBarsPadding()
     ) {
         val maxCardWidth = 320.dp
         val selectedWidth = 1f * maxCardWidth.value
@@ -84,10 +80,6 @@ fun <T> DiscoverCardVerticalPager(
                     }
                     .height(cardHeight)
                     .width(width)
-                    .background(
-                        color = Color.LightGray,
-                        shape = RoundedCornerShape(16.dp)
-                    )
                     .zIndex(1f - pageOffset),
                 contentAlignment = Alignment.Center,
             ) {

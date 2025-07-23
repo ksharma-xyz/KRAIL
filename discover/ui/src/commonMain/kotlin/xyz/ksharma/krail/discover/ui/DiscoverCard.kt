@@ -37,6 +37,7 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
 
 @Composable
 fun DiscoverCard(
@@ -48,7 +49,7 @@ fun DiscoverCard(
         modifier = modifier
             .size(height = 480.dp, width = 320.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(color = Color.LightGray),
+            .background(color = themeBackgroundColor()),
     ) {
         Box(
             modifier = Modifier

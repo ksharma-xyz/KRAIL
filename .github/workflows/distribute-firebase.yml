@@ -25,7 +25,7 @@ jobs:
       - name: Install Firebase CLI
         run: |
           sudo rm -f /usr/local/bin/firebase
-          curl -sL firebase.tools | bash
+          curl -sL https://firebase.tools | bash
           ls -l /usr/local/bin/firebase
           /usr/local/bin/firebase --version
 

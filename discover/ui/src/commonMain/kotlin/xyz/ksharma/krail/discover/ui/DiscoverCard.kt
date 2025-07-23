@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -47,24 +47,19 @@ fun DiscoverCard(
 ) {
     Column(
         modifier = modifier
-            .size(height = 480.dp, width = 320.dp)
+            .height(520.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(color = themeBackgroundColor()),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
+        AsyncImage(
+            model = discoverCardModel.imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.None,
+            modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 12.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .aspectRatio(1f)
-        ) {
-            AsyncImage(
-                model = discoverCardModel.imageUrl,
-                contentDescription = null,
-                contentScale = ContentScale.None,
-                modifier = Modifier.aspectRatio(1f),
-            )
-        }
+                .height(300.dp)
+                .clip(RoundedCornerShape(16.dp)),
+        )
 
         Text(
             text = discoverCardModel.title,
@@ -109,15 +104,18 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
                     Text(text = left.button.label)
                 }
             }
+
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
                 SocialConnectionBox()
             }
+
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 FeedbackCircleBox()
                 FeedbackCircleBox()
             }
+
             null -> Box(modifier = Modifier) // Empty box to keep slot
         }
 
@@ -129,6 +127,7 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
                 // Replace with your Share button UI
                 FeedbackCircleBox()
             }
+
             null -> Box(modifier = Modifier) // Empty box to keep slot
         }
     }

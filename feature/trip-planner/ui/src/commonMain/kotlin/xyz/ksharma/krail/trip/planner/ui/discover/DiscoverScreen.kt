@@ -75,5 +75,21 @@ fun DiscoverScreen(
                     .background(color = Color.Transparent),
             )
         }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            KrailTheme.colors.surface.copy(alpha = 0.95f),
+                            KrailTheme.colors.surface.copy(alpha = 0.8f),
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY,
+                    )
+                ).height(100.dp),
+        ) {
+        }
     }
 }

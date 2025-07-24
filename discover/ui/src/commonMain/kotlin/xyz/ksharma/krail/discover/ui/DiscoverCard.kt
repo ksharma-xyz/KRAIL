@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.discover.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,27 +22,37 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import app.krail.taj.resources.ic_android_share
+import app.krail.taj.resources.ic_ios_share
 import coil3.ColorImage
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
+import xyz.ksharma.krail.core.appinfo.DevicePlatformType
+import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.social.SocialConnectionRow
 import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
 import xyz.ksharma.krail.discover.network.api.toButtonRowState
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.discoverCardHeight
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeContentColor
+import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun DiscoverCard(
@@ -123,14 +134,19 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
-                SocialConnectionRow()
+                SocialConnectionRow(onClick = {})
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                FeedbackCircleBox()
-                FeedbackCircleBox()
+                FeedbackCircleBox {
+                    Text("👍")
+                }
+
+                FeedbackCircleBox {
+                    Text("👎")
+                }
             }
 
             null -> Box(modifier = Modifier) // Empty box to keep slot
@@ -141,8 +157,18 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
         // Right button (always right-aligned)
         when (val right = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
-                // Replace with your Share button UI
-                FeedbackCircleBox()
+                RoundIconButton(onClick = {}) {
+                    Image(
+                        painter = if (getAppPlatformType() == DevicePlatformType.IOS) {
+                            painterResource(TajRes.drawable.ic_ios_share)
+                        } else {
+                            painterResource(TajRes.drawable.ic_android_share)
+                        },
+                        contentDescription = "Invite Friends",
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
 
             null -> Box(modifier = Modifier) // Empty box to keep slot
@@ -150,24 +176,18 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
     }
 }
 
-@Composable
-fun SocialConnectionRow() {
-    Row(
-        modifier = Modifier
-            .padding(start = (24 + 16 + 6).dp, end = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // todo can be used from :social module once created.
-    }
-}
 
 @Composable
-private fun FeedbackCircleBox() {
+private fun FeedbackCircleBox(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
     Box(
-        modifier = Modifier.size(40.dp).background(Color.Yellow, shape = CircleShape),
-        contentAlignment = Alignment.Center
+        modifier = modifier.size(40.dp)
+            .background(color = themeContentColor(), shape = CircleShape),
+        contentAlignment = Alignment.Center,
     ) {
-        Text("F", color = Color.Black)
+        content()
     }
 }
 

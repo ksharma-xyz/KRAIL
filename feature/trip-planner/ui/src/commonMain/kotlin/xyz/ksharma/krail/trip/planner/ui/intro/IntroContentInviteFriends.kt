@@ -21,9 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_android_share
-import krail.feature.trip_planner.ui.generated.resources.ic_ios_share
+import app.krail.taj.resources.Res as TajRes
+import app.krail.taj.resources.ic_android_share
+import app.krail.taj.resources.ic_ios_share
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
@@ -73,9 +73,9 @@ fun IntroContentInviteFriends(
             ) {
                 Image(
                     painter = if (getAppPlatformType() == DevicePlatformType.IOS) {
-                        painterResource(Res.drawable.ic_ios_share)
+                        painterResource(TajRes.drawable.ic_ios_share)
                     } else {
-                        painterResource(Res.drawable.ic_android_share)
+                        painterResource(TajRes.drawable.ic_android_share)
                     },
                     contentDescription = "Invite Friends",
                     colorFilter = ColorFilter.tint(Color.White),

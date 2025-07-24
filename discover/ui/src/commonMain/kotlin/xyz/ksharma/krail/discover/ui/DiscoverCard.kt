@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.discover.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import xyz.ksharma.krail.core.log.logError
@@ -38,6 +41,7 @@ import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
 import xyz.ksharma.krail.discover.network.api.toButtonRowState
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.SocialConnectionBox
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.discoverCardHeight
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -123,7 +127,7 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
-                SocialConnectionBox()
+                SocialConnectionRow()
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
@@ -151,13 +155,13 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
 }
 
 @Composable
-private fun SocialConnectionBox() {
-    // Replace with your SocialConnectionBox implementation
-    Box(
-        modifier = Modifier.size(40.dp).background(Color.Blue, shape = CircleShape),
-        contentAlignment = Alignment.Center
+fun SocialConnectionRow() {
+    Row(
+        modifier = Modifier
+            .padding(start = (24 + 16 + 6).dp, end = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("S", color = Color.White)
+        // todo can be used from :social module once created.
     }
 }
 

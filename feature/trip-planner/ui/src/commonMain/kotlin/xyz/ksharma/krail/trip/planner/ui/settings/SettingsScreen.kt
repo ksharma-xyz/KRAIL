@@ -39,6 +39,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
+import xyz.ksharma.krail.taj.components.SocialConnectionBox
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -137,14 +138,8 @@ fun SettingsScreen(
                             ) {
                                 SocialType.entries.forEach { socialType ->
                                     SocialConnectionBox(
-                                        type = socialType,
-                                        onSocialLinkClick = {
-                                            onSocialLinkClick(socialType)
-                                        },
-                                        modifier = Modifier.padding(
-                                            top = 4.dp,
-                                            bottom = 4.dp,
-                                        ),
+                                        onClick = { onSocialLinkClick(socialType) },
+                                        modifier = Modifier.padding(vertical = 4.dp),
                                     ) {
                                         Image(
                                             painter = painterResource(resource = socialType.resource()),
@@ -189,7 +184,7 @@ private fun SocialType.resource(): DrawableResource = when (this) {
     SocialType.Instagram -> Res.drawable.ic_instagram
     SocialType.Facebook -> Res.drawable.ic_facebook
 }
-
+/*
 @Composable
 private fun SocialConnectionBox(
     type: SocialType,
@@ -211,7 +206,7 @@ private fun SocialConnectionBox(
     ) {
         content()
     }
-}
+}*/
 
 @Composable
 private fun SettingsItem(

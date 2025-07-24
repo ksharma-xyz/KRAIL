@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.components
+package xyz.ksharma.krail.taj.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.discover.ui.DiscoverCard
-import xyz.ksharma.krail.discover.ui.discoverCardList
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.absoluteValue
+
+val discoverCardHeight = 550.dp
 
 @Composable
 fun <T> DiscoverCardVerticalPager(
@@ -43,19 +43,18 @@ fun <T> DiscoverCardVerticalPager(
     ) {
         val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
         val selectedWidth = 1f * maxCardWidth.value
-        val unselectedWidth = 0.9f * maxCardWidth.value
-        val cardHeight = 550.dp // todo - common var
+        val unselectedWidth = 0.95f * maxCardWidth.value
+
 
         // Calculate padding to center the selected item
         val screenHeight = maxHeight
-        //
-        val topPadding = (screenHeight - cardHeight) / 2
+        val topPadding = (screenHeight - discoverCardHeight) / 2
 
         VerticalPager(
             state = pagerState,
             pageSpacing = 20.dp,
             pageSize = PageSize.Fixed(
-                pageSize = cardHeight,
+                pageSize = discoverCardHeight,
             ),
             key = { (it % items.size) },
             contentPadding = PaddingValues(vertical = topPadding),
@@ -81,7 +80,7 @@ fun <T> DiscoverCardVerticalPager(
                         scaleY = scale
                         this.alpha = alpha
                     }
-                    .height(cardHeight)
+                    .height(discoverCardHeight)
                     .width(width)
                     .zIndex(1f - pageOffset),
                 contentAlignment = Alignment.Center,
@@ -108,11 +107,13 @@ fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
 @Composable
 private fun VerticalCardStackPreview() {
     KrailTheme {
+/*
         DiscoverCardVerticalPager(
             items = discoverCardList,
             content = { cardModel ->
                 DiscoverCard(discoverCardModel = cardModel)
             }
         )
+*/
     }
 }

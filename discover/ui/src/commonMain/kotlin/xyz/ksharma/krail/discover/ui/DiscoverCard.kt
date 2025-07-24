@@ -39,6 +39,7 @@ import xyz.ksharma.krail.discover.network.api.toButtonRowState
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.discoverCardHeight
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 
@@ -50,7 +51,7 @@ fun DiscoverCard(
 ) {
     Column(
         modifier = modifier
-            .height(550.dp) // todo - common var
+            .height(discoverCardHeight)
             .clip(RoundedCornerShape(24.dp))
             .background(color = themeBackgroundColor()),
     ) {
@@ -76,7 +77,7 @@ fun DiscoverCard(
         Text(
             text = discoverCardModel.title,
             modifier = Modifier.padding(horizontal = 16.dp),
-            maxLines = 2,
+            maxLines = 2, // for large font size 2, // for small font size 3
             style = KrailTheme.typography.titleLarge,
         )
 
@@ -84,8 +85,7 @@ fun DiscoverCard(
         Text(
             text = discoverCardModel.description,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            maxLines = 2,
-
+            maxLines = 2, // for large font size 2, // for small font size 3
             style = KrailTheme.typography.bodySmall,
         )
 

@@ -26,27 +26,22 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_facebook
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
-import krail.feature.trip_planner.ui.generated.resources.ic_instagram
-import krail.feature.trip_planner.ui.generated.resources.ic_linkedin
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
-import krail.feature.trip_planner.ui.generated.resources.ic_reddit
 import krail.feature.trip_planner.ui.generated.resources.ic_wifi
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.social.SocialConnectionRow
+import xyz.ksharma.krail.core.social.model.SocialType
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
-import xyz.ksharma.krail.taj.components.SocialConnectionBox
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType
 
 @Composable
 fun SettingsScreen(
@@ -131,25 +126,11 @@ fun SettingsScreen(
                         icon = painterResource(Res.drawable.ic_wifi),
                         text = "Stay connected",
                         detailContent = {
-                            Row(
+                            SocialConnectionRow(
                                 modifier = Modifier
                                     .padding(start = (24 + 16 + 6).dp, end = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            ) {
-                                SocialType.entries.forEach { socialType ->
-                                    SocialConnectionBox(
-                                        onClick = { onSocialLinkClick(socialType) },
-                                        modifier = Modifier.padding(vertical = 4.dp),
-                                    ) {
-                                        Image(
-                                            painter = painterResource(resource = socialType.resource()),
-                                            contentDescription = "${socialType.displayName} Page for KRAIL App",
-                                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                    }
-                                }
-                            }
+                                onClick = { socialType -> onSocialLinkClick(socialType) }
+                            )
                         },
                     )
                 }
@@ -178,12 +159,6 @@ fun SettingsScreen(
     }
 }
 
-private fun SocialType.resource(): DrawableResource = when (this) {
-    SocialType.LinkedIn -> Res.drawable.ic_linkedin
-    SocialType.Reddit -> Res.drawable.ic_reddit
-    SocialType.Instagram -> Res.drawable.ic_instagram
-    SocialType.Facebook -> Res.drawable.ic_facebook
-}
 /*
 @Composable
 private fun SocialConnectionBox(

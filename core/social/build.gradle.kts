@@ -1,13 +1,14 @@
 plugins {
     alias(libs.plugins.krail.android.library)
-    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
 }
 
 android {
-    namespace = "xyz.ksharma.krail.trip.planner.state"
+    namespace = "xyz.ksharma.krail.core.social"
 }
 
 kotlin {
@@ -27,17 +28,15 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(projects.core.dateTime)
-                implementation(projects.core.festival)
-                implementation(projects.core.social)
-                implementation(projects.taj)
                 implementation(projects.core.analytics)
-
-                implementation(libs.kotlinx.collections.immutable)
-                implementation(libs.kotlinx.serialization.json)
+                implementation(projects.core.log)
+                implementation(projects.taj)
 
                 implementation(compose.runtime)
-                implementation(libs.kotlinx.datetime)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
+                implementation(compose.foundation)
+                implementation(compose.ui)
             }
         }
     }

@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.modifier.klickable
 
 @Composable
-fun SocialConnectionBox(
+fun SocialConnectionIcon(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     content: @Composable () -> Unit = {},

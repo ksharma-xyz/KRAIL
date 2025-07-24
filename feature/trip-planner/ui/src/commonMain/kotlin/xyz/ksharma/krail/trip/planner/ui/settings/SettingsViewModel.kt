@@ -10,21 +10,13 @@ import kotlinx.coroutines.flow.stateIn
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialPlatform.FACEBOOK
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialPlatform.INSTAGRAM
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialPlatform.LINKEDIN
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialPlatform.REDDIT
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.core.social.model.toAnalyticsEventPlatform
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsState
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType.Facebook
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType.Instagram
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType.LinkedIn
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SocialType.Reddit
 
 class SettingsViewModel(
     private val appInfoProvider: AppInfoProvider,
@@ -45,7 +37,7 @@ class SettingsViewModel(
                 platformOps.openUrl(url = event.socialType.httpLink)
                 analytics.track(
                     event = AnalyticsEvent.SocialConnectionLinkClickEvent(
-                        socialPlatform = socialPlatformFromType(event.socialType),
+                        socialPlatform = event.socialType.toAnalyticsEventPlatform(),
                     ),
                 )
             }
@@ -72,14 +64,5 @@ class SettingsViewModel(
 
     fun onOurStoryClick() {
         analytics.track(AnalyticsEvent.OurStoryClick)
-    }
-
-    private fun socialPlatformFromType(
-        socialType: SocialType,
-    ): AnalyticsEvent.SocialConnectionLinkClickEvent.SocialPlatform = when (socialType) {
-        LinkedIn -> LINKEDIN
-        Reddit -> REDDIT
-        Instagram -> INSTAGRAM
-        Facebook -> FACEBOOK
     }
 }

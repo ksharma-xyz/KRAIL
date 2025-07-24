@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.state.settings
 
 data class SettingsState(val appVersion: String = "")
 
+// TODO - move to separate module for reusability.
 enum class SocialType(val displayName: String, val httpLink: String) {
     LinkedIn(displayName = "LinkedIn", httpLink = "https://www.linkedin.com/company/krail/"),
 

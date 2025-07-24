@@ -7,6 +7,7 @@ import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
+import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
@@ -22,6 +23,7 @@ val viewModelsModule = module {
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
     viewModelOf(::OurStoryViewModel)
+    viewModelOf(::DiscoverViewModel)
 
     viewModel {
         IntroViewModel(

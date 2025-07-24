@@ -12,6 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
@@ -133,6 +134,13 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 navController.navigate(
                     route = SettingsRoute,
+                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                )
+            },
+            onDiscoverButtonClick = {
+               viewModel.onEvent(SavedTripUiEvent.AnalyticsDiscoverButtonClick)
+                navController.navigate(
+                    route = DiscoverRoute,
                     navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
                 )
             },

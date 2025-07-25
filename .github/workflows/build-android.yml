@@ -70,25 +70,15 @@ jobs:
         run: |
           echo "GitHub run number: ${{ github.run_number }}"
 
-      - name: Build Android App
+      - name: Build ${{ inputs.variant }}
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test \
-              -PversionCode="${{ github.run_number }}" \
-              --no-build-cache \
-              --no-configuration-cache \
-              --rerun-tasks \
-              --refresh-dependencies \
-              --stacktrace
+            ./gradlew :composeApp:assembleDebug test -PversionCode="${{ github.run_number }}" --rerun-tasks --stacktrace
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease \
-              -PversionCode="${{ github.run_number }}" \
-              --no-build-cache \
-              --no-configuration-cache \
-              --rerun-tasks \
-              --refresh-dependencies \
-              --stacktrace
+            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi
 
       - name: Upload Debug APK

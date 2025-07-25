@@ -11,6 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: Firebase
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle
     steps:
       - uses: actions/checkout@v4
 

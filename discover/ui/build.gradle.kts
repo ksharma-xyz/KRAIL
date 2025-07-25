@@ -42,7 +42,9 @@ kotlin {
                 implementation(libs.coil3.networkKtor)
                 implementation(libs.kotlinx.collections.immutable)
 
+                implementation(projects.core.appInfo)
                 implementation(projects.core.log)
+                implementation(projects.core.social)
                 implementation(projects.discover.network.api)
                 implementation(projects.taj)
             }

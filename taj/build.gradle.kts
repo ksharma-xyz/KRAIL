@@ -54,5 +54,5 @@ dependencies {
 compose.resources {
     publicResClass = true
     packageOfResClass = "app.krail.taj.resources"
-    generateResClass = auto
+    generateResClass = always
 }

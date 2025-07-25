@@ -73,7 +73,7 @@ jobs:
       - name: Build Android App
         run: |
           set -e
-          if [[ "${{ matrix.build-type }}" == "debug" ]]; then
+          if [[ "${{ inputs.variant }}" == "debug" ]]; then
             ./gradlew :composeApp:assembleDebug test \
               -PversionCode="${{ github.run_number }}" \
               --no-build-cache \
@@ -81,9 +81,14 @@ jobs:
               --rerun-tasks \
               --refresh-dependencies \
               --stacktrace
-          elif [[ "${{ matrix.build-type }}" == "release" ]]; then
+          elif [[ "${{ inputs.variant }}" == "release" ]]; then
             ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease \
-              -PversionCode="${{ github.run_number }}"
+              -PversionCode="${{ github.run_number }}" \
+              --no-build-cache \
+              --no-configuration-cache \
+              --rerun-tasks \
+              --refresh-dependencies \
+              --stacktrace
           fi
 
       - name: Upload Debug APK

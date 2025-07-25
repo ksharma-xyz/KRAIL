@@ -47,10 +47,11 @@ jobs:
           DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
         run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
 
-      - name: Clean Build
+      - name: Clean Build Cache
         run: |
-          ./gradlew clean
-          ./gradlew build --no-build-cache --no-configuration-cache --rerun-tasks --refresh-dependencies
+          ./gradlew clean --no-build-cache --no-configuration-cache
+          rm -rf ~/.gradle/caches/
+          rm -rf .gradle/
 
       - name: Decode Keystore
         if: ${{ inputs.variant == 'release' }}
@@ -73,7 +74,7 @@ jobs:
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test -PversionCode="${{ github.run_number }}" --rerun-tasks --stacktrace
+            ./gradlew :composeApp:assembleDebug test -PversionCode="${{ github.run_number }}" --no-build-cache --no-configuration-cache --rerun-tasks --refresh-dependencies --stacktrace
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
             ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
           fi

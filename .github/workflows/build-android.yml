@@ -25,14 +25,14 @@ jobs:
           distribution: zulu
           java-version: 21
 
-      - name: Cache Gradle and wrapper
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: ""
+#      - name: Cache Gradle and wrapper
+#        uses: actions/cache@v4
+#        with:
+#          path: |
+#            ~/.gradle/caches
+#            ~/.gradle/wrapper
+#          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+#          restore-keys: ""
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
@@ -51,7 +51,9 @@ jobs:
         run: |
           ./gradlew clean --no-build-cache --no-configuration-cache
           rm -rf ~/.gradle/caches/
+          rm -rf ~/.gradle/wrapper/
           rm -rf .gradle/
+          rm -rf build/
 
       - name: Decode Keystore
         if: ${{ inputs.variant == 'release' }}
@@ -68,15 +70,20 @@ jobs:
         run: |
           echo "GitHub run number: ${{ github.run_number }}"
 
-      - name: Build ${{ inputs.variant }}
-        env:
-          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+      - name: Build Android App
         run: |
           set -e
-          if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test -PversionCode="${{ github.run_number }}" --no-build-cache --no-configuration-cache --rerun-tasks --refresh-dependencies --stacktrace
-          elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
+          if [[ "${{ matrix.build-type }}" == "debug" ]]; then
+            ./gradlew :composeApp:assembleDebug test \
+              -PversionCode="${{ github.run_number }}" \
+              --no-build-cache \
+              --no-configuration-cache \
+              --rerun-tasks \
+              --refresh-dependencies \
+              --stacktrace
+          elif [[ "${{ matrix.build-type }}" == "release" ]]; then
+            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease \
+              -PversionCode="${{ github.run_number }}"
           fi
 
       - name: Upload Debug APK

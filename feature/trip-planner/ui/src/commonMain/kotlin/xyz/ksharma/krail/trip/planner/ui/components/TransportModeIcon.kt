@@ -87,7 +87,11 @@ enum class TransportModeIconSize(val dpSize: Dp) {
 }
 
 // region Previews
-@Preview
+
+private const val previewGroupName = "Transport Mode Icons"
+private const val previewWithBackground = "Transport Mode Icons With Background"
+
+@Preview(group = previewGroupName)
 @Composable
 private fun TrainPreview() {
     KrailTheme {
@@ -98,7 +102,7 @@ private fun TrainPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewGroupName)
 @Composable
 private fun BusPreview() {
     KrailTheme {
@@ -109,7 +113,7 @@ private fun BusPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewGroupName)
 @Composable
 private fun MetroPreview() {
     KrailTheme {
@@ -120,7 +124,7 @@ private fun MetroPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewGroupName)
 @Composable
 private fun LightRailPreview() {
     KrailTheme {
@@ -131,7 +135,7 @@ private fun LightRailPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewGroupName)
 @Composable
 private fun FerryPreview() {
     KrailTheme {
@@ -142,7 +146,7 @@ private fun FerryPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewWithBackground)
 @Composable
 private fun TrainWithBackgroundPreview() {
     KrailTheme {
@@ -153,7 +157,7 @@ private fun TrainWithBackgroundPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewWithBackground)
 @Composable
 private fun BusWithBackgroundPreview() {
     KrailTheme {
@@ -164,7 +168,7 @@ private fun BusWithBackgroundPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewWithBackground)
 @Composable
 private fun MetroWithBackgroundPreview() {
     KrailTheme {
@@ -175,7 +179,7 @@ private fun MetroWithBackgroundPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewWithBackground)
 @Composable
 private fun LightRailWithBackgroundPreview() {
     KrailTheme {
@@ -186,7 +190,7 @@ private fun LightRailWithBackgroundPreview() {
     }
 }
 
-@Preview
+@Preview(group = previewWithBackground)
 @Composable
 private fun FerryWithBackgroundPreview() {
     KrailTheme {

@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.discover.ui.DiscoverCard
-import xyz.ksharma.krail.discover.ui.discoverCardList
+import xyz.ksharma.krail.discover.ui.previewDiscoverCardList
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -35,7 +35,7 @@ fun DiscoverScreen(
 
             // Add the pager here
             DiscoverCardVerticalPager(
-                items = discoverCardList,
+                items = previewDiscoverCardList,
                 modifier = Modifier.fillMaxSize(),
                 content = { cardModel ->
                     DiscoverCard(discoverCardModel = cardModel)

@@ -41,12 +41,10 @@ data class DiscoverCardModel(
                     val type: SocialType,
                     val url: String,
                 )
-
             }
         }
     }
 }
-
 
 data class DiscoverCardButtonRowState(
     val left: LeftButtonType?,

@@ -23,7 +23,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.absoluteValue
 
-val discoverCardHeight = 550.dp
+val discoverCardHeight = 480.dp
 
 @Composable
 fun <T> DiscoverCardVerticalPager(
@@ -44,7 +44,6 @@ fun <T> DiscoverCardVerticalPager(
         val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
         val selectedWidth = 1f * maxCardWidth.value
         val unselectedWidth = 0.95f * maxCardWidth.value
-
 
         // Calculate padding to center the selected item
         val screenHeight = maxHeight

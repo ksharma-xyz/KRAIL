@@ -23,16 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
 import app.krail.taj.resources.ic_ios_share
-import coil3.ColorImage
-import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePreviewHandler
-import coil3.compose.LocalAsyncImagePreviewHandler
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -44,14 +39,15 @@ import xyz.ksharma.krail.core.social.SocialConnectionRow
 import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
 import xyz.ksharma.krail.discover.network.api.toButtonRowState
+import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.discoverCardHeight
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeContentColor
 import app.krail.taj.resources.Res as TajRes
 
 @Composable
@@ -155,9 +151,12 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
         Spacer(modifier = Modifier.weight(1f))
 
         // Right button (always right-aligned)
-        when (val right = state.right) {
+        when (state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
-                RoundIconButton(onClick = {}) {
+                RoundIconButton(
+                    onClick = {},
+                    color = Color.Transparent,
+                ) {
                     Image(
                         painter = if (getAppPlatformType() == DevicePlatformType.IOS) {
                             painterResource(TajRes.drawable.ic_ios_share)
@@ -184,40 +183,71 @@ private fun FeedbackCircleBox(
 ) {
     Box(
         modifier = modifier.size(40.dp)
-            .background(color = themeContentColor(), shape = CircleShape),
+            .clip(shape = CircleShape)
+            .klickable {},
         contentAlignment = Alignment.Center,
     ) {
-        content()
+        CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.title) {
+            content()
+        }
     }
 }
 
-
-@OptIn(ExperimentalCoilApi::class)
-@Preview
+@Preview(showBackground = true)
 @Composable
-private fun DiscoverCardPreview(
-//    @PreviewParameter(DiscoverCardProvider::class) discoverCard: DiscoverCard,
-) {
-    val previewHandler = AsyncImagePreviewHandler {
-        ColorImage(Color.Blue.toArgb())
+private fun DiscoverCardCtaPreview() {
+    PreviewContent {
+        DiscoverCard(discoverCardModel = previewDiscoverCardList[0])
     }
-    CompositionLocalProvider(LocalAsyncImagePreviewHandler provides previewHandler) {
-        KrailTheme {
-            DiscoverCardProvider().values.forEach { discoverCard ->
-                Column(modifier = Modifier.background(color = KrailTheme.colors.surface)) {
-                    DiscoverCard(discoverCardModel = discoverCard)
-                }
-            }
-        }
+}
+
+@Preview(showBackground = true)
+private
+@Composable
+fun DiscoverCardNoButtonsPreview() {
+    PreviewContent {
+        DiscoverCard(discoverCardModel = previewDiscoverCardList[1])
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DiscoverCardSocialPreview() {
+    PreviewContent {
+        DiscoverCard(discoverCardModel = previewDiscoverCardList[2])
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DiscoverCardSharePreview() {
+    PreviewContent {
+        DiscoverCard(discoverCardModel = previewDiscoverCardList[3])
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DiscoverCardCtaSharePreview() {
+    PreviewContent {
+        DiscoverCard(discoverCardModel = previewDiscoverCardList[4])
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DiscoverCardFeedbackPreview() {
+    PreviewContent {
+        DiscoverCard(discoverCardModel = previewDiscoverCardList[5])
     }
 }
 
 private class DiscoverCardProvider : PreviewParameterProvider<DiscoverCardModel> {
     override val values: Sequence<DiscoverCardModel>
-        get() = discoverCardList.asSequence()
+        get() = previewDiscoverCardList.asSequence()
 }
 
-val discoverCardList = listOf(
+val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Cta only card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
@@ -230,19 +260,19 @@ val discoverCardList = listOf(
         ),
     ),
     DiscoverCardModel(
-        title = "No Buttons Card Title 2",
+        title = "No Buttons Card Title",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageUrl = "https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f",
         buttons = persistentListOf(),
     ),
     DiscoverCardModel(
-        title = "Social Card 3",
+        title = "Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageUrl = "https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b",
         buttons = persistentListOf(DiscoverCardModel.Button.Social)
     ),
     DiscoverCardModel(
-        title = "Share Only Card 4",
+        title = "Share Only Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageUrl = "https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014",
         buttons = persistentListOf(
@@ -252,7 +282,7 @@ val discoverCardList = listOf(
         )
     ),
     DiscoverCardModel(
-        title = "Cta + Share Card 8",
+        title = "Cta + Share Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageUrl = "https://images.unsplash.com/photo-1752939124510-e444139e6404",
         buttons = persistentListOf(
@@ -266,24 +296,13 @@ val discoverCardList = listOf(
         )
     ),
     DiscoverCardModel(
-        title = "Feedback Card 5",
+        title = "Feedback Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageUrl = "https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7",
         buttons = persistentListOf(
             DiscoverCardModel.Button.Feedback(
                 label = "Feedback",
                 url = "https://example.com/feedback",
-            ),
-        )
-    ),
-    DiscoverCardModel(
-        title = "Cta Card 6",
-        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://images.unsplash.com/photo-1752350434901-e1754a4784fe?q=80&w=830",
-        buttons = persistentListOf(
-            DiscoverCardModel.Button.Cta(
-                label = "Click Me",
-                url = "https://example.com/cta",
             ),
         )
     ),

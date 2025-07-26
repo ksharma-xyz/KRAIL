@@ -250,10 +250,16 @@ class SavedTripsViewModel(
         // 3. For each unique stopId, create SavedParkRide objects with all required data
         val savedParkRideList: Set<SavedParkRide> = uniqueStopIds
             .flatMap { stopId ->
-                // should ideally always have a stopName here and never fallback to stopID
-                // because, we are operating on data from Saved Trips so , it should be present in db
-                // unless some other issue with Db.
-                val stopName = stopResultsManager.fetchLocalStopName(stopId) ?: stopId
+                // Try to resolve stopName for each stopId in priority order:
+                // 1. Use local DB (should always succeed for saved trips).
+                // 2. If not found, use Park & Ride facility name from facility mapping - remote config.
+                //    This can happen if the stopId in the saved trip is different from the one in
+                //    the park ride api call response. In that case, the remote config mapping
+                //    will provide the correct facility name for those stopId's.
+                // 3. If still not found, fallback to stopId itself (should rarely happen).
+                val stopName = stopResultsManager.fetchLocalStopName(stopId)
+                    ?: facilityDetailMap[stopId]?.firstOrNull()?.parkRideName
+                    ?: stopId
 
                 facilityDetailMap[stopId]?.map { facility ->
                     SavedParkRide(
@@ -269,7 +275,7 @@ class SavedTripsViewModel(
 
         savedParkRideList.map {
             it.stopId to it.facilityId + " (${it.stopName})"
-        }.let{
+        }.let {
             log("StopId -> FacilityId Mapping: \n${it.joinToString("\n")}")
         }
 

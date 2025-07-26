@@ -36,8 +36,11 @@ import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.social.SocialConnectionRow
+import xyz.ksharma.krail.core.social.model.KrailSocialType
+import xyz.ksharma.krail.core.social.model.SocialType
 import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
+import xyz.ksharma.krail.discover.network.api.DiscoverCardModel.Button.Social.PartnerSocial.PartnerSocialType
 import xyz.ksharma.krail.discover.network.api.toButtonRowState
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
@@ -130,7 +133,15 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
-                SocialConnectionRow(onClick = {})
+                when (left.button) {
+                    DiscoverCardModel.Button.Social.AppSocial -> {
+                        SocialConnectionRow(onClick = {})
+                    }
+
+                    is DiscoverCardModel.Button.Social.PartnerSocial -> {
+                        // TODO - Handle partner social links
+                    }
+                }
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
@@ -266,10 +277,22 @@ val previewDiscoverCardList = listOf(
         buttons = persistentListOf(),
     ),
     DiscoverCardModel(
-        title = "Social Card",
+        title = "App Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = listOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
-        buttons = persistentListOf(DiscoverCardModel.Button.Social)
+        buttons = persistentListOf(DiscoverCardModel.Button.Social.AppSocial)
+    ),
+    DiscoverCardModel(
+        title = "Partner Social Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Social.PartnerSocial(
+                links = listOf(
+                    PartnerSocialType(type = SocialType.Facebook, url = "https://facebook.com"),
+                )
+            )
+        )
     ),
     DiscoverCardModel(
         title = "Share Only Card",

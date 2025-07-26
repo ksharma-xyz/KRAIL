@@ -2,6 +2,7 @@ package xyz.ksharma.krail.discover.network.api
 
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
+import xyz.ksharma.krail.core.social.model.SocialType
 
 @Stable
 data class DiscoverCardModel(
@@ -29,9 +30,23 @@ data class DiscoverCardModel(
             val url: String? = null,
         ) : Button()
 
-        data object Social : Button()
+        sealed class Social : Button() {
+
+            data object AppSocial : Social()
+
+            data class PartnerSocial(
+                val links: List<PartnerSocialType>
+            ) : Social() {
+                data class PartnerSocialType(
+                    val type: SocialType,
+                    val url: String,
+                )
+
+            }
+        }
     }
 }
+
 
 data class DiscoverCardButtonRowState(
     val left: LeftButtonType?,

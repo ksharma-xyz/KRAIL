@@ -26,6 +26,8 @@ kotlin {
     sourceSets {
         commonMain  {
             dependencies {
+                implementation(projects.core.social)
+
                 implementation(compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)
             }

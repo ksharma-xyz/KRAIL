@@ -52,7 +52,7 @@ import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun DiscoverCard(
-    discoverCardModel: DiscoverCardModel,
+    discoverCardModel: DiscoverCardModel, // todo - map to ui model defined in ui module
     modifier: Modifier = Modifier,
     onClick: (DiscoverCardModel) -> Unit = {},
 ) {
@@ -68,7 +68,7 @@ fun DiscoverCard(
             val imageRatio = if (isTablet) 1.2f else 1f // Slightly wider on tablets
 
             AsyncImage(
-                model = discoverCardModel.imageUrl,
+                model = discoverCardModel.imageList.firstOrNull(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -251,7 +251,7 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Cta only card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://images.unsplash.com/photo-1749751234397-41ee8a7887c2",
+        imageList = listOf("https://images.unsplash.com/photo-1749751234397-41ee8a7887c2"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Cta(
                 label = "Click Me",
@@ -262,19 +262,19 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "No Buttons Card Title",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f"),
         buttons = persistentListOf(),
     ),
     DiscoverCardModel(
         title = "Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
         buttons = persistentListOf(DiscoverCardModel.Button.Social)
     ),
     DiscoverCardModel(
         title = "Share Only Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Share(
                 shareUrl = "https://example.com/share",
@@ -284,7 +284,7 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Cta + Share Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://images.unsplash.com/photo-1752939124510-e444139e6404",
+        imageList = listOf("https://images.unsplash.com/photo-1752939124510-e444139e6404"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Cta(
                 label = "Click Me",
@@ -298,7 +298,7 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Feedback Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Feedback(
                 label = "Feedback",

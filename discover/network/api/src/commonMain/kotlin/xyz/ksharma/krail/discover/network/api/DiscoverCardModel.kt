@@ -7,7 +7,11 @@ import kotlinx.collections.immutable.ImmutableList
 data class DiscoverCardModel(
     val title: String,
     val description: String,
-    val imageUrl: String,
+
+    /**
+     * List of image URLs to be displayed in the card.
+     */
+    val imageList: List<String>,
     val buttons: ImmutableList<Button>? = null,
 ) {
     sealed class Button {

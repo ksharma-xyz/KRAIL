@@ -3,8 +3,11 @@ package xyz.ksharma.krail.discover.network.api
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
 import xyz.ksharma.krail.social.network.api.model.SocialType
+import kotlinx.serialization.Serializable
+import xyz.ksharma.krail.discover.network.api.DiscoverModel.Button
 
 @Stable
+@Serializable
 data class DiscoverModel(
 
     val title: String,
@@ -25,7 +28,8 @@ data class DiscoverModel(
      */
     val imageList: ImmutableList<String>,
 
-    val buttons: ImmutableList<Button>? = null,
+    @Serializable(with = ButtonListSerializer::class)
+    val buttons: List<Button>? = null,
 
     val type: DiscoverCardType,
 ) {
@@ -88,77 +92,77 @@ data class DiscoverCardButtonRowState(
     val right: RightButtonType?,
 ) {
     sealed interface LeftButtonType {
-        data class Cta(val button: DiscoverModel.Button.Cta) : LeftButtonType
-        data class Social(val button: DiscoverModel.Button.Social) : LeftButtonType
-        data class Feedback(val button: DiscoverModel.Button.Feedback) : LeftButtonType
+        data class Cta(val button: Button.Cta) : LeftButtonType
+        data class Social(val button: Button.Social) : LeftButtonType
+        data class Feedback(val button: Button.Feedback) : LeftButtonType
     }
 
     sealed interface RightButtonType {
-        data class Share(val button: DiscoverModel.Button.Share) : RightButtonType
+        data class Share(val button: Button.Share) : RightButtonType
     }
 }
 
-fun List<DiscoverModel.Button>.toButtonRowState(): DiscoverCardButtonRowState? {
+fun List<Button>.toButtonRowState(): DiscoverCardButtonRowState? {
     if (!isValidButtonCombo()) return null
     var left: DiscoverCardButtonRowState.LeftButtonType? = null
     var right: DiscoverCardButtonRowState.RightButtonType? = null
     for (button in this) {
         when (button) {
-            is DiscoverModel.Button.Cta -> left =
+            is Button.Cta -> left =
                 DiscoverCardButtonRowState.LeftButtonType.Cta(button)
 
-            is DiscoverModel.Button.Social -> left =
+            is Button.Social -> left =
                 DiscoverCardButtonRowState.LeftButtonType.Social(button)
 
-            is DiscoverModel.Button.Feedback -> left =
+            is Button.Feedback -> left =
                 DiscoverCardButtonRowState.LeftButtonType.Feedback(button)
 
-            is DiscoverModel.Button.Share -> right =
+            is Button.Share -> right =
                 DiscoverCardButtonRowState.RightButtonType.Share(button)
         }
     }
     return DiscoverCardButtonRowState(left, right)
 }
 
-fun List<DiscoverModel.Button>.isValidButtonCombo(): Boolean {
+fun List<Button>.isValidButtonCombo(): Boolean {
     val types = this.map { it::class }
 
     val leftTypes = listOf(
-        DiscoverModel.Button.Cta::class,
-        DiscoverModel.Button.Feedback::class,
-        DiscoverModel.Button.Social::class
+        Button.Cta::class,
+        Button.Feedback::class,
+        Button.Social::class
     )
     if (types.count { it in leftTypes } > 1) return false
 
     // Only one Share allowed, can be alone or with Cta
-    if (types.count { it == DiscoverModel.Button.Share::class } > 1) return false
-    if (types.contains(DiscoverModel.Button.Share::class)) {
+    if (types.count { it == Button.Share::class } > 1) return false
+    if (types.contains(Button.Share::class)) {
         val leftCount = types.count { it in leftTypes }
         if (leftCount > 1) return false
-        if (leftCount == 1 && !types.contains(DiscoverModel.Button.Cta::class)) return false
+        if (leftCount == 1 && !types.contains(Button.Cta::class)) return false
     }
 
     // Cta cannot be combined with Social or Feedback
-    if (types.contains(DiscoverModel.Button.Cta::class) &&
-        (types.contains(DiscoverModel.Button.Social::class) || types.contains(
-            DiscoverModel.Button.Feedback::class
+    if (types.contains(Button.Cta::class) &&
+        (types.contains(Button.Social::class) || types.contains(
+            Button.Feedback::class
         ))
     ) return false
 
     // Social cannot be combined with Feedback or Cta
-    if (types.contains(DiscoverModel.Button.Social::class) &&
-        (types.contains(DiscoverModel.Button.Feedback::class) || types.contains(DiscoverModel.Button.Cta::class))
+    if (types.contains(Button.Social::class) &&
+        (types.contains(Button.Feedback::class) || types.contains(Button.Cta::class))
     ) return false
 
     // Feedback cannot be combined with Social or Cta
-    if (types.contains(DiscoverModel.Button.Feedback::class) &&
-        (types.contains(DiscoverModel.Button.Social::class) || types.contains(DiscoverModel.Button.Cta::class))
+    if (types.contains(Button.Feedback::class) &&
+        (types.contains(Button.Social::class) || types.contains(Button.Cta::class))
     ) return false
 
     // Only one of each type allowed
-    if (types.count { it == DiscoverModel.Button.Cta::class } > 1) return false
-    if (types.count { it == DiscoverModel.Button.Feedback::class } > 1) return false
-    if (types.count { it == DiscoverModel.Button.Social::class } > 1) return false
+    if (types.count { it == Button.Cta::class } > 1) return false
+    if (types.count { it == Button.Feedback::class } > 1) return false
+    if (types.count { it == Button.Social::class } > 1) return false
 
     return true
 }

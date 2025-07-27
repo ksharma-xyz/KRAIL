@@ -9,5 +9,5 @@ const val LARGE_FONT_SCALE_THRESHOLD = 1.3f
 fun isLargeFontScale(): Boolean {
     val density = LocalDensity.current
     val fontScale = density.fontScale
-    return fontScale > LARGE_FONT_SCALE_THRESHOLD
+    return fontScale >= LARGE_FONT_SCALE_THRESHOLD
 }

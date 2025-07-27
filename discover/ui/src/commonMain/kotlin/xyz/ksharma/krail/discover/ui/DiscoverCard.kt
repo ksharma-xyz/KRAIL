@@ -98,9 +98,9 @@ fun DiscoverCard(
         discoverModel.disclaimer?.let { disclaimer ->
             Text(
                 text = disclaimer,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
                 maxLines = 1,
-                style = KrailTheme.typography.labelMedium,
+                style = KrailTheme.typography.labelSmall,
             )
         }
 

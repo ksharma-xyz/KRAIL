@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "xyz.ksharma.krail.core.social"
+    namespace = "xyz.ksharma.krail.social.ui"
 }
 
 kotlin {

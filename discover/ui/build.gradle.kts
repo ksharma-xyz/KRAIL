@@ -44,7 +44,7 @@ kotlin {
 
                 implementation(projects.core.appInfo)
                 implementation(projects.core.log)
-                implementation(projects.core.social)
+                implementation(projects.social.ui)
                 implementation(projects.discover.network.api)
                 implementation(projects.taj)
             }

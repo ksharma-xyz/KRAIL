@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "xyz.ksharma.krail.discover.network.api"
+    namespace = "xyz.ksharma.krail.social.api"
 }
 
 kotlin {
@@ -26,7 +26,7 @@ kotlin {
     sourceSets {
         commonMain  {
             dependencies {
-                implementation(projects.social.network.api)
+//                implementation(projects.social)
 
                 implementation(compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)

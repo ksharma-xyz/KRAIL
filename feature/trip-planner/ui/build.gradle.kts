@@ -31,7 +31,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
-                implementation(projects.core.social)
+                implementation(projects.social.ui)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.discover.ui)
                 implementation(projects.feature.parkRide.network)

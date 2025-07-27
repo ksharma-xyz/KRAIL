@@ -3,10 +3,12 @@ plugins {
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.krail.android.library)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "xyz.ksharma.krail.discover.network.api"
+    namespace = "xyz.ksharma.krail.social.real"
 }
 
 kotlin {
@@ -24,12 +26,14 @@ kotlin {
     }
 
     sourceSets {
-        commonMain  {
+        commonMain {
             dependencies {
-                implementation(projects.social.network.api)
-
                 implementation(compose.runtime)
-                implementation(libs.kotlinx.collections.immutable)
+
+                implementation(projects.core.log)
+                implementation(projects.core.remoteConfig)
+                implementation(projects.social.network.api)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
         commonTest {

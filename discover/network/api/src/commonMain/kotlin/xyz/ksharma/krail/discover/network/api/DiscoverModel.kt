@@ -38,6 +38,12 @@ data class DiscoverModel(
                 val socialPartnerName: String,
                 val links: List<PartnerSocialType>
             ) : Social() {
+
+                init {
+                    require(socialPartnerName.isNotBlank()) { "socialPartnerName must not be empty or blank" }
+                    require(links.isNotEmpty()) { "links list must not be empty" }
+                }
+
                 data class PartnerSocialType(
                     val type: SocialType,
                     val url: String,

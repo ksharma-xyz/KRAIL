@@ -32,8 +32,8 @@ import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import krail.feature.trip_planner.ui.generated.resources.ic_wifi
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.core.social.SocialConnectionRow
-import xyz.ksharma.krail.core.social.network.api.model.KrailSocialType
+import xyz.ksharma.krail.social.network.api.model.KrailSocialType
+import xyz.ksharma.krail.social.ui.SocialConnectionRow
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -127,9 +127,10 @@ fun SettingsScreen(
                         text = "Stay connected",
                         detailContent = {
                             SocialConnectionRow(
+                                socialLinks = KrailSocialType.entries,
                                 modifier = Modifier
                                     .padding(start = (24 + 16 + 6).dp, end = 16.dp),
-                                onClick = { socialType -> onSocialLinkClick(socialType) }
+                                onClick = { onSocialLinkClick(it) }
                             )
                         },
                     )

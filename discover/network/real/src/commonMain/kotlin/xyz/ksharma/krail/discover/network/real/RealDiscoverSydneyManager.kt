@@ -8,27 +8,27 @@ import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.FlagValue
-import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
-import xyz.ksharma.krail.discover.network.api.DiscoverCardsProvider
+import xyz.ksharma.krail.discover.network.api.DiscoverModel
+import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 
-internal class RealDiscoverCardsProvider(
+internal class RealDiscoverSydneyManager(
     private val flag: Flag,
-) : DiscoverCardsProvider {
+) : DiscoverSydneyManager {
 
-    private val discoverCardModelList: List<DiscoverCardModel> by lazy {
+    private val discoverModelList: List<DiscoverModel> by lazy {
         flag.getFlagValue(FlagKeys.DISCOVER_SYDNEY.key).toDiscoverCards()
     }
 
-    override fun getCards(): List<DiscoverCardModel> {
-        return discoverCardModelList
+    override fun fetchDiscoverData(): List<DiscoverModel> {
+        return discoverModelList
     }
 
-    private fun FlagValue.toDiscoverCards(): List<DiscoverCardModel> {
+    private fun FlagValue.toDiscoverCards(): List<DiscoverModel> {
         return when (this) {
             is FlagValue.JsonValue -> {
                 log("flagValue: ${this.value}")
                 val jsonArray = Json.parseToJsonElement(value).jsonArray
-                jsonArray.map { Json.decodeFromJsonElement<DiscoverCardModel>(it) }
+                jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
             }
             else -> {
                 log("FlagValue is not JsonValue, using default value for ${FlagKeys.DISCOVER_SYDNEY.key}")
@@ -36,7 +36,7 @@ internal class RealDiscoverCardsProvider(
                     .firstOrNull { it.first == FlagKeys.DISCOVER_SYDNEY.key }?.second as? String
                     ?: return emptyList()
                 val jsonArray = Json.parseToJsonElement(defaultJson).jsonArray
-                jsonArray.map { Json.decodeFromJsonElement<DiscoverCardModel>(it) }
+                jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
             }
         }
     }}

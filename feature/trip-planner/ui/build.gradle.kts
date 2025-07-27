@@ -31,8 +31,8 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
-                implementation(projects.social.ui)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.discover.network.api) // todo - temp
                 implementation(projects.discover.ui)
                 implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.tripPlanner.network)
@@ -40,8 +40,9 @@ kotlin {
                 implementation(projects.io.gtfs)
                 implementation(projects.platform.ops)
                 implementation(projects.sandook)
+                implementation(projects.social.network.api)
+                implementation(projects.social.ui)
                 implementation(projects.taj)
-                implementation(projects.discover.network.api) // todo - temp
 
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)

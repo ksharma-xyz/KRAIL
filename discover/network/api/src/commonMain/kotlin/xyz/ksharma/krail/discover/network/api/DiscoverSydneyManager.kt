@@ -1,10 +1,10 @@
 package xyz.ksharma.krail.discover.network.api
 
-interface DiscoverCardsProvider {
+interface DiscoverSydneyManager {
 
     /**
      * Returns a list of cards to be displayed in the Discover screen.
      */
-    fun getCards(): List<DiscoverCardModel>
+    fun fetchDiscoverData(): List<DiscoverModel>
 
 }

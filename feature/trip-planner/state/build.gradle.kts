@@ -29,7 +29,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.dateTime)
                 implementation(projects.core.festival)
-                implementation(projects.core.social)
+                implementation(projects.social.network.api)
                 implementation(projects.taj)
                 implementation(projects.core.analytics)
 

@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "xyz.ksharma.krail.core.social"
+    namespace = "xyz.ksharma.krail.social.ui"
 }
 
 kotlin {
@@ -30,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.analytics)
                 implementation(projects.core.log)
+                implementation(projects.social.network.api)
                 implementation(projects.taj)
 
                 implementation(compose.runtime)

@@ -33,7 +33,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import krail.feature.trip_planner.ui.generated.resources.ic_wifi
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.social.SocialConnectionRow
-import xyz.ksharma.krail.core.social.model.SocialType
+import xyz.ksharma.krail.core.social.model.KrailSocialType
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -52,7 +52,7 @@ fun SettingsScreen(
     onReferFriendClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
-    onSocialLinkClick: (SocialType) -> Unit = {},
+    onSocialLinkClick: (KrailSocialType) -> Unit = {},
 ) {
     Box(
         modifier = modifier

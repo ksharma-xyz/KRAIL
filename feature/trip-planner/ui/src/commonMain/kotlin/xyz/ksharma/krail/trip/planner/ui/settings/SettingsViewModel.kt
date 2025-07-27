@@ -34,10 +34,10 @@ class SettingsViewModel(
     fun onEvent(event: SettingsEvent) {
         when (event) {
             is SettingsEvent.SocialLinkClick -> {
-                platformOps.openUrl(url = event.socialType.httpLink)
+                platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
                     event = AnalyticsEvent.SocialConnectionLinkClickEvent(
-                        socialPlatform = event.socialType.toAnalyticsEventPlatform(),
+                        socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
                     ),
                 )
             }

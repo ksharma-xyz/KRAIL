@@ -36,8 +36,11 @@ import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.social.SocialConnectionRow
+import xyz.ksharma.krail.core.social.model.KrailSocialType
+import xyz.ksharma.krail.core.social.model.SocialType
 import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
+import xyz.ksharma.krail.discover.network.api.DiscoverCardModel.Button.Social.PartnerSocial.PartnerSocialType
 import xyz.ksharma.krail.discover.network.api.toButtonRowState
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
@@ -52,7 +55,7 @@ import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun DiscoverCard(
-    discoverCardModel: DiscoverCardModel,
+    discoverCardModel: DiscoverCardModel, // todo - map to ui model defined in ui module
     modifier: Modifier = Modifier,
     onClick: (DiscoverCardModel) -> Unit = {},
 ) {
@@ -64,16 +67,15 @@ fun DiscoverCard(
     ) {
         BoxWithConstraints {
             val maxCardWidth = maxWidth
-            val isTablet = maxWidth > 600.dp
-            val imageRatio = if (isTablet) 1.2f else 1f // Slightly wider on tablets
+            val imageHeight = discoverCardHeight * 0.6f
 
             AsyncImage(
-                model = discoverCardModel.imageUrl,
+                model = discoverCardModel.imageList.firstOrNull(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(maxCardWidth)
-                    .aspectRatio(imageRatio) // Maintains 1:1 ratio for square images
+                    .height(imageHeight)
                     .padding(horizontal = 12.dp, vertical = 12.dp)
                     .clip(RoundedCornerShape(16.dp)),
             )
@@ -83,17 +85,17 @@ fun DiscoverCard(
         // text can be max 5-6 words
         Text(
             text = discoverCardModel.title,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
             maxLines = 2, // for large font size 2, // for small font size 3
-            style = KrailTheme.typography.titleLarge,
+            style = KrailTheme.typography.headlineSmall,
         )
 
         // max 18-20 words
         Text(
             text = discoverCardModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             maxLines = 2, // for large font size 2, // for small font size 3
-            style = KrailTheme.typography.bodySmall,
+            style = KrailTheme.typography.bodyMedium,
         )
 
         Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to bottom
@@ -130,22 +132,32 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
-                SocialConnectionRow(onClick = {})
-            }
+                when (left.button) {
+                    DiscoverCardModel.Button.Social.AppSocial -> {
+                        SocialConnectionRow(onClick = {})
+                    }
 
-            is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FeedbackCircleBox {
-                    Text("👍")
-                }
-
-                FeedbackCircleBox {
-                    Text("👎")
+                    is DiscoverCardModel.Button.Social.PartnerSocial -> {
+                        // TODO - Handle partner social links
+                    }
                 }
             }
 
-            null -> Box(modifier = Modifier) // Empty box to keep slot
+            is DiscoverCardButtonRowState.LeftButtonType.Feedback -> {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    FeedbackCircleBox {
+                        Text("👍")
+                    }
+
+                    FeedbackCircleBox {
+                        Text("👎")
+                    }
+                }
+            }
+
+            null -> Unit
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -175,7 +187,6 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
     }
 }
 
-
 @Composable
 private fun FeedbackCircleBox(
     modifier: Modifier = Modifier,
@@ -184,7 +195,7 @@ private fun FeedbackCircleBox(
     Box(
         modifier = modifier.size(40.dp)
             .clip(shape = CircleShape)
-            .klickable {},
+            .klickable(indication = null) {},
         contentAlignment = Alignment.Center,
     ) {
         CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.title) {
@@ -202,9 +213,8 @@ private fun DiscoverCardCtaPreview() {
 }
 
 @Preview(showBackground = true)
-private
 @Composable
-fun DiscoverCardNoButtonsPreview() {
+private fun DiscoverCardNoButtonsPreview() {
     PreviewContent {
         DiscoverCard(discoverCardModel = previewDiscoverCardList[1])
     }
@@ -251,7 +261,7 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Cta only card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://images.unsplash.com/photo-1749751234397-41ee8a7887c2",
+        imageList = listOf("https://images.unsplash.com/photo-1749751234397-41ee8a7887c2"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Cta(
                 label = "Click Me",
@@ -262,19 +272,31 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "No Buttons Card Title",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f"),
         buttons = persistentListOf(),
     ),
     DiscoverCardModel(
-        title = "Social Card",
+        title = "App Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b",
-        buttons = persistentListOf(DiscoverCardModel.Button.Social)
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        buttons = persistentListOf(DiscoverCardModel.Button.Social.AppSocial)
+    ),
+    DiscoverCardModel(
+        title = "Partner Social Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        buttons = persistentListOf(
+            DiscoverCardModel.Button.Social.PartnerSocial(
+                links = listOf(
+                    PartnerSocialType(type = SocialType.Facebook, url = "https://facebook.com"),
+                )
+            )
+        )
     ),
     DiscoverCardModel(
         title = "Share Only Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Share(
                 shareUrl = "https://example.com/share",
@@ -284,7 +306,7 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Cta + Share Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://images.unsplash.com/photo-1752939124510-e444139e6404",
+        imageList = listOf("https://images.unsplash.com/photo-1752939124510-e444139e6404"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Cta(
                 label = "Click Me",
@@ -298,7 +320,7 @@ val previewDiscoverCardList = listOf(
     DiscoverCardModel(
         title = "Feedback Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
-        imageUrl = "https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7",
+        imageList = listOf("https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7"),
         buttons = persistentListOf(
             DiscoverCardModel.Button.Feedback(
                 label = "Feedback",

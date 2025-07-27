@@ -2,12 +2,17 @@ package xyz.ksharma.krail.discover.network.api
 
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
+import xyz.ksharma.krail.core.social.model.SocialType
 
 @Stable
 data class DiscoverCardModel(
     val title: String,
     val description: String,
-    val imageUrl: String,
+
+    /**
+     * List of image URLs to be displayed in the card.
+     */
+    val imageList: List<String>,
     val buttons: ImmutableList<Button>? = null,
 ) {
     sealed class Button {
@@ -25,7 +30,19 @@ data class DiscoverCardModel(
             val url: String? = null,
         ) : Button()
 
-        data object Social : Button()
+        sealed class Social : Button() {
+
+            data object AppSocial : Social()
+
+            data class PartnerSocial(
+                val links: List<PartnerSocialType>
+            ) : Social() {
+                data class PartnerSocialType(
+                    val type: SocialType,
+                    val url: String,
+                )
+            }
+        }
     }
 }
 

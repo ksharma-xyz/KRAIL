@@ -25,6 +25,7 @@ import kotlin.math.absoluteValue
 
 val discoverCardHeight = 550.dp
 
+// todo - to be used only with a mobile , not for tablet.
 @Composable
 fun <T> DiscoverCardVerticalPager(
     items: List<T>,
@@ -44,7 +45,6 @@ fun <T> DiscoverCardVerticalPager(
         val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
         val selectedWidth = 1f * maxCardWidth.value
         val unselectedWidth = 0.95f * maxCardWidth.value
-
 
         // Calculate padding to center the selected item
         val screenHeight = maxHeight

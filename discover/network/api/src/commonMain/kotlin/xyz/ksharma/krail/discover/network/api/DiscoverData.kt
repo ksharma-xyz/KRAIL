@@ -9,6 +9,7 @@ val previewDiscoverCardList = listOf(
         title = "Cta only card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://images.unsplash.com/photo-1749751234397-41ee8a7887c2"),
+        type = DiscoverModel.DiscoverCardType.Travel,
         buttons = persistentListOf(
             DiscoverModel.Button.Cta(
                 label = "Click Me",
@@ -20,18 +21,21 @@ val previewDiscoverCardList = listOf(
         title = "No Buttons Card Title",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752367225760-34f565f0720f"),
+        type = DiscoverModel.DiscoverCardType.Events,
         buttons = persistentListOf(),
     ),
     DiscoverModel(
         title = "App Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        type = DiscoverModel.DiscoverCardType.Krail,
         buttons = persistentListOf(DiscoverModel.Button.Social.AppSocial)
     ),
     DiscoverModel(
         title = "Partner Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        type = DiscoverModel.DiscoverCardType.Events,
         buttons = persistentListOf(
             DiscoverModel.Button.Social.PartnerSocial(
                 socialPartnerName = "XYZ Place",
@@ -45,6 +49,7 @@ val previewDiscoverCardList = listOf(
         title = "Share Only Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
+        type = DiscoverModel.DiscoverCardType.Kids,
         buttons = persistentListOf(
             DiscoverModel.Button.Share(
                 shareUrl = "https://example.com/share",
@@ -55,6 +60,7 @@ val previewDiscoverCardList = listOf(
         title = "Cta + Share Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://images.unsplash.com/photo-1752939124510-e444139e6404"),
+        type = DiscoverModel.DiscoverCardType.Sports,
         buttons = persistentListOf(
             DiscoverModel.Button.Cta(
                 label = "Click Me",
@@ -69,6 +75,7 @@ val previewDiscoverCardList = listOf(
         title = "Feedback Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7"),
+        type = DiscoverModel.DiscoverCardType.Events,
         buttons = persistentListOf(
             DiscoverModel.Button.Feedback(
                 label = "Feedback",

@@ -94,6 +94,15 @@ fun DiscoverCard(
             style = KrailTheme.typography.bodyMedium,
         )
 
+        discoverModel.disclaimer?.let { disclaimer ->
+            Text(
+                text = disclaimer,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                maxLines = 1,
+                style = KrailTheme.typography.labelMedium,
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to bottom
 
         discoverModel.buttons?.let { buttonsList ->

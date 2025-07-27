@@ -8,13 +8,30 @@ import xyz.ksharma.krail.social.network.api.model.SocialType
 data class DiscoverModel(
     val title: String,
     val description: String,
+    val startDate: String? = null,
+    val endDate: String? = null,
+
+    // image credits etc.
+    val disclaimer: String? = null,
 
     /**
      * List of image URLs to be displayed in the card.
      */
     val imageList: ImmutableList<String>,
     val buttons: ImmutableList<Button>? = null,
+    val type: DiscoverCardType,
 ) {
+
+    enum class DiscoverCardType {
+        Krail,
+        Travel,
+        Events,
+        Food,
+        Sports,
+        Kids
+        ;
+    }
+
     sealed class Button {
         data class Cta(
             val label: String,

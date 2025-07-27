@@ -48,7 +48,7 @@ fun SocialConnectionRow(
                 Image(
                     painter = painterResource(resource = socialType.resource()),
                     contentDescription = "${socialType.socialType} Page for KRAIL App",
-                    colorFilter = ColorFilter.tint(color = getForegroundColor(backgroundColor = themeBackgroundColor())),
+                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
                     modifier = Modifier.size(24.dp),
                 )
             }
@@ -75,7 +75,7 @@ fun SocialConnectionRow(
                 Image(
                     painter = painterResource(resource = socialType.resource()),
                     contentDescription = "${socialType.name} Page for $socialPartnerName",
-                    colorFilter = ColorFilter.tint(color = getForegroundColor(backgroundColor = themeBackgroundColor())),
+                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
                     modifier = Modifier.size(24.dp),
                 )
             }

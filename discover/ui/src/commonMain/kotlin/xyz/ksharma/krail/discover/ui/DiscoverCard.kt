@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -36,8 +35,7 @@ import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.social.SocialConnectionRow
-import xyz.ksharma.krail.core.social.model.KrailSocialType
-import xyz.ksharma.krail.core.social.model.SocialType
+import xyz.ksharma.krail.core.social.network.api.model.SocialType
 import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel
 import xyz.ksharma.krail.discover.network.api.DiscoverCardModel.Button.Social.PartnerSocial.PartnerSocialType

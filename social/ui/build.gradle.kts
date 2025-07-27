@@ -30,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.analytics)
                 implementation(projects.core.log)
+                implementation(projects.social.network.api)
                 implementation(projects.taj)
 
                 implementation(compose.runtime)

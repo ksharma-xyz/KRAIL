@@ -10,10 +10,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import krail.social.ui.generated.resources.Res
+import krail.social.ui.generated.resources.ic_facebook
+import krail.social.ui.generated.resources.ic_instagram
+import krail.social.ui.generated.resources.ic_linkedin
+import krail.social.ui.generated.resources.ic_reddit
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.core.social.model.KrailSocialType
-import xyz.ksharma.krail.core.social.model.resource
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
+import xyz.ksharma.krail.social.network.api.model.KrailSocialType
 import xyz.ksharma.krail.taj.components.SocialConnectionIcon
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
@@ -51,3 +57,18 @@ private fun SocialConnectionRowPreview() {
         )
     }
 }
+
+fun KrailSocialType.resource(): DrawableResource = when (this) {
+    KrailSocialType.LinkedIn -> Res.drawable.ic_linkedin
+    KrailSocialType.Reddit -> Res.drawable.ic_reddit
+    KrailSocialType.Instagram -> Res.drawable.ic_instagram
+    KrailSocialType.Facebook -> Res.drawable.ic_facebook
+}
+
+fun KrailSocialType.toAnalyticsEventPlatform(): SocialConnectionLinkClickEvent.SocialPlatform =
+    when (this) {
+        KrailSocialType.LinkedIn -> SocialConnectionLinkClickEvent.SocialPlatform.LINKEDIN
+        KrailSocialType.Reddit -> SocialConnectionLinkClickEvent.SocialPlatform.REDDIT
+        KrailSocialType.Instagram -> SocialConnectionLinkClickEvent.SocialPlatform.INSTAGRAM
+        KrailSocialType.Facebook -> SocialConnectionLinkClickEvent.SocialPlatform.FACEBOOK
+    }

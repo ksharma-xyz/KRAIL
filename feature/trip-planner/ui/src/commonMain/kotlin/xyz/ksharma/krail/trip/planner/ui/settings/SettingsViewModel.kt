@@ -12,7 +12,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
-import xyz.ksharma.krail.core.social.model.toAnalyticsEventPlatform
+import xyz.ksharma.krail.core.social.network.api.model.toAnalyticsEventPlatform
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent

@@ -40,6 +40,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             tripPlannerNetworkModule,
             parkRideNetworkModule,
             festivalModule,
+            discoverModule,
         )
     }
 }

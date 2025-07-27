@@ -34,7 +34,7 @@ fun DiscoverScreen(
     ) {
         Column {
 
-            // Add the pager here
+            // todo - for tablets use a normal scrolling list
             DiscoverCardVerticalPager(
                 items = previewDiscoverCardList,
                 modifier = Modifier.fillMaxSize(),

@@ -23,8 +23,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.absoluteValue
 
-val discoverCardHeight = 480.dp
+val discoverCardHeight = 550.dp
 
+// todo - to be used only with a mobile , not for tablet.
 @Composable
 fun <T> DiscoverCardVerticalPager(
     items: List<T>,

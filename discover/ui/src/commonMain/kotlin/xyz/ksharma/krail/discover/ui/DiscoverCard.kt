@@ -67,8 +67,7 @@ fun DiscoverCard(
     ) {
         BoxWithConstraints {
             val maxCardWidth = maxWidth
-            val isTablet = maxWidth > 600.dp
-            val imageRatio = if (isTablet) 1.2f else 1f // Slightly wider on tablets
+            val imageHeight = discoverCardHeight * 0.6f
 
             AsyncImage(
                 model = discoverCardModel.imageList.firstOrNull(),
@@ -76,7 +75,7 @@ fun DiscoverCard(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(maxCardWidth)
-                    .aspectRatio(imageRatio) // Maintains 1:1 ratio for square images
+                    .height(imageHeight)
                     .padding(horizontal = 12.dp, vertical = 12.dp)
                     .clip(RoundedCornerShape(16.dp)),
             )
@@ -86,17 +85,17 @@ fun DiscoverCard(
         // text can be max 5-6 words
         Text(
             text = discoverCardModel.title,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
             maxLines = 2, // for large font size 2, // for small font size 3
-            style = KrailTheme.typography.titleLarge,
+            style = KrailTheme.typography.headlineSmall,
         )
 
         // max 18-20 words
         Text(
             text = discoverCardModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             maxLines = 2, // for large font size 2, // for small font size 3
-            style = KrailTheme.typography.bodySmall,
+            style = KrailTheme.typography.bodyMedium,
         )
 
         Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to bottom
@@ -144,19 +143,21 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
                 }
             }
 
-            is DiscoverCardButtonRowState.LeftButtonType.Feedback -> Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FeedbackCircleBox {
-                    Text("👍")
-                }
+            is DiscoverCardButtonRowState.LeftButtonType.Feedback -> {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    FeedbackCircleBox {
+                        Text("👍")
+                    }
 
-                FeedbackCircleBox {
-                    Text("👎")
+                    FeedbackCircleBox {
+                        Text("👎")
+                    }
                 }
             }
 
-            null -> Box(modifier = Modifier) // Empty box to keep slot
+            null -> Unit
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -186,7 +187,6 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverCardModel.Button>) {
     }
 }
 
-
 @Composable
 private fun FeedbackCircleBox(
     modifier: Modifier = Modifier,
@@ -195,7 +195,7 @@ private fun FeedbackCircleBox(
     Box(
         modifier = modifier.size(40.dp)
             .clip(shape = CircleShape)
-            .klickable {},
+            .klickable(indication = null) {},
         contentAlignment = Alignment.Center,
     ) {
         CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.title) {
@@ -213,9 +213,8 @@ private fun DiscoverCardCtaPreview() {
 }
 
 @Preview(showBackground = true)
-private
 @Composable
-fun DiscoverCardNoButtonsPreview() {
+private fun DiscoverCardNoButtonsPreview() {
     PreviewContent {
         DiscoverCard(discoverCardModel = previewDiscoverCardList[1])
     }

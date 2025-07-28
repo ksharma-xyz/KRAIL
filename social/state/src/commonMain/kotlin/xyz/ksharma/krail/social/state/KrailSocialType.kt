@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.social.network.api.model
+package xyz.ksharma.krail.social.state
 
 enum class KrailSocialType(val socialType: SocialType, val url: String) {
     LinkedIn(socialType = SocialType.LinkedIn, url = "https://www.linkedin.com/company/krail/"),

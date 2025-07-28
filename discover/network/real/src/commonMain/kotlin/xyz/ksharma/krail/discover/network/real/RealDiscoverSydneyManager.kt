@@ -26,10 +26,10 @@ internal class RealDiscoverSydneyManager(
     private fun FlagValue.toDiscoverCards(): List<DiscoverModel> {
         return when (this) {
             is FlagValue.JsonValue -> {
-                log("flagValue: ${this.value}")
                 val jsonArray = Json.parseToJsonElement(value).jsonArray
                 jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
             }
+
             else -> {
                 log("FlagValue is not JsonValue, using default value for ${FlagKeys.DISCOVER_SYDNEY.key}")
                 val defaultJson = RemoteConfigDefaults.getDefaults()
@@ -39,5 +39,5 @@ internal class RealDiscoverSydneyManager(
                 jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
             }
         }
-    }}
-
+    }
+}

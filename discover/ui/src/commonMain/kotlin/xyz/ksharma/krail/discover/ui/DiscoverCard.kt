@@ -45,6 +45,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.discoverCardHeight
+import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
@@ -64,7 +65,7 @@ fun DiscoverCard(
     ) {
         BoxWithConstraints {
             val maxCardWidth = maxWidth
-            val imageHeight = discoverCardHeight * 0.6f
+            val imageHeight = discoverCardHeight * if (isLargeFontScale()) 0.5f else 0.6f
 
             AsyncImage(
                 model = discoverModel.imageList.firstOrNull(),
@@ -73,28 +74,37 @@ fun DiscoverCard(
                 modifier = Modifier
                     .width(maxCardWidth)
                     .height(imageHeight)
-                    .padding(horizontal = 12.dp, vertical = 12.dp).clip(RoundedCornerShape(16.dp)),
+                    .padding(horizontal = 12.dp, vertical = 12.dp)
+                    .clip(RoundedCornerShape(16.dp)),
             )
         }
 
-        // todo - auto suze to fit one line
-        // text can be max 5-6 words
         Text(
             text = discoverModel.title,
             modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
-            maxLines = 2, // for large font size 2, // for small font size 3
-            style = KrailTheme.typography.headlineSmall,
+            maxLines = if(isLargeFontScale()) 2 else 3,
+            style = if (isLargeFontScale()) KrailTheme.typography.titleMedium
+            else KrailTheme.typography.headlineSmall,
         )
 
-        // max 18-20 words
         Text(
             text = discoverModel.description,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            maxLines = 2, // for large font size 2, // for small font size 3
-            style = KrailTheme.typography.bodyMedium,
+            maxLines = if(isLargeFontScale()) 2 else 3,
+            style = if (isLargeFontScale()) KrailTheme.typography.bodySmall
+            else KrailTheme.typography.bodyMedium,
         )
 
-        Spacer(modifier = Modifier.weight(1f)) // Pushes buttons to bottom
+        discoverModel.disclaimer?.let { disclaimer ->
+            Text(
+                text = disclaimer,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                maxLines = 1,
+                style = KrailTheme.typography.labelSmall,
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
 
         discoverModel.buttons?.let { buttonsList ->
             DiscoverCardButtonRow(buttonsList)
@@ -180,7 +190,7 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverModel.Button>) {
                 }
             }
 
-            null -> Box(modifier = Modifier) // Empty box to keep slot
+            null -> Unit
         }
     }
 }
@@ -199,6 +209,8 @@ private fun FeedbackCircleBox(
         }
     }
 }
+
+// region Previews
 
 @Preview(showBackground = true)
 @Composable
@@ -252,3 +264,5 @@ private class DiscoverCardProvider : PreviewParameterProvider<DiscoverModel> {
     override val values: Sequence<DiscoverModel>
         get() = previewDiscoverCardList.asSequence()
 }
+
+// endregion Previews

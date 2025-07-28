@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.krail.android.library)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -26,10 +27,12 @@ kotlin {
     sourceSets {
         commonMain  {
             dependencies {
+                implementation(projects.core.log)
                 implementation(projects.social.network.api)
 
                 implementation(compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
         commonTest {
@@ -37,6 +40,9 @@ kotlin {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
             }
+        }
+        all {
+            languageSettings.enableLanguageFeature("PropertyParamAnnotationDefaultTargetMode")
         }
     }
 }

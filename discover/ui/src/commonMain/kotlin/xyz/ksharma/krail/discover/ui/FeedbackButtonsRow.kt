@@ -1,8 +1,6 @@
 package xyz.ksharma.krail.discover.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,19 +8,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
@@ -31,42 +25,118 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
-@OptIn(ExperimentalAnimationApi::class)
+private enum class FeedbackAnimState {
+    Idle, Rotating, ScalingOut, ShowButton
+}
+
 @Composable
 fun FeedbackButtonsRow(
     modifier: Modifier = Modifier,
     onPositive: () -> Unit,
     onNegative: () -> Unit,
 ) {
-    var state by remember { mutableStateOf(FeedbackState.Idle) }
+    var selected by remember { mutableStateOf<FeedbackSelectedState?>(null) }
+    var animState by remember { mutableStateOf(FeedbackAnimState.Idle) }
+    val scope = rememberCoroutineScope()
+
+    val leftRotation = remember { Animatable(0f) }
+    val leftScale = remember { Animatable(1f) }
+    val rightScale = remember { Animatable(1f) }
+    val buttonScale = remember { Animatable(0.8f) }
+
+    fun startAnimation(feedback: FeedbackSelectedState) {
+        selected = feedback
+        animState = FeedbackAnimState.Rotating
+        scope.launch {
+            if (feedback == FeedbackSelectedState.Positive) {
+                launch { leftRotation.animateTo(360f, tween(400)) }
+                launch { rightScale.animateTo(0f, tween(300)) }
+                delay(400)
+                animState = FeedbackAnimState.ScalingOut
+                leftScale.animateTo(0f, tween(250))
+            } else {
+                // 👎: both scale out, no rotation
+                launch { leftScale.animateTo(0f, tween(300)) }
+                launch { rightScale.animateTo(0f, tween(300)) }
+                //delay(300)
+                animState = FeedbackAnimState.ScalingOut
+            }
+            animState = FeedbackAnimState.ShowButton
+            buttonScale.snapTo(0.8f)
+            buttonScale.animateTo(1f, tween(350))
+        }
+    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         modifier = modifier,
     ) {
-        AnimatedContent(targetState = state, label = "feedback") { feedbackState ->
-            when (feedbackState) {
-                FeedbackState.Idle -> {
-                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                        FeedbackCircleBox(
-                            modifier = Modifier.klickable {
-                                state = FeedbackState.Positive
+        when (animState) {
+            FeedbackAnimState.Idle -> {
+                FeedbackCircleBox(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            rotationZ = leftRotation.value
+                            scaleX = leftScale.value
+                            scaleY = leftScale.value
+                        }
+                        .klickable {
+                            if (animState == FeedbackAnimState.Idle) {
                                 onPositive()
+                                startAnimation(FeedbackSelectedState.Positive)
                             }
-                        ) { Text("👍") }
+                        }
+                ) { Text("👍") }
 
-                        FeedbackCircleBox(
-                            modifier = Modifier.klickable {
-                                state = FeedbackState.Negative
+                FeedbackCircleBox(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            rotationZ = 0f
+                            scaleX = rightScale.value
+                            scaleY = rightScale.value
+                        }
+                        .klickable {
+                            if (animState == FeedbackAnimState.Idle) {
                                 onNegative()
+                                startAnimation(FeedbackSelectedState.Negative)
                             }
-                        ) { Text("👎") }
-                    }
+                        }
+                ) { Text("👎") }
+            }
+
+            FeedbackAnimState.Rotating, FeedbackAnimState.ScalingOut -> {
+                FeedbackCircleBox(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            rotationZ = leftRotation.value
+                            scaleX = leftScale.value
+                            scaleY = leftScale.value
+                        }
+                ) { Text("👍") }
+
+                FeedbackCircleBox(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            rotationZ = 0f
+                            scaleX = rightScale.value
+                            scaleY = rightScale.value
+                        }
+                ) { Text("👎") }
+            }
+
+            FeedbackAnimState.ShowButton -> {
+                val text = when (selected) {
+                    FeedbackSelectedState.Positive -> "Write a review"
+                    FeedbackSelectedState.Negative -> "Send feedback"
+                    else -> ""
                 }
-
-                FeedbackState.Positive -> AnimatedFeedbackButton("Write a review")
-
-                FeedbackState.Negative -> AnimatedFeedbackButton("Share feedback")
+                Button(
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                    onClick = {},
+                    modifier = Modifier.scale(buttonScale.value)
+                ) {
+                    Text(text)
+                }
             }
         }
     }
@@ -87,26 +157,7 @@ private fun FeedbackCircleBox(
     }
 }
 
-@Composable
-private fun AnimatedFeedbackButton(text: String) {
-    var startAnim by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(if (startAnim) 1f else 0.8f, animationSpec = tween(400))
-    val alpha by animateFloatAsState(if (startAnim) 1f else 0f, animationSpec = tween(400))
-
-    LaunchedEffect(Unit) { startAnim = true }
-
-    Button(
-        dimensions = ButtonDefaults.mediumButtonSize(),
-        onClick = {},
-        modifier = Modifier
-            .scale(scale)
-            .alpha(alpha)
-    ) {
-        Text(text)
-    }
-}
-
-enum class FeedbackState { Idle, Positive, Negative }
+enum class FeedbackSelectedState { Positive, Negative }
 
 @Preview(showBackground = true)
 @Composable

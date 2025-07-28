@@ -33,7 +33,7 @@ fun DiscoverScreen(
     ) {
         Column {
 
-            if (!state.discoverCardsList.isEmpty()) {
+            if (state.discoverCardsList.isNotEmpty()) {
                 // todo - for tablets use a normal scrolling list
                 DiscoverCardVerticalPager(
                     pages = state.discoverCardsList,

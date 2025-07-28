@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,10 +56,10 @@ class DiscoverViewModel(
             DiscoverState.DiscoverUiModel(
                 title = model.title,
                 description = model.description,
-                imageList = persistentListOf(*model.imageList.toTypedArray()),
+                imageList = model.imageList.toPersistentList(),
                 type = model.type,
                 disclaimer = model.disclaimer,
-                buttons = model.buttons?.let { persistentListOf(*it.toTypedArray()) }
+                buttons = model.buttons?.toPersistentList(),
             )
         }
     }

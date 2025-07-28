@@ -16,7 +16,7 @@ import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 
 internal class RealDiscoverSydneyManager(
     private val flag: Flag,
-    private val ioDispatcher: CoroutineDispatcher = DispatchersComponent().ioDispatcher,
+    private val defaultDispatcher: CoroutineDispatcher = DispatchersComponent().defaultDispatcher,
 ) : DiscoverSydneyManager {
 
     private var cachedFlagValue: FlagValue? = null
@@ -37,7 +37,7 @@ internal class RealDiscoverSydneyManager(
         val flagValue = this
         log("Fetching Discover Sydney data from flag: ${FlagKeys.DISCOVER_SYDNEY.key}: $flagValue")
 
-        return withContext(ioDispatcher) {
+        return withContext(defaultDispatcher) {
             when (flagValue) {
                 is FlagValue.JsonValue -> {
                     val jsonArray = Json.parseToJsonElement(value).jsonArray

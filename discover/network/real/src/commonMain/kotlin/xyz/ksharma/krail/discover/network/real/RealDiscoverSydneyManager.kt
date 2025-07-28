@@ -19,8 +19,18 @@ internal class RealDiscoverSydneyManager(
     private val ioDispatcher: CoroutineDispatcher = DispatchersComponent().ioDispatcher,
 ) : DiscoverSydneyManager {
 
+    private var cachedFlagValue: FlagValue? = null
+    private var cachedDiscoverModels: List<DiscoverModel>? = null
+
     override suspend fun fetchDiscoverData(): List<DiscoverModel> {
-        return flag.getFlagValue(FlagKeys.DISCOVER_SYDNEY.key).toDiscoverCards()
+        val currentFlagValue = flag.getFlagValue(FlagKeys.DISCOVER_SYDNEY.key)
+        if (cachedFlagValue == currentFlagValue && cachedDiscoverModels != null) {
+            return cachedDiscoverModels!!
+        }
+        val models = currentFlagValue.toDiscoverCards()
+        cachedFlagValue = currentFlagValue
+        cachedDiscoverModels = models
+        return models
     }
 
     private suspend fun FlagValue.toDiscoverCards(): List<DiscoverModel> {

@@ -119,6 +119,7 @@ kotlin {
             implementation(projects.core.log)
             implementation(projects.core.network)
             implementation(projects.core.remoteConfig)
+            implementation(projects.discover.network.real)
             implementation(projects.feature.parkRide.network)
             implementation(projects.feature.tripPlanner.network)
             implementation(projects.feature.tripPlanner.state)

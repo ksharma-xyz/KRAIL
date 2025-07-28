@@ -29,7 +29,7 @@ data class DiscoverModel(
     val imageList: ImmutableList<String>,
 
     @Serializable(with = ButtonListSerializer::class)
-    val buttons: List<Button>? = null,
+    val buttons: List<Button>? = null, // todo - need immutablelist for Composable
 
     val type: DiscoverCardType,
 ) {

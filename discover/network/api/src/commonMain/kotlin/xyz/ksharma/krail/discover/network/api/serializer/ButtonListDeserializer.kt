@@ -79,7 +79,7 @@ object ButtonListSerializer : KSerializer<List<Button>> {
                         val url = linkObj["url"]?.jsonPrimitive?.content
                         require(!url.isNullOrBlank()) { "Button PartnerSocial link URL cannot be null or blank" }
 
-                        Button.Social.PartnerSocial.PartnerSocialType(type, url)
+                        Button.Social.PartnerSocial.PartnerSocialLink(type, url)
                     }
                     Button.Social.PartnerSocial(
                         socialPartnerName = partnerName,

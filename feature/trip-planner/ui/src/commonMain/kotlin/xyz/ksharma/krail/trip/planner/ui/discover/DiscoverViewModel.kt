@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.discover
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
@@ -43,13 +43,25 @@ class DiscoverViewModel(
                 analytics.track(
                     event = AnalyticsEvent.SocialConnectionLinkClickEvent(
                         socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                        source = SocialConnectionSource.DISCOVER_CARD,
+                    ),
+                )
+            }
+
+            is DiscoverEvent.PartnerSocialLinkClicked -> {
+                platformOps.openUrl(url = event.partnerSocialLink.url)
+                analytics.track(
+                    event = AnalyticsEvent.SocialConnectionLinkClickEvent(
+                        socialPlatform = event.partnerSocialLink.type.toAnalyticsEventPlatform(),
+                        source = SocialConnectionSource.DISCOVER_CARD,
                     ),
                 )
             }
 
             is DiscoverEvent.CtaButtonClicked -> {}
+
             is DiscoverEvent.FeedbackThumbButtonClicked -> {}
-            is DiscoverEvent.PartnerSocialLinkClicked -> {}
+
             is DiscoverEvent.ShareButtonClicked -> {}
         }
     }

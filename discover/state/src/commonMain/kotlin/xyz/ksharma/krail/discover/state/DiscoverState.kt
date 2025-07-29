@@ -72,7 +72,7 @@ sealed class Button {
 
         data class PartnerSocial(
             val socialPartnerName: String,
-            val links: List<PartnerSocialType>
+            val links: List<PartnerSocialLink>
         ) : Social() {
 
             init {
@@ -80,7 +80,7 @@ sealed class Button {
                 require(links.isNotEmpty()) { "links list must not be empty" }
             }
 
-            data class PartnerSocialType(
+            data class PartnerSocialLink(
                 val type: SocialType,
                 val url: String,
             )

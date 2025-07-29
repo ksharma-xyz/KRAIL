@@ -1,13 +1,15 @@
 package xyz.ksharma.krail.discover.state
 
 import xyz.ksharma.krail.social.state.KrailSocialType
-import xyz.ksharma.krail.social.state.SocialType
+import  xyz.ksharma.krail.discover.state.Button.Social.PartnerSocial.PartnerSocialLink
 
 sealed interface DiscoverEvent {
 
     data class AppSocialLinkClicked(val krailSocialType: KrailSocialType) : DiscoverEvent
 
-    data class PartnerSocialLinkClicked(val socialType: SocialType, val url: String) : DiscoverEvent
+    data class PartnerSocialLinkClicked(
+        val partnerSocialLink: PartnerSocialLink,
+    ) : DiscoverEvent
 
     data class ShareButtonClicked(val url: String) : DiscoverEvent
 

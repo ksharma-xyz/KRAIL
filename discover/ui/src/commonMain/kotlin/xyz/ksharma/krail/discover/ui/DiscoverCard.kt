@@ -53,6 +53,7 @@ fun DiscoverCard(
     discoverModel: DiscoverState.DiscoverUiModel,
     modifier: Modifier = Modifier,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit = {},
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit = {},
     onClick: (DiscoverState.DiscoverUiModel) -> Unit = {},
 ) {
     Column(
@@ -106,6 +107,7 @@ fun DiscoverCard(
             DiscoverCardButtonRow(
                 buttonsList = buttonsList,
                 onAppSocialLinkClicked = onAppSocialLinkClicked,
+                onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
             )
         }
     }
@@ -115,6 +117,7 @@ fun DiscoverCard(
 private fun DiscoverCardButtonRow(
     buttonsList: List<Button>,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
@@ -150,9 +153,12 @@ private fun DiscoverCardButtonRow(
 
                     is Button.Social.PartnerSocial -> {
                         SocialConnectionRow(
-                            onClick = { },
+                            onClick = { partnerSocialType ->
+                                onPartnerSocialLinkClicked(partnerSocialType)
+                            },
                             socialPartnerName = socialButton.socialPartnerName,
-                            socialLinks = socialButton.links.map { it.type })
+                            partnerSocialLinks = socialButton.links,
+                        )
                     }
                 }
             }
@@ -291,7 +297,7 @@ val previewDiscoverCardList = listOf(
             Button.Social.PartnerSocial(
                 socialPartnerName = "XYZ Place",
                 links = persistentListOf(
-                    Button.Social.PartnerSocial.PartnerSocialType(
+                    Button.Social.PartnerSocial.PartnerSocialLink(
                         type = SocialType.Facebook,
                         url = "https://example.com"
                     ),

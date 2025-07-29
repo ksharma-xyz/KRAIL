@@ -23,7 +23,7 @@ jobs:
         run: ls
 
       - name: Download Firebase CLI
-        run: curl -sL https://firebase.tools | sed s/latest/v14.11.0/ | bash
+        run: curl -sL https://firebase.tools | bash
 
       - name: Authenticate with Firebase
         env:

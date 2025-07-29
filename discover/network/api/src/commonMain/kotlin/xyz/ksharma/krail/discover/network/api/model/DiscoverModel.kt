@@ -41,4 +41,7 @@ data class DiscoverModel(
 
     @SerialName("type")
     val type: DiscoverCardType,
+
+    @SerialName("cardId")
+    val cardId: String,
 )

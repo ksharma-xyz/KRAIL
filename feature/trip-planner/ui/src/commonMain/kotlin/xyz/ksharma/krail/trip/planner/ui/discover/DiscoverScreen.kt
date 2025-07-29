@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.discover.state.Button
+import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.social.state.KrailSocialType
@@ -29,7 +30,7 @@ fun DiscoverScreen(
     state: DiscoverState,
     onBackClick: () -> Unit,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
-    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
 ) {
     Box(
         modifier = modifier

@@ -38,7 +38,7 @@ class SettingsViewModel(
                 platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
                     event = SocialConnectionLinkClickEvent(
-                        socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                        socialPlatformType = event.krailSocialType.toAnalyticsEventPlatform(),
                         source = SocialConnectionLinkClickEvent.SocialConnectionSource.SETTINGS,
                     ),
                 )

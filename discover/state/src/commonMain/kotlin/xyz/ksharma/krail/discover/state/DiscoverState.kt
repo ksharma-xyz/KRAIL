@@ -33,6 +33,8 @@ data class DiscoverState(
         val buttons: ImmutableList<Button>? = null,
 
         val type: DiscoverCardType,
+
+        val cardId: String,
     )
 }
 

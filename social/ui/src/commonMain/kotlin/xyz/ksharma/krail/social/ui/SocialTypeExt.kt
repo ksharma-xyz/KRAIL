@@ -24,19 +24,19 @@ internal fun SocialType.resource(): DrawableResource = when (this) {
     SocialType.Facebook -> Res.drawable.ic_facebook
 }
 
-fun SocialType.toAnalyticsEventPlatform(): SocialConnectionLinkClickEvent.SocialPlatform =
+fun SocialType.toAnalyticsEventPlatform(): SocialConnectionLinkClickEvent.SocialPlatformType =
     when (this) {
-        SocialType.LinkedIn -> SocialConnectionLinkClickEvent.SocialPlatform.LINKEDIN
-        SocialType.Reddit -> SocialConnectionLinkClickEvent.SocialPlatform.REDDIT
-        SocialType.Instagram -> SocialConnectionLinkClickEvent.SocialPlatform.INSTAGRAM
-        SocialType.Facebook -> SocialConnectionLinkClickEvent.SocialPlatform.FACEBOOK
+        SocialType.LinkedIn -> SocialConnectionLinkClickEvent.SocialPlatformType.LINKEDIN
+        SocialType.Reddit -> SocialConnectionLinkClickEvent.SocialPlatformType.REDDIT
+        SocialType.Instagram -> SocialConnectionLinkClickEvent.SocialPlatformType.INSTAGRAM
+        SocialType.Facebook -> SocialConnectionLinkClickEvent.SocialPlatformType.FACEBOOK
     }
 
-fun KrailSocialType.toAnalyticsEventPlatform(): SocialConnectionLinkClickEvent.SocialPlatform =
+fun KrailSocialType.toAnalyticsEventPlatform(): SocialConnectionLinkClickEvent.SocialPlatformType =
     when (this) {
-        KrailSocialType.LinkedIn -> SocialConnectionLinkClickEvent.SocialPlatform.LINKEDIN
-        KrailSocialType.Reddit -> SocialConnectionLinkClickEvent.SocialPlatform.REDDIT
-        KrailSocialType.Instagram -> SocialConnectionLinkClickEvent.SocialPlatform.INSTAGRAM
-        KrailSocialType.Facebook -> SocialConnectionLinkClickEvent.SocialPlatform.FACEBOOK
+        KrailSocialType.LinkedIn -> SocialConnectionLinkClickEvent.SocialPlatformType.LINKEDIN
+        KrailSocialType.Reddit -> SocialConnectionLinkClickEvent.SocialPlatformType.REDDIT
+        KrailSocialType.Instagram -> SocialConnectionLinkClickEvent.SocialPlatformType.INSTAGRAM
+        KrailSocialType.Facebook -> SocialConnectionLinkClickEvent.SocialPlatformType.FACEBOOK
     }
 

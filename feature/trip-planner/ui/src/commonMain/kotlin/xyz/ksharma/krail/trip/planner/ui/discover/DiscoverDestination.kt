@@ -24,10 +24,12 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                     event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType)
                 )
             },
-            onPartnerSocialLinkClicked = { partnerSocialLink ->
+            onPartnerSocialLinkClicked = { partnerSocialLink, cardId, cardType ->
                 viewModel.onEvent(
                     event = DiscoverEvent.PartnerSocialLinkClicked(
                         partnerSocialLink = partnerSocialLink,
+                        cardId = cardId,
+                        cardType = cardType,
                     )
                 )
             }

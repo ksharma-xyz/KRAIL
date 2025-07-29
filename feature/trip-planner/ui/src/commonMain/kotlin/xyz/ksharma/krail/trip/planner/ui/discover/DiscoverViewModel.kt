@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.*
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
@@ -43,7 +43,7 @@ class DiscoverViewModel(
                 platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
                     event = SocialConnectionLinkClickEvent(
-                        socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                        socialPlatformType = event.krailSocialType.toAnalyticsEventPlatform(),
                         source = SocialConnectionSource.DISCOVER_CARD,
                     ),
                 )
@@ -52,9 +52,14 @@ class DiscoverViewModel(
             is DiscoverEvent.PartnerSocialLinkClicked -> {
                 platformOps.openUrl(url = event.partnerSocialLink.url)
                 analytics.track(
-                    event = SocialConnectionLinkClickEvent(
-                        socialPlatform = event.partnerSocialLink.type.toAnalyticsEventPlatform(),
-                        source = SocialConnectionSource.DISCOVER_CARD,
+                    event = DiscoverCardClick(
+                        source = DiscoverCardClick.Source.PARTNER_SOCIAL_LINK,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
+                        partnerSocialLink = DiscoverCardClick.PartnerSocialLink(
+                            type = event.partnerSocialLink.type.toAnalyticsSocialType(),
+                            url = event.partnerSocialLink.url,
+                        )
                     ),
                 )
             }
@@ -65,14 +70,16 @@ class DiscoverViewModel(
                 // save to db, feedback button id clicked. so that we don't show the same
                 // feedback to suer again.
                 discoverSydneyManager.feedbackThumbButtonClicked(
-                    feedbackId = event.feedbackId,
+                    feedbackId = event.cardId,
                     isPositive = event.isPositive,
                 )
-                log("Feedback thumb button clicked: feedbackId=${event.feedbackId}, isPositive=${event.isPositive}")
                 analytics.track(
-                    event = FeedbackClick(
-                        action = if (event.isPositive) FeedbackClick.FeedbackAction.POSITIVE_THUMB
-                        else FeedbackClick.FeedbackAction.NEGATIVE_THUMB,
+                    event = DiscoverCardClick(
+                        source = if (event.isPositive)
+                            DiscoverCardClick.Source.FEEDBACK_POSITIVE_THUMB
+                        else DiscoverCardClick.Source.FEEDBACK_NEGATIVE_THUMB,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
                     ),
                 )
             }
@@ -88,7 +95,7 @@ class DiscoverViewModel(
             val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
             log("Fetched Discover Sydney data: ${data.size}")
             data.forEach {
-                log("\tDiscover Card: ${it.type}")
+                log("\tDiscover Card: ${it.type}, ${it.title}")
             }
             updateUiState {
                 copy(
@@ -107,6 +114,7 @@ class DiscoverViewModel(
                 type = model.type,
                 disclaimer = model.disclaimer,
                 buttons = model.buttons?.toPersistentList(),
+                cardId = model.cardId,
             )
         }
     }

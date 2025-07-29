@@ -2,8 +2,6 @@ package xyz.ksharma.krail.discover.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,10 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,14 +38,12 @@ import xyz.ksharma.krail.discover.state.toButtonRowState
 import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.social.ui.SocialConnectionRow
-import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.discoverCardHeight
 import xyz.ksharma.krail.taj.isLargeFontScale
-import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import app.krail.taj.resources.Res as TajRes
@@ -85,17 +79,15 @@ fun DiscoverCard(
         Text(
             text = discoverModel.title,
             modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
-            maxLines = if(isLargeFontScale()) 2 else 3,
-            style = if (isLargeFontScale()) KrailTheme.typography.titleMedium
-            else KrailTheme.typography.headlineSmall,
+            maxLines = 2,
+            style = KrailTheme.typography.headlineSmall,
         )
 
         Text(
             text = discoverModel.description,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            maxLines = if(isLargeFontScale()) 2 else 3,
-            style = if (isLargeFontScale()) KrailTheme.typography.bodySmall
-            else KrailTheme.typography.bodyMedium,
+            maxLines = if (isLargeFontScale()) 2 else 3,
+            style = KrailTheme.typography.bodyMedium,
         )
 
         discoverModel.disclaimer?.let { disclaimer ->
@@ -131,7 +123,9 @@ private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
         when (val left = state.left) {
             is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
                 Button(
-                    dimensions = ButtonDefaults.mediumButtonSize(), onClick = {}) {
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                    onClick = {},
+                ) {
                     Text(text = left.button.label)
                 }
             }
@@ -155,17 +149,14 @@ private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
             }
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    FeedbackCircleBox {
-                        Text("👍")
-                    }
+                FeedbackButtonsRow(
+                    onNegative = {
 
-                    FeedbackCircleBox {
-                        Text("👎")
+                    },
+                    onPositive = {
+
                     }
-                }
+                )
             }
 
             null -> Unit
@@ -174,10 +165,12 @@ private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
         Spacer(modifier = Modifier.weight(1f))
 
         // Right button (always right-aligned)
-        when (state.right) {
+        when (val rightButton = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
                 RoundIconButton(
-                    onClick = {},
+                    onClick = {
+                        rightButton.button.shareUrl
+                    },
                     color = Color.Transparent,
                 ) {
                     Image(
@@ -194,21 +187,6 @@ private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
             }
 
             null -> Unit
-        }
-    }
-}
-
-@Composable
-private fun FeedbackCircleBox(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier.size(40.dp).clip(shape = CircleShape).klickable(indication = null) {},
-        contentAlignment = Alignment.Center,
-    ) {
-        CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.title) {
-            content()
         }
     }
 }

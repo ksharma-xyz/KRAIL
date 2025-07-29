@@ -12,16 +12,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
+import xyz.ksharma.krail.platform.ops.PlatformOps
+import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 
 class DiscoverViewModel(
     private val discoverSydneyManager: DiscoverSydneyManager,
     private val ioDispatcher: CoroutineDispatcher,
+    private val analytics: Analytics,
+    private val platformOps: PlatformOps,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<DiscoverState> = MutableStateFlow(DiscoverState())
@@ -32,7 +38,19 @@ class DiscoverViewModel(
 
     fun onEvent(event: DiscoverEvent) {
         when (event) {
-            DiscoverEvent.ButtonClicked -> {}
+            is DiscoverEvent.AppSocialLinkClicked -> {
+                platformOps.openUrl(url = event.krailSocialType.url)
+                analytics.track(
+                    event = AnalyticsEvent.SocialConnectionLinkClickEvent(
+                        socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                    ),
+                )
+            }
+
+            is DiscoverEvent.CtaButtonClicked -> {}
+            is DiscoverEvent.FeedbackThumbButtonClicked -> {}
+            is DiscoverEvent.PartnerSocialLinkClicked -> {}
+            is DiscoverEvent.ShareButtonClicked -> {}
         }
     }
 

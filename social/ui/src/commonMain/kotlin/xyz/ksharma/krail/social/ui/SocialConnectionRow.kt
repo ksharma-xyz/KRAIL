@@ -63,12 +63,12 @@ fun SocialConnectionRow(
     ) {
         socialLinks.forEach { socialType ->
             SocialConnectionIcon(
-                onClick = { onClick(socialType) },
+                onClick = { },
                 modifier = Modifier.padding(vertical = 4.dp),
             ) {
                 Image(
                     painter = painterResource(resource = socialType.resource()),
-                    contentDescription = "${socialType.name} Page for $socialPartnerName",
+                    contentDescription = "${socialType.displayName} Page for $socialPartnerName",
                     colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
                     modifier = Modifier.size(24.dp),
                 )

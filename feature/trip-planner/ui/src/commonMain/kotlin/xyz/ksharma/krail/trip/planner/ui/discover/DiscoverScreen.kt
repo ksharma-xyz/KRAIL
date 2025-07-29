@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.discover.ui.DiscoverCard
+import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -26,6 +27,7 @@ fun DiscoverScreen(
     modifier: Modifier = Modifier,
     state: DiscoverState,
     onBackClick: () -> Unit,
+    onAppSocialLinkClicked: (KrailSocialType) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -39,7 +41,10 @@ fun DiscoverScreen(
                     pages = state.discoverCardsList,
                     modifier = Modifier.fillMaxSize(),
                     content = { cardModel ->
-                        DiscoverCard(discoverModel = cardModel)
+                        DiscoverCard(
+                            discoverModel = cardModel,
+                            onAppSocialLinkClicked = onAppSocialLinkClicked,
+                        )
                     }
                 )
             }

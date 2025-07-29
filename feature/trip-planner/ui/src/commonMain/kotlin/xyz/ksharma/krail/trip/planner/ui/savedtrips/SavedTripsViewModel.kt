@@ -421,7 +421,7 @@ class SavedTripsViewModel(
                     )
 
                     parkRideSandook.insertOrReplaceAll(listOf(detail))
-                    log("Fetched and saved facility $facilityId for stop $stopId")
+                    log("Fetched and saved facility $facilityId for stop $stopId - $detail")
                 } else {
                     // reset timestamp to DISTANT_PAST as API call failed, so we can retry
                     // earlier than cooldown would end.

@@ -30,7 +30,10 @@ import kotlin.time.ExperimentalTime
  **/
 @OptIn(ExperimentalTime::class)
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String, stopId: String): NSWParkRideFacilityDetail {
+fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(
+    stopName: String,
+    stopId: String
+): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0
     val occupiedSpots = zones.sumOf {
         it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
@@ -47,7 +50,7 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(stopName: String, 
 
     return NSWParkRideFacilityDetail(
         facilityId = facilityId,
-        spotsAvailable = spotsAvailable.toLong(),
+        spotsAvailable = spotsAvailable.toLong().coerceAtLeast(0),
         totalSpots = totalSpots.toLong(),
         facilityName = facilityName.toDisplayFacilityName(),
         percentageFull = percentageFull.toLong(),

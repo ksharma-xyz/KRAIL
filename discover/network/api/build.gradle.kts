@@ -28,7 +28,9 @@ kotlin {
         commonMain  {
             dependencies {
                 implementation(projects.core.log)
+                implementation(projects.discover.state)
                 implementation(projects.social.network.api)
+                implementation(projects.social.state)
 
                 implementation(compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)

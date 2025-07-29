@@ -23,7 +23,6 @@ val viewModelsModule = module {
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
     viewModelOf(::OurStoryViewModel)
-    viewModelOf(::DiscoverViewModel)
 
     viewModel {
         IntroViewModel(
@@ -70,6 +69,13 @@ val viewModelsModule = module {
         ThemeSelectionViewModel(
             sandook = get(),
             analytics = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
+    viewModel {
+        DiscoverViewModel(
+            discoverSydneyManager = get(),
             ioDispatcher = get(named(IODispatcher)),
         )
     }

@@ -11,7 +11,7 @@ import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.FlagValue
-import xyz.ksharma.krail.discover.network.api.DiscoverModel
+import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 
 internal class RealDiscoverSydneyManager(

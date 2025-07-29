@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.state.discover
+package xyz.ksharma.krail.discover.state
 
 sealed interface DiscoverEvent {
     data object ButtonClicked: DiscoverEvent

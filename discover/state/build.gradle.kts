@@ -5,9 +5,8 @@ plugins {
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
 }
-
 android {
-    namespace = "xyz.ksharma.krail.trip.planner.state"
+    namespace = "xyz.ksharma.krail.discover.state"
 }
 
 kotlin {
@@ -27,16 +26,10 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(projects.core.analytics)
-                implementation(projects.core.dateTime)
-                implementation(projects.core.festival)
-                implementation(projects.social.network.api)
-                implementation(projects.social.state)
-                implementation(projects.taj)
-
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.serialization.json)
 
+                implementation(projects.social.state)
                 implementation(compose.runtime)
                 implementation(libs.kotlinx.datetime)
             }

@@ -27,17 +27,20 @@ import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
 import app.krail.taj.resources.ic_ios_share
 import coil3.compose.AsyncImage
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.discover.network.api.DiscoverCardButtonRowState
-import xyz.ksharma.krail.discover.network.api.DiscoverModel
-import xyz.ksharma.krail.discover.network.api.previewDiscoverCardList
-import xyz.ksharma.krail.discover.network.api.toButtonRowState
-import xyz.ksharma.krail.social.network.api.model.KrailSocialType
+import xyz.ksharma.krail.discover.state.Button
+import xyz.ksharma.krail.discover.state.DiscoverCardButtonRowState
+import xyz.ksharma.krail.discover.state.DiscoverCardType
+import xyz.ksharma.krail.discover.state.DiscoverState
+import xyz.ksharma.krail.discover.state.toButtonRowState
+import xyz.ksharma.krail.social.state.KrailSocialType
+import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.social.ui.SocialConnectionRow
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
@@ -53,9 +56,9 @@ import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun DiscoverCard(
-    discoverModel: DiscoverModel,
+    discoverModel: DiscoverState.DiscoverUiModel,
     modifier: Modifier = Modifier,
-    onClick: (DiscoverModel) -> Unit = {},
+    onClick: (DiscoverState.DiscoverUiModel) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -113,7 +116,7 @@ fun DiscoverCard(
 }
 
 @Composable
-private fun DiscoverCardButtonRow(buttonsList: List<DiscoverModel.Button>) {
+private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
         logError("Invalid button combination or no buttons provided: ${buttonsList.map { it::class.simpleName }}")
@@ -135,14 +138,14 @@ private fun DiscoverCardButtonRow(buttonsList: List<DiscoverModel.Button>) {
 
             is DiscoverCardButtonRowState.LeftButtonType.Social -> {
                 when (val socialButton = left.button) {
-                    DiscoverModel.Button.Social.AppSocial -> {
+                    Button.Social.AppSocial -> {
                         SocialConnectionRow(
                             onClick = {},
                             socialLinks = KrailSocialType.entries,
                         )
                     }
 
-                    is DiscoverModel.Button.Social.PartnerSocial -> {
+                    is Button.Social.PartnerSocial -> {
                         SocialConnectionRow(
                             onClick = {},
                             socialPartnerName = socialButton.socialPartnerName,
@@ -260,9 +263,106 @@ private fun DiscoverCardFeedbackPreview() {
     }
 }
 
-private class DiscoverCardProvider : PreviewParameterProvider<DiscoverModel> {
-    override val values: Sequence<DiscoverModel>
+private class DiscoverCardProvider : PreviewParameterProvider<DiscoverState.DiscoverUiModel> {
+    override val values: Sequence<DiscoverState.DiscoverUiModel>
         get() = previewDiscoverCardList.asSequence()
 }
+
+val previewDiscoverCardList = listOf(
+    DiscoverState.DiscoverUiModel(
+        title = "Cta only card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://images.unsplash.com/photo-1749751234397-41ee8a7887c2"),
+        type = DiscoverCardType.Travel,
+        buttons = persistentListOf(
+            Button.Cta(
+                label = "Click Me",
+                url = "https://example.com/cta",
+            ),
+        ),
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "No Buttons Card Title",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://images.unsplash.com/photo-1741851373856-67a519f0c014"),
+        type = DiscoverCardType.Events,
+        buttons = persistentListOf(),
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "App Social Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        type = DiscoverCardType.Krail,
+        buttons = persistentListOf(Button.Social.AppSocial)
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "Partner Social Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
+        type = DiscoverCardType.Events,
+        buttons = persistentListOf(
+            Button.Social.PartnerSocial(
+                socialPartnerName = "XYZ Place",
+                links = persistentListOf(
+                    Button.Social.PartnerSocial.PartnerSocialType(
+                        type = SocialType.Facebook,
+                        url = "https://example.com"
+                    ),
+                )
+            )
+        )
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "Share Only Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
+        type = DiscoverCardType.Kids,
+        buttons = persistentListOf(
+            Button.Share(
+                shareUrl = "https://example.com/share",
+            ),
+        )
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "Cta + Share Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1730005745671-dbbfddfe387e"),
+        type = DiscoverCardType.Sports,
+        buttons = persistentListOf(
+            Button.Cta(
+                label = "Click Me",
+                url = "https://example.com/cta",
+            ),
+            Button.Share(
+                shareUrl = "https://example.com/share",
+            ),
+        )
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "Feedback Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7"),
+        type = DiscoverCardType.Events,
+        buttons = persistentListOf(
+            Button.Feedback(
+                label = "Feedback",
+                url = "https://example.com/feedback",
+            ),
+        )
+    ),
+    DiscoverState.DiscoverUiModel(
+        title = "Credits Disclaimer Card",
+        description = "This is a sample description for the Discover Card. It can be used to display additional information.",
+        imageList = persistentListOf("https://images.unsplash.com/photo-1735746693939-586a9d7558e1"),
+        type = DiscoverCardType.Events,
+        disclaimer = "Image credits: Unsplash",
+        buttons = persistentListOf(
+            Button.Cta(
+                label = "Cta Button",
+                url = "https://example.com/feedback",
+            ),
+        )
+    ),
+)
 
 // endregion Previews

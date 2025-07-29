@@ -1,88 +1,89 @@
-package xyz.ksharma.krail.discover.network.api
+package xyz.ksharma.krail.discover.state
 
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
-import xyz.ksharma.krail.social.network.api.model.SocialType
-import kotlinx.serialization.Serializable
-import xyz.ksharma.krail.discover.network.api.DiscoverModel.Button
+import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.social.state.SocialType
 
 @Stable
-@Serializable
-data class DiscoverModel(
-
-    val title: String,
-
-    val description: String,
-
-    // ISO 8601 date format
-    val startDate: String? = null,
-
-    // ISO 8601 date format
-    val endDate: String? = null,
-
-    // image credits etc.
-    val disclaimer: String? = null,
-
-    /**
-     * List of image URLs to be displayed in the card.
-     */
-    val imageList: ImmutableList<String>,
-
-    @Serializable(with = ButtonListSerializer::class)
-    val buttons: List<Button>? = null, // todo - need immutablelist for Composable
-
-    val type: DiscoverCardType,
+data class DiscoverState(
+    val discoverCardsList: ImmutableList<DiscoverUiModel> = persistentListOf(),
 ) {
 
-    enum class DiscoverCardType {
-        Krail, // general Krail related content
+    @Stable
+    data class DiscoverUiModel(
+        val title: String,
 
-        Travel, // places to visit, travel tips etc.
+        val description: String,
 
-        Events, // concerts, festivals etc.
+        // ISO 8601 date format
+        val startDate: String? = null,
 
-        Food, // restaurants, cafes etc.
+        // ISO 8601 date format
+        val endDate: String? = null,
 
-        Sports, // football, cricket etc.
+        // image credits etc.
+        val disclaimer: String? = null,
 
-        Kids // pokemon, games etc..
-        ;
-    }
+        /**
+         * List of image URLs to be displayed in the card.
+         */
+        val imageList: ImmutableList<String>,
 
-    sealed class Button {
-        data class Cta(
-            val label: String,
-            val url: String,
-        ) : Button()
+        val buttons: ImmutableList<Button>? = null,
 
-        data class Share(
-            val shareUrl: String,
-        ) : Button()
+        val type: DiscoverCardType,
+    )
+}
 
-        data class Feedback(
-            val label: String? = null,
-            val url: String? = null,
-        ) : Button()
+enum class DiscoverCardType {
+    Krail, // general Krail related content
 
-        sealed class Social : Button() {
+    Travel, // places to visit, travel tips etc.
 
-            data object AppSocial : Social()
+    Events, // concerts, festivals etc.
 
-            data class PartnerSocial(
-                val socialPartnerName: String,
-                val links: List<PartnerSocialType>
-            ) : Social() {
+    Food, // restaurants, cafes etc.
 
-                init {
-                    require(socialPartnerName.isNotBlank()) { "socialPartnerName must not be empty or blank" }
-                    require(links.isNotEmpty()) { "links list must not be empty" }
-                }
+    Sports, // football, cricket etc.
 
-                data class PartnerSocialType(
-                    val type: SocialType,
-                    val url: String,
-                )
+    Kids // pokemon, games etc..
+    ;
+}
+
+sealed class Button {
+    data class Cta(
+        val label: String,
+        val url: String,
+    ) : Button()
+
+    data class Share(
+        val shareUrl: String,
+    ) : Button()
+
+    data class Feedback(
+        val label: String? = null,
+        val url: String? = null,
+    ) : Button()
+
+    sealed class Social : Button() {
+
+        data object AppSocial : Social()
+
+        data class PartnerSocial(
+            val socialPartnerName: String,
+            val links: List<PartnerSocialType>
+        ) : Social() {
+
+            init {
+                require(socialPartnerName.isNotBlank()) { "socialPartnerName must not be empty or blank" }
+                require(links.isNotEmpty()) { "links list must not be empty" }
             }
+
+            data class PartnerSocialType(
+                val type: SocialType,
+                val url: String,
+            )
         }
     }
 }

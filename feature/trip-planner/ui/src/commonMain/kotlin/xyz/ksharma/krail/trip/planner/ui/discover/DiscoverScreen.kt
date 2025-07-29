@@ -14,13 +14,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.discover.network.api.previewDiscoverCardList
+import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.discover.ui.DiscoverCard
+import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
-import xyz.ksharma.krail.trip.planner.ui.state.discover.DiscoverState
 
 @Composable
 fun DiscoverScreen(
@@ -34,14 +33,16 @@ fun DiscoverScreen(
     ) {
         Column {
 
-            // todo - for tablets use a normal scrolling list
-            DiscoverCardVerticalPager(
-                items = previewDiscoverCardList,
-                modifier = Modifier.fillMaxSize(),
-                content = { cardModel ->
-                    DiscoverCard(discoverModel = cardModel)
-                }
-            )
+            if (state.discoverCardsList.isNotEmpty()) {
+                // todo - for tablets use a normal scrolling list
+                DiscoverCardVerticalPager(
+                    pages = state.discoverCardsList,
+                    modifier = Modifier.fillMaxSize(),
+                    content = { cardModel ->
+                        DiscoverCard(discoverModel = cardModel)
+                    }
+                )
+            }
         }
 
         Column(

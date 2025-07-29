@@ -32,7 +32,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import krail.feature.trip_planner.ui.generated.resources.ic_wifi
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.social.network.api.model.KrailSocialType
+import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.social.ui.SocialConnectionRow
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider

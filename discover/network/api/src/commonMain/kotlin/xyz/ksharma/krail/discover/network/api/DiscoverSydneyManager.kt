@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.discover.network.api
 
+import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
+
 interface DiscoverSydneyManager {
 
     /**

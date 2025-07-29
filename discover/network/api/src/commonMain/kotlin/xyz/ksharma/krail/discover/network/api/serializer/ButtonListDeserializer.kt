@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.discover.network.api
+package xyz.ksharma.krail.discover.network.api.serializer
 
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -11,16 +11,17 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.social.network.api.model.SocialType
+import xyz.ksharma.krail.discover.state.Button
 
-object ButtonListSerializer : KSerializer<List<DiscoverModel.Button>> {
+object ButtonListSerializer : KSerializer<List<Button>> {
 
     @OptIn(InternalSerializationApi::class)
     override val descriptor: SerialDescriptor =
         buildSerialDescriptor("ButtonList", StructureKind.LIST)
 
-    override fun deserialize(decoder: Decoder): List<DiscoverModel.Button> {
+    override fun deserialize(decoder: Decoder): List<Button> {
         val input = decoder as? JsonDecoder ?: error("Expected JsonDecoder")
         val jsonArray = input.decodeJsonElement().jsonArray
 
@@ -34,7 +35,7 @@ object ButtonListSerializer : KSerializer<List<DiscoverModel.Button>> {
                     require(!label.isNullOrBlank()) { "Button Cta label cannot be null or blank" }
                     require(!url.isNullOrBlank()) { "Button Cta URL cannot be null or blank" }
 
-                    DiscoverModel.Button.Cta(
+                    Button.Cta(
                         label = label,
                         url = url,
                     )
@@ -44,7 +45,7 @@ object ButtonListSerializer : KSerializer<List<DiscoverModel.Button>> {
                     val shareUrl = buttonObj["shareUrl"]?.jsonPrimitive?.content
                     require(!shareUrl.isNullOrBlank()) { "Button Share URL cannot be null or blank" }
 
-                    DiscoverModel.Button.Share(
+                    Button.Share(
                         shareUrl = shareUrl,
                     )
                 }
@@ -55,13 +56,13 @@ object ButtonListSerializer : KSerializer<List<DiscoverModel.Button>> {
                     require(!label.isNullOrBlank()) { "Button Feedback label cannot be null or blank" }
                     require(!url.isNullOrBlank()) { "Button Feedback URL cannot be null or blank" }
 
-                    DiscoverModel.Button.Feedback(
+                    Button.Feedback(
                         label = label,
                         url = url,
                     )
                 }
 
-                "AppSocial" -> DiscoverModel.Button.Social.AppSocial
+                "AppSocial" -> Button.Social.AppSocial
 
                 "PartnerSocial" -> {
                     val partnerName = buttonObj["socialPartnerName"]?.jsonPrimitive?.content
@@ -78,9 +79,9 @@ object ButtonListSerializer : KSerializer<List<DiscoverModel.Button>> {
                         val url = linkObj["url"]?.jsonPrimitive?.content
                         require(!url.isNullOrBlank()) { "Button PartnerSocial link URL cannot be null or blank" }
 
-                        DiscoverModel.Button.Social.PartnerSocial.PartnerSocialType(type, url)
+                        Button.Social.PartnerSocial.PartnerSocialType(type, url)
                     }
-                    DiscoverModel.Button.Social.PartnerSocial(
+                    Button.Social.PartnerSocial(
                         socialPartnerName = partnerName,
                         links = links
                     )
@@ -94,7 +95,7 @@ object ButtonListSerializer : KSerializer<List<DiscoverModel.Button>> {
         }
     }
 
-    override fun serialize(encoder: Encoder, value: List<DiscoverModel.Button>) {
+    override fun serialize(encoder: Encoder, value: List<Button>) {
         error("Serialization not supported")
     }
 }

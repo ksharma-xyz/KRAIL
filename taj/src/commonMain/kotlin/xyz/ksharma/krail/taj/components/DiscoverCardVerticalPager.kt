@@ -28,7 +28,7 @@ val discoverCardHeight = 550.dp
 // todo - to be used only with a mobile , not for tablet.
 @Composable
 fun <T> DiscoverCardVerticalPager(
-    items: List<T>,
+    pages: List<T>,
     modifier: Modifier = Modifier,
     content: @Composable (T) -> Unit,
 ) {
@@ -56,11 +56,11 @@ fun <T> DiscoverCardVerticalPager(
             pageSize = PageSize.Fixed(
                 pageSize = discoverCardHeight,
             ),
-            key = { (it % items.size) },
+            key = { (it % pages.size) },
             contentPadding = PaddingValues(vertical = topPadding),
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            val actualPage = page % items.size
+            val actualPage = page % pages.size
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
             val width by animateDpAsState(
                 targetValue = lerpDp(
@@ -85,7 +85,7 @@ fun <T> DiscoverCardVerticalPager(
                     .zIndex(1f - pageOffset),
                 contentAlignment = Alignment.Center,
             ) {
-                content(items[actualPage])
+                content(pages[actualPage])
             }
         }
     }

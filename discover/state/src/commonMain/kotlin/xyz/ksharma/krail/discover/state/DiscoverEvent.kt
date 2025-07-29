@@ -21,5 +21,7 @@ sealed interface DiscoverEvent {
      *          true if the user clicked the thumbs up button,
      *          false if they clicked the thumbs down button.
      */
-    data class FeedbackThumbButtonClicked(val isPositive: Boolean) : DiscoverEvent
+    data class FeedbackThumbButtonClicked(val isPositive: Boolean, val feedbackId: String) : DiscoverEvent
+
+    data class FeedbackCtaButtonClicked(val isPositive: Boolean, val feedbackId: String) : DiscoverEvent
 }

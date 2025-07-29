@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.*
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
@@ -41,7 +42,7 @@ class DiscoverViewModel(
             is DiscoverEvent.AppSocialLinkClicked -> {
                 platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
-                    event = AnalyticsEvent.SocialConnectionLinkClickEvent(
+                    event = SocialConnectionLinkClickEvent(
                         socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
                         source = SocialConnectionSource.DISCOVER_CARD,
                     ),
@@ -51,7 +52,7 @@ class DiscoverViewModel(
             is DiscoverEvent.PartnerSocialLinkClicked -> {
                 platformOps.openUrl(url = event.partnerSocialLink.url)
                 analytics.track(
-                    event = AnalyticsEvent.SocialConnectionLinkClickEvent(
+                    event = SocialConnectionLinkClickEvent(
                         socialPlatform = event.partnerSocialLink.type.toAnalyticsEventPlatform(),
                         source = SocialConnectionSource.DISCOVER_CARD,
                     ),
@@ -60,9 +61,25 @@ class DiscoverViewModel(
 
             is DiscoverEvent.CtaButtonClicked -> {}
 
-            is DiscoverEvent.FeedbackThumbButtonClicked -> {}
+            is DiscoverEvent.FeedbackThumbButtonClicked -> {
+                // save to db, feedback button id clicked. so that we don't show the same
+                // feedback to suer again.
+                discoverSydneyManager.feedbackThumbButtonClicked(
+                    feedbackId = event.feedbackId,
+                    isPositive = event.isPositive,
+                )
+                log("Feedback thumb button clicked: feedbackId=${event.feedbackId}, isPositive=${event.isPositive}")
+                analytics.track(
+                    event = FeedbackClick(
+                        action = if (event.isPositive) FeedbackClick.FeedbackAction.POSITIVE_THUMB
+                        else FeedbackClick.FeedbackAction.NEGATIVE_THUMB,
+                    ),
+                )
+            }
 
             is DiscoverEvent.ShareButtonClicked -> {}
+
+            is DiscoverEvent.FeedbackCtaButtonClicked -> {}
         }
     }
 

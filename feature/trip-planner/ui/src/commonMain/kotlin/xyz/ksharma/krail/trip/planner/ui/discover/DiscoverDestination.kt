@@ -32,6 +32,15 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                         cardType = cardType,
                     )
                 )
+            },
+            onCtaClicked = { url, cardId, cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.CtaButtonClicked(
+                        url = url,
+                        cardId = cardId,
+                        cardType = cardType,
+                    )
+                )
             }
         )
     }

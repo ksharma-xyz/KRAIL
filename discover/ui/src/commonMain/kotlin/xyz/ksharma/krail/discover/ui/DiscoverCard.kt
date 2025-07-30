@@ -58,6 +58,7 @@ fun DiscoverCard(
         String,
         DiscoverCardType
     ) -> Unit = { _, _, _ -> },
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> }
 ) {
     Column(
         modifier = modifier
@@ -114,6 +115,9 @@ fun DiscoverCard(
                     onPartnerSocialLinkClicked(
                         partnerSocialLink, discoverModel.cardId, discoverModel.type
                     )
+                },
+                onCtaClicked = { url ->
+                    onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                 }
             )
         }
@@ -125,6 +129,7 @@ private fun DiscoverCardButtonRow(
     buttonsList: List<Button>,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
+    onCtaClicked: (String) -> Unit,
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
@@ -141,7 +146,9 @@ private fun DiscoverCardButtonRow(
             is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
                 Button(
                     dimensions = ButtonDefaults.mediumButtonSize(),
-                    onClick = {},
+                    onClick = {
+                        onCtaClicked(left.button.url)
+                    },
                 ) {
                     Text(text = left.button.label)
                 }

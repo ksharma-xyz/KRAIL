@@ -31,6 +31,7 @@ fun DiscoverScreen(
     onBackClick: () -> Unit,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -48,6 +49,7 @@ fun DiscoverScreen(
                             discoverModel = cardModel,
                             onAppSocialLinkClicked = onAppSocialLinkClicked,
                             onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                            onCtaClicked = onCtaClicked,
                         )
                     }
                 )

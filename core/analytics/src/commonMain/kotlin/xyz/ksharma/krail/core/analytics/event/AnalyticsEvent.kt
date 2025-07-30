@@ -252,16 +252,16 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     )
 
     data class SocialConnectionLinkClickEvent(
-        val socialPlatform: SocialPlatform,
+        val socialPlatformType: SocialPlatformType,
         val source: SocialConnectionSource,
     ) : AnalyticsEvent(
         name = "social_connection_link_click",
         properties = mapOf(
-            "socialPlatform" to socialPlatform.platform,
+            "socialPlatform" to socialPlatformType.platformName,
             "source" to source.source,
         ),
     ) {
-        enum class SocialPlatform(val platform: String) {
+        enum class SocialPlatformType(val platformName: String) {
             LINKEDIN("linkedin"),
             REDDIT("reddit"),
             INSTAGRAM("instagram"),
@@ -303,17 +303,49 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     // region Discover
 
-    data class FeedbackClick(val action: FeedbackAction) : AnalyticsEvent(
-        name = "discover_feedback_provided",
-        properties = mapOf(
-            "action" to action.actionName,
-        )
+    data class DiscoverCardClick(
+        val location: String = "SYD",
+        val source: Source,
+        val cardId: String,
+        val cardType: CardType,
+        val partnerSocialLink: PartnerSocialLink? = null,
+    ) : AnalyticsEvent(
+        name = "discover_click",
+        properties = mutableMapOf(
+            "location" to location,
+            "source" to source.actionName,
+            "cardId" to cardId,
+            "cardType" to cardType,
+        ).apply {
+            partnerSocialLink?.let { socialLink ->
+                put("partnerSocialPlatformName", socialLink.type.platformName)
+                put("partnerSocialPlatformUrl", socialLink.url)
+            }
+        }
     ) {
-        enum class FeedbackAction(val actionName: String) {
-            POSITIVE_THUMB("positive"),
-            NEGATIVE_THUMB("negative"),
-            SHARE_FEEDBACK("share_feedback"),
-            WRITE_REVIEW("write_review"),
+        data class PartnerSocialLink(
+            val type: SocialConnectionLinkClickEvent.SocialPlatformType,
+            val url: String,
+        )
+
+        enum class CardType(val type: String) {
+            KRAIL("krail"),
+            TRAVEL("travel"),
+            EVENTS("events"),
+            FOOD("food"),
+            SPORTS("sports"),
+            KIDS("kids"),
+            UNKNOWN("unknown"),
+        }
+
+        enum class Source(val actionName: String) {
+            FEEDBACK_POSITIVE_THUMB("feedback_positive"),
+            FEEDBACK_NEGATIVE_THUMB("feedback_negative"),
+            FEEDBACK_SHARE_FEEDBACK("share_feedback"),
+            FEEDBACK_WRITE_REVIEW("write_review"),
+            CTA_CLICK("cta_click"),
+            SHARE_CLICK("share"),
+            PARTNER_SOCIAL_LINK("partner_social_link"),
         }
     }
 

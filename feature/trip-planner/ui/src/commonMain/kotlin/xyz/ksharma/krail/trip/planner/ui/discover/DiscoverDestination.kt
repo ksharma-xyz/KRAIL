@@ -24,10 +24,49 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                     event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType)
                 )
             },
-            onPartnerSocialLinkClicked = { partnerSocialLink ->
+            onPartnerSocialLinkClicked = { partnerSocialLink, cardId, cardType ->
                 viewModel.onEvent(
                     event = DiscoverEvent.PartnerSocialLinkClicked(
                         partnerSocialLink = partnerSocialLink,
+                        cardId = cardId,
+                        cardType = cardType,
+                    )
+                )
+            },
+            onCtaClicked = { url, cardId, cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.CtaButtonClicked(
+                        url = url,
+                        cardId = cardId,
+                        cardType = cardType,
+                    )
+                )
+            },
+            onFeedbackCta = { isPositive, cardId, cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.FeedbackCtaButtonClicked(
+                        isPositive = isPositive,
+                        cardId = cardId,
+                        cardType = cardType,
+                    )
+                )
+            },
+            onFeedbackThumb = { isPositive, cardId, cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.FeedbackThumbButtonClicked(
+                        isPositive = isPositive,
+                        cardId = cardId,
+                        cardType = cardType,
+                    )
+                )
+            },
+            onShareClick = { shareUrl, cardId, cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.ShareButtonClicked(
+                        cardTitle = shareUrl,
+                        cardId = cardId,
+                        cardType = cardType,
+                        url = shareUrl,
                     )
                 )
             }

@@ -66,6 +66,9 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
     override val timeZone: String
         get() = java.util.TimeZone.getDefault().id
 
+    override val appStoreUrl: String
+        get() = "https://play.google.com/store/apps/details?id=xyz.ksharma.krail"
+
     override fun toString() =
         "AndroidAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
             "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +

@@ -13,8 +13,8 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 
 class IosPlatformOps : PlatformOps {
-    override fun sharePlainText(text: String) {
-        handleShareClick(text)
+    override fun sharePlainText(text: String, title: String) {
+        handleShareClick(text = text, title = title)
     }
 
     override fun openUrl(url: String) {
@@ -37,7 +37,8 @@ class IosPlatformOps : PlatformOps {
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    private fun handleShareClick(text: String) {
+    private fun handleShareClick(text: String, title: String) {
+        // TODO - test title or list etc.
         val activityItems = listOf(text)
         val activityViewController = UIActivityViewController(activityItems, null)
 

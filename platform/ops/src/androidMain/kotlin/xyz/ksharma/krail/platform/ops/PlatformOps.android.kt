@@ -7,8 +7,9 @@ import xyz.ksharma.krail.core.log.log
 
 class AndroidPlatformOps(private val context: Context) : PlatformOps {
 
-    override fun sharePlainText(text: String) {
-        handleShareClick(context = context, text = text, mimeType = "text/plain")
+    // "Tell your mates about KRAIL"
+    override fun sharePlainText(text: String, title: String) {
+        handleShareClick(context = context, text = text, mimeType = "text/plain", title = title)
     }
 
     override fun openUrl(url: String) {
@@ -24,7 +25,7 @@ class AndroidPlatformOps(private val context: Context) : PlatformOps {
 }
 
 // https://developer.android.com/training/sharing/send#why-to-use-system-sharesheet
-private fun handleShareClick(context: Context, text: String, mimeType: String) {
+private fun handleShareClick(context: Context, text: String, mimeType: String, title: String) {
     log("handleShareClick: $text")
 
     // Create and start the share intent
@@ -34,7 +35,7 @@ private fun handleShareClick(context: Context, text: String, mimeType: String) {
         type = mimeType
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    val shareIntent = Intent.createChooser(intent, "Tell your mates about KRAIL")
+    val shareIntent = Intent.createChooser(intent, title)
     shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context.startActivity(shareIntent)
 }

@@ -38,7 +38,7 @@ class SettingsViewModel(
                 platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
                     event = SocialConnectionLinkClickEvent(
-                        socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                        socialPlatformType = event.krailSocialType.toAnalyticsEventPlatform(),
                         source = SocialConnectionLinkClickEvent.SocialConnectionSource.SETTINGS,
                     ),
                 )
@@ -52,7 +52,7 @@ class SettingsViewModel(
     }
 
     fun onReferFriendClick() {
-        platformOps.sharePlainText(getReferText())
+        platformOps.sharePlainText(text = getReferText(), title = "Tell your mates about KRAIL App")
         analytics.track(
             AnalyticsEvent.ReferFriend(
                 entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SETTINGS,

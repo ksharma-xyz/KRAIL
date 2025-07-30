@@ -53,8 +53,15 @@ fun DiscoverCard(
     discoverModel: DiscoverState.DiscoverUiModel,
     modifier: Modifier = Modifier,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit = {},
-    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit = {},
-    onClick: (DiscoverState.DiscoverUiModel) -> Unit = {},
+    onPartnerSocialLinkClicked: (
+        Button.Social.PartnerSocial.PartnerSocialLink,
+        String,
+        DiscoverCardType
+    ) -> Unit = { _, _, _ -> },
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
+    onFeedbackCta: (Boolean) -> Unit = {},
+    onFeedbackThumb: (Boolean) -> Unit = {},
+    onShareClick: (String) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -107,7 +114,17 @@ fun DiscoverCard(
             DiscoverCardButtonRow(
                 buttonsList = buttonsList,
                 onAppSocialLinkClicked = onAppSocialLinkClicked,
-                onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                onPartnerSocialLinkClicked = { partnerSocialLink ->
+                    onPartnerSocialLinkClicked(
+                        partnerSocialLink, discoverModel.cardId, discoverModel.type
+                    )
+                },
+                onCtaClicked = { url ->
+                    onCtaClicked(url, discoverModel.cardId, discoverModel.type)
+                },
+                onFeedbackCta = onFeedbackCta,
+                onFeedbackThumb = onFeedbackThumb,
+                onShareClick = onShareClick,
             )
         }
     }
@@ -118,6 +135,10 @@ private fun DiscoverCardButtonRow(
     buttonsList: List<Button>,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
+    onCtaClicked: (String) -> Unit,
+    onFeedbackThumb: (Boolean) -> Unit,
+    onFeedbackCta: (Boolean) -> Unit,
+    onShareClick: (String) -> Unit,
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
@@ -134,7 +155,9 @@ private fun DiscoverCardButtonRow(
             is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
                 Button(
                     dimensions = ButtonDefaults.mediumButtonSize(),
-                    onClick = {},
+                    onClick = {
+                        onCtaClicked(left.button.url)
+                    },
                 ) {
                     Text(text = left.button.label)
                 }
@@ -165,12 +188,18 @@ private fun DiscoverCardButtonRow(
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> {
                 FeedbackButtonsRow(
-                    onNegative = {
-
+                    onNegativeThumb = {
+                        onFeedbackThumb(false)
                     },
-                    onPositive = {
-
-                    }
+                    onPositiveThumb = {
+                        onFeedbackThumb(true)
+                    },
+                    onNegativeCta = {
+                        onFeedbackCta(false)
+                    },
+                    onPositiveCta = {
+                        onFeedbackCta(true)
+                    },
                 )
             }
 
@@ -183,9 +212,7 @@ private fun DiscoverCardButtonRow(
         when (val rightButton = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
                 RoundIconButton(
-                    onClick = {
-                        rightButton.button.shareUrl
-                    },
+                    onClick = { onShareClick(rightButton.button.shareUrl) },
                     color = Color.Transparent,
                 ) {
                     Image(
@@ -263,6 +290,7 @@ private class DiscoverCardProvider : PreviewParameterProvider<DiscoverState.Disc
 
 val previewDiscoverCardList = listOf(
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_1",
         title = "Cta only card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://images.unsplash.com/photo-1749751234397-41ee8a7887c2"),
@@ -275,6 +303,7 @@ val previewDiscoverCardList = listOf(
         ),
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_2",
         title = "No Buttons Card Title",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://images.unsplash.com/photo-1741851373856-67a519f0c014"),
@@ -282,6 +311,7 @@ val previewDiscoverCardList = listOf(
         buttons = persistentListOf(),
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_3",
         title = "App Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
@@ -289,6 +319,7 @@ val previewDiscoverCardList = listOf(
         buttons = persistentListOf(Button.Social.AppSocial)
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_4",
         title = "Partner Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
@@ -306,6 +337,7 @@ val previewDiscoverCardList = listOf(
         )
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_4",
         title = "Share Only Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
@@ -317,6 +349,7 @@ val previewDiscoverCardList = listOf(
         )
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_5",
         title = "Cta + Share Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1730005745671-dbbfddfe387e"),
@@ -332,6 +365,7 @@ val previewDiscoverCardList = listOf(
         )
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_6",
         title = "Feedback Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752832756659-4dd7c40f5ae7"),
@@ -344,6 +378,7 @@ val previewDiscoverCardList = listOf(
         )
     ),
     DiscoverState.DiscoverUiModel(
+        cardId = "cta_card_7",
         title = "Credits Disclaimer Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://images.unsplash.com/photo-1735746693939-586a9d7558e1"),

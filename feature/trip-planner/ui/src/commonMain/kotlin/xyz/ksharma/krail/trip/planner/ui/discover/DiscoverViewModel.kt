@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.*
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
+import xyz.ksharma.krail.core.appinfo.AppInfo
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
@@ -23,12 +25,14 @@ import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
+import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 
 class DiscoverViewModel(
     private val discoverSydneyManager: DiscoverSydneyManager,
     private val ioDispatcher: CoroutineDispatcher,
     private val analytics: Analytics,
     private val platformOps: PlatformOps,
+    private val appInfoProvider: AppInfoProvider,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<DiscoverState> = MutableStateFlow(DiscoverState())
@@ -43,7 +47,7 @@ class DiscoverViewModel(
                 platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
                     event = SocialConnectionLinkClickEvent(
-                        socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                        socialPlatformType = event.krailSocialType.toAnalyticsEventPlatform(),
                         source = SocialConnectionSource.DISCOVER_CARD,
                     ),
                 )
@@ -52,34 +56,76 @@ class DiscoverViewModel(
             is DiscoverEvent.PartnerSocialLinkClicked -> {
                 platformOps.openUrl(url = event.partnerSocialLink.url)
                 analytics.track(
-                    event = SocialConnectionLinkClickEvent(
-                        socialPlatform = event.partnerSocialLink.type.toAnalyticsEventPlatform(),
-                        source = SocialConnectionSource.DISCOVER_CARD,
+                    event = DiscoverCardClick(
+                        source = DiscoverCardClick.Source.PARTNER_SOCIAL_LINK,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
+                        partnerSocialLink = DiscoverCardClick.PartnerSocialLink(
+                            type = event.partnerSocialLink.type.toAnalyticsSocialType(),
+                            url = event.partnerSocialLink.url,
+                        )
                     ),
                 )
             }
 
-            is DiscoverEvent.CtaButtonClicked -> {}
+            is DiscoverEvent.CtaButtonClicked -> {
+                platformOps.openUrl(url = event.url)
+                analytics.track(
+                    event = DiscoverCardClick(
+                        source = DiscoverCardClick.Source.CTA_CLICK,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
+                    ),
+                )
+            }
 
             is DiscoverEvent.FeedbackThumbButtonClicked -> {
                 // save to db, feedback button id clicked. so that we don't show the same
                 // feedback to suer again.
                 discoverSydneyManager.feedbackThumbButtonClicked(
-                    feedbackId = event.feedbackId,
+                    feedbackId = event.cardId,
                     isPositive = event.isPositive,
                 )
-                log("Feedback thumb button clicked: feedbackId=${event.feedbackId}, isPositive=${event.isPositive}")
                 analytics.track(
-                    event = FeedbackClick(
-                        action = if (event.isPositive) FeedbackClick.FeedbackAction.POSITIVE_THUMB
-                        else FeedbackClick.FeedbackAction.NEGATIVE_THUMB,
+                    event = DiscoverCardClick(
+                        source = if (event.isPositive)
+                            DiscoverCardClick.Source.FEEDBACK_POSITIVE_THUMB
+                        else DiscoverCardClick.Source.FEEDBACK_NEGATIVE_THUMB,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
                     ),
                 )
             }
 
-            is DiscoverEvent.ShareButtonClicked -> {}
+            is DiscoverEvent.ShareButtonClicked -> {
+                platformOps.sharePlainText(event.url, title = event.cardTitle)
+                analytics.track(
+                    event = DiscoverCardClick(
+                        source = DiscoverCardClick.Source.SHARE_CLICK,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
+                    ),
+                )
+            }
 
-            is DiscoverEvent.FeedbackCtaButtonClicked -> {}
+            is DiscoverEvent.FeedbackCtaButtonClicked -> {
+                viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
+                    val url = if (event.isPositive) {
+                        appInfoProvider.getAppInfo().appStoreUrl
+                    } else {
+                        "mailto:hey@krail.app"
+                    }
+                    platformOps.openUrl(url = url)
+                    analytics.track(
+                        event = DiscoverCardClick(
+                            source = if (event.isPositive) DiscoverCardClick.Source.FEEDBACK_WRITE_REVIEW else
+                                DiscoverCardClick.Source.FEEDBACK_SHARE_FEEDBACK,
+                            cardType = event.cardType.toAnalyticsCardType(),
+                            cardId = event.cardId,
+                        ),
+                    )
+                }
+            }
         }
     }
 
@@ -88,7 +134,7 @@ class DiscoverViewModel(
             val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
             log("Fetched Discover Sydney data: ${data.size}")
             data.forEach {
-                log("\tDiscover Card: ${it.type}")
+                log("\tDiscover Card: ${it.type}, ${it.title}")
             }
             updateUiState {
                 copy(
@@ -107,6 +153,7 @@ class DiscoverViewModel(
                 type = model.type,
                 disclaimer = model.disclaimer,
                 buttons = model.buttons?.toPersistentList(),
+                cardId = model.cardId,
             )
         }
     }

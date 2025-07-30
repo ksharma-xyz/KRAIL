@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.discover.state.Button
+import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.social.state.KrailSocialType
@@ -29,7 +30,11 @@ fun DiscoverScreen(
     state: DiscoverState,
     onBackClick: () -> Unit,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
-    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onFeedbackCta: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onFeedbackThumb: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -47,6 +52,28 @@ fun DiscoverScreen(
                             discoverModel = cardModel,
                             onAppSocialLinkClicked = onAppSocialLinkClicked,
                             onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                            onCtaClicked = onCtaClicked,
+                            onFeedbackThumb = { isPositive ->
+                                onFeedbackThumb(
+                                    isPositive,
+                                    cardModel.cardId,
+                                    cardModel.type,
+                                )
+                            },
+                            onFeedbackCta = { isPositive ->
+                                onFeedbackCta(
+                                    isPositive,
+                                    cardModel.cardId,
+                                    cardModel.type,
+                                )
+                            },
+                            onShareClick = { shareUrl ->
+                                onShareClick(
+                                    shareUrl,
+                                    cardModel.cardId,
+                                    cardModel.type,
+                                )
+                            }
                         )
                     }
                 )

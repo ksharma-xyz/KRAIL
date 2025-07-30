@@ -23,6 +23,10 @@ import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
 import app.krail.taj.resources.ic_ios_share
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -47,11 +51,6 @@ import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import app.krail.taj.resources.Res as TajRes
-import coil3.request.CachePolicy
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 
 @Composable
 fun DiscoverCard(
@@ -85,7 +84,7 @@ fun DiscoverCard(
                     .data(discoverModel.imageList.firstOrNull())
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCachePolicy(CachePolicy.DISABLED)
-                    .networkCachePolicy(CachePolicy.DISABLED)
+                    .networkCachePolicy(CachePolicy.READ_ONLY)
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,

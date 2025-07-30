@@ -47,6 +47,11 @@ import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import app.krail.taj.resources.Res as TajRes
+import coil3.request.CachePolicy
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 
 @Composable
 fun DiscoverCard(
@@ -72,9 +77,16 @@ fun DiscoverCard(
         BoxWithConstraints {
             val maxCardWidth = maxWidth
             val imageHeight = discoverCardHeight * if (isLargeFontScale()) 0.5f else 0.6f
+            val context = LocalPlatformContext.current
 
             AsyncImage(
-                model = discoverModel.imageList.firstOrNull(),
+                model = ImageRequest.Builder(context)
+                    .crossfade(true)
+                    .data(discoverModel.imageList.firstOrNull())
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.DISABLED)
+                    .networkCachePolicy(CachePolicy.DISABLED)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

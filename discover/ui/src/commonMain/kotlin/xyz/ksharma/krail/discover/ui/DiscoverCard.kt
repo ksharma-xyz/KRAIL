@@ -58,7 +58,9 @@ fun DiscoverCard(
         String,
         DiscoverCardType
     ) -> Unit = { _, _, _ -> },
-    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> }
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
+    onFeedbackCta: (Boolean) -> Unit = {},
+    onFeedbackThumb: (Boolean) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -118,7 +120,9 @@ fun DiscoverCard(
                 },
                 onCtaClicked = { url ->
                     onCtaClicked(url, discoverModel.cardId, discoverModel.type)
-                }
+                },
+                onFeedbackCta = onFeedbackCta,
+                onFeedbackThumb = onFeedbackThumb
             )
         }
     }
@@ -130,6 +134,8 @@ private fun DiscoverCardButtonRow(
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
     onCtaClicked: (String) -> Unit,
+    onFeedbackThumb: (Boolean) -> Unit,
+    onFeedbackCta: (Boolean) -> Unit,
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
@@ -179,12 +185,18 @@ private fun DiscoverCardButtonRow(
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> {
                 FeedbackButtonsRow(
-                    onNegative = {
-
+                    onNegativeThumb = {
+                        onFeedbackThumb(false)
                     },
-                    onPositive = {
-
-                    }
+                    onPositiveThumb = {
+                        onFeedbackThumb(true)
+                    },
+                    onNegativeCta = {
+                        onFeedbackCta(false)
+                    },
+                    onPositiveCta = {
+                        onFeedbackCta(true)
+                    },
                 )
             }
 

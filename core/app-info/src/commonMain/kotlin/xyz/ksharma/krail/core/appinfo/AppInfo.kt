@@ -72,6 +72,8 @@ interface AppInfo {
      * E.g. "Australia/Sydney"
      */
     val timeZone: String
+
+    val appStoreUrl: String
 }
 
 enum class DevicePlatformType {

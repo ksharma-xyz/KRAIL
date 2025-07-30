@@ -32,8 +32,10 @@ private enum class FeedbackAnimState {
 @Composable
 fun FeedbackButtonsRow(
     modifier: Modifier = Modifier,
-    onPositive: () -> Unit,
-    onNegative: () -> Unit,
+    onPositiveThumb: () -> Unit,
+    onNegativeThumb: () -> Unit,
+    onPositiveCta: () -> Unit,
+    onNegativeCta: () -> Unit,
 ) {
     var selected by remember { mutableStateOf<FeedbackSelectedState?>(null) }
     var animState by remember { mutableStateOf(FeedbackAnimState.Idle) }
@@ -82,7 +84,7 @@ fun FeedbackButtonsRow(
                         }
                         .klickable {
                             if (animState == FeedbackAnimState.Idle) {
-                                onPositive()
+                                onPositiveThumb()
                                 startAnimation(FeedbackSelectedState.Positive)
                             }
                         }
@@ -97,7 +99,7 @@ fun FeedbackButtonsRow(
                         }
                         .klickable {
                             if (animState == FeedbackAnimState.Idle) {
-                                onNegative()
+                                onNegativeThumb()
                                 startAnimation(FeedbackSelectedState.Negative)
                             }
                         }
@@ -132,7 +134,13 @@ fun FeedbackButtonsRow(
                 }
                 Button(
                     dimensions = ButtonDefaults.mediumButtonSize(),
-                    onClick = {},
+                    onClick = {
+                        when (selected) {
+                            FeedbackSelectedState.Positive -> onPositiveCta()
+                            FeedbackSelectedState.Negative -> onNegativeCta()
+                            null -> Unit
+                        }
+                    },
                     modifier = Modifier.scale(buttonScale.value)
                 ) {
                     Text(text)
@@ -164,9 +172,11 @@ enum class FeedbackSelectedState { Positive, Negative }
 private fun FeedbackButtonsRowPreview() {
     PreviewContent {
         FeedbackButtonsRow(
-            onPositive = {},
-            onNegative = {},
+            onPositiveThumb = {},
+            onNegativeThumb = {},
             modifier = Modifier.systemBarsPadding(),
+            onPositiveCta = {},
+            onNegativeCta = {},
         )
     }
 }

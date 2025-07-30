@@ -79,6 +79,7 @@ val viewModelsModule = module {
             ioDispatcher = get(named(IODispatcher)),
             analytics = get(),
             platformOps = get(),
+            appInfoProvider = get(),
         )
     }
 

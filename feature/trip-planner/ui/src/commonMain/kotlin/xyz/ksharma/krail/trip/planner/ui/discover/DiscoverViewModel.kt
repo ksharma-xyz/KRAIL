@@ -15,6 +15,8 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
+import xyz.ksharma.krail.core.appinfo.AppInfo
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
@@ -30,6 +32,7 @@ class DiscoverViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val analytics: Analytics,
     private val platformOps: PlatformOps,
+    private val appInfoProvider: AppInfoProvider,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<DiscoverState> = MutableStateFlow(DiscoverState())
@@ -105,7 +108,24 @@ class DiscoverViewModel(
                 )
             }
 
-            is DiscoverEvent.FeedbackCtaButtonClicked -> {}
+            is DiscoverEvent.FeedbackCtaButtonClicked -> {
+                viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
+                    val url = if (event.isPositive) {
+                        appInfoProvider.getAppInfo().appStoreUrl
+                    } else {
+                        "mailto:hey@krail.app"
+                    }
+                    platformOps.openUrl(url = url)
+                    analytics.track(
+                        event = DiscoverCardClick(
+                            source = if (event.isPositive) DiscoverCardClick.Source.FEEDBACK_WRITE_REVIEW else
+                                DiscoverCardClick.Source.FEEDBACK_SHARE_FEEDBACK,
+                            cardType = event.cardType.toAnalyticsCardType(),
+                            cardId = event.cardId,
+                        ),
+                    )
+                }
+            }
         }
     }
 

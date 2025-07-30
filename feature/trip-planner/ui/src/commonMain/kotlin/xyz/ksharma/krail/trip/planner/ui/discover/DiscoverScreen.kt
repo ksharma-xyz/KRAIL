@@ -32,6 +32,8 @@ fun DiscoverScreen(
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onFeedbackCta: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onFeedbackThumb: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -50,6 +52,20 @@ fun DiscoverScreen(
                             onAppSocialLinkClicked = onAppSocialLinkClicked,
                             onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
                             onCtaClicked = onCtaClicked,
+                            onFeedbackThumb = { isPositive ->
+                                onFeedbackThumb(
+                                    isPositive,
+                                    cardModel.cardId,
+                                    cardModel.type,
+                                )
+                            },
+                            onFeedbackCta = { isPositive ->
+                                onFeedbackCta(
+                                    isPositive,
+                                    cardModel.cardId,
+                                    cardModel.type,
+                                )
+                            },
                         )
                     }
                 )

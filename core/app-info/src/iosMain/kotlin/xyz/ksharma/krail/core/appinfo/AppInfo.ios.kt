@@ -66,6 +66,9 @@ class IOSAppInfo : AppInfo {
     override val timeZone: String
         get() = NSTimeZone.localTimeZone.name
 
+    override val appStoreUrl: String
+        get() = "https://apps.apple.com/us/app/krail-app/id6738934832"
+
     override fun toString() =
         "iOSAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
             "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +

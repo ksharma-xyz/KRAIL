@@ -106,6 +106,8 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.lifecycle.runtime.ktx)
                 api(libs.di.koinAndroid)
+
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
@@ -148,6 +150,15 @@ kotlin {
             implementation(libs.firebase.gitLiveCrashlytics)
             implementation(libs.firebase.gitLiveAnalytics)
             implementation(libs.firebase.gitLivePerformance)
+
+            implementation(libs.coil3.compose)
+            implementation(libs.coil3.networkKtor)
+        }
+
+        iosMain {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
         }
     }
 }

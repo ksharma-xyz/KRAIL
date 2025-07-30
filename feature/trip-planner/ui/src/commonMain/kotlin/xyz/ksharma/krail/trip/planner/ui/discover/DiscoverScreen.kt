@@ -34,6 +34,7 @@ fun DiscoverScreen(
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
     onFeedbackCta: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
     onFeedbackThumb: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -66,6 +67,13 @@ fun DiscoverScreen(
                                     cardModel.type,
                                 )
                             },
+                            onShareClick = { shareUrl ->
+                                onShareClick(
+                                    shareUrl,
+                                    cardModel.cardId,
+                                    cardModel.type,
+                                )
+                            }
                         )
                     }
                 )

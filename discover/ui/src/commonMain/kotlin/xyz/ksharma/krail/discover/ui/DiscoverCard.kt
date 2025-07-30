@@ -61,6 +61,7 @@ fun DiscoverCard(
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
     onFeedbackCta: (Boolean) -> Unit = {},
     onFeedbackThumb: (Boolean) -> Unit = {},
+    onShareClick: (String) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -122,7 +123,8 @@ fun DiscoverCard(
                     onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                 },
                 onFeedbackCta = onFeedbackCta,
-                onFeedbackThumb = onFeedbackThumb
+                onFeedbackThumb = onFeedbackThumb,
+                onShareClick = onShareClick,
             )
         }
     }
@@ -136,6 +138,7 @@ private fun DiscoverCardButtonRow(
     onCtaClicked: (String) -> Unit,
     onFeedbackThumb: (Boolean) -> Unit,
     onFeedbackCta: (Boolean) -> Unit,
+    onShareClick: (String) -> Unit,
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
@@ -209,9 +212,7 @@ private fun DiscoverCardButtonRow(
         when (val rightButton = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
                 RoundIconButton(
-                    onClick = {
-                        rightButton.button.shareUrl
-                    },
+                    onClick = { onShareClick(rightButton.button.shareUrl) },
                     color = Color.Transparent,
                 ) {
                     Image(
@@ -318,7 +319,7 @@ val previewDiscoverCardList = listOf(
         buttons = persistentListOf(Button.Social.AppSocial)
     ),
     DiscoverState.DiscoverUiModel(
-        cardId = "cta_card_3",
+        cardId = "cta_card_4",
         title = "Partner Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),

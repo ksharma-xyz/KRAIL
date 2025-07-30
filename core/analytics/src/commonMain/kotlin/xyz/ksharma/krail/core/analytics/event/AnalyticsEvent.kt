@@ -319,7 +319,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ).apply {
             partnerSocialLink?.let { socialLink ->
                 put("partnerSocialPlatformName", socialLink.type.platformName)
-                put("partnerSocialPlatformName", socialLink.url)
+                put("partnerSocialPlatformUrl", socialLink.url)
             }
         }
     ) {

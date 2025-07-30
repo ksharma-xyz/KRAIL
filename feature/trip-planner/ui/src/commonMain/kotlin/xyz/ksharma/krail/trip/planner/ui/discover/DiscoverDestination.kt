@@ -59,6 +59,16 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                         cardType = cardType,
                     )
                 )
+            },
+            onShareClick = { shareUrl, cardId, cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.ShareButtonClicked(
+                        cardTitle = shareUrl,
+                        cardId = cardId,
+                        cardType = cardType,
+                        url = shareUrl,
+                    )
+                )
             }
         )
     }

@@ -77,6 +77,8 @@ val viewModelsModule = module {
         DiscoverViewModel(
             discoverSydneyManager = get(),
             ioDispatcher = get(named(IODispatcher)),
+            analytics = get(),
+            platformOps = get(),
         )
     }
 

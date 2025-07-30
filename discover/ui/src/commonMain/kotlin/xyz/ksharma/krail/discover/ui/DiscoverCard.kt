@@ -52,6 +52,8 @@ import app.krail.taj.resources.Res as TajRes
 fun DiscoverCard(
     discoverModel: DiscoverState.DiscoverUiModel,
     modifier: Modifier = Modifier,
+    onAppSocialLinkClicked: (KrailSocialType) -> Unit = {},
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit = {},
     onClick: (DiscoverState.DiscoverUiModel) -> Unit = {},
 ) {
     Column(
@@ -102,13 +104,21 @@ fun DiscoverCard(
         Spacer(modifier = Modifier.weight(1f))
 
         discoverModel.buttons?.let { buttonsList ->
-            DiscoverCardButtonRow(buttonsList)
+            DiscoverCardButtonRow(
+                buttonsList = buttonsList,
+                onAppSocialLinkClicked = onAppSocialLinkClicked,
+                onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+            )
         }
     }
 }
 
 @Composable
-private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
+private fun DiscoverCardButtonRow(
+    buttonsList: List<Button>,
+    onAppSocialLinkClicked: (KrailSocialType) -> Unit,
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
+) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
         logError("Invalid button combination or no buttons provided: ${buttonsList.map { it::class.simpleName }}")
@@ -134,16 +144,21 @@ private fun DiscoverCardButtonRow(buttonsList: List<Button>) {
                 when (val socialButton = left.button) {
                     Button.Social.AppSocial -> {
                         SocialConnectionRow(
-                            onClick = {},
+                            onClick = { krailSocialType ->
+                                onAppSocialLinkClicked(krailSocialType)
+                            },
                             socialLinks = KrailSocialType.entries,
                         )
                     }
 
                     is Button.Social.PartnerSocial -> {
                         SocialConnectionRow(
-                            onClick = {},
+                            onClick = { partnerSocialType ->
+                                onPartnerSocialLinkClicked(partnerSocialType)
+                            },
                             socialPartnerName = socialButton.socialPartnerName,
-                            socialLinks = socialButton.links.map { it.type })
+                            partnerSocialLinks = socialButton.links,
+                        )
                     }
                 }
             }
@@ -282,7 +297,7 @@ val previewDiscoverCardList = listOf(
             Button.Social.PartnerSocial(
                 socialPartnerName = "XYZ Place",
                 links = persistentListOf(
-                    Button.Social.PartnerSocial.PartnerSocialType(
+                    Button.Social.PartnerSocial.PartnerSocialLink(
                         type = SocialType.Facebook,
                         url = "https://example.com"
                     ),

@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.stateIn
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
-import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 import xyz.ksharma.krail.platform.ops.PlatformOps
+import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsState
@@ -36,8 +37,9 @@ class SettingsViewModel(
             is SettingsEvent.SocialLinkClick -> {
                 platformOps.openUrl(url = event.krailSocialType.url)
                 analytics.track(
-                    event = AnalyticsEvent.SocialConnectionLinkClickEvent(
+                    event = SocialConnectionLinkClickEvent(
                         socialPlatform = event.krailSocialType.toAnalyticsEventPlatform(),
+                        source = SocialConnectionLinkClickEvent.SocialConnectionSource.SETTINGS,
                     ),
                 )
             }

@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
 
 internal fun NavGraphBuilder.discoverDestination(navController: NavHostController) {
@@ -17,6 +18,18 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
             state = discoverState,
             onBackClick = {
                 navController.navigateUp()
+            },
+            onAppSocialLinkClicked = { krailSocialType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType)
+                )
+            },
+            onPartnerSocialLinkClicked = { partnerSocialLink ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.PartnerSocialLinkClicked(
+                        partnerSocialLink = partnerSocialLink,
+                    )
+                )
             }
         )
     }

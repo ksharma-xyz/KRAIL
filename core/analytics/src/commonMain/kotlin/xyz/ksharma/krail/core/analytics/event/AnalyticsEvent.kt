@@ -253,10 +253,12 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     data class SocialConnectionLinkClickEvent(
         val socialPlatform: SocialPlatform,
+        val source: SocialConnectionSource,
     ) : AnalyticsEvent(
         name = "social_connection_link_click",
         properties = mapOf(
             "socialPlatform" to socialPlatform.platform,
+            "source" to source.source,
         ),
     ) {
         enum class SocialPlatform(val platform: String) {
@@ -264,6 +266,11 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             REDDIT("reddit"),
             INSTAGRAM("instagram"),
             FACEBOOK("facebook"),
+        }
+
+        enum class SocialConnectionSource(val source: String) {
+            SETTINGS("settings"),
+            DISCOVER_CARD("discover_card"),
         }
     }
 

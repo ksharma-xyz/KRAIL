@@ -300,4 +300,22 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     )
     // endregion
+
+    // region Discover
+
+    data class FeedbackClick(val action: FeedbackAction) : AnalyticsEvent(
+        name = "discover_feedback_provided",
+        properties = mapOf(
+            "action" to action.actionName,
+        )
+    ) {
+        enum class FeedbackAction(val actionName: String) {
+            POSITIVE_THUMB("positive"),
+            NEGATIVE_THUMB("negative"),
+            SHARE_FEEDBACK("share_feedback"),
+            WRITE_REVIEW("write_review"),
+        }
+    }
+
+    // endregion
 }

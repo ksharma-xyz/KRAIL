@@ -33,6 +33,12 @@ internal class RealDiscoverSydneyManager(
         return models
     }
 
+    override fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean) {
+        // save in local db, so that we don't show the same feedback to user again.
+        log("Feedback thumb button clicked: feedbackId=$feedbackId, isPositive=$isPositive")
+        // todo implement feedback saving logic
+    }
+
     private suspend fun FlagValue.toDiscoverCards(): List<DiscoverModel> {
         val flagValue = this
         log("Fetching Discover Sydney data from flag: ${FlagKeys.DISCOVER_SYDNEY.key}: $flagValue")

@@ -9,4 +9,5 @@ interface DiscoverSydneyManager {
      */
     suspend fun fetchDiscoverData(): List<DiscoverModel>
 
+    fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean)
 }

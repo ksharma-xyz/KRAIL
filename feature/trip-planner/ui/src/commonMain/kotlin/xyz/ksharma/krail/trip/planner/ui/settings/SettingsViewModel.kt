@@ -52,7 +52,7 @@ class SettingsViewModel(
     }
 
     fun onReferFriendClick() {
-        platformOps.sharePlainText(getReferText())
+        platformOps.sharePlainText(text = getReferText(), title = "Tell your mates about KRAIL App")
         analytics.track(
             AnalyticsEvent.ReferFriend(
                 entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SETTINGS,

@@ -23,6 +23,7 @@ import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
+import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 
 class DiscoverViewModel(
     private val discoverSydneyManager: DiscoverSydneyManager,
@@ -64,7 +65,16 @@ class DiscoverViewModel(
                 )
             }
 
-            is DiscoverEvent.CtaButtonClicked -> {}
+            is DiscoverEvent.CtaButtonClicked -> {
+                platformOps.openUrl(url = event.url)
+                analytics.track(
+                    event = DiscoverCardClick(
+                        source = DiscoverCardClick.Source.CTA_CLICK,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
+                    ),
+                )
+            }
 
             is DiscoverEvent.FeedbackThumbButtonClicked -> {
                 // save to db, feedback button id clicked. so that we don't show the same
@@ -84,7 +94,16 @@ class DiscoverViewModel(
                 )
             }
 
-            is DiscoverEvent.ShareButtonClicked -> {}
+            is DiscoverEvent.ShareButtonClicked -> {
+                platformOps.sharePlainText(event.url, title = event.cardTitle)
+                analytics.track(
+                    event = DiscoverCardClick(
+                        source = DiscoverCardClick.Source.SHARE_CLICK,
+                        cardType = event.cardType.toAnalyticsCardType(),
+                        cardId = event.cardId,
+                    ),
+                )
+            }
 
             is DiscoverEvent.FeedbackCtaButtonClicked -> {}
         }

@@ -37,7 +37,10 @@ class IntroViewModel(
     fun onEvent(event: IntroUiEvent) {
         when (event) {
             is IntroUiEvent.ReferFriend -> {
-                platformOps.sharePlainText(getReferText())
+                platformOps.sharePlainText(
+                    text = getReferText(),
+                    title = "Tell your mates about KRAIL App",
+                )
                 analytics.track(
                     AnalyticsEvent.ReferFriend(
                         entryPoint = event.analyticsEntryPoint,

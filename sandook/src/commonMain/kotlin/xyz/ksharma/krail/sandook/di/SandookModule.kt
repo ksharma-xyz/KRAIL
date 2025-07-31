@@ -4,8 +4,10 @@ import org.koin.core.module.Module
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent
+import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 import xyz.ksharma.krail.sandook.KrailSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.RealDiscoverCardSeenPreferences
 import xyz.ksharma.krail.sandook.RealNswParkRideSandook
 import xyz.ksharma.krail.sandook.RealSandook
 import xyz.ksharma.krail.sandook.RealSandookPreferences
@@ -32,6 +34,8 @@ val sandookModule = module {
 
     // Add the missing SandookPreferences dependency
     single<SandookPreferences> { RealSandookPreferences(get()) }
+
+    single<DiscoverCardSeenPreferences> { RealDiscoverCardSeenPreferences(get()) }
 
     // Provide repositories
     single<NswParkRideSandook> {

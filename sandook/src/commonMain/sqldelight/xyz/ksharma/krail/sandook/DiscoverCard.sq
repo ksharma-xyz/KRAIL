@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS DiscoverCardSeen (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cardId TEXT NOT NULL UNIQUE
+);
+
+-- Insert a card as seen
+insertCardSeen:
+INSERT OR REPLACE INTO DiscoverCardSeen(cardId) VALUES (:cardId);
+
+-- Delete a card by cardId
+deleteCardSeenById:
+DELETE FROM DiscoverCardSeen WHERE cardId = :cardId;
+
+-- Delete all seen cards
+deleteAllCardSeen:
+DELETE FROM DiscoverCardSeen;
+
+-- Read all seen card IDs
+selectAllCardSeen:
+SELECT cardId FROM DiscoverCardSeen;

@@ -7,6 +7,7 @@ import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter1
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter2
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter3
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter4
+import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter5
 
 class IosSandookDriverFactory : SandookDriverFactory {
     override fun createDriver(): SqlDriver {
@@ -22,5 +23,6 @@ class IosSandookDriverFactory : SandookDriverFactory {
         AfterVersion(2) { SandookMigrationAfter2.migrate(it) },
         AfterVersion(3) { SandookMigrationAfter3.migrate(it) },
         AfterVersion(4) { SandookMigrationAfter4.migrate(it) },
+        AfterVersion(5) { SandookMigrationAfter5.migrate(it) },
     )
 }

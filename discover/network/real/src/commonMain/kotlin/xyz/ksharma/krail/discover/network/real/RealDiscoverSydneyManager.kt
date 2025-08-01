@@ -11,12 +11,14 @@ import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.FlagValue
-import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
+import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
+import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 
 internal class RealDiscoverSydneyManager(
     private val flag: Flag,
     private val defaultDispatcher: CoroutineDispatcher = DispatchersComponent().defaultDispatcher,
+    private val discoverCardOrderingEngine: DiscoverCardOrderingEngine
 ) : DiscoverSydneyManager {
 
     private var cachedFlagValue: FlagValue? = null
@@ -37,6 +39,11 @@ internal class RealDiscoverSydneyManager(
         // save in local db, so that we don't show the same feedback to user again.
         log("Feedback thumb button clicked: feedbackId=$feedbackId, isPositive=$isPositive")
         // todo implement feedback saving logic
+    }
+
+    override suspend fun markCardAsSeen(cardId: String) {
+        log("Marking card as seen: $cardId")
+        discoverCardOrderingEngine.markCardAsSeen(cardId)
     }
 
     private suspend fun FlagValue.toDiscoverCards(): List<DiscoverModel> {

@@ -43,6 +43,8 @@ class DiscoverViewModel(
             fetchDiscoverCards()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DiscoverState())
 
+    var fetchDiscoverCardsJob: Job? = null
+
     fun onEvent(event: DiscoverEvent) {
         when (event) {
             is DiscoverEvent.AppSocialLinkClicked -> {
@@ -138,6 +140,7 @@ class DiscoverViewModel(
     private fun onResetAllSeenCards() {
         // todo - debug functionality only
         viewModelScope.launch {
+            log("Resetting all seen cards")
             discoverSydneyManager.resetAllSeenCards()
         }
     }
@@ -149,18 +152,22 @@ class DiscoverViewModel(
     }
 
     private fun fetchDiscoverCards() {
-        viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
-            val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
-            log("Fetched Discover Sydney data: ${data.size}")
-            data.forEach {
-                log("\tDiscover Card: ${it.type}, ${it.title}")
+        fetchDiscoverCardsJob?.cancel()
+        fetchDiscoverCardsJob =
+            viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
+                val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
+                log("Fetched Discover Sydney data: ${data.size}")
+/*
+                data.forEach {
+                    log("\tDiscover Card: ${it.type}, ${it.title}")
+                }
+*/
+                updateUiState {
+                    copy(
+                        discoverCardsList = data.toImmutableList(),
+                    )
+                }
             }
-            updateUiState {
-                copy(
-                    discoverCardsList = data.toImmutableList(),
-                )
-            }
-        }
     }
 
     private fun List<DiscoverModel>.toDiscoverUiModelList(): List<DiscoverState.DiscoverUiModel> {

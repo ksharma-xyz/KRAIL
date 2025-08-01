@@ -13,7 +13,12 @@ internal class RealDiscoverCardOrderingEngine(
         log("Sorting ${cards.size} discover cards")
         val seenCardIdList = discoverCardPreferences.selectAllCardSeen()
         val (seen, unseen) = cards.partition { it.cardId in seenCardIdList }
-        log("Seen discover cards: ${seen.size}, Unseen cards: ${unseen.size}")
+        seen.forEach {
+            log("\tSeen card: ${it.cardId}, Title: ${it.title.take(6)}")
+        }
+        unseen.forEach {
+            log("\tUnseen card: ${it.cardId}, Title: ${it.title.take(6)}")
+        }
         return unseen + seen
     }
 

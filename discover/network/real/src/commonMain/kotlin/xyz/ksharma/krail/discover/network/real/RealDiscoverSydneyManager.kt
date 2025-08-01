@@ -21,7 +21,6 @@ internal class RealDiscoverSydneyManager(
     private val discoverCardOrderingEngine: DiscoverCardOrderingEngine
 ) : DiscoverSydneyManager {
 
-
     // Cache the parsed JSON card list to avoid repeated parsing.
     private var cachedFlagValue: FlagValue? = null
     private var cachedParsedCards: List<DiscoverModel>? = null

@@ -40,6 +40,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.serialization.json)
                 implementation(projects.core.di)
+                implementation(projects.core.log)
 
                 implementation(compose.runtime)
                 api(libs.di.koinComposeViewmodel)

@@ -48,7 +48,7 @@ fun <T> DiscoverCardVerticalPager(
 
         // Calculate padding to center the selected item
         val screenHeight = maxHeight
-        val topPadding = (screenHeight - discoverCardHeight) / 2
+        val topPadding = ((screenHeight - discoverCardHeight) / 2).coerceAtLeast(0.dp)
 
         VerticalPager(
             state = pagerState,

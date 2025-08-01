@@ -35,7 +35,17 @@ val sandookModule = module {
     // Add the missing SandookPreferences dependency
     single<SandookPreferences> { RealSandookPreferences(get()) }
 
-    single<DiscoverCardSeenPreferences> { RealDiscoverCardSeenPreferences(get()) }
+    /**
+     * Important: Expose the queries otherwise they won't be available for injection
+     * E.g. If you wanna inject it in RealDiscoverCardSeenPreferences, then you need to expose
+     *      it here. Otherwise it will not be available for injection and Koin will throw an error.
+     */
+    single { get<KrailSandook>().discoverCardQueries }
+
+    // get for [DiscoverCardQueries] will only work, if we have exposed it to Koin separately.
+    single<DiscoverCardSeenPreferences> {
+        RealDiscoverCardSeenPreferences(get())
+    }
 
     // Provide repositories
     single<NswParkRideSandook> {

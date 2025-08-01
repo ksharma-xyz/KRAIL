@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick.PartnerSocialLink
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick.Source
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
@@ -55,10 +57,10 @@ class DiscoverViewModel(
                 platformOps.openUrl(url = event.partnerSocialLink.url)
                 analytics.track(
                     event = DiscoverCardClick(
-                        source = DiscoverCardClick.Source.PARTNER_SOCIAL_LINK,
+                        source = Source.PARTNER_SOCIAL_LINK,
                         cardType = event.cardType.toAnalyticsCardType(),
                         cardId = event.cardId,
-                        partnerSocialLink = DiscoverCardClick.PartnerSocialLink(
+                        partnerSocialLink = PartnerSocialLink(
                             type = event.partnerSocialLink.type.toAnalyticsSocialType(),
                             url = event.partnerSocialLink.url,
                         )
@@ -70,7 +72,7 @@ class DiscoverViewModel(
                 platformOps.openUrl(url = event.url)
                 analytics.track(
                     event = DiscoverCardClick(
-                        source = DiscoverCardClick.Source.CTA_CLICK,
+                        source = Source.CTA_CLICK,
                         cardType = event.cardType.toAnalyticsCardType(),
                         cardId = event.cardId,
                     ),
@@ -87,8 +89,8 @@ class DiscoverViewModel(
                 analytics.track(
                     event = DiscoverCardClick(
                         source = if (event.isPositive)
-                            DiscoverCardClick.Source.FEEDBACK_POSITIVE_THUMB
-                        else DiscoverCardClick.Source.FEEDBACK_NEGATIVE_THUMB,
+                            Source.FEEDBACK_POSITIVE_THUMB
+                        else Source.FEEDBACK_NEGATIVE_THUMB,
                         cardType = event.cardType.toAnalyticsCardType(),
                         cardId = event.cardId,
                     ),
@@ -99,7 +101,7 @@ class DiscoverViewModel(
                 platformOps.sharePlainText(event.url, title = event.cardTitle)
                 analytics.track(
                     event = DiscoverCardClick(
-                        source = DiscoverCardClick.Source.SHARE_CLICK,
+                        source = Source.SHARE_CLICK,
                         cardType = event.cardType.toAnalyticsCardType(),
                         cardId = event.cardId,
                     ),
@@ -116,14 +118,22 @@ class DiscoverViewModel(
                     platformOps.openUrl(url = url)
                     analytics.track(
                         event = DiscoverCardClick(
-                            source = if (event.isPositive) DiscoverCardClick.Source.FEEDBACK_WRITE_REVIEW else
-                                DiscoverCardClick.Source.FEEDBACK_SHARE_FEEDBACK,
+                            source = if (event.isPositive) Source.FEEDBACK_WRITE_REVIEW else
+                                Source.FEEDBACK_SHARE_FEEDBACK,
                             cardType = event.cardType.toAnalyticsCardType(),
                             cardId = event.cardId,
                         ),
                     )
                 }
             }
+
+            is DiscoverEvent.CardSeen -> onCardSeen(event.cardId)
+        }
+    }
+
+    private fun onCardSeen(cardId: String) {
+        viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
+            discoverSydneyManager.markCardAsSeen(cardId)
         }
     }
 

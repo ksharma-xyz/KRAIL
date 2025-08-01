@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -35,6 +36,7 @@ fun DiscoverScreen(
     onFeedbackCta: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
     onFeedbackThumb: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
     onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onCardSeen: (cardId: String) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -48,6 +50,11 @@ fun DiscoverScreen(
                     pages = state.discoverCardsList,
                     modifier = Modifier.fillMaxSize(),
                     content = { cardModel ->
+
+                        LaunchedEffect(cardModel.cardId) {
+                            onCardSeen(cardModel.cardId)
+                        }
+
                         DiscoverCard(
                             discoverModel = cardModel,
                             onAppSocialLinkClicked = onAppSocialLinkClicked,

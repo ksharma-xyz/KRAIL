@@ -29,10 +29,19 @@ internal class RealDiscoverSydneyManager(
         if (cachedFlagValue == currentFlagValue && cachedDiscoverModels != null) {
             return cachedDiscoverModels!!
         }
-        val models = currentFlagValue.toDiscoverCards()
+        val discoverModelList = currentFlagValue.toDiscoverCards()
+
+        // Sort cards using the ordering engine (which checks seen status)
+        val sortedModels = discoverCardOrderingEngine.getSortedCards(discoverModelList)
         cachedFlagValue = currentFlagValue
-        cachedDiscoverModels = models
-        return models
+        cachedDiscoverModels = sortedModels
+
+        return sortedModels
+    }
+
+    override suspend fun markCardAsSeen(cardId: String) {
+        log("Marking card as seen: $cardId")
+        discoverCardOrderingEngine.markCardAsSeen(cardId)
     }
 
     override fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean) {
@@ -41,11 +50,7 @@ internal class RealDiscoverSydneyManager(
         // todo implement feedback saving logic
     }
 
-    override suspend fun markCardAsSeen(cardId: String) {
-        log("Marking card as seen: $cardId")
-        discoverCardOrderingEngine.markCardAsSeen(cardId)
-    }
-
+    // todo - Move to another mapper file.
     private suspend fun FlagValue.toDiscoverCards(): List<DiscoverModel> {
         val flagValue = this
         log("Fetching Discover Sydney data from flag: ${FlagKeys.DISCOVER_SYDNEY.key}: $flagValue")

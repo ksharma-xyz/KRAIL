@@ -106,7 +106,7 @@ fun DiscoverCard(
         Text(
             text = discoverModel.description,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            maxLines = if (isLargeFontScale()) 2 else 3,
+            maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null) 2 else 3,
             style = KrailTheme.typography.bodyMedium,
         )
 

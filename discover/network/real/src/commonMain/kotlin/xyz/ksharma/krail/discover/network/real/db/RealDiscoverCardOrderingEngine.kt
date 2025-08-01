@@ -3,7 +3,6 @@ package xyz.ksharma.krail.discover.network.real.db
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
-import xyz.ksharma.krail.sandook.DiscoverCardQueries
 import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 
 internal class RealDiscoverCardOrderingEngine(
@@ -23,7 +22,7 @@ internal class RealDiscoverCardOrderingEngine(
         discoverCardPreferences.insertCardSeen(cardId)
     }
 
-    override suspend fun resetSeenCards() {
+    override suspend fun resetAllSeenCards() {
         log("Resetting all seen cards")
         discoverCardPreferences.deleteAllCardSeen()
     }

@@ -45,4 +45,6 @@ sealed interface DiscoverEvent {
     ) : DiscoverEvent
 
     data class CardSeen(val cardId: String) : DiscoverEvent
+
+    data object ResetAllSeenCards: DiscoverEvent
 }

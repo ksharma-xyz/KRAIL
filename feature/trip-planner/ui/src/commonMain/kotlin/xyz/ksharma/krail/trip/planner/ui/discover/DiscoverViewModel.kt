@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick.PartnerSocialLink
@@ -128,6 +130,15 @@ class DiscoverViewModel(
             }
 
             is DiscoverEvent.CardSeen -> onCardSeen(event.cardId)
+
+            DiscoverEvent.ResetAllSeenCards -> onResetAllSeenCards()
+        }
+    }
+
+    private fun onResetAllSeenCards() {
+        // todo - debug functionality only
+        viewModelScope.launch {
+            discoverSydneyManager.resetAllSeenCards()
         }
     }
 

@@ -44,6 +44,11 @@ internal class RealDiscoverSydneyManager(
         discoverCardOrderingEngine.markCardAsSeen(cardId)
     }
 
+    override suspend fun resetAllSeenCards() {
+        log("Resetting all seen cards")
+        discoverCardOrderingEngine.resetAllSeenCards()
+    }
+
     override fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean) {
         // save in local db, so that we don't show the same feedback to user again.
         log("Feedback thumb button clicked: feedbackId=$feedbackId, isPositive=$isPositive")

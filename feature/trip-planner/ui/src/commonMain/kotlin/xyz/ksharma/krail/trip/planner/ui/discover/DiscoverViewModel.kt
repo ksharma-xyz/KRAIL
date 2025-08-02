@@ -27,9 +27,11 @@ import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
+import xyz.ksharma.krail.discover.ui.FeedbackAnimationConstants.TOTAL_FEEDBACK_ANIMATION_DURATION
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 
 class DiscoverViewModel(
@@ -97,7 +99,7 @@ class DiscoverViewModel(
                 // Delay UI state update to allow animation to complete
                 viewModelScope.launch {
                     // delay for the animation to complete.
-                    delay(600)
+                    delay(TOTAL_FEEDBACK_ANIMATION_DURATION.milliseconds)
                     // Update only the specific card's feedback state in UI
                     updateSpecificCardFeedbackState(
                         cardId = event.cardId,

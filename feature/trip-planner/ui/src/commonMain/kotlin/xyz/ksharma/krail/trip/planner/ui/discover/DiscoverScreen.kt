@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
@@ -112,14 +113,16 @@ fun DiscoverScreen(
                 onNavActionClick = onBackClick,
                 title = { },
                 actions = {
-                    // for debug only
-                    Text(
-                        "Reset", modifier = Modifier.clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() },
-                            onClick = resetAllSeenCards,
+                    val appInfo = LocalAppInfo.current
+                    if (appInfo?.isDebug == true) {
+                        Text(
+                            "Reset", modifier = Modifier.clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = resetAllSeenCards,
+                            )
                         )
-                    )
+                    }
                 }
             )
 

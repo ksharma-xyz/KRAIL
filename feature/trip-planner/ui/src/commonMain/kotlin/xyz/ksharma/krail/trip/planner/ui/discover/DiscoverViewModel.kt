@@ -140,8 +140,10 @@ class DiscoverViewModel(
     private fun onResetAllSeenCards() {
         // todo - debug functionality only
         viewModelScope.launch {
-            log("Resetting all seen cards")
-            discoverSydneyManager.resetAllSeenCards()
+            if (appInfoProvider.getAppInfo().isDebug) {
+                log("Resetting all seen cards")
+                discoverSydneyManager.resetAllSeenCards()
+            }
         }
     }
 
@@ -157,11 +159,6 @@ class DiscoverViewModel(
             viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
                 val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
                 log("Fetched Discover Sydney data: ${data.size}")
-/*
-                data.forEach {
-                    log("\tDiscover Card: ${it.type}, ${it.title}")
-                }
-*/
                 updateUiState {
                     copy(
                         discoverCardsList = data.toImmutableList(),

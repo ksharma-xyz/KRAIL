@@ -84,7 +84,7 @@ fun ParkRideCard(
                                     FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Text(
                                             text = "${facility.spotsAvailable}",
-                                            style = KrailTheme.typography.headlineLarge,
+                                            style = KrailTheme.typography.headlineMedium,
                                             modifier = Modifier.alignByBaseline(),
                                         )
                                         Text(
@@ -99,7 +99,7 @@ fun ParkRideCard(
                                     ) {
                                         Text(
                                             text = "${facility.percentageFull}%",
-                                            style = KrailTheme.typography.headlineLarge,
+                                            style = KrailTheme.typography.headlineMedium,
                                             modifier = Modifier.alignByBaseline(),
                                         )
                                         Text(
@@ -115,6 +115,7 @@ fun ParkRideCard(
                                     Text(
                                         text = "Last updated at\u00A0${facility.timeText}",
                                         style = KrailTheme.typography.bodySmall,
+                                        color = KrailTheme.colors.secondaryLabel,
                                     )
                                 }
                             }

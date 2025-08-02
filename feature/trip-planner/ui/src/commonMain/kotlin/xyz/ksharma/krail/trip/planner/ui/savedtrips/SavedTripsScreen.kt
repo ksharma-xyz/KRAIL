@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import krail.feature.trip_planner.ui.generated.resources.ic_sydney
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -123,16 +125,8 @@ fun SavedTripsScreen(
                     }
                 } else {
                     stickyHeader(key = "saved_trips_title") {
-                        Box(
-                            modifier = Modifier.fillMaxWidth()
-                                .background(color = KrailTheme.colors.surface)
-                                .padding(vertical = 16.dp, horizontal = 16.dp),
-                            contentAlignment = Alignment.CenterStart,
-                        ) {
-                            Text(
-                                text = "Saved Trips",
-                                style = KrailTheme.typography.titleMedium,
-                            )
+                        SavedTripsTitle {
+                            Text(text = "Saved Trips")
                         }
                     }
 
@@ -169,18 +163,8 @@ fun SavedTripsScreen(
                         }
 
                         stickyHeader(key = "park_ride_title") {
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                                    .background(color = KrailTheme.colors.surface)
-                                    .padding(vertical = 16.dp, horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Park & Ride",
-                                    style = KrailTheme.typography.titleMedium,
-                                    modifier = Modifier.align(Alignment.CenterVertically),
-                                )
+                            SavedTripsTitle {
+                                Text(text = "Park & Ride")
                             }
                         }
 
@@ -226,6 +210,24 @@ fun SavedTripsScreen(
             onReverseButtonClick = onReverseButtonClick,
             onSearchButtonClick = { onSearchButtonClick() },
         )
+    }
+}
+
+@Composable
+private fun SavedTripsTitle(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .background(color = KrailTheme.colors.surface)
+            .padding(vertical = 16.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.titleMedium) {
+            content()
+        }
     }
 }
 

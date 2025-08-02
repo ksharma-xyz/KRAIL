@@ -22,10 +22,11 @@ internal class RealDiscoverCardSeenPreferences(
 
 
     // New feedback methods
-    override fun insertCardFeedback(cardId: String, isPositive: Boolean) {
+    override fun insertCardFeedback(cardId: String, isPositive: Boolean, isCompleted: Boolean) {
         discoverCardQueries.insertCardFeedback(
             cardId = cardId,
-            isPositive = if (isPositive) 1L else 0L
+            isPositive = if (isPositive) 1L else 0L,
+            isCompleted = if (isCompleted) 1L else 0L,
         )
     }
 
@@ -34,7 +35,8 @@ internal class RealDiscoverCardSeenPreferences(
             CardFeedback(
                 cardId = it.cardId,
                 isPositive = it.isPositive == 1L,
-                timestamp = it.timestamp
+                timestamp = it.timestamp,
+                isCompleted = it.isCompleted == 1L
             )
         }
     }
@@ -44,7 +46,8 @@ internal class RealDiscoverCardSeenPreferences(
             CardFeedback(
                 cardId = it.cardId,
                 isPositive = it.isPositive == 1L,
-                timestamp = it.timestamp
+                timestamp = it.timestamp,
+                isCompleted = it.isCompleted == 1L
             )
         }
     }
@@ -59,5 +62,12 @@ internal class RealDiscoverCardSeenPreferences(
 
     override fun hasCardFeedback(cardId: String): Boolean {
         return selectCardFeedback(cardId) != null
+    }
+
+    override fun updateCardFeedbackCompletion(cardId: String, isCompleted: Boolean) {
+        discoverCardQueries.updateCardFeedbackCompletion(
+            cardId = cardId,
+            isCompleted = if (isCompleted) 1L else 0L
+        )
     }
 }

@@ -28,28 +28,33 @@ SELECT cardId FROM DiscoverCardSeen;
      id INTEGER PRIMARY KEY AUTOINCREMENT,
      cardId TEXT NOT NULL UNIQUE,
      isPositive INTEGER NOT NULL, -- 1 for positive, 0 for negative
-     timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
- );
+     timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+     isCompleted INTEGER NOT NULL DEFAULT 0 -- 1 for completed, 0 for not completed
+);
 
- -- Insert or update feedback for a card
- insertCardFeedback:
- INSERT OR REPLACE INTO DiscoverCardFeedback(cardId, isPositive, timestamp)
- VALUES (:cardId, :isPositive, strftime('%s', 'now'));
+-- Insert or update feedback for a card
+insertCardFeedback:
+INSERT OR REPLACE INTO DiscoverCardFeedback(cardId, isPositive, timestamp, isCompleted)
+VALUES (:cardId, :isPositive, strftime('%s', 'now'), :isCompleted);
 
- -- Get feedback for a specific card
- selectCardFeedback:
- SELECT cardId, isPositive, timestamp FROM DiscoverCardFeedback WHERE cardId = :cardId;
+-- Get feedback for a specific card
+selectCardFeedback:
+SELECT cardId, isPositive, timestamp, isCompleted FROM DiscoverCardFeedback WHERE cardId = :cardId;
 
- -- Get all feedback records
- selectAllCardFeedback:
- SELECT cardId, isPositive, timestamp FROM DiscoverCardFeedback;
+-- Get all feedback records
+selectAllCardFeedback:
+SELECT cardId, isPositive, timestamp, isCompleted FROM DiscoverCardFeedback;
 
- -- Delete feedback for a specific card
- deleteCardFeedback:
- DELETE FROM DiscoverCardFeedback WHERE cardId = :cardId;
+-- Update completion status for a card
+updateCardFeedbackCompletion:
+UPDATE DiscoverCardFeedback SET isCompleted = :isCompleted WHERE cardId = :cardId;
 
- -- Delete all feedback records
- deleteAllCardFeedback:
- DELETE FROM DiscoverCardFeedback;
+-- Delete feedback for a specific card
+deleteCardFeedback:
+DELETE FROM DiscoverCardFeedback WHERE cardId = :cardId;
 
- ------------------------------------------------------
+-- Delete all feedback records
+deleteAllCardFeedback:
+DELETE FROM DiscoverCardFeedback;
+
+------------------------------------------------------

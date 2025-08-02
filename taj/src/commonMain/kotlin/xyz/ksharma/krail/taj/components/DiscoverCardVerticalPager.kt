@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -83,10 +82,6 @@ fun <T> DiscoverCardVerticalPager(
 }
 
 fun lerp(start: Float, end: Float, fraction: Float): Float {
-    return start + (end - start) * fraction
-}
-
-fun lerpDp(start: Dp, end: Dp, fraction: Float): Dp {
     return start + (end - start) * fraction
 }
 

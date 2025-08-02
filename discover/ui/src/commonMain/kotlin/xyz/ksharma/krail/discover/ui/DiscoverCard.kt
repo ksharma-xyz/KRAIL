@@ -154,8 +154,10 @@ private fun DiscoverCardButtonRow(
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
-        logError("Invalid button combination or no buttons provided: " +
-                "${buttonsList.map { it::class.simpleName }}")
+        logError(
+            "Invalid button combination or no buttons provided: " +
+                "${buttonsList.map { it::class.simpleName }}"
+        )
         return
     }
 

@@ -34,6 +34,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.discover.network.api)
+                implementation(projects.discover.state)
                 implementation(projects.sandook)
 
                 implementation(libs.kotlinx.serialization.json)

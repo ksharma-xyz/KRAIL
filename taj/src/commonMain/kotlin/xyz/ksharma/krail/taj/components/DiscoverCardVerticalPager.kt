@@ -57,7 +57,7 @@ fun <T> DiscoverCardVerticalPager(
                 pageSize = discoverCardHeight,
             ),
             key = { (it % pages.size) },
-            contentPadding = PaddingValues(vertical = topPadding),
+            contentPadding = PaddingValues(vertical = topPadding.coerceAtLeast(0.dp)),
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val actualPage = page % pages.size

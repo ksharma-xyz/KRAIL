@@ -14,22 +14,24 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 
 @Composable
 fun KrailApp() {
-    val appInfoProvider: AppInfoProvider = koinInject()
+    val appInfo = rememberAppInfo()
 
-    val appInfoState = produceState<AppInfo?>(initialValue = null, appInfoProvider) {
-        value = appInfoProvider.getAppInfo()
-    }
-    val appInfo = appInfoState.value
-
-    CompositionLocalProvider(
-        LocalAppInfo provides appInfo,
-    ) {
+    CompositionLocalProvider(LocalAppInfo provides appInfo) {
         SetupCoilImageLoader()
 
         KrailTheme {
             KrailNavHost()
         }
     }
+}
+
+@Composable
+private fun rememberAppInfo(): AppInfo? {
+    val appInfoProvider: AppInfoProvider = koinInject()
+    val appInfoState = produceState<AppInfo?>(initialValue = null, appInfoProvider) {
+        value = appInfoProvider.getAppInfo()
+    }
+    return appInfoState.value
 }
 
 @Composable

@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverState.DiscoverUiModel.FeedbackState
+import xyz.ksharma.krail.discover.ui.FeedbackAnimationConstants.BUTTON_APPEAR_DURATION
+import xyz.ksharma.krail.discover.ui.FeedbackAnimationConstants.THUMBS_FADE_DURATION
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -63,10 +65,10 @@ fun FeedbackButtonsRow(
     fun animateToCtaState(selectedState: FeedbackSelectedState) {
         // Only animate if no external state (fresh selection)
         scope.launch {
-            thumbsAlpha.animateTo(0f, tween(250))
+            thumbsAlpha.animateTo(0f, tween(THUMBS_FADE_DURATION))
             localSelected = selectedState
-            launch { buttonAlpha.animateTo(1f, tween(350)) }
-            launch { buttonScale.animateTo(1f, tween(350)) }
+            launch { buttonAlpha.animateTo(1f, tween(BUTTON_APPEAR_DURATION)) }
+            launch { buttonScale.animateTo(1f, tween(BUTTON_APPEAR_DURATION)) }
         }
     }
 
@@ -157,7 +159,13 @@ private fun FeedbackCircleBox(
     }
 }
 
-enum class FeedbackSelectedState { Positive, Negative }
+private enum class FeedbackSelectedState { Positive, Negative }
+
+object FeedbackAnimationConstants {
+    const val THUMBS_FADE_DURATION = 250 // ms
+    const val BUTTON_APPEAR_DURATION = 350 // ms
+    const val TOTAL_FEEDBACK_ANIMATION_DURATION = THUMBS_FADE_DURATION + BUTTON_APPEAR_DURATION
+}
 
 @Preview(showBackground = true)
 @Composable

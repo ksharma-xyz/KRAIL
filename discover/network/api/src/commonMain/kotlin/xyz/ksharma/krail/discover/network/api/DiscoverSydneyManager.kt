@@ -9,7 +9,7 @@ interface DiscoverSydneyManager {
      */
     suspend fun fetchDiscoverData(): List<DiscoverModel>
 
-    fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean)
+    fun feedbackThumbButtonClicked(cardId: String, isPositive: Boolean)
 
     suspend fun markCardAsSeen(cardId: String)
 

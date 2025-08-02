@@ -18,3 +18,38 @@ DELETE FROM DiscoverCardSeen;
 -- Read all seen card IDs
 selectAllCardSeen:
 SELECT cardId FROM DiscoverCardSeen;
+
+ -------------------------------------------------
+ -- DiscoverCardFeedback table for user feedback |
+ -------------------------------------------------
+
+ -- Feedback table for thumb button clicks
+ CREATE TABLE IF NOT EXISTS DiscoverCardFeedback (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     cardId TEXT NOT NULL UNIQUE,
+     isPositive INTEGER NOT NULL, -- 1 for positive, 0 for negative
+     timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+ );
+
+ -- Insert or update feedback for a card
+ insertCardFeedback:
+ INSERT OR REPLACE INTO DiscoverCardFeedback(cardId, isPositive, timestamp)
+ VALUES (:cardId, :isPositive, strftime('%s', 'now'));
+
+ -- Get feedback for a specific card
+ selectCardFeedback:
+ SELECT cardId, isPositive, timestamp FROM DiscoverCardFeedback WHERE cardId = :cardId;
+
+ -- Get all feedback records
+ selectAllCardFeedback:
+ SELECT cardId, isPositive, timestamp FROM DiscoverCardFeedback;
+
+ -- Delete feedback for a specific card
+ deleteCardFeedback:
+ DELETE FROM DiscoverCardFeedback WHERE cardId = :cardId;
+
+ -- Delete all feedback records
+ deleteAllCardFeedback:
+ DELETE FROM DiscoverCardFeedback;
+
+ ------------------------------------------------------

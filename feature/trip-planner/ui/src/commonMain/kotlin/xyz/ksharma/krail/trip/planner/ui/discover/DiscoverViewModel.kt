@@ -28,6 +28,8 @@ import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class DiscoverViewModel(
     private val discoverSydneyManager: DiscoverSydneyManager,
@@ -90,7 +92,13 @@ class DiscoverViewModel(
                     cardId = event.cardId,
                     isPositive = event.isPositive,
                 )
-                fetchDiscoverCards()
+
+                // Update only the specific card's feedback state in UI
+                updateSpecificCardFeedbackState(
+                    cardId = event.cardId,
+                    isPositive = event.isPositive,
+                )
+
                 analytics.track(
                     event = DiscoverCardClick(
                         source = if (event.isPositive)
@@ -179,6 +187,26 @@ class DiscoverViewModel(
                 buttons = model.buttons?.toPersistentList(),
                 cardId = model.cardId,
                 feedbackState = discoverSydneyManager.getCardFeedback(model.cardId),
+            )
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun updateSpecificCardFeedbackState(cardId: String, isPositive: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                discoverCardsList = currentState.discoverCardsList.map { card ->
+                    if (card.cardId == cardId) {
+                        card.copy(
+                            feedbackState = DiscoverState.DiscoverUiModel.FeedbackState(
+                                isPositive = isPositive,
+                                timestamp = Clock.System.now().toEpochMilliseconds(),
+                            )
+                        )
+                    } else {
+                        card
+                    }
+                }.toImmutableList()
             )
         }
     }

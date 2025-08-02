@@ -17,4 +17,6 @@ enum class FlagKeys(val key: String) {
     FESTIVALS("festivals"),
 
     DISCOVER_SYDNEY("discover_sydney"),
+
+    DISCOVER_AVAILABLE("is_discover_available"),
 }

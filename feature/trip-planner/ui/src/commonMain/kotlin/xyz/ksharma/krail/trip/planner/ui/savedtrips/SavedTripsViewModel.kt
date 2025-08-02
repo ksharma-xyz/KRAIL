@@ -30,6 +30,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
+import xyz.ksharma.krail.core.remote_config.flag.asBoolean
 import xyz.ksharma.krail.core.remote_config.flag.asNumber
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
@@ -63,10 +64,6 @@ class SavedTripsViewModel(
     private val flag: Flag,
 ) : ViewModel() {
 
-    init {
-        log("Temp log for CI builds")
-    }
-
     private val nonPeakTimeCooldownSeconds: Long by lazy {
         flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key)
             .asNumber(600)
@@ -75,6 +72,10 @@ class SavedTripsViewModel(
     private val peakTimeCooldownSeconds: Long by lazy {
         flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_PEAK_TIME_COOLDOWN.key)
             .asNumber(fallback = 120)
+    }
+
+    private val isDiscoverAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.DISCOVER_AVAILABLE.key).asBoolean(false)
     }
 
     /**
@@ -94,6 +95,7 @@ class SavedTripsViewModel(
             observeSavedTrips()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
+            updateDiscoverState()
         }
         .onCompletion {
             cleanupJobs()
@@ -506,6 +508,10 @@ class SavedTripsViewModel(
         } else {
             peakTimeCooldownSeconds.seconds
         }
+    }
+
+    private fun updateDiscoverState() {
+        updateUiState { copy(isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable) }
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

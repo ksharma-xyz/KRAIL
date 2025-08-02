@@ -83,15 +83,17 @@ fun SavedTripsScreen(
                     Text(text = "KRAIL", color = themeColor())
                 },
                 actions = {
-                    RoundIconButton(
-                        onClick = onDiscoverButtonClick,
-                    ) {
-                        Image(
-                            painter = painterResource(Res.drawable.ic_sydney),
-                            contentDescription = "Discover Sydney",
-                            colorFilter = ColorFilter.tint(LocalContentColor.current),
-                            modifier = Modifier.size(32.dp),
-                        )
+                    if (savedTripsState.isDiscoverAvailable) {
+                        RoundIconButton(
+                            onClick = onDiscoverButtonClick,
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.ic_sydney),
+                                contentDescription = "Discover Sydney",
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                                modifier = Modifier.size(32.dp),
+                            )
+                        }
                     }
 
                     RoundIconButton(

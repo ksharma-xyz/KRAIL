@@ -107,6 +107,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.DISCOVER_SYDNEY.key,
                 second = "[]",
             ),
+            Pair(
+                first = FlagKeys.DISCOVER_AVAILABLE.key,
+                second = true,
+            ),
         )
     }
 }

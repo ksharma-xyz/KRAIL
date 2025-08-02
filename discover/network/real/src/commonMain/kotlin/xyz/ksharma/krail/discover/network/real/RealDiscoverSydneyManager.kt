@@ -107,13 +107,26 @@ internal class RealDiscoverSydneyManager(
         discoverCardPreferences.insertCardFeedback(cardId = cardId, isPositive = isPositive)
     }
 
+
     override fun getCardFeedback(cardId: String): FeedbackState? {
-        return discoverCardPreferences.selectCardFeedback(cardId)?.let {
-            FeedbackState(
-                isPositive = it.isPositive,
-                timestamp = it.timestamp
-            )
+        val feedback = discoverCardPreferences.selectCardFeedback(cardId)
+
+        // Don't show feedback UI if already completed
+        return if (feedback?.isCompleted == true) {
+            null
+        } else {
+            feedback?.let {
+                FeedbackState(
+                    isPositive = it.isPositive,
+                    timestamp = it.timestamp
+                )
+            }
         }
+    }
+
+    override fun markFeedbackAsCompleted(cardId: String) {
+        log("Marking feedback as completed: $cardId")
+        discoverCardPreferences.updateCardFeedbackCompletion(cardId, isCompleted = true)
     }
 
     // endregion

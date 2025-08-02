@@ -16,5 +16,10 @@ interface DiscoverSydneyManager {
 
     suspend fun resetAllDiscoverCardsDebugOnly()
 
+    // region Card Feedback
     fun getCardFeedback(cardId: String): DiscoverState.DiscoverUiModel.FeedbackState?
+
+    fun markFeedbackAsCompleted(cardId: String)
+
+    // endregion
 }

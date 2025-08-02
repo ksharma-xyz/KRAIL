@@ -14,8 +14,7 @@ interface DiscoverCardSeenPreferences {
     // endregion
 
     // region Card Feedback
-
-    fun insertCardFeedback(cardId: String, isPositive: Boolean)
+    fun insertCardFeedback(cardId: String, isPositive: Boolean, isCompleted: Boolean = false)
 
     fun selectCardFeedback(cardId: String): CardFeedback?
 
@@ -27,11 +26,14 @@ interface DiscoverCardSeenPreferences {
 
     fun hasCardFeedback(cardId: String): Boolean
 
+    fun updateCardFeedbackCompletion(cardId: String, isCompleted: Boolean)
+
     // endregion
 }
 
 data class CardFeedback(
     val cardId: String,
     val isPositive: Boolean,
-    val timestamp: Long
+    val timestamp: Long,
+    val isCompleted: Boolean,
 )

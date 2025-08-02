@@ -155,7 +155,6 @@ class DiscoverViewModel(
     }
 
     private fun onResetAllSeenCards() {
-        // todo - debug functionality only
         viewModelScope.launch {
             if (appInfoProvider.getAppInfo().isDebug) {
                 log("Resetting all seen cards")
@@ -221,5 +220,21 @@ class DiscoverViewModel(
 
     private fun updateUiState(block: DiscoverState.() -> DiscoverState) {
         _uiState.update(block)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        log("DiscoverViewModel cleared")
+        fetchDiscoverCardsJob?.cancel()
+        // todo set feedbackComplete so this feedback card should not be displayed to user again.
+
+        // Mark all cards with feedback as completed
+        viewModelScope.launch {
+            _uiState.value.discoverCardsList.forEach { card ->
+                if (card.feedbackState != null) {
+                    discoverSydneyManager.markFeedbackAsCompleted(card.cardId)
+                }
+            }
+        }
     }
 }

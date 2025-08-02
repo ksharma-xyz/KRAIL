@@ -108,6 +108,7 @@ fun DiscoverCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null) 2 else 3,
             style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.secondaryLabel,
         )
 
         discoverModel.disclaimer?.let { disclaimer ->
@@ -153,8 +154,10 @@ private fun DiscoverCardButtonRow(
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
-        logError("Invalid button combination or no buttons provided: " +
-                "${buttonsList.map { it::class.simpleName }}")
+        logError(
+            "Invalid button combination or no buttons provided: " +
+                "${buttonsList.map { it::class.simpleName }}"
+        )
         return
     }
 

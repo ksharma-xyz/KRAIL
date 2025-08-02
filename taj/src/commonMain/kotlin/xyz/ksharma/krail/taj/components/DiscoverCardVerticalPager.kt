@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.taj.components
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +11,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -43,8 +41,6 @@ fun <T> DiscoverCardVerticalPager(
             .fillMaxSize()
     ) {
         val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
-        val selectedWidth = 1f * maxCardWidth.value
-        val unselectedWidth = 0.95f * maxCardWidth.value
 
         // Calculate padding to center the selected item
         val screenHeight = maxHeight
@@ -57,20 +53,13 @@ fun <T> DiscoverCardVerticalPager(
                 pageSize = discoverCardHeight,
             ),
             key = { (it % pages.size) },
-            contentPadding = PaddingValues(vertical = topPadding),
+            contentPadding = PaddingValues(vertical = topPadding.coerceAtLeast(0.dp)),
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val actualPage = page % pages.size
             val isCardSelected = pagerState.currentPage == page
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
-            val width by animateDpAsState(
-                targetValue = lerpDp(
-                    selectedWidth.dp,
-                    unselectedWidth.dp,
-                    pageOffset.coerceIn(0f, 1f)
-                ),
-                label = "cardWidth"
-            )
+
             val scale = lerp(1f, 0.95f, pageOffset.coerceIn(0f, 1f))
             val alpha = lerp(1f, 0.2f, pageOffset.coerceIn(0f, 1f))
 
@@ -81,9 +70,10 @@ fun <T> DiscoverCardVerticalPager(
                         scaleY = scale
                         this.alpha = alpha
                     }
+                    .zIndex(2f - pageOffset)
                     .height(discoverCardHeight)
-                    .width(width)
-                    .zIndex(1f - pageOffset),
+                    .width(maxCardWidth)
+                    .align(Alignment.Center),
                 contentAlignment = Alignment.Center,
             ) {
                 content(pages[actualPage], isCardSelected)

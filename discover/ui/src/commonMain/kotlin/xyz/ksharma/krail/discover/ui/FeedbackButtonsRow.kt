@@ -61,14 +61,12 @@ fun FeedbackButtonsRow(
     val buttonScale = remember { Animatable(0.5f) }
 
     fun animateToCtaState(selectedState: FeedbackSelectedState) {
-        if (feedbackState == null) {
-            // Only animate if no external state (fresh selection)
-            scope.launch {
-                thumbsAlpha.animateTo(0f, tween(250))
-                localSelected = selectedState
-                launch { buttonAlpha.animateTo(1f, tween(350)) }
-                launch { buttonScale.animateTo(1f, tween(350)) }
-            }
+        // Only animate if no external state (fresh selection)
+        scope.launch {
+            thumbsAlpha.animateTo(0f, tween(250))
+            localSelected = selectedState
+            launch { buttonAlpha.animateTo(1f, tween(350)) }
+            launch { buttonScale.animateTo(1f, tween(350)) }
         }
     }
 

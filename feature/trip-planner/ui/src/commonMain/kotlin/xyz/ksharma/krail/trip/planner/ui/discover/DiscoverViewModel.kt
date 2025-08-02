@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -93,11 +94,16 @@ class DiscoverViewModel(
                     isPositive = event.isPositive,
                 )
 
-                // Update only the specific card's feedback state in UI
-                updateSpecificCardFeedbackState(
-                    cardId = event.cardId,
-                    isPositive = event.isPositive,
-                )
+                // Delay UI state update to allow animation to complete
+                viewModelScope.launch {
+                    // delay for the animation to complete.
+                    delay(600)
+                    // Update only the specific card's feedback state in UI
+                    updateSpecificCardFeedbackState(
+                        cardId = event.cardId,
+                        isPositive = event.isPositive,
+                    )
+                }
 
                 analytics.track(
                     event = DiscoverCardClick(

@@ -14,7 +14,7 @@ val md_theme_light_scrim = Color(0xFF000000)
 val md_theme_light_alert = Color(0xFFFFBA27)
 val md_theme_light_softLabel = Color(0xFF767676)
 
-val md_theme_light_secondary_label = Color(0xFF404040)
+val md_theme_light_secondary_label = Color(0xFF2E2E2E)
 
 // Dark Color tokens
 val md_theme_dark_error = Color(0xFFFFB4AB)
@@ -26,7 +26,7 @@ val md_theme_dark_onSurface = Color(0xFFFCF6F1)
 val md_theme_dark_scrim = Color(0xFF000000)
 val md_theme_dark_alert = Color(0xFFF4B400)
 val md_theme_dark_softLabel = Color(0xFFB0B0B0)
-val md_theme_dark_secondary_label = Color(0xFFEBEBEB)
+val md_theme_dark_secondary_label = Color(0xFFE2E2E2)
 
 val bus_theme = Color(0xFF00B5EF)
 val train_theme = Color(0xFFF6891F)

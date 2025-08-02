@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
@@ -125,13 +126,19 @@ fun DiscoverScreen(
                     }
                 }
             )
+            val density = LocalDensity.current
+            val fontScale = density.fontScale
 
             Text(
-                text = "What's On, Sydney!",
-                style = KrailTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal),
+                text = "What's On, Sydney!", // todo -dynamically from config.
+                style = if (fontScale < 1.5f) {
+                    KrailTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal)
+                } else {
+                    KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
+                },
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
                     .background(color = Color.Transparent),
             )
         }

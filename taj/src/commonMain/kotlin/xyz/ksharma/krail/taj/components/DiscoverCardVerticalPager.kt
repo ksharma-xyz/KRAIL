@@ -71,19 +71,19 @@ fun <T> DiscoverCardVerticalPager(
                 ),
                 label = "cardWidth"
             )
-            val scale = lerp(1f, 0.95f, pageOffset.coerceIn(0f, 1f))
+            val scale = lerp(1f, 0.98f, pageOffset.coerceIn(0f, 1f))
             val alpha = lerp(1f, 0.2f, pageOffset.coerceIn(0f, 1f))
 
             Box(
                 modifier = Modifier
+                    .height(discoverCardHeight)
+                    .width(width)
                     .graphicsLayer {
                         scaleX = scale
                         scaleY = scale
                         this.alpha = alpha
                     }
-                    .height(discoverCardHeight)
-                    .width(width)
-                    .zIndex(1f - pageOffset),
+                    .zIndex(2f - pageOffset),
                 contentAlignment = Alignment.Center,
             ) {
                 content(pages[actualPage], isCardSelected)

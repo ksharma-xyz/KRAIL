@@ -108,6 +108,7 @@ fun DiscoverCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null) 2 else 3,
             style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.secondaryLabel,
         )
 
         discoverModel.disclaimer?.let { disclaimer ->

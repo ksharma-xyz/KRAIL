@@ -86,10 +86,11 @@ class DiscoverViewModel(
             is DiscoverEvent.FeedbackThumbButtonClicked -> {
                 // save to db, feedback button id clicked. so that we don't show the same
                 // feedback to suer again.
-                discoverSydneyManager.feedbackThumbButtonClicked(
+                discoverSydneyManager.cardFeedbackSelected(
                     cardId = event.cardId,
                     isPositive = event.isPositive,
                 )
+                fetchDiscoverCards()
                 analytics.track(
                     event = DiscoverCardClick(
                         source = if (event.isPositive)
@@ -142,7 +143,7 @@ class DiscoverViewModel(
         viewModelScope.launch {
             if (appInfoProvider.getAppInfo().isDebug) {
                 log("Resetting all seen cards")
-                discoverSydneyManager.resetAllSeenCards()
+                discoverSydneyManager.resetAllDiscoverCardsDebugOnly()
             }
         }
     }
@@ -177,6 +178,7 @@ class DiscoverViewModel(
                 disclaimer = model.disclaimer,
                 buttons = model.buttons?.toPersistentList(),
                 cardId = model.cardId,
+                feedbackState = discoverSydneyManager.getCardFeedback(model.cardId),
             )
         }
     }

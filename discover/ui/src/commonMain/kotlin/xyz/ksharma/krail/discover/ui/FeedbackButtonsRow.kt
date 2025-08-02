@@ -3,6 +3,8 @@ package xyz.ksharma.krail.discover.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -24,6 +26,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.discover.state.DiscoverState.DiscoverUiModel.FeedbackState
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -35,25 +38,36 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 @Composable
 fun FeedbackButtonsRow(
     modifier: Modifier = Modifier,
+    feedbackState: FeedbackState? = null,
     onPositiveThumb: () -> Unit,
     onNegativeThumb: () -> Unit,
     onPositiveCta: () -> Unit,
     onNegativeCta: () -> Unit,
 ) {
-    var selected by remember { mutableStateOf<FeedbackSelectedState?>(null) }
+    // Single source of truth for selected state
+    var localSelected by remember { mutableStateOf<FeedbackSelectedState?>(null) }
+
+    // Priority: feedbackState from DB > localSelected (for animations)
+    val currentState = feedbackState?.let {
+        if (it.isPositive) FeedbackSelectedState.Positive
+        else FeedbackSelectedState.Negative
+    } ?: localSelected
+
     val scope = rememberCoroutineScope()
 
     val thumbsAlpha = remember { Animatable(1f) }
     val buttonAlpha = remember { Animatable(0f) }
     val buttonScale = remember { Animatable(0.95f) }
 
-    fun startAnimation(feedback: FeedbackSelectedState) {
-        scope.launch {
-            thumbsAlpha.animateTo(0f, tween(250))
-            selected = feedback
-            // Animate alpha and scale together
-            launch { buttonAlpha.animateTo(1f, tween(350)) }
-            launch { buttonScale.animateTo(1f, tween(350)) }
+    fun animateToCtaState(selectedState: FeedbackSelectedState) {
+        if (feedbackState == null) {
+            // Only animate if no external state (fresh selection)
+            scope.launch {
+                thumbsAlpha.animateTo(0f, tween(250))
+                localSelected = selectedState
+                launch { buttonAlpha.animateTo(1f, tween(350)) }
+                launch { buttonScale.animateTo(1f, tween(350)) }
+            }
         }
     }
 
@@ -61,49 +75,66 @@ fun FeedbackButtonsRow(
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         modifier = modifier,
     ) {
-        if (selected == null) {
-            FeedbackCircleBox(
-                modifier = Modifier
-                    .graphicsLayer { alpha = thumbsAlpha.value }
-                    .klickable {
-                        if (selected == null) {
-                            onPositiveThumb()
-                            startAnimation(FeedbackSelectedState.Positive)
-                        }
-                    }
-            ) { Text("👍") }
+        when (currentState) {
+            null -> {
+                // Show thumbs (no feedback given yet)
+                FeedbackCircleBox(
+                    modifier = Modifier.graphicsLayer { alpha = thumbsAlpha.value }
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = {
+                                onPositiveThumb()
+                                animateToCtaState(FeedbackSelectedState.Positive)
+                            }),
+                ) {
+                    Text(text = "👍")
+                }
 
-            FeedbackCircleBox(
-                modifier = Modifier
-                    .graphicsLayer { alpha = thumbsAlpha.value }
-                    .klickable {
-                        if (selected == null) {
-                            onNegativeThumb()
-                            startAnimation(FeedbackSelectedState.Negative)
-                        }
-                    }
-            ) { Text("👎") }
-
-        } else {
-            val text = when (selected) {
-                FeedbackSelectedState.Positive -> "Write a review"
-                FeedbackSelectedState.Negative -> "Send feedback"
-                else -> ""
+                FeedbackCircleBox(
+                    modifier = Modifier.graphicsLayer { alpha = thumbsAlpha.value }
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = {
+                                onNegativeThumb()
+                                animateToCtaState(FeedbackSelectedState.Negative)
+                            }),
+                ) {
+                    Text(text = "👎")
+                }
             }
-            Button(
-                dimensions = ButtonDefaults.mediumButtonSize(),
-                onClick = {
-                    when (selected) {
-                        FeedbackSelectedState.Positive -> onPositiveCta()
-                        FeedbackSelectedState.Negative -> onNegativeCta()
-                        null -> Unit
-                    }
-                },
-                modifier = Modifier
-                    .scale(buttonScale.value)
-                    .graphicsLayer { alpha = buttonAlpha.value }
-            ) {
-                Text(text)
+
+            FeedbackSelectedState.Positive -> {
+                // Show positive CTA buttons
+                Button(
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (feedbackState != null) 1f else buttonAlpha.value
+                            scaleX = if (feedbackState != null) 1f else buttonScale.value
+                            scaleY = if (feedbackState != null) 1f else buttonScale.value
+                        },
+                    onClick = onPositiveCta,
+                ) {
+                    Text(text = "Write Review")
+                }
+            }
+
+            FeedbackSelectedState.Negative -> {
+                // Show negative CTA buttons
+                Button(
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = if (feedbackState != null) 1f else buttonAlpha.value
+                            scaleX = if (feedbackState != null) 1f else buttonScale.value
+                            scaleY = if (feedbackState != null) 1f else buttonScale.value
+                        },
+                    onClick = onNegativeCta,
+                ) {
+                    Text(text = "Share Feedback")
+                }
             }
         }
     }

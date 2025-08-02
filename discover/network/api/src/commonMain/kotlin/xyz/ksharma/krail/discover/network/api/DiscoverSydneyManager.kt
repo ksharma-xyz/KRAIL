@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.discover.network.api
 
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
+import xyz.ksharma.krail.discover.state.DiscoverState
 
 interface DiscoverSydneyManager {
 
@@ -9,9 +10,11 @@ interface DiscoverSydneyManager {
      */
     suspend fun fetchDiscoverData(): List<DiscoverModel>
 
-    fun feedbackThumbButtonClicked(cardId: String, isPositive: Boolean)
+    fun cardFeedbackSelected(cardId: String, isPositive: Boolean)
 
     suspend fun markCardAsSeen(cardId: String)
 
-    suspend fun resetAllSeenCards()
+    suspend fun resetAllDiscoverCardsDebugOnly()
+
+    fun getCardFeedback(cardId: String): DiscoverState.DiscoverUiModel.FeedbackState?
 }

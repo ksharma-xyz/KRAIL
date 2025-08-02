@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagValue
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
+import xyz.ksharma.krail.discover.state.DiscoverState.DiscoverUiModel.FeedbackState
 import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 
 internal class RealDiscoverSydneyManager(
@@ -92,14 +93,28 @@ internal class RealDiscoverSydneyManager(
         discoverCardOrderingEngine.markCardAsSeen(cardId)
     }
 
-    override suspend fun resetAllSeenCards() {
+    override suspend fun resetAllDiscoverCardsDebugOnly() {
         log("Resetting all seen cards")
         discoverCardOrderingEngine.resetAllSeenCards()
+        discoverCardPreferences.deleteAllCardFeedback()
     }
 
-    override fun feedbackThumbButtonClicked(cardId: String, isPositive: Boolean) {
+    // region Card Feedback
+
+    override fun cardFeedbackSelected(cardId: String, isPositive: Boolean) {
         // Save in local db, so that we don't show the same feedback to user again.
         log("Feedback thumb button clicked: cardId=$cardId, isPositive=$isPositive")
         discoverCardPreferences.insertCardFeedback(cardId = cardId, isPositive = isPositive)
     }
+
+    override fun getCardFeedback(cardId: String): FeedbackState? {
+        return discoverCardPreferences.selectCardFeedback(cardId)?.let {
+            FeedbackState(
+                isPositive = it.isPositive,
+                timestamp = it.timestamp
+            )
+        }
+    }
+
+    // endregion
 }

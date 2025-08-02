@@ -125,6 +125,7 @@ fun DiscoverCard(
         discoverModel.buttons?.let { buttonsList ->
             DiscoverCardButtonRow(
                 buttonsList = buttonsList,
+                feedbackState = discoverModel.feedbackState,
                 onAppSocialLinkClicked = onAppSocialLinkClicked,
                 onPartnerSocialLinkClicked = { partnerSocialLink ->
                     onPartnerSocialLinkClicked(
@@ -145,6 +146,8 @@ fun DiscoverCard(
 @Composable
 private fun DiscoverCardButtonRow(
     buttonsList: List<Button>,
+    modifier: Modifier = Modifier,
+    feedbackState: DiscoverState.DiscoverUiModel.FeedbackState? = null,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
     onCtaClicked: (String) -> Unit,
@@ -156,13 +159,13 @@ private fun DiscoverCardButtonRow(
     if (state == null) {
         logError(
             "Invalid button combination or no buttons provided: " +
-                "${buttonsList.map { it::class.simpleName }}"
+                    "${buttonsList.map { it::class.simpleName }}"
         )
         return
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left button (always left-aligned)
@@ -203,6 +206,7 @@ private fun DiscoverCardButtonRow(
 
             is DiscoverCardButtonRowState.LeftButtonType.Feedback -> {
                 FeedbackButtonsRow(
+                    feedbackState = feedbackState,
                     onNegativeThumb = {
                         onFeedbackThumb(false)
                     },

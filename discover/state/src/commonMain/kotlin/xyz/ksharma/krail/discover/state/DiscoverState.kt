@@ -35,7 +35,16 @@ data class DiscoverState(
         val type: DiscoverCardType,
 
         val cardId: String,
-    )
+
+        val feedbackState: FeedbackState? = null,
+    ) {
+
+        @Stable
+        data class FeedbackState(
+            val isPositive: Boolean,
+            val timestamp: Long,
+        )
+    }
 }
 
 enum class DiscoverCardType {

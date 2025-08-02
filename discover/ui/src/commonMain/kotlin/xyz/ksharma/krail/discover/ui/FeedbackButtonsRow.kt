@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -31,7 +30,6 @@ import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 
@@ -48,16 +46,19 @@ fun FeedbackButtonsRow(
     var localSelected by remember { mutableStateOf<FeedbackSelectedState?>(null) }
 
     // Priority: feedbackState from DB > localSelected (for animations)
-    val currentState = feedbackState?.let {
-        if (it.isPositive) FeedbackSelectedState.Positive
-        else FeedbackSelectedState.Negative
-    } ?: localSelected
+    // Priority: feedbackState from DB > localSelected (for animations)
+    val currentState = remember(feedbackState, localSelected) {
+        feedbackState?.let {
+            if (it.isPositive) FeedbackSelectedState.Positive
+            else FeedbackSelectedState.Negative
+        } ?: localSelected
+    }
 
     val scope = rememberCoroutineScope()
 
     val thumbsAlpha = remember { Animatable(1f) }
     val buttonAlpha = remember { Animatable(0f) }
-    val buttonScale = remember { Animatable(0.95f) }
+    val buttonScale = remember { Animatable(0.5f) }
 
     fun animateToCtaState(selectedState: FeedbackSelectedState) {
         if (feedbackState == null) {

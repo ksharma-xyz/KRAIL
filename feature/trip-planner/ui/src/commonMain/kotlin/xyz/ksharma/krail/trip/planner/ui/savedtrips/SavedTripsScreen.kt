@@ -126,10 +126,9 @@ fun SavedTripsScreen(
                         Box(
                             modifier = Modifier.fillMaxWidth()
                                 .background(color = KrailTheme.colors.surface)
-                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                                .padding(vertical = 16.dp, horizontal = 16.dp),
                             contentAlignment = Alignment.CenterStart,
                         ) {
-
                             Text(
                                 text = "Saved Trips",
                                 style = KrailTheme.typography.titleMedium,
@@ -173,7 +172,7 @@ fun SavedTripsScreen(
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                                     .background(color = KrailTheme.colors.surface)
-                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                    .padding(vertical = 16.dp, horizontal = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {

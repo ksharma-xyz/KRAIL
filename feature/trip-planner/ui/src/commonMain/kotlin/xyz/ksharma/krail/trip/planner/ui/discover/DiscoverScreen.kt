@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.discover
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -35,6 +39,8 @@ fun DiscoverScreen(
     onFeedbackCta: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
     onFeedbackThumb: (isPositive: Boolean, cardId: String, cardType: DiscoverCardType) -> Unit,
     onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onCardSeen: (cardId: String) -> Unit,
+    resetAllSeenCards: () -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -47,7 +53,14 @@ fun DiscoverScreen(
                 DiscoverCardVerticalPager(
                     pages = state.discoverCardsList,
                     modifier = Modifier.fillMaxSize(),
-                    content = { cardModel ->
+                    content = { cardModel, isCardSelected ->
+
+                        if (isCardSelected) {
+                            LaunchedEffect(cardModel.cardId) {
+                                onCardSeen(cardModel.cardId)
+                            }
+                        }
+
                         DiscoverCard(
                             discoverModel = cardModel,
                             onAppSocialLinkClicked = onAppSocialLinkClicked,
@@ -98,6 +111,16 @@ fun DiscoverScreen(
                 modifier = Modifier.fillMaxWidth(),
                 onNavActionClick = onBackClick,
                 title = { },
+                actions = {
+                    // for debug only
+                    Text(
+                        "Reset", modifier = Modifier.clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = resetAllSeenCards,
+                        )
+                    )
+                }
             )
 
             Text(

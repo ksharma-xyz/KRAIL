@@ -1,22 +1,22 @@
 package xyz.ksharma.krail.sandook
 
 internal class RealDiscoverCardSeenPreferences(
-    private val queries: DiscoverCardQueries,
+    private val discoverCardQueries: DiscoverCardQueries,
 ) : DiscoverCardSeenPreferences {
 
     override fun insertCardSeen(cardId: String) {
-        queries.insertCardSeen(cardId)
+        discoverCardQueries.insertCardSeen(cardId)
     }
 
     override fun deleteCardSeenById(cardId: String) {
-        queries.deleteCardSeenById(cardId)
+        discoverCardQueries.deleteCardSeenById(cardId)
     }
 
     override fun deleteAllCardSeen() {
-        queries.deleteAllCardSeen()
+        discoverCardQueries.deleteAllCardSeen()
     }
 
     override fun selectAllCardSeen(): List<String> {
-        return queries.selectAllCardSeen().executeAsList()
+        return discoverCardQueries.selectAllCardSeen().executeAsList()
     }
 }

@@ -7,5 +7,5 @@ interface DiscoverCardOrderingEngine {
 
     suspend fun markCardAsSeen(cardId: String)
 
-    suspend fun resetSeenCards()
+    suspend fun resetAllSeenCards()
 }

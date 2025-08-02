@@ -21,39 +21,53 @@ internal class RealDiscoverSydneyManager(
     private val discoverCardOrderingEngine: DiscoverCardOrderingEngine
 ) : DiscoverSydneyManager {
 
-    private var cachedFlagValue: FlagValue? = null
-    private var cachedDiscoverModels: List<DiscoverModel>? = null
 
+    // Cache the parsed JSON card list to avoid repeated parsing.
+    private var cachedFlagValue: FlagValue? = null
+    private var cachedParsedCards: List<DiscoverModel>? = null
+
+    /**
+     * Fetches Discover cards for the UI.
+     * - Caches the parsed JSON card list to avoid repeated parsing.
+     * - Always sorts the cached list to reflect up-to-date "seen" status.
+     * - This ensures sorting is always correct, but parsing is only done when the flag changes.
+     */
     override suspend fun fetchDiscoverData(): List<DiscoverModel> {
         val currentFlagValue = flag.getFlagValue(FlagKeys.DISCOVER_SYDNEY.key)
-        if (cachedFlagValue == currentFlagValue && cachedDiscoverModels != null) {
-            return cachedDiscoverModels!!
+        val parsedCards = getOrParseCards(currentFlagValue)
+        // Always sort the cached cards to reflect latest "seen" status.
+        val sortedModels = discoverCardOrderingEngine.getSortedCards(parsedCards)
+        log("Fetched and sorted Discover Sydney cards data: ${sortedModels.size} cards")
+        return sortedModels
+    }
+
+    /**
+     * Returns the cached parsed cards if the flag value hasn't changed,
+     * otherwise parses and caches the new card list.
+     * This avoids repeated JSON parsing for the same flag value.
+     */
+    private suspend fun getOrParseCards(currentFlagValue: FlagValue): List<DiscoverModel> {
+        if (cachedFlagValue == currentFlagValue && cachedParsedCards != null) {
+            // Return cached parsed cards if flag hasn't changed.
+            return cachedParsedCards!!
         }
-        val models = currentFlagValue.toDiscoverCards()
+        // Parse and cache new cards if flag value changed.
+        val discoverCards: List<DiscoverModel> = parseCardsFromFlag(currentFlagValue)
         cachedFlagValue = currentFlagValue
-        cachedDiscoverModels = models
-        return models
+        cachedParsedCards = discoverCards
+        return discoverCards
     }
 
-    override fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean) {
-        // save in local db, so that we don't show the same feedback to user again.
-        log("Feedback thumb button clicked: feedbackId=$feedbackId, isPositive=$isPositive")
-        // todo implement feedback saving logic
-    }
-
-    override suspend fun markCardAsSeen(cardId: String) {
-        log("Marking card as seen: $cardId")
-        discoverCardOrderingEngine.markCardAsSeen(cardId)
-    }
-
-    private suspend fun FlagValue.toDiscoverCards(): List<DiscoverModel> {
-        val flagValue = this
-        log("Fetching Discover Sydney data from flag: ${FlagKeys.DISCOVER_SYDNEY.key}: $flagValue")
-
+    /**
+     * Parses the Discover cards from the given flag value.
+     * Uses default value if flag is not a JSON value.
+     */
+    private suspend fun parseCardsFromFlag(flagValue: FlagValue): List<DiscoverModel> {
+        log("Parsing Discover Sydney data from flag: ${FlagKeys.DISCOVER_SYDNEY.key}")
         return withContext(defaultDispatcher) {
             when (flagValue) {
                 is FlagValue.JsonValue -> {
-                    val jsonArray = Json.parseToJsonElement(value).jsonArray
+                    val jsonArray = Json.parseToJsonElement(flagValue.value).jsonArray
                     jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
                 }
 
@@ -70,5 +84,21 @@ internal class RealDiscoverSydneyManager(
                 }
             }
         }
+    }
+
+    override suspend fun markCardAsSeen(cardId: String) {
+        log("Marking card as seen: $cardId")
+        discoverCardOrderingEngine.markCardAsSeen(cardId)
+    }
+
+    override suspend fun resetAllSeenCards() {
+        log("Resetting all seen cards")
+        discoverCardOrderingEngine.resetAllSeenCards()
+    }
+
+    override fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean) {
+        // Save in local db, so that we don't show the same feedback to user again.
+        log("Feedback thumb button clicked: feedbackId=$feedbackId, isPositive=$isPositive")
+        // TODO: implement feedback saving logic
     }
 }

@@ -12,4 +12,6 @@ interface DiscoverSydneyManager {
     fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean)
 
     suspend fun markCardAsSeen(cardId: String)
+
+    suspend fun resetAllSeenCards()
 }

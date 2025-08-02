@@ -69,6 +69,14 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                         url = shareUrl,
                     )
                 )
+            },
+            onCardSeen = { cardId ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.CardSeen(cardId = cardId)
+                )
+            },
+            resetAllSeenCards = {
+                viewModel.onEvent(event = DiscoverEvent.ResetAllSeenCards)
             }
         )
     }

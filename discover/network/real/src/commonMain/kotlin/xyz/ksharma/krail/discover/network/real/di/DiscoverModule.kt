@@ -16,7 +16,7 @@ val discoverModule = module {
 
     single<DiscoverCardOrderingEngine> {
         RealDiscoverCardOrderingEngine(
-            discoverCardQueries = get(),
+            discoverCardPreferences = get(),
         )
     }
 }

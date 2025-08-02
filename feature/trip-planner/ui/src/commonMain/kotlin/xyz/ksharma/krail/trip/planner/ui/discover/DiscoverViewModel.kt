@@ -87,7 +87,7 @@ class DiscoverViewModel(
                 // save to db, feedback button id clicked. so that we don't show the same
                 // feedback to suer again.
                 discoverSydneyManager.feedbackThumbButtonClicked(
-                    feedbackId = event.cardId,
+                    cardId = event.cardId,
                     isPositive = event.isPositive,
                 )
                 analytics.track(

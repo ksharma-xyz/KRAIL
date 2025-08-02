@@ -14,11 +14,13 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagValue
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
+import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 
 internal class RealDiscoverSydneyManager(
     private val flag: Flag,
     private val defaultDispatcher: CoroutineDispatcher = DispatchersComponent().defaultDispatcher,
-    private val discoverCardOrderingEngine: DiscoverCardOrderingEngine
+    private val discoverCardOrderingEngine: DiscoverCardOrderingEngine,
+    private val discoverCardPreferences: DiscoverCardSeenPreferences,
 ) : DiscoverSydneyManager {
 
     // Cache the parsed JSON card list to avoid repeated parsing.
@@ -95,9 +97,9 @@ internal class RealDiscoverSydneyManager(
         discoverCardOrderingEngine.resetAllSeenCards()
     }
 
-    override fun feedbackThumbButtonClicked(feedbackId: String, isPositive: Boolean) {
+    override fun feedbackThumbButtonClicked(cardId: String, isPositive: Boolean) {
         // Save in local db, so that we don't show the same feedback to user again.
-        log("Feedback thumb button clicked: feedbackId=$feedbackId, isPositive=$isPositive")
-        // TODO: implement feedback saving logic
+        log("Feedback thumb button clicked: cardId=$cardId, isPositive=$isPositive")
+        discoverCardPreferences.insertCardFeedback(cardId = cardId, isPositive = isPositive)
     }
 }

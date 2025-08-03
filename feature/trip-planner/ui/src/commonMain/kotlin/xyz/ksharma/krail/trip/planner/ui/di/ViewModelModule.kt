@@ -54,6 +54,7 @@ val viewModelsModule = module {
             parkRideSandook = get(),
             stopResultsManager = get(),
             flag = get(),
+            preferences = get(),
         )
     }
 

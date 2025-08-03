@@ -13,6 +13,7 @@ import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.core.test.fakes.FakeParkRideService
 import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -48,6 +49,8 @@ class SavedTripsViewModelTest {
 
     private val fakeFlag: Flag = FakeFlag()
 
+    private val fakeSandookPreferences = FakeSandookPreferences()
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -60,6 +63,7 @@ class SavedTripsViewModelTest {
             parkRideSandook = fakeNswParkRideSandook,
             stopResultsManager = fakeStopResultsManager,
             flag = fakeFlag,
+            preferences = fakeSandookPreferences,
         )
     }
 

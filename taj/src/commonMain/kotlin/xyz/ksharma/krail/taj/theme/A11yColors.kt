@@ -46,12 +46,17 @@ fun getForegroundColor(
     val lightForegroundColor = md_theme_dark_onSurface
     val darkForegroundColor = md_theme_light_onSurface
 
+    val superWhiteForegroundColor = Color(0xFFFFFFFF) // A very light color for high contrast
+    val superBlackForegroundColor = Color(0xFF000000) // A very dark color for high contrast
+
     // Return the color with a sufficient contrast ratio
     return if (lightForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
         lightForegroundColor
-    } else {
+    } else if (darkForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
         darkForegroundColor
-    }
+    } else if (superWhiteForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
+        superWhiteForegroundColor
+    } else superBlackForegroundColor
 }
 
 fun shouldUseDarkIcons(backgroundColor: Color): Boolean {

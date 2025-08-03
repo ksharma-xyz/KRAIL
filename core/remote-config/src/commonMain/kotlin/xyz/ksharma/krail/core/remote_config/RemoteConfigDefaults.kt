@@ -105,7 +105,109 @@ object RemoteConfigDefaults {
             ),
             Pair(
                 first = FlagKeys.DISCOVER_SYDNEY.key,
-                second = "[]",
+                second = """
+                    [
+                      {
+                        "cardId": "1",
+                        "title": "CITY 2 SURF",
+                        "description": "Join the iconic City 2 Surf event in Sydney! Experience the thrill of running from the city to Bondi Beach.",
+                        "startDate": "2025-12-20",
+                        "endDate": "2025-12-31",
+                        "imageList": [
+                          "https://i.imgur.com/m9kVyqt.png"
+                        ],
+                        "type": "Travel",
+                        "buttons": [
+                          {
+                            "buttonType": "Cta",
+                            "label": "Click Me",
+                            "url": "https://example.com/cta"
+                          }
+                        ]
+                      },
+                      {
+                        "cardId": "2",
+                        "title": "Park & Ride",
+                        "description": "Your guide to Park & Ride facilities in NSW. Find the nearest facility and enjoy hassle-free travel.",
+                        "disclaimer": "Image Credit: Unsplash",
+                        "imageList": [
+                          "https://i.imgur.com/LvuEwiP.png"
+                        ],
+                        "type": "Events",
+                        "buttons": []
+                      },
+                      {
+                        "cardId": "3",
+                        "title": "Follow KRAIL",
+                        "description": "Stay updated with the latest from KRAIL.",
+                        "imageList": [
+                          "https://i.imgur.com/xFahu5j.png"
+                        ],
+                        "type": "Travel",
+                        "buttons": [
+                          {
+                            "buttonType": "AppSocial"
+                          }
+                        ]
+                      },
+                      {
+                        "cardId": "4",
+                        "title": "Opal Fare Changes 2025",
+                        "description": "Opal fares are changing in 2025. Check out the latest updates and plan your travel accordingly.",
+                        "imageList": [
+                          "https://i.imgur.com/kpd99ri.png"
+                        ],
+                        "type": "Events",
+                        "buttons": [
+                          {
+                            "buttonType": "PartnerSocial",
+                            "socialPartnerName": "XYZ Place",
+                            "links": [
+                              {
+                                "type": "Facebook",
+                                "url": "https://example.com"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "cardId": "5",
+                        "title": "Park & Ride",
+                        "description": "Park & Ride is a convenient way to travel in NSW. Find out more about the facilities available.",
+                        "imageList": [
+                          "https://i.imgur.com/vMbFo2W.png"
+                        ],
+                        "type": "Events",
+                        "buttons": [
+                          {
+                            "buttonType": "Share",
+                            "shareUrl": "https://example.com/share"
+                          }
+                        ]
+                      },
+                      {
+                        "cardId": "6",
+                        "title": "Cta + Share Card",
+                        "description": "This is a sample description for the Discover Card. It can be used to display additional information.",
+                        "imageList": [
+                          "https://images.unsplash.com/photo-1752939124510-e444139e6404"
+                        ],
+                        "type": "Sports",
+                        "buttons": [
+                          {
+                            "buttonType": "Cta",
+                            "label": "Click Me",
+                            "url": "https://example.com/cta"
+                          },
+                          {
+                            "buttonType": "Share",
+                            "shareUrl": "https://example.com/share"
+                          }
+                        ]
+                      }
+                    ]
+                """.trimIndent(),
             ),
             Pair(
                 first = FlagKeys.DISCOVER_AVAILABLE.key,

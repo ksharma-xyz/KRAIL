@@ -14,4 +14,5 @@ data class SavedTripsState(
     val observeParkRideStopIdSet: ImmutableSet<String> = persistentSetOf(),
     val parkRideUiState: ImmutableList<ParkRideUiState> = persistentListOf(),
     val isDiscoverAvailable: Boolean = false,
+    val displayDiscoverBadge: Boolean = false,
 )

@@ -39,6 +39,8 @@ val barbie_pink_theme = Color(0xFFE0218A)
 
 val seed = Color(0xFFFFBA27)
 
+val md_theme_badge = Color(0xFFFF0000)
+
 @Immutable
 data class KrailColors(
     val label: Color,
@@ -52,6 +54,7 @@ data class KrailColors(
     val alert: Color,
     val softLabel: Color,
     val secondaryLabel: Color,
+    val badge: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -66,6 +69,7 @@ internal val KrailLightColors = KrailColors(
     alert = md_theme_light_alert,
     softLabel = md_theme_light_softLabel,
     secondaryLabel = md_theme_light_secondary_label,
+    badge = md_theme_badge,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -80,6 +84,7 @@ internal val KrailDarkColors = KrailColors(
     alert = md_theme_dark_alert,
     softLabel = md_theme_dark_softLabel,
     secondaryLabel = md_theme_dark_secondary_label,
+    badge = md_theme_badge,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -95,5 +100,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         alert = Color.Unspecified,
         softLabel = Color.Unspecified,
         secondaryLabel = Color.Unspecified,
+        badge = Color.Unspecified,
     )
 }

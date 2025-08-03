@@ -40,6 +40,7 @@ import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
@@ -62,6 +63,7 @@ class SavedTripsViewModel(
     private val parkRideSandook: NswParkRideSandook,
     private val stopResultsManager: StopResultsManager,
     private val flag: Flag,
+    private val preferences: SandookPreferences,
 ) : ViewModel() {
 
     private val nonPeakTimeCooldownSeconds: Long by lazy {
@@ -143,6 +145,8 @@ class SavedTripsViewModel(
 
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
                 analytics.track(AnalyticsEvent.DiscoverButtonClick)
+                preferences.markDiscoverAsClicked()
+                updateUiState { copy(displayDiscoverBadge = false) }
             }
         }
     }
@@ -511,7 +515,12 @@ class SavedTripsViewModel(
     }
 
     private fun updateDiscoverState() {
-        updateUiState { copy(isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable) }
+        updateUiState {
+            copy(
+                isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable,
+                displayDiscoverBadge = !preferences.hasDiscoverBeenClicked() && savedTrips.isNotEmpty(),
+            )
+        }
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

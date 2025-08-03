@@ -1,19 +1,28 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ButtonTokens.RoundButtonSize
 
 /**
@@ -29,6 +38,7 @@ import xyz.ksharma.krail.taj.tokens.ButtonTokens.RoundButtonSize
 fun RoundIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showBadge: Boolean = false,
     color: Color? = null,
     onClickLabel: String? = null,
     content: @Composable () -> Unit = {},
@@ -39,17 +49,65 @@ fun RoundIconButton(
     ) {
         Box(
             modifier = modifier
-                .size(RoundButtonSize) // TODO - token "SearchButtonHeight"
-                .clip(CircleShape)
-                .background(color = color ?: LocalContainerColor.current)
-                .klickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
+                .size(RoundButtonSize)
         ) {
-            content()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+                    .background(color = color ?: LocalContainerColor.current)
+                    .klickable(onClick = onClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                content()
+            }
+
+            if (showBadge) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-4).dp, y = 2.dp)
+                        .clip(CircleShape)
+                        .background(KrailTheme.colors.badge)
+                )
+            }
         }
     }
 }
 
 // region Previews
+
+@Preview
+@Composable
+private fun PreviewRoundIconButton() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        RoundIconButton(
+            onClick = { }
+        ) {
+            Image(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add"
+            )
+        }
+    }
+}
+
+
+@Preview
+@Composable
+private fun PreviewRoundIconButtonWithBadge() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        RoundIconButton(
+            showBadge = true,
+            onClick = { }
+        ) {
+            Image(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add"
+            )
+        }
+    }
+}
 
 // endregion

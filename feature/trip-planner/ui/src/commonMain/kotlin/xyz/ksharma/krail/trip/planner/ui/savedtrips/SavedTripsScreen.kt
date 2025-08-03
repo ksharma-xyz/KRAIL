@@ -85,6 +85,7 @@ fun SavedTripsScreen(
                 actions = {
                     if (savedTripsState.isDiscoverAvailable) {
                         RoundIconButton(
+                            showBadge = savedTripsState.displayDiscoverBadge,
                             onClick = onDiscoverButtonClick,
                         ) {
                             Image(

@@ -38,18 +38,18 @@ data class DiscoverState(
     )
 }
 
-enum class DiscoverCardType {
-    Krail, // general Krail related content
+enum class DiscoverCardType(val displayName: String) {
+    Krail("KRAIL"), // general Krail related content
 
-    Travel, // places to visit, travel tips etc.
+    Travel("Travel"), // places to visit, travel tips etc.
 
-    Events, // concerts, festivals etc.
+    Events("Events"), // concerts, festivals etc.
 
-    Food, // restaurants, cafes etc.
+    Food("Food"), // restaurants, cafes etc.
 
-    Sports, // football, cricket etc.
+    Sports("Sports"), // football, cricket etc.
 
-    Kids // pokemon, games etc..
+    Unknown("Unknown"); // fallback for unknown types
     ;
 }
 

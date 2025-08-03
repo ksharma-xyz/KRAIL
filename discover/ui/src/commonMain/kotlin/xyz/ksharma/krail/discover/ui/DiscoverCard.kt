@@ -334,7 +334,7 @@ val previewDiscoverCardList = listOf(
         title = "Share Only Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
-        type = DiscoverCardType.Kids,
+        type = DiscoverCardType.Travel,
         buttons = persistentListOf(
             Button.Share(
                 shareUrl = "https://example.com/share",

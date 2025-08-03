@@ -328,9 +328,11 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         )
 
         enum class CardType(val type: String) {
-            KRAIL("krail"), TRAVEL("travel"), EVENTS("events"), FOOD("food"), SPORTS("sports"), KIDS(
-                "kids"
-            ),
+            KRAIL("krail"),
+            TRAVEL("travel"),
+            EVENTS("events"),
+            FOOD("food"),
+            SPORTS("sports"),
             UNKNOWN("unknown"),
         }
 

@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -19,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
@@ -140,8 +145,18 @@ fun DiscoverScreen(
                         startY = 0f,
                         endY = Float.POSITIVE_INFINITY,
                     )
-                ).height(100.dp),
+                )
+                .navigationBarsPadding(),
         ) {
+            var selectedType by remember { mutableStateOf(DiscoverCardType.Krail) }
+            DiscoverChipRow(
+                chipTypes = DiscoverCardType.entries.toImmutableList(),
+                selectedType = selectedType,
+                modifier = Modifier.padding(vertical = 20.dp),
+                onChipSelected = { type ->
+                    selectedType = type
+                },
+            )
         }
     }
 }

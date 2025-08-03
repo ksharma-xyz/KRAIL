@@ -15,6 +15,7 @@ import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.discover.state.Button
 
+// TODO - ADD UT TESTS FOR THIS SERIALIZER
 object ButtonListSerializer : KSerializer<List<Button>> {
 
     @OptIn(InternalSerializationApi::class)

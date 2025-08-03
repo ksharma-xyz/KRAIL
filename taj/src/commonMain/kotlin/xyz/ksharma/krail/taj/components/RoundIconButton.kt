@@ -93,7 +93,6 @@ private fun PreviewRoundIconButton() {
     }
 }
 
-
 @Preview
 @Composable
 private fun PreviewRoundIconButtonWithBadge() {

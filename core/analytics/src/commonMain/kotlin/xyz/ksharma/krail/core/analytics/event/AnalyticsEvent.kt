@@ -7,8 +7,7 @@ import kotlin.time.ExperimentalTime
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
     data class ScreenViewEvent(val screen: AnalyticsScreen) : AnalyticsEvent(
-        name = "view_screen",
-        properties = mapOf("name" to screen.name)
+        name = "view_screen", properties = mapOf("name" to screen.name)
     )
 
     // region SavedTrips
@@ -48,6 +47,23 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         properties = mapOf("stopId" to stopId),
     )
 
+    data class SearchStopQuery(
+        val query: String,
+        val resultsCount: Int? = null,
+        val isError: Boolean = false,
+    ) : AnalyticsEvent(
+        name = "search_stop_query",
+        properties = mutableMapOf<String, Any>(
+            "query" to query,
+        ).apply {
+            if (isError) {
+                put("isError", isError)
+            } else if(resultsCount != null) {
+                put("resultsCount", resultsCount)
+            }
+        },
+    )
+
     // endregion
 
     // region Theme
@@ -73,31 +89,28 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId)
         )
 
-    data class SaveTripClickEvent(val fromStopId: String, val toStopId: String) :
-        AnalyticsEvent(
-            name = "save_trip_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
-        )
+    data class SaveTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
+        name = "save_trip_click",
+        properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+    )
 
-    data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) :
-        AnalyticsEvent(
-            name = "plan_trip_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
-        )
+    data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
+        name = "plan_trip_click",
+        properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+    )
 
     data class ModeClickEvent(
         val fromStopId: String,
         val toStopId: String,
         val displayModeSelectionRow: Boolean,
-    ) :
-        AnalyticsEvent(
-            name = "mode_click",
-            properties = mapOf(
-                "fromStopId" to fromStopId,
-                "toStopId" to toStopId,
-                "displayModeSelectionRow" to displayModeSelectionRow,
-            ),
-        )
+    ) : AnalyticsEvent(
+        name = "mode_click",
+        properties = mapOf(
+            "fromStopId" to fromStopId,
+            "toStopId" to toStopId,
+            "displayModeSelectionRow" to displayModeSelectionRow,
+        ),
+    )
 
     data class ModeSelectionDoneEvent(
         val fromStopId: String,
@@ -128,11 +141,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     )
 
-    data class JourneyCardExpandEvent(val hasStarted: Boolean) :
-        AnalyticsEvent(
-            name = "journey_card_expand",
-            properties = mapOf("hasStarted" to hasStarted),
-        )
+    data class JourneyCardExpandEvent(val hasStarted: Boolean) : AnalyticsEvent(
+        name = "journey_card_expand",
+        properties = mapOf("hasStarted" to hasStarted),
+    )
 
     data class JourneyCardCollapseEvent(val hasStarted: Boolean) : AnalyticsEvent(
         name = "journey_card_collapse",
@@ -177,8 +189,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val batteryLevel: Int,
         val timeZone: String,
     ) : AnalyticsEvent(
-        name = "app_start",
-        properties = mapOf(
+        name = "app_start", properties = mapOf(
             "platformType" to platformType.trim(),
             "appVersion" to appVersion.trim(),
             "osVersion" to osVersion.trim(),
@@ -203,15 +214,12 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * screen etc.
      */
     data class ReferFriend(val entryPoint: EntryPoint) : AnalyticsEvent(
-        name = "refer_friend",
-        properties = mapOf(
+        name = "refer_friend", properties = mapOf(
             "entryPoint" to entryPoint.from,
         )
     ) {
         enum class EntryPoint(val from: String) {
-            SETTINGS("settings"),
-            INTRO_BUTTON("intro_button"),
-            INTRO_CONTENT_BUTTON("intro_content_button"),
+            SETTINGS("settings"), INTRO_BUTTON("intro_button"), INTRO_CONTENT_BUTTON("intro_content_button"),
         }
     }
 
@@ -226,20 +234,13 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val pageType: InteractionPage,
         val pageNumber: Int,
     ) : AnalyticsEvent(
-        name = "intro_lets_krail",
-        properties = mapOf(
+        name = "intro_lets_krail", properties = mapOf(
             "completedOnPage" to pageType.name,
             "completedOnPageNumber" to pageNumber,
         )
     ) {
         enum class InteractionPage {
-            SAVE_TRIPS,
-            REAL_TIME_ROUTES,
-            ALERTS,
-            PLAN_TRIP,
-            SELECT_MODE,
-            INVITE_FRIENDS,
-            PARK_RIDE,
+            SAVE_TRIPS, REAL_TIME_ROUTES, ALERTS, PLAN_TRIP, SELECT_MODE, INVITE_FRIENDS, PARK_RIDE,
         }
     }
 
@@ -262,15 +263,11 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     ) {
         enum class SocialPlatformType(val platformName: String) {
-            LINKEDIN("linkedin"),
-            REDDIT("reddit"),
-            INSTAGRAM("instagram"),
-            FACEBOOK("facebook"),
+            LINKEDIN("linkedin"), REDDIT("reddit"), INSTAGRAM("instagram"), FACEBOOK("facebook"),
         }
 
         enum class SocialConnectionSource(val source: String) {
-            SETTINGS("settings"),
-            DISCOVER_CARD("discover_card"),
+            SETTINGS("settings"), DISCOVER_CARD("discover_card"),
         }
     }
 
@@ -304,8 +301,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region Discover
 
     data object DiscoverButtonClick : AnalyticsEvent(
-        name = "discover_button_click",
-        properties = mapOf("location" to "SYD")
+        name = "discover_button_click", properties = mapOf("location" to "SYD")
     )
 
     data class DiscoverCardClick(
@@ -315,8 +311,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val cardType: CardType,
         val partnerSocialLink: PartnerSocialLink? = null,
     ) : AnalyticsEvent(
-        name = "discover_card_click",
-        properties = mutableMapOf(
+        name = "discover_card_click", properties = mutableMapOf(
             "location" to location,
             "source" to source.actionName,
             "cardId" to cardId,
@@ -326,27 +321,21 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
                 put("partnerSocialPlatformName", socialLink.type.platformName)
                 put("partnerSocialPlatformUrl", socialLink.url)
             }
-        }
-    ) {
+        }) {
         data class PartnerSocialLink(
             val type: SocialConnectionLinkClickEvent.SocialPlatformType,
             val url: String,
         )
 
         enum class CardType(val type: String) {
-            KRAIL("krail"),
-            TRAVEL("travel"),
-            EVENTS("events"),
-            FOOD("food"),
-            SPORTS("sports"),
-            KIDS("kids"),
+            KRAIL("krail"), TRAVEL("travel"), EVENTS("events"), FOOD("food"), SPORTS("sports"), KIDS(
+                "kids"
+            ),
             UNKNOWN("unknown"),
         }
 
         enum class Source(val actionName: String) {
-            CTA_CLICK("cta_click"),
-            SHARE_CLICK("share"),
-            PARTNER_SOCIAL_LINK("partner_social_link"),
+            CTA_CLICK("cta_click"), SHARE_CLICK("share"), PARTNER_SOCIAL_LINK("partner_social_link"),
         }
     }
 
@@ -354,8 +343,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val cardSeenCount: Int,
         val location: String = "SYD",
     ) : AnalyticsEvent(
-        name = "discover_session_complete",
-        properties = mutableMapOf(
+        name = "discover_session_complete", properties = mutableMapOf(
             "cardSeenCount" to cardSeenCount,
             "location" to location,
         )

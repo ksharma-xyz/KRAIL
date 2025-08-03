@@ -52,9 +52,15 @@ class SearchStopViewModel(
             runCatching {
                 val stopResults = stopResultsManager.fetchStopResults(query)
                 updateUiState { displayData(stopResults) }
+                analytics.track(
+                    AnalyticsEvent.SearchStopQuery(query = query, resultsCount = stopResults.size)
+                )
             }.getOrElse {
                 delay(1000) // buffer for API response before displaying error.
                 updateUiState { displayError() }
+                analytics.track(
+                    AnalyticsEvent.SearchStopQuery(query = query, isError = true)
+                )
             }
         }
     }

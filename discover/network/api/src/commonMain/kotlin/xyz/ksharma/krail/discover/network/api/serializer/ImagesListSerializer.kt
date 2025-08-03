@@ -7,6 +7,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+// TODO - ADD UT TESTS FOR THIS SERIALIZER
 object ImagesListSerializer : KSerializer<List<String>> {
     private val listSerializer = ListSerializer(String.Companion.serializer())
     override val descriptor: SerialDescriptor = listSerializer.descriptor

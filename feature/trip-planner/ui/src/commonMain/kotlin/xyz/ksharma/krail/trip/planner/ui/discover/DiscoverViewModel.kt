@@ -31,6 +31,7 @@ import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 
+// TODO - Add UTs
 class DiscoverViewModel(
     private val discoverSydneyManager: DiscoverSydneyManager,
     private val ioDispatcher: CoroutineDispatcher,

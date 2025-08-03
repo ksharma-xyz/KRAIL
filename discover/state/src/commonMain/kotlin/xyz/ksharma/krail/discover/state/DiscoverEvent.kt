@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.discover.state
 
+import xyz.ksharma.krail.discover.state.Button.Social.PartnerSocial.PartnerSocialLink
 import xyz.ksharma.krail.social.state.KrailSocialType
-import  xyz.ksharma.krail.discover.state.Button.Social.PartnerSocial.PartnerSocialLink
 
 sealed interface DiscoverEvent {
 
@@ -26,25 +26,7 @@ sealed interface DiscoverEvent {
         val cardType: DiscoverCardType,
     ) : DiscoverEvent
 
-    /**
-     * Event triggered when the user clicks on the feedback thumbs up/down button.
-     * @param isPositive
-     *          true if the user clicked the thumbs up button,
-     *          false if they clicked the thumbs down button.
-     */
-    data class FeedbackThumbButtonClicked(
-        val isPositive: Boolean,
-        val cardId: String,
-        val cardType: DiscoverCardType,
-    ) : DiscoverEvent
-
-    data class FeedbackCtaButtonClicked(
-        val isPositive: Boolean,
-        val cardId: String,
-        val cardType: DiscoverCardType,
-    ) : DiscoverEvent
-
     data class CardSeen(val cardId: String) : DiscoverEvent
 
-    data object ResetAllSeenCards: DiscoverEvent
+    data object ResetAllSeenCards : DiscoverEvent
 }

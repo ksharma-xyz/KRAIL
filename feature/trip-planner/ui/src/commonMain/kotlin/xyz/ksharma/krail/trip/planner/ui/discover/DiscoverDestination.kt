@@ -42,24 +42,6 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                     )
                 )
             },
-            onFeedbackCta = { isPositive, cardId, cardType ->
-                viewModel.onEvent(
-                    event = DiscoverEvent.FeedbackCtaButtonClicked(
-                        isPositive = isPositive,
-                        cardId = cardId,
-                        cardType = cardType,
-                    )
-                )
-            },
-            onFeedbackThumb = { isPositive, cardId, cardType ->
-                viewModel.onEvent(
-                    event = DiscoverEvent.FeedbackThumbButtonClicked(
-                        isPositive = isPositive,
-                        cardId = cardId,
-                        cardType = cardType,
-                    )
-                )
-            },
             onShareClick = { shareUrl, cardId, cardType ->
                 viewModel.onEvent(
                     event = DiscoverEvent.ShareButtonClicked(

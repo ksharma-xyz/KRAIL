@@ -28,8 +28,8 @@ object ButtonListSerializer : KSerializer<List<Button>> {
         return jsonArray.mapNotNull { buttonElement ->
             val buttonObj = buttonElement.jsonObject
 
-            when (buttonObj["buttonType"]?.jsonPrimitive?.content) {
-                "Cta" -> {
+            when (buttonObj["buttonType"]?.jsonPrimitive?.content?.lowercase()) {
+                "cta" -> {
                     val label = buttonObj["label"]?.jsonPrimitive?.content
                     val url = buttonObj["url"]?.jsonPrimitive?.content
                     require(!label.isNullOrBlank()) { "Button Cta label cannot be null or blank" }
@@ -41,7 +41,7 @@ object ButtonListSerializer : KSerializer<List<Button>> {
                     )
                 }
 
-                "Share" -> {
+                "share" -> {
                     val shareUrl = buttonObj["shareUrl"]?.jsonPrimitive?.content
                     require(!shareUrl.isNullOrBlank()) { "Button Share URL cannot be null or blank" }
 
@@ -50,21 +50,9 @@ object ButtonListSerializer : KSerializer<List<Button>> {
                     )
                 }
 
-                "Feedback" -> {
-                    val label = buttonObj["label"]?.jsonPrimitive?.content
-                    val url = buttonObj["url"]?.jsonPrimitive?.content
-                    require(!label.isNullOrBlank()) { "Button Feedback label cannot be null or blank" }
-                    require(!url.isNullOrBlank()) { "Button Feedback URL cannot be null or blank" }
+                "appsocial" -> Button.Social.AppSocial
 
-                    Button.Feedback(
-                        label = label,
-                        url = url,
-                    )
-                }
-
-                "AppSocial" -> Button.Social.AppSocial
-
-                "PartnerSocial" -> {
+                "partnersocial" -> {
                     val partnerName = buttonObj["socialPartnerName"]?.jsonPrimitive?.content
                     require(!partnerName.isNullOrBlank()) { "Button PartnerSocial socialPartnerName cannot be null or blank" }
                     val linksA = buttonObj["links"]?.jsonArray

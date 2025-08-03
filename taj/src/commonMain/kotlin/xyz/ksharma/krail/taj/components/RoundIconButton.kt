@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentColor
@@ -23,6 +22,7 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.tokens.BadgeTokens
 import xyz.ksharma.krail.taj.tokens.ButtonTokens.RoundButtonSize
 
 /**
@@ -65,9 +65,9 @@ fun RoundIconButton(
             if (showBadge) {
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
+                        .size(BadgeTokens.BadgeSize)
                         .align(Alignment.TopEnd)
-                        .offset(x = (-4).dp, y = 2.dp)
+                        .offset(x = BadgeTokens.BadgeOffsetX, y = BadgeTokens.BadgeOffsetY)
                         .clip(CircleShape)
                         .background(KrailTheme.colors.badge)
                 )

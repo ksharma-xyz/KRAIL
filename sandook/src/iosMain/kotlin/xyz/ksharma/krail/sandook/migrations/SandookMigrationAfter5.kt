@@ -14,14 +14,6 @@ internal object SandookMigrationAfter5 : SandookMigration {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     cardId TEXT NOT NULL UNIQUE
                 );
-
-                CREATE TABLE IF NOT EXISTS DiscoverCardFeedback (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    cardId TEXT NOT NULL UNIQUE,
-                    isPositive INTEGER NOT NULL, -- 1 for positive, 0 for negative
-                    timestamp INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
-                    isCompleted INTEGER NOT NULL DEFAULT 0 -- 1 for completed, 0 for not completed
-                );
             """.trimIndent(),
             parameters = 0,
         )

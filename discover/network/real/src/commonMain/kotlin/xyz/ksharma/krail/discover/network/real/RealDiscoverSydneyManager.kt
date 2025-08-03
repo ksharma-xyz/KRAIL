@@ -14,14 +14,11 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagValue
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
-import xyz.ksharma.krail.discover.state.DiscoverState.DiscoverUiModel.FeedbackState
-import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 
 internal class RealDiscoverSydneyManager(
     private val flag: Flag,
     private val defaultDispatcher: CoroutineDispatcher = DispatchersComponent().defaultDispatcher,
     private val discoverCardOrderingEngine: DiscoverCardOrderingEngine,
-    private val discoverCardPreferences: DiscoverCardSeenPreferences,
 ) : DiscoverSydneyManager {
 
     // Cache the parsed JSON card list to avoid repeated parsing.
@@ -37,10 +34,12 @@ internal class RealDiscoverSydneyManager(
     override suspend fun fetchDiscoverData(): List<DiscoverModel> {
         val currentFlagValue = flag.getFlagValue(FlagKeys.DISCOVER_SYDNEY.key)
         val parsedCards = getOrParseCards(currentFlagValue)
-        // Always sort the cached cards to reflect latest "seen" status.
-        val sortedModels = discoverCardOrderingEngine.getSortedCards(parsedCards)
-        log("Fetched and sorted Discover Sydney cards data: ${sortedModels.size} cards")
-        return sortedModels
+
+        // Sort first, then filter - maintains correct relative ordering
+        val sortedCards = discoverCardOrderingEngine.getSortedCards(parsedCards)
+
+        log("Fetched and sorted Discover Sydney cards data: ${sortedCards.size} cards")
+        return sortedCards
     }
 
     /**
@@ -96,38 +95,5 @@ internal class RealDiscoverSydneyManager(
     override suspend fun resetAllDiscoverCardsDebugOnly() {
         log("Resetting all seen cards")
         discoverCardOrderingEngine.resetAllSeenCards()
-        discoverCardPreferences.deleteAllCardFeedback()
     }
-
-    // region Card Feedback
-
-    override fun cardFeedbackSelected(cardId: String, isPositive: Boolean) {
-        // Save in local db, so that we don't show the same feedback to user again.
-        log("Feedback thumb button clicked: cardId=$cardId, isPositive=$isPositive")
-        discoverCardPreferences.insertCardFeedback(cardId = cardId, isPositive = isPositive)
-    }
-
-
-    override fun getCardFeedback(cardId: String): FeedbackState? {
-        val feedback = discoverCardPreferences.selectCardFeedback(cardId)
-
-        // Don't show feedback UI if already completed
-        return if (feedback?.isCompleted == true) {
-            null
-        } else {
-            feedback?.let {
-                FeedbackState(
-                    isPositive = it.isPositive,
-                    timestamp = it.timestamp
-                )
-            }
-        }
-    }
-
-    override fun markFeedbackAsCompleted(cardId: String) {
-        log("Marking feedback as completed: $cardId")
-        discoverCardPreferences.updateCardFeedbackCompletion(cardId, isCompleted = true)
-    }
-
-    // endregion
 }

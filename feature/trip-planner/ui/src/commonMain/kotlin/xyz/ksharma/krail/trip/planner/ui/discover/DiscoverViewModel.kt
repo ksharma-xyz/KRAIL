@@ -6,7 +6,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,12 +26,8 @@ import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
-import xyz.ksharma.krail.discover.ui.FeedbackAnimationConstants.TOTAL_FEEDBACK_ANIMATION_DURATION
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.ExperimentalTime
 
 class DiscoverViewModel(
     private val discoverSydneyManager: DiscoverSydneyManager,
@@ -88,36 +83,6 @@ class DiscoverViewModel(
                 )
             }
 
-            is DiscoverEvent.FeedbackThumbButtonClicked -> {
-                // save to db, feedback button id clicked. so that we don't show the same
-                // feedback to suer again.
-                discoverSydneyManager.cardFeedbackSelected(
-                    cardId = event.cardId,
-                    isPositive = event.isPositive,
-                )
-
-                // Delay UI state update to allow animation to complete
-                viewModelScope.launch {
-                    // delay for the animation to complete.
-                    delay(TOTAL_FEEDBACK_ANIMATION_DURATION.milliseconds)
-                    // Update only the specific card's feedback state in UI
-                    updateSpecificCardFeedbackState(
-                        cardId = event.cardId,
-                        isPositive = event.isPositive,
-                    )
-                }
-
-                analytics.track(
-                    event = DiscoverCardClick(
-                        source = if (event.isPositive)
-                            Source.FEEDBACK_POSITIVE_THUMB
-                        else Source.FEEDBACK_NEGATIVE_THUMB,
-                        cardType = event.cardType.toAnalyticsCardType(),
-                        cardId = event.cardId,
-                    ),
-                )
-            }
-
             is DiscoverEvent.ShareButtonClicked -> {
                 platformOps.sharePlainText(event.url, title = event.cardTitle)
                 analytics.track(
@@ -127,25 +92,6 @@ class DiscoverViewModel(
                         cardId = event.cardId,
                     ),
                 )
-            }
-
-            is DiscoverEvent.FeedbackCtaButtonClicked -> {
-                viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
-                    val url = if (event.isPositive) {
-                        appInfoProvider.getAppInfo().appStoreUrl
-                    } else {
-                        "mailto:hey@krail.app"
-                    }
-                    platformOps.openUrl(url = url)
-                    analytics.track(
-                        event = DiscoverCardClick(
-                            source = if (event.isPositive) Source.FEEDBACK_WRITE_REVIEW else
-                                Source.FEEDBACK_SHARE_FEEDBACK,
-                            cardType = event.cardType.toAnalyticsCardType(),
-                            cardId = event.cardId,
-                        ),
-                    )
-                }
             }
 
             is DiscoverEvent.CardSeen -> onCardSeen(event.cardId)
@@ -193,27 +139,6 @@ class DiscoverViewModel(
                 disclaimer = model.disclaimer,
                 buttons = model.buttons?.toPersistentList(),
                 cardId = model.cardId,
-                feedbackState = discoverSydneyManager.getCardFeedback(model.cardId),
-            )
-        }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun updateSpecificCardFeedbackState(cardId: String, isPositive: Boolean) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                discoverCardsList = currentState.discoverCardsList.map { card ->
-                    if (card.cardId == cardId) {
-                        card.copy(
-                            feedbackState = DiscoverState.DiscoverUiModel.FeedbackState(
-                                isPositive = isPositive,
-                                timestamp = Clock.System.now().toEpochMilliseconds(),
-                            )
-                        )
-                    } else {
-                        card
-                    }
-                }.toImmutableList()
             )
         }
     }
@@ -226,15 +151,5 @@ class DiscoverViewModel(
         super.onCleared()
         log("DiscoverViewModel cleared")
         fetchDiscoverCardsJob?.cancel()
-        // todo set feedbackComplete so this feedback card should not be displayed to user again.
-
-        // Mark all cards with feedback as completed
-        viewModelScope.launch {
-            _uiState.value.discoverCardsList.forEach { card ->
-                if (card.feedbackState != null) {
-                    discoverSydneyManager.markFeedbackAsCompleted(card.cardId)
-                }
-            }
-        }
     }
 }

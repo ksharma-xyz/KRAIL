@@ -45,6 +45,10 @@ fun <T> DiscoverCardVerticalPager(
         val screenHeight = maxHeight
         val topPadding = ((screenHeight - discoverCardHeight) / 2).coerceAtLeast(0.dp)
 
+        if (pages.isEmpty()) {
+            return@BoxWithConstraints
+        }
+
         VerticalPager(
             state = pagerState,
             pageSpacing = 20.dp,

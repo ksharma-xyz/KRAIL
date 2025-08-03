@@ -11,7 +11,6 @@ val discoverModule = module {
         RealDiscoverSydneyManager(
             flag = get(),
             discoverCardOrderingEngine = get(),
-            discoverCardPreferences = get(),
         )
     }
 

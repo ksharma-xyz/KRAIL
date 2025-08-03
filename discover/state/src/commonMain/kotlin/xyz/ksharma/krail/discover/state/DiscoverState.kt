@@ -35,16 +35,7 @@ data class DiscoverState(
         val type: DiscoverCardType,
 
         val cardId: String,
-
-        val feedbackState: FeedbackState? = null,
-    ) {
-
-        @Stable
-        data class FeedbackState(
-            val isPositive: Boolean,
-            val timestamp: Long,
-        )
-    }
+    )
 }
 
 enum class DiscoverCardType {
@@ -70,11 +61,6 @@ sealed class Button {
 
     data class Share(
         val shareUrl: String,
-    ) : Button()
-
-    data class Feedback(
-        val label: String? = null,
-        val url: String? = null,
     ) : Button()
 
     sealed class Social : Button() {
@@ -106,7 +92,6 @@ data class DiscoverCardButtonRowState(
     sealed interface LeftButtonType {
         data class Cta(val button: Button.Cta) : LeftButtonType
         data class Social(val button: Button.Social) : LeftButtonType
-        data class Feedback(val button: Button.Feedback) : LeftButtonType
     }
 
     sealed interface RightButtonType {
@@ -126,9 +111,6 @@ fun List<Button>.toButtonRowState(): DiscoverCardButtonRowState? {
             is Button.Social -> left =
                 DiscoverCardButtonRowState.LeftButtonType.Social(button)
 
-            is Button.Feedback -> left =
-                DiscoverCardButtonRowState.LeftButtonType.Feedback(button)
-
             is Button.Share -> right =
                 DiscoverCardButtonRowState.RightButtonType.Share(button)
         }
@@ -141,7 +123,6 @@ fun List<Button>.isValidButtonCombo(): Boolean {
 
     val leftTypes = listOf(
         Button.Cta::class,
-        Button.Feedback::class,
         Button.Social::class
     )
     if (types.count { it in leftTypes } > 1) return false
@@ -154,26 +135,12 @@ fun List<Button>.isValidButtonCombo(): Boolean {
         if (leftCount == 1 && !types.contains(Button.Cta::class)) return false
     }
 
-    // Cta cannot be combined with Social or Feedback
-    if (types.contains(Button.Cta::class) &&
-        (types.contains(Button.Social::class) || types.contains(
-            Button.Feedback::class
-        ))
-    ) return false
+    // Social cannot be combined with Cta
+    if (types.contains(Button.Social::class) || types.contains(Button.Cta::class)) return false
 
-    // Social cannot be combined with Feedback or Cta
-    if (types.contains(Button.Social::class) &&
-        (types.contains(Button.Feedback::class) || types.contains(Button.Cta::class))
-    ) return false
-
-    // Feedback cannot be combined with Social or Cta
-    if (types.contains(Button.Feedback::class) &&
-        (types.contains(Button.Social::class) || types.contains(Button.Cta::class))
-    ) return false
 
     // Only one of each type allowed
     if (types.count { it == Button.Cta::class } > 1) return false
-    if (types.count { it == Button.Feedback::class } > 1) return false
     if (types.count { it == Button.Social::class } > 1) return false
 
     return true

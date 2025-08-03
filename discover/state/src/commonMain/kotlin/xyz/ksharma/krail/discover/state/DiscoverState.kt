@@ -136,8 +136,7 @@ fun List<Button>.isValidButtonCombo(): Boolean {
     }
 
     // Social cannot be combined with Cta
-    if (types.contains(Button.Social::class) || types.contains(Button.Cta::class)) return false
-
+    if (types.contains(Button.Social::class) && types.contains(Button.Cta::class)) return false
 
     // Only one of each type allowed
     if (types.count { it == Button.Cta::class } > 1) return false

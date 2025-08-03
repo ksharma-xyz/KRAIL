@@ -27,6 +27,7 @@ val discoverCardHeight = 550.dp
 fun <T> DiscoverCardVerticalPager(
     pages: List<T>,
     modifier: Modifier = Modifier,
+    keySelector: (T) -> String,
     content: @Composable (T, isCardSelected: Boolean) -> Unit,
 ) {
     val initialPage = Int.MAX_VALUE / 2
@@ -55,7 +56,10 @@ fun <T> DiscoverCardVerticalPager(
             pageSize = PageSize.Fixed(
                 pageSize = discoverCardHeight,
             ),
-            key = { (it % pages.size) },
+            key = { page ->
+                val actualPage = page % pages.size
+                keySelector(pages[actualPage])
+            },
             contentPadding = PaddingValues(vertical = topPadding.coerceAtLeast(0.dp)),
             modifier = Modifier.fillMaxSize()
         ) { page ->

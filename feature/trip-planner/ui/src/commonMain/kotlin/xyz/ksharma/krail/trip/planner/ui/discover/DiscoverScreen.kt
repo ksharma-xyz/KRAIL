@@ -53,6 +53,7 @@ fun DiscoverScreen(
                 DiscoverCardVerticalPager(
                     pages = state.discoverCardsList,
                     modifier = Modifier.fillMaxSize(),
+                    keySelector = { it.cardId },
                     content = { cardModel, isCardSelected ->
 
                         if (isCardSelected) {

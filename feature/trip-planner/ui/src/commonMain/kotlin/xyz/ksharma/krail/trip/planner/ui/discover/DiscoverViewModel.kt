@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick.PartnerSocialLink
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick.Source
@@ -35,6 +37,7 @@ class DiscoverViewModel(
     private val analytics: Analytics,
     private val platformOps: PlatformOps,
     private val appInfoProvider: AppInfoProvider,
+    private val appCoroutineScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<DiscoverState> = MutableStateFlow(DiscoverState())
@@ -44,6 +47,9 @@ class DiscoverViewModel(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DiscoverState())
 
     var fetchDiscoverCardsJob: Job? = null
+
+    // track seen cards for analytics purposes
+    val analyticsSessionSeenCardIds = mutableSetOf<String>()
 
     fun onEvent(event: DiscoverEvent) {
         when (event) {
@@ -112,6 +118,7 @@ class DiscoverViewModel(
     private fun onCardSeen(cardId: String) {
         viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
             discoverSydneyManager.markCardAsSeen(cardId)
+            analyticsSessionSeenCardIds.add(cardId)
         }
     }
 
@@ -151,5 +158,14 @@ class DiscoverViewModel(
         super.onCleared()
         log("DiscoverViewModel cleared")
         fetchDiscoverCardsJob?.cancel()
+
+        // Track the completion of the discover card session
+        appCoroutineScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
+            analytics.track(
+                event = AnalyticsEvent.DiscoverCardSessionComplete(
+                    cardSeenCount = analyticsSessionSeenCardIds.size,
+                )
+            )
+        }
     }
 }

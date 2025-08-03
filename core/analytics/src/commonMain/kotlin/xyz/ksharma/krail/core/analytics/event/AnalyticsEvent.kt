@@ -303,6 +303,11 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     // region Discover
 
+    data object DiscoverButtonClick : AnalyticsEvent(
+        name = "discover_button_click",
+        properties = mapOf("location" to "SYD")
+    )
+
     data class DiscoverCardClick(
         val location: String = "SYD",
         val source: Source,
@@ -310,7 +315,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val cardType: CardType,
         val partnerSocialLink: PartnerSocialLink? = null,
     ) : AnalyticsEvent(
-        name = "discover_click",
+        name = "discover_card_click",
         properties = mutableMapOf(
             "location" to location,
             "source" to source.actionName,
@@ -339,15 +344,22 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         }
 
         enum class Source(val actionName: String) {
-            FEEDBACK_POSITIVE_THUMB("feedback_positive"),
-            FEEDBACK_NEGATIVE_THUMB("feedback_negative"),
-            FEEDBACK_SHARE_FEEDBACK("share_feedback"),
-            FEEDBACK_WRITE_REVIEW("write_review"),
             CTA_CLICK("cta_click"),
             SHARE_CLICK("share"),
             PARTNER_SOCIAL_LINK("partner_social_link"),
         }
     }
+
+    data class DiscoverCardSessionComplete(
+        val cardSeenCount: Int,
+        val location: String = "SYD",
+    ) : AnalyticsEvent(
+        name = "discover_session_complete",
+        properties = mutableMapOf(
+            "cardSeenCount" to cardSeenCount,
+            "location" to location,
+        )
+    )
 
     // endregion
 }

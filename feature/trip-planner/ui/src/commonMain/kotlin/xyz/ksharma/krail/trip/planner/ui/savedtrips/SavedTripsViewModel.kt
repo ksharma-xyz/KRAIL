@@ -142,7 +142,7 @@ class SavedTripsViewModel(
             )
 
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
-                // todo
+                analytics.track(AnalyticsEvent.DiscoverButtonClick)
             }
         }
     }

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,8 +21,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.size
-import androidx.compose.ui.unit.width
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.components.Text
@@ -31,8 +28,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeContentColor
-import xyz.ksharma.krail.taj.themeSolidBackgroundColor
+import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 
 @Composable
 fun DiscoverChip(
@@ -40,8 +37,8 @@ fun DiscoverChip(
     selected: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val selectedBackgroundColor = themeSolidBackgroundColor()
-    val unselectedBackgroundColor = KrailTheme.colors.discoverChipBackground
+    val selectedBackgroundColor = themeColor()
+    val unselectedBackgroundColor = themeBackgroundColor()
 
     val textColor = if (selected) {
         getForegroundColor(backgroundColor = selectedBackgroundColor)

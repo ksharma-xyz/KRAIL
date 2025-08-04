@@ -2,19 +2,14 @@ package xyz.ksharma.krail.discover.state
 
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.social.state.SocialType
 
 @Stable
 data class DiscoverState(
     val discoverCardsList: ImmutableList<DiscoverUiModel> = persistentListOf(),
+    val sortedDiscoverCardTypes: ImmutableList<DiscoverCardType> = persistentListOf()
 ) {
-
-    val discoverFilterChipTypes: ImmutableList<DiscoverCardType>
-        get() = discoverCardsList.map { it.type }.toSet().toImmutableList()
 
     @Stable
     data class DiscoverUiModel(

@@ -81,7 +81,7 @@ fun <T> DiscoverCardVerticalPager(
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
 
             val scale = lerp(1f, 0.95f, pageOffset.coerceIn(0f, 1f))
-            val alpha = lerp(1f, 0.2f, pageOffset.coerceIn(0f, 1f))
+            val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
 
             Box(
                 modifier = Modifier

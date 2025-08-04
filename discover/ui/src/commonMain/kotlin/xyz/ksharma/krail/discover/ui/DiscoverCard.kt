@@ -68,7 +68,7 @@ fun DiscoverCard(
     Column(
         modifier = modifier
             .height(discoverCardHeight)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(color = themeBackgroundColor()),
     ) {
         BoxWithConstraints {
@@ -89,8 +89,8 @@ fun DiscoverCard(
                 modifier = Modifier
                     .width(maxCardWidth)
                     .height(imageHeight)
-                    .padding(horizontal = 12.dp, vertical = 12.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(8.dp)),
             )
         }
 

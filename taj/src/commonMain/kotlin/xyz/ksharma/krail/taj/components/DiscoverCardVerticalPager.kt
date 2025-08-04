@@ -77,7 +77,7 @@ fun <T> DiscoverCardVerticalPager(
                         scaleY = scale
                         this.alpha = alpha
                     }
-                    .zIndex(2f - pageOffset)
+                    .zIndex(1f - pageOffset)
                     .height(discoverCardHeight)
                     .width(maxCardWidth)
                     .align(Alignment.Center),

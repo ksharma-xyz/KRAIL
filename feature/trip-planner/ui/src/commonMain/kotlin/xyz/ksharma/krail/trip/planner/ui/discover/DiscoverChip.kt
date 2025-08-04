@@ -5,18 +5,25 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.size
+import androidx.compose.ui.unit.width
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.components.Text
@@ -48,14 +55,32 @@ fun DiscoverChip(
         label = "selected_alpha"
     )
 
-    val unselectedAlpha by animateFloatAsState(
-        targetValue = if (selected) 0f else 1f,
-        animationSpec = tween(durationMillis = 200, easing = LinearEasing),
-        label = "unselected_alpha"
-    )
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val textStyle = KrailTheme.typography.title
+
+    val chipWidth = remember(type.displayName, textStyle, density) {
+        // Measure the text with bold font weight
+        val boldTextWidth = textMeasurer.measure(
+            text = type.displayName,
+            style = textStyle.copy(fontWeight = FontWeight.Bold)
+        ).size.width
+
+        // Measure the text with normal font weight
+        val normalTextWidth = textMeasurer.measure(
+            text = type.displayName,
+            style = textStyle.copy(fontWeight = FontWeight.Normal)
+        ).size.width
+
+        // Take the maximum of the two and add padding
+        with(density) {
+            (maxOf(boldTextWidth, normalTextWidth) / density.density).dp + 32.dp
+        }
+    }
 
     Box(
         modifier = modifier
+            .width(chipWidth)
             .clip(RoundedCornerShape(50))
             .background(color = Color.Transparent)
             .drawBehind {

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -48,8 +49,21 @@ fun DiscoverChip(
 
     val selectedAlpha by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
-        animationSpec = tween(durationMillis = 200, easing = LinearEasing),
+        animationSpec = tween(durationMillis = 300, easing = LinearEasing),
         label = "selected_alpha"
+    )
+
+    // Bubble scale animation
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.1f else 1f,
+        animationSpec = if (selected) {
+            // When becoming selected: quick grow then settle
+            tween(durationMillis = 400, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+        } else {
+            // When becoming deselected: quick shrink
+            tween(durationMillis = 200, easing = androidx.compose.animation.core.FastOutLinearInEasing)
+        },
+        label = "bubble_scale"
     )
 
     val textMeasurer = rememberTextMeasurer()
@@ -57,19 +71,16 @@ fun DiscoverChip(
     val textStyle = KrailTheme.typography.title
 
     val chipWidth = remember(type.displayName, textStyle, density) {
-        // Measure the text with bold font weight
         val boldTextWidth = textMeasurer.measure(
             text = type.displayName,
             style = textStyle.copy(fontWeight = FontWeight.Bold)
         ).size.width
 
-        // Measure the text with normal font weight
         val normalTextWidth = textMeasurer.measure(
             text = type.displayName,
             style = textStyle.copy(fontWeight = FontWeight.Normal)
         ).size.width
 
-        // Take the maximum of the two and add padding
         with(density) {
             (maxOf(boldTextWidth, normalTextWidth) / density.density).dp + 32.dp
         }
@@ -78,6 +89,10 @@ fun DiscoverChip(
     Box(
         modifier = modifier
             .width(chipWidth)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(50))
             .background(color = Color.Transparent)
             .drawBehind {

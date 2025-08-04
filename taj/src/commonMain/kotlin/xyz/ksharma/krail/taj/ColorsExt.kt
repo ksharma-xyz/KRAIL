@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.absoluteValue
 
 fun String.hexToComposeColor(): Color {
@@ -210,4 +211,44 @@ fun darkenColor(color: Int, factor: Float = 0.2f): Int {
 
     // Convert back to RGB and return the color as an Int
     return hsvToColor(hsv)
+}
+
+@Composable
+fun themeSolidBackgroundColor(): Color {
+    val themeColor by LocalThemeColor.current
+    return if (isSystemInDarkTheme()) {
+        // Blend the theme color with dark surface for solid color
+        blendColors(
+            foreground = themeColor.hexToComposeColor().copy(alpha = 0.45f),
+            background = KrailTheme.colors.surface
+        )
+    } else {
+        // Blend the theme color with light surface for solid color
+        blendColors(
+            foreground = themeColor.hexToComposeColor().copy(alpha = 0.15f),
+            background = KrailTheme.colors.surface
+        )
+    }
+}
+
+/**
+ * Blends two colors based on the alpha of the foreground color.
+ *
+ * This function takes a foreground color and a background color, and blends them
+ * according to the alpha value of the foreground color. The resulting color is
+ * a mix of both colors, with the foreground color's alpha determining how much
+ * of each color is present in the final result.
+ *
+ * @param foreground The foreground color to blend.
+ * @param background The background color to blend with.
+ * @return A new Color that is a blend of the foreground and background colors.
+ */
+private fun blendColors(foreground: Color, background: Color): Color {
+    val alpha = foreground.alpha
+    return Color(
+        red = foreground.red * alpha + background.red * (1 - alpha),
+        green = foreground.green * alpha + background.green * (1 - alpha),
+        blue = foreground.blue * alpha + background.blue * (1 - alpha),
+        alpha = 1f
+    )
 }

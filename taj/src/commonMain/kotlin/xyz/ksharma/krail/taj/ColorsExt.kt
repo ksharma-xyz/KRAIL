@@ -182,7 +182,7 @@ private fun Int.toHex(): String {
     return this.toString(16).padStart(2, '0').uppercase()
 }
 
-private fun Color.darken(factor: Float = 0.2f): Color {
+fun Color.darken(factor: Float = 0.2f): Color {
     val argb = this.toArgb()
     val darkArgb = darkenColor(argb, factor)
     return Color(darkArgb)

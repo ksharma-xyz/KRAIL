@@ -45,12 +45,18 @@ fun getForegroundColor(
     // Default to predefined light and dark theme colors
     val lightForegroundColor = md_theme_dark_onSurface
     val darkForegroundColor = md_theme_light_onSurface
+    val highContrastLightForegroundColor = Color(0xFF000000) // High contrast light color
+    val highContrastDarkForegroundColor = Color(0xFFFFFFFF) // High contrast dark color
 
     // Return the color with a sufficient contrast ratio
     return if (lightForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
         lightForegroundColor
-    } else {
+    } else if (darkForegroundColor.contrastRatio( backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
         darkForegroundColor
+    } else if(highContrastLightForegroundColor.contrastRatio( backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
+       highContrastLightForegroundColor
+    } else {
+        highContrastDarkForegroundColor
     }
 }
 

@@ -2,13 +2,19 @@ package xyz.ksharma.krail.discover.state
 
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.social.state.SocialType
 
 @Stable
 data class DiscoverState(
     val discoverCardsList: ImmutableList<DiscoverUiModel> = persistentListOf(),
 ) {
+
+    val discoverFilterChipTypes: ImmutableList<DiscoverCardType>
+        get() = discoverCardsList.map { it.type }.toSet().toImmutableList()
 
     @Stable
     data class DiscoverUiModel(
@@ -38,19 +44,13 @@ data class DiscoverState(
     )
 }
 
-enum class DiscoverCardType(val displayName: String) {
-    Krail("KRAIL"), // general Krail related content
-
-    Travel("Travel"), // places to visit, travel tips etc.
-
-    Events("Events"), // concerts, festivals etc.
-
-    Food("Food"), // restaurants, cafes etc.
-
-    Sports("Sports"), // football, cricket etc.
-
-    Unknown("Unknown"); // fallback for unknown types
-    ;
+enum class DiscoverCardType(val displayName: String, val sortOrder: Int) {
+    Krail("KRAIL", 0), // general Krail related content
+    Travel("Travel", 1), // places to visit, travel tips etc.
+    Events("Events", 2), // concerts, festivals etc.
+    Food("Food", 3), // restaurants, cafes etc.
+    Sports("Sports", 4), // football, cricket etc.
+    Unknown("Unknown", 999); // fallback for unknown types - always last
 }
 
 sealed class Button {

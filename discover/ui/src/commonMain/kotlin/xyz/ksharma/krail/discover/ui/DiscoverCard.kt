@@ -2,7 +2,6 @@ package xyz.ksharma.krail.discover.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -15,16 +14,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
@@ -49,7 +44,6 @@ import xyz.ksharma.krail.discover.state.toButtonRowState
 import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.social.ui.SocialConnectionRow
-import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.brighten
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -59,7 +53,6 @@ import xyz.ksharma.krail.taj.components.rememberCardHeight
 import xyz.ksharma.krail.taj.darken
 import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import app.krail.taj.resources.Res as TajRes
 
@@ -173,7 +166,7 @@ fun createAdaptiveBackground(): Color {
         // Dark mode: blend theme color with darkened surface (towards black)
         blendColors(
             foreground = themeColor.copy(alpha = 0.15f), // Reduced alpha for subtlety
-            background = surfaceColor.darken(0.65f)     // More darkening towards black
+            background = surfaceColor.darken(0.45f)     // More darkening towards black
         )
     } else {
         // Light mode: blend theme color with brightened surface (towards white)
@@ -224,6 +217,7 @@ private fun DiscoverCardButtonRow(
             is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
                 Button(
                     dimensions = ButtonDefaults.mediumButtonSize(),
+                    colors = ButtonDefaults.monochromeButtonColors(),
                     onClick = {
                         onCtaClicked(left.button.url)
                     },

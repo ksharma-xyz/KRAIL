@@ -273,7 +273,13 @@ object ButtonDefaults {
             mutableStateOf(hexContainerColor.hexToComposeColor())
         }
         val containerColor = customContainerColor ?: defaultContainerColor
-        val defaultContentColor: Color by remember { mutableStateOf(getForegroundColor(containerColor)) }
+        val defaultContentColor: Color by remember {
+            mutableStateOf(
+                getForegroundColor(
+                    containerColor
+                )
+            )
+        }
         val contentColor = customContentColor ?: defaultContentColor
 
         return ButtonColors(
@@ -281,6 +287,14 @@ object ButtonDefaults {
             contentColor = contentColor,
             disabledContainerColor = containerColor.copy(alpha = DisabledContentAlpha),
             disabledContentColor = contentColor.copy(alpha = DisabledContentAlpha),
+        )
+    }
+
+    @Composable
+    fun monochromeButtonColors(): ButtonColors {
+        return buttonColors(
+            customContainerColor = KrailTheme.colors.onSurface,
+            customContentColor = KrailTheme.colors.surface,
         )
     }
 

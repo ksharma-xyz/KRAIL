@@ -77,7 +77,7 @@ fun DiscoverChip(
 
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val textStyle = KrailTheme.typography.labelSmall
+    val textStyle = KrailTheme.typography.bodyLarge
 
     val chipWidth = remember(type.displayName, textStyle, density, horizontalPadding) {
         val boldTextWidth = textMeasurer.measure(
@@ -113,7 +113,7 @@ fun DiscoverChip(
     ) {
         Text(
             text = type.displayName,
-            style = KrailTheme.typography.title.copy(
+            style = textStyle.copy(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             ),
             maxLines = 1,

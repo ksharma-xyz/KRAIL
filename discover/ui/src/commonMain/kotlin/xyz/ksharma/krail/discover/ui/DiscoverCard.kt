@@ -46,7 +46,7 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.discoverCardHeight
+import xyz.ksharma.krail.taj.components.rememberCardHeight
 import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
@@ -65,6 +65,8 @@ fun DiscoverCard(
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
     onShareClick: (String) -> Unit = {},
 ) {
+    val discoverCardHeight = rememberCardHeight()
+
     Column(
         modifier = modifier
             .height(discoverCardHeight)
@@ -89,22 +91,22 @@ fun DiscoverCard(
                 modifier = Modifier
                     .width(maxCardWidth)
                     .height(imageHeight)
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    //.padding(horizontal = 8.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
             )
         }
 
         Text(
             text = discoverModel.title,
-            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp).padding(top = 12.dp),
             maxLines = 2,
             style = KrailTheme.typography.headlineSmall,
         )
 
         Text(
             text = discoverModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null) 2 else 3,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null || !discoverModel.buttons.isNullOrEmpty()) 2 else 3,
             style = KrailTheme.typography.bodyMedium,
             color = KrailTheme.colors.secondaryLabel,
         )
@@ -112,7 +114,7 @@ fun DiscoverCard(
         discoverModel.disclaimer?.let { disclaimer ->
             Text(
                 text = disclaimer,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 12.dp),
                 maxLines = 1,
                 style = KrailTheme.typography.labelSmall,
             )
@@ -133,6 +135,7 @@ fun DiscoverCard(
                     onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                 },
                 onShareClick = onShareClick,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 20.dp)
             )
         }
     }
@@ -157,7 +160,7 @@ private fun DiscoverCardButtonRow(
     }
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left button (always left-aligned)

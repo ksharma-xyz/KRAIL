@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -18,7 +20,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun DiscoverChipRow(
-    chipTypes: Set<DiscoverCardType>,
+    chipTypes: ImmutableList<DiscoverCardType>,
     selectedType: DiscoverCardType,
     onChipSelected: (DiscoverCardType) -> Unit,
     modifier: Modifier = Modifier,
@@ -29,7 +31,7 @@ fun DiscoverChipRow(
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         items(
-            items = chipTypes.toList(),
+            items = chipTypes,
             key = { type ->
                 type.displayName
             },
@@ -60,7 +62,7 @@ private fun DiscoverChipRowPreview() {
                 DiscoverCardType.Events,
                 DiscoverCardType.Food,
                 DiscoverCardType.Sports,
-            ),
+            ).toImmutableList(),
             selectedType = DiscoverCardType.Travel,
             onChipSelected = { }
         )

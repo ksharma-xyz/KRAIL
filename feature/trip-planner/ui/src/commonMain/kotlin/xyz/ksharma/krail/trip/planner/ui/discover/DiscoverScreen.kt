@@ -119,11 +119,7 @@ fun DiscoverScreen(
 
             Text(
                 text = "What's On, Sydney!", // todo -dynamically from config.
-                style = if (fontScale < 1.5f) {
-                    KrailTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal)
-                } else {
-                    KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal)
-                },
+                style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
                     .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)

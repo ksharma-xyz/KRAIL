@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverCardType
@@ -37,6 +38,8 @@ fun DiscoverChip(
     type: DiscoverCardType,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = DiscoverChipDefaults.ChipHorizontalPadding,
+    verticalPadding: Dp = DiscoverChipDefaults.ChipVerticalPadding,
 ) {
     val selectedBackgroundColor = themeColor()
     val unselectedBackgroundColor = themeBackgroundColor()
@@ -58,19 +61,25 @@ fun DiscoverChip(
         targetValue = if (selected) 1.1f else 1f,
         animationSpec = if (selected) {
             // When becoming selected: quick grow then settle
-            tween(durationMillis = 400, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+            tween(
+                durationMillis = 400,
+                easing = androidx.compose.animation.core.FastOutSlowInEasing
+            )
         } else {
             // When becoming deselected: quick shrink
-            tween(durationMillis = 200, easing = androidx.compose.animation.core.FastOutLinearInEasing)
+            tween(
+                durationMillis = 200,
+                easing = androidx.compose.animation.core.FastOutLinearInEasing
+            )
         },
         label = "bubble_scale"
     )
 
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val textStyle = KrailTheme.typography.title
+    val textStyle = KrailTheme.typography.labelSmall
 
-    val chipWidth = remember(type.displayName, textStyle, density) {
+    val chipWidth = remember(type.displayName, textStyle, density, horizontalPadding) {
         val boldTextWidth = textMeasurer.measure(
             text = type.displayName,
             style = textStyle.copy(fontWeight = FontWeight.Bold)
@@ -82,7 +91,7 @@ fun DiscoverChip(
         ).size.width
 
         with(density) {
-            (maxOf(boldTextWidth, normalTextWidth) / density.density).dp + 32.dp
+            (maxOf(boldTextWidth, normalTextWidth) / density.density).dp + (horizontalPadding * 4)
         }
     }
 
@@ -107,8 +116,9 @@ fun DiscoverChip(
             style = KrailTheme.typography.title.copy(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             ),
+            maxLines = 1,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = verticalPadding),
         )
     }
 }

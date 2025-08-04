@@ -148,9 +148,9 @@ fun DiscoverScreen(
                 )
                 .navigationBarsPadding(),
         ) {
-            var selectedType by remember { mutableStateOf(DiscoverCardType.Krail) }
+            var selectedType by remember { mutableStateOf(DiscoverCardType.Travel) }
             DiscoverChipRow(
-                chipTypes = DiscoverCardType.entries.toImmutableList(),
+                chipTypes = state.discoverFilterChipTypes,
                 selectedType = selectedType,
                 modifier = Modifier.padding(vertical = 20.dp),
                 onChipSelected = { type ->

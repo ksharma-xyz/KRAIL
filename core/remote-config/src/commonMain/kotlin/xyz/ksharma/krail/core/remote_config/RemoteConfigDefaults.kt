@@ -178,7 +178,7 @@ object RemoteConfigDefaults {
                         "imageList": [
                           "https://i.imgur.com/vMbFo2W.png"
                         ],
-                        "type": "Events",
+                        "type": "Food",
                         "buttons": [
                           {
                             "buttonType": "Share",

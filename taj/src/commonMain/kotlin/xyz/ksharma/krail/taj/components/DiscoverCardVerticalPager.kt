@@ -42,7 +42,12 @@ fun <T> DiscoverCardVerticalPager(
     keySelector: (T) -> String,
     content: @Composable (T, isCardSelected: Boolean) -> Unit,
 ) {
-    val initialPage = Int.MAX_VALUE / 2
+    if (pages.isEmpty()) return
+
+    // Calculate initial page to ensure first card (index 0) is shown
+    val baseInitialPage = Int.MAX_VALUE / 2
+    val initialPage = baseInitialPage - (baseInitialPage % pages.size)
+
     val pagerState = rememberPagerState(
         initialPage = initialPage,
         pageCount = { Int.MAX_VALUE }
@@ -53,22 +58,14 @@ fun <T> DiscoverCardVerticalPager(
         modifier = modifier
             .fillMaxSize()
     ) {
-        val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
-
-        // Calculate padding to center the selected item
+        val maxCardWidth = maxWidth - 24.dp
         val screenHeight = maxHeight
         val topPadding = ((screenHeight - discoverCardHeight) / 2).coerceAtLeast(0.dp)
-
-        if (pages.isEmpty()) {
-            return@BoxWithConstraints
-        }
 
         VerticalPager(
             state = pagerState,
             pageSpacing = 20.dp,
-            pageSize = PageSize.Fixed(
-                pageSize = discoverCardHeight,
-            ),
+            pageSize = PageSize.Fixed(pageSize = discoverCardHeight),
             key = { page ->
                 val actualPage = page % pages.size
                 keySelector(pages[actualPage])

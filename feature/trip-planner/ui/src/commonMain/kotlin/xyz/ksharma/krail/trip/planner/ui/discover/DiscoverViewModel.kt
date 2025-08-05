@@ -11,9 +11,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -44,11 +44,21 @@ class DiscoverViewModel(
     private val appCoroutineScope: CoroutineScope,
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<DiscoverState> = MutableStateFlow(DiscoverState())
-    val uiState: StateFlow<DiscoverState> = _uiState
-        .onStart {
-            fetchDiscoverCards()
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DiscoverState())
+    private val _allCards = MutableStateFlow<List<DiscoverUiModel>>(emptyList())
+    private val _selectedType = MutableStateFlow<DiscoverCardType?>(null)
+    val uiState: StateFlow<DiscoverState> = combine(
+        _allCards,
+        _selectedType
+    ) { allCards, selectedType ->
+        val filteredCards = filterDiscoverCards(selectedType, allCards)
+        DiscoverState(
+            discoverCardsList = filteredCards.toImmutableList(),
+            sortedDiscoverCardTypes = allCards.extractSortedDiscoverCardTypes(),
+            selectedType = selectedType ?: DiscoverCardType.Unknown,
+        )
+    }.onStart {
+        fetchDiscoverCards() // Fetch cards when first subscriber comes
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DiscoverState())
 
     var fetchDiscoverCardsJob: Job? = null
 
@@ -107,7 +117,13 @@ class DiscoverViewModel(
             is DiscoverEvent.CardSeen -> onCardSeen(event.cardId)
 
             DiscoverEvent.ResetAllSeenCards -> onResetAllSeenCards()
+
+            is DiscoverEvent.FilterChipClicked -> onFilterChipClicked(event.cardType)
         }
+    }
+
+    private fun onFilterChipClicked(cardType: DiscoverCardType) {
+        _selectedType.value = if (_selectedType.value == cardType) null else cardType
     }
 
     private fun onResetAllSeenCards() {
@@ -132,12 +148,7 @@ class DiscoverViewModel(
             viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
                 val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
                 log("Fetched Discover Sydney data: ${data.size}")
-                updateUiState {
-                    copy(
-                        discoverCardsList = data.toImmutableList(),
-                        sortedDiscoverCardTypes = data.extractSortedDiscoverCardTypes(),
-                    )
-                }
+                _allCards.value = data // Update _allCards instead of _uiState
             }
     }
 
@@ -164,8 +175,13 @@ class DiscoverViewModel(
         }
     }
 
-    private fun updateUiState(block: DiscoverState.() -> DiscoverState) {
-        _uiState.update(block)
+    private fun filterDiscoverCards(
+        selectedType: DiscoverCardType?,
+        allCards: List<DiscoverUiModel>
+    ): List<DiscoverUiModel> = if (selectedType != null) {
+        allCards.filter { it.type == selectedType }
+    } else {
+        allCards
     }
 
     override fun onCleared() {

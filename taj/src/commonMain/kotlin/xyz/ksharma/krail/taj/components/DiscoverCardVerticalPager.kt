@@ -11,6 +11,8 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -44,19 +46,21 @@ fun <T> DiscoverCardVerticalPager(
 ) {
     if (pages.isEmpty()) return
 
-    // Calculate initial page to ensure first card (index 0) is shown
-    val baseInitialPage = Int.MAX_VALUE / 2
-    val initialPage = baseInitialPage - (baseInitialPage % pages.size)
-
     val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { Int.MAX_VALUE }
+        initialPage = 0,
+        pageCount = { pages.size }
     )
     val discoverCardHeight = rememberCardHeight()
 
+    // Reset to first page when list changes and current page is out of bounds
+    LaunchedEffect(pages.map { keySelector(it) }) {
+        if (pagerState.currentPage >= pages.size && pages.isNotEmpty()) {
+            pagerState.scrollToPage(0)
+        }
+    }
+
     BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         val maxCardWidth = maxWidth - 24.dp
         val screenHeight = maxHeight
@@ -67,33 +71,35 @@ fun <T> DiscoverCardVerticalPager(
             pageSpacing = 20.dp,
             pageSize = PageSize.Fixed(pageSize = discoverCardHeight),
             key = { page ->
-                val actualPage = page % pages.size
-                keySelector(pages[actualPage])
+                // Add bounds check to prevent crashes
+                if (page < pages.size) keySelector(pages[page]) else "empty_$page"
             },
             contentPadding = PaddingValues(vertical = topPadding.coerceAtLeast(0.dp)),
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            val actualPage = page % pages.size
-            val isCardSelected = pagerState.currentPage == page
-            val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
+            // Add bounds check before accessing pages
+            if (page < pages.size) {
+                val isCardSelected = pagerState.currentPage == page
+                val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
 
-            val scale = lerp(1f, 0.90f, pageOffset.coerceIn(0f, 1f))
-            val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
+                val scale = lerp(1f, 0.90f, pageOffset.coerceIn(0f, 1f))
+                val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
 
-            Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        this.alpha = alpha
-                    }
-                    .zIndex(1f - pageOffset)
-                    .height(discoverCardHeight)
-                    .width(maxCardWidth)
-                    .align(Alignment.Center),
-                contentAlignment = Alignment.Center,
-            ) {
-                content(pages[actualPage], isCardSelected)
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            this.alpha = alpha
+                        }
+                        .zIndex(1f - pageOffset)
+                        .height(discoverCardHeight)
+                        .width(maxCardWidth)
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    content(pages[page], isCardSelected)
+                }
             }
         }
     }

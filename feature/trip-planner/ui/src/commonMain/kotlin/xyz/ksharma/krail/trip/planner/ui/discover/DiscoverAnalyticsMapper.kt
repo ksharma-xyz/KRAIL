@@ -9,7 +9,6 @@ internal fun DiscoverCardType.toAnalyticsCardType(): DiscoverCardClick.CardType 
     return when (this) {
         DiscoverCardType.Events -> DiscoverCardClick.CardType.EVENTS
         DiscoverCardType.Sports -> DiscoverCardClick.CardType.SPORTS
-        DiscoverCardType.Krail -> DiscoverCardClick.CardType.KRAIL
         DiscoverCardType.Travel -> DiscoverCardClick.CardType.TRAVEL
         DiscoverCardType.Food -> DiscoverCardClick.CardType.FOOD
         DiscoverCardType.Unknown -> DiscoverCardClick.CardType.UNKNOWN

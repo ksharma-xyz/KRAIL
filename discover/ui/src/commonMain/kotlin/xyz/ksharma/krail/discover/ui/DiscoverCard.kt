@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardButtonRowState
@@ -52,7 +54,7 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.rememberCardHeight
 import xyz.ksharma.krail.taj.darken
-import xyz.ksharma.krail.taj.isLargeFontScale
+import xyz.ksharma.krail.taj.getImageHeightRatio
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
@@ -98,7 +100,7 @@ fun DiscoverCard(
     ) {
         BoxWithConstraints {
             val maxCardWidth = maxWidth
-            val imageHeight = discoverCardHeight * if (isLargeFontScale()) 0.5f else 0.6f
+            val imageHeight = discoverCardHeight * getImageHeightRatio()
             val context = LocalPlatformContext.current
 
             AsyncImage(
@@ -123,14 +125,14 @@ fun DiscoverCard(
             text = discoverModel.title,
             modifier = Modifier.padding(horizontal = 12.dp).padding(top = 12.dp),
             maxLines = 2,
-            style = KrailTheme.typography.displayMedium,
+            style = KrailTheme.typography.titleLarge,
         )
 
         Text(
             text = discoverModel.description,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null || !discoverModel.buttons.isNullOrEmpty()) 2 else 3,
-            style = KrailTheme.typography.bodyLarge,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            maxLines = if (discoverModel.disclaimer != null) 2 else 3,
+            style = KrailTheme.typography.bodySmall,
             color = KrailTheme.colors.secondaryLabel,
         )
 
@@ -158,7 +160,7 @@ fun DiscoverCard(
                     onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                 },
                 onShareClick = onShareClick,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 20.dp)
+                modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp)
             )
         }
     }
@@ -213,11 +215,14 @@ private fun DiscoverCardButtonRow(
                     "${buttonsList.map { it::class.simpleName }}"
         )
         return
+    } else {
+        log("Buttons state: left=${state.left}, right=${state.right}")
     }
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         // Left button (always left-aligned)
         when (val left = state.left) {
@@ -264,6 +269,8 @@ private fun DiscoverCardButtonRow(
         // Right button (always right-aligned)
         when (val rightButton = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
+                log("Right button is Share: ${rightButton.button.shareUrl}")
+
                 RoundIconButton(
                     onClick = { onShareClick(rightButton.button.shareUrl) },
                     color = Color.Transparent,
@@ -274,14 +281,16 @@ private fun DiscoverCardButtonRow(
                         } else {
                             painterResource(TajRes.drawable.ic_android_share)
                         },
-                        contentDescription = "Invite Friends",
+                        contentDescription = "Share",
                         colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
                         modifier = Modifier.size(24.dp),
                     )
                 }
             }
 
-            null -> Unit
+            null -> {
+                log("No right button to display")
+            }
         }
     }
 }

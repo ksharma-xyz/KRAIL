@@ -107,6 +107,31 @@ object RemoteConfigDefaults {
                 first = FlagKeys.DISCOVER_SYDNEY.key,
                 second = """
                     [
+                     {
+                        "cardId": "card_ap_bakery_1",
+                        "title": "Secret Bakery Everyone’s Talking About",
+                        "description": "AP Quay by All Purpose Bakery is making waves with flaky croissants, snacks, and wine from 5pm in Circular Quay.",
+                        "imageList": [
+                          "https://i.imgur.com/EuUxtgY.png"
+                        ],
+                        "type": "Food",
+                        "buttons": [
+                          {
+                            "buttonType": "PartnerSocial",
+                            "socialPartnerName": "AP Bakery",
+                            "links": [
+                              {
+                                "type": "Instagram",
+                                "url": "https://www.instagram.com/a.p.bread/"
+                              }
+                            ]
+                          },
+                          {
+                            "buttonType": "Share",
+                            "shareUrl": "Check out AP Quay by All Purpose Bakery (https://www.instagram.com/a.p.bread/) — flaky croissants, bread snacks, and great wine in Circular Quay! Found it on the KRAIL app — your guide to the best food, travel, and events in Sydney. #KRAILApp https://krail.app"
+                          }
+                        ]
+                      },
                       {
                         "cardId": "card_1",
                         "title": "CITY 2 SURF",

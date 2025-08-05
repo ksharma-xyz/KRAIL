@@ -2,6 +2,7 @@ package xyz.ksharma.krail.discover.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,7 @@ import xyz.ksharma.krail.taj.components.rememberCardHeight
 import xyz.ksharma.krail.taj.darken
 import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import app.krail.taj.resources.Res as TajRes
 
@@ -86,6 +88,11 @@ fun DiscoverCard(
                     )
                 ),
                 shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = themeBackgroundColor(),
+                shape = RoundedCornerShape(16.dp),
             )
             .clip(RoundedCornerShape(16.dp)),
     ) {

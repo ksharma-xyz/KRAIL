@@ -131,7 +131,7 @@ object RemoteConfigDefaults {
                         "description": "Your guide to Park & Ride facilities in NSW. Find the nearest facility and enjoy hassle-free travel.",
                         "disclaimer": "Image Credit: Unsplash",
                         "imageList": [
-                          "https://i.imgur.com/LvuEwiP.png"
+                          "https://i.imgur.com/JMtCVR6.png"
                         ],
                         "type": "Events",
                         "buttons": []

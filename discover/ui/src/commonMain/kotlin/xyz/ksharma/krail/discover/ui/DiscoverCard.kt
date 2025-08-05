@@ -167,7 +167,7 @@ fun createAdaptiveBackground(): Color {
         // Dark mode: blend theme color with darkened surface (towards black)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
-            background = surfaceColor.darken(0.25f)     // More darkening towards black
+            background = surfaceColor.darken(0.15f)     // More darkening towards black
         )
     } else {
         // Light mode: blend theme color with brightened surface (towards white)

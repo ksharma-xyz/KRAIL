@@ -3,7 +3,7 @@ package xyz.ksharma.krail.taj
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 
-const val LARGE_FONT_SCALE_THRESHOLD = 1.3f
+const val LARGE_FONT_SCALE_THRESHOLD = 1.7f
 
 @Composable
 fun isLargeFontScale(): Boolean {

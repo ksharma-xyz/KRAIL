@@ -135,8 +135,8 @@ fun DiscoverScreen(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
+                            KrailTheme.colors.surface.copy(alpha = 0.10f),
                             KrailTheme.colors.surface.copy(alpha = 0.95f),
-                            KrailTheme.colors.surface.copy(alpha = 0.85f),
                         ),
                         startY = 0f,
                         endY = Float.POSITIVE_INFINITY,

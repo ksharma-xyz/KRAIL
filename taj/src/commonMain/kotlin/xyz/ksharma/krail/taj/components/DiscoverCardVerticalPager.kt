@@ -14,13 +14,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.absoluteValue
 
-val discoverCardHeight = 550.dp
+@Composable
+fun rememberCardHeight(): Dp {
+    val density = LocalDensity.current
+    if (density.fontScale <= 1.3f) {
+        return 500.dp
+    } else if (density.fontScale <= 1.7f) {
+        return 525.dp
+    } else {
+        return 550.dp
+    }
+}
 
 // todo - to be used only with a mobile , not for tablet.
 @Composable
@@ -35,6 +47,7 @@ fun <T> DiscoverCardVerticalPager(
         initialPage = initialPage,
         pageCount = { Int.MAX_VALUE }
     )
+    val discoverCardHeight = rememberCardHeight()
 
     BoxWithConstraints(
         modifier = modifier
@@ -67,8 +80,8 @@ fun <T> DiscoverCardVerticalPager(
             val isCardSelected = pagerState.currentPage == page
             val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
 
-            val scale = lerp(1f, 0.95f, pageOffset.coerceIn(0f, 1f))
-            val alpha = lerp(1f, 0.2f, pageOffset.coerceIn(0f, 1f))
+            val scale = lerp(1f, 0.90f, pageOffset.coerceIn(0f, 1f))
+            val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
 
             Box(
                 modifier = Modifier
@@ -77,7 +90,7 @@ fun <T> DiscoverCardVerticalPager(
                         scaleY = scale
                         this.alpha = alpha
                     }
-                    .zIndex(2f - pageOffset)
+                    .zIndex(1f - pageOffset)
                     .height(discoverCardHeight)
                     .width(maxCardWidth)
                     .align(Alignment.Center),
@@ -95,19 +108,4 @@ fun lerp(start: Float, end: Float, fraction: Float): Float {
 
 fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
     return (currentPage - page) + currentPageOffsetFraction
-}
-
-@Preview
-@Composable
-private fun VerticalCardStackPreview() {
-    KrailTheme {
-/*
-        DiscoverCardVerticalPager(
-            items = discoverCardList,
-            content = { cardModel ->
-                DiscoverCard(discoverCardModel = cardModel)
-            }
-        )
-*/
-    }
 }

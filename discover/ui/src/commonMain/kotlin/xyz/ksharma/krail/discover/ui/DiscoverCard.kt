@@ -2,6 +2,7 @@ package xyz.ksharma.krail.discover.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -42,14 +44,16 @@ import xyz.ksharma.krail.discover.state.toButtonRowState
 import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.social.ui.SocialConnectionRow
+import xyz.ksharma.krail.taj.brighten
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.discoverCardHeight
+import xyz.ksharma.krail.taj.components.rememberCardHeight
+import xyz.ksharma.krail.taj.darken
 import xyz.ksharma.krail.taj.isLargeFontScale
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 import app.krail.taj.resources.Res as TajRes
 
 @Composable
@@ -65,11 +69,25 @@ fun DiscoverCard(
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
     onShareClick: (String) -> Unit = {},
 ) {
+    val discoverCardHeight = rememberCardHeight()
+
+    // Create a blended background that combines theme color with surface
+    val blendedBackground = createAdaptiveBackground()
+
     Column(
         modifier = modifier
             .height(discoverCardHeight)
-            .clip(RoundedCornerShape(24.dp))
-            .background(color = themeBackgroundColor()),
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        KrailTheme.colors.surface,           // Top: pure surface
+                        blendedBackground.copy(alpha = 0.3f), // Middle: subtle blend
+                        blendedBackground.copy(alpha = 0.6f)  // Bottom: stronger blend
+                    )
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clip(RoundedCornerShape(16.dp)),
     ) {
         BoxWithConstraints {
             val maxCardWidth = maxWidth
@@ -89,22 +107,22 @@ fun DiscoverCard(
                 modifier = Modifier
                     .width(maxCardWidth)
                     .height(imageHeight)
-                    .padding(horizontal = 12.dp, vertical = 12.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    //.padding(horizontal = 8.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
             )
         }
 
         Text(
             text = discoverModel.title,
-            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp).padding(top = 12.dp),
             maxLines = 2,
             style = KrailTheme.typography.headlineSmall,
         )
 
         Text(
             text = discoverModel.description,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null) 2 else 3,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null || !discoverModel.buttons.isNullOrEmpty()) 2 else 3,
             style = KrailTheme.typography.bodyMedium,
             color = KrailTheme.colors.secondaryLabel,
         )
@@ -112,7 +130,7 @@ fun DiscoverCard(
         discoverModel.disclaimer?.let { disclaimer ->
             Text(
                 text = disclaimer,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 12.dp),
                 maxLines = 1,
                 style = KrailTheme.typography.labelSmall,
             )
@@ -133,9 +151,43 @@ fun DiscoverCard(
                     onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                 },
                 onShareClick = onShareClick,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 20.dp)
             )
         }
     }
+}
+
+@Composable
+fun createAdaptiveBackground(): Color {
+    val themeColor = themeColor()
+    val surfaceColor = KrailTheme.colors.surface
+
+    return if (isSystemInDarkTheme()) {
+        // Dark mode: blend theme color with darkened surface (towards black)
+        blendColors(
+            foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
+            background = surfaceColor.darken(0.35f)     // More darkening towards black
+        )
+    } else {
+        // Light mode: blend theme color with brightened surface (towards white)
+        blendColors(
+            foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
+            background = surfaceColor.brighten(0.15f)    // More brightening towards white
+        )
+    }
+}
+
+/**
+ * Blends two colors based on the alpha of the foreground color.
+ */
+private fun blendColors(foreground: Color, background: Color): Color {
+    val alpha = foreground.alpha
+    return Color(
+        red = foreground.red * alpha + background.red * (1 - alpha),
+        green = foreground.green * alpha + background.green * (1 - alpha),
+        blue = foreground.blue * alpha + background.blue * (1 - alpha),
+        alpha = 1f
+    )
 }
 
 @Composable
@@ -157,7 +209,7 @@ private fun DiscoverCardButtonRow(
     }
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left button (always left-aligned)
@@ -165,6 +217,7 @@ private fun DiscoverCardButtonRow(
             is DiscoverCardButtonRowState.LeftButtonType.Cta -> {
                 Button(
                     dimensions = ButtonDefaults.mediumButtonSize(),
+                    colors = ButtonDefaults.monochromeButtonColors(),
                     onClick = {
                         onCtaClicked(left.button.url)
                     },

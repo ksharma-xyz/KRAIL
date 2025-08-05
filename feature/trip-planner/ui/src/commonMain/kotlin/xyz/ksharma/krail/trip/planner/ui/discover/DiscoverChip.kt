@@ -1,9 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.discover
 
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -14,10 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -26,11 +25,11 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.darken
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 
 @Composable
@@ -41,20 +40,13 @@ fun DiscoverChip(
     horizontalPadding: Dp = DiscoverChipDefaults.ChipHorizontalPadding,
     verticalPadding: Dp = DiscoverChipDefaults.ChipVerticalPadding,
 ) {
-    val selectedBackgroundColor = themeColor()
-    val unselectedBackgroundColor = themeBackgroundColor()
-
     val textColor = if (selected) {
-        getForegroundColor(backgroundColor = selectedBackgroundColor)
+        getForegroundColor(
+            backgroundColor = if (isSystemInDarkTheme()) themeColor().darken() else themeColor(),
+        )
     } else {
         KrailTheme.colors.label
     }
-
-    val selectedAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = tween(durationMillis = 300, easing = LinearEasing),
-        label = "selected_alpha"
-    )
 
     // Bubble scale animation
     val scale by animateFloatAsState(
@@ -77,7 +69,7 @@ fun DiscoverChip(
 
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val textStyle = KrailTheme.typography.labelSmall
+    val textStyle = KrailTheme.typography.bodyLarge
 
     val chipWidth = remember(type.displayName, textStyle, density, horizontalPadding) {
         val boldTextWidth = textMeasurer.measure(
@@ -103,17 +95,20 @@ fun DiscoverChip(
                 scaleY = scale
             }
             .clip(RoundedCornerShape(50))
-            .background(color = Color.Transparent)
-            .drawBehind {
-                val blendedColor =
-                    lerp(unselectedBackgroundColor, selectedBackgroundColor, selectedAlpha)
-                drawRect(color = blendedColor)
-            },
+            .border(
+                width = 1.dp,
+                color = if (selected) Color.Transparent else themeColor(),
+                shape = RoundedCornerShape(50)
+            )
+            .background(
+                color = if (selected) if (isSystemInDarkTheme()) themeColor().darken() else themeColor() else KrailTheme.colors.discoverChipBackground,
+                shape = RoundedCornerShape(50)
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = type.displayName,
-            style = KrailTheme.typography.title.copy(
+            style = textStyle.copy(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             ),
             maxLines = 1,

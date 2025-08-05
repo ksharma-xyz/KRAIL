@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
@@ -96,7 +97,6 @@ fun DiscoverCard(
 
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .crossfade(true)
                     .data(discoverModel.imageList.firstOrNull())
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCachePolicy(CachePolicy.DISABLED)
@@ -104,10 +104,11 @@ fun DiscoverCard(
                     .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                placeholder = ColorPainter(blendedBackground),
                 modifier = Modifier
                     .width(maxCardWidth)
                     .height(imageHeight)
-                    //.padding(horizontal = 8.dp, vertical = 8.dp)
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
             )
         }
@@ -116,14 +117,14 @@ fun DiscoverCard(
             text = discoverModel.title,
             modifier = Modifier.padding(horizontal = 12.dp).padding(top = 12.dp),
             maxLines = 2,
-            style = KrailTheme.typography.headlineSmall,
+            style = KrailTheme.typography.displayMedium,
         )
 
         Text(
             text = discoverModel.description,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             maxLines = if (isLargeFontScale() && discoverModel.disclaimer != null || !discoverModel.buttons.isNullOrEmpty()) 2 else 3,
-            style = KrailTheme.typography.bodyMedium,
+            style = KrailTheme.typography.bodyLarge,
             color = KrailTheme.colors.secondaryLabel,
         )
 
@@ -166,7 +167,7 @@ fun createAdaptiveBackground(): Color {
         // Dark mode: blend theme color with darkened surface (towards black)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
-            background = surfaceColor.darken(0.35f)     // More darkening towards black
+            background = surfaceColor.darken(0.25f)     // More darkening towards black
         )
     } else {
         // Light mode: blend theme color with brightened surface (towards white)

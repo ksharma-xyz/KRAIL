@@ -41,7 +41,6 @@ data class DiscoverState(
 }
 
 enum class DiscoverCardType(val displayName: String, val sortOrder: Int) {
-    Krail("KRAIL", 0), // general Krail related content
     Travel("Travel", 1), // places to visit, travel tips etc.
     Events("Events", 2), // concerts, festivals etc.
     Food("Food", 3), // restaurants, cafes etc.

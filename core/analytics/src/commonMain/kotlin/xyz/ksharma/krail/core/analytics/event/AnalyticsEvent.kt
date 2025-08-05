@@ -58,7 +58,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ).apply {
             if (isError) {
                 put("isError", isError)
-            } else if(resultsCount != null) {
+            } else if (resultsCount != null) {
                 put("resultsCount", resultsCount)
             }
         },
@@ -301,7 +301,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region Discover
 
     data object DiscoverButtonClick : AnalyticsEvent(
-        name = "discover_button_click", properties = mapOf("location" to "SYD")
+        name = "discover_button_click",
     )
 
     data class DiscoverCardClick(
@@ -312,10 +312,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val partnerSocialLink: PartnerSocialLink? = null,
     ) : AnalyticsEvent(
         name = "discover_card_click", properties = mutableMapOf(
-            "location" to location,
+            //"location" to location,
             "source" to source.actionName,
             "cardId" to cardId,
-            "cardType" to cardType,
+            "cardType" to cardType.displayName,
         ).apply {
             partnerSocialLink?.let { socialLink ->
                 put("partnerSocialPlatformName", socialLink.type.platformName)
@@ -327,17 +327,18 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             val url: String,
         )
 
-        enum class CardType(val type: String) {
-            KRAIL("krail"),
-            TRAVEL("travel"),
-            EVENTS("events"),
-            FOOD("food"),
-            SPORTS("sports"),
-            UNKNOWN("unknown"),
+        enum class CardType(val displayName: String) {
+            TRAVEL(displayName = "Travel"),
+            EVENTS(displayName = "Events"),
+            FOOD(displayName = "Food"),
+            SPORTS(displayName = "Sports"),
+            UNKNOWN(displayName = "unknown"),
         }
 
         enum class Source(val actionName: String) {
-            CTA_CLICK("cta_click"), SHARE_CLICK("share"), PARTNER_SOCIAL_LINK("partner_social_link"),
+            CTA_CLICK("cta_click"),
+            SHARE_CLICK("share"),
+            PARTNER_SOCIAL_LINK("partner_social_link"),
         }
     }
 
@@ -345,9 +346,19 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val cardSeenCount: Int,
         val location: String = "SYD",
     ) : AnalyticsEvent(
-        name = "discover_session_complete", properties = mutableMapOf(
+        name = "discover_session_complete",
+        properties = mapOf(
             "cardSeenCount" to cardSeenCount,
             "location" to location,
+        )
+    )
+
+    data class DiscoverFilterChipSelected(
+        val cardType: DiscoverCardClick.CardType,
+    ) : AnalyticsEvent(
+        name = "discover_filter_chip_selected",
+        properties = mapOf(
+            "cardType" to cardType.displayName
         )
     )
 

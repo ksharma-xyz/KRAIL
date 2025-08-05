@@ -124,6 +124,7 @@ class DiscoverViewModel(
 
     private fun onFilterChipClicked(cardType: DiscoverCardType) {
         _selectedType.value = if (_selectedType.value == cardType) null else cardType
+        analytics.track(AnalyticsEvent.DiscoverFilterChipSelected(cardType = cardType.toAnalyticsCardType()))
     }
 
     private fun onResetAllSeenCards() {

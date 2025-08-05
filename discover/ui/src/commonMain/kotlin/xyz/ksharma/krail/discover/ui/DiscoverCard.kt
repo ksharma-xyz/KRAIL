@@ -29,7 +29,6 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import coil3.request.crossfade
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -362,7 +361,7 @@ val previewDiscoverCardList = listOf(
         title = "App Social Card",
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
-        type = DiscoverCardType.Krail,
+        type = DiscoverCardType.Food,
         buttons = persistentListOf(Button.Social.AppSocial)
     ),
     DiscoverState.DiscoverUiModel(

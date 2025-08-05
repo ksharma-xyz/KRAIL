@@ -16,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.discover.state.DiscoverCardType
@@ -36,6 +38,8 @@ fun DiscoverChip(
     type: DiscoverCardType,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = DiscoverChipDefaults.ChipHorizontalPadding,
+    verticalPadding: Dp = DiscoverChipDefaults.ChipVerticalPadding,
 ) {
     val selectedBackgroundColor = themeColor()
     val unselectedBackgroundColor = themeBackgroundColor()
@@ -48,36 +52,56 @@ fun DiscoverChip(
 
     val selectedAlpha by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
-        animationSpec = tween(durationMillis = 200, easing = LinearEasing),
+        animationSpec = tween(durationMillis = 300, easing = LinearEasing),
         label = "selected_alpha"
+    )
+
+    // Bubble scale animation
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.1f else 1f,
+        animationSpec = if (selected) {
+            // When becoming selected: quick grow then settle
+            tween(
+                durationMillis = 400,
+                easing = androidx.compose.animation.core.FastOutSlowInEasing
+            )
+        } else {
+            // When becoming deselected: quick shrink
+            tween(
+                durationMillis = 200,
+                easing = androidx.compose.animation.core.FastOutLinearInEasing
+            )
+        },
+        label = "bubble_scale"
     )
 
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    val textStyle = KrailTheme.typography.title
+    val textStyle = KrailTheme.typography.labelSmall
 
-    val chipWidth = remember(type.displayName, textStyle, density) {
-        // Measure the text with bold font weight
+    val chipWidth = remember(type.displayName, textStyle, density, horizontalPadding) {
         val boldTextWidth = textMeasurer.measure(
             text = type.displayName,
             style = textStyle.copy(fontWeight = FontWeight.Bold)
         ).size.width
 
-        // Measure the text with normal font weight
         val normalTextWidth = textMeasurer.measure(
             text = type.displayName,
             style = textStyle.copy(fontWeight = FontWeight.Normal)
         ).size.width
 
-        // Take the maximum of the two and add padding
         with(density) {
-            (maxOf(boldTextWidth, normalTextWidth) / density.density).dp + 32.dp
+            (maxOf(boldTextWidth, normalTextWidth) / density.density).dp + (horizontalPadding * 4)
         }
     }
 
     Box(
         modifier = modifier
             .width(chipWidth)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(50))
             .background(color = Color.Transparent)
             .drawBehind {
@@ -92,8 +116,9 @@ fun DiscoverChip(
             style = KrailTheme.typography.title.copy(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             ),
+            maxLines = 1,
             color = textColor,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = verticalPadding),
         )
     }
 }

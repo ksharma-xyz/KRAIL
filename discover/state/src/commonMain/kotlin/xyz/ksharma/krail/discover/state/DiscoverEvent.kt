@@ -29,4 +29,6 @@ sealed interface DiscoverEvent {
     data class CardSeen(val cardId: String) : DiscoverEvent
 
     data object ResetAllSeenCards : DiscoverEvent
+
+    data class FilterChipClicked(val cardType: DiscoverCardType) : DiscoverEvent
 }

@@ -59,6 +59,11 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
             },
             resetAllSeenCards = {
                 viewModel.onEvent(event = DiscoverEvent.ResetAllSeenCards)
+            },
+            onChipSelected = { cardType ->
+                viewModel.onEvent(
+                    event = DiscoverEvent.FilterChipClicked(cardType = cardType)
+                )
             }
         )
     }

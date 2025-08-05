@@ -11,6 +11,8 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -42,61 +44,62 @@ fun <T> DiscoverCardVerticalPager(
     keySelector: (T) -> String,
     content: @Composable (T, isCardSelected: Boolean) -> Unit,
 ) {
-    val initialPage = Int.MAX_VALUE / 2
+    if (pages.isEmpty()) return
+
     val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { Int.MAX_VALUE }
+        initialPage = 0,
+        pageCount = { pages.size }
     )
     val discoverCardHeight = rememberCardHeight()
 
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
-        val maxCardWidth = maxWidth - 48.dp // 24.dp padding on each side
+    // Reset to first page when list changes and current page is out of bounds
+    LaunchedEffect(pages.map { keySelector(it) }) {
+        if (pagerState.currentPage >= pages.size && pages.isNotEmpty()) {
+            pagerState.scrollToPage(0)
+        }
+    }
 
-        // Calculate padding to center the selected item
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize()
+    ) {
+        val maxCardWidth = maxWidth - 24.dp
         val screenHeight = maxHeight
         val topPadding = ((screenHeight - discoverCardHeight) / 2).coerceAtLeast(0.dp)
-
-        if (pages.isEmpty()) {
-            return@BoxWithConstraints
-        }
 
         VerticalPager(
             state = pagerState,
             pageSpacing = 20.dp,
-            pageSize = PageSize.Fixed(
-                pageSize = discoverCardHeight,
-            ),
+            pageSize = PageSize.Fixed(pageSize = discoverCardHeight),
             key = { page ->
-                val actualPage = page % pages.size
-                keySelector(pages[actualPage])
+                // Add bounds check to prevent crashes
+                if (page < pages.size) keySelector(pages[page]) else "empty_$page"
             },
             contentPadding = PaddingValues(vertical = topPadding.coerceAtLeast(0.dp)),
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            val actualPage = page % pages.size
-            val isCardSelected = pagerState.currentPage == page
-            val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
+            // Add bounds check before accessing pages
+            if (page < pages.size) {
+                val isCardSelected = pagerState.currentPage == page
+                val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
 
-            val scale = lerp(1f, 0.90f, pageOffset.coerceIn(0f, 1f))
-            val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
+                val scale = lerp(1f, 0.90f, pageOffset.coerceIn(0f, 1f))
+                val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
 
-            Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        this.alpha = alpha
-                    }
-                    .zIndex(1f - pageOffset)
-                    .height(discoverCardHeight)
-                    .width(maxCardWidth)
-                    .align(Alignment.Center),
-                contentAlignment = Alignment.Center,
-            ) {
-                content(pages[actualPage], isCardSelected)
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            this.alpha = alpha
+                        }
+                        .zIndex(1f - pageOffset)
+                        .height(discoverCardHeight)
+                        .width(maxCardWidth)
+                        .align(Alignment.Center),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    content(pages[page], isCardSelected)
+                }
             }
         }
     }

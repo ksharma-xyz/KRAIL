@@ -108,7 +108,7 @@ object RemoteConfigDefaults {
                 second = """
                     [
                       {
-                        "cardId": "1",
+                        "cardId": "card_1",
                         "title": "CITY 2 SURF",
                         "description": "Join the iconic City 2 Surf event in Sydney! Experience the thrill of running from the city to Bondi Beach.",
                         "startDate": "2025-12-20",
@@ -126,7 +126,7 @@ object RemoteConfigDefaults {
                         ]
                       },
                       {
-                        "cardId": "2",
+                        "cardId": "card_2",
                         "title": "Park & Ride",
                         "description": "Your guide to Park & Ride facilities in NSW. Find the nearest facility and enjoy hassle-free travel.",
                         "disclaimer": "Image Credit: Unsplash",
@@ -137,7 +137,7 @@ object RemoteConfigDefaults {
                         "buttons": []
                       },
                       {
-                        "cardId": "3",
+                        "cardId": "card_3",
                         "title": "Follow KRAIL",
                         "description": "Stay updated with the latest from KRAIL.",
                         "imageList": [
@@ -151,7 +151,7 @@ object RemoteConfigDefaults {
                         ]
                       },
                       {
-                        "cardId": "4",
+                        "cardId": "card_4",
                         "title": "Opal Fare Changes 2025",
                         "description": "Opal fares are changing in 2025. Check out the latest updates and plan your travel accordingly.",
                         "imageList": [
@@ -172,8 +172,8 @@ object RemoteConfigDefaults {
                         ]
                       },
                       {
-                        "cardId": "5",
-                        "title": "Park & Ride",
+                        "cardId": "card_5",
+                        "title": "New Park & Ride",
                         "description": "Park & Ride is a convenient way to travel in NSW. Find out more about the facilities available.",
                         "imageList": [
                           "https://i.imgur.com/vMbFo2W.png"
@@ -187,7 +187,7 @@ object RemoteConfigDefaults {
                         ]
                       },
                       {
-                        "cardId": "6",
+                        "cardId": "card_6",
                         "title": "Cta + Share Card",
                         "description": "This is a sample description for the Discover Card. It can be used to display additional information.",
                         "imageList": [

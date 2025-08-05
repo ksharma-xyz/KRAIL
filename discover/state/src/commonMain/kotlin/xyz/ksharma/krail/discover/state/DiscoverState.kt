@@ -8,7 +8,8 @@ import xyz.ksharma.krail.social.state.SocialType
 @Stable
 data class DiscoverState(
     val discoverCardsList: ImmutableList<DiscoverUiModel> = persistentListOf(),
-    val sortedDiscoverCardTypes: ImmutableList<DiscoverCardType> = persistentListOf()
+    val sortedDiscoverCardTypes: ImmutableList<DiscoverCardType> = persistentListOf(),
+    val selectedType: DiscoverCardType = DiscoverCardType.Unknown,
 ) {
 
     @Stable

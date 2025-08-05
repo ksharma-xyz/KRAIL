@@ -46,6 +46,7 @@ fun DiscoverScreen(
     onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
     onCardSeen: (cardId: String) -> Unit,
     resetAllSeenCards: () -> Unit,
+    onChipSelected: (DiscoverCardType) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -144,14 +145,11 @@ fun DiscoverScreen(
                 )
                 .navigationBarsPadding(),
         ) {
-            var selectedType by remember { mutableStateOf(DiscoverCardType.Travel) }
             DiscoverChipRow(
                 chipTypes = state.sortedDiscoverCardTypes,
-                selectedType = selectedType,
+                selectedType = state.selectedType,
                 modifier = Modifier.padding(vertical = 20.dp),
-                onChipSelected = { type ->
-                    selectedType = type
-                },
+                onChipSelected = onChipSelected,
             )
         }
     }

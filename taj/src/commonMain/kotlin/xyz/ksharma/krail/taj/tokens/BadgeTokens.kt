@@ -6,7 +6,7 @@ internal object BadgeTokens {
     /**
      * The size of the badge.
      */
-    val BadgeSize = 16.dp
+    val BadgeSize = 12.dp
 
     /**
      * The offset of the badge from the top right corner.

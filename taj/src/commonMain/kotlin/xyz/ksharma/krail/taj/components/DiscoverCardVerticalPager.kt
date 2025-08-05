@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
@@ -83,7 +84,13 @@ fun <T> DiscoverCardVerticalPager(
                 val pageOffset = pagerState.calculateCurrentOffsetForPage(page).absoluteValue
 
                 val scale = lerp(1f, 0.90f, pageOffset.coerceIn(0f, 1f))
-                val alpha = lerp(1f, 0.15f, pageOffset.coerceIn(0f, 1f))
+
+                // if light mode then 0.1f for dark mode 0.25f
+                val alpha = if (isSystemInDarkTheme()) {
+                    lerp(1f, 0.25f, pageOffset.coerceIn(0f, 1f))
+                } else {
+                    lerp(1f, 0.1f, pageOffset.coerceIn(0f, 1f))
+                }
 
                 Box(
                     modifier = Modifier

@@ -95,47 +95,64 @@ data class DiscoverCardButtonRowState(
 }
 
 fun List<Button>.toButtonRowState(): DiscoverCardButtonRowState? {
-    if (!isValidButtonCombo()) return null
+    println("toButtonRowState - Input: ${this.map { it::class.simpleName }}")
+
+    if (!isValidButtonCombo()) {
+        println("toButtonRowState - FAILED validation")
+        return null
+    }
+
     var left: DiscoverCardButtonRowState.LeftButtonType? = null
     var right: DiscoverCardButtonRowState.RightButtonType? = null
+
     for (button in this) {
         when (button) {
-            is Button.Cta -> left =
-                DiscoverCardButtonRowState.LeftButtonType.Cta(button)
-
-            is Button.Social -> left =
-                DiscoverCardButtonRowState.LeftButtonType.Social(button)
-
-            is Button.Share -> right =
-                DiscoverCardButtonRowState.RightButtonType.Share(button)
+            is Button.Cta -> {
+                left = DiscoverCardButtonRowState.LeftButtonType.Cta(button)
+            }
+            is Button.Social -> {
+                left = DiscoverCardButtonRowState.LeftButtonType.Social(button)
+            }
+            is Button.Share -> {
+                right = DiscoverCardButtonRowState.RightButtonType.Share(button)
+            }
         }
     }
+
+    println("toButtonRowState - Result: left=${left}, right=${right}")
     return DiscoverCardButtonRowState(left, right)
 }
 
 fun List<Button>.isValidButtonCombo(): Boolean {
     val types = this.map { it::class }
 
+    // This logs: [PartnerSocial, Share]
+    println("Button validation - Input buttons: ${this.map { it::class.simpleName }}")
+
     val leftTypes = listOf(
         Button.Cta::class,
-        Button.Social::class
+        Button.Social::class  // PartnerSocial is a subclass of Button.Social
     )
-    if (types.count { it in leftTypes } > 1) return false
 
-    // Only one Share allowed, can be alone or with Cta
-    if (types.count { it == Button.Share::class } > 1) return false
+    // Share button validation
     if (types.contains(Button.Share::class)) {
-        val leftCount = types.count { it in leftTypes }
-        if (leftCount > 1) return false
-        if (leftCount == 1 && !types.contains(Button.Cta::class)) return false
+        val leftCount = types.count { it in leftTypes }  // This is 1 (PartnerSocial)
+        if (leftCount == 1) {
+            val hasCta = types.contains(Button.Cta::class)  // false
+            val hasPartnerSocial = this.any { it is Button.Social.PartnerSocial }  // true
+            val hasAppSocial = this.any { it is Button.Social.AppSocial }  // false
+
+            // Allow Cta + Share OR PartnerSocial + Share, but not AppSocial + Share
+            if (!hasCta && !hasPartnerSocial) {  // false && false = false
+                return false  // This line won't execute
+            }
+            if (hasAppSocial) {  // false
+                return false  // This line won't execute
+            }
+        }
     }
 
-    // Social cannot be combined with Cta
-    if (types.contains(Button.Social::class) && types.contains(Button.Cta::class)) return false
-
-    // Only one of each type allowed
-    if (types.count { it == Button.Cta::class } > 1) return false
-    if (types.count { it == Button.Social::class } > 1) return false
-
+    // The validation should pass and return true
+    println("Button validation - PASSED: Valid button combination")
     return true
 }

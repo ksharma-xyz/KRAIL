@@ -3,7 +3,6 @@ package xyz.ksharma.krail.social.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -24,7 +23,7 @@ fun SocialConnectionRow(
     onClick: (KrailSocialType) -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         socialLinks.forEach { socialType ->
@@ -51,7 +50,7 @@ fun SocialConnectionRow(
     onClick: (PartnerSocialLink) -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         partnerSocialLinks.forEach { socialType ->

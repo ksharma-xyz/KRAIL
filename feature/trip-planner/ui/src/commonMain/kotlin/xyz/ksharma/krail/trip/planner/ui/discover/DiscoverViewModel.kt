@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.discover
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,8 +27,10 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
+import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
+import xyz.ksharma.krail.discover.state.DiscoverState.DiscoverUiModel
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 
@@ -132,14 +135,24 @@ class DiscoverViewModel(
                 updateUiState {
                     copy(
                         discoverCardsList = data.toImmutableList(),
+                        sortedDiscoverCardTypes = data.extractSortedDiscoverCardTypes(),
                     )
                 }
             }
     }
 
-    private fun List<DiscoverModel>.toDiscoverUiModelList(): List<DiscoverState.DiscoverUiModel> {
+    private fun List<DiscoverUiModel>.extractSortedDiscoverCardTypes(): ImmutableList<DiscoverCardType> {
+        val sortedTypes = this
+            .map { it.type }
+            .toSet()
+            .sortedBy { discoverCardType -> discoverCardType.sortOrder }
+            .toImmutableList()
+        return sortedTypes
+    }
+
+    private fun List<DiscoverModel>.toDiscoverUiModelList(): List<DiscoverUiModel> {
         return map { model ->
-            DiscoverState.DiscoverUiModel(
+            DiscoverUiModel(
                 title = model.title,
                 description = model.description,
                 imageList = model.imageList.toPersistentList(),

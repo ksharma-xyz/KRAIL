@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
@@ -144,7 +146,7 @@ fun DiscoverScreen(
         ) {
             var selectedType by remember { mutableStateOf(DiscoverCardType.Travel) }
             DiscoverChipRow(
-                chipTypes = state.discoverFilterChipTypes,
+                chipTypes = state.sortedDiscoverCardTypes,
                 selectedType = selectedType,
                 modifier = Modifier.padding(vertical = 20.dp),
                 onChipSelected = { type ->

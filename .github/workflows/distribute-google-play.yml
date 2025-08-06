@@ -13,7 +13,7 @@ jobs:
     environment: Firebase
     steps:
       - name: Download Release AAB artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ inputs.artifact-name }}
           path: aab

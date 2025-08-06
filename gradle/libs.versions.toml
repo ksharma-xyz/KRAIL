@@ -31,7 +31,7 @@ uiGeometryAndroid = "1.8.3"
 foundationLayoutAndroid = "1.8.3"
 ui-tooling = "1.8.3"
 detekt = "1.23.8"
-detektCompose = "0.4.26"
+detektCompose = "0.4.27"
 coil3 = "3.3.0"
 
 [libraries]

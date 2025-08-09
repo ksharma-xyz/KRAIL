@@ -3,18 +3,23 @@ package xyz.ksharma.krail.trip.planner.ui.discover
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -22,13 +27,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.ImmutableList
+import androidx.window.core.layout.WindowWidthSizeClass
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.discover.ui.DiscoverCard
+import xyz.ksharma.krail.discover.ui.DiscoverCardTablet
+import xyz.ksharma.krail.discover.ui.previewDiscoverCardList
 import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
@@ -48,109 +57,403 @@ fun DiscoverScreen(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize(),
-    ) {
-        Column {
+    val windowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
+    if (windowWidthSizeClass == WindowWidthSizeClass.COMPACT) {
+        DiscoverScreenCompact(
+            modifier = modifier,
+            state = state,
+            onBackClick = onBackClick,
+            onAppSocialLinkClicked = onAppSocialLinkClicked,
+            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+            onCtaClicked = onCtaClicked,
+            onShareClick = onShareClick,
+            onCardSeen = onCardSeen,
+            resetAllSeenCards = resetAllSeenCards,
+            onChipSelected = onChipSelected,
+        )
+    } else {
+        DiscoverScreenTablet(
+            modifier = modifier,
+            state = state,
+            onBackClick = onBackClick,
+            onAppSocialLinkClicked = onAppSocialLinkClicked,
+            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+            onCtaClicked = onCtaClicked,
+            onShareClick = onShareClick,
+            onCardSeen = onCardSeen,
+            resetAllSeenCards = resetAllSeenCards,
+            onChipSelected = onChipSelected,
+        )
+    }
+}
 
-            if (state.discoverCardsList.isNotEmpty()) {
-                // todo - for tablets use a normal scrolling list
-                DiscoverCardVerticalPager(
-                    pages = state.discoverCardsList,
-                    modifier = Modifier.fillMaxSize(),
-                    keySelector = { it.cardId },
-                    content = { cardModel, isCardSelected ->
+@Composable
+fun DiscoverScreenCompact(
+    modifier: Modifier = Modifier,
+    state: DiscoverState,
+    onBackClick: () -> Unit,
+    onAppSocialLinkClicked: (KrailSocialType) -> Unit,
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onCardSeen: (cardId: String) -> Unit,
+    resetAllSeenCards: () -> Unit,
+    onChipSelected: (DiscoverCardType) -> Unit,
+) {
+    if (state.discoverCardsList.isEmpty()) {
+        return
+    }
 
-                        if (isCardSelected) {
-                            LaunchedEffect(cardModel.cardId) {
-                                onCardSeen(cardModel.cardId)
-                            }
-                        }
+    Box(modifier = Modifier.fillMaxSize()) {
 
-                        DiscoverCard(
-                            discoverModel = cardModel,
-                            onAppSocialLinkClicked = onAppSocialLinkClicked,
-                            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
-                            onCtaClicked = onCtaClicked,
-                            onShareClick = { shareUrl ->
-                                onShareClick(
-                                    shareUrl,
-                                    cardModel.cardId,
-                                    cardModel.type,
-                                )
-                            }
+        DiscoverCardVerticalPager(
+            pages = state.discoverCardsList,
+            modifier = modifier.fillMaxSize(),
+            keySelector = { it.cardId },
+            content = { cardModel, isCardSelected ->
+
+                if (isCardSelected) {
+                    LaunchedEffect(cardModel.cardId) {
+                        onCardSeen(cardModel.cardId)
+                    }
+                }
+
+                DiscoverCard(
+                    discoverModel = cardModel,
+                    onAppSocialLinkClicked = onAppSocialLinkClicked,
+                    onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                    onCtaClicked = onCtaClicked,
+                    onShareClick = { shareUrl ->
+                        onShareClick(
+                            shareUrl,
+                            cardModel.cardId,
+                            cardModel.type,
                         )
                     }
                 )
             }
-        }
+        )
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            KrailTheme.colors.surface.copy(alpha = 0.8f),
-                            KrailTheme.colors.surface.copy(alpha = 0.95f)
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    )
-                ),
-        ) {
-            TitleBar(
-                modifier = Modifier.fillMaxWidth(),
-                onNavActionClick = onBackClick,
-                title = { },
-                actions = {
-                    val appInfo = LocalAppInfo.current
-                    if (appInfo?.isDebug == true) {
-                        Text(
-                            "Reset", modifier = Modifier.clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = resetAllSeenCards,
-                            )
+        // Header with title bar
+        DiscoverTitleBar(onBackClick, resetAllSeenCards)
+
+        // Footer with chips
+        DiscoverFooterChipsRow(state, onChipSelected)
+    }
+}
+
+
+@Composable
+fun DiscoverScreenTablet(
+    modifier: Modifier = Modifier,
+    state: DiscoverState,
+    onBackClick: () -> Unit,
+    onAppSocialLinkClicked: (KrailSocialType) -> Unit,
+    onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
+    onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onCardSeen: (cardId: String) -> Unit,
+    resetAllSeenCards: () -> Unit,
+    onChipSelected: (DiscoverCardType) -> Unit,
+) {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    val useLargeFontLayout = fontScale > 1.4f
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(KrailTheme.colors.surface),
+    ) {
+        Column {
+            if (useLargeFontLayout) {
+                // Large font: centered lazy column
+                LazyColumn(
+                    contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        count = state.discoverCardsList.size,
+                        key = { index -> state.discoverCardsList[index].cardId }
+                    ) { index ->
+                        val cardModel = state.discoverCardsList[index]
+
+                        LaunchedEffect(cardModel.cardId) {
+                            onCardSeen(cardModel.cardId)
+                        }
+
+                        DiscoverCardTablet(
+                            discoverModel = cardModel,
+                            onAppSocialLinkClicked = onAppSocialLinkClicked,
+                            onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
+                                onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
+                            },
+                            onCtaClicked = { url, cardId, type ->
+                                onCtaClicked(url, cardId, type)
+                            },
+                            onShareClick = { shareUrl ->
+                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                            },
+                            modifier = Modifier.animateItem(),
                         )
                     }
                 }
-            )
-            val density = LocalDensity.current
-            val fontScale = density.fontScale
+            } else {
+                // Normal font: grid layout
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 320.dp),
+                    contentPadding = PaddingValues(
+                        top = 120.dp,
+                        start = 24.dp,
+                        end = 24.dp,
+                        bottom = 200.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        count = state.discoverCardsList.size,
+                        key = { index -> state.discoverCardsList[index].cardId }
+                    ) { index ->
+                        val cardModel = state.discoverCardsList[index]
 
-            Text(
-                text = "What's On, Sydney!", // todo -dynamically from config.
-                style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
-                    .background(color = Color.Transparent),
-            )
+                        LaunchedEffect(cardModel.cardId) {
+                            onCardSeen(cardModel.cardId)
+                        }
+
+                        DiscoverCardTablet(
+                            discoverModel = cardModel,
+                            onAppSocialLinkClicked = onAppSocialLinkClicked,
+                            onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
+                                onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
+                            },
+                            onCtaClicked = { url, cardId, type ->
+                                onCtaClicked(url, cardId, type)
+                            },
+                            onShareClick = { shareUrl ->
+                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                            },
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
+                }
+            }
         }
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            KrailTheme.colors.surface.copy(alpha = 0.10f),
-                            KrailTheme.colors.surface.copy(alpha = 0.95f),
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    )
-                )
-                .navigationBarsPadding(),
-        ) {
-            DiscoverChipRow(
-                chipTypes = state.sortedDiscoverCardTypes,
-                selectedType = state.selectedType,
-                modifier = Modifier.padding(vertical = 20.dp),
-                onChipSelected = onChipSelected,
-            )
-        }
+        // Header with title bar
+        DiscoverTitleBar(onBackClick, resetAllSeenCards)
+
+        // Footer with chips
+        DiscoverFooterChipsRow(state, onChipSelected)
     }
 }
+
+@Composable
+private fun BoxScope.DiscoverFooterChipsRow(
+    state: DiscoverState,
+    onChipSelected: (DiscoverCardType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DiscoverChipRow(
+        chipTypes = state.sortedDiscoverCardTypes,
+        selectedType = state.selectedType,
+        modifier = modifier
+            .align(Alignment.BottomCenter)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        KrailTheme.colors.surface.copy(alpha = 0.10f),
+                        KrailTheme.colors.surface.copy(alpha = 0.95f),
+                    ),
+                    startY = 0f,
+                    endY = Float.POSITIVE_INFINITY,
+                )
+            )
+            .padding(vertical = 16.dp)
+            .navigationBarsPadding(),
+        onChipSelected = onChipSelected,
+    )
+}
+
+@Composable
+private fun BoxScope.DiscoverTitleBar(
+    onBackClick: () -> Unit,
+    resetAllSeenCards: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        KrailTheme.colors.surface.copy(alpha = 0.8f),
+                        KrailTheme.colors.surface.copy(alpha = 0.95f)
+                    ),
+                    startY = 0f,
+                    endY = Float.POSITIVE_INFINITY,
+                )
+            ),
+    ) {
+        TitleBar(
+            modifier = Modifier.fillMaxWidth(),
+            onNavActionClick = onBackClick,
+            title = { },
+            actions = {
+                val appInfo = LocalAppInfo.current
+                if (appInfo?.isDebug == true) {
+                    Text(
+                        "Reset", modifier = Modifier.clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = resetAllSeenCards,
+                        )
+                    )
+                }
+            }
+        )
+        val density = LocalDensity.current
+        val fontScale = density.fontScale
+
+        Text(
+            text = "What's On, Sydney!",
+            style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
+                .background(color = Color.Transparent),
+        )
+    }
+}
+
+// region Previews
+
+@Preview(
+    group = "Discover Card Tablet",
+    showBackground = true,
+    widthDp = 720,
+    heightDp = 1024,
+)
+@Composable
+private fun DiscoverScreenTabletLightPreview() {
+    KrailTheme(darkTheme = false) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food,
+                    DiscoverCardType.Sports
+                ),
+                selectedType = DiscoverCardType.Travel
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+@Preview(
+    group = "Discover Card Tablet",
+    showBackground = true,
+    widthDp = 720,
+    heightDp = 1024,
+)
+@Composable
+private fun DiscoverScreenTabletDarkPreview() {
+    KrailTheme(darkTheme = true) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food,
+                    DiscoverCardType.Sports
+                ),
+                selectedType = DiscoverCardType.Events
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+@Preview(
+    group = "Discover Card Phone",
+    showBackground = true,
+    widthDp = 480,
+    heightDp = 854,
+)
+@Composable
+private fun DiscoverScreenCompactLightPreview() {
+    KrailTheme(darkTheme = false) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food
+                ),
+                selectedType = DiscoverCardType.Food
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+@Preview(
+    group = "Discover Card Phone",
+    showBackground = true,
+    widthDp = 480,
+    heightDp = 854,
+)
+@Composable
+private fun DiscoverScreenCompactDarkPreview() {
+    KrailTheme(true) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food
+                ),
+                selectedType = DiscoverCardType.Sports
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+// endregion Previews

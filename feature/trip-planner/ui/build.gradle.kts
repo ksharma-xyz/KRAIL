@@ -61,6 +61,7 @@ kotlin {
                 implementation(libs.navigation.compose)
 
                 implementation(libs.molecule.runtime)
+                implementation(libs.material.adaptive)
             }
         }
         commonTest {

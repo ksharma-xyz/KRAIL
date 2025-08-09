@@ -26,6 +26,11 @@ internal class RealDiscoverSydneyManager(
     private var cachedFlagValue: FlagValue? = null
     private var cachedParsedCards: List<DiscoverModel>? = null
 
+    private val json = Json {
+        ignoreUnknownKeys = true // Ignore unknown keys in JSON
+        isLenient = true // Allow lenient parsing
+    }
+
     /**
      * Fetches Discover cards for the UI.
      * - Caches the parsed JSON card list to avoid repeated parsing.
@@ -69,8 +74,8 @@ internal class RealDiscoverSydneyManager(
         return withContext(defaultDispatcher) {
             when (flagValue) {
                 is FlagValue.JsonValue -> {
-                    val jsonArray = Json.parseToJsonElement(flagValue.value).jsonArray
-                    jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
+                    val jsonArray = json.parseToJsonElement(flagValue.value).jsonArray
+                    jsonArray.map { json.decodeFromJsonElement<DiscoverModel>(it) }
                 }
 
                 else -> {
@@ -80,8 +85,8 @@ internal class RealDiscoverSydneyManager(
                     if (defaultJson == null) {
                         emptyList()
                     } else {
-                        val jsonArray = Json.parseToJsonElement(defaultJson).jsonArray
-                        jsonArray.map { Json.decodeFromJsonElement<DiscoverModel>(it) }
+                        val jsonArray = json.parseToJsonElement(defaultJson).jsonArray
+                        jsonArray.map { json.decodeFromJsonElement<DiscoverModel>(it) }
                     }
                 }
             }

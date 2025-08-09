@@ -106,7 +106,7 @@ object RemoteConfigDefaults {
             Pair(
                 first = FlagKeys.DISCOVER_SYDNEY.key,
                 second = """
-                   []
+                    []
                 """.trimIndent(),
             ),
             Pair(

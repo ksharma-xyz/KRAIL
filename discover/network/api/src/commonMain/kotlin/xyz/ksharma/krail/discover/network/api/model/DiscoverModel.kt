@@ -18,11 +18,18 @@ data class DiscoverModel(
     @SerialName("description")
     val description: String,
 
-    // ISO 8601 date format
+    /**
+     * The start date of the event in the card, if it spans across multiple days.
+     * This is used to display the start date of the event in the card.
+     * ISO 8601 date format.
+     */
     @SerialName("startDate")
     val startDate: String? = null,
 
-    // ISO 8601 date format
+    /**
+     * The end date of the event in the card, if it spans across multiple days.
+     * ISO 8601 date format.
+     */
     @SerialName("endDate")
     val endDate: String? = null,
 

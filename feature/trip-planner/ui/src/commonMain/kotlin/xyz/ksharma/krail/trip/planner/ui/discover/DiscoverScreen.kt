@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -216,6 +217,10 @@ private fun DiscoverScreenTabletContent(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    val useLargeFontLayout = fontScale > 1.4f
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -223,36 +228,85 @@ private fun DiscoverScreenTabletContent(
     ) {
         Column {
             if (state.discoverCardsList.isNotEmpty()) {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 320.dp),
-                    contentPadding = PaddingValues(top = 120.dp, start = 24.dp, end = 24.dp, bottom = 200.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = state.discoverCardsList,
-                        key = { it.cardId }
-                    ) { cardModel ->
-                        DiscoverCardTablet(
-                            discoverModel = cardModel,
-                            onAppSocialLinkClicked = onAppSocialLinkClicked,
-                            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
-                            onCtaClicked = onCtaClicked,
-                            onShareClick = { shareUrl ->
-                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
-                            },
-                            modifier = Modifier.animateItem(),
-                        )
+                if (useLargeFontLayout) {
+                    // Large font: centered lazy column
+                    LazyColumn(
+                        contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(
+                            count = state.discoverCardsList.size,
+                            key = { index -> state.discoverCardsList[index].cardId }
+                        ) { index ->
+                            val cardModel = state.discoverCardsList[index]
 
-                        LaunchedEffect(cardModel.cardId) {
-                            onCardSeen(cardModel.cardId)
+                            LaunchedEffect(cardModel.cardId) {
+                                onCardSeen(cardModel.cardId)
+                            }
+
+                            DiscoverCardTablet(
+                                discoverModel = cardModel,
+                                onAppSocialLinkClicked = onAppSocialLinkClicked,
+                                onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
+                                    onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
+                                },
+                                onCtaClicked = { url, cardId, type ->
+                                    onCtaClicked(url, cardId, type)
+                                },
+                                onShareClick = { shareUrl ->
+                                    onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                                },
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
+                    }
+                } else {
+                    // Normal font: grid layout
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 320.dp),
+                        contentPadding = PaddingValues(
+                            top = 120.dp,
+                            start = 24.dp,
+                            end = 24.dp,
+                            bottom = 200.dp
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(
+                            count = state.discoverCardsList.size,
+                            key = { index -> state.discoverCardsList[index].cardId }
+                        ) { index ->
+                            val cardModel = state.discoverCardsList[index]
+
+                            LaunchedEffect(cardModel.cardId) {
+                                onCardSeen(cardModel.cardId)
+                            }
+
+                            DiscoverCardTablet(
+                                discoverModel = cardModel,
+                                onAppSocialLinkClicked = onAppSocialLinkClicked,
+                                onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
+                                    onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
+                                },
+                                onCtaClicked = { url, cardId, type ->
+                                    onCtaClicked(url, cardId, type)
+                                },
+                                onShareClick = { shareUrl ->
+                                    onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                                },
+                                modifier = Modifier.animateItem(),
+                            )
                         }
                     }
                 }
             }
         }
 
+        // Header with title bar
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -284,19 +338,17 @@ private fun DiscoverScreenTabletContent(
                     }
                 }
             )
-            val density = LocalDensity.current
-            val fontScale = density.fontScale
-
             Text(
                 text = "What's On, Sydney!",
                 style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
+                    .padding(bottom = 16.dp)
                     .background(color = Color.Transparent),
             )
         }
 
+        // Footer with chips
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)

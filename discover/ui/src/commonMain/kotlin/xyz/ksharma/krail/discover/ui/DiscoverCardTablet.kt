@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -28,9 +31,26 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 
-val cardWidth = 320.dp
-val cardHeight = 400.dp
-val imageHeight = (cardWidth * 9f / 16f)
+@Composable
+private fun rememberTabletCardDimensions(): Pair<Dp, Dp?> {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+
+    return when {
+        fontScale > 1.4f -> {
+            // Large font size: flexible height, centered width
+            Pair(400.dp, null) // null height = wrap content
+        }
+        fontScale > 1.1f -> {
+            // Medium font size: slightly larger cards
+            Pair(340.dp, 420.dp)
+        }
+        else -> {
+            // Normal font size: standard dimensions
+            Pair(320.dp, 400.dp)
+        }
+    }
+}
 
 @Composable
 fun DiscoverCardTablet(
@@ -40,17 +60,25 @@ fun DiscoverCardTablet(
     onPartnerSocialLinkClicked: (
         Button.Social.PartnerSocial.PartnerSocialLink,
         String,
-        DiscoverCardType
+        DiscoverCardType,
     ) -> Unit = { _, _, _ -> },
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
     onShareClick: (String) -> Unit = {},
 ) {
+    val (cardWidth, cardHeight) = rememberTabletCardDimensions()
+    val imageHeight = cardWidth * 9f / 16f
     val blendedBackground = createAdaptiveBackground()
 
     Column(
         modifier = modifier
             .width(cardWidth)
-            .height(cardHeight)
+            .let { mod ->
+                if (cardHeight != null) {
+                    mod.height(cardHeight)
+                } else {
+                    mod.wrapContentHeight()
+                }
+            }
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -89,20 +117,26 @@ fun DiscoverCardTablet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .let { mod ->
+                    if (cardHeight != null) {
+                        mod.weight(1f)
+                    } else {
+                        mod.wrapContentHeight()
+                    }
+                }
                 .padding(horizontal = 12.dp)
         ) {
             Text(
                 text = discoverModel.title,
                 modifier = Modifier.padding(top = 12.dp),
-                maxLines = 2,
+                maxLines = if (cardHeight == null) Int.MAX_VALUE else 2,
                 style = KrailTheme.typography.titleMedium,
             )
 
             Text(
                 text = discoverModel.description,
                 modifier = Modifier.padding(vertical = 8.dp),
-                maxLines = if (discoverModel.disclaimer != null) 2 else 3,
+                maxLines = if (cardHeight == null) Int.MAX_VALUE else (if (discoverModel.disclaimer != null) 2 else 3),
                 style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.secondaryLabel,
             )
@@ -110,12 +144,16 @@ fun DiscoverCardTablet(
             discoverModel.disclaimer?.let { disclaimer ->
                 Text(
                     text = disclaimer,
-                    maxLines = 1,
+                    maxLines = if (cardHeight == null) Int.MAX_VALUE else 1,
                     style = KrailTheme.typography.labelSmall,
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            if (cardHeight != null) {
+                Spacer(modifier = Modifier.weight(1f))
+            } else {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             discoverModel.buttons?.let { buttonsList ->
                 DiscoverCardButtonRow(

@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.discover
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -27,12 +28,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
 import xyz.ksharma.krail.discover.ui.DiscoverCard
 import xyz.ksharma.krail.discover.ui.DiscoverCardTablet
+import xyz.ksharma.krail.discover.ui.previewDiscoverCardList
 import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
@@ -322,3 +327,133 @@ private fun BoxScope.DiscoverTitleBar(
         )
     }
 }
+
+// region Previews
+
+@Preview(
+    group = "Discover Card Tablet",
+    showBackground = true,
+    widthDp = 720,
+    heightDp = 1024,
+)
+@Composable
+private fun DiscoverScreenTabletLightPreview() {
+    KrailTheme(darkTheme = false) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food,
+                    DiscoverCardType.Sports
+                ),
+                selectedType = DiscoverCardType.Travel
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+@Preview(
+    group = "Discover Card Tablet",
+    showBackground = true,
+    widthDp = 720,
+    heightDp = 1024,
+)
+@Composable
+private fun DiscoverScreenTabletDarkPreview() {
+    KrailTheme(darkTheme = true) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food,
+                    DiscoverCardType.Sports
+                ),
+                selectedType = DiscoverCardType.Events
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+@Preview(
+    group = "Discover Card Phone",
+    showBackground = true,
+    widthDp = 480,
+    heightDp = 854,
+)
+@Composable
+private fun DiscoverScreenCompactLightPreview() {
+    KrailTheme(darkTheme = false) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food
+                ),
+                selectedType = DiscoverCardType.Food
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+@Preview(
+    group = "Discover Card Phone",
+    showBackground = true,
+    widthDp = 480,
+    heightDp = 854,
+)
+@Composable
+private fun DiscoverScreenCompactDarkPreview() {
+    KrailTheme(true) {
+        DiscoverScreen(
+            state = DiscoverState(
+                discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),
+                sortedDiscoverCardTypes = persistentListOf(
+                    DiscoverCardType.Travel,
+                    DiscoverCardType.Events,
+                    DiscoverCardType.Food
+                ),
+                selectedType = DiscoverCardType.Sports
+            ),
+            onBackClick = {},
+            onAppSocialLinkClicked = {},
+            onPartnerSocialLinkClicked = { _, _, _ -> },
+            onCtaClicked = { _, _, _ -> },
+            onShareClick = { _, _, _ -> },
+            onCardSeen = {},
+            resetAllSeenCards = {},
+            onChipSelected = {}
+        )
+    }
+}
+
+// endregion Previews

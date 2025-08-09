@@ -130,75 +130,13 @@ fun DiscoverScreenCompact(
         )
 
         // Header with title bar
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            KrailTheme.colors.surface.copy(alpha = 0.8f),
-                            KrailTheme.colors.surface.copy(alpha = 0.95f)
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    )
-                ),
-        ) {
-            TitleBar(
-                modifier = Modifier.fillMaxWidth(),
-                onNavActionClick = onBackClick,
-                title = { },
-                actions = {
-                    val appInfo = LocalAppInfo.current
-                    if (appInfo?.isDebug == true) {
-                        Text(
-                            "Reset", modifier = Modifier.clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = resetAllSeenCards,
-                            )
-                        )
-                    }
-                }
-            )
-            val density = LocalDensity.current
-            val fontScale = density.fontScale
-
-            Text(
-                text = "What's On, Sydney!", // todo -dynamically from config.
-                style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
-                    .background(color = Color.Transparent),
-            )
-        }
+        DiscoverTitleBar(onBackClick, resetAllSeenCards)
 
         // Footer with chips
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            KrailTheme.colors.surface.copy(alpha = 0.10f),
-                            KrailTheme.colors.surface.copy(alpha = 0.95f),
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    )
-                )
-                .navigationBarsPadding(),
-        ) {
-            DiscoverChipRow(
-                chipTypes = state.sortedDiscoverCardTypes,
-                selectedType = state.selectedType,
-                modifier = Modifier.padding(vertical = 20.dp),
-                onChipSelected = onChipSelected,
-            )
-        }
+        DiscoverFooterChipsRow(state, onChipSelected)
     }
 }
+
 
 @Composable
 fun DiscoverScreenTablet(
@@ -223,149 +161,164 @@ fun DiscoverScreenTablet(
             .background(KrailTheme.colors.surface),
     ) {
         Column {
-            if (state.discoverCardsList.isNotEmpty()) {
-                if (useLargeFontLayout) {
-                    // Large font: centered lazy column
-                    LazyColumn(
-                        contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(
-                            count = state.discoverCardsList.size,
-                            key = { index -> state.discoverCardsList[index].cardId }
-                        ) { index ->
-                            val cardModel = state.discoverCardsList[index]
+            if (useLargeFontLayout) {
+                // Large font: centered lazy column
+                LazyColumn(
+                    contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        count = state.discoverCardsList.size,
+                        key = { index -> state.discoverCardsList[index].cardId }
+                    ) { index ->
+                        val cardModel = state.discoverCardsList[index]
 
-                            LaunchedEffect(cardModel.cardId) {
-                                onCardSeen(cardModel.cardId)
-                            }
-
-                            DiscoverCardTablet(
-                                discoverModel = cardModel,
-                                onAppSocialLinkClicked = onAppSocialLinkClicked,
-                                onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
-                                    onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
-                                },
-                                onCtaClicked = { url, cardId, type ->
-                                    onCtaClicked(url, cardId, type)
-                                },
-                                onShareClick = { shareUrl ->
-                                    onShareClick(shareUrl, cardModel.cardId, cardModel.type)
-                                },
-                                modifier = Modifier.animateItem(),
-                            )
+                        LaunchedEffect(cardModel.cardId) {
+                            onCardSeen(cardModel.cardId)
                         }
+
+                        DiscoverCardTablet(
+                            discoverModel = cardModel,
+                            onAppSocialLinkClicked = onAppSocialLinkClicked,
+                            onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
+                                onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
+                            },
+                            onCtaClicked = { url, cardId, type ->
+                                onCtaClicked(url, cardId, type)
+                            },
+                            onShareClick = { shareUrl ->
+                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                            },
+                            modifier = Modifier.animateItem(),
+                        )
                     }
-                } else {
-                    // Normal font: grid layout
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 320.dp),
-                        contentPadding = PaddingValues(
-                            top = 120.dp,
-                            start = 24.dp,
-                            end = 24.dp,
-                            bottom = 200.dp
-                        ),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(
-                            count = state.discoverCardsList.size,
-                            key = { index -> state.discoverCardsList[index].cardId }
-                        ) { index ->
-                            val cardModel = state.discoverCardsList[index]
+                }
+            } else {
+                // Normal font: grid layout
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 320.dp),
+                    contentPadding = PaddingValues(
+                        top = 120.dp,
+                        start = 24.dp,
+                        end = 24.dp,
+                        bottom = 200.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        count = state.discoverCardsList.size,
+                        key = { index -> state.discoverCardsList[index].cardId }
+                    ) { index ->
+                        val cardModel = state.discoverCardsList[index]
 
-                            LaunchedEffect(cardModel.cardId) {
-                                onCardSeen(cardModel.cardId)
-                            }
-
-                            DiscoverCardTablet(
-                                discoverModel = cardModel,
-                                onAppSocialLinkClicked = onAppSocialLinkClicked,
-                                onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
-                                    onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
-                                },
-                                onCtaClicked = { url, cardId, type ->
-                                    onCtaClicked(url, cardId, type)
-                                },
-                                onShareClick = { shareUrl ->
-                                    onShareClick(shareUrl, cardModel.cardId, cardModel.type)
-                                },
-                                modifier = Modifier.animateItem(),
-                            )
+                        LaunchedEffect(cardModel.cardId) {
+                            onCardSeen(cardModel.cardId)
                         }
+
+                        DiscoverCardTablet(
+                            discoverModel = cardModel,
+                            onAppSocialLinkClicked = onAppSocialLinkClicked,
+                            onPartnerSocialLinkClicked = { partnerSocialLink, cardId, type ->
+                                onPartnerSocialLinkClicked(partnerSocialLink, cardId, type)
+                            },
+                            onCtaClicked = { url, cardId, type ->
+                                onCtaClicked(url, cardId, type)
+                            },
+                            onShareClick = { shareUrl ->
+                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                            },
+                            modifier = Modifier.animateItem(),
+                        )
                     }
                 }
             }
         }
 
         // Header with title bar
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            KrailTheme.colors.surface.copy(alpha = 0.8f),
-                            KrailTheme.colors.surface.copy(alpha = 0.95f)
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    )
-                ),
-        ) {
-            TitleBar(
-                modifier = Modifier.fillMaxWidth(),
-                onNavActionClick = onBackClick,
-                title = { },
-                actions = {
-                    val appInfo = LocalAppInfo.current
-                    if (appInfo?.isDebug == true) {
-                        Text(
-                            "Reset", modifier = Modifier.clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = resetAllSeenCards,
-                            )
-                        )
-                    }
-                }
-            )
-            Text(
-                text = "What's On, Sydney!",
-                style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 16.dp)
-                    .background(color = Color.Transparent),
-            )
-        }
+        DiscoverTitleBar(onBackClick, resetAllSeenCards)
 
         // Footer with chips
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            KrailTheme.colors.surface.copy(alpha = 0.10f),
-                            KrailTheme.colors.surface.copy(alpha = 0.95f),
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    )
+        DiscoverFooterChipsRow(state, onChipSelected)
+    }
+}
+
+@Composable
+private fun BoxScope.DiscoverFooterChipsRow(
+    state: DiscoverState,
+    onChipSelected: (DiscoverCardType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DiscoverChipRow(
+        chipTypes = state.sortedDiscoverCardTypes,
+        selectedType = state.selectedType,
+        modifier = modifier
+            .align(Alignment.BottomCenter)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        KrailTheme.colors.surface.copy(alpha = 0.10f),
+                        KrailTheme.colors.surface.copy(alpha = 0.95f),
+                    ),
+                    startY = 0f,
+                    endY = Float.POSITIVE_INFINITY,
                 )
-                .navigationBarsPadding(),
-        ) {
-            DiscoverChipRow(
-                chipTypes = state.sortedDiscoverCardTypes,
-                selectedType = state.selectedType,
-                modifier = Modifier.padding(vertical = 20.dp),
-                onChipSelected = onChipSelected,
             )
-        }
+            .padding(vertical = 16.dp)
+            .navigationBarsPadding(),
+        onChipSelected = onChipSelected,
+    )
+}
+
+@Composable
+private fun BoxScope.DiscoverTitleBar(
+    onBackClick: () -> Unit,
+    resetAllSeenCards: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        KrailTheme.colors.surface.copy(alpha = 0.8f),
+                        KrailTheme.colors.surface.copy(alpha = 0.95f)
+                    ),
+                    startY = 0f,
+                    endY = Float.POSITIVE_INFINITY,
+                )
+            ),
+    ) {
+        TitleBar(
+            modifier = Modifier.fillMaxWidth(),
+            onNavActionClick = onBackClick,
+            title = { },
+            actions = {
+                val appInfo = LocalAppInfo.current
+                if (appInfo?.isDebug == true) {
+                    Text(
+                        "Reset", modifier = Modifier.clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = resetAllSeenCards,
+                        )
+                    )
+                }
+            }
+        )
+        val density = LocalDensity.current
+        val fontScale = density.fontScale
+
+        Text(
+            text = "What's On, Sydney!",
+            style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
+                .background(color = Color.Transparent),
+        )
     }
 }

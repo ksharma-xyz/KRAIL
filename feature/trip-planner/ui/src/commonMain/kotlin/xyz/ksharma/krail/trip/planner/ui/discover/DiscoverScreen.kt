@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowWidthSizeClass
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
@@ -36,7 +38,6 @@ import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.components.AlternateLayout
 
 @Composable
 fun DiscoverScreen(
@@ -51,41 +52,38 @@ fun DiscoverScreen(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
-    AlternateLayout(
-        modifier = Modifier.fillMaxSize(),
-        compactContent = {
-            DiscoverScreenCompactContent(
-                modifier = modifier,
-                state = state,
-                onBackClick = onBackClick,
-                onAppSocialLinkClicked = onAppSocialLinkClicked,
-                onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
-                onCtaClicked = onCtaClicked,
-                onShareClick = onShareClick,
-                onCardSeen = onCardSeen,
-                resetAllSeenCards = resetAllSeenCards,
-                onChipSelected = onChipSelected,
-            )
-        },
-        tabletContent = {
-            DiscoverScreenTabletContent(
-                modifier = modifier,
-                state = state,
-                onBackClick = onBackClick,
-                onAppSocialLinkClicked = onAppSocialLinkClicked,
-                onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
-                onCtaClicked = onCtaClicked,
-                onShareClick = onShareClick,
-                onCardSeen = onCardSeen,
-                resetAllSeenCards = resetAllSeenCards,
-                onChipSelected = onChipSelected,
-            )
-        }
-    )
+    val windowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
+    if (windowWidthSizeClass == WindowWidthSizeClass.COMPACT) {
+        DiscoverScreenCompact(
+            modifier = modifier,
+            state = state,
+            onBackClick = onBackClick,
+            onAppSocialLinkClicked = onAppSocialLinkClicked,
+            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+            onCtaClicked = onCtaClicked,
+            onShareClick = onShareClick,
+            onCardSeen = onCardSeen,
+            resetAllSeenCards = resetAllSeenCards,
+            onChipSelected = onChipSelected,
+        )
+    } else {
+        DiscoverScreenTablet(
+            modifier = modifier,
+            state = state,
+            onBackClick = onBackClick,
+            onAppSocialLinkClicked = onAppSocialLinkClicked,
+            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+            onCtaClicked = onCtaClicked,
+            onShareClick = onShareClick,
+            onCardSeen = onCardSeen,
+            resetAllSeenCards = resetAllSeenCards,
+            onChipSelected = onChipSelected,
+        )
+    }
 }
 
 @Composable
-private fun DiscoverScreenCompactContent(
+fun DiscoverScreenCompact(
     modifier: Modifier = Modifier,
     state: DiscoverState,
     onBackClick: () -> Unit,
@@ -97,44 +95,41 @@ private fun DiscoverScreenCompactContent(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize(),
-    ) {
-        Column {
+    if (state.discoverCardsList.isEmpty()) {
+        return
+    }
 
-            if (state.discoverCardsList.isNotEmpty()) {
-                // todo - for tablets use a normal scrolling list
-                DiscoverCardVerticalPager(
-                    pages = state.discoverCardsList,
-                    modifier = Modifier.fillMaxSize(),
-                    keySelector = { it.cardId },
-                    content = { cardModel, isCardSelected ->
+    Box(modifier = Modifier.fillMaxSize()) {
 
-                        if (isCardSelected) {
-                            LaunchedEffect(cardModel.cardId) {
-                                onCardSeen(cardModel.cardId)
-                            }
-                        }
+        DiscoverCardVerticalPager(
+            pages = state.discoverCardsList,
+            modifier = modifier.fillMaxSize(),
+            keySelector = { it.cardId },
+            content = { cardModel, isCardSelected ->
 
-                        DiscoverCard(
-                            discoverModel = cardModel,
-                            onAppSocialLinkClicked = onAppSocialLinkClicked,
-                            onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
-                            onCtaClicked = onCtaClicked,
-                            onShareClick = { shareUrl ->
-                                onShareClick(
-                                    shareUrl,
-                                    cardModel.cardId,
-                                    cardModel.type,
-                                )
-                            }
+                if (isCardSelected) {
+                    LaunchedEffect(cardModel.cardId) {
+                        onCardSeen(cardModel.cardId)
+                    }
+                }
+
+                DiscoverCard(
+                    discoverModel = cardModel,
+                    onAppSocialLinkClicked = onAppSocialLinkClicked,
+                    onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                    onCtaClicked = onCtaClicked,
+                    onShareClick = { shareUrl ->
+                        onShareClick(
+                            shareUrl,
+                            cardModel.cardId,
+                            cardModel.type,
                         )
                     }
                 )
             }
-        }
+        )
 
+        // Header with title bar
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -179,6 +174,7 @@ private fun DiscoverScreenCompactContent(
             )
         }
 
+        // Footer with chips
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -205,7 +201,7 @@ private fun DiscoverScreenCompactContent(
 }
 
 @Composable
-private fun DiscoverScreenTabletContent(
+fun DiscoverScreenTablet(
     modifier: Modifier = Modifier,
     state: DiscoverState,
     onBackClick: () -> Unit,

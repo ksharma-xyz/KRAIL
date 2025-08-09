@@ -39,7 +39,7 @@ private fun rememberTabletCardDimensions(): Pair<Dp, Dp?> {
     return when {
         fontScale > 1.4f -> {
             // Large font size: flexible height, centered width
-            Pair(400.dp, null) // null height = wrap content
+            Pair(500.dp, null) // null height = wrap content
         }
         fontScale > 1.1f -> {
             // Medium font size: slightly larger cards

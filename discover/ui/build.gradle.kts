@@ -47,6 +47,7 @@ kotlin {
                 implementation(libs.coil3.compose)
                 implementation(libs.coil3.networkKtor)
                 implementation(libs.kotlinx.collections.immutable)
+                implementation(libs.material.adaptive)
 
                 implementation(projects.core.appInfo)
                 implementation(projects.core.log)

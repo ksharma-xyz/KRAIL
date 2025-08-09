@@ -200,7 +200,7 @@ private fun blendColors(foreground: Color, background: Color): Color {
 }
 
 @Composable
-private fun DiscoverCardButtonRow(
+fun DiscoverCardButtonRow(
     buttonsList: List<Button>,
     modifier: Modifier = Modifier,
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,

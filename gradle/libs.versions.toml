@@ -14,6 +14,7 @@ kotlinxDatetime = "0.7.1-0.6.x-compat"
 kotlinxIoCore = "0.8.0"
 lifecycleViewmodelCompose = "2.9.1"
 materialIconsCore = "1.7.3"
+materialAdaptive = "1.1.2"
 moleculeRuntime = "2.1.0"
 navigationCompose = "2.9.0-beta04"
 kotlinxSerializationJson = "1.9.0"
@@ -44,6 +45,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "android-lifecycle" }
 material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsCore" }
+material-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "materialAdaptive" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 

@@ -147,7 +147,9 @@ class DiscoverViewModel(
         fetchDiscoverCardsJob?.cancel()
         fetchDiscoverCardsJob =
             viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
-                val data = discoverSydneyManager.fetchDiscoverData().toDiscoverUiModelList()
+                val data = discoverSydneyManager.fetchDiscoverData()
+
+                    .toDiscoverUiModelList()
                 log("Fetched Discover Sydney data: ${data.size}")
                 _allCards.value = data // Update _allCards instead of _uiState
             }

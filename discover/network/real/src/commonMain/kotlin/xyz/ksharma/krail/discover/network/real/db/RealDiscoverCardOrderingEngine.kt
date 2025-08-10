@@ -1,9 +1,7 @@
 package xyz.ksharma.krail.discover.network.real.db
 
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -13,65 +11,24 @@ import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-// TODO - ADD UT TESTS FOR THIS ENGINE
 class RealDiscoverCardOrderingEngine(
     private val discoverCardPreferences: DiscoverCardSeenPreferences,
 ) : DiscoverCardOrderingEngine {
 
-    /**
-     * Sorts the Discover cards based on the following logic:
-     * 1. Unseen cards for events in the next week (show on top)
-     * 2. Cards for events today (regardless of seen status)
-     * 3. All other unseen cards (keep default order)
-     */
+    @OptIn(ExperimentalTime::class)
+    private val todayDate by lazy {
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    }
+
     @OptIn(ExperimentalTime::class)
     override suspend fun getSortedCards(cards: List<DiscoverModel>): List<DiscoverModel> {
-        log("Sorting ${cards.size} discover cards with date logic")
-        val seenCardIdList = discoverCardPreferences.selectAllCardSeen()
-        val today: LocalDate =
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val nextWeekEnd = today.plus(7, DateTimeUnit.DAY)
+        log("Sorting ${cards.size} discover cards")
+        val seenCardIds = discoverCardPreferences.selectAllCardSeen().toSet()
 
-        fun DiscoverModel.getEventDate(): LocalDate? {
-            return startDate?.let { dateString ->
-                try {
-                    // Parse ISO 8601 date string to LocalDate
-                    LocalDate.parse(dateString)
-                } catch (e: Exception) {
-                    logError("Failed to parse date: $dateString", e)
-                    null
-                }
-            }
-        }
+        val activeCards = filterActiveCards(cards, todayDate)
+        val sortedCards = sortCardsByPriority(activeCards, seenCardIds, todayDate)
 
-        val sortedCards = cards.sortedWith(compareBy<DiscoverModel> { card ->
-            val eventDate = card.getEventDate()
-            val isSeen = card.cardId in seenCardIdList
-            val isToday = eventDate == today
-            val isNextWeek = eventDate != null && eventDate > today && eventDate <= nextWeekEnd
-
-            when {
-                // Priority 1: Unseen cards for events in next week (show on top)
-                isNextWeek && !isSeen -> 0
-                // Priority 2: Cards for events today (regardless of seen status)
-                isToday -> 1
-                // Priority 3: All other unseen cards
-                !isSeen -> 2
-                // Priority 4: All other seen cards (keep default order)
-                else -> 3
-            }
-        })
-
-        sortedCards.forEach { card ->
-            val eventDate = card.getEventDate()
-            val isSeen = card.cardId in seenCardIdList
-            log(
-                "\tCard: ${card.cardId}, Date: $eventDate, Seen: $isSeen, Title: ${
-                    card.title.take(6)
-                }"
-            )
-        }
-
+        logSortingResults(cards.size, activeCards.size, sortedCards, seenCardIds)
         return sortedCards
     }
 
@@ -83,5 +40,86 @@ class RealDiscoverCardOrderingEngine(
     override suspend fun resetAllSeenCards() {
         log("Resetting all seen cards")
         discoverCardPreferences.deleteAllCardSeen()
+    }
+
+    /**
+     * Filters out cards that are past events based on their start and end dates.
+     * An active card is defined as one that has not yet ended
+     * (i.e., its end date is today or in the future).
+     * If both start and end dates are null, then also card is considered active.
+     */
+    private fun filterActiveCards(cards: List<DiscoverModel>, today: LocalDate): List<DiscoverModel> {
+        return cards.filterNot { it.isPastEvent(today) }
+    }
+
+    /**
+     * Sorts the cards based on the following priority:
+     * 1. Unseen today events (where startDate == endDate == today) at the top.
+     * 2. All other unseen cards.
+     * 3. All other seen cards.
+     */
+    private fun sortCardsByPriority(
+        cards: List<DiscoverModel>,
+        seenCardIds: Set<String>,
+        today: LocalDate
+    ): List<DiscoverModel> {
+        val (todayEvents, otherCards) = cards.partition { it.isTodayEvent(today) }
+
+        val unseenTodayEvents = todayEvents.filterNot { it.cardId in seenCardIds }
+        val (seenOthers, unseenOthers) = otherCards.partition { it.cardId in seenCardIds }
+
+        return unseenTodayEvents + unseenOthers + seenOthers
+    }
+
+    private fun logSortingResults(
+        originalSize: Int,
+        activeSize: Int,
+        sortedCards: List<DiscoverModel>,
+        seenCardIds: Set<String>
+    ) {
+        log("Filtered out ${originalSize - activeSize} past events")
+
+        sortedCards.forEach { card ->
+            val isSeen = card.cardId in seenCardIds
+            val isToday = card.isTodayEvent(todayDate)
+            log("\tCard: ${card.cardId.take(6)}, Seen: $isSeen, Title: ${card.title.take(10)}, Today: $isToday,")
+        }
+    }
+
+    private fun DiscoverModel.toLocalStartDate(): LocalDate? {
+        return startDate?.parseToLocalDateOrNull()
+    }
+
+    private fun DiscoverModel.toLocalEndDate(): LocalDate? {
+        return endDate?.parseToLocalDateOrNull()
+    }
+
+    /**
+     * Parses a date string in ISO 8601 format to a LocalDate.
+     * Returns null if the parsing fails.
+     */
+    private fun String.parseToLocalDateOrNull(): LocalDate? {
+        return try {
+            LocalDate.parse(this)
+        } catch (e: Exception) {
+            logError("Failed to parse date: $this", e)
+            null
+        }
+    }
+
+    private fun DiscoverModel.isTodayEvent(today: LocalDate): Boolean {
+        val start = toLocalStartDate()
+        val end = toLocalEndDate()
+        return start == today && (end == null || end == start)
+    }
+
+    private fun DiscoverModel.isPastEvent(today: LocalDate): Boolean {
+        val end = toLocalEndDate()
+        val start = toLocalStartDate()
+        return when {
+            end != null -> end < today
+            start != null -> start < today
+            else -> false
+        }
     }
 }

@@ -43,9 +43,6 @@ kotlin {
                 implementation(libs.test.kotlinxCoroutineTest)
             }
         }
-        all {
-            languageSettings.enableLanguageFeature("PropertyParamAnnotationDefaultTargetMode")
-        }
     }
 }
 

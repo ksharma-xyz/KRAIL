@@ -51,7 +51,7 @@ fun DiscoverScreen(
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
-    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (cardId: String, cardType: DiscoverCardType) -> Unit,
     onCardSeen: (cardId: String) -> Unit,
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
@@ -94,7 +94,7 @@ fun DiscoverScreenCompact(
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
-    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (cardId: String, cardType: DiscoverCardType) -> Unit,
     onCardSeen: (cardId: String) -> Unit,
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
@@ -122,9 +122,8 @@ fun DiscoverScreenCompact(
                     onAppSocialLinkClicked = onAppSocialLinkClicked,
                     onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
                     onCtaClicked = onCtaClicked,
-                    onShareClick = { shareUrl ->
+                    onShareClick = {
                         onShareClick(
-                            shareUrl,
                             cardModel.cardId,
                             cardModel.type,
                         )
@@ -141,7 +140,6 @@ fun DiscoverScreenCompact(
     }
 }
 
-
 @Composable
 fun DiscoverScreenTablet(
     modifier: Modifier = Modifier,
@@ -150,7 +148,7 @@ fun DiscoverScreenTablet(
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -> Unit,
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit,
-    onShareClick: (shareUrl: String, cardId: String, cardType: DiscoverCardType) -> Unit,
+    onShareClick: (cardId: String, cardType: DiscoverCardType) -> Unit,
     onCardSeen: (cardId: String) -> Unit,
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
@@ -192,8 +190,8 @@ fun DiscoverScreenTablet(
                             onCtaClicked = { url, cardId, type ->
                                 onCtaClicked(url, cardId, type)
                             },
-                            onShareClick = { shareUrl ->
-                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                            onShareClick = {
+                                onShareClick(cardModel.cardId, cardModel.type)
                             },
                             modifier = Modifier.animateItem(),
                         )
@@ -232,8 +230,8 @@ fun DiscoverScreenTablet(
                             onCtaClicked = { url, cardId, type ->
                                 onCtaClicked(url, cardId, type)
                             },
-                            onShareClick = { shareUrl ->
-                                onShareClick(shareUrl, cardModel.cardId, cardModel.type)
+                            onShareClick = {
+                                onShareClick(cardModel.cardId, cardModel.type)
                             },
                             modifier = Modifier.animateItem(),
                         )
@@ -353,7 +351,7 @@ private fun DiscoverScreenTabletLightPreview() {
             onAppSocialLinkClicked = {},
             onPartnerSocialLinkClicked = { _, _, _ -> },
             onCtaClicked = { _, _, _ -> },
-            onShareClick = { _, _, _ -> },
+            onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
             onChipSelected = {}
@@ -385,7 +383,7 @@ private fun DiscoverScreenTabletDarkPreview() {
             onAppSocialLinkClicked = {},
             onPartnerSocialLinkClicked = { _, _, _ -> },
             onCtaClicked = { _, _, _ -> },
-            onShareClick = { _, _, _ -> },
+            onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
             onChipSelected = {}
@@ -416,7 +414,7 @@ private fun DiscoverScreenCompactLightPreview() {
             onAppSocialLinkClicked = {},
             onPartnerSocialLinkClicked = { _, _, _ -> },
             onCtaClicked = { _, _, _ -> },
-            onShareClick = { _, _, _ -> },
+            onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
             onChipSelected = {}
@@ -447,7 +445,7 @@ private fun DiscoverScreenCompactDarkPreview() {
             onAppSocialLinkClicked = {},
             onPartnerSocialLinkClicked = { _, _, _ -> },
             onCtaClicked = { _, _, _ -> },
-            onShareClick = { _, _, _ -> },
+            onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
             onChipSelected = {}

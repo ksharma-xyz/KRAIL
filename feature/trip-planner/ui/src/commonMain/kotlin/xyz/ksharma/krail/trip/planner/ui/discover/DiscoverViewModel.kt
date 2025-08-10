@@ -105,15 +105,16 @@ class DiscoverViewModel(
             }
 
             is DiscoverEvent.ShareButtonClicked -> {
+                val card = _allCards.value.firstOrNull { it.cardId == event.cardId }
                 val ctaLink = uiState.value.getCtaOrPartnerSocialLinkForCard(event.cardId)
+
                 platformOps.sharePlainText(
                     text = createShareText(
-                        cardTitle = event.cardTitle,
+                        cardTitle = card?.title,
+                        cardDescription = card?.description,
                         cardType = event.cardType,
-                        originalText = event.shareText,
                         ctaLink = ctaLink,
                     ),
-                    title = event.cardTitle,
                 )
                 analytics.track(
                     event = DiscoverCardClick(
@@ -235,11 +236,12 @@ fun DiscoverState.getCtaOrPartnerSocialLinkForCard(cardId: String): String? {
 }
 
 private fun createShareText(
-    cardTitle: String,
+    cardTitle: String?,
+    cardDescription: String?,
     cardType: DiscoverCardType,
-    originalText: String,
     ctaLink: String? = null
 ): String {
+    log("ctaLink: $ctaLink")
     val letsKrailText = "\n#LetsKRAIL https://krail.app"
 
     val postfix = when (cardType) {
@@ -249,5 +251,7 @@ private fun createShareText(
         DiscoverCardType.Sports -> "\n$ctaLink\n\nGame on with KRAIL App$letsKrailText"
         DiscoverCardType.Unknown -> "\n$ctaLink\n\nShared via KRAIL App$letsKrailText"
     }
-    return cardTitle + "\n" + originalText + postfix
+    val text = (cardTitle ?: "") + "\n" + (cardDescription ?: "") + postfix
+    log("Share text created: $text")
+    return text
 }

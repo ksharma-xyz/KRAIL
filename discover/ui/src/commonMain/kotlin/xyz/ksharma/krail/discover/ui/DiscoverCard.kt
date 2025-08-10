@@ -71,7 +71,7 @@ fun DiscoverCard(
         DiscoverCardType
     ) -> Unit = { _, _, _ -> },
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
-    onShareClick: (String) -> Unit = {},
+    onShareClick: () -> Unit = {},
 ) {
     val discoverCardHeight = rememberCardHeight()
 
@@ -206,7 +206,7 @@ fun DiscoverCardButtonRow(
     onAppSocialLinkClicked: (KrailSocialType) -> Unit,
     onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -> Unit,
     onCtaClicked: (String) -> Unit,
-    onShareClick: (String) -> Unit,
+    onShareClick: () -> Unit,
 ) {
     val state = buttonsList.toButtonRowState()
     if (state == null) {
@@ -269,10 +269,10 @@ fun DiscoverCardButtonRow(
         // Right button (always right-aligned)
         when (val rightButton = state.right) {
             is DiscoverCardButtonRowState.RightButtonType.Share -> {
-                log("Right button is Share: ${rightButton.button.shareUrl}")
+                log("Right button is Share")
 
                 RoundIconButton(
-                    onClick = { onShareClick(rightButton.button.shareUrl) },
+                    onClick = onShareClick,
                     color = Color.Transparent,
                 ) {
                     Image(
@@ -404,11 +404,7 @@ val previewDiscoverCardList = listOf(
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
         type = DiscoverCardType.Travel,
-        buttons = persistentListOf(
-            Button.Share(
-                shareUrl = "https://example.com/share",
-            ),
-        )
+        buttons = persistentListOf(Button.Share)
     ),
     DiscoverState.DiscoverUiModel(
         cardId = "cta_card_5",
@@ -421,9 +417,7 @@ val previewDiscoverCardList = listOf(
                 label = "Click Me",
                 url = "https://example.com/cta",
             ),
-            Button.Share(
-                shareUrl = "https://example.com/share",
-            ),
+            Button.Share,
         )
     ),
     DiscoverState.DiscoverUiModel(

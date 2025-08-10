@@ -63,7 +63,7 @@ fun DiscoverCardTablet(
         DiscoverCardType,
     ) -> Unit = { _, _, _ -> },
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
-    onShareClick: (String) -> Unit = {},
+    onShareClick: () -> Unit = {},
 ) {
     val (cardWidth, cardHeight) = rememberTabletCardDimensions()
     val imageHeight = cardWidth * 9f / 16f

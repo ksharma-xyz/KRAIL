@@ -15,7 +15,7 @@ sealed interface DiscoverEvent {
 
     data class ShareButtonClicked(
         val cardTitle: String,
-        val url: String,
+        val shareText: String,
         val cardId: String,
         val cardType: DiscoverCardType,
     ) : DiscoverEvent

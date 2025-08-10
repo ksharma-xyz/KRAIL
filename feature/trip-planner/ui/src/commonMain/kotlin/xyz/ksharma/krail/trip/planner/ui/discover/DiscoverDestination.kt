@@ -48,7 +48,7 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                         cardTitle = shareUrl,
                         cardId = cardId,
                         cardType = cardType,
-                        url = shareUrl,
+                        shareText = shareUrl,
                     )
                 )
             },

@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -115,90 +117,32 @@ fun SavedTripsScreen(
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 300.dp),
             ) {
-                if (savedTripsState.savedTrips.isEmpty() && savedTripsState.isSavedTripsLoading.not()) {
-                    item(key = "empty_state") {
-                        ErrorMessage(
-                            emoji = "🌟",
-                            title = "Ready to roll, mate?",
-                            message = "Star your trips to see them here!",
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .animateItem(),
-                        )
-                    }
-                } else {
-                    stickyHeader(key = "saved_trips_title") {
-                        SavedTripsTitle {
-                            Text(text = "Saved Trips")
-                        }
+
+                when {
+                    savedTripsState.isSavedTripsLoading -> {
+                        Unit // display nothing while loading
                     }
 
-                    items(
-                        items = savedTripsState.savedTrips,
-                        key = { trip -> trip.tripId },
-                    ) { trip ->
-                        SavedTripCard(
-                            trip = trip,
-                            onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
-                            onCardClick = {
-                                onSavedTripCardClick(
-                                    StopItem(
-                                        stopId = trip.fromStopId,
-                                        stopName = trip.fromStopName,
-                                    ),
-                                    StopItem(
-                                        stopId = trip.toStopId,
-                                        stopName = trip.toStopName,
-                                    ),
-                                )
-                            },
-                            primaryTransportMode = null, // TODO
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp),
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    if (savedTripsState.parkRideUiState.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-
-                        stickyHeader(key = "park_ride_title") {
-                            SavedTripsTitle {
-                                Text(text = "Park & Ride")
-                            }
-                        }
-
-                        items(
-                            items = savedTripsState.parkRideUiState,
-                            key = { parkRide -> parkRide.stopId },
-                        ) { parkRide ->
-
-                            val isExpanded = expandedMap[parkRide.stopId] ?: false
-                            ParkRideCard(
-                                isExpanded = isExpanded,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                onClick = {
-                                    val newExpanded = !isExpanded
-                                    expandedMap[parkRide.stopId] = newExpanded
-                                    onEvent(
-                                        SavedTripUiEvent.ParkRideCardClick(
-                                            parkRideState = parkRide,
-                                            isExpanded = newExpanded,
-                                        ),
-                                    )
-                                },
-                                parkRideUiState = parkRide,
+                    savedTripsState.savedTrips.isEmpty() -> {
+                        item(key = "empty_state") {
+                            ErrorMessage(
+                                emoji = "🌟",
+                                title = "Ready to roll, mate?",
+                                message = "Star your trips to see them here!",
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .animateItem(),
                             )
-
-                            Spacer(modifier = Modifier.height(16.dp))
                         }
+                    }
 
-                        item {
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
+                    savedTripsState.savedTrips.isNotEmpty() -> {
+                        SavedTripsContent(
+                            savedTripsState = savedTripsState,
+                            onEvent = onEvent,
+                            onSavedTripCardClick = onSavedTripCardClick,
+                            expandedMap = expandedMap,
+                        )
                     }
                 }
             }
@@ -213,6 +157,83 @@ fun SavedTripsScreen(
             onReverseButtonClick = onReverseButtonClick,
             onSearchButtonClick = { onSearchButtonClick() },
         )
+    }
+}
+
+private fun LazyListScope.SavedTripsContent(
+    savedTripsState: SavedTripsState,
+    onEvent: (SavedTripUiEvent) -> Unit,
+    onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
+    expandedMap: SnapshotStateMap<String, Boolean>,
+) {
+    stickyHeader(key = "saved_trips_title") {
+        SavedTripsTitle {
+            Text(text = "Saved Trips")
+        }
+    }
+
+    items(
+        items = savedTripsState.savedTrips,
+        key = { trip -> trip.tripId },
+    ) { trip ->
+        SavedTripCard(
+            trip = trip,
+            onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
+            onCardClick = {
+                onSavedTripCardClick(
+                    StopItem(
+                        stopId = trip.fromStopId,
+                        stopName = trip.fromStopName,
+                    ),
+                    StopItem(
+                        stopId = trip.toStopId,
+                        stopName = trip.toStopName,
+                    ),
+                )
+            },
+            primaryTransportMode = null, // TODO
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+
+    if (savedTripsState.parkRideUiState.isNotEmpty()) {
+        stickyHeader(key = "park_ride_title") {
+            SavedTripsTitle {
+                Text(text = "Park & Ride")
+            }
+        }
+
+        items(
+            items = savedTripsState.parkRideUiState,
+            key = { parkRide -> parkRide.stopId },
+        ) { parkRide ->
+            val isExpanded = expandedMap[parkRide.stopId] ?: false
+
+            ParkRideCard(
+                isExpanded = isExpanded,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                onClick = {
+                    val newExpanded = !isExpanded
+                    expandedMap[parkRide.stopId] = newExpanded
+                    onEvent(
+                        SavedTripUiEvent.ParkRideCardClick(
+                            parkRideState = parkRide,
+                            isExpanded = newExpanded,
+                        ),
+                    )
+                },
+                parkRideUiState = parkRide,
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        item(key = "park_ride_spacer_bottom") {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 }
 

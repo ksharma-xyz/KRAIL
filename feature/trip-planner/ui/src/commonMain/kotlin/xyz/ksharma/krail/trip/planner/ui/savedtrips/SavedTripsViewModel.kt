@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +51,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Clock.System
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -206,7 +208,7 @@ class SavedTripsViewModel(
     }
 
     private fun observeSavedTrips() {
-        log("observeSavedTrips called")
+        log("onStart - observeSavedTrips called")
         observeSavedTripsJob?.cancel()
         observeSavedTripsJob = viewModelScope.launch(ioDispatcher) {
             updateUiState { copy(isSavedTripsLoading = true) }
@@ -334,7 +336,7 @@ class SavedTripsViewModel(
      */
     @OptIn(ExperimentalTime::class)
     private fun observeFacilityDetailsFromDb() {
-        log("observeFacilitySpotsAvailability called")
+        log("onStart - observeFacilitySpotsAvailability called")
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
@@ -476,6 +478,8 @@ class SavedTripsViewModel(
      * with shorter cooldowns during peak hours and longer ones during off-peak times.
      */
     private suspend fun refreshFacilityDetails() {
+        log("onStart - refreshFacilityDetails called")
+
         // Retrieve the set of stop IDs with currently expanded UI cards
         val expandedStopIds = _uiState.value.observeParkRideStopIdSet
         log("Refreshing Park Ride facilities for expanded stops: $expandedStopIds")
@@ -514,11 +518,14 @@ class SavedTripsViewModel(
         }
     }
 
-    private fun updateDiscoverState() {
+    private suspend fun updateDiscoverState() {
+        log("onStart - updateDiscoverState called")
+        // Delay to ensure savedTrips is inited before checking discover availability
+        delay(200.milliseconds)
         updateUiState {
             copy(
-                isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable,
-                displayDiscoverBadge = !preferences.hasDiscoverBeenClicked() && savedTrips.isNotEmpty(),
+                isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable && savedTrips.isNotEmpty(),
+                displayDiscoverBadge = !preferences.hasDiscoverBeenClicked(),
             )
         }
     }

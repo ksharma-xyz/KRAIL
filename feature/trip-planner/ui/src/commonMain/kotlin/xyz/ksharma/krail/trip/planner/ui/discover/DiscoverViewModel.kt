@@ -27,6 +27,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
+import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.discover.state.DiscoverState
@@ -104,7 +105,17 @@ class DiscoverViewModel(
             }
 
             is DiscoverEvent.ShareButtonClicked -> {
-                platformOps.sharePlainText(event.url, title = event.cardTitle)
+                val card = _allCards.value.firstOrNull { it.cardId == event.cardId }
+                val ctaLink = uiState.value.getCtaOrPartnerSocialLinkForCard(event.cardId)
+
+                platformOps.sharePlainText(
+                    text = createShareText(
+                        cardTitle = card?.title,
+                        cardDescription = card?.description,
+                        cardType = event.cardType,
+                        ctaLink = ctaLink,
+                    ),
+                )
                 analytics.track(
                     event = DiscoverCardClick(
                         source = Source.SHARE_CLICK,
@@ -201,4 +212,46 @@ class DiscoverViewModel(
             )
         }
     }
+}
+
+/**
+ * Returns the first CTA or PartnerSocial link URL for the card, or null if none found.
+ */
+fun DiscoverState.getCtaOrPartnerSocialLinkForCard(cardId: String): String? {
+    val card = discoverCardsList.firstOrNull { it.cardId == cardId }
+    card?.buttons?.forEach { button ->
+        when (button) {
+
+            is Button.Cta -> return button.url
+
+            is Button.Social.PartnerSocial -> {
+                val firstLink = button.links.firstOrNull()
+                if (firstLink != null) return firstLink.url
+            }
+
+            else -> Unit
+        }
+    }
+    return null
+}
+
+private fun createShareText(
+    cardTitle: String?,
+    cardDescription: String?,
+    cardType: DiscoverCardType,
+    ctaLink: String? = null
+): String {
+    log("ctaLink: $ctaLink")
+    val letsKrailText = "\n#LetsKRAIL https://krail.app"
+
+    val postfix = when (cardType) {
+        DiscoverCardType.Travel -> "\n$ctaLink\n\nFound in KRAIL App$letsKrailText"
+        DiscoverCardType.Events -> "\n$ctaLink\n\nSee more events in KRAIL App$letsKrailText"
+        DiscoverCardType.Food -> "\n$ctaLink\n\nDiscovered in KRAIL App$letsKrailText"
+        DiscoverCardType.Sports -> "\n$ctaLink\n\nGame on with KRAIL App$letsKrailText"
+        DiscoverCardType.Unknown -> "\n$ctaLink\n\nShared via KRAIL App$letsKrailText"
+    }
+    val text = (cardTitle ?: "") + "\n" + (cardDescription ?: "") + postfix
+    log("Share text created: $text")
+    return text
 }

@@ -7,7 +7,7 @@ interface PlatformOps {
      *
      * @param text - the text to share (can contain emoji and other characters)
      */
-    fun sharePlainText(text: String, title: String)
+    fun sharePlainText(text: String, title: String = "")
 
     /**
      * Will open the given URL in the system browser.

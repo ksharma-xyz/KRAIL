@@ -43,12 +43,7 @@ object ButtonListSerializer : KSerializer<List<Button>> {
                 }
 
                 "share" -> {
-                    val shareUrl = buttonObj["shareUrl"]?.jsonPrimitive?.content
-                    require(!shareUrl.isNullOrBlank()) { "Button Share URL cannot be null or blank" }
-
-                    Button.Share(
-                        shareUrl = shareUrl,
-                    )
+                    Button.Share
                 }
 
                 "appsocial" -> Button.Social.AppSocial

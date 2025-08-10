@@ -54,9 +54,7 @@ sealed class Button {
         val url: String,
     ) : Button()
 
-    data class Share(
-        val shareUrl: String,
-    ) : Button()
+    data object Share : Button()
 
     sealed class Social : Button() {
 

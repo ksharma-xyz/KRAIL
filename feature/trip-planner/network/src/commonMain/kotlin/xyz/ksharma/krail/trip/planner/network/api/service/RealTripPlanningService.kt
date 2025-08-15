@@ -40,7 +40,7 @@ internal class RealTripPlanningService(
                 parameters.append(TripRequestParams.calcNumberOfTrips, "6")
                 parameters.append(TripRequestParams.typeOrigin, "any")
                 parameters.append(TripRequestParams.tfNSWTR, "true")
-                parameters.append(TripRequestParams.version, "10.2.1.42")
+                parameters.append(TripRequestParams.version, "10.2.1.42") // 10.6.21.17 from 27 August 2024
                 parameters.append(TripRequestParams.coordOutputFormat, "EPSG:4326")
                 parameters.append(TripRequestParams.itOptionsActive, "1")
                 parameters.append(TripRequestParams.computeMonomodalTripBicycle, "false")

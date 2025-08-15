@@ -156,6 +156,14 @@ data class TripResponse(
          * Contains additional information about this stop, such as wheelchair accessibility information.
          */
         @SerialName("properties") val properties: DestinationProperties? = null,
+
+        /**
+         * This is a list of product classes that this stop belongs to.
+         * It is used to determine which products are available at this stop.
+         * For example, a stop may belong to the product class for trains, buses, ferries, etc.
+         * Only available for v10.6.21.17 and later.
+         */
+        @SerialName("productClasses") val productClasses: List<Long>? = null,
     )
 
     @Serializable

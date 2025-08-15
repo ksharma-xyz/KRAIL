@@ -51,6 +51,14 @@ internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.Journ
                 totalWalkingDuration.takeIf { it > 0L }?.toDuration(DurationUnit.SECONDS)
                     ?.toFormattedDurationTimeString()
 
+            val alertsList = legs
+                    .flatMap { leg -> leg.infos.orEmpty() }
+                    .toSet()
+            println("\tTotal unique service alerts: ${alertsList.size}")
+            alertsList.forEach {
+                println("\tAlert: ${it.subtitle?.take(5) ?: "No subtitle"}")
+            }
+
             TimeTableState.JourneyCardInfo(
                 timeText = originTimeUTC.getTimeText(),
                 platformText = firstPublicTransportLeg.getPlatformText(),
@@ -66,7 +74,7 @@ internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.Journ
                 totalWalkTime = walkingDurationStr,
                 transportModeLines = transportModeLines,
                 legs = legsList,
-                totalUniqueServiceAlerts = legs.flatMap { leg -> leg.infos.orEmpty() }.toSet().size,
+                totalUniqueServiceAlerts = alertsList.size,
             ).also {
                 log("\tJourneyId: ${it.journeyId}")
             }
@@ -116,9 +124,9 @@ private fun List<TripResponse.Leg>.logTransportModes() = forEachIndexed { index,
     log("Origin #$index: ${leg.origin?.disassembledName}")
     log(
         "TransportMode #$index: ${leg.transportation?.product?.productClass}, " +
-            "name: ${leg.transportation?.product?.name}, " +
-            "stops: ${leg.stopSequence?.size}, " +
-            "duration: ${leg.duration}",
+                "name: ${leg.transportation?.product?.name}, " +
+                "stops: ${leg.stopSequence?.size}, " +
+                "duration: ${leg.duration}",
     )
 }
 
@@ -171,6 +179,15 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
             if (transportMode != null && lineName != null && displayText != null &&
                 numberOfStops != null && stops != null && displayDuration != null
             ) {
+                if (alerts != null) {
+                    log("alerts is not null - ${alerts.size}")
+                } else {
+                    log("alerts is null")
+                }
+                alerts?.forEach {
+                    println("\tAlert: ${it.heading}")
+                }
+
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     transportModeLine = TransportModeLine(
                         transportMode = transportMode,
@@ -189,8 +206,8 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
             } else {
                 logError(
                     "Something is null - NOT adding Transport LEG: " +
-                        "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
-                        "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
+                            "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
+                            "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
                 )
                 null
             }
@@ -235,7 +252,7 @@ private fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInf
     // For first leg there is no arrival time, so using departure time.
     val time =
         departureTimeEstimated ?: departureTimePlanned ?: arrivalTimeEstimated
-            ?: arrivalTimePlanned
+        ?: arrivalTimePlanned
     return if (stopName != null && time != null) {
         TimeTableState.JourneyCardInfo.Stop(
             name = stopName,

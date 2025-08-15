@@ -477,6 +477,7 @@ class TimeTableViewModel(
             val alerts = withContext(ioDispatcher) {
                 runCatching {
                     _uiState.value.journeyList.find { it.journeyId == journeyId }?.let { journey ->
+                        log("Fetching alerts for journey: $journeyId")
                         getAlertsFromJourney(journey)
                     }
                 }.getOrElse {
@@ -484,6 +485,7 @@ class TimeTableViewModel(
                     emptyList()
                 }
             }
+            log("Fetched alerts for journeyId: $journeyId, alerts: ${alerts?.size}")
             if (alerts?.isNotEmpty() == true) {
                 analytics.track(
                     AnalyticsEvent.JourneyAlertClickEvent(
@@ -500,11 +502,15 @@ class TimeTableViewModel(
         val alerts =
             journey.legs.filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
                 .flatMap { it.serviceAlertList.orEmpty() }
-
+        alerts.forEach { alert ->
+            log("\tAlert for JourneyId: ${journey.journeyId}, Alert: $alert")
+        }
+//        log("getAlertsFromJourney - JourneyId: ${journey.journeyId}, Alerts: ${alerts.size}")
         sandook.insertAlerts(
             journeyId = journey.journeyId,
             alerts = alerts.map { it.toSelectServiceAlertsByJourneyId(journey.journeyId) },
         )
+        log("Inserted alerts for journeyId: ${journey.journeyId}, Alerts: ${alerts.size}")
         return alerts
     }
 

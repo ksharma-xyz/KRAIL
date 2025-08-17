@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -81,6 +82,15 @@ fun DiscoverCard(
     Column(
         modifier = modifier
             .height(discoverCardHeight)
+            .dropShadow(
+                RoundedCornerShape(16.dp),
+                dropShadow = DropShadow(
+                    radius = 16.dp,
+                    color = Color.Black,
+                    spread = 8.dp,
+                    alpha = 0.18f
+                )
+            )
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(

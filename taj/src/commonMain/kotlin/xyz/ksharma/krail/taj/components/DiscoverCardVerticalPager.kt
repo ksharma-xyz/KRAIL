@@ -11,19 +11,22 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeColor
 import kotlin.math.absoluteValue
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 fun rememberCardHeight(): Dp {
@@ -92,16 +95,28 @@ fun <T> DiscoverCardVerticalPager(
                     lerp(1f, 0.1f, pageOffset.coerceIn(0f, 1f))
                 }
 
+                val shadowTargetAlpha = if (isCardSelected) 0.35f else 0f
+                val shadowAnimatedAlpha by animateFloatAsState(targetValue = shadowTargetAlpha)
+
                 Box(
                     modifier = Modifier
+                        .height(discoverCardHeight)
+                        .width(maxCardWidth)
+                        .dropShadow(
+                            shape = RoundedCornerShape(16.dp),
+                            shadow = Shadow(
+                                radius = 8.dp,
+                                color = themeColor(),
+                                spread = 4.dp,
+                                alpha = shadowAnimatedAlpha
+                            )
+                        )
                         .graphicsLayer {
                             scaleX = scale
                             scaleY = scale
                             this.alpha = alpha
                         }
                         .zIndex(1f - pageOffset)
-                        .height(discoverCardHeight)
-                        .width(maxCardWidth)
                         .align(Alignment.Center),
                     contentAlignment = Alignment.Center,
                 ) {

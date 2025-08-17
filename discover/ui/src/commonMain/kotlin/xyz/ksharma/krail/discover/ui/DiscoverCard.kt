@@ -19,11 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
@@ -82,15 +83,6 @@ fun DiscoverCard(
     Column(
         modifier = modifier
             .height(discoverCardHeight)
-            .dropShadow(
-                RoundedCornerShape(16.dp),
-                dropShadow = DropShadow(
-                    radius = 16.dp,
-                    color = Color.Black,
-                    spread = 8.dp,
-                    alpha = 0.18f
-                )
-            )
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(

@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,6 +16,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -23,10 +26,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import kotlin.math.absoluteValue
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.runtime.getValue
 
 @Composable
 fun rememberCardHeight(): Dp {
@@ -95,19 +97,27 @@ fun <T> DiscoverCardVerticalPager(
                     lerp(1f, 0.1f, pageOffset.coerceIn(0f, 1f))
                 }
 
-                val shadowAlpha = lerp(0.25f, 0f, pageOffset.coerceIn(0f, 1f))
+                // region Shadow for card
+                val maxShadowAlpha = 0.25f
+                val targetShadowAlpha = if (isCardSelected) {
+                    lerp(maxShadowAlpha, 0f, pageOffset.coerceIn(0f, 1f))
+                } else {
+                    0f
+                }
+                val animatedShadowAlpha by animateFloatAsState(targetValue = targetShadowAlpha)
+                // endregion Shadow for card
 
                 Box(
                     modifier = Modifier
                         .height(discoverCardHeight)
                         .width(maxCardWidth)
                         .dropShadow(
-                            shape = RoundedCornerShape((16.dp * scale).coerceIn(1.dp, 16.dp)),
+                            shape = RoundedCornerShape((8.dp * scale).coerceIn(1.dp, 8.dp)),
                             shadow = Shadow(
                                 radius = (8.dp * scale).coerceIn(1.dp, 8.dp),
                                 color = themeColor(),
                                 spread = (4.dp * scale).coerceIn(1.dp, 4.dp),
-                                alpha = shadowAlpha,
+                                alpha = animatedShadowAlpha,
                             )
                         )
                         .graphicsLayer {
@@ -115,6 +125,7 @@ fun <T> DiscoverCardVerticalPager(
                             scaleY = scale
                             this.alpha = alpha
                         }
+                        .background(color = KrailTheme.colors.surface, shape = RoundedCornerShape(16.dp))
                         .zIndex(1f - pageOffset)
                         .align(Alignment.Center),
                     contentAlignment = Alignment.Center,

@@ -95,8 +95,7 @@ fun <T> DiscoverCardVerticalPager(
                     lerp(1f, 0.1f, pageOffset.coerceIn(0f, 1f))
                 }
 
-                val shadowTargetAlpha = if (isCardSelected) 0.35f else 0f
-                val shadowAnimatedAlpha by animateFloatAsState(targetValue = shadowTargetAlpha)
+                val shadowAlpha = lerp(0.35f, 0f, pageOffset.coerceIn(0f, 1f))
 
                 Box(
                     modifier = Modifier
@@ -108,7 +107,7 @@ fun <T> DiscoverCardVerticalPager(
                                 radius = 8.dp,
                                 color = themeColor(),
                                 spread = 4.dp,
-                                alpha = shadowAnimatedAlpha
+                                alpha = shadowAlpha,
                             )
                         )
                         .graphicsLayer {

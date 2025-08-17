@@ -95,18 +95,18 @@ fun <T> DiscoverCardVerticalPager(
                     lerp(1f, 0.1f, pageOffset.coerceIn(0f, 1f))
                 }
 
-                val shadowAlpha = lerp(0.35f, 0f, pageOffset.coerceIn(0f, 1f))
+                val shadowAlpha = lerp(0.25f, 0f, pageOffset.coerceIn(0f, 1f))
 
                 Box(
                     modifier = Modifier
                         .height(discoverCardHeight)
                         .width(maxCardWidth)
                         .dropShadow(
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape((16.dp * scale).coerceIn(1.dp, 16.dp)),
                             shadow = Shadow(
-                                radius = 8.dp,
+                                radius = (8.dp * scale).coerceIn(1.dp, 8.dp),
                                 color = themeColor(),
-                                spread = 4.dp,
+                                spread = (4.dp * scale).coerceIn(1.dp, 4.dp),
                                 alpha = shadowAlpha,
                             )
                         )

@@ -6,6 +6,9 @@ on:
       artifact-name:
         required: true
         type: string
+      track:
+        required: true
+        type: string
 
 jobs:
   distribute:

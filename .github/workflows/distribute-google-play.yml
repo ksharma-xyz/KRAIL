@@ -6,6 +6,17 @@ on:
       artifact-name:
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      artifact-name:
+        description: 'Distribute KRAIL App to Google Play Store internal test tack.'
+        required: true
+        type: string
+      track:
+        description: 'Play Store - Internal track'
+        required: true
+        default: 'internal'
+        type: string
 
 jobs:
   distribute:
@@ -15,7 +26,7 @@ jobs:
       - name: Download Release AAB artifact
         uses: actions/download-artifact@v5
         with:
-          name: ${{ inputs.artifact-name }}
+          name: ${{ github.event.inputs.artifact-name || inputs.artifact-name }}
           path: aab
 
       - name: Deploy to Play Store (Internal)
@@ -24,7 +35,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: xyz.ksharma.krail
           releaseFiles: aab/*.aab
-          track: internal
+          track: ${{ github.event.inputs.track || 'internal' }}
 
       - name: Create Github Release
         uses: softprops/action-gh-release@v2

@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.taj.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
+import kotlin.compareTo
 import kotlin.math.absoluteValue
 
 @Composable
@@ -98,36 +100,43 @@ fun <T> DiscoverCardVerticalPager(
                 }
 
                 // region Shadow for card
-                val maxShadowAlpha = 0.25f
-                val targetShadowAlpha = if (isCardSelected) {
-                    lerp(maxShadowAlpha, 0f, pageOffset.coerceIn(0f, 1f))
-                } else {
-                    0f
-                }
-                val animatedShadowAlpha by animateFloatAsState(targetValue = targetShadowAlpha)
+                val maxShadowAlpha = if(isSystemInDarkTheme()) 0.25f else 0.15f
+                val targetShadowAlpha = if (isCardSelected) maxShadowAlpha else 0f
+                val animatedShadowAlpha by animateFloatAsState(
+                    targetValue = targetShadowAlpha,
+                    animationSpec = tween(durationMillis = 100)
+                )
                 // endregion Shadow for card
 
-                Box(
-                    modifier = Modifier
-                        .height(discoverCardHeight)
-                        .width(maxCardWidth)
-                        .dropShadow(
-                            shape = RoundedCornerShape((8.dp * scale).coerceIn(1.dp, 8.dp)),
-                            shadow = Shadow(
-                                radius = (8.dp * scale).coerceIn(1.dp, 8.dp),
-                                color = themeColor(),
-                                spread = (4.dp * scale).coerceIn(1.dp, 4.dp),
-                                alpha = animatedShadowAlpha,
+                val cardModifier = Modifier
+                    .height(discoverCardHeight)
+                    .width(maxCardWidth)
+                    .background(
+                        color = KrailTheme.colors.surface,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        this.alpha = alpha
+                    }
+                    .then(
+                        if (animatedShadowAlpha > 0f) {
+                            Modifier.dropShadow(
+                                shape = RoundedCornerShape((16.dp * scale).coerceIn(1.dp, 16.dp)),
+                                shadow = Shadow(
+                                    radius = (10.dp * scale).coerceIn(1.dp, 10.dp),
+                                    color = themeColor(),
+                                    alpha = animatedShadowAlpha,
+                                )
                             )
-                        )
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            this.alpha = alpha
-                        }
-                        .background(color = KrailTheme.colors.surface, shape = RoundedCornerShape(16.dp))
-                        .zIndex(1f - pageOffset)
-                        .align(Alignment.Center),
+                        } else Modifier
+                    )
+                    .zIndex(1f - pageOffset)
+                    .align(Alignment.Center)
+
+                Box(
+                    modifier = cardModifier,
                     contentAlignment = Alignment.Center,
                 ) {
                     content(pages[page], isCardSelected)

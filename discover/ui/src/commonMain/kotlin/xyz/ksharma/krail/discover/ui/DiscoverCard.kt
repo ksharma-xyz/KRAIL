@@ -84,13 +84,7 @@ fun DiscoverCard(
         modifier = modifier
             .height(discoverCardHeight)
             .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        KrailTheme.colors.surface,           // Top: pure surface
-                        blendedBackground.copy(alpha = 0.3f), // Middle: subtle blend
-                        blendedBackground.copy(alpha = 0.6f)  // Bottom: stronger blend
-                    )
-                ),
+                color = KrailTheme.colors.surface,
                 shape = RoundedCornerShape(16.dp)
             )
             .border(

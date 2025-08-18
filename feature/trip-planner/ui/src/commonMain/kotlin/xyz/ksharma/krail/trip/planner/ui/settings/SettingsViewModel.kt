@@ -46,7 +46,7 @@ class SettingsViewModel(
         }
     }
 
-    private suspend fun fetchAppVersion() {
+    private fun fetchAppVersion() {
         val appVersion = appInfoProvider.getAppInfo().appVersion
         _uiState.value = _uiState.value.copy(appVersion = appVersion)
     }

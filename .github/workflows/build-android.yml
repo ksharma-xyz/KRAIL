@@ -56,15 +56,29 @@ jobs:
         run: |
           echo "GitHub run number: ${{ github.run_number }}"
 
+      # New step: compute versionCode in UTC and export to GITHUB_ENV
+      - name: Compute versionCode
+        id: compute_version_code
+        run: |
+          set -e
+          RUN_NUMBER=${{ github.run_number }}
+          START_TS=$(date -ud '2025-01-01 00:00:00Z' +%s)
+          NOW_TS=$(date -u +%s)
+          DAYS_SINCE=$(( (NOW_TS - START_TS) / 86400 ))
+          RUN_MOD=$(( RUN_NUMBER % 100 ))
+          VERSION_CODE=$(( 2000 + DAYS_SINCE + RUN_MOD ))
+          echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_ENV
+          echo "Computed versionCode: ${VERSION_CODE} (days=${DAYS_SINCE}, run#=${RUN_NUMBER}, run%100=${RUN_MOD})"
+
       - name: Build ${{ inputs.variant }}
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test -PversionCode="${{ github.run_number }}" --rerun-tasks --stacktrace
+            ./gradlew :composeApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${{ github.run_number }}"
+            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${VERSION_CODE}"
           fi
 
       - name: Upload Debug APK

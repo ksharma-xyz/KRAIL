@@ -100,33 +100,30 @@ fun <T> DiscoverCardVerticalPager(
                 }
 
                 // region Shadow for card
-                val maxShadowAlpha = if(isSystemInDarkTheme()) 0.25f else 0.15f
+                val maxShadowAlpha = if(isSystemInDarkTheme()) 0.25f else 0.05f
                 val targetShadowAlpha = if (isCardSelected) maxShadowAlpha else 0f
                 val animatedShadowAlpha by animateFloatAsState(
                     targetValue = targetShadowAlpha,
-                    animationSpec = tween(durationMillis = 100)
+                    animationSpec = tween(durationMillis = 50)
                 )
                 // endregion Shadow for card
 
                 val cardModifier = Modifier
                     .height(discoverCardHeight)
                     .width(maxCardWidth)
-                    .background(
-                        color = KrailTheme.colors.surface,
-                        shape = RoundedCornerShape(16.dp)
-                    )
                     .graphicsLayer {
                         scaleX = scale
                         scaleY = scale
                         this.alpha = alpha
                     }
                     .then(
-                        if (animatedShadowAlpha > 0f) {
+                        if (isCardSelected) {
                             Modifier.dropShadow(
-                                shape = RoundedCornerShape((16.dp * scale).coerceIn(1.dp, 16.dp)),
+                                shape = RoundedCornerShape(16.dp),
                                 shadow = Shadow(
-                                    radius = (10.dp * scale).coerceIn(1.dp, 10.dp),
+                                    radius = 16.dp,
                                     color = themeColor(),
+                                    spread = 1.dp,
                                     alpha = animatedShadowAlpha,
                                 )
                             )

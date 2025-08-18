@@ -1,0 +1,27 @@
+name: Create Github Release
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        required: true
+        type: string
+  workflow_dispatch: # Manual trigger for creating a release
+    inputs:
+      tag_name:
+        description: 'Release tag name'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Github Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          generate_release_notes: true
+          draft: true

@@ -46,20 +46,3 @@ jobs:
     with:
       variant: release
     secrets: inherit
-
-  distribute-google-play:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/prod/')
-    needs: build-android-release
-    uses: ./.github/workflows/distribute-google-play.yml
-    with:
-      artifact-name: composeApp-release-aab-${{ github.run_id }}
-    secrets: inherit
-
-  create-github-release:
-    # Only create a release for prod branch pushes
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/prod/')
-    needs: distribute-google-play
-    uses: ./.github/workflows/create-github-release.yml
-    with:
-      tag_name: v${{ needs.android.outputs.version_name }}
-    secrets: inherit

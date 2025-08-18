@@ -6,5 +6,4 @@ import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 
 expect fun baseHttpClient(
     appInfoProvider: AppInfoProvider,
-    coroutineScope: CoroutineScope,
 ): HttpClient

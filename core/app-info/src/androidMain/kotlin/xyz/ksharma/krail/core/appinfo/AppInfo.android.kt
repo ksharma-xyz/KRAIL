@@ -71,18 +71,15 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
 
     override fun toString() =
         "AndroidAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
-            "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
-            "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
-            "timeZone=$timeZone)"
+                "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
+                "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
+                "timeZone=$timeZone)"
 }
 
 class AndroidAppInfoProvider(
     private val context: Context,
-    private val defaultDispatcher: CoroutineDispatcher,
 ) : AppInfoProvider {
-    override suspend fun getAppInfo(): AppInfo = withContext(defaultDispatcher) {
-        AndroidAppInfo(context)
-    }
+    override fun getAppInfo(): AppInfo = AndroidAppInfo(context)
 }
 
 actual fun getAppPlatformType() = DevicePlatformType.ANDROID

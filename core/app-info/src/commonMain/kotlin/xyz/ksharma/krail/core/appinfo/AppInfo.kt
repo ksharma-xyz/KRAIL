@@ -83,5 +83,5 @@ enum class DevicePlatformType {
 }
 
 interface AppInfoProvider {
-    suspend fun getAppInfo(): AppInfo
+    fun getAppInfo(): AppInfo
 }

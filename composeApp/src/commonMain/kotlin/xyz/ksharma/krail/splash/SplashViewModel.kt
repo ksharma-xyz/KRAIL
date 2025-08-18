@@ -56,7 +56,7 @@ class SplashViewModel(
         }
     }
 
-    private suspend fun trackAppStartEvent() = with(appInfoProvider.getAppInfo()) {
+    private fun trackAppStartEvent() = with(appInfoProvider.getAppInfo()) {
         log("AppInfo: $this, krailTheme: ${_uiState.value.themeStyle.id}")
         analytics.track(
             AnalyticsEvent.AppStart(

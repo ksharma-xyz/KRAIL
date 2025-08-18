@@ -77,7 +77,7 @@ class IOSAppInfo : AppInfo {
 }
 
 class IosAppInfoProvider : AppInfoProvider {
-    override suspend fun getAppInfo(): AppInfo {
+    override fun getAppInfo(): AppInfo {
         return IOSAppInfo()
     }
 }

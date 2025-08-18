@@ -28,6 +28,7 @@ kotlin {
         androidMain {
             dependencies {
                 api(libs.di.koinAndroid)
+                implementation(libs.log.slf4j.android)
             }
         }
 

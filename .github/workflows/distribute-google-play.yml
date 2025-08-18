@@ -28,12 +28,3 @@ jobs:
           packageName: xyz.ksharma.krail
           releaseFiles: aab/*.aab
           track: internal
-
-      - name: Create Github Release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
-        with:
-          tag_name: v${{ needs.android.outputs.version_name }}
-          generate_release_notes: true
-          draft: true

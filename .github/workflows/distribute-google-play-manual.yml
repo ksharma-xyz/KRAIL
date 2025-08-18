@@ -1,0 +1,25 @@
+name: Manual Build & Distribute Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: 'Play Store track (e.g., internal, closed)'
+        required: true
+        default: 'internal'
+        type: string
+
+jobs:
+  build-android-release:
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: release
+    secrets: inherit
+
+  distribute-google-play:
+    needs: build-android-release
+    uses: ./.github/workflows/distribute-google-play.yml
+    with:
+      artifact-name: composeApp-release-aab-${{ github.run_id }}
+      track: ${{ github.event.inputs.track }}
+    secrets: inherit

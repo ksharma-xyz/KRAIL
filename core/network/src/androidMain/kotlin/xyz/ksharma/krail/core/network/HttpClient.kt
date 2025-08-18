@@ -2,6 +2,7 @@ package xyz.ksharma.krail.core.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -43,6 +44,11 @@ actual fun baseHttpClient(
                     level = LogLevel.NONE
                 }
             }
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = DEFAULT_TIMEOUTS.requestTimeoutMillis
+            connectTimeoutMillis = DEFAULT_TIMEOUTS.connectTimeoutMillis
+            socketTimeoutMillis = DEFAULT_TIMEOUTS.socketTimeoutMillis
         }
     }
 }

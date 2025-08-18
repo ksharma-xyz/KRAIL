@@ -59,7 +59,7 @@ jobs:
     # Only create a release for prod branch pushes
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/prod/')
     needs: distribute-google-play
-    uses: ./.github/workflows/release-github.yml
+    uses: ./.github/workflows/create-github-release.yml
     with:
       tag_name: v${{ needs.android.outputs.version_name }}
     secrets: inherit

@@ -1,7 +1,7 @@
 name: Manual Build & Distribute Google Play
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger for building and distributing Android release
     inputs:
       track:
         description: 'Play Store track (e.g., internal, closed)'

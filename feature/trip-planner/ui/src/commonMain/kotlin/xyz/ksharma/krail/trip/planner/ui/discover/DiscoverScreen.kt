@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -42,6 +43,7 @@ import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
 
 @Composable
 fun DiscoverScreen(
@@ -103,40 +105,79 @@ fun DiscoverScreenCompact(
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
 
-        DiscoverCardVerticalPager(
-            pages = state.discoverCardsList,
-            modifier = modifier.fillMaxSize(),
-            keySelector = { it.cardId },
-            content = { cardModel, isCardSelected ->
+        if (isLargeFontScale()) {
+            LazyColumn(
+                contentPadding = PaddingValues(bottom = 200.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = modifier.fillMaxSize()
+            ) {
+                item {
+                    DiscoverTitleBar(onBackClick, resetAllSeenCards)
+                }
 
-                if (isCardSelected) {
+                stickyHeader {
+                    DiscoverFooterChipsRow(state, onChipSelected)
+                }
+
+                items(
+                    count = state.discoverCardsList.size,
+                    key = { index -> state.discoverCardsList[index].cardId }
+                ) { index ->
+                    val cardModel = state.discoverCardsList[index]
+
                     LaunchedEffect(cardModel.cardId) {
                         onCardSeen(cardModel.cardId)
                     }
+
+                    DiscoverCard(
+                        discoverModel = cardModel,
+                        onAppSocialLinkClicked = onAppSocialLinkClicked,
+                        onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                        onCtaClicked = onCtaClicked,
+                        onShareClick = {
+                            onShareClick(cardModel.cardId, cardModel.type)
+                        },
+                        modifier = Modifier.animateItem(),
+                    )
                 }
-
-                DiscoverCard(
-                    discoverModel = cardModel,
-                    onAppSocialLinkClicked = onAppSocialLinkClicked,
-                    onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
-                    onCtaClicked = onCtaClicked,
-                    onShareClick = {
-                        onShareClick(
-                            cardModel.cardId,
-                            cardModel.type,
-                        )
-                    }
-                )
             }
-        )
+        } else {
+            DiscoverCardVerticalPager(
+                pages = state.discoverCardsList,
+                modifier = modifier.fillMaxSize(),
+                keySelector = { it.cardId },
+                content = { cardModel, isCardSelected ->
 
-        // Header with title bar
-        DiscoverTitleBar(onBackClick, resetAllSeenCards)
+                    if (isCardSelected) {
+                        LaunchedEffect(cardModel.cardId) {
+                            onCardSeen(cardModel.cardId)
+                        }
+                    }
 
-        // Footer with chips
-        DiscoverFooterChipsRow(state, onChipSelected)
+                    DiscoverCard(
+                        discoverModel = cardModel,
+                        onAppSocialLinkClicked = onAppSocialLinkClicked,
+                        onPartnerSocialLinkClicked = onPartnerSocialLinkClicked,
+                        onCtaClicked = onCtaClicked,
+                        onShareClick = {
+                            onShareClick(
+                                cardModel.cardId,
+                                cardModel.type,
+                            )
+                        }
+                    )
+                }
+            )
+
+            // Header with title bar
+            DiscoverTitleBar(onBackClick, resetAllSeenCards)
+
+            // Footer with chips
+            DiscoverFooterChipsRow(state, onChipSelected)
+        }
     }
 }
 
@@ -153,17 +194,13 @@ fun DiscoverScreenTablet(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
-    val density = LocalDensity.current
-    val fontScale = density.fontScale
-    val useLargeFontLayout = fontScale > 1.4f
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(KrailTheme.colors.surface),
     ) {
         Column {
-            if (useLargeFontLayout) {
+            if (isLargeFontScale()) {
                 // Large font: centered lazy column
                 LazyColumn(
                     contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),

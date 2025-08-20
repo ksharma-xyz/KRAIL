@@ -8,3 +8,10 @@ fun isFontScaleLessThanThreshold(fontScaleThreshold: Float = 1.8f): Boolean {
     val density = LocalDensity.current
     return density.fontScale < fontScaleThreshold
 }
+
+@Composable
+fun isLargeFontScale(): Boolean {
+    val density = LocalDensity.current
+    val fontScale = density.fontScale
+    return fontScale > 1.4f
+}

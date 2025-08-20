@@ -84,7 +84,7 @@ fun DiscoverCard(
         modifier = modifier
             .height(discoverCardHeight)
             .background(
-                color = KrailTheme.colors.surface,
+                color = KrailTheme.colors.discoverCardBackground,
                 shape = RoundedCornerShape(16.dp)
             )
             .border(

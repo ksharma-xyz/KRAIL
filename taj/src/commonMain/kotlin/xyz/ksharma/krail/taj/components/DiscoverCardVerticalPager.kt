@@ -100,7 +100,7 @@ fun <T> DiscoverCardVerticalPager(
                 }
 
                 // region Shadow for card
-                val maxShadowAlpha = if(isSystemInDarkTheme()) 0.25f else 0.05f
+                val maxShadowAlpha = if(isSystemInDarkTheme()) 0.15f else 0.1f
                 val targetShadowAlpha = if (isCardSelected) maxShadowAlpha else 0f
                 val animatedShadowAlpha by animateFloatAsState(
                     targetValue = targetShadowAlpha,
@@ -121,9 +121,9 @@ fun <T> DiscoverCardVerticalPager(
                             Modifier.dropShadow(
                                 shape = RoundedCornerShape(16.dp),
                                 shadow = Shadow(
-                                    radius = 16.dp,
+                                    radius = 24.dp,
                                     color = themeColor(),
-                                    spread = 1.dp,
+                                    spread = 2.dp,
                                     alpha = animatedShadowAlpha,
                                 )
                             )

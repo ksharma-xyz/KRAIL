@@ -5,8 +5,6 @@ import android.content.Context.BATTERY_SERVICE
 import android.content.res.Configuration
 import android.os.BatteryManager
 import android.os.Build
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 
 class AndroidAppInfo(private val context: Context) : AppInfo {
 
@@ -16,11 +14,16 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
         get() =
             context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
 
+    private val packageInfo by lazy {
+        context.packageManager.getPackageInfo(context.packageName, 0)
+    }
+
     override val appVersion: String
-        get() {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            return packageInfo.versionName ?: "Unknown"
-        }
+        get() = packageInfo.versionName ?: "Unknown"
+
+    override val appBuildNumber: String
+        get() = packageInfo.longVersionCode.toString()
+
     override val osVersion: String
         get() = Build.VERSION.SDK_INT.toString()
 

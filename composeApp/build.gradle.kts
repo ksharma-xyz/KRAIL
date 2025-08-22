@@ -115,6 +115,7 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.appInfo)
             implementation(projects.core.appStart)
+            implementation(projects.core.appVersion)
             implementation(projects.core.coroutinesExt)
             implementation(projects.core.di)
             implementation(projects.core.festival)

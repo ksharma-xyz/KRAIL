@@ -113,6 +113,18 @@ object RemoteConfigDefaults {
                 first = FlagKeys.DISCOVER_AVAILABLE.key,
                 second = true,
             ),
+            Pair(
+                first = FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
+                second = "1.6.1",
+            ),
+            Pair(
+                first = FlagKeys.LATEST_APP_VERSION_IOS.key,
+                second = "",
+            ),
+            Pair(
+                first = FlagKeys.LATEST_APP_VERSION_ANDROID.key,
+                second = "",
+            )
         )
     }
 }

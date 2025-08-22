@@ -20,7 +20,7 @@ interface AppVersionManager {
     fun getCurrentVersion(): String
 }
 
-internal class RealAppVersionManager(
+class RealAppVersionManager(
     private val appInfoProvider: AppInfoProvider,
     private val flag: Flag,
 ) : AppVersionManager {
@@ -60,7 +60,7 @@ internal class RealAppVersionManager(
 
         log("Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion")
 
-        val x = when {
+        val state = when {
             compareVersions(current, minimumSupportedAppVersion) < 0 ->
                 AppVersionUpdateState.ForcedUpdateRequired
 
@@ -69,26 +69,45 @@ internal class RealAppVersionManager(
 
             else -> AppVersionUpdateState.UpToDate
         }
-        log("App version update state: $x")
-        return x
+        log("App version update state: $state")
+        return state
     }
 
     override fun getCurrentVersion(): String = appInfoProvider.getAppInfo().appVersion
 
+    /**
+     * Compares two version strings and returns:
+     * - A negative number if `currentVersion` is less than `other`
+     * - Zero if they are equal
+     * - A positive number if `currentVersion` is greater than `other`
+     */
     private fun compareVersions(currentVersion: String, other: String): Int {
-        val av = parse(currentVersion)
-        val bv = parse(other)
-        val max = maxOf(av.size, bv.size)
+        // Parse versions into number lists: Converts version strings like "1.9.0" into lists of integers [1, 9, 0]
+        val currentVersionNumbers = parseAppVersion(currentVersion)
+        val otherVersionNumbers = parseAppVersion(other)
+
+        // Handle different lengths: Uses the maximum length of both version arrays to ensure all components are compared
+        val max = maxOf(currentVersionNumbers.size, otherVersionNumbers.size)
+
+        // Component-by-component comparison: Iterates through each version component (major, minor, patch, etc.)
         for (i in 0 until max) {
-            val ai = av.getOrElse(i) { 0 }
-            val bi = bv.getOrElse(i) { 0 }
+            // Safe array access: Uses getOrElse(i) { 0 } to treat missing components as 0
+            // Example: "1.9" vs "1.9.0" → treats "1.9" as "1.9.0"
+            val ai = currentVersionNumbers.getOrElse(i) { 0 }
+            val bi = otherVersionNumbers.getOrElse(i) { 0 }
+
+            // Return comparison result as soon as we find a difference:
+            // Negative: current version < other version
+            // Positive: current version > other version
             if (ai != bi) return ai - bi
         }
+
+        // Zero: versions are equal (all components matched)
         return 0
     }
 
-    private fun parse(v: String): List<Int> =
-        v.split('.')
+    private fun parseAppVersion(strVersion: String): List<Int> =
+        strVersion.split('.')
             .map { seg ->
                 seg.filter { it.isDigit() }
                     .takeIf { it.isNotEmpty() }

@@ -42,6 +42,8 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(projects.core.analytics)
+                implementation(projects.core.appInfo)
+                implementation(projects.core.appVersion)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)

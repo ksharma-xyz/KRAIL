@@ -1,7 +1,7 @@
 package xyz.ksharma.core.test.fakes
 
-import xyz.ksharma.krail.core.appinfo.AppVersionManager
-import xyz.ksharma.krail.core.appinfo.AppVersionUpdateState
+import xyz.ksharma.krail.core.appversion.AppVersionManager
+import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 
 class FakeAppVersionManager: AppVersionManager {
 

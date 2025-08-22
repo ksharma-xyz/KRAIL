@@ -1,5 +1,7 @@
-package xyz.ksharma.krail.core.appinfo
+package xyz.ksharma.krail.core.appversion
 
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys

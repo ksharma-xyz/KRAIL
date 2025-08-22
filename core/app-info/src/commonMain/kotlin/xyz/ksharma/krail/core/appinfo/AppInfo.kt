@@ -15,9 +15,22 @@ interface AppInfo {
     val isDebug: Boolean
 
     /**
-     * App version.
+     * Semantic version name (e.g. "1.7.6"). Used for comparisons.
      */
     val appVersion: String
+
+    /**
+     * Build number / version code (Android: versionCode/longVersionCode, iOS: CFBundleVersion).
+     */
+    val appBuildNumber: String
+
+    /**
+     * UI friendly display (debug: "1.7.6 (123)", release: "1.7.6").
+     */
+    val appVersionDisplay: String
+        get() = if (isDebug && appBuildNumber.isNotBlank())
+            "$appVersion ($appBuildNumber)"
+        else appVersion
 
     /**
      * OS version.

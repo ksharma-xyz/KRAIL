@@ -16,20 +16,17 @@ import kotlin.math.absoluteValue
 class IOSAppInfo : AppInfo {
 
     override val devicePlatformType: DevicePlatformType = DevicePlatformType.IOS
+    private val info = NSBundle.mainBundle.infoDictionary
 
     @OptIn(ExperimentalNativeApi::class)
     override val isDebug: Boolean
         get() = Platform.isDebugBinary
 
     override val appVersion: String
-        get() {
-            val shortVersion =
-                NSBundle.mainBundle.infoDictionary?.get("CFBundleShortVersionString") as? String
-                    ?: "Unknown"
-            val buildVersion =
-                NSBundle.mainBundle.infoDictionary?.get("CFBundleVersion") as? String ?: "Unknown"
-            return "$shortVersion ${if (isDebug) "($buildVersion)" else ""}"
-        }
+        get() = info?.get("CFBundleShortVersionString") as? String ?: "Unknown"
+
+    override val appBuildNumber: String
+        get() = info?.get("CFBundleVersion") as? String ?: "Unknown"
 
     override val osVersion: String
         get() = UIDevice.currentDevice.systemVersion

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.core.appinfo.AppVersionManager
 import xyz.ksharma.krail.core.appstart.AppStart
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -30,6 +31,7 @@ class SplashViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val appStart: AppStart,
     private val preferences: SandookPreferences,
+    private val appVersionManager: AppVersionManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SplashState> = MutableStateFlow(SplashState())
@@ -41,6 +43,7 @@ class SplashViewModel(
             coroutineScope {
                 loadKrailThemeStyle()
                 displayIntroScreen()
+                appVersionManager.checkForUpdates()
                 appStart.start()
                 trackAppStartEvent()
             }

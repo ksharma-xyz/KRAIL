@@ -9,6 +9,7 @@ import org.koin.dsl.module
 import xyz.ksharma.krail.core.analytics.di.analyticsModule
 import xyz.ksharma.krail.core.appinfo.di.appInfoModule
 import xyz.ksharma.krail.core.appstart.di.appStartModule
+import xyz.ksharma.krail.core.appversion.di.appVersionModule
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.core.di.coroutineDispatchersModule
 import xyz.ksharma.krail.core.festival.di.festivalModule
@@ -33,6 +34,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             sandookModule,
             splashModule,
             appInfoModule,
+            appVersionModule,
             analyticsModule,
             remoteConfigModule,
             gtfsModule,
@@ -55,6 +57,7 @@ val splashModule = module {
             ioDispatcher = get(named(IODispatcher)),
             appStart = get(),
             preferences = get(),
+            appVersionManager = get(),
         )
     }
 }

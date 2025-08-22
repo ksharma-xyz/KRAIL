@@ -19,4 +19,10 @@ enum class FlagKeys(val key: String) {
     DISCOVER_SYDNEY("discover_sydney"),
 
     DISCOVER_AVAILABLE("is_discover_available"),
+
+    MIN_SUPPORTED_APP_VERSION("min_supported_app_version"),
+
+    LATEST_APP_VERSION_ANDROID("latest_app_version_android"),
+
+    LATEST_APP_VERSION_IOS("latest_app_version_ios"),
 }

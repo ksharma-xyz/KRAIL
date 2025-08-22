@@ -46,7 +46,7 @@ fun Button(
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(),
     enabled: Boolean = true,
-    content: @Composable () -> Unit, // RowScope and place
+    content: @Composable () -> Unit,
 ) {
     val contentAlphaProvider =
         rememberSaveable(enabled) { if (enabled) EnabledContentAlpha else DisabledContentAlpha }
@@ -146,11 +146,12 @@ fun TextButton(
         Box(
             modifier = modifier
                 .heightIn(dimensions.height)
-                .clip(dimensions.shape)
                 .background(
                     color = Color.Transparent,
                     shape = dimensions.shape,
-                ).klickable(
+                )
+                .clip(dimensions.shape)
+                .klickable(
                     enabled = enabled,
                     onClick = onClick,
                 )

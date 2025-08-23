@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.CookieShapeBox
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 
 @Composable
@@ -90,14 +89,7 @@ fun ForceUpgradeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 // Background circle - like a work area
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .background(
-                            color = themeBackgroundColor(),
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        )
-                )
+                CookieShapeBox()
 
                 // Main gear being worked on (center of circle) - counter-clockwise
                 Text(

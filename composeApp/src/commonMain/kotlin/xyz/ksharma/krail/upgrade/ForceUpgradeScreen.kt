@@ -108,12 +108,14 @@ fun ForceUpgradeScreen(
             )
 
             // Construction Scene: Worker fixing gears with tools
+/*
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
+*/
                 // Cookie shape with subtle animated rotation + scale
                 CookieShapeBox(
                     backgroundColor = KrailTheme.colors.surface,
@@ -122,58 +124,62 @@ fun ForceUpgradeScreen(
                         colors = magicBorderColors()
                     ),
                     modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp)
                         .graphicsLayer {
                             rotationZ = cookieRotation
                             scaleX = cookieScale
                             scaleY = cookieScale
-                        }
-                )
+                        },
+                    content =  {
 
-                // Main gear being worked on (center of circle) - counter-clockwise
-                Text(
-                    text = "⚙️",
-                    style = KrailTheme.typography.displayLarge.copy(
-                        fontSize = 45.sp,
-                    ),
-                    modifier = Modifier
-                        .offset(x = 0.dp, y = 0.dp) // Exactly centered
-                        .rotate(mainGearRotation),
-                    color = KrailTheme.colors.onSurface,
-                )
+                        // Main gear being worked on (center of circle) - counter-clockwise
+                        Text(
+                            text = "⚙️",
+                            style = KrailTheme.typography.displayLarge.copy(
+                                fontSize = 45.sp,
+                            ),
+                            modifier = Modifier
+                                .offset(x = 0.dp, y = 0.dp) // Exactly centered
+                                .rotate(mainGearRotation),
+                            color = KrailTheme.colors.onSurface,
+                        )
 
-                // Background rotating gear (top right) - clockwise for meshing motion
-                Text(
-                    text = "⚙️",
-                    style = KrailTheme.typography.displayLarge.copy(
-                        fontSize = 35.sp,
-                    ),
-                    modifier = Modifier
-                        .offset(x = 34.dp, y = (-32).dp)
-                        .rotate(backgroundGearRotation),
-                    color = KrailTheme.colors.onSurface,
-                )
+                        // Background rotating gear (top right) - clockwise for meshing motion
+                        Text(
+                            text = "⚙️",
+                            style = KrailTheme.typography.displayLarge.copy(
+                                fontSize = 35.sp,
+                            ),
+                            modifier = Modifier
+                                .offset(x = 34.dp, y = (-32).dp)
+                                .rotate(backgroundGearRotation),
+                            color = KrailTheme.colors.onSurface,
+                        )
 
-                // Worker person (left center edge of circle)
-                Text(
-                    text = "👷‍♂️",
-                    style = KrailTheme.typography.displayLarge.copy(
-                        fontSize = 45.sp,
-                    ),
-                    modifier = Modifier
-                        .offset(x = (-55).dp, y = 0.dp)
-                )
+                        // Worker person (left center edge of circle)
+                        Text(
+                            text = "👷‍♂️",
+                            style = KrailTheme.typography.displayLarge.copy(
+                                fontSize = 45.sp,
+                            ),
+                            modifier = Modifier
+                                .offset(x = (-55).dp, y = 0.dp)
+                        )
 
-                // Tool box positioned at bottom right of person with minimal padding
-                Text(
-                    text = "🧰",
-                    style = KrailTheme.typography.displayLarge.copy(
-                        fontSize = 28.sp,
-                    ),
-                    modifier = Modifier
-                        .offset(x = (-30).dp, y = 32.dp),
-                    color = KrailTheme.colors.onSurface,
+                        // Tool box positioned at bottom right of person with minimal padding
+                        Text(
+                            text = "🧰",
+                            style = KrailTheme.typography.displayLarge.copy(
+                                fontSize = 28.sp,
+                            ),
+                            modifier = Modifier
+                                .offset(x = (-30).dp, y = 32.dp),
+                            color = KrailTheme.colors.onSurface,
+                        )
+                    }
                 )
-            }
+           // }
 
             Text(
                 text = "\uD83D\uDEA7 Time to Update \uD83D\uDEA7",

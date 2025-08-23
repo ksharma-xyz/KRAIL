@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
@@ -23,15 +24,27 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 
+/**
+ * A box with a cookie-shaped background and optional multi-color stroke.
+ * This is a reusable component that can be used to create cookie-like backgrounds or containers.
+ *
+ * @param modifier Modifier to be applied to the box.
+ * @param backgroundColor Background color of the box, defaults to theme background color.
+ * @param strokeColor Fallback single color stroke, used if [outlineBrush] is null
+ * @param outlineBrush Optional Brush for multi-color stroke. If null, [strokeColor] is used.
+ * @param cookieShadow Optional shadow to apply to the cookie shape.
+ *                    If provided, it will be applied as a drop shadow to the box.
+ *                    Defaults to null.
+ * @see CookieShape
+ */
 @Composable
 fun CookieShapeBox(
     modifier: Modifier = Modifier,
     backgroundColor: Color = themeBackgroundColor(),
-    // Fallback single color stroke (used if outlineBrush == null)
     strokeColor: Color = themeColor(),
-    // Provide a Brush for multi-color stroke
     outlineBrush: Brush? = null,
     cookieShadow: Shadow? = null,
+    content: @Composable () -> Unit = {},
 ) {
     val shape = CookieShape()
     Box(
@@ -45,7 +58,8 @@ fun CookieShapeBox(
                 } else Modifier
             )
             .size(SIZE)
-            .background(color = backgroundColor, shape = CookieShape())
+            .background(color = backgroundColor, shape = CookieShape()),
+        contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.matchParentSize()) {
             val path = buildCookiePath(size, bumps = BUMPS, depthFraction = 0.12f, smooth = true)
@@ -62,6 +76,8 @@ fun CookieShapeBox(
                     drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
             }
         }
+
+        content()
     }
 }
 

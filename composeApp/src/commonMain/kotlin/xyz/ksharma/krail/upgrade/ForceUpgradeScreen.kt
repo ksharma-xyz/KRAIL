@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,7 +31,9 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.CookieShapeBox
+import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.cookieShapeShadow
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -105,6 +108,8 @@ fun ForceUpgradeScreen(
             )
 
             // Construction Scene: Worker fixing gears with tools
+            // Adding a Box wrapper here and not using content param in CookieShapeBox because otherwise
+            // contents will also rotate.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,12 +118,19 @@ fun ForceUpgradeScreen(
             ) {
                 // Cookie shape with subtle animated rotation + scale
                 CookieShapeBox(
+                    backgroundColor = KrailTheme.colors.surface,
+                    cookieShadow = cookieShapeShadow(),
+                    outlineBrush = Brush.linearGradient(
+                        colors = magicBorderColors(),
+                    ),
                     modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp)
                         .graphicsLayer {
                             rotationZ = cookieRotation
                             scaleX = cookieScale
                             scaleY = cookieScale
-                        }
+                        },
                 )
 
                 // Main gear being worked on (center of circle) - counter-clockwise
@@ -166,16 +178,12 @@ fun ForceUpgradeScreen(
                     color = KrailTheme.colors.onSurface,
                 )
             }
-        }
 
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-        ) {
             Text(
                 text = "\uD83D\uDEA7 Time to Update \uD83D\uDEA7",
                 style = KrailTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -198,6 +206,7 @@ fun ForceUpgradeScreen(
         }
     }
 }
+
 
 @Preview
 @Composable

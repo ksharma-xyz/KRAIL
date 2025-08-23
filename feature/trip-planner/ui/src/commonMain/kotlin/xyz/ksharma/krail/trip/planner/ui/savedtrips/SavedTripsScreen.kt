@@ -127,8 +127,8 @@ fun SavedTripsScreen(
                         item(key = "empty_state") {
                             ErrorMessage(
                                 emoji = "🌟",
-                                title = "Ready to roll, mate?",
-                                message = "Star your trips to see them here!",
+                                title = "Let's Go! Sydney",
+                                message = "Your saved trips will show up here.",
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .animateItem(),

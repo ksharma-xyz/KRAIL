@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import kotlin.math.absoluteValue
 
 fun String.hexToComposeColor(): Color {
@@ -252,3 +253,18 @@ private fun blendColors(foreground: Color, background: Color): Color {
         alpha = 1f
     )
 }
+
+/**
+ * Returns a list of colors used for the magic border effect.
+ *
+ * This function provides a predefined list of colors that can be used to create
+ * a visually appealing border effect, to be consistent with the Krail theme.
+ *
+ * @return A list of [Color] objects representing the magic border colors.
+ */
+@Composable
+fun magicBorderColors(): List<Color> = listOf(
+    KrailThemeStyle.PurpleDrip.hexColorCode.hexToComposeColor(),
+    KrailTheme.colors.magicYellow,
+    KrailThemeStyle.BarbiePink.hexColorCode.hexToComposeColor(),
+)

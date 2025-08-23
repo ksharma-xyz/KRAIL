@@ -22,11 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,8 +31,9 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.CookieShapeBox
+import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.cookieShapeShadow
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -118,18 +116,8 @@ fun ForceUpgradeScreen(
             ) {
                 // Cookie shape with subtle animated rotation + scale
                 CookieShapeBox(
-                    fillColor = KrailTheme.colors.surface,
-                    cookieShadow = Shadow(
-                        radius = 12.dp,  // keep value low, lower blur -> less muddy
-                        spread = 4.dp,   // extend outward so it is visible
-                        brush = Brush.linearGradient(
-                            colors = magicBorderColors(),
-                            start = Offset.Zero,
-                            // closer to actual size; avoids over-stretch washout
-                            end = Offset(400f, 400f),
-                        ),
-                        alpha = 0.95f // slightly under 1 to keep saturation
-                    ),
+                    backgroundColor = KrailTheme.colors.surface,
+                    cookieShadow = cookieShapeShadow(),
                     outlineBrush = Brush.linearGradient(
                         colors = magicBorderColors()
                     ),
@@ -215,12 +203,6 @@ fun ForceUpgradeScreen(
     }
 }
 
-@Composable
-private fun magicBorderColors(): List<Color> = listOf(
-    KrailThemeStyle.PurpleDrip.hexColorCode.hexToComposeColor(),
-    KrailTheme.colors.magicYellow,
-    KrailThemeStyle.BarbiePink.hexColorCode.hexToComposeColor(),
-)
 
 @Preview
 @Composable

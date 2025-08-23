@@ -14,6 +14,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.BUMPS
+import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.SIZE
+import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.shapes.CookieShape
 import xyz.ksharma.krail.taj.shapes.buildCookiePath
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -23,10 +26,10 @@ import xyz.ksharma.krail.taj.themeColor
 @Composable
 fun CookieShapeBox(
     modifier: Modifier = Modifier,
-    fillColor: Color = themeBackgroundColor(),
-    // Fallback single color outline (used if outlineBrush == null)
-    outlineColor: Color = themeColor(),
-    // Provide a Brush for multi-color outline
+    backgroundColor: Color = themeBackgroundColor(),
+    // Fallback single color stroke (used if outlineBrush == null)
+    strokeColor: Color = themeColor(),
+    // Provide a Brush for multi-color stroke
     outlineBrush: Brush? = null,
     cookieShadow: Shadow? = null,
 ) {
@@ -41,11 +44,11 @@ fun CookieShapeBox(
                     )
                 } else Modifier
             )
-            .size(180.dp)
-            .background(color = fillColor, shape = CookieShape())
+            .size(SIZE)
+            .background(color = backgroundColor, shape = CookieShape())
     ) {
         Canvas(Modifier.matchParentSize()) {
-            val path = buildCookiePath(size, bumps = 9, depthFraction = 0.12f, smooth = true)
+            val path = buildCookiePath(size, bumps = BUMPS, depthFraction = 0.12f, smooth = true)
 
             // Fill already applied by background, skip fill here
             val strokeWidth = size.minDimension * 0.018f
@@ -56,7 +59,7 @@ fun CookieShapeBox(
                     drawPath(path, outlineBrush, style = Stroke(width = strokeWidth))
 
                 else ->
-                    drawPath(path, outlineColor, style = Stroke(width = strokeWidth))
+                    drawPath(path, strokeColor, style = Stroke(width = strokeWidth))
             }
         }
     }
@@ -68,12 +71,37 @@ fun CookieShapeCanvas(
     fill: Color = themeBackgroundColor(),
     stroke: Color = themeColor()
 ) {
-    Canvas(modifier.size(180.dp)) {
-        val path = buildCookiePath(size, bumps = 9, depthFraction = 0.13f, smooth = true)
+    Canvas(modifier.size(SIZE)) {
+        val path = buildCookiePath(size, bumps = BUMPS, depthFraction = 0.13f, smooth = true)
         drawPath(path, fill)
         drawPath(path, stroke, style = Stroke(width = size.minDimension * 0.018f))
     }
 }
+
+object CookieShapeBoxDefaults {
+    val SIZE = 180.dp
+    val SHADOW_RADIUS = 12.dp
+    val SHADOW_SPREAD = 4.dp
+
+    // closer to actual size; avoids over-stretch washout
+    val SHADOW_GRADIENT_END = Offset(400f, 400f)
+    const val SHADOW_ALPHA = 0.95f // slightly under 1 to keep saturation
+
+    const val BUMPS = 9
+
+    @Composable
+    fun cookieShapeShadow(): Shadow = Shadow(
+        radius = SHADOW_RADIUS, // keep value low, lower blur -> less muddy
+        spread = SHADOW_SPREAD, // extend outward so it is visible
+        brush = Brush.linearGradient(
+            colors = magicBorderColors(),
+            start = Offset.Zero,
+            end = SHADOW_GRADIENT_END,
+        ),
+        alpha = SHADOW_ALPHA
+    )
+}
+
 
 @Preview
 @Composable

@@ -42,6 +42,8 @@ val barbie_pink_theme = Color(0xFFE0218A)
 
 val seed = Color(0xFFFFBA27)
 
+val magic_yellow = Color(0xFFFFC800)
+
 val md_theme_badge = Color(0xFFFF0000)
 
 @Immutable
@@ -60,6 +62,7 @@ data class KrailColors(
     val badge: Color,
     val discoverChipBackground: Color,
     val discoverCardBackground: Color,
+    val magicYellow: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -77,6 +80,7 @@ internal val KrailLightColors = KrailColors(
     badge = md_theme_badge,
     discoverChipBackground = md_theme_light_discover_chip_background,
     discoverCardBackground = md_theme_light_discover_card_background,
+    magicYellow = magic_yellow,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -94,6 +98,7 @@ internal val KrailDarkColors = KrailColors(
     badge = md_theme_badge,
     discoverChipBackground = md_theme_dark_discover_chip_background,
     discoverCardBackground = md_theme_dark_discover_card_background,
+    magicYellow = magic_yellow,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -112,5 +117,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         badge = Color.Unspecified,
         discoverChipBackground = Color.Unspecified,
         discoverCardBackground = Color.Unspecified,
+        magicYellow = Color.Unspecified,
     )
 }

@@ -62,45 +62,6 @@ fun CookieShapeBox(
     }
 }
 
-// Convenience gradient variants
-
-@Composable
-fun CookieShapeBoxSweepGradient() {
-    CookieShapeBox(
-        outlineBrush = Brush.sweepGradient(
-            listOf(
-                Color(0xFFFF5722),
-                Color(0xFFFFC107),
-                Color(0xFF4CAF50),
-                Color(0xFF03A9F4),
-                Color(0xFF9C27B0),
-                Color(0xFFFF5722) // close loop
-            )
-        )
-    )
-}
-
-@Composable
-fun CookieShapeBoxLinearGradient() {
-    CookieShapeBox(
-        outlineBrush = Brush.linearGradient(
-            colors = listOf(Color.Magenta, Color.Cyan, Color.Yellow),
-            start = Offset.Zero,
-            end = Offset.Infinite // Compose will normalize to size
-        )
-    )
-}
-
-@Composable
-fun CookieShapeBoxRadialGradient() {
-    CookieShapeBox(
-        outlineBrush = Brush.radialGradient(
-            colors = listOf(Color(0xFFFFEE58), Color(0xFFF57F17)),
-            center = Offset.Unspecified
-        )
-    )
-}
-
 @Composable
 fun CookieShapeCanvas(
     modifier: Modifier = Modifier,
@@ -127,5 +88,34 @@ private fun CookiePreviewBox() {
 private fun CookiePreviewCanvas() {
     KrailTheme {
         CookieShapeCanvas()
+    }
+}
+
+
+@Preview
+@Composable
+private fun CookieShapeBoxSweepGradient() {
+    CookieShapeBox(
+        outlineBrush = Brush.sweepGradient(
+            listOf(
+                Color(0xFFFF5722),
+                Color(0xFFFFC107),
+                Color(0xFF4CAF50),
+                Color(0xFF03A9F4),
+            )
+        )
+    )
+}
+
+@Preview
+@Composable
+private fun CookieShapeBoxRadialGradient() {
+    KrailTheme {
+        CookieShapeBox(
+            outlineBrush = Brush.radialGradient(
+                colors = listOf(Color(0xFFFFEE58), Color(0xFFF57F17)),
+                center = Offset.Unspecified
+            )
+        )
     }
 }

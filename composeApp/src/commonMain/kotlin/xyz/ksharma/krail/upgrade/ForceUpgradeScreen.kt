@@ -118,9 +118,9 @@ fun ForceUpgradeScreen(
             ) {
                 // Cookie shape with subtle animated rotation + scale
                 CookieShapeBox(
-                    fillColor = KrailTheme.colors.discoverChipBackground,
+                    fillColor = KrailTheme.colors.surface,
                     cookieShadow = Shadow(
-                        radius = 14.dp,  // keep value low, lower blur -> less muddy
+                        radius = 12.dp,  // keep value low, lower blur -> less muddy
                         spread = 4.dp,   // extend outward so it is visible
                         brush = Brush.linearGradient(
                             colors = magicBorderColors(),
@@ -218,7 +218,7 @@ fun ForceUpgradeScreen(
 @Composable
 private fun magicBorderColors(): List<Color> = listOf(
     KrailThemeStyle.PurpleDrip.hexColorCode.hexToComposeColor(),
-    "#FFC800".hexToComposeColor(), // Yellow
+    KrailTheme.colors.magicYellow,
     KrailThemeStyle.BarbiePink.hexColorCode.hexToComposeColor(),
 )
 

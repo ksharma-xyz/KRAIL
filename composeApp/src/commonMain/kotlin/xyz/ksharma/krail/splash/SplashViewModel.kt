@@ -104,6 +104,7 @@ class SplashViewModel(
     }
 
     private fun onSplashAnimationComplete() {
+
         viewModelScope.launchWithExceptionHandler<SplashViewModel>(
             dispatcher = ioDispatcher,
             errorBlock = {

@@ -13,16 +13,21 @@ import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
-import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.appstart.AppStart
+import xyz.ksharma.krail.core.appversion.AppVersionManager
+import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.coroutines.ext.safeResult
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_HAS_SEEN_INTRO
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.navigation.ForcedUpgradeRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 
 class SplashViewModel(
     private val sandook: Sandook,
@@ -43,11 +48,16 @@ class SplashViewModel(
             coroutineScope {
                 loadKrailThemeStyle()
                 displayIntroScreen()
-                appVersionManager.checkForUpdates()
                 appStart.start()
                 trackAppStartEvent()
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun onUiEvent(event: SplashUiEvent) {
+        when (event) {
+            SplashUiEvent.SplashAnimationComplete -> onSplashAnimationComplete()
+        }
+    }
 
     private suspend fun displayIntroScreen() = safeResult(ioDispatcher) {
         val hasSeenIntro = preferences.getBoolean(KEY_HAS_SEEN_INTRO)
@@ -91,6 +101,33 @@ class SplashViewModel(
         logError("Error loading KRAIL theme style: $it", it)
     }.onSuccess {
         log("Krail theme style loaded: $it")
+    }
+
+    private fun onSplashAnimationComplete() {
+        viewModelScope.launchWithExceptionHandler<SplashViewModel>(
+            dispatcher = ioDispatcher,
+            errorBlock = {
+                logError("Error during splash animation completion, navigating to saved trips.")
+                updateUiState { copy(navigationDestination = SavedTripsRoute) }
+            }) {
+            when (appVersionManager.checkForUpdates()) {
+                AppVersionUpdateState.ForcedUpdateRequired -> {
+                    log("Forced update required, navigating to update screen.")
+                    updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
+                }
+
+                AppVersionUpdateState.UpToDate, AppVersionUpdateState.UpdateRequired -> {
+                    log("App is up to date or update is not required, proceeding to next screen.")
+
+                    updateUiState {
+                        copy(
+                            navigationDestination =
+                                if (_uiState.value.hasSeenIntro) SavedTripsRoute else IntroRoute,
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun updateUiState(block: SplashState.() -> SplashState) {

@@ -16,24 +16,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.CookieShapeBox
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 
 @Composable
@@ -60,6 +60,28 @@ fun ForceUpgradeScreen(
             repeatMode = RepeatMode.Restart
         )
     )
+
+    // region Cookie Shape Box rotation animations
+    // super slow subtle cookie rotation (1 minute per full turn)
+    val cookieRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 60_000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    // gentle breathing scale (slight, reversible)
+    val cookieScale by infiniteTransition.animateFloat(
+        initialValue = 0.98f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 5000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    // endregion
 
     Box(
         modifier = modifier
@@ -89,14 +111,14 @@ fun ForceUpgradeScreen(
                     .padding(vertical = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Background circle - like a work area
-                Box(
+                // Cookie shape with subtle animated rotation + scale
+                CookieShapeBox(
                     modifier = Modifier
-                        .size(150.dp)
-                        .background(
-                            color = themeBackgroundColor(),
-                            shape = androidx.compose.foundation.shape.CircleShape
-                        )
+                        .graphicsLayer {
+                            rotationZ = cookieRotation
+                            scaleX = cookieScale
+                            scaleY = cookieScale
+                        }
                 )
 
                 // Main gear being worked on (center of circle) - counter-clockwise
@@ -140,7 +162,7 @@ fun ForceUpgradeScreen(
                         fontSize = 28.sp,
                     ),
                     modifier = Modifier
-                        .offset(x = (-25).dp, y = 32.dp),
+                        .offset(x = (-30).dp, y = 32.dp),
                     color = KrailTheme.colors.onSurface,
                 )
             }
@@ -150,7 +172,7 @@ fun ForceUpgradeScreen(
             modifier = Modifier.align(Alignment.Center),
         ) {
             Text(
-                text = "Time to Update \uD83D\uDEA7",
+                text = "\uD83D\uDEA7 Time to Update \uD83D\uDEA7",
                 style = KrailTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
@@ -160,7 +182,7 @@ fun ForceUpgradeScreen(
 
             Text(
                 text = "We’ve made improvements, please update to keep going\u00A0places!",
-                style = KrailTheme.typography.bodyLarge,
+                style = KrailTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
         }

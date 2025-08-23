@@ -14,14 +14,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 
 @Composable
@@ -40,48 +42,22 @@ fun ForceUpgradeScreen(
 ) {
     val infiniteTransition = rememberInfiniteTransition()
 
-    // Rotating animation for settings gear
-    val rotation by infiniteTransition.animateFloat(
+    // Scene animations
+    val backgroundGearRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
+            animation = tween(4000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         )
     )
 
-    // Pounding animation for hammer
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
+    val mainGearRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -360f, // Counter-clockwise rotation
         animationSpec = infiniteRepeatable(
-            animation = tween(600),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    // More realistic pounding animation - mimics actual hammering motion
-    val hammerRotation by infiniteTransition.animateFloat(
-        initialValue = -45f,
-        targetValue = 25f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 800,
-                easing = androidx.compose.animation.core.FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    val hammerScale by infiniteTransition.animateFloat(
-        initialValue = 0.9f,
-        targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 800,
-                easing = androidx.compose.animation.core.FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
+            animation = tween(3000, easing = LinearEasing), // Slightly faster
+            repeatMode = RepeatMode.Restart
         )
     )
 
@@ -90,7 +66,7 @@ fun ForceUpgradeScreen(
             .fillMaxSize()
             .background(color = KrailTheme.colors.surface)
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter)) {
@@ -106,43 +82,76 @@ fun ForceUpgradeScreen(
                 textAlign = TextAlign.Center,
             )
 
-            // Choose one of these animated icons:
-
-            // Option 1: Rotating Settings Gear
-          /*  Text(
-                text = "⚙️",
-                style = KrailTheme.typography.displayLarge.copy(
-                    fontSize = 80.sp,
-                ),
-                textAlign = TextAlign.Center,
+            // Construction Scene: Worker fixing gears with tools
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 32.dp)
-                    .rotate(rotation)
-            )*/
+                    .padding(vertical = 32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Background circle - like a work area
+                Box(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .background(
+                            color = themeBackgroundColor(),
+                            shape = androidx.compose.foundation.shape.CircleShape
+                        )
+                )
 
-            // Option 2: Pounding Hammer with rotation and scale
-            Text(
-                text = "🔨",
-                style = KrailTheme.typography.displayLarge.copy(
-                    fontSize = 80.sp,
-                ),
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 32.dp)
-                    .rotate(hammerRotation)
-                    .scale(hammerScale)
-            )
+                // Main gear being worked on (center of circle) - counter-clockwise
+                Text(
+                    text = "⚙️",
+                    style = KrailTheme.typography.displayLarge.copy(
+                        fontSize = 45.sp,
+                    ),
+                    modifier = Modifier
+                        .offset(x = 0.dp, y = 0.dp) // Exactly centered
+                        .rotate(mainGearRotation),
+                    color = KrailTheme.colors.onSurface,
+                )
 
+                // Background rotating gear (top right) - clockwise for meshing motion
+                Text(
+                    text = "⚙️",
+                    style = KrailTheme.typography.displayLarge.copy(
+                        fontSize = 35.sp,
+                    ),
+                    modifier = Modifier
+                        .offset(x = 34.dp, y = (-32).dp)
+                        .rotate(backgroundGearRotation),
+                    color = KrailTheme.colors.onSurface,
+                )
+
+                // Worker person (left center edge of circle)
+                Text(
+                    text = "👷‍♂️",
+                    style = KrailTheme.typography.displayLarge.copy(
+                        fontSize = 45.sp,
+                    ),
+                    modifier = Modifier
+                        .offset(x = (-55).dp, y = 0.dp)
+                )
+
+                // Tool box positioned at bottom right of person with minimal padding
+                Text(
+                    text = "🧰",
+                    style = KrailTheme.typography.displayLarge.copy(
+                        fontSize = 28.sp,
+                    ),
+                    modifier = Modifier
+                        .offset(x = (-25).dp, y = 32.dp),
+                    color = KrailTheme.colors.onSurface,
+                )
+            }
         }
 
         Column(
             modifier = Modifier.align(Alignment.Center),
         ) {
             Text(
-                text = "Update Required",
-                style = KrailTheme.typography.headlineLarge,
+                text = "Time to Update \uD83D\uDEA7",
+                style = KrailTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -150,7 +159,7 @@ fun ForceUpgradeScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Please update KRAIL to continue using the\u00A0app.",
+                text = "We’ve made improvements, please update to keep going\u00A0places!",
                 style = KrailTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center
             )

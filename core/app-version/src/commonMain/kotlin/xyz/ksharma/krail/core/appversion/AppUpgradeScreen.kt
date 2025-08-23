@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.upgrade
+package xyz.ksharma.krail.core.appversion
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -53,7 +53,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 
 @Composable
-fun ForceUpgradeScreen(
+fun AppUpgradeScreen(
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition()
@@ -228,9 +228,9 @@ fun ForceUpgradeScreen(
 
 @Preview
 @Composable
-fun ForceUpgradeScreenPreview() {
+fun AppUpgradeScreenPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
-        ForceUpgradeScreen()
+        AppUpgradeScreen()
     }
 }
 

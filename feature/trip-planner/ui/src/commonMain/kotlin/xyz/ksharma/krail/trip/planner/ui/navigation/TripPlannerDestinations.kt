@@ -102,7 +102,7 @@ data object OurStoryRoute
 data object IntroRoute: KrailRoute
 
 @Serializable
-data object ForcedUpgradeRoute: KrailRoute
+data object AppUpgradeRoute: KrailRoute
 
 @Serializable
 data class DateTimeSelectorRoute(

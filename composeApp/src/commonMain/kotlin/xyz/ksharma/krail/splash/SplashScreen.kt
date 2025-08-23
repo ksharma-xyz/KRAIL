@@ -44,7 +44,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 fun SplashScreen(
     logoColor: Color?,
     backgroundColor: Color?,
-    onSplashComplete: () -> Unit,
+    onSplashAnimationComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -55,7 +55,7 @@ fun SplashScreen(
     ) {
         AnimatedKrailLogo(logoColor = logoColor ?: KrailTheme.colors.onSurface)
 
-        val splashComplete by rememberUpdatedState(onSplashComplete)
+        val splashComplete by rememberUpdatedState(onSplashAnimationComplete)
         LaunchedEffect(key1 = Unit) {
             delay(1200)
             splashComplete()
@@ -196,7 +196,7 @@ private fun PreviewLogo() {
 private fun PreviewSplashScreen() {
     KrailTheme {
         SplashScreen(
-            onSplashComplete = {},
+            onSplashAnimationComplete = {},
             logoColor = KrailTheme.colors.onSurface,
             backgroundColor = Color(0xFF009B77),
         )

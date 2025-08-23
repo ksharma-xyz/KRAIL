@@ -62,11 +62,13 @@ internal sealed class SearchStopFieldType(val key: String) {
     }
 }
 
+interface KrailRoute
+
 @Serializable
 internal data object TripPlannerNavRoute
 
 @Serializable
-data object SavedTripsRoute
+data object SavedTripsRoute: KrailRoute
 
 @Serializable
 internal data class TimeTableRoute(
@@ -97,7 +99,10 @@ data object SettingsRoute
 data object OurStoryRoute
 
 @Serializable
-data object IntroRoute
+data object IntroRoute: KrailRoute
+
+@Serializable
+data object ForcedUpgradeRoute: KrailRoute
 
 @Serializable
 data class DateTimeSelectorRoute(

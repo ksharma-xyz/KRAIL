@@ -5,6 +5,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -17,7 +18,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.splash.SplashScreen
+import xyz.ksharma.krail.splash.SplashUiEvent
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalThemeColor
@@ -27,9 +30,9 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.taj.unspecifiedColor
-import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.ForcedUpgradeRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.tripPlannerDestinations
+import xyz.ksharma.krail.upgrade.ForceUpgradeScreen
 
 /**
  * TODO - I don't like [NavHost] defined in app module, I would love to refactor it to :core:navigation module
@@ -76,6 +79,21 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                 themeId = uiState.themeStyle.id
                 themeColorHexCode.value = uiState.themeStyle.hexColorCode
 
+                LaunchedEffect(uiState.navigationDestination) {
+                    uiState.navigationDestination?.let { destination ->
+                        log("Splash complete Navigating to destination: $destination")
+                        navController.navigate(
+                            route = destination,
+                            navOptions = NavOptions.Builder()
+                                .setLaunchSingleTop(true)
+                                .setPopUpTo<SplashScreen>(inclusive = true)
+                                .build(),
+                        )
+                    } ?: run {
+                        log("navigationDestination is null, still loading?")
+                    }
+                }
+
                 SplashScreen(
                     logoColor = if (themeId != null && themeColorHexCode.value != unspecifiedColor) {
                         themeColorHexCode.value.hexToComposeColor()
@@ -83,16 +101,14 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                         KrailTheme.colors.onSurface
                     },
                     backgroundColor = KrailTheme.colors.surface,
-                    onSplashComplete = {
-                        navController.navigate(
-                            route = if (uiState.hasSeenIntro) SavedTripsRoute else IntroRoute,
-                            navOptions = NavOptions.Builder()
-                                .setLaunchSingleTop(true)
-                                .setPopUpTo<SplashScreen>(inclusive = true)
-                                .build(),
-                        )
+                    onSplashAnimationComplete = {
+                        viewModel.onUiEvent(SplashUiEvent.SplashAnimationComplete)
                     },
                 )
+            }
+
+            composable<ForcedUpgradeRoute> {
+                ForceUpgradeScreen()
             }
         }
     }

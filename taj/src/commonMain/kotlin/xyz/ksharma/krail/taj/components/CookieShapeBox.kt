@@ -2,10 +2,7 @@ package xyz.ksharma.krail.taj.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -55,9 +52,8 @@ fun CookieShapeCanvas(
 @Preview
 @Composable
 private fun CookiePreviewBox() {
-    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+    KrailTheme {
         CookieShapeBox()
-        CookieShapeCanvas()
     }
 }
 
@@ -66,6 +62,5 @@ private fun CookiePreviewBox() {
 private fun CookiePreviewCanvas() {
     KrailTheme {
         CookieShapeCanvas()
-
     }
 }

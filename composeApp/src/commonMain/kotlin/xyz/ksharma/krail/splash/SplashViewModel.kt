@@ -104,8 +104,8 @@ class SplashViewModel(
     }
 
     private fun onSplashAnimationComplete() {
-
-        viewModelScope.launchWithExceptionHandler<SplashViewModel>(
+        updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
+/*        viewModelScope.launchWithExceptionHandler<SplashViewModel>(
             dispatcher = ioDispatcher,
             errorBlock = {
                 logError("Error during splash animation completion, navigating to saved trips.")
@@ -128,7 +128,7 @@ class SplashViewModel(
                     }
                 }
             }
-        }
+        }*/
     }
 
     private fun updateUiState(block: SplashState.() -> SplashState) {

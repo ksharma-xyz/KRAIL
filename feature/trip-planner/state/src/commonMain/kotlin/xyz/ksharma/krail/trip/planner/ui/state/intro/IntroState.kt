@@ -4,6 +4,8 @@ import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.magic_yellow
+import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 data class IntroState(
@@ -33,6 +35,7 @@ data class IntroState(
     }
 
     companion object {
+
         fun default(): IntroState = IntroState(
             pages = persistentListOf(
                 IntroPage(
@@ -40,7 +43,7 @@ data class IntroState(
                     colorsList = persistentListOf(
                         KrailThemeStyle.Metro.hexColorCode,
                         KrailThemeStyle.Bus.hexColorCode,
-                        "#FFC800", // Yellow
+                        magic_yellow.toHex(),
                         KrailThemeStyle.Metro.hexColorCode,
                     ),
                     title = "Save Your Trips",
@@ -54,7 +57,7 @@ data class IntroState(
                     id = 1,
                     colorsList = persistentListOf(
                         TransportMode.Ferry().colorCode,
-                        "#FFC800", // Yellow
+                        magic_yellow.toHex(),
                         TransportMode.Ferry().colorCode,
                     ),
                     title = "Live Updates",
@@ -68,7 +71,7 @@ data class IntroState(
                     id = 2,
                     colorsList = persistentListOf(
                         KrailThemeStyle.Bus.hexColorCode,
-                        "#FFC800", // Yellow
+                        magic_yellow.toHex(),
                         KrailThemeStyle.Bus.hexColorCode,
                     ),
                     title = "Park & Ride",
@@ -111,7 +114,7 @@ data class IntroState(
                     id = 5,
                     colorsList = persistentListOf(
                         KrailThemeStyle.PurpleDrip.hexColorCode,
-                        "#FFC800", // Yellow
+                        magic_yellow.toHex(),
                         KrailThemeStyle.PurpleDrip.hexColorCode,
                     ),
                     title = "Plan Your Trip",
@@ -125,7 +128,7 @@ data class IntroState(
                     id = 6,
                     colorsList = persistentListOf(
                         KrailThemeStyle.BarbiePink.hexColorCode,
-                        "#FFC800", // Yellow
+                        magic_yellow.toHex(),
                         KrailThemeStyle.BarbiePink.hexColorCode,
                     ),
                     title = "Invite Your Friends",

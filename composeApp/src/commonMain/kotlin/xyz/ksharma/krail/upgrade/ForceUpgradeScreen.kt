@@ -1,10 +1,14 @@
 package xyz.ksharma.krail.upgrade
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -17,8 +21,15 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -28,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.CookieShapeBox
@@ -94,7 +107,11 @@ fun ForceUpgradeScreen(
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Column(modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter)) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .verticalScroll(rememberScrollState()),
+        ) {
             Text(
                 text = "KRAIL",
                 style = KrailTheme.typography.displayLarge.copy(
@@ -191,19 +208,20 @@ fun ForceUpgradeScreen(
             Text(
                 text = "We’ve made improvements, please update to keep going\u00A0places!",
                 style = KrailTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
 
-        Button(
+        AnimatedUpdateButton(
             onClick = {},
             modifier = Modifier
                 .navigationBarsPadding()
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 20.dp),
-        ) {
-            Text("Update Now")
-        }
+                .padding(vertical = 20.dp)
+        )
     }
 }
 
@@ -213,5 +231,68 @@ fun ForceUpgradeScreen(
 fun ForceUpgradeScreenPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         ForceUpgradeScreen()
+    }
+}
+
+@Composable
+private fun AnimatedUpdateButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    startDelayMillis: Int = 300,
+    fadeDurationMillis: Int = 520,
+    scaleSpringDamping: Float = 0.68f
+) {
+    var hasAnimated by rememberSaveable { mutableStateOf(false) }
+
+    // Start closer to final size (0.7) to feel less "popping"
+    val initialScale = if (hasAnimated) 1f else 0.7f
+    val scale = remember { Animatable(initialScale) }
+    val alpha = remember { Animatable(if (hasAnimated) 1f else 0f) }
+
+    LaunchedEffect(hasAnimated) {
+        if (!hasAnimated) {
+            delay(startDelayMillis.toLong())
+
+            // Run alpha + scale concurrently
+            val scaleJob = launch {
+                // Gentle ease to slight overshoot
+                scale.animateTo(
+                    targetValue = 1.06f,
+                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                )
+                // Natural settle using spring
+                scale.animateTo(
+                    targetValue = 1f,
+                    animationSpec = spring(
+                        dampingRatio = scaleSpringDamping,
+                        stiffness = Spring.StiffnessMediumLow,
+                    )
+                )
+            }
+            val alphaJob = launch {
+                alpha.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = fadeDurationMillis,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            }
+            scaleJob.join()
+            alphaJob.join()
+            hasAnimated = true
+        }
+    }
+
+    Button(
+        onClick = onClick,
+        modifier = modifier.graphicsLayer {
+            scaleX = scale.value
+            scaleY = scale.value
+            this.alpha = alpha.value
+        },
+        enabled = alpha.value > 0.5f
+    ) {
+        Text("Update Now")
     }
 }

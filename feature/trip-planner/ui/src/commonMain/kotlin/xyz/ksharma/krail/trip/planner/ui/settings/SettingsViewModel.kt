@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -47,8 +48,11 @@ class SettingsViewModel(
     }
 
     private fun fetchAppVersion() {
-        val appVersion = appInfoProvider.getAppInfo().appVersion
-        _uiState.value = _uiState.value.copy(appVersion = appVersion)
+        updateUiState {
+            copy(
+                appVersion = appInfoProvider.getAppInfo().appVersionDisplay,
+            )
+        }
     }
 
     fun onReferFriendClick() {
@@ -66,5 +70,9 @@ class SettingsViewModel(
 
     fun onOurStoryClick() {
         analytics.track(AnalyticsEvent.OurStoryClick)
+    }
+
+    private fun updateUiState(block: SettingsState.() -> SettingsState) {
+        _uiState.update(block)
     }
 }

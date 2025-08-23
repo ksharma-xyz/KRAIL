@@ -104,34 +104,31 @@ class SplashViewModel(
     }
 
     private fun onSplashAnimationComplete() {
-        updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
 
-        /*
-                viewModelScope.launchWithExceptionHandler<SplashViewModel>(
-                    dispatcher = ioDispatcher,
-                    errorBlock = {
-                        logError("Error during splash animation completion, navigating to saved trips.")
-                        updateUiState { copy(navigationDestination = SavedTripsRoute) }
-                    }) {
-                    when (appVersionManager.checkForUpdates()) {
-                        AppVersionUpdateState.ForcedUpdateRequired -> {
-                            log("Forced update required, navigating to update screen.")
-                            updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
-                        }
+        viewModelScope.launchWithExceptionHandler<SplashViewModel>(
+            dispatcher = ioDispatcher,
+            errorBlock = {
+                logError("Error during splash animation completion, navigating to saved trips.")
+                updateUiState { copy(navigationDestination = SavedTripsRoute) }
+            }) {
+            when (appVersionManager.checkForUpdates()) {
+                AppVersionUpdateState.ForcedUpdateRequired -> {
+                    log("Forced update required, navigating to update screen.")
+                    updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
+                }
 
-                        AppVersionUpdateState.UpToDate, AppVersionUpdateState.UpdateRequired -> {
-                            log("App is up to date or update is not required, proceeding to next screen.")
+                AppVersionUpdateState.UpToDate, AppVersionUpdateState.UpdateRequired -> {
+                    log("App is up to date or update is not required, proceeding to next screen.")
 
-                            updateUiState {
-                                copy(
-                                    navigationDestination =
-                                        if (_uiState.value.hasSeenIntro) SavedTripsRoute else IntroRoute,
-                                )
-                            }
-                        }
+                    updateUiState {
+                        copy(
+                            navigationDestination =
+                                if (_uiState.value.hasSeenIntro) SavedTripsRoute else IntroRoute,
+                        )
                     }
                 }
-        */
+            }
+        }
     }
 
     private fun updateUiState(block: SplashState.() -> SplashState) {

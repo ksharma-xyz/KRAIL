@@ -3,6 +3,7 @@ package xyz.ksharma.krail.core.appversion
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.asString
@@ -59,6 +60,10 @@ class RealAppVersionManager(
         val current = getCurrentVersion()
         log("Current app version: $current")
         if (current.isBlank()) return AppVersionUpdateState.UpToDate
+
+        if (compareVersions(current, latestAppVersion) > 0) {
+            logError("Current version ($current) is ahead of latest flag ($latestAppVersion) -> flag value is likely stale")
+        }
 
         log("Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion")
 

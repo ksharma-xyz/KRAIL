@@ -76,9 +76,9 @@ jobs:
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace
+            ./gradlew :composeApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace --no-configuration-cache
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${VERSION_CODE}"
+            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${VERSION_CODE}" --no-configuration-cache
           fi
 
       - name: Upload Debug APK

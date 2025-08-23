@@ -21,8 +21,6 @@ import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.shapes.CookieShape
 import xyz.ksharma.krail.taj.shapes.buildCookiePath
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeColor
 
 /**
  * A box with a cookie-shaped background and optional multi-color stroke.
@@ -40,8 +38,8 @@ import xyz.ksharma.krail.taj.themeColor
 @Composable
 fun CookieShapeBox(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = themeBackgroundColor(),
-    strokeColor: Color = themeColor(),
+    backgroundColor: Color = KrailTheme.colors.surface,
+    strokeColor: Color = Color.Transparent,
     outlineBrush: Brush? = null,
     cookieShadow: Shadow? = null,
     content: @Composable () -> Unit = {},
@@ -84,12 +82,12 @@ fun CookieShapeBox(
 @Composable
 fun CookieShapeCanvas(
     modifier: Modifier = Modifier,
-    fill: Color = themeBackgroundColor(),
-    stroke: Color = themeColor()
+    backgroundColor: Color = KrailTheme.colors.surface,
+    stroke: Color = Color.Transparent,
 ) {
     Canvas(modifier.size(SIZE)) {
         val path = buildCookiePath(size, bumps = BUMPS, depthFraction = 0.13f, smooth = true)
-        drawPath(path, fill)
+        drawPath(path, backgroundColor)
         drawPath(path, stroke, style = Stroke(width = size.minDimension * 0.018f))
     }
 }

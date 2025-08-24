@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.taj.components
 
-import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.semantics
@@ -102,14 +102,7 @@ fun InfoTile(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .klickable(
-                onClick = {
-                    state = when (state) {
-                        InfoTileState.COLLAPSED -> InfoTileState.EXPANDED
-                        InfoTileState.EXPANDED -> InfoTileState.COLLAPSED
-                    }
-                },
-            )
+            // Shadow must be applied before clickable modifier
             .dropShadow(
                 shape = shape,
                 shadow = Shadow(
@@ -119,11 +112,22 @@ fun InfoTile(
                     alpha = SHADOW_ALPHA,
                 )
             )
+            // clip shape added before clickable so that ripple indication is bounded within shape
+            .clip(shape)
+            .klickable(
+                onClick = {
+                    state = when (state) {
+                        InfoTileState.COLLAPSED -> InfoTileState.EXPANDED
+                        InfoTileState.EXPANDED -> InfoTileState.COLLAPSED
+                    }
+                },
+            )
             .border(
                 width = borderWidth,
                 color = themeBackgroundColor(),
                 shape = shape,
             )
+            // Apply background after shadow modifier, so that shadow color is not visible.
             .background(color = KrailTheme.colors.surface, shape = shape)
             .padding(vertical = verticalPadding, horizontal = horizontalPadding)
             .animateContentSize()

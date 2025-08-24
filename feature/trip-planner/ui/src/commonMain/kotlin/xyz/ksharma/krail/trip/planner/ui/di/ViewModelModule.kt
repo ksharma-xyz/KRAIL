@@ -57,6 +57,7 @@ val viewModelsModule = module {
             preferences = get(),
             appVersionManager = get(),
             appInfoProvider = get(),
+            platformOps = get(),
         )
     }
 

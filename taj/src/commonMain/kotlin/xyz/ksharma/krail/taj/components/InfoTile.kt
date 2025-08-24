@@ -94,7 +94,7 @@ fun InfoTile(
     infoTileData: InfoTileData,
     infoTileState: InfoTileState = InfoTileState.COLLAPSED,
     modifier: Modifier = Modifier,
-    onCtaClicked: (url: String) -> Unit,
+    onCtaClicked: (InfoTileData) -> Unit,
     onDismissClick: (() -> Unit) = {},
 ) {
     var state by rememberSaveable { mutableStateOf(infoTileState) }
@@ -161,7 +161,7 @@ fun InfoTile(
                 infoTileData.primaryCta?.let { cta ->
                     Button(
                         dimensions = ButtonDefaults.mediumButtonSize(),
-                        onClick = { onCtaClicked(cta.url) },
+                        onClick = { onCtaClicked(infoTileData) },
                     ) {
                         Text(text = cta.text)
                     }

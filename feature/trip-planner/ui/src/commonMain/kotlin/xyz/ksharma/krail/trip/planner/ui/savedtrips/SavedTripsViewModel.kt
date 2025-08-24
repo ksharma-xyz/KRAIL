@@ -557,7 +557,7 @@ class SavedTripsViewModel(
                 )
             )
             copy(
-                infoTiles = (infoTiles?.plus(updateTile))?.toImmutableSet()
+                infoTiles = persistentListOf(infoTiles, updateTile).flatMapTo(InfoTileState)
             )
         }
     }

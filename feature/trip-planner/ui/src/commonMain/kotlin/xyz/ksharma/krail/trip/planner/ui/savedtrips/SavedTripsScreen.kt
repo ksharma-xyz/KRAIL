@@ -26,12 +26,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import krail.feature.trip_planner.ui.generated.resources.ic_sydney
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
+import xyz.ksharma.krail.taj.components.InfoTile
+import xyz.ksharma.krail.taj.components.InfoTileState
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -124,6 +127,11 @@ fun SavedTripsScreen(
                     }
 
                     savedTripsState.savedTrips.isEmpty() -> {
+
+                        savedTripsState.infoTiles?.let{ infoTiles ->
+                            infoTiles(infoTiles)
+                        }
+
                         item(key = "empty_state") {
                             ErrorMessage(
                                 emoji = "🌟",
@@ -137,6 +145,11 @@ fun SavedTripsScreen(
                     }
 
                     savedTripsState.savedTrips.isNotEmpty() -> {
+
+                        savedTripsState.infoTiles?.let{ infoTiles ->
+                            infoTiles(infoTiles)
+                        }
+
                         SavedTripsContent(
                             savedTripsState = savedTripsState,
                             onEvent = onEvent,
@@ -156,6 +169,19 @@ fun SavedTripsScreen(
             toButtonClick = toButtonClick,
             onReverseButtonClick = onReverseButtonClick,
             onSearchButtonClick = { onSearchButtonClick() },
+        )
+    }
+}
+
+private fun LazyListScope.infoTiles(infoTiles: ImmutableList<InfoTileState>) {
+    items(
+        items = infoTiles,
+        key = { item -> item.hashCode() },
+    ) { tileState ->
+        InfoTile(
+            infoTileState = tileState,
+            onCtaClicked = {},
+            onDismissClick = {},
         )
     }
 }

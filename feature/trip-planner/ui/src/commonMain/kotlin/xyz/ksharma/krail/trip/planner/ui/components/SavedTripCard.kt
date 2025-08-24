@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -15,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,7 +34,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
@@ -46,26 +46,23 @@ fun SavedTripCard(
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val themeColor by LocalThemeColor.current
-
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(
-                color = primaryTransportMode?.let { transportModeBackgroundColor(it) }
-                    ?: themeBackgroundColor(),
-            )
+            .border(color = themeColor(), shape = RoundedCornerShape(12.dp), width = 1.dp)
             .klickable(onClick = onCardClick)
             .padding(vertical = 16.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         primaryTransportMode?.let {
-            TransportModeIcon(transportMode = primaryTransportMode,)
+            TransportModeIcon(
+                transportMode = primaryTransportMode,
+                modifier = Modifier.padding(end = 12.dp),
+            )
         }
 
         Column(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -93,7 +90,7 @@ fun SavedTripCard(
                 colorFilter = ColorFilter.tint(
                     if (isSystemInDarkTheme().not()) {
                         primaryTransportMode?.colorCode
-                            ?.hexToComposeColor() ?: themeColor.hexToComposeColor()
+                            ?.hexToComposeColor() ?: themeColor()
                     } else {
                         KrailTheme.colors.onSurface
                     },

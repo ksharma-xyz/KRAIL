@@ -191,7 +191,10 @@ fun TimeTableScreen(
 
             item(key = "trip-actions-row") {
                 FlowRow(
-                    modifier = Modifier.fillParentMaxWidth().padding(horizontal = 10.dp),
+                    modifier = Modifier
+                        .fillParentMaxWidth()
+                        .padding(horizontal = 10.dp)
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -288,7 +291,7 @@ fun TimeTableScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             if (timeTableState.isError) {

@@ -15,19 +15,15 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appstart.AppStart
 import xyz.ksharma.krail.core.appversion.AppVersionManager
-import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.coroutines.ext.safeResult
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_HAS_SEEN_INTRO
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.trip.planner.ui.navigation.ForcedUpgradeRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
 
 class SplashViewModel(
     private val sandook: Sandook,
@@ -104,7 +100,7 @@ class SplashViewModel(
     }
 
     private fun onSplashAnimationComplete() {
-        updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
+        updateUiState { copy(navigationDestination = AppUpgradeRoute) }
 /*        viewModelScope.launchWithExceptionHandler<SplashViewModel>(
             dispatcher = ioDispatcher,
             errorBlock = {

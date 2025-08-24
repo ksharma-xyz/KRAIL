@@ -30,9 +30,9 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.taj.unspecifiedColor
-import xyz.ksharma.krail.trip.planner.ui.navigation.ForcedUpgradeRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.tripPlannerDestinations
-import xyz.ksharma.krail.upgrade.ForceUpgradeScreen
+import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
 
 /**
  * TODO - I don't like [NavHost] defined in app module, I would love to refactor it to :core:navigation module
@@ -107,8 +107,8 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                 )
             }
 
-            composable<ForcedUpgradeRoute> {
-                ForceUpgradeScreen()
+            composable<AppUpgradeRoute> {
+                AppUpgradeScreen()
             }
         }
     }

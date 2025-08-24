@@ -38,10 +38,15 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.taj)
 
                 implementation(libs.kotlinx.serialization.json)
 
+                implementation(compose.components.uiToolingPreview)
                 implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
                 api(libs.di.koinComposeViewmodel)
             }
         }

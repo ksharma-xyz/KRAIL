@@ -21,6 +21,35 @@ interface AppVersionManager {
      * Retrieves the current version of the app.
      */
     fun getCurrentVersion(): String
+
+    /**
+     * Checks if an optional update is available.
+     * Returns true if an update is required, false otherwise.
+     */
+    suspend fun isOptionalUpdateAvailable(): Boolean =
+        checkForUpdates() is AppVersionUpdateState.UpdateRequired
+
+    /**
+     * Checks if a forced update is required.
+     */
+    suspend fun isForcedUpdateRequired(): Boolean =
+        checkForUpdates() is AppVersionUpdateState.ForcedUpdateRequired
+
+    /**
+     * Retrieves the copy for the app version update dialog based on the current state.
+     * Returns an [AppVersionUpdateCopy] containing the title, description, and call-to-action text.
+     */
+    suspend fun getUpdateCopy(): AppVersionUpdateCopy?
+
+    /**
+     * Data class representing the copy text for the app version update UI elements.
+     * Contains the title, description, and call-to-action text.
+     */
+    data class AppVersionUpdateCopy(
+        val title: String,
+        val description: String,
+        val ctaText: String
+    )
 }
 
 class RealAppVersionManager(
@@ -48,7 +77,7 @@ class RealAppVersionManager(
             }
 
             DevicePlatformType.UNKNOWN -> {
-                log("Fetching latest app version for unknown platform: ")
+                logError("Cannot fetch latest app version for unknown platform: ")
                 // If the platform is unknown, we can't determine the latest version
                 ""
             }
@@ -81,6 +110,25 @@ class RealAppVersionManager(
     }
 
     override fun getCurrentVersion(): String = appInfoProvider.getAppInfo().appVersion
+
+    // (TODO) pull copy from remote flags.
+    override suspend fun getUpdateCopy(): AppVersionManager.AppVersionUpdateCopy? {
+        return when (checkForUpdates()) {
+            is AppVersionUpdateState.UpToDate -> return null
+
+            is AppVersionUpdateState.UpdateRequired -> AppVersionManager.AppVersionUpdateCopy(
+                title = "New Update Available",
+                description = "Please update the app to the latest version for the best experience.",
+                ctaText = "Update Now",
+            )
+
+            is AppVersionUpdateState.ForcedUpdateRequired -> AppVersionManager.AppVersionUpdateCopy(
+                title = "\uD83D\uDEA7 Time to Update \uD83D\uDEA7",
+                description = "We’ve made improvements, please update to keep going\u00A0places!",
+                ctaText = "Update Now",
+            )
+        }
+    }
 
     /**
      * Compares two version strings and returns:

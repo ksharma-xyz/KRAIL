@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,6 +28,7 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
@@ -55,6 +57,10 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import xyz.ksharma.krail.core.appversion.AppVersionManager
+import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
+import xyz.ksharma.krail.taj.components.InfoTileCta
+import xyz.ksharma.krail.taj.components.InfoTileState
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -66,6 +72,8 @@ class SavedTripsViewModel(
     private val stopResultsManager: StopResultsManager,
     private val flag: Flag,
     private val preferences: SandookPreferences,
+    private val appVersionManager: AppVersionManager,
+    private val appInfoProvider: AppInfoProvider,
 ) : ViewModel() {
 
     private val nonPeakTimeCooldownSeconds: Long by lazy {
@@ -100,6 +108,7 @@ class SavedTripsViewModel(
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
             updateDiscoverState()
+            checkAppVersion()
         }
         .onCompletion {
             cleanupJobs()
@@ -526,6 +535,29 @@ class SavedTripsViewModel(
             copy(
                 isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable && savedTrips.isNotEmpty(),
                 displayDiscoverBadge = !preferences.hasDiscoverBeenClicked(),
+            )
+        }
+    }
+
+    private suspend fun checkAppVersion() {
+        log("onStart - checkAppVersion called")
+        val appUpdateCopy = appVersionManager.getUpdateCopy()
+        if (appUpdateCopy == null) {
+            log("App update copy is null, no update available.")
+            return
+        }
+
+        updateUiState {
+            val updateTile = InfoTileState(
+                title = appUpdateCopy.title,
+                description = appUpdateCopy.description,
+                primaryCta = InfoTileCta(
+                    text = appUpdateCopy.ctaText,
+                    url = appInfoProvider.getAppInfo().appStoreUrl,
+                )
+            )
+            copy(
+                infoTiles = (infoTiles?.plus(updateTile))?.toImmutableSet()
             )
         }
     }

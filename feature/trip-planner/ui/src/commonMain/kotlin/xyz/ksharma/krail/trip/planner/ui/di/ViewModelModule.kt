@@ -55,6 +55,8 @@ val viewModelsModule = module {
             stopResultsManager = get(),
             flag = get(),
             preferences = get(),
+            appVersionManager = get(),
+            appInfoProvider = get(),
         )
     }
 

@@ -138,7 +138,9 @@ fun AppUpgradeScreen(
                     backgroundColor = KrailTheme.colors.surface,
                     cookieShadow = cookieShapeShadow(),
                     outlineBrush = Brush.linearGradient(
-                        colors = magicBorderColors(),
+                        colors = magicBorderColors().map {
+                            it.copy(alpha = 0.8f) // Slightly faded for subtlety
+                        },
                     ),
                     modifier = Modifier
                         .fillMaxWidth()

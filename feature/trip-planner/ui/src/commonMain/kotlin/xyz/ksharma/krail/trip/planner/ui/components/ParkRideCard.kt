@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -33,6 +34,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 
 @Composable
@@ -42,14 +44,11 @@ fun ParkRideCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
-//    var isExpanded by rememberSaveable { mutableStateOf(false) }
-
     Row(
         modifier = modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(themeBackgroundColor())
+            // TODO - this modifier should be extracted and made reusable.
+            .border(shape= RoundedCornerShape(16.dp), width = 1.dp, color = themeColor())
             .klickable {
-                //isExpanded = !isExpanded
                 onClick()
             }
             .animateContentSize()

@@ -48,7 +48,6 @@ fun SavedTripCard(
 ) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
             .border(color = themeColor(), shape = RoundedCornerShape(12.dp), width = 1.dp)
             .klickable(onClick = onCardClick)
             .padding(vertical = 16.dp, horizontal = 12.dp),

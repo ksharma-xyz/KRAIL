@@ -31,12 +31,32 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 
 @Stable
-data class InfoTileState(
+data class InfoTileData(
     val title: String,
+
     val description: String,
+
+    /**
+     * Type of Tile which determines its priority in the list of Tiles.
+     */
+    val type: InfoTileType,
+
     val dismissCtaText: String = "Dismiss",
+
+    /**
+     * ISO-8601 formatted date string representing the end date of the info tile.
+     * E.g., "2023-12-31" for December 31, 2023.
+     */
+    val endDate: String? = null,
+
     val primaryCta: InfoTileCta? = null,
-)
+) {
+    enum class InfoTileType(val priority: Int) {
+        INFO(priority = 1),
+        APP_UPDATE(priority = 2), //  higher priority than info, but lower than alert
+        CRITICAL_ALERT(9999), // highest priority, should be shown at top of list
+    }
+}
 
 @Stable
 data class InfoTileCta(
@@ -46,7 +66,7 @@ data class InfoTileCta(
 
 object InfoTileDefaults {
     val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)
-    val horizontalPadding = 12.dp
+    val horizontalPadding = 16.dp
     val verticalPadding = 16.dp
     val borderWidth = 1.dp
 
@@ -59,7 +79,7 @@ object InfoTileDefaults {
 
 @Composable
 fun InfoTile(
-    infoTileState: InfoTileState,
+    infoTileData: InfoTileData,
     modifier: Modifier = Modifier,
     onCtaClicked: (url: String) -> Unit,
     onDismissClick: (() -> Unit) = {},
@@ -86,12 +106,12 @@ fun InfoTile(
             .semantics(mergeDescendants = true) {},
     ) {
         Text(
-            text = infoTileState.title,
+            text = infoTileData.title,
             style = KrailTheme.typography.title,
         )
 
         Text(
-            text = infoTileState.description,
+            text = infoTileData.description,
             style = KrailTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 8.dp),
         )
@@ -106,10 +126,10 @@ fun InfoTile(
                 dimensions = ButtonDefaults.mediumButtonSize(),
                 modifier = Modifier.padding(end = 12.dp),
             ) {
-                Text(text = infoTileState.dismissCtaText)
+                Text(text = infoTileData.dismissCtaText)
             }
 
-            infoTileState.primaryCta?.let { cta ->
+            infoTileData.primaryCta?.let { cta ->
                 Button(
                     dimensions = ButtonDefaults.mediumButtonSize(),
                     onClick = { onCtaClicked(cta.url) },
@@ -132,13 +152,14 @@ private fun InfoTileLightPreview() {
     //  In future, colors should be calculated and set in tokens rather than being calculated on fly.
     PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
         InfoTile(
-            infoTileState = InfoTileState(
+            infoTileData = InfoTileData(
                 title = "Service update",
                 description = "Planned maintenance may cause minor delays this weekend.",
                 primaryCta = InfoTileCta(
                     text = "Learn more",
                     url = "https://example.com/maintenance",
                 ),
+                type = InfoTileData.InfoTileType.INFO,
             ),
             onCtaClicked = {},
             onDismissClick = {},
@@ -152,9 +173,10 @@ private fun InfoTileLightPreview() {
 private fun InfoTileDarkPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
         InfoTile(
-            infoTileState = InfoTileState(
+            infoTileData = InfoTileData(
                 title = "Network issue resolved",
                 description = "All lines are now operating on their regular schedules.",
+                type = InfoTileData.InfoTileType.INFO,
             ),
             onCtaClicked = {},
             onDismissClick = {},

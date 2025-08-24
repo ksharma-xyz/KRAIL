@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.state.savedtrip
 
+import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 sealed interface SavedTripUiEvent {
@@ -25,4 +26,8 @@ sealed interface SavedTripUiEvent {
     data class ParkRideCardClick(
         val parkRideState: ParkRideUiState, val isExpanded: Boolean
     ) : SavedTripUiEvent
+
+    data class DismissInfoTile(val infoTile: InfoTileData) : SavedTripUiEvent
+
+    data class InfoTileCtaClick(val infoTile: String) : SavedTripUiEvent
 }

@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,6 +28,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
@@ -46,6 +46,8 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.SavedTrip
+import xyz.ksharma.krail.taj.components.InfoTileCta
+import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -57,10 +59,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import xyz.ksharma.krail.core.appversion.AppVersionManager
-import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
-import xyz.ksharma.krail.taj.components.InfoTileCta
-import xyz.ksharma.krail.taj.components.InfoTileState
 
 class SavedTripsViewModel(
     private val sandook: Sandook,
@@ -159,6 +157,10 @@ class SavedTripsViewModel(
                 preferences.markDiscoverAsClicked()
                 updateUiState { copy(displayDiscoverBadge = false) }
             }
+
+            is SavedTripUiEvent.DismissInfoTile -> {} //onDismissInfoTile(event.infoTileState)
+
+            is SavedTripUiEvent.InfoTileCtaClick -> {} // onInfoTileCtaClick(event.infoTileState)
         }
     }
 
@@ -548,9 +550,10 @@ class SavedTripsViewModel(
         }
 
         updateUiState {
-            val updateTile = InfoTileState(
+            val updateTile = InfoTileData(
                 title = appUpdateCopy.title,
                 description = appUpdateCopy.description,
+                type = InfoTileData.InfoTileType.APP_UPDATE,
                 primaryCta = InfoTileCta(
                     text = appUpdateCopy.ctaText,
                     url = appInfoProvider.getAppInfo().appStoreUrl,
@@ -560,6 +563,10 @@ class SavedTripsViewModel(
                 infoTiles = (infoTiles ?: persistentListOf())
                     .plus(updateTile)
                     .toSet()
+                    .sortedBy { it.type.priority }
+                    // TODO - [Visual] [Enhancement] At max 2 tiles should be displayed.
+                    //  Unless a Stack UI, in which case, all can be displayed.
+                    .take(2)
                     .toImmutableList()
             )
         }

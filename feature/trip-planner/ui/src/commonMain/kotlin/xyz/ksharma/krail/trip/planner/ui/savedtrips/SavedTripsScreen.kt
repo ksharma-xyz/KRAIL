@@ -183,7 +183,7 @@ private fun LazyListScope.infoTiles(infoTiles: ImmutableList<InfoTileState>) {
             onCtaClicked = {},
             onDismissClick = {},
             modifier = Modifier
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         )
     }
 }

@@ -1,6 +1,13 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +17,19 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 
 @Stable
 data class InfoTileState(
@@ -42,11 +53,31 @@ fun InfoTile(
     onCtaClicked: (url: String) -> Unit,
     onDismissClick: (() -> Unit) = {},
 ) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val gradientOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(color = backgroundColor, shape = RoundedCornerShape(16.dp))
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .border(
+                width = 2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        themeColor(),
+                        KrailTheme.colors.magicYellow,
+                        themeColor(),
+                    ),
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(vertical = 16.dp, horizontal = 12.dp),
     ) {
         Text(
             text = infoTileState.title,
@@ -56,13 +87,13 @@ fun InfoTile(
         Text(
             text = infoTileState.description,
             style = KrailTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 8.dp),
         )
 
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         ) {
             TextButton(
                 onClick = onDismissClick,

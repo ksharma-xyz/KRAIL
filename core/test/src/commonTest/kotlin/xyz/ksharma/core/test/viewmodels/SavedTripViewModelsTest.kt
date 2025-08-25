@@ -1,6 +1,7 @@
 package xyz.ksharma.core.test.viewmodels
 
 import app.cash.turbine.test
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -29,6 +30,8 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.taj.components.InfoTileCta
 import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.isInfoTileDismissed
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.markInfoTileAsDismissed
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -37,6 +40,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -87,28 +91,28 @@ class SavedTripsViewModelTest {
         Dispatchers.resetMain()
     }
 
-/*
-    @Test
-    fun `GIVEN initial state WHEN observer is active THEN analytics event should be tracked`() =
-        runTest {
-            // Ensure analytics events have not been tracked before observation
-            assertFalse((fakeAnalytics as FakeAnalytics).isEventTracked("view_screen"))
+    /*
+        @Test
+        fun `GIVEN initial state WHEN observer is active THEN analytics event should be tracked`() =
+            runTest {
+                // Ensure analytics events have not been tracked before observation
+                assertFalse((fakeAnalytics as FakeAnalytics).isEventTracked("view_screen"))
 
-            viewModel.uiState.test {
-                val item = awaitItem()
-                assertEquals(item, SavedTripsState())
+                viewModel.uiState.test {
+                    val item = awaitItem()
+                    assertEquals(item, SavedTripsState())
 
-//                advanceUntilIdle()
-                assertScreenViewEventTracked(
-                    fakeAnalytics,
-                    expectedScreenName = AnalyticsScreen.SavedTrips.name,
-                )
+    //                advanceUntilIdle()
+                    assertScreenViewEventTracked(
+                        fakeAnalytics,
+                        expectedScreenName = AnalyticsScreen.SavedTrips.name,
+                    )
 
-                cancelAndConsumeRemainingEvents()
-                viewModel.cleanupJobs()
+                    cancelAndConsumeRemainingEvents()
+                    viewModel.cleanupJobs()
+                }
             }
-        }
-*/
+    */
 
     @Test
     fun `GIVEN no observer is active WHEN checking analytics THEN event should not be tracked`() =
@@ -272,23 +276,93 @@ class SavedTripsViewModelTest {
         }
 
     @Test
-    fun `GIVEN InfoTileCtaClick event WHEN triggered THEN platformOps openUrl is called with correct url`() = runTest {
-        // GIVEN an info tile with a primary CTA URL
-        val testUrl = "https://example.com"
+    fun `GIVEN InfoTileCtaClick event WHEN triggered THEN platformOps openUrl is called with correct url`() =
+        runTest {
+            // GIVEN an info tile with a primary CTA URL
+            val testUrl = "https://example.com"
+            val infoTile = InfoTileData(
+                key = "test_key",
+                title = "Test",
+                description = "Test Desc",
+                type = InfoTileData.InfoTileType.APP_UPDATE,
+                primaryCta = InfoTileCta(
+                    text = "Go",
+                    url = testUrl
+                )
+            )
+
+            // WHEN the InfoTileCtaClick event is triggered
+            viewModel.onEvent(SavedTripUiEvent.InfoTileCtaClick(infoTile))
+
+            // THEN verify platformOps.openUrl was called with the correct URL
+            assertEquals(testUrl, fakePlatformOps.lastOpenedUrl)
+        }
+
+    @Test
+    fun `GIVEN an info tile WHEN DismissInfoTile event is triggered THEN tile is removed and marked dismissed`() =
+        runTest {
+            // Ensure the key matches what the ViewModel will use
+            fakeAppVersionManager.mockCurrentVersion = "update_key"
+            val infoTile = InfoTileData(
+                key = "update_key",
+                title = "Update Available",
+                description = "Update your app",
+                type = InfoTileData.InfoTileType.APP_UPDATE,
+                primaryCta = InfoTileCta(
+                    text = "Update",
+                    url = "https://store.com/app"
+                )
+            )
+            // Simulate info tile present in state by using a public event that adds it
+            fakeAppVersionManager.setUpdateCopy(
+                title = infoTile.title,
+                description = infoTile.description,
+                ctaText = infoTile.primaryCta?.text ?: "",
+                key = infoTile.key
+            )
+            viewModel.uiState.test {
+                skipItems(2) // Initial state + after checkAppVersion
+                // Dismiss the tile
+                viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(infoTile))
+                val item = awaitItem()
+                assertTrue(item.infoTiles?.isEmpty() == true)
+                assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
+                cancelAndIgnoreRemainingEvents()
+                viewModel.cleanupJobs()
+            }
+        }
+
+    @Test
+    fun `GIVEN an info tile already dismissed WHEN DismissInfoTile event is triggered THEN infoTiles remains unchanged`() = runTest {
         val infoTile = InfoTileData(
-            title = "Test",
-            description = "Test Desc",
+            key = "already_dismissed",
+            title = "Dismissed",
+            description = "Already gone",
             type = InfoTileData.InfoTileType.APP_UPDATE,
             primaryCta = InfoTileCta(
-                text = "Go",
-                url = testUrl
+                text = "Update",
+                url = "https://store.com/app"
             )
         )
-
-        // WHEN the InfoTileCtaClick event is triggered
-        viewModel.onEvent(SavedTripUiEvent.InfoTileCtaClick(infoTile))
-
-        // THEN verify platformOps.openUrl was called with the correct URL
-        assertEquals(testUrl, fakePlatformOps.lastOpenedUrl)
+        // Mark as dismissed in preferences before test
+        fakeSandookPreferences.markInfoTileAsDismissed(infoTile.key)
+        // Simulate info tile present in state
+        fakeAppVersionManager.setUpdateCopy(
+            title = infoTile.title,
+            description = infoTile.description,
+            ctaText = infoTile.primaryCta?.text ?: "",
+            key = infoTile.key
+        )
+        viewModel.uiState.test {
+            val item = awaitItem()
+            println("Received item with infoTiles: ${item.infoTiles}")
+            assertNull(item.infoTiles)
+            // Dismiss the tile (should be a no-op, no new state emitted)
+            viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(infoTile))
+            // No need to await another item, just check preference
+            assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
+            cancelAndIgnoreRemainingEvents()
+            viewModel.cleanupJobs()
+        }
     }
 }

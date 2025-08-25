@@ -20,4 +20,18 @@ class FakeAppVersionManager : AppVersionManager {
     override suspend fun getUpdateCopy(): AppVersionManager.AppVersionUpdateCopy? {
         return mockUpdateCopy
     }
+
+    fun setUpdateCopy(
+        title: String,
+        description: String,
+        ctaText: String,
+        key: String = mockCurrentVersion
+    ) {
+        mockCurrentVersion = key
+        mockUpdateCopy = AppVersionManager.AppVersionUpdateCopy(
+            title = title,
+            description = description,
+            ctaText = ctaText
+        )
+    }
 }

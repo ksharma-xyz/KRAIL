@@ -419,6 +419,26 @@ class SavedTripsViewModelTest {
             }
         }
 
+    @Test
+    fun `GIVEN no info tile WHEN DismissInfoTile event is triggered THEN state remains unchanged`() = runTest {
+        val infoTile = InfoTileData(
+            key = "non_existent",
+            title = "Not present",
+            description = "Should not exist",
+            type = InfoTileData.InfoTileType.APP_UPDATE,
+            primaryCta = null
+        )
+        viewModel.uiState.test {
+            val item = awaitItem()
+            assertNull(item.infoTiles)
+            viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(infoTile))
+            // No new state emitted, nothing marked as dismissed
+            assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
+            cancelAndIgnoreRemainingEvents()
+            viewModel.cleanupJobs()
+        }
+    }
+
     // endregion Info Tile Tests
 
     // region Discover Tests

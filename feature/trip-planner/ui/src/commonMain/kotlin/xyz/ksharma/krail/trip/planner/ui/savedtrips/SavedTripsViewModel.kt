@@ -39,6 +39,7 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
+import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
@@ -72,6 +73,7 @@ class SavedTripsViewModel(
     private val preferences: SandookPreferences,
     private val appVersionManager: AppVersionManager,
     private val appInfoProvider: AppInfoProvider,
+    private val platformOps: PlatformOps,
 ) : ViewModel() {
 
     private val nonPeakTimeCooldownSeconds: Long by lazy {
@@ -160,8 +162,15 @@ class SavedTripsViewModel(
 
             is SavedTripUiEvent.DismissInfoTile -> {} //onDismissInfoTile(event.infoTileState)
 
-            is SavedTripUiEvent.InfoTileCtaClick -> {} // onInfoTileCtaClick(event.infoTileState)
+            is SavedTripUiEvent.InfoTileCtaClick -> onInfoTileCtaClick(event.infoTile)
         }
+    }
+
+    private fun onInfoTileCtaClick(infoTile: InfoTileData) {
+        infoTile.primaryCta?.url?.let { url ->
+            platformOps.openUrl(url)
+        }
+        // TODO - track analytics.
     }
 
     private fun onParkRideCardClick(

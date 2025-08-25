@@ -56,6 +56,7 @@ kotlin {
                 implementation(projects.feature.tripPlanner.ui)
                 implementation(projects.feature.tripPlanner.state)
                 implementation(projects.feature.tripPlanner.network)
+                implementation(projects.platform.ops)
                 implementation(projects.taj)
 
                 implementation(libs.test.junit)

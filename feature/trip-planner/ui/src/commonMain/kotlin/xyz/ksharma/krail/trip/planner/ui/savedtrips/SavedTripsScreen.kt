@@ -128,8 +128,13 @@ fun SavedTripsScreen(
 
                     savedTripsState.savedTrips.isEmpty() -> {
 
-                        savedTripsState.infoTiles?.let{ infoTiles ->
-                            infoTiles(infoTiles)
+                        savedTripsState.infoTiles?.let { infoTiles ->
+                            infoTiles(
+                                infoTiles = infoTiles,
+                                onCtaClicked = { tileData ->
+                                    onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                },
+                            )
                         }
 
                         item(key = "empty_state") {
@@ -145,9 +150,13 @@ fun SavedTripsScreen(
                     }
 
                     savedTripsState.savedTrips.isNotEmpty() -> {
-
-                        savedTripsState.infoTiles?.let{ infoTiles ->
-                            infoTiles(infoTiles)
+                        savedTripsState.infoTiles?.let { infoTiles ->
+                            infoTiles(
+                                infoTiles = infoTiles,
+                                onCtaClicked = { tileData ->
+                                    onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                },
+                            )
                         }
 
                         SavedTripsContent(
@@ -173,14 +182,17 @@ fun SavedTripsScreen(
     }
 }
 
-private fun LazyListScope.infoTiles(infoTiles: ImmutableList<InfoTileData>) {
+private fun LazyListScope.infoTiles(
+    infoTiles: ImmutableList<InfoTileData>,
+    onCtaClicked: (InfoTileData) -> Unit,
+) {
     items(
         items = infoTiles,
         key = { item -> item.hashCode() },
-    ) { tileState ->
+    ) { tileData ->
         InfoTile(
-            infoTileData = tileState,
-            onCtaClicked = {},
+            infoTileData = tileData,
+            onCtaClicked = onCtaClicked,
             onDismissClick = {},
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp),

@@ -14,6 +14,7 @@ import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.core.test.fakes.FakeParkRideService
+import xyz.ksharma.core.test.fakes.FakePlatformOps
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
@@ -25,6 +26,8 @@ import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.taj.components.InfoTileCta
+import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -32,6 +35,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -57,6 +61,7 @@ class SavedTripsViewModelTest {
     private val fakeAppVersionManager = FakeAppVersionManager()
 
     private val fakeAppInfoProvider = FakeAppInfoProvider()
+    private val fakePlatformOps = FakePlatformOps()
 
     @BeforeTest
     fun setUp() {
@@ -73,6 +78,7 @@ class SavedTripsViewModelTest {
             preferences = fakeSandookPreferences,
             appVersionManager = fakeAppVersionManager,
             appInfoProvider = fakeAppInfoProvider,
+            platformOps = fakePlatformOps,
         )
     }
 
@@ -264,4 +270,25 @@ class SavedTripsViewModelTest {
             val eventName = AnalyticsEvent.ToFieldClickEvent.name
             assertTrue(fakeAnalytics.isEventTracked(eventName))
         }
+
+    @Test
+    fun `GIVEN InfoTileCtaClick event WHEN triggered THEN platformOps openUrl is called with correct url`() = runTest {
+        // GIVEN an info tile with a primary CTA URL
+        val testUrl = "https://example.com"
+        val infoTile = InfoTileData(
+            title = "Test",
+            description = "Test Desc",
+            type = InfoTileData.InfoTileType.APP_UPDATE,
+            primaryCta = InfoTileCta(
+                text = "Go",
+                url = testUrl
+            )
+        )
+
+        // WHEN the InfoTileCtaClick event is triggered
+        viewModel.onEvent(SavedTripUiEvent.InfoTileCtaClick(infoTile))
+
+        // THEN verify platformOps.openUrl was called with the correct URL
+        assertEquals(testUrl, fakePlatformOps.lastOpenedUrl)
+    }
 }

@@ -14,6 +14,7 @@ import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.core.test.fakes.FakeParkRideService
+import xyz.ksharma.core.test.fakes.FakePlatformOps
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
@@ -57,6 +58,7 @@ class SavedTripsViewModelTest {
     private val fakeAppVersionManager = FakeAppVersionManager()
 
     private val fakeAppInfoProvider = FakeAppInfoProvider()
+    private val fakePlatformOps = FakePlatformOps()
 
     @BeforeTest
     fun setUp() {
@@ -73,6 +75,7 @@ class SavedTripsViewModelTest {
             preferences = fakeSandookPreferences,
             appVersionManager = fakeAppVersionManager,
             appInfoProvider = fakeAppInfoProvider,
+            platformOps = fakePlatformOps,
         )
     }
 

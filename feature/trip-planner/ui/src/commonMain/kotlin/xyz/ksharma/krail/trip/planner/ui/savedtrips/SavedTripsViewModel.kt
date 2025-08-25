@@ -552,7 +552,8 @@ class SavedTripsViewModel(
 
     private suspend fun checkAppVersion() {
         log("onStart - checkAppVersion called")
-        val appUpdateCopy = appVersionManager.getUpdateCopy()
+        val appUpdateCopy: AppVersionManager.AppVersionUpdateCopy? =
+            appVersionManager.getUpdateCopy()
         if (appUpdateCopy == null) {
             log("App update copy is null, no update available.")
             return
@@ -589,7 +590,7 @@ class SavedTripsViewModel(
 
     private fun onDismissInfoTile(infoTileData: InfoTileData) {
         log("Dismissing info tile: ${infoTileData.key}")
-        // TODO - add to dismissed set in db
+        preferences.markInfoTileAsDismissed(infoTileData.key)
         updateUiState {
             copy(
                 infoTiles = infoTiles?.filter { it.key != infoTileData.key }?.toImmutableList()
@@ -598,9 +599,8 @@ class SavedTripsViewModel(
     }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {
-        // If the key is not in the dismissed set, return true (not dismissed)
-        // TODO - add db support
-        return true
+        log("Checking if info tile key '$key' is not in dismissed tiles.")
+        return !preferences.isInfoTileDismissed(key)
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

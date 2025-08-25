@@ -39,6 +39,11 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 
 @Stable
 data class InfoTileData(
+    /**
+     * Unique key to identify the info tile, will be used to track when user dismisses the tile.
+     */
+    val key: String,
+
     val title: String,
 
     val description: String,
@@ -189,6 +194,7 @@ private fun InfoTileLightPreview() {
                     text = "Learn more",
                     url = "https://example.com/maintenance",
                 ),
+                key = "unique_tile_01",
                 type = InfoTileData.InfoTileType.INFO,
             ),
             onCtaClicked = {},
@@ -204,6 +210,7 @@ private fun InfoTileDarkPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
         InfoTile(
             infoTileData = InfoTileData(
+                key = "unique_tile_01",
                 title = "Network issue resolved",
                 description = "All lines are now operating on their regular schedules.",
                 type = InfoTileData.InfoTileType.INFO,

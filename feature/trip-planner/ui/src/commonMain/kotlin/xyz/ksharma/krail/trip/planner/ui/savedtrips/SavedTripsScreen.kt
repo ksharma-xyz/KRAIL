@@ -188,7 +188,7 @@ private fun LazyListScope.infoTiles(
 ) {
     items(
         items = infoTiles,
-        key = { item -> item.hashCode() },
+        key = { item -> item.key },
     ) { tileData ->
         InfoTile(
             infoTileData = tileData,

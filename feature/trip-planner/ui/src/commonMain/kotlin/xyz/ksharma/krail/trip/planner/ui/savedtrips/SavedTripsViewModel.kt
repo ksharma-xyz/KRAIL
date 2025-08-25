@@ -160,7 +160,7 @@ class SavedTripsViewModel(
                 updateUiState { copy(displayDiscoverBadge = false) }
             }
 
-            is SavedTripUiEvent.DismissInfoTile -> {} //onDismissInfoTile(event.infoTileState)
+            is SavedTripUiEvent.DismissInfoTile -> onDismissInfoTile(event.infoTile)
 
             is SavedTripUiEvent.InfoTileCtaClick -> onInfoTileCtaClick(event.infoTile)
         }
@@ -560,6 +560,7 @@ class SavedTripsViewModel(
 
         updateUiState {
             val updateTile = InfoTileData(
+                key = appVersionManager.getCurrentVersion(),
                 title = appUpdateCopy.title,
                 description = appUpdateCopy.description,
                 type = InfoTileData.InfoTileType.APP_UPDATE,
@@ -568,17 +569,38 @@ class SavedTripsViewModel(
                     url = appInfoProvider.getAppInfo().appStoreUrl,
                 )
             )
+
+            if (isKeyNotInDismissedTiles(updateTile.key)) {
+                copy(
+                    infoTiles = (infoTiles ?: persistentListOf())
+                        .plus(updateTile)
+                        .toSet()
+                        .sortedBy { it.type.priority }
+                        // TODO - [Visual] [Enhancement] At max 2 tiles should be displayed.
+                        //  Unless a Stack UI, in which case, all can be displayed.
+                        .take(2)
+                        .toImmutableList()
+                )
+            } else {
+                this
+            }
+        }
+    }
+
+    private fun onDismissInfoTile(infoTileData: InfoTileData) {
+        log("Dismissing info tile: ${infoTileData.key}")
+        // TODO - add to dismissed set in db
+        updateUiState {
             copy(
-                infoTiles = (infoTiles ?: persistentListOf())
-                    .plus(updateTile)
-                    .toSet()
-                    .sortedBy { it.type.priority }
-                    // TODO - [Visual] [Enhancement] At max 2 tiles should be displayed.
-                    //  Unless a Stack UI, in which case, all can be displayed.
-                    .take(2)
-                    .toImmutableList()
+                infoTiles = infoTiles?.filter { it.key != infoTileData.key }?.toImmutableList()
             )
         }
+    }
+
+    private fun isKeyNotInDismissedTiles(key: String): Boolean {
+        // If the key is not in the dismissed set, return true (not dismissed)
+        // TODO - add db support
+        return true
     }
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {

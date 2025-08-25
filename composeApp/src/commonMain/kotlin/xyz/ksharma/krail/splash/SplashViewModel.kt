@@ -15,8 +15,10 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appstart.AppStart
 import xyz.ksharma.krail.core.appversion.AppVersionManager
+import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.coroutines.ext.safeResult
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
@@ -24,6 +26,8 @@ import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_HAS_SEEN_INTRO
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 
 class SplashViewModel(
     private val sandook: Sandook,
@@ -100,8 +104,7 @@ class SplashViewModel(
     }
 
     private fun onSplashAnimationComplete() {
-        updateUiState { copy(navigationDestination = AppUpgradeRoute) }
-/*        viewModelScope.launchWithExceptionHandler<SplashViewModel>(
+       viewModelScope.launchWithExceptionHandler<SplashViewModel>(
             dispatcher = ioDispatcher,
             errorBlock = {
                 logError("Error during splash animation completion, navigating to saved trips.")
@@ -110,7 +113,7 @@ class SplashViewModel(
             when (appVersionManager.checkForUpdates()) {
                 AppVersionUpdateState.ForcedUpdateRequired -> {
                     log("Forced update required, navigating to update screen.")
-                    updateUiState { copy(navigationDestination = ForcedUpgradeRoute) }
+                    updateUiState { copy(navigationDestination = AppUpgradeRoute) }
                 }
 
                 AppVersionUpdateState.UpToDate, AppVersionUpdateState.UpdateRequired -> {
@@ -124,7 +127,7 @@ class SplashViewModel(
                     }
                 }
             }
-        }*/
+        }
     }
 
     private fun updateUiState(block: SplashState.() -> SplashState) {

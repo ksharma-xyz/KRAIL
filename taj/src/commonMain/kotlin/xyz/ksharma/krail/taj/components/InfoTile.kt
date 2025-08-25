@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.taj.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,9 +13,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.SHADOW_ALPHA
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.borderWidth
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.horizontalPadding
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.shadowRadius
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.shadowSpread
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.shape
+import xyz.ksharma.krail.taj.components.InfoTileDefaults.verticalPadding
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -34,19 +44,46 @@ data class InfoTileCta(
     val url: String,
 )
 
+object InfoTileDefaults {
+    val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)
+    val horizontalPadding = 12.dp
+    val verticalPadding = 16.dp
+    val borderWidth = 1.dp
+
+    // region Shadow
+    val shadowRadius = 12.dp
+    val shadowSpread = 2.dp
+    const val SHADOW_ALPHA = 1f
+    // endregion
+}
+
 @Composable
 fun InfoTile(
     infoTileState: InfoTileState,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = themeBackgroundColor(),
     onCtaClicked: (url: String) -> Unit,
     onDismissClick: (() -> Unit) = {},
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(color = backgroundColor, shape = RoundedCornerShape(16.dp))
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .border(
+                width = borderWidth,
+                color = themeBackgroundColor(),
+                shape = shape,
+            )
+            .dropShadow(
+                shape = shape,
+                shadow = Shadow(
+                    radius = shadowRadius,
+                    color = themeBackgroundColor(),
+                    spread = shadowSpread,
+                    alpha = SHADOW_ALPHA,
+                )
+            )
+            .background(color = KrailTheme.colors.surface, shape = shape)
+            .padding(vertical = verticalPadding, horizontal = horizontalPadding)
+            .semantics(mergeDescendants = true) {},
     ) {
         Text(
             text = infoTileState.title,
@@ -56,13 +93,13 @@ fun InfoTile(
         Text(
             text = infoTileState.description,
             style = KrailTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 8.dp),
         )
 
         Row(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         ) {
             TextButton(
                 onClick = onDismissClick,

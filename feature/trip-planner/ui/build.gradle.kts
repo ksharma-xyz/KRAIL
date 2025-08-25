@@ -25,6 +25,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.appInfo)
+                implementation(projects.core.appVersion)
                 implementation(projects.core.analytics)
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)

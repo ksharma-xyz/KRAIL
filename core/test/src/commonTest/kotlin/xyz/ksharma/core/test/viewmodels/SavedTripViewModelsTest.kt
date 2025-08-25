@@ -8,6 +8,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
+import xyz.ksharma.core.test.fakes.FakeAppInfoProvider
+import xyz.ksharma.core.test.fakes.FakeAppVersionManager
 import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
 import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
@@ -17,6 +19,7 @@ import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
@@ -51,6 +54,10 @@ class SavedTripsViewModelTest {
 
     private val fakeSandookPreferences = FakeSandookPreferences()
 
+    private val fakeAppVersionManager = FakeAppVersionManager()
+
+    private val fakeAppInfoProvider = FakeAppInfoProvider()
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -64,6 +71,8 @@ class SavedTripsViewModelTest {
             stopResultsManager = fakeStopResultsManager,
             flag = fakeFlag,
             preferences = fakeSandookPreferences,
+            appVersionManager = fakeAppVersionManager,
+            appInfoProvider = fakeAppInfoProvider,
         )
     }
 

@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import xyz.ksharma.krail.taj.components.InfoTileState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 @Stable
@@ -15,4 +16,5 @@ data class SavedTripsState(
     val parkRideUiState: ImmutableList<ParkRideUiState> = persistentListOf(),
     val isDiscoverAvailable: Boolean = false,
     val displayDiscoverBadge: Boolean = false,
+    val infoTiles: ImmutableList<InfoTileState>? = null,
 )

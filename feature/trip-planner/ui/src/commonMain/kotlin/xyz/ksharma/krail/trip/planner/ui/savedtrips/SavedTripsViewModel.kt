@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -550,43 +551,46 @@ class SavedTripsViewModel(
         }
     }
 
+    // region AppVersion Tile
     private suspend fun checkAppVersion() {
         log("onStart - checkAppVersion called")
-        val appUpdateCopy: AppVersionManager.AppVersionUpdateCopy? =
-            appVersionManager.getUpdateCopy()
+        val appUpdateCopy = appVersionManager.getUpdateCopy()
         if (appUpdateCopy == null) {
             log("App update copy is null, no update available.")
             return
         }
 
+        val updateTile = createAppUpdateTile(appUpdateCopy)
         updateUiState {
-            val updateTile = InfoTileData(
-                key = appVersionManager.getCurrentVersion(),
-                title = appUpdateCopy.title,
-                description = appUpdateCopy.description,
-                type = InfoTileData.InfoTileType.APP_UPDATE,
-                primaryCta = InfoTileCta(
-                    text = appUpdateCopy.ctaText,
-                    url = appInfoProvider.getAppInfo().appStoreUrl,
-                )
-            )
-
             if (isKeyNotInDismissedTiles(updateTile.key)) {
-                copy(
-                    infoTiles = (infoTiles ?: persistentListOf())
-                        .plus(updateTile)
-                        .toSet()
-                        .sortedBy { it.type.priority }
-                        // TODO - [Visual] [Enhancement] At max 2 tiles should be displayed.
-                        //  Unless a Stack UI, in which case, all can be displayed.
-                        .take(2)
-                        .toImmutableList()
-                )
+                copy(infoTiles = addInfoTile(infoTiles, updateTile))
             } else {
                 this
             }
         }
     }
+
+    private fun createAppUpdateTile(appUpdateCopy: AppVersionManager.AppVersionUpdateCopy): InfoTileData =
+        InfoTileData(
+            key = appVersionManager.getCurrentVersion(),
+            title = appUpdateCopy.title,
+            description = appUpdateCopy.description,
+            type = InfoTileData.InfoTileType.APP_UPDATE,
+            primaryCta = InfoTileCta(
+                text = appUpdateCopy.ctaText,
+                url = appInfoProvider.getAppInfo().appStoreUrl,
+            )
+        )
+
+    private fun addInfoTile(
+        currentTiles: List<InfoTileData>?,
+        newTile: InfoTileData
+    ): ImmutableList<InfoTileData> = (currentTiles ?: persistentListOf())
+        .plus(newTile)
+        .toSet()
+        .sortedBy { it.type.priority }
+        .take(2)
+        .toImmutableList()
 
     private fun onDismissInfoTile(infoTileData: InfoTileData) {
         log("Dismissing info tile: ${infoTileData.key}")
@@ -602,6 +606,8 @@ class SavedTripsViewModel(
         log("Checking if info tile key '$key' is not in dismissed tiles.")
         return !preferences.isInfoTileDismissed(key)
     }
+
+    // endregion
 
     private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {
         _uiState.update(block)

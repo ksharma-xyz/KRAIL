@@ -28,6 +28,7 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.taj.components.InfoTileCta
 import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.hasDiscoverBeenClicked
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.isInfoTileDismissed
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.markInfoTileAsDismissed
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
@@ -56,7 +57,7 @@ class SavedTripsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private val fakeFlag: Flag = FakeFlag()
+    private val fakeFlag = FakeFlag()
 
     private val fakeSandookPreferences = FakeSandookPreferences()
 
@@ -416,4 +417,27 @@ class SavedTripsViewModelTest {
     }
 
     // endregion Info Tile Tests
+
+    // region Discover Tests
+
+    @Test
+    fun `GIVEN Discover button WHEN clicked THEN analytics tracked, badge hidden, and preference updated`() = runTest {
+        // Simulate discover available and badge shown
+        fakeFlag.setDiscoverAvailable(true)
+        fakeSandookPreferences.setDiscoverClicked(false)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.onEvent(SavedTripUiEvent.AnalyticsDiscoverButtonClick)
+            val item = awaitItem()
+            assertFalse(item.displayDiscoverBadge)
+            assertTrue(fakeSandookPreferences.hasDiscoverBeenClicked())
+            val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
+            assertTrue(fakeAnalytics.isEventTracked(AnalyticsEvent.DiscoverButtonClick.name))
+            cancelAndIgnoreRemainingEvents()
+            viewModel.cleanupJobs()
+        }
+    }
+
+    // endregion Discover Tests
 }

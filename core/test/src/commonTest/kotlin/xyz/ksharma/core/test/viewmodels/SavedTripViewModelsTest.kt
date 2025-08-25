@@ -1,7 +1,6 @@
 package xyz.ksharma.core.test.viewmodels
 
 import app.cash.turbine.test
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,7 +20,6 @@ import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
@@ -275,6 +273,7 @@ class SavedTripsViewModelTest {
             assertTrue(fakeAnalytics.isEventTracked(eventName))
         }
 
+    // region Info Tile Tests
     @Test
     fun `GIVEN InfoTileCtaClick event WHEN triggered THEN platformOps openUrl is called with correct url`() =
         runTest {
@@ -365,4 +364,56 @@ class SavedTripsViewModelTest {
             viewModel.cleanupJobs()
         }
     }
+
+    @Test
+    fun `GIVEN multiple info tiles WHEN one is dismissed THEN only that tile is removed and marked dismissed`() = runTest {
+        // Setup two info tiles with different keys and types
+        val updateTile = InfoTileData(
+            key = "update_key",
+            title = "Update Available",
+            description = "Update your app",
+            type = InfoTileData.InfoTileType.APP_UPDATE,
+            primaryCta = InfoTileCta(
+                text = "Update",
+                url = "https://store.com/app"
+            )
+        )
+        val criticalAlertTile = InfoTileData(
+            key = "alert_key",
+            title = "Critical Alert",
+            description = "Warning, disruptions expected",
+            type = InfoTileData.InfoTileType.CRITICAL_ALERT,
+            primaryCta = InfoTileCta(
+                text = "Read more",
+                url = "https://example.com/read"
+            )
+        )
+        // Simulate both tiles present
+        fakeAppVersionManager.mockCurrentVersion = updateTile.key
+        fakeAppVersionManager.setUpdateCopy(
+            title = updateTile.title,
+            description = updateTile.description,
+            ctaText = updateTile.primaryCta?.text ?: "",
+            key = updateTile.key
+        )
+        // Manually add promo tile to state (simulate as needed for your ViewModel)
+        viewModel.uiState.test {
+            skipItems(1) // initial state
+            // Add promo tile
+            viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(criticalAlertTile.copy(key = "not_dismissed"))) // Ensure promo tile is not dismissed
+            viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(updateTile.copy(key = "not_dismissed"))) // Ensure update tile is not dismissed
+            updateTile.copy(key = "update_key")
+            criticalAlertTile.copy(key = "alert_key")
+            viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(criticalAlertTile))
+            val item = awaitItem()
+            // Only updateTile should remain
+            assertEquals(listOf(updateTile).size, item.infoTiles?.size)
+            assertTrue(fakeSandookPreferences.isInfoTileDismissed(criticalAlertTile.key))
+            assertFalse(fakeSandookPreferences.isInfoTileDismissed(updateTile.key))
+            cancelAndIgnoreRemainingEvents()
+            viewModel.cleanupJobs()
+        }
+    }
+
+    // endregion Info Tile Tests
 }

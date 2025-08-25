@@ -18,4 +18,8 @@ class FakeFlag : Flag {
             else -> FlagValue.BooleanValue(false)
         }
     }
+
+    fun setDiscoverAvailable(value: Boolean) {
+        setFlagValue(FlagKeys.DISCOVER_AVAILABLE.key, FlagValue.BooleanValue(value))
+    }
 }

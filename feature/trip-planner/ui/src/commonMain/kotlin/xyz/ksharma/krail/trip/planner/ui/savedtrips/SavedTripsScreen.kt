@@ -34,7 +34,7 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.InfoTile
-import xyz.ksharma.krail.taj.components.InfoTileState
+import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -173,13 +173,13 @@ fun SavedTripsScreen(
     }
 }
 
-private fun LazyListScope.infoTiles(infoTiles: ImmutableList<InfoTileState>) {
+private fun LazyListScope.infoTiles(infoTiles: ImmutableList<InfoTileData>) {
     items(
         items = infoTiles,
         key = { item -> item.hashCode() },
     ) { tileState ->
         InfoTile(
-            infoTileState = tileState,
+            infoTileData = tileState,
             onCtaClicked = {},
             onDismissClick = {},
             modifier = Modifier

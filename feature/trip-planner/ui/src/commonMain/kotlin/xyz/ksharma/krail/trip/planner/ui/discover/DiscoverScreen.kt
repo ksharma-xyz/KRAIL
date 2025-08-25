@@ -105,7 +105,11 @@ fun DiscoverScreenCompact(
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+            .background(color = KrailTheme.colors.surface)
+            .systemBarsPadding()
+    ) {
 
         if (isLargeFontScale()) {
             LazyColumn(
@@ -197,7 +201,8 @@ fun DiscoverScreenTablet(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(KrailTheme.colors.surface),
+            .background(KrailTheme.colors.surface)
+            .systemBarsPadding(),
     ) {
         Column {
             if (isLargeFontScale()) {

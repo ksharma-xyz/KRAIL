@@ -117,14 +117,15 @@ class RealAppVersionManager(
             is AppVersionUpdateState.UpToDate -> return null
 
             is AppVersionUpdateState.UpdateRequired -> AppVersionManager.AppVersionUpdateCopy(
-                title = "New Update Available",
-                description = "Please update the app to the latest version for the best experience.",
-                ctaText = "Update Now",
+                title = "KRAIL just got better! \uD83D\uDE80",
+                description = "Smoother, faster and ready for your next journey.",
+                ctaText = "Get the Update",
             )
 
             is AppVersionUpdateState.ForcedUpdateRequired -> AppVersionManager.AppVersionUpdateCopy(
                 title = "\uD83D\uDEA7 Time to Update \uD83D\uDEA7",
-                description = "We’ve made improvements, please update to keep going\u00A0places!",
+                description = "Important fixes and updates ahead — required to keep KRAIL running at its best.",
+                //"This important update keeps KRAIL running smoothly and hope you enjoy latest\u00A0improvements!",
                 ctaText = "Update Now",
             )
         }

@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +22,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -197,13 +203,25 @@ private fun LazyListScope.infoTiles(
         items = infoTiles,
         key = { item -> item.key },
     ) { tileData ->
-        InfoTile(
-            infoTileData = tileData,
-            onCtaClick = onCtaClick,
-            onDismissClick = onDismissClick,
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        )
+        var visible by remember { mutableStateOf(true) }
+        AnimatedVisibility(
+            visible = visible,
+            exit = slideOutHorizontally(
+                targetOffsetX = { it }, // slide fully to the right
+                animationSpec = tween(300)
+            ),
+        ) {
+            InfoTile(
+                infoTileData = tileData,
+                onCtaClick = onCtaClick,
+                onDismissClick = {
+                    visible = false
+                    onDismissClick
+                },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+        }
     }
 }
 

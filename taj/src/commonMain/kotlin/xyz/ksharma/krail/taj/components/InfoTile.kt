@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -11,8 +12,13 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.semantics
@@ -25,6 +31,7 @@ import xyz.ksharma.krail.taj.components.InfoTileDefaults.shadowRadius
 import xyz.ksharma.krail.taj.components.InfoTileDefaults.shadowSpread
 import xyz.ksharma.krail.taj.components.InfoTileDefaults.shape
 import xyz.ksharma.krail.taj.components.InfoTileDefaults.verticalPadding
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -64,6 +71,11 @@ data class InfoTileCta(
     val url: String,
 )
 
+enum class InfoTileState {
+    COLLAPSED,
+    EXPANDED
+}
+
 object InfoTileDefaults {
     val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)
     val horizontalPadding = 16.dp
@@ -80,18 +92,17 @@ object InfoTileDefaults {
 @Composable
 fun InfoTile(
     infoTileData: InfoTileData,
+    infoTileState: InfoTileState = InfoTileState.COLLAPSED,
     modifier: Modifier = Modifier,
     onCtaClicked: (url: String) -> Unit,
     onDismissClick: (() -> Unit) = {},
 ) {
+    var state by rememberSaveable { mutableStateOf(infoTileState) }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .border(
-                width = borderWidth,
-                color = themeBackgroundColor(),
-                shape = shape,
-            )
+            // Shadow must be applied before clickable modifier
             .dropShadow(
                 shape = shape,
                 shadow = Shadow(
@@ -101,8 +112,25 @@ fun InfoTile(
                     alpha = SHADOW_ALPHA,
                 )
             )
+            // clip shape added before clickable so that ripple indication is bounded within shape
+            .clip(shape)
+            .klickable(
+                onClick = {
+                    state = when (state) {
+                        InfoTileState.COLLAPSED -> InfoTileState.EXPANDED
+                        InfoTileState.EXPANDED -> InfoTileState.COLLAPSED
+                    }
+                },
+            )
+            .border(
+                width = borderWidth,
+                color = themeBackgroundColor(),
+                shape = shape,
+            )
+            // Apply background after shadow modifier, so that shadow color is not visible.
             .background(color = KrailTheme.colors.surface, shape = shape)
             .padding(vertical = verticalPadding, horizontal = horizontalPadding)
+            .animateContentSize()
             .semantics(mergeDescendants = true) {},
     ) {
         Text(
@@ -110,31 +138,33 @@ fun InfoTile(
             style = KrailTheme.typography.title,
         )
 
-        Text(
-            text = infoTileData.description,
-            style = KrailTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp),
-        )
+        if (state == InfoTileState.EXPANDED) {
+            Text(
+                text = infoTileData.description,
+                style = KrailTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp),
+            )
 
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        ) {
-            TextButton(
-                onClick = onDismissClick,
-                dimensions = ButtonDefaults.mediumButtonSize(),
-                modifier = Modifier.padding(end = 12.dp),
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             ) {
-                Text(text = infoTileData.dismissCtaText)
-            }
-
-            infoTileData.primaryCta?.let { cta ->
-                Button(
+                TextButton(
+                    onClick = onDismissClick,
                     dimensions = ButtonDefaults.mediumButtonSize(),
-                    onClick = { onCtaClicked(cta.url) },
+                    modifier = Modifier.padding(end = 12.dp),
                 ) {
-                    Text(text = cta.text)
+                    Text(text = infoTileData.dismissCtaText)
+                }
+
+                infoTileData.primaryCta?.let { cta ->
+                    Button(
+                        dimensions = ButtonDefaults.mediumButtonSize(),
+                        onClick = { onCtaClicked(cta.url) },
+                    ) {
+                        Text(text = cta.text)
+                    }
                 }
             }
         }

@@ -267,7 +267,7 @@ object ButtonDefaults {
         customContentColor: Color? = null
     ): ButtonColors {
         val hexThemeColor: String by LocalThemeColor.current
-        val hexContainerColor: String by rememberSaveable(hexThemeColor) {
+        val hexContainerColor: String by remember(hexThemeColor) {
             mutableStateOf(hexThemeColor)
         }
         val defaultContainerColor: Color by remember(hexContainerColor) {

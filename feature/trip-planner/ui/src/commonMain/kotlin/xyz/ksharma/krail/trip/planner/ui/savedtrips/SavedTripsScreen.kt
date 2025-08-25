@@ -131,8 +131,11 @@ fun SavedTripsScreen(
                         savedTripsState.infoTiles?.let { infoTiles ->
                             infoTiles(
                                 infoTiles = infoTiles,
-                                onCtaClicked = { tileData ->
+                                onCtaClick = { tileData ->
                                     onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                },
+                                onDismissClick = { tileData ->
+                                    onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
                                 },
                             )
                         }
@@ -153,13 +156,16 @@ fun SavedTripsScreen(
                         savedTripsState.infoTiles?.let { infoTiles ->
                             infoTiles(
                                 infoTiles = infoTiles,
-                                onCtaClicked = { tileData ->
+                                onCtaClick = { tileData ->
                                     onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                },
+                                onDismissClick = { tileData ->
+                                    onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
                                 },
                             )
                         }
 
-                        SavedTripsContent(
+                        savedTripsContent(
                             savedTripsState = savedTripsState,
                             onEvent = onEvent,
                             onSavedTripCardClick = onSavedTripCardClick,
@@ -184,7 +190,8 @@ fun SavedTripsScreen(
 
 private fun LazyListScope.infoTiles(
     infoTiles: ImmutableList<InfoTileData>,
-    onCtaClicked: (InfoTileData) -> Unit,
+    onCtaClick: (InfoTileData) -> Unit,
+    onDismissClick: (InfoTileData) -> Unit,
 ) {
     items(
         items = infoTiles,
@@ -192,15 +199,15 @@ private fun LazyListScope.infoTiles(
     ) { tileData ->
         InfoTile(
             infoTileData = tileData,
-            onCtaClicked = onCtaClicked,
-            onDismissClick = {},
+            onCtaClick = onCtaClick,
+            onDismissClick = onDismissClick,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         )
     }
 }
 
-private fun LazyListScope.SavedTripsContent(
+private fun LazyListScope.savedTripsContent(
     savedTripsState: SavedTripsState,
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },

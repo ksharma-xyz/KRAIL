@@ -30,8 +30,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
-import xyz.ksharma.krail.taj.modifier.themeBorder
+import xyz.ksharma.krail.taj.modifier.cardBorder
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -47,7 +48,7 @@ fun SavedTripCard(
 ) {
     Row(
         modifier = modifier
-            .themeBorder()
+            .cardBackground()
             .klickable(onClick = onCardClick)
             .padding(vertical = 16.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

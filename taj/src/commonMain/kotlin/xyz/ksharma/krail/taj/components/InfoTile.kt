@@ -135,7 +135,7 @@ fun InfoTile(
     ) {
         Text(
             text = infoTileData.title,
-            style = KrailTheme.typography.title,
+            style = KrailTheme.typography.titleMedium,
         )
 
         if (state == InfoTileState.EXPANDED) {

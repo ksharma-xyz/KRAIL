@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableSet
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
-import xyz.ksharma.krail.taj.modifier.themeBorder
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -37,7 +37,7 @@ fun ParkRideCard(
 ) {
     Row(
         modifier = modifier.fillMaxWidth()
-            .themeBorder()
+            .cardBackground()
             .klickable {
                 onClick()
             }

@@ -3,5 +3,6 @@
     <style name="Theme.Krail" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/background_color</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="isLightTheme">false</item>
     </style>
 </resources>

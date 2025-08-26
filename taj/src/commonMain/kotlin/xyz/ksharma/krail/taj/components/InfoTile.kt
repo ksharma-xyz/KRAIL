@@ -99,8 +99,8 @@ fun InfoTile(
     infoTileData: InfoTileData,
     infoTileState: InfoTileState = InfoTileState.COLLAPSED,
     modifier: Modifier = Modifier,
-    onCtaClicked: (InfoTileData) -> Unit,
-    onDismissClick: (() -> Unit) = {},
+    onCtaClick: (InfoTileData) -> Unit,
+    onDismissClick: (InfoTileData) -> Unit,
 ) {
     var state by rememberSaveable { mutableStateOf(infoTileState) }
 
@@ -156,7 +156,7 @@ fun InfoTile(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             ) {
                 TextButton(
-                    onClick = onDismissClick,
+                    onClick = { onDismissClick(infoTileData) },
                     dimensions = ButtonDefaults.mediumButtonSize(),
                     modifier = Modifier.padding(end = 12.dp),
                 ) {
@@ -166,7 +166,7 @@ fun InfoTile(
                 infoTileData.primaryCta?.let { cta ->
                     Button(
                         dimensions = ButtonDefaults.mediumButtonSize(),
-                        onClick = { onCtaClicked(infoTileData) },
+                        onClick = { onCtaClick(infoTileData) },
                     ) {
                         Text(text = cta.text)
                     }
@@ -197,7 +197,7 @@ private fun InfoTileLightPreview() {
                 key = "unique_tile_01",
                 type = InfoTileData.InfoTileType.INFO,
             ),
-            onCtaClicked = {},
+            onCtaClick = {},
             onDismissClick = {},
             modifier = Modifier.systemBarsPadding(),
         )
@@ -215,7 +215,7 @@ private fun InfoTileDarkPreview() {
                 description = "All lines are now operating on their regular schedules.",
                 type = InfoTileData.InfoTileType.INFO,
             ),
-            onCtaClicked = {},
+            onCtaClick = {},
             onDismissClick = {},
         )
     }

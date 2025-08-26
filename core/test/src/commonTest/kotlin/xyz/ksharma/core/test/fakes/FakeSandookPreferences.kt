@@ -1,6 +1,7 @@
 package xyz.ksharma.core.test.fakes
 
 import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISCOVER_CLICKED_BEFORE
 
 class FakeSandookPreferences : SandookPreferences {
 
@@ -40,5 +41,13 @@ class FakeSandookPreferences : SandookPreferences {
 
     override fun deletePreference(key: String) {
         preferences.remove(key)
+    }
+
+    fun setDiscoverClicked(clicked: Boolean) {
+        setBoolean(KEY_DISCOVER_CLICKED_BEFORE, clicked)
+    }
+
+    fun hasDiscoverBeenClicked(): Boolean {
+        return getBoolean(KEY_DISCOVER_CLICKED_BEFORE) ?: false
     }
 }

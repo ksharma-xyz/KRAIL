@@ -124,6 +124,10 @@ object RemoteConfigDefaults {
             Pair(
                 first = FlagKeys.LATEST_APP_VERSION_ANDROID.key,
                 second = "",
+            ),
+            Pair(
+                first = FlagKeys.INFO_TILES.key,
+                second = "[]",
             )
         )
     }

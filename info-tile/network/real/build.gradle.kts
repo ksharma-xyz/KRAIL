@@ -30,10 +30,12 @@ kotlin {
             dependencies {
                 implementation(compose.runtime)
 
+                implementation(projects.core.appVersion)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.infoTile.network.api)
+                implementation(projects.platform.ops)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)

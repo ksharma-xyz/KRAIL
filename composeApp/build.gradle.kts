@@ -128,6 +128,7 @@ kotlin {
             implementation(projects.feature.tripPlanner.state)
             implementation(projects.feature.tripPlanner.ui)
             implementation(projects.io.gtfs)
+            implementation(projects.infoTile.network.real)
             implementation(projects.platform.ops)
             implementation(projects.sandook)
             implementation(projects.taj)

@@ -30,6 +30,7 @@ kotlin {
                 implementation(projects.core.analytics)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.festival)
+                implementation(projects.infoTile.state)
                 implementation(projects.social.network.api)
                 implementation(projects.social.state)
                 implementation(projects.taj)

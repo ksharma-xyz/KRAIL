@@ -552,18 +552,18 @@ class SavedTripsViewModel(
     private suspend fun updateInfoTilesUiState() {
         log("Updating info tiles in UI state")
         val activeTiles = infoTileManager.getInfoTiles()
+        log("Active info tiles: ${activeTiles.map { it.key }}")
         updateUiState {
             copy(infoTiles = activeTiles.toImmutableList())
         }
     }
 
     private fun onDismissInfoTile(infoTileData: InfoTileData) {
-        log("Dismissing info tile: ${infoTileData.key}")
-        infoTileManager.markInfoTileDismissed(infoTileData)
-        updateUiState {
-            copy(
-                infoTiles = infoTiles?.filter { it.key != infoTileData.key }?.toImmutableList()
-            )
+        log("onDismissInfoTile: ${infoTileData.key}")
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            log("Dismissing info tile: ${infoTileData.key}")
+            infoTileManager.markInfoTileDismissed(infoTileData)
+            updateInfoTilesUiState()
         }
     }
 

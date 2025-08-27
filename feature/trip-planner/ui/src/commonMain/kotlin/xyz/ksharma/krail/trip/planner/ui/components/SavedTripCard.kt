@@ -50,7 +50,7 @@ fun SavedTripCard(
         modifier = modifier
             .cardBackground()
             .klickable(onClick = onCardClick)
-            .padding(vertical = 16.dp, horizontal = 12.dp),
+            .padding(vertical = 16.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         primaryTransportMode?.let {

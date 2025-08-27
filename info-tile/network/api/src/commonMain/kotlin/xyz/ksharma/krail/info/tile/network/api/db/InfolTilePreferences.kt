@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.info.tile.network.api.db
 
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISMISSED_INFO_TILES
 
@@ -17,6 +18,7 @@ fun SandookPreferences.isInfoTileDismissed(key: String): Boolean {
         ?.split(",")
         ?.filter { it.isNotBlank() }
         ?.toSet() ?: emptySet()
+    log("Checking if info tile key '$key' is dismissed. Dismissed keys: ${dismissed.joinToString(",")}")
     return key in dismissed
 }
 
@@ -35,4 +37,11 @@ fun SandookPreferences.markInfoTileAsDismissed(key: String) {
         ?.toMutableSet() ?: mutableSetOf()
     dismissed.add(key)
     setString(KEY_DISMISSED_INFO_TILES, dismissed.joinToString(","))
+    log(
+        "Marked info tile key '$key' as dismissed. Updated dismissed keys: ${
+            dismissed.joinToString(
+                ","
+            )
+        }"
+    )
 }

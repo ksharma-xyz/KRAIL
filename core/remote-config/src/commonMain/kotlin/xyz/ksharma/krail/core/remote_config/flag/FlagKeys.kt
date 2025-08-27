@@ -25,4 +25,6 @@ enum class FlagKeys(val key: String) {
     LATEST_APP_VERSION_ANDROID("latest_app_version_android"),
 
     LATEST_APP_VERSION_IOS("latest_app_version_ios"),
+
+    INFO_TILES("info_tiles_json"),
 }

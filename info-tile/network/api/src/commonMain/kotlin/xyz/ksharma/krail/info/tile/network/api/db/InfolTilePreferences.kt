@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.savedtrips
+package xyz.ksharma.krail.info.tile.network.api.db
 
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISMISSED_INFO_TILES

@@ -10,6 +10,7 @@ val infoTileModule = module {
             appVersionManager = get(),
             appInfoProvider = get(),
             platformOps = get(),
+            preferences = get(),
         )
     }
 }

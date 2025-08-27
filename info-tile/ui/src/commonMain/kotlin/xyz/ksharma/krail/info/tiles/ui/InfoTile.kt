@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.taj.components
+package xyz.ksharma.krail.info.tiles.ui
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,62 +23,25 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.SHADOW_ALPHA
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.borderWidth
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.horizontalPadding
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.shadowRadius
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.shadowSpread
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.shape
-import xyz.ksharma.krail.taj.components.InfoTileDefaults.verticalPadding
+import xyz.ksharma.krail.info.tile.state.InfoTileCta
+import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.info.tile.state.InfoTileState
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.borderWidth
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.horizontalPadding
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.verticalPadding
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
-
-@Stable
-data class InfoTileData(
-    /**
-     * Unique key to identify the info tile, will be used to track when user dismisses the tile.
-     */
-    val key: String,
-
-    val title: String,
-
-    val description: String,
-
-    /**
-     * Type of Tile which determines its priority in the list of Tiles.
-     */
-    val type: InfoTileType,
-
-    val dismissCtaText: String = "Dismiss",
-
-    /**
-     * ISO-8601 formatted date string representing the end date of the info tile.
-     * E.g., "2023-12-31" for December 31, 2023.
-     */
-    val endDate: String? = null,
-
-    val primaryCta: InfoTileCta? = null,
-) {
-    enum class InfoTileType(val priority: Int) {
-        INFO(priority = 1),
-        APP_UPDATE(priority = 2), //  higher priority than info, but lower than alert
-        CRITICAL_ALERT(9999), // highest priority, should be shown at top of list
-    }
-}
-
-@Stable
-data class InfoTileCta(
-    val text: String,
-    val url: String,
-)
-
-enum class InfoTileState {
-    COLLAPSED,
-    EXPANDED
-}
 
 object InfoTileDefaults {
     val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)

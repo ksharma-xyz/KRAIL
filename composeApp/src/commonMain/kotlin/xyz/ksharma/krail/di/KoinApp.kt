@@ -16,6 +16,7 @@ import xyz.ksharma.krail.core.festival.di.festivalModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
 import xyz.ksharma.krail.core.remote_config.di.remoteConfigModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
+import xyz.ksharma.krail.info.tile.network.real.di.infoTileModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule
 import xyz.ksharma.krail.park.ride.network.di.parkRideNetworkModule
 import xyz.ksharma.krail.platform.ops.di.opsModule
@@ -44,6 +45,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             parkRideNetworkModule,
             festivalModule,
             discoverModule,
+            infoTileModule,
         )
     }
 }

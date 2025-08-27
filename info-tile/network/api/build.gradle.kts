@@ -28,6 +28,8 @@ kotlin {
         commonMain  {
             dependencies {
                 implementation(projects.core.log)
+                implementation(projects.infoTile.state)
+                implementation(projects.sandook)
                 implementation(projects.social.network.api)
 
                 implementation(compose.runtime)

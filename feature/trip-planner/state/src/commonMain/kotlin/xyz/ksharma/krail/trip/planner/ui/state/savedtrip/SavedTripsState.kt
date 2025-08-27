@@ -5,7 +5,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-import xyz.ksharma.krail.taj.components.InfoTileData
+import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 @Stable

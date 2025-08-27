@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -28,8 +27,6 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
-import xyz.ksharma.krail.core.appinfo.AppInfoProvider
-import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.flag.Flag
@@ -37,6 +34,8 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
 import xyz.ksharma.krail.core.remote_config.flag.asBoolean
 import xyz.ksharma.krail.core.remote_config.flag.asNumber
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.info.tile.network.api.InfoTileManager
+import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
@@ -48,8 +47,6 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.SavedTrip
-import xyz.ksharma.krail.taj.components.InfoTileCta
-import xyz.ksharma.krail.taj.components.InfoTileData
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -72,8 +69,7 @@ class SavedTripsViewModel(
     private val stopResultsManager: StopResultsManager,
     private val flag: Flag,
     private val preferences: SandookPreferences,
-    private val appVersionManager: AppVersionManager,
-    private val appInfoProvider: AppInfoProvider,
+    private val infoTileManager: InfoTileManager,
     private val platformOps: PlatformOps,
 ) : ViewModel() {
 
@@ -109,7 +105,7 @@ class SavedTripsViewModel(
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
             updateDiscoverState()
-            checkAppVersion()
+            updateInfoTilesUiState()
         }
         .onCompletion {
             cleanupJobs()
@@ -551,60 +547,24 @@ class SavedTripsViewModel(
         }
     }
 
-    // region AppVersion Tile
-    private suspend fun checkAppVersion() {
-        log("onStart - checkAppVersion called")
-        val appUpdateCopy = appVersionManager.getUpdateCopy()
-        if (appUpdateCopy == null) {
-            log("App update copy is null, no update available.")
-            return
-        }
+    // region - Info Tiles
 
-        val updateTile = createAppUpdateTile(appUpdateCopy)
+    private suspend fun updateInfoTilesUiState() {
+        log("Updating info tiles in UI state")
+        val activeTiles = infoTileManager.getInfoTiles()
         updateUiState {
-            if (isKeyNotInDismissedTiles(updateTile.key)) {
-                copy(infoTiles = addInfoTile(infoTiles, updateTile))
-            } else {
-                this
-            }
+            copy(infoTiles = activeTiles.toImmutableList())
         }
     }
 
-    private fun createAppUpdateTile(appUpdateCopy: AppVersionManager.AppVersionUpdateCopy): InfoTileData =
-        InfoTileData(
-            key = appVersionManager.getCurrentVersion(),
-            title = appUpdateCopy.title,
-            description = appUpdateCopy.description,
-            type = InfoTileData.InfoTileType.APP_UPDATE,
-            primaryCta = InfoTileCta(
-                text = appUpdateCopy.ctaText,
-                url = appInfoProvider.getAppInfo().appStoreUrl,
-            )
-        )
-
-    private fun addInfoTile(
-        currentTiles: List<InfoTileData>?,
-        newTile: InfoTileData
-    ): ImmutableList<InfoTileData> = (currentTiles ?: persistentListOf())
-        .plus(newTile)
-        .toSet()
-        .sortedBy { it.type.priority }
-        .take(2)
-        .toImmutableList()
-
     private fun onDismissInfoTile(infoTileData: InfoTileData) {
         log("Dismissing info tile: ${infoTileData.key}")
-        preferences.markInfoTileAsDismissed(infoTileData.key)
+        infoTileManager.markInfoTileDismissed(infoTileData)
         updateUiState {
             copy(
                 infoTiles = infoTiles?.filter { it.key != infoTileData.key }?.toImmutableList()
             )
         }
-    }
-
-    private fun isKeyNotInDismissedTiles(key: String): Boolean {
-        log("Checking if info tile key '$key' is not in dismissed tiles.")
-        return !preferences.isInfoTileDismissed(key)
     }
 
     // endregion

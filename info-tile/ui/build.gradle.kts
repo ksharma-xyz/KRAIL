@@ -36,6 +36,7 @@ kotlin {
                 implementation(libs.material.adaptive)
 
                 implementation(projects.core.log)
+                implementation(projects.infoTile.state)
                 implementation(projects.taj)
             }
         }

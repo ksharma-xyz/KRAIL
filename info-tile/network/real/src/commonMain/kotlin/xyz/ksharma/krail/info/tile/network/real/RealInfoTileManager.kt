@@ -28,36 +28,24 @@ class RealInfoTileManager(
     private val flag: Flag,
 ) : InfoTileManager {
 
-    private val list = flag.getFlagValue(FlagKeys.INFO_TILES.key).toInfoTileList()
+    private val configInfoTilesList = flag.getFlagValue(FlagKeys.INFO_TILES.key).toInfoTileList()
 
     override suspend fun getInfoTiles(): List<InfoTileData> {
-        // todo -
-        // add info tiles from different sources.
-        // Source -1 : Flag, json key.
-        // Source 2: check app version and add if required.
 
-        // process list
-        // sort by priority .sortedBy { it.type.priority }
-        // - have max of MAX_INFO_TILE_COUNT items only
-        // toSet - ensure unique elements only.
+        val appUpdateTile = getAppUpdateTileOrNull()
 
-        // then return list.
-        return emptyList()
+        val allTiles = (configInfoTilesList + listOfNotNull(appUpdateTile))
+            .filterDismissedTiles()
+            .distinctBy { it.key }
+            .sortedBy { it.type.priority }
+            .take(MAX_INFO_TILE_COUNT)
+
+        return allTiles
     }
 
-    private suspend fun checkAppVersion() {
-        log("onStart - checkAppVersion called")
-        val appUpdateCopy = appVersionManager.getUpdateCopy()
-        if (appUpdateCopy == null) {
-            log("App update copy is null, no update available.")
-            return
-        }
-
-        val updateTile = createAppUpdateTile(appUpdateCopy)
-    }
-
-    private fun createAppUpdateTile(appUpdateCopy: AppVersionManager.AppVersionUpdateCopy): InfoTileData =
-        InfoTileData(
+    private suspend fun getAppUpdateTileOrNull(): InfoTileData? {
+        val appUpdateCopy = appVersionManager.getUpdateCopy() ?: return null
+        return InfoTileData(
             key = appVersionManager.getCurrentVersion(),
             title = appUpdateCopy.title,
             description = appUpdateCopy.description,
@@ -67,16 +55,10 @@ class RealInfoTileManager(
                 url = appInfoProvider.getAppInfo().appStoreUrl,
             )
         )
+    }
 
-    private fun addInfoTile(
-        currentTiles: List<InfoTileData>?,
-        newTile: InfoTileData
-    ): ImmutableList<InfoTileData> = (currentTiles ?: persistentListOf())
-        .plus(newTile)
-        .toSet()
-        .sortedBy { it.type.priority }
-        .take(MAX_INFO_TILE_COUNT)
-        .toImmutableList()
+    private fun List<InfoTileData>.filterDismissedTiles(): List<InfoTileData> =
+        filter { isKeyNotInDismissedTiles(it.key) }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {
         log("Checking if info tile key '$key' is not in dismissed tiles.")

@@ -10,7 +10,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeAppInfoProvider
 import xyz.ksharma.core.test.fakes.FakeAppVersionManager
 import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeInfoTileManager
@@ -110,7 +109,7 @@ class SavedTripsViewModelTest {
                     )
 
                     cancelAndConsumeRemainingEvents()
-                    viewModel.cleanupJobs()
+
                 }
             }
     */
@@ -150,7 +149,7 @@ class SavedTripsViewModelTest {
                 assertTrue(item.savedTrips.isNotEmpty())
 
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
@@ -186,7 +185,7 @@ class SavedTripsViewModelTest {
                 assertFalse(item.isSavedTripsLoading)
                 assertTrue(item.savedTrips.isEmpty())
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
@@ -332,7 +331,7 @@ class SavedTripsViewModelTest {
                 assertTrue(item.infoTiles?.isEmpty() == true)
                 assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
@@ -355,7 +354,7 @@ class SavedTripsViewModelTest {
                 val item = awaitItem()
                 assertTrue(item.infoTiles?.contains(infoTile) == true)
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
@@ -390,64 +389,62 @@ class SavedTripsViewModelTest {
                 // No need to await another item, just check preference
                 assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
-    /*
-        @Test
-        fun `GIVEN multiple info tiles WHEN one is dismissed THEN only that tile is removed and marked dismissed`() =
-            runTest {
-                // Setup two info tiles with different keys and types
-                val updateTile = InfoTileData(
-                    key = "update_key",
-                    title = "Update Available",
-                    description = "Update your app",
-                    type = InfoTileData.InfoTileType.APP_UPDATE,
-                    primaryCta = InfoTileCta(
-                        text = "Update",
-                        url = "https://store.com/app"
-                    )
+    @Test
+    fun `GIVEN multiple info tiles WHEN one is dismissed THEN only that tile is removed and marked dismissed`() =
+        runTest {
+            val updateTile = InfoTileData(
+                key = "update_key",
+                title = "Update Available",
+                description = "Update your app",
+                type = InfoTileData.InfoTileType.APP_UPDATE,
+                primaryCta = InfoTileCta(
+                    text = "Update",
+                    url = "https://store.com/app"
                 )
-                val criticalAlertTile = InfoTileData(
-                    key = "alert_key",
-                    title = "Critical Alert",
-                    description = "Warning, disruptions expected",
-                    type = InfoTileData.InfoTileType.CRITICAL_ALERT,
-                    primaryCta = InfoTileCta(
-                        text = "Read more",
-                        url = "https://example.com/read"
-                    )
+            )
+            val criticalAlertTile = InfoTileData(
+                key = "alert_key",
+                title = "Critical Alert",
+                description = "Warning, disruptions expected",
+                type = InfoTileData.InfoTileType.CRITICAL_ALERT,
+                primaryCta = InfoTileCta(
+                    text = "Read more",
+                    url = "https://example.com/read"
                 )
-                // Simulate both tiles present
-                fakeAppVersionManager.mockCurrentVersion = updateTile.key
-                fakeAppVersionManager.setUpdateCopy(
-                    title = updateTile.title,
-                    description = updateTile.description,
-                    ctaText = updateTile.primaryCta?.text ?: "",
-                    key = updateTile.key
-                )
-                // Manually add promo tile to state (simulate as needed for your ViewModel)
-                viewModel.uiState.test {
-                    skipItems(1) // initial state
-                    // Add promo tile
-                    viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(criticalAlertTile.copy(key = "not_dismissed"))) // Ensure promo tile is not dismissed
-                    viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(updateTile.copy(key = "not_dismissed"))) // Ensure update tile is not dismissed
-                    updateTile.copy(key = "update_key")
-                    criticalAlertTile.copy(key = "alert_key")
-                    viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(criticalAlertTile))
-                    val item = awaitItem()
-                    // Only updateTile should remain
-                    assertEquals(listOf(updateTile).size, item.infoTiles?.size)
-                    assertTrue(fakeSandookPreferences.isInfoTileDismissed(criticalAlertTile.key))
-                    assertFalse(fakeSandookPreferences.isInfoTileDismissed(updateTile.key))
-                    cancelAndIgnoreRemainingEvents()
-                    viewModel.cleanupJobs()
-                }
-            }
+            )
+            fakeAppVersionManager.mockCurrentVersion = updateTile.key
+            fakeAppVersionManager.setUpdateCopy(
+                title = updateTile.title,
+                description = updateTile.description,
+                ctaText = updateTile.primaryCta?.text ?: "",
+                key = updateTile.key
+            )
+            fakeInfoTileManager.setTiles(listOf(updateTile, criticalAlertTile))
 
-        @Test
-        fun `GIVEN no info tile WHEN DismissInfoTile event is triggered THEN state remains unchanged`() = runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                awaitItem().run {
+                    println("Received initial item with infoTiles: ${this.infoTiles}")
+                    assertEquals(2, this.infoTiles?.size)
+                }
+                viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(criticalAlertTile))
+                awaitItem().run {
+                    println("Received item after dismissal with infoTiles: ${this.infoTiles}")
+                    assertEquals(1, this.infoTiles?.size)
+                    assertTrue(this.infoTiles?.contains(updateTile) == true)
+                }
+                cancelAndIgnoreRemainingEvents()
+
+            }
+        }
+
+    @Test
+    fun `GIVEN no info tile WHEN DismissInfoTile event is triggered THEN state remains unchanged`() =
+        runTest {
             val infoTile = InfoTileData(
                 key = "non_existent",
                 title = "Not present",
@@ -456,16 +453,15 @@ class SavedTripsViewModelTest {
                 primaryCta = null
             )
             viewModel.uiState.test {
-                val item = awaitItem()
-                assertNull(item.infoTiles)
+                val initial = awaitItem()
+                assertNull(initial.infoTiles)
                 viewModel.onEvent(SavedTripUiEvent.DismissInfoTile(infoTile))
-                // No new state emitted, nothing marked as dismissed
-                assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
+                // Await next state, or verify no new state is emitted
+                expectNoEvents() // No new state should be emitted
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
-    */
 
     // endregion Info Tile Tests
 
@@ -487,7 +483,7 @@ class SavedTripsViewModelTest {
                 val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
                 assertTrue(fakeAnalytics.isEventTracked(AnalyticsEvent.DiscoverButtonClick.name))
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
@@ -517,7 +513,7 @@ class SavedTripsViewModelTest {
                 val item = awaitItem()
                 assertTrue(item.observeParkRideStopIdSet.contains("STOP_1"))
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 
@@ -550,7 +546,7 @@ class SavedTripsViewModelTest {
                 val item = awaitItem()
                 assertFalse(item.observeParkRideStopIdSet.contains("STOP_1"))
                 cancelAndIgnoreRemainingEvents()
-                viewModel.cleanupJobs()
+
             }
         }
 

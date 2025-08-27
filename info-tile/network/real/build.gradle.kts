@@ -36,7 +36,6 @@ kotlin {
                 implementation(projects.core.remoteConfig)
                 implementation(projects.infoTile.network.api)
                 implementation(projects.infoTile.state)
-                implementation(projects.platform.ops)
                 implementation(projects.sandook)
 
                 implementation(libs.kotlinx.serialization.json)

@@ -9,8 +9,8 @@ val infoTileModule = module {
         RealInfoTileManager(
             appVersionManager = get(),
             appInfoProvider = get(),
-            platformOps = get(),
             preferences = get(),
+            flag = get(),
         )
     }
 }

@@ -1,11 +1,11 @@
 package xyz.ksharma.krail.info.tile.network.real
 
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appversion.AppVersionManager
+import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
@@ -15,24 +15,22 @@ import xyz.ksharma.krail.core.remote_config.flag.FlagValue
 import xyz.ksharma.krail.info.tile.network.api.InfoTileManager
 import xyz.ksharma.krail.info.tile.network.api.InfoTileManager.Companion.MAX_INFO_TILE_COUNT
 import xyz.ksharma.krail.info.tile.network.api.db.isInfoTileDismissed
+import xyz.ksharma.krail.info.tile.network.api.db.markInfoTileAsDismissed
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
-import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.SandookPreferences
 
 class RealInfoTileManager(
     private val appVersionManager: AppVersionManager,
     private val appInfoProvider: AppInfoProvider,
-    private val platformOps: PlatformOps,
     private val preferences: SandookPreferences,
     private val flag: Flag,
+    private val ioDispatcher: CoroutineDispatcher = DispatchersComponent().ioDispatcher,
 ) : InfoTileManager {
 
-    private val configInfoTilesList = flag.getFlagValue(FlagKeys.INFO_TILES.key).toInfoTileList()
-
-    override suspend fun getInfoTiles(): List<InfoTileData> {
-
+    override suspend fun getInfoTiles(): List<InfoTileData> = withContext(ioDispatcher) {
         val appUpdateTile = getAppUpdateTileOrNull()
+        val configInfoTilesList = flag.getFlagValue(FlagKeys.INFO_TILES.key).toInfoTileList()
 
         val allTiles = (configInfoTilesList + listOfNotNull(appUpdateTile))
             .filterDismissedTiles()
@@ -40,7 +38,16 @@ class RealInfoTileManager(
             .sortedBy { it.type.priority }
             .take(MAX_INFO_TILE_COUNT)
 
-        return allTiles
+        return@withContext allTiles
+    }
+
+    override fun isInfoTileActive(key: String): Boolean {
+        log("Checking if info tile key '$key' is active (not dismissed).")
+        return !preferences.isInfoTileDismissed(key)
+    }
+
+    override fun markInfoTileDismissed(infoTileData: InfoTileData) {
+        preferences.markInfoTileAsDismissed(infoTileData.key)
     }
 
     private suspend fun getAppUpdateTileOrNull(): InfoTileData? {

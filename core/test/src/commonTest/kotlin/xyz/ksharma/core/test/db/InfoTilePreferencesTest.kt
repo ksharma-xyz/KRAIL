@@ -4,8 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import xyz.ksharma.core.test.fakes.FakeSandookPreferences
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.isInfoTileDismissed
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.markInfoTileAsDismissed
+import xyz.ksharma.krail.info.tile.network.api.db.isInfoTileDismissed
+import xyz.ksharma.krail.info.tile.network.api.db.markInfoTileAsDismissed
 
 class InfoTilePreferencesTest {
 

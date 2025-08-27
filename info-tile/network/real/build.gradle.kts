@@ -30,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(compose.runtime)
 
+                implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)
                 implementation(projects.core.di)
                 implementation(projects.core.log)

@@ -31,9 +31,9 @@ data class InfoTileData(
     val primaryCta: InfoTileCta? = null,
 ) {
     enum class InfoTileType(val priority: Int) {
-        INFO(priority = 1),
-        APP_UPDATE(priority = 2), //  higher priority than info, but lower than alert
-        CRITICAL_ALERT(9999), // highest priority, should be shown at top of list
+        CRITICAL_ALERT(1), // highest priority, should be shown at top of list
+        INFO(priority = 100), // higher priority than app update
+        APP_UPDATE(priority = 200), // lower priority than info, should be shown at bottom of list
     }
 }
 

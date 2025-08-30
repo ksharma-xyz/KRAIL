@@ -219,7 +219,7 @@ private fun LazyListScope.infoTiles(
                     onDismissClick(tileData)
                 },
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
     }

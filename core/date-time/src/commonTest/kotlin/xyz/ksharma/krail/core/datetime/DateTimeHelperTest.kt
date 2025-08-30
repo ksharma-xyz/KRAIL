@@ -1,14 +1,21 @@
 package xyz.ksharma.krail.core.datetime
 
-import kotlin.time.Instant
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToAEST
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class DateTimeHelperTest {
 
@@ -92,4 +99,42 @@ class DateTimeHelperTest {
         )
         assertEquals(0L, difference3.inWholeMinutes)
     }
+
+
+    // region isDateInFuture tests
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun testIsDateInFuture_validFutureDate() {
+        val futureDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .plus(1, DateTimeUnit.DAY)
+            .toString()
+        assertEquals(true, futureDate.isDateInFuture())
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun testIsDateInFuture_todayDate() {
+        val todayDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toString()
+        assertEquals(false, todayDate.isDateInFuture())
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun testIsDateInFuture_pastDate() {
+        val pastDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .minus(1, DateTimeUnit.DAY)
+            .toString()
+        assertEquals(false, pastDate.isDateInFuture())
+    }
+
+    @Test
+    fun testIsDateInFuture_invalidFormat() {
+        assertEquals(false, "not-a-date".isDateInFuture())
+    }
+
+    // endregion
 }

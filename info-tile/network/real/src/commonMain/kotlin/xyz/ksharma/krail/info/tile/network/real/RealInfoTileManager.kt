@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appversion.AppVersionManager
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -33,6 +34,7 @@ class RealInfoTileManager(
         val configInfoTilesList = flag.getFlagValue(FlagKeys.INFO_TILES.key).toInfoTileList()
 
         val allTiles = (configInfoTilesList + listOfNotNull(appUpdateTile))
+            .filterExpiredTiles()
             .filterDismissedTiles()
             .distinctBy { it.key }
             .sortedBy { it.type.priority }
@@ -67,6 +69,9 @@ class RealInfoTileManager(
 
     private fun List<InfoTileData>.filterDismissedTiles(): List<InfoTileData> =
         filter { isKeyNotInDismissedTiles(it.key) }
+
+    private fun List<InfoTileData>.filterExpiredTiles(): List<InfoTileData> =
+        filter { it.endDate?.isDateInFuture() != false }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {
         log("Checking if info tile key '$key' is not in dismissed tiles. : ${preferences.isInfoTileDismissed(key)}")

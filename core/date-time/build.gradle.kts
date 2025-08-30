@@ -21,6 +21,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.datetime)
                 implementation(compose.runtime)
+                implementation(projects.core.log)
             }
         }
 

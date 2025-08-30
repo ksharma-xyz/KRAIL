@@ -1,16 +1,17 @@
 package xyz.ksharma.krail.core.datetime
 
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import xyz.ksharma.krail.core.log.logError
 import kotlin.math.absoluteValue
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 object DateTimeHelper {
 
@@ -24,7 +25,8 @@ object DateTimeHelper {
     @OptIn(ExperimentalTime::class)
     fun String.formatTo12HourTime(): String {
         val localDateTime = Instant.parse(this).toLocalDateTime(TimeZone.UTC)
-        val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
+        val hour =
+            if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
         val minute = localDateTime.minute.toString().padStart(2, '0')
         val amPm = if (localDateTime.hour < 12) "am" else "pm"
         return "$hour:$minute $amPm"
@@ -53,14 +55,14 @@ object DateTimeHelper {
         return "$hour:$minute $amPm"
     }
 
-   /* fun String.aestToHHMM(): String {
-        val dateTimeString = if (this.length == 16) "$this:00" else this
-        val localDateTime = Instant.parse(dateTimeString).toLocalDateTime(TimeZone.of("Australia/Sydney"))
-        val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
-        val minute = localDateTime.minute.toString().padStart(2, '0')
-        val amPm = if (localDateTime.hour < 12) "AM" else "PM"
-        return "$hour:$minute $amPm"
-    }*/
+    /* fun String.aestToHHMM(): String {
+         val dateTimeString = if (this.length == 16) "$this:00" else this
+         val localDateTime = Instant.parse(dateTimeString).toLocalDateTime(TimeZone.of("Australia/Sydney"))
+         val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
+         val minute = localDateTime.minute.toString().padStart(2, '0')
+         val amPm = if (localDateTime.hour < 12) "AM" else "PM"
+         return "$hour:$minute $amPm"
+     }*/
 
     @OptIn(ExperimentalTime::class)
     fun calculateTimeDifferenceFromNow(
@@ -135,5 +137,25 @@ object DateTimeHelper {
         val minute = localDateTime.minute.toString().padStart(2, '0')
         val amPm = if (localDateTime.hour < 12) "AM" else "PM"
         return "$hour:$minute $amPm"
+    }
+
+    /**
+     * Checks if the string represents a date in the future.
+     * The string should be in ISO-8601 format (e.g., "2023-12-31").
+     *
+     * @receiver String The date string to check.
+     * @return Boolean true if the date is in the future, false otherwise.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun String.isDateInFuture(): Boolean {
+        return try {
+            val localDate = LocalDate.parse(this)
+            val today = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            localDate > today
+        } catch (e: Exception) {
+            logError("Error parsing date string: $this", e)
+            false
+        }
     }
 }

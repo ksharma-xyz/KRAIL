@@ -32,6 +32,7 @@ kotlin {
 
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)
+                implementation(projects.core.dateTime)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)

@@ -216,7 +216,7 @@ private fun LazyListScope.infoTiles(
                 onCtaClick = onCtaClick,
                 onDismissClick = {
                     visible = false
-                    onDismissClick
+                    onDismissClick(tileData)
                 },
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 12.dp),

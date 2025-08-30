@@ -93,10 +93,8 @@ data class DiscoverCardButtonRowState(
 }
 
 fun List<Button>.toButtonRowState(): DiscoverCardButtonRowState? {
-    println("toButtonRowState - Input: ${this.map { it::class.simpleName }}")
 
     if (!isValidButtonCombo()) {
-        println("toButtonRowState - FAILED validation")
         return null
     }
 
@@ -108,16 +106,17 @@ fun List<Button>.toButtonRowState(): DiscoverCardButtonRowState? {
             is Button.Cta -> {
                 left = DiscoverCardButtonRowState.LeftButtonType.Cta(button)
             }
+
             is Button.Social -> {
                 left = DiscoverCardButtonRowState.LeftButtonType.Social(button)
             }
+
             is Button.Share -> {
                 right = DiscoverCardButtonRowState.RightButtonType.Share(button)
             }
         }
     }
 
-    println("toButtonRowState - Result: left=${left}, right=${right}")
     return DiscoverCardButtonRowState(left, right)
 }
 
@@ -125,7 +124,6 @@ fun List<Button>.isValidButtonCombo(): Boolean {
     val types = this.map { it::class }
 
     // This logs: [PartnerSocial, Share]
-    println("Button validation - Input buttons: ${this.map { it::class.simpleName }}")
 
     val leftTypes = listOf(
         Button.Cta::class,
@@ -151,6 +149,5 @@ fun List<Button>.isValidButtonCombo(): Boolean {
     }
 
     // The validation should pass and return true
-    println("Button validation - PASSED: Valid button combination")
     return true
 }

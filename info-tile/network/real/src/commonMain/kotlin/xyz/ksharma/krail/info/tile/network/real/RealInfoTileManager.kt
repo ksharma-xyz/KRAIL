@@ -47,6 +47,7 @@ class RealInfoTileManager(
     }
 
     override fun markInfoTileDismissed(infoTileData: InfoTileData) {
+        log("Marking info tile key '${infoTileData.key}' as dismissed.")
         preferences.markInfoTileAsDismissed(infoTileData.key)
     }
 
@@ -68,7 +69,7 @@ class RealInfoTileManager(
         filter { isKeyNotInDismissedTiles(it.key) }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {
-        log("Checking if info tile key '$key' is not in dismissed tiles.")
+        log("Checking if info tile key '$key' is not in dismissed tiles. : ${preferences.isInfoTileDismissed(key)}")
         return !preferences.isInfoTileDismissed(key)
     }
 

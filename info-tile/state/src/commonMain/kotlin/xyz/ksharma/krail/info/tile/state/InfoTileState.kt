@@ -1,8 +1,10 @@
 package xyz.ksharma.krail.info.tile.state
 
 import androidx.compose.runtime.Stable
+import kotlinx.serialization.Serializable
 
 @Stable
+@Serializable
 data class InfoTileData(
     /**
      * Unique key to identify the info tile, will be used to track when user dismisses the tile.
@@ -36,6 +38,7 @@ data class InfoTileData(
 }
 
 @Stable
+@Serializable
 data class InfoTileCta(
     val text: String,
     val url: String,

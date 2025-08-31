@@ -63,6 +63,8 @@ fun InfoTile(
     modifier: Modifier = Modifier,
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
+    // required for analytics only
+    onTileExpand: (InfoTileData) -> Unit = {},
 ) {
     var state by rememberSaveable { mutableStateOf(infoTileState) }
 
@@ -84,7 +86,11 @@ fun InfoTile(
             .klickable(
                 onClick = {
                     state = when (state) {
-                        InfoTileState.COLLAPSED -> InfoTileState.EXPANDED
+                        InfoTileState.COLLAPSED -> {
+                            onTileExpand(infoTileData)
+                            InfoTileState.EXPANDED
+                        }
+
                         InfoTileState.EXPANDED -> InfoTileState.COLLAPSED
                     }
                 },

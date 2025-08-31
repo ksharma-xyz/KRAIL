@@ -143,6 +143,9 @@ fun SavedTripsScreen(
                                 onDismissClick = { tileData ->
                                     onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
                                 },
+                                onTileExpand = {
+                                    onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
+                                },
                             )
                         }
 
@@ -167,6 +170,9 @@ fun SavedTripsScreen(
                                 },
                                 onDismissClick = { tileData ->
                                     onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
+                                },
+                                onTileExpand = {
+                                    onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
                                 },
                             )
                         }
@@ -198,6 +204,7 @@ private fun LazyListScope.infoTiles(
     infoTiles: ImmutableList<InfoTileData>,
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
+    onTileExpand: (InfoTileData) -> Unit,
 ) {
     items(
         items = infoTiles,
@@ -218,6 +225,7 @@ private fun LazyListScope.infoTiles(
                     visible = false
                     onDismissClick(tileData)
                 },
+                onTileExpand = onTileExpand,
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             )

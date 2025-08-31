@@ -29,6 +29,17 @@ class RealInfoTileManager(
     private val ioDispatcher: CoroutineDispatcher = DispatchersComponent().ioDispatcher,
 ) : InfoTileManager {
 
+    /**
+     * Cache the last fetched [FlagValue] and the parsed list of [InfoTileData].
+     */
+    private var cachedInfoTilesFlagValue: FlagValue? = null
+
+    /** This cache is only valid for the lifetime of this instance.
+     * If the [FlagValue] changes, the cache will be updated on the next call to [getInfoTiles].
+     */
+    private var cachedParsedTiles: List<InfoTileData>? = null
+
+    // TODO - add UT's for this method
     override suspend fun getInfoTiles(): List<InfoTileData> = withContext(ioDispatcher) {
         val appUpdateTile = getAppUpdateTileOrNull()
         val configInfoTilesList = flag.getFlagValue(FlagKeys.INFO_TILES.key).toInfoTileList()
@@ -74,7 +85,13 @@ class RealInfoTileManager(
         filter { it.endDate?.isDateInFuture() != false }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {
-        log("Checking if info tile key '$key' is not in dismissed tiles. : ${preferences.isInfoTileDismissed(key)}")
+        log(
+            "Checking if info tile key '$key' is not in dismissed tiles. : ${
+                preferences.isInfoTileDismissed(
+                    key
+                )
+            }"
+        )
         return !preferences.isInfoTileDismissed(key)
     }
 
@@ -91,6 +108,10 @@ class RealInfoTileManager(
      * @return List of InfoTileData
      */
     private fun FlagValue.toInfoTileList(): List<InfoTileData> {
+        cachedParsedTiles?.let { cachedTiles ->
+            if (cachedInfoTilesFlagValue == this) return cachedTiles
+        }
+
         val jsonStr = when (this) {
             is FlagValue.JsonValue -> this.value
             else -> RemoteConfigDefaults.getDefaults()

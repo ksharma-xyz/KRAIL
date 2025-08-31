@@ -160,14 +160,9 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.DismissInfoTile -> onDismissInfoTile(event.infoTile)
 
             is SavedTripUiEvent.InfoTileCtaClick -> onInfoTileCtaClick(event.infoTile)
-        }
-    }
 
-    private fun onInfoTileCtaClick(infoTile: InfoTileData) {
-        infoTile.primaryCta?.url?.let { url ->
-            platformOps.openUrl(url)
+            is SavedTripUiEvent.InfoTileExpand -> onInfoTileExpand(key = event.key)
         }
-        // TODO - track analytics.
     }
 
     private fun onParkRideCardClick(
@@ -564,6 +559,42 @@ class SavedTripsViewModel(
             log("Dismissing info tile: ${infoTileData.key}")
             infoTileManager.markInfoTileDismissed(infoTileData)
             updateInfoTilesUiState()
+            trackInfoTileInteraction(
+                key = infoTileData.key,
+                dismiss = true,
+            )
+        }
+    }
+
+    private fun onInfoTileCtaClick(infoTile: InfoTileData) {
+        infoTile.primaryCta?.url?.let { url ->
+            platformOps.openUrl(url)
+            trackInfoTileInteraction(
+                key = infoTile.key,
+                url = url,
+            )
+        }
+    }
+
+    private fun onInfoTileExpand(key: String) {
+        trackInfoTileInteraction(key = key, expand = true)
+    }
+
+    private fun trackInfoTileInteraction(
+        key: String,
+        url: String? = null,
+        dismiss: Boolean? = null,
+        expand: Boolean? = null,
+    ) {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            analytics.track(
+                event = AnalyticsEvent.InfoTileInteraction(
+                    key = key,
+                    ctaUrl = url,
+                    dismiss = dismiss,
+                    expand = expand,
+                )
+            )
         }
     }
 

@@ -127,7 +127,39 @@ object RemoteConfigDefaults {
             ),
             Pair(
                 first = FlagKeys.INFO_TILES.key,
-                second = "[]",
+                second = """
+                    [
+                      {
+                        "key": "update_2024",
+                        "title": "App Update Available",
+                        "description": "A new version of the app is available. Update now for new features.",
+                        "type": "APP_UPDATE",
+                        "dismissCtaText": "Dismiss",
+                        "primaryCta": {
+                          "text": "Update",
+                          "url": "https://example.com/app"
+                        }
+                      },
+                      {
+                        "key": "info_001",
+                        "title": "Welcome!",
+                        "description": "Thanks for installing our app.",
+                        "type": "INFO",
+                        "dismissCtaText": "Dismiss",
+                        "endDate": "2025-09-01",
+                        "primaryCta": {
+                          "text": "Learn More",
+                          "url": "https://example.com/welcome"
+                        }
+                      },
+                      {
+                        "key": "critical_01",
+                        "title": "Security Alert",
+                        "description": "Please update your app immediately.",
+                        "type": "CRITICAL_ALERT"
+                      }
+                    ]
+                """.trimIndent(),
             )
         )
     }

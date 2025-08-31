@@ -363,4 +363,24 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     )
 
     // endregion
+
+    // region InfoTiles
+
+    data class InfoTileInteraction(
+        val key: String,
+        val expand: Boolean? = null,
+        val dismiss: Boolean? = null,
+        val ctaUrl: String? = null,
+    ) : AnalyticsEvent(
+        name = "info_tile_interaction",
+        properties = mutableMapOf<String, Any>(
+            "key" to key,
+        ).apply {
+            dismiss?.let { put("dismiss", dismiss) }
+            ctaUrl?.let { put("cta_click", ctaUrl) }
+            expand?.let { put("expand", expand) }
+        }
+    )
+
+    // endregion
 }

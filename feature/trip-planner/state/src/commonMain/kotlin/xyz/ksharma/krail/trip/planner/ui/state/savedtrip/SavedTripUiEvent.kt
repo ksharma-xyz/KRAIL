@@ -30,4 +30,6 @@ sealed interface SavedTripUiEvent {
     data class DismissInfoTile(val infoTile: InfoTileData) : SavedTripUiEvent
 
     data class InfoTileCtaClick(val infoTile: InfoTileData) : SavedTripUiEvent
+
+    data class InfoTileExpand(val key: String): SavedTripUiEvent
 }

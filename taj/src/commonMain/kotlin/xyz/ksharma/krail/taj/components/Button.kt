@@ -4,8 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalContentColor
@@ -34,6 +38,8 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.modifier.scalingKlickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
@@ -334,3 +340,277 @@ data class ButtonDimensions(
     val padding: PaddingValues,
     val shape: RoundedCornerShape = RoundedCornerShape(50),
 )
+
+
+// region Previews Button
+
+@Composable
+@Preview(name = "Primary Button - Light")
+fun PreviewPrimaryButtonLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+        Button(onClick = {}) { Text("Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Primary Button - Dark")
+fun PreviewPrimaryButtonDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = true) {
+        Button(onClick = {}) { Text("Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Primary Button Dimensions - Light")
+fun PreviewPrimaryButtonDimensionsLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Button(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Primary Button Dimensions - Dark")
+fun PreviewPrimaryButtonDimensionsDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = true) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Button(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Primary Button Disabled - Light")
+fun PreviewPrimaryButtonDisabledLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+        Button(onClick = {}, enabled = false) { Text("Disabled Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Primary Button Disabled - Dark")
+fun PreviewPrimaryButtonDisabledDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = true) {
+        Button(onClick = {}, enabled = false) { Text("Disabled Button") }
+    }
+}
+
+// endregion
+
+// region Previews SubtleButton
+
+@Composable
+@Preview(name = "Subtle Button - Light")
+fun PreviewSubtleButtonLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus, darkTheme = false) {
+        SubtleButton(onClick = {}) { Text("Subtle") }
+    }
+}
+
+@Composable
+@Preview(name = "Subtle Button - Dark")
+fun PreviewSubtleButtonDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = true) {
+        SubtleButton(onClick = {}) { Text("Subtle") }
+    }
+}
+
+@Composable
+@Preview(name = "Subtle Button Dimensions - Light")
+fun PreviewSubtleButtonDimensionsLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus, darkTheme = false) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Subtle Button Dimensions - Dark")
+fun PreviewSubtleButtonDimensionsDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Ferry, darkTheme = true) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            SubtleButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+
+@Composable
+@Preview(name = "Subtle Button Disabled - Light")
+fun PreviewSubtleButtonDisabledLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus, darkTheme = false) {
+        SubtleButton(onClick = {}, enabled = false) { Text("Disabled Subtle") }
+    }
+}
+
+@Composable
+@Preview(name = "Subtle Button Disabled - Dark")
+fun PreviewSubtleButtonDisabledDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
+        SubtleButton(onClick = {}, enabled = false) { Text("Disabled Subtle") }
+    }
+}
+// endregion
+
+// region Previews TextButton
+
+@Composable
+@Preview(name = "Text Button - Light")
+fun PreviewTextButtonLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = false) {
+        TextButton(onClick = {}) { Text("Text Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Text Button - Dark")
+fun PreviewTextButtonDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = true) {
+        TextButton(onClick = {}) { Text("Text Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Text Button Dimensions - Light")
+fun PreviewTextButtonDimensionsLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = false) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            TextButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Text Button Dimensions - Dark")
+fun PreviewTextButtonDimensionsDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Ferry, darkTheme = true) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            TextButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Text Button Disabled - Light")
+fun PreviewTextButtonDisabledLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = false) {
+        TextButton(onClick = {}, enabled = false) { Text("Disabled Text") }
+    }
+}
+
+@Composable
+@Preview(name = "Text Button Disabled - Dark")
+fun PreviewTextButtonDisabledDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus, darkTheme = true) {
+        TextButton(onClick = {}, enabled = false) { Text("Disabled Text") }
+    }
+}
+
+// endregion
+
+// region Previews AlertButton
+
+@Composable
+@Preview(name = "Alert Button - Light")
+fun PreviewAlertButtonLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus, darkTheme = false) {
+        AlertButton(onClick = {}) { Text("Alert Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Alert Button - Dark")
+fun PreviewAlertButtonDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
+        AlertButton(onClick = {}) { Text("Alert Button") }
+    }
+}
+
+@Composable
+@Preview(name = "Alert Button Dimensions - Light")
+fun PreviewAlertButtonDimensionsLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink, darkTheme = false) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+@Composable
+@Preview(name = "Alert Button Dimensions - Dark")
+fun PreviewAlertButtonDimensionsDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus, darkTheme = true) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) { Text("Extra Small") }
+            Spacer(Modifier.height(8.dp))
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) { Text("Small") }
+            Spacer(Modifier.height(8.dp))
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) { Text("Medium") }
+            Spacer(Modifier.height(8.dp))
+            AlertButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) { Text("Large") }
+        }
+    }
+}
+
+
+@Composable
+@Preview(name = "Alert Button Disabled - Light")
+fun PreviewAlertButtonDisabledLight() {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+        AlertButton(onClick = {}, enabled = false) { Text("Disabled Alert") }
+    }
+}
+
+@Composable
+@Preview(name = "Alert Button Disabled - Dark")
+fun PreviewAlertButtonDisabledDark() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
+        AlertButton(onClick = {}, enabled = false) { Text("Disabled Alert") }
+    }
+}
+
+// endregion AlertButton

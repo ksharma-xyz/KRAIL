@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,10 +35,13 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.PlaceholderOpacity
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
@@ -155,31 +159,57 @@ private fun TextFieldPlaceholder(placeholder: String? = null) {
 
 // region Previews
 
+@Preview(name = "Text Field Enabled - Light")
 @Composable
-private fun TextFieldEnabledPreview() {
-    KrailTheme {
-        TextField(placeholder = "Station")
+private fun TextFieldEnabledPreviewLight() {
+    PreviewTextFieldContent {
+
+        TextField(placeholder = "Station", initialText = "Central")
+        Spacer(Modifier.height(8.dp))
+        TextField(placeholder = "Search here")
     }
 }
 
+@Preview(name = "Text Field Enabled - Dark")
 @Composable
-private fun TextFieldEnabledPlaceholderPreview() {
-    KrailTheme {
-        TextField(placeholder = "Placeholder")
+private fun TextFieldEnabledPreviewDark() {
+    PreviewTextFieldContent {
+        TextField(placeholder = "Station", initialText = "Central")
+        Spacer(Modifier.height(8.dp))
+        TextField(placeholder = "Search here")
     }
 }
 
+@Preview(name = "Text Field Disabled - Light")
 @Composable
-private fun TextFieldDisabledPreview() {
-    KrailTheme {
+private fun TextFieldDisabledPreviewLight() {
+    PreviewTextFieldContent {
         TextField(enabled = false, initialText = "Disabled TextField")
+        Spacer(Modifier.height(8.dp))
+        TextField(enabled = false, placeholder = "Disabled Placeholder")
+    }
+}
+
+@Preview(name = "Text Field Disabled - Dark")
+@Composable
+private fun TextFieldDisabledPreviewDark() {
+    PreviewTextFieldContent {
+        TextField(enabled = false, initialText = "Disabled TextField")
+        Spacer(Modifier.height(8.dp))
+        TextField(enabled = false, placeholder = "Disabled Placeholder")
     }
 }
 
 @Composable
-private fun TextFieldDisabledPlaceholderPreview() {
-    KrailTheme {
-        TextField(enabled = false, placeholder = "Disabled Placeholder")
+private fun PreviewTextFieldContent(content: @Composable () -> Unit) {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .background(KrailTheme.colors.onSurface),
+        ) {
+            content()
+        }
     }
 }
 

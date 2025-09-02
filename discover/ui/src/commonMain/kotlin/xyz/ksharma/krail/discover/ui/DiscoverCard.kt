@@ -19,12 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.innerShadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
@@ -296,7 +293,7 @@ fun DiscoverCardButtonRow(
 @Preview(showBackground = true)
 @Composable
 private fun DiscoverCardCtaPreview() {
-    PreviewContent {
+    PreviewDiscoverContent {
         DiscoverCard(discoverModel = previewDiscoverCardList[0])
     }
 }
@@ -304,7 +301,7 @@ private fun DiscoverCardCtaPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun DiscoverCardNoButtonsPreview() {
-    PreviewContent {
+    PreviewDiscoverContent {
         DiscoverCard(discoverModel = previewDiscoverCardList[1])
     }
 }
@@ -312,7 +309,7 @@ private fun DiscoverCardNoButtonsPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun DiscoverCardSocialPreview() {
-    PreviewContent {
+    PreviewDiscoverContent {
         DiscoverCard(discoverModel = previewDiscoverCardList[2])
     }
 }
@@ -320,7 +317,7 @@ private fun DiscoverCardSocialPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun DiscoverCardSharePreview() {
-    PreviewContent {
+    PreviewDiscoverContent {
         DiscoverCard(discoverModel = previewDiscoverCardList[3])
     }
 }
@@ -328,7 +325,7 @@ private fun DiscoverCardSharePreview() {
 @Preview(showBackground = true)
 @Composable
 private fun DiscoverCardCtaSharePreview() {
-    PreviewContent {
+    PreviewDiscoverContent {
         DiscoverCard(discoverModel = previewDiscoverCardList[4])
     }
 }
@@ -336,7 +333,7 @@ private fun DiscoverCardCtaSharePreview() {
 @Preview(showBackground = true)
 @Composable
 private fun DiscoverCardFeedbackPreview() {
-    PreviewContent {
+    PreviewDiscoverContent {
         DiscoverCard(discoverModel = previewDiscoverCardList[5])
     }
 }

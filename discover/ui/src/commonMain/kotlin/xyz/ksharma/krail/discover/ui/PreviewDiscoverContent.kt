@@ -16,7 +16,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
-fun PreviewContent(
+fun PreviewDiscoverContent(
     krailThemeStyle: KrailThemeStyle = KrailThemeStyle.Train,
     imageColor: Color = Color.Blue,
     content: @Composable () -> Unit

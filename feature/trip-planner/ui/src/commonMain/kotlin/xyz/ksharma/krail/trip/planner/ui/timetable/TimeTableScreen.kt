@@ -356,6 +356,7 @@ fun TimeTableScreen(
                         onLegClick = onJourneyLegClick,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             .animateItem(),
+                        departureDeviation = journey.departureDeviation,
                     )
                 }
             } else { // Journey list is empty or null
@@ -394,6 +395,7 @@ private fun JourneyCardItem(
     modifier: Modifier = Modifier,
     transportModeLineList: ImmutableList<TransportModeLine>? = null,
     onLegClick: (Boolean) -> Unit,
+    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -413,6 +415,7 @@ private fun JourneyCardItem(
             totalUniqueServiceAlerts = totalUniqueServiceAlerts,
             onLegClick = onLegClick,
             modifier = modifier,
+            departureDeviation = departureDeviation,
         )
     }
 }

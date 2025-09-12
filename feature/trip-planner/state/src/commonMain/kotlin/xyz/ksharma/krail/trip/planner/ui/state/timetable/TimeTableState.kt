@@ -59,6 +59,12 @@ data class TimeTableState(
         val legs: ImmutableList<Leg>,
 
         val totalUniqueServiceAlerts: Int,
+
+        /**
+         * Deviation for the first public transport departure vs planned time.
+         * Null when real-time estimate is unavailable.
+         */
+        val departureDeviation: DepartureDeviation? = null,
     ) {
         val journeyId: String
             get() = buildString {
@@ -83,6 +89,15 @@ data class TimeTableState(
          */
         val hasJourneyEnded: Boolean
             get() = Instant.parse(destinationUtcDateTime) < Clock.System.now()
+
+        /**
+         * A sealed type describing the departure deviation status.
+         */
+        sealed interface DepartureDeviation {
+            data class Late(val text: String) : DepartureDeviation
+            data class Early(val text: String) : DepartureDeviation
+            data object OnTime : DepartureDeviation
+        }
 
         @Stable
         sealed class Leg {

@@ -354,29 +354,18 @@ fun DefaultJourneyCardContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            if (isLargeFontScale()) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        text = timeToDeparture,
-                        style = KrailTheme.typography.titleMedium,
-                        color = themeColor,
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .align(Alignment.Start),
-                    )
-                    // Always show badges/icons on a new line for large font scale; let FlowRow wrap
-                    TransportModesRow(
-                        transportModeLineList = transportModeLineList,
-                        showBadge = { it.transportMode is TransportMode.Bus },
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
+            if (isLargeFontScale() || transportModeLineList.size > 2) {
+                Text(
+                    text = timeToDeparture,
+                    style = KrailTheme.typography.titleMedium,
+                    color = themeColor,
+                    modifier = Modifier
+                        .padding(end = 8.dp),
+                )
             } else {
                 FlowRow(
                     horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
@@ -403,6 +392,15 @@ fun DefaultJourneyCardContent(
                     modifier = Modifier,
                 )
             }
+        }
+
+        if (isLargeFontScale() || transportModeLineList.size > 2) {
+            // Always show badges/icons on a new line for large font scale; let FlowRow wrap
+            TransportModesRow(
+                transportModeLineList = transportModeLineList,
+                showBadge = { it.transportMode is TransportMode.Bus },
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
 
         Text(
@@ -466,6 +464,7 @@ private fun TransportModesRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         transportModeLineList.forEachIndexed { index, line ->
             if (showBadge(line)) {

@@ -351,24 +351,61 @@ fun DefaultJourneyCardContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            FlowRow(
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = timeToDeparture,
-                    style = KrailTheme.typography.titleMedium,
-                    color = themeColor,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .align(Alignment.CenterVertically),
-                )
-                if (transportModeLineList.size < 4 || isFontScaleLessThanThreshold()) {
-                    Row(
+            if (isLargeFontScale()) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = timeToDeparture,
+                        style = KrailTheme.typography.titleMedium,
+                        color = themeColor,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .align(Alignment.Start),
+                    )
+                    // Always show badges/icons on a new line for large font scale; let FlowRow wrap
+                    FlowRow(
+                        modifier = Modifier
+                            .padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        transportModeLineList.forEachIndexed { index, line ->
+                            if (line.transportMode is TransportMode.Bus) {
+                                TransportModeBadge(
+                                    backgroundColor = line.lineColorCode.hexToComposeColor(),
+                                    badgeText = line.lineName,
+                                )
+                            }
+                            TransportModeIcon(
+                                transportMode = line.transportMode,
+                                size = TransportModeIconSize.Small,
+                            )
+                            if (index != transportModeLineList.lastIndex) {
+                                SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
+                            }
+                        }
+                    }
+                }
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = timeToDeparture,
+                        style = KrailTheme.typography.titleMedium,
+                        color = themeColor,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .align(Alignment.CenterVertically),
+                    )
+                    FlowRow(
                         modifier = Modifier
                             .align(Alignment.CenterVertically),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         transportModeLineList.forEachIndexed { index, line ->
                             // Show badge for Trains only
@@ -551,7 +588,7 @@ private fun PreviewJourneyCardCollapsed() {
                     lineName = "700",
                 ),
 
-            ).toImmutableList(),
+                ).toImmutableList(),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
@@ -577,7 +614,7 @@ private fun PreviewJourneyCardCollapsed() {
                     tripId = "700",
                 ),
 
-            ),
+                ),
             cardState = JourneyCardState.EXPANDED,
             totalWalkTime = "10 mins",
             totalUniqueServiceAlerts = 1,

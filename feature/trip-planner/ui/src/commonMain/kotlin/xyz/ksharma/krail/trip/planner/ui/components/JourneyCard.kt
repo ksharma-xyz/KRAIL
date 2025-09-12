@@ -531,7 +531,25 @@ internal fun List<TransportMode>?.toColors(onSurface: Color): List<Color> = when
 
 // region Previews
 
-@Preview(name = "Default - Inline modes + platform")
+private val PREVIEW_STOPS = persistentListOf(
+    TimeTableState.JourneyCardInfo.Stop(
+        name = "Stop 1",
+        time = "8:30am",
+        isWheelchairAccessible = true,
+    ),
+    TimeTableState.JourneyCardInfo.Stop(
+        name = "Stop 2",
+        time = "8:35am",
+        isWheelchairAccessible = true,
+    ),
+    TimeTableState.JourneyCardInfo.Stop(
+        name = "Stop 3",
+        time = "8:40am",
+        isWheelchairAccessible = false,
+    ),
+)
+
+@Preview(name = "Default - Inline modes + platform", group = "Collapsed")
 @Composable
 private fun Preview_Default_InlineModesAndPlatform() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
@@ -557,7 +575,7 @@ private fun Preview_Default_InlineModesAndPlatform() {
     }
 }
 
-@Preview(name = "Default - Inline modes + platform (Dark)")
+@Preview(name = "Default - Inline modes + platform (Dark)", group = "Collapsed")
 @Composable
 private fun Preview_Default_InlineModesAndPlatform_Dark() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE, darkTheme = true) {
@@ -583,7 +601,7 @@ private fun Preview_Default_InlineModesAndPlatform_Dark() {
     }
 }
 
-@Preview(name = "Large font - Modes on next line")
+@Preview(name = "Large font - Modes on next line", group = "Collapsed")
 @Composable
 private fun Preview_LargeFont_ModesNextLine() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE, fontScale = 2f) {
@@ -609,7 +627,7 @@ private fun Preview_LargeFont_ModesNextLine() {
     }
 }
 
-@Preview(name = "Many modes - Wrapping")
+@Preview(name = "Many modes - Wrapping", group = "Collapsed")
 @Composable
 private fun Preview_ManyModes_Wrap() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
@@ -635,6 +653,116 @@ private fun Preview_ManyModes_Wrap() {
             cardState = JourneyCardState.DEFAULT,
             totalWalkTime = null,
             totalUniqueServiceAlerts = 0,
+            onClick = {},
+        )
+    }
+}
+
+@Preview(name = "Expanded - Journey card", group = "Expanded")
+@Composable
+private fun Preview_JourneyCard_Expanded() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 5 mins",
+            originTime = "8:25am",
+            destinationTime = "8:40am",
+            totalTravelTime = "15 mins",
+            platformNumber = "3",
+            platformText = "Platform 3",
+            isWheelchairAccessible = true,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Abc via Rainy Rd",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train(),
+                        lineName = "T1",
+                    ),
+                    totalDuration = "20 mins",
+                    tripId = "T1",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+                    duration = "15 mins",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS.take(2).toImmutableList(),
+                    displayText = "towards Xyz via Awesome Rd",
+                    totalDuration = "10 mins",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus(),
+                        lineName = "700",
+                    ),
+                    tripId = "700",
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 1,
+            onClick = {},
+        )
+    }
+}
+
+@Preview(name = "Expanded - Journey card (Dark)", group = "Expanded")
+@Composable
+private fun Preview_JourneyCard_Expanded_Dark() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE, darkTheme = true) {
+        JourneyCard(
+            timeToDeparture = "in 5 mins",
+            originTime = "8:25am",
+            destinationTime = "8:40am",
+            totalTravelTime = "15 mins",
+            platformNumber = "3",
+            platformText = "Platform 3",
+            isWheelchairAccessible = true,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Abc via Rainy Rd",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train(),
+                        lineName = "T1",
+                    ),
+                    totalDuration = "20 mins",
+                    tripId = "T1",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+                    duration = "15 mins",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS.take(2).toImmutableList(),
+                    displayText = "towards Xyz via Awesome Rd",
+                    totalDuration = "10 mins",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus(),
+                        lineName = "700",
+                    ),
+                    tripId = "700",
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 1,
             onClick = {},
         )
     }

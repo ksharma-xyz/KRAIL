@@ -392,7 +392,7 @@ fun DefaultJourneyCardContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            if (displayAdaptiveTransportModeList(transportModeLineList)) {
+            if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
                 Text(
                     text = timeToDeparture,
                     style = KrailTheme.typography.titleMedium,
@@ -427,12 +427,12 @@ fun DefaultJourneyCardContent(
                     text = text,
                     textAlign = TextAlign.Center,
                     style = KrailTheme.typography.labelLarge,
-                    modifier = Modifier,
+                    modifier = Modifier.padding(start = 4.dp),
                 )
             }
         }
 
-        if (displayAdaptiveTransportModeList(transportModeLineList)) {
+        if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
             // Always show badges/icons on a new line for large font scale; let FlowRow wrap
             TransportModesRow(
                 transportModeLineList = transportModeLineList,
@@ -492,8 +492,9 @@ fun DefaultJourneyCardContent(
 
 @Composable
 private fun displayAdaptiveTransportModeList(
-    transportModeLineList: ImmutableList<TransportModeLine>
-): Boolean = isLargeFontScale() || transportModeLineList.size > 2
+    transportModeLineList: ImmutableList<TransportModeLine>,
+    platformText: String?,
+): Boolean = isLargeFontScale() || transportModeLineList.size > 2 && platformText != null
 
 @Composable
 private fun TransportModesRow(

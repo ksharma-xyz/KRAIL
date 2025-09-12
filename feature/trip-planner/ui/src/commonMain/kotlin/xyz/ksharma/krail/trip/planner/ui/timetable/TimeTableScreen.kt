@@ -339,12 +339,7 @@ fun TimeTableScreen(
                         destinationTime = journey.destinationTime,
                         durationText = journey.travelTime,
                         totalWalkTime = journey.totalWalkTime,
-                        transportModeLineList = journey.transportModeLines.map {
-                            TransportModeLine(
-                                transportMode = it.transportMode,
-                                lineName = it.lineName,
-                            )
-                        }.toImmutableList(),
+                        transportModeLineList = journey.transportModeLines,
                         legList = journey.legs.toImmutableList(),
                         cardState = if (expandedJourneyId == journey.journeyId) {
                             JourneyCardState.EXPANDED
@@ -410,8 +405,7 @@ private fun JourneyCardItem(
             platformText = platformText,
             isWheelchairAccessible = false,
             cardState = cardState,
-            transportModeList = transportModeLineList.map { it.transportMode }
-                .toImmutableList(),
+            transportModeLineList = transportModeLineList,
             legList = legList,
             totalWalkTime = totalWalkTime,
             onClick = onClick,

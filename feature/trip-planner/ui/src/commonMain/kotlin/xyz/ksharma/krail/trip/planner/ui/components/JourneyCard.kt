@@ -364,28 +364,11 @@ fun DefaultJourneyCardContent(
                             .align(Alignment.Start),
                     )
                     // Always show badges/icons on a new line for large font scale; let FlowRow wrap
-                    FlowRow(
-                        modifier = Modifier
-                            .padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        transportModeLineList.forEachIndexed { index, line ->
-                            if (line.transportMode is TransportMode.Bus) {
-                                TransportModeBadge(
-                                    backgroundColor = line.lineColorCode.hexToComposeColor(),
-                                    badgeText = line.lineName,
-                                )
-                            }
-                            TransportModeIcon(
-                                transportMode = line.transportMode,
-                                size = TransportModeIconSize.Small,
-                            )
-                            if (index != transportModeLineList.lastIndex) {
-                                SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
-                            }
-                        }
-                    }
+                    TransportModesRow(
+                        transportModeLineList = transportModeLineList,
+                        showBadge = { it.transportMode is TransportMode.Bus },
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
             } else {
                 FlowRow(
@@ -401,29 +384,11 @@ fun DefaultJourneyCardContent(
                             .padding(end = 8.dp)
                             .align(Alignment.CenterVertically),
                     )
-                    FlowRow(
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        transportModeLineList.forEachIndexed { index, line ->
-                            // Show badge for Trains only
-                            if (line.transportMode is TransportMode.Bus) {
-                                TransportModeBadge(
-                                    backgroundColor = line.lineColorCode.hexToComposeColor(),
-                                    badgeText = line.lineName,
-                                )
-                            }
-                            TransportModeIcon(
-                                transportMode = line.transportMode,
-                                size = TransportModeIconSize.Small,
-                            )
-                            if (index != transportModeLineList.lastIndex) {
-                                SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
-                            }
-                        }
-                    }
+                    TransportModesRow(
+                        transportModeLineList = transportModeLineList,
+                        showBadge = { it.transportMode is TransportMode.Bus },
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                    )
                 }
             }
 
@@ -483,6 +448,35 @@ fun DefaultJourneyCardContent(
                         .size(14.dp.toAdaptiveSize())
                         .align(Alignment.CenterVertically),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransportModesRow(
+    transportModeLineList: ImmutableList<TransportModeLine>,
+    showBadge: (TransportModeLine) -> Boolean,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        transportModeLineList.forEachIndexed { index, line ->
+            if (showBadge(line)) {
+                TransportModeBadge(
+                    backgroundColor = line.lineColorCode.hexToComposeColor(),
+                    badgeText = line.lineName,
+                )
+            }
+            TransportModeIcon(
+                transportMode = line.transportMode,
+                size = TransportModeIconSize.Small,
+            )
+            if (index != transportModeLineList.lastIndex) {
+                SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
             }
         }
     }

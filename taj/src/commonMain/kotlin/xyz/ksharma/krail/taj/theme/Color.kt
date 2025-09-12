@@ -17,6 +17,11 @@ val md_theme_light_secondary_label = Color(0xFF2E2E2E)
 val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
 
+// Light theme (Deviations colors)
+val md_theme_light_onTime = Color(0xFF31DB39)
+val md_theme_light_early = Color(0xFFFFC60F)
+val md_theme_light_late = Color(0xFFF12525)
+
 // Dark Color tokens
 val md_theme_dark_error = Color(0xFFFFB4AB)
 val md_theme_dark_errorContainer = Color(0xFF93000A)
@@ -30,6 +35,11 @@ val md_theme_dark_softLabel = Color(0xFFB0B0B0)
 val md_theme_dark_secondary_label = Color(0xFFE2E2E2)
 val md_theme_dark_discover_chip_background = Color(0xFF292929)
 val md_theme_dark_discover_card_background = Color(0xFF292929)
+
+// Dark theme (Deviations colors)
+val md_theme_dark_onTime = Color(0xFF31DB39)
+val md_theme_dark_early = Color(0xFFFFC60F)
+val md_theme_dark_late = Color(0xFFFF2B2B)
 
 val bus_theme = Color(0xFF00B5EF)
 val train_theme = Color(0xFFF6891F)
@@ -63,6 +73,10 @@ data class KrailColors(
     val discoverChipBackground: Color,
     val discoverCardBackground: Color,
     val magicYellow: Color,
+    // Deviation colors
+    val deviationOnTime: Color,
+    val deviationEarly: Color,
+    val deviationLate: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -81,6 +95,9 @@ internal val KrailLightColors = KrailColors(
     discoverChipBackground = md_theme_light_discover_chip_background,
     discoverCardBackground = md_theme_light_discover_card_background,
     magicYellow = magic_yellow,
+    deviationOnTime = md_theme_light_onTime,
+    deviationEarly = md_theme_light_early,
+    deviationLate = md_theme_light_late,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -99,6 +116,9 @@ internal val KrailDarkColors = KrailColors(
     discoverChipBackground = md_theme_dark_discover_chip_background,
     discoverCardBackground = md_theme_dark_discover_card_background,
     magicYellow = magic_yellow,
+    deviationOnTime = md_theme_dark_onTime,
+    deviationEarly = md_theme_dark_early,
+    deviationLate = md_theme_dark_late,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -118,5 +138,8 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         discoverChipBackground = Color.Unspecified,
         discoverCardBackground = Color.Unspecified,
         magicYellow = Color.Unspecified,
+        deviationOnTime = Color.Unspecified,
+        deviationEarly = Color.Unspecified,
+        deviationLate = Color.Unspecified,
     )
 }

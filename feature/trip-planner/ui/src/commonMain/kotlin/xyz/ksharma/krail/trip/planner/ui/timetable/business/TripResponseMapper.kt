@@ -14,9 +14,11 @@ import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
+import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.time.toDuration
 
 @Suppress("ComplexCondition")
@@ -67,6 +69,7 @@ internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.Journ
                 transportModeLines = transportModeLines,
                 legs = legsList,
                 totalUniqueServiceAlerts = legs.flatMap { leg -> leg.infos.orEmpty() }.toSet().size,
+                departureDeviation = firstPublicTransportLeg.getDepartureDeviation(),
             ).also {
                 log("\tJourneyId: ${it.journeyId}")
             }
@@ -251,3 +254,27 @@ private fun String.fromUTCToDisplayTimeString() = this.utcToLocalDateTimeAEST().
 
 private fun TripResponse.Leg.isWalkingLeg(): Boolean =
     transportation?.product?.productClass == 99L || transportation?.product?.productClass == 100L
+
+@OptIn(ExperimentalTime::class)
+private fun TripResponse.Leg?.getDepartureDeviation(): TimeTableState.JourneyCardInfo.DepartureDeviation? {
+    val est = this?.origin?.departureTimeEstimated
+    val planned = this?.origin?.departureTimePlanned
+    if (est == null || planned == null) return null
+    val estInstant = Instant.parse(est)
+    val plannedInstant = Instant.parse(planned)
+    val diff = estInstant - plannedInstant
+    val mins = diff.inWholeMinutes
+    return when {
+        mins == 0L -> TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime
+        mins > 0L -> {
+            val abs = mins.absoluteValue
+            val unit = if (abs == 1L) "min" else "mins"
+            TimeTableState.JourneyCardInfo.DepartureDeviation.Late("$abs $unit late")
+        }
+        else -> {
+            val abs = mins.absoluteValue
+            val unit = if (abs == 1L) "min" else "mins"
+            TimeTableState.JourneyCardInfo.DepartureDeviation.Early("$abs $unit early")
+        }
+    }
+}

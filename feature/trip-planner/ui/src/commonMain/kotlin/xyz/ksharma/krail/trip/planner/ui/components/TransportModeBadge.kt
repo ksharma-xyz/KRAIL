@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -12,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -27,15 +25,12 @@ fun TransportModeBadge(
     backgroundColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-
     CompositionLocalProvider(
         LocalTextColor provides Color.White,
         LocalTextStyle provides KrailTheme.typography.titleMedium,
     ) {
         Box(
             modifier = modifier
-                .requiredHeightIn(with(density) { 28.toDp() })
                 .clip(shape = RoundedCornerShape(percent = 20))
                 .background(color = backgroundColor),
             contentAlignment = Alignment.Center,

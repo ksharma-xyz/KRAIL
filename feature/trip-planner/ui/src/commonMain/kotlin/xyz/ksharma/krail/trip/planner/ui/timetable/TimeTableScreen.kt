@@ -339,12 +339,7 @@ fun TimeTableScreen(
                         destinationTime = journey.destinationTime,
                         durationText = journey.travelTime,
                         totalWalkTime = journey.totalWalkTime,
-                        transportModeLineList = journey.transportModeLines.map {
-                            TransportModeLine(
-                                transportMode = it.transportMode,
-                                lineName = it.lineName,
-                            )
-                        }.toImmutableList(),
+                        transportModeLineList = journey.transportModeLines,
                         legList = journey.legs.toImmutableList(),
                         cardState = if (expandedJourneyId == journey.journeyId) {
                             JourneyCardState.EXPANDED
@@ -361,6 +356,7 @@ fun TimeTableScreen(
                         onLegClick = onJourneyLegClick,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             .animateItem(),
+                        departureDeviation = journey.departureDeviation,
                     )
                 }
             } else { // Journey list is empty or null
@@ -399,6 +395,7 @@ private fun JourneyCardItem(
     modifier: Modifier = Modifier,
     transportModeLineList: ImmutableList<TransportModeLine>? = null,
     onLegClick: (Boolean) -> Unit,
+    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -410,8 +407,7 @@ private fun JourneyCardItem(
             platformText = platformText,
             isWheelchairAccessible = false,
             cardState = cardState,
-            transportModeList = transportModeLineList.map { it.transportMode }
-                .toImmutableList(),
+            transportModeLineList = transportModeLineList,
             legList = legList,
             totalWalkTime = totalWalkTime,
             onClick = onClick,
@@ -419,6 +415,7 @@ private fun JourneyCardItem(
             totalUniqueServiceAlerts = totalUniqueServiceAlerts,
             onLegClick = onLegClick,
             modifier = modifier,
+            departureDeviation = departureDeviation,
         )
     }
 }

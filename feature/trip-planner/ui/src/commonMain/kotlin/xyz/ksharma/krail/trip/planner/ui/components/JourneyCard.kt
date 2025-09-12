@@ -67,7 +67,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
  * @param totalTravelTime The total time the journey takes.
  * @param platformNumber The platform or stand number, the journey departs from.
  * @param isWheelchairAccessible Whether the journey is wheelchair accessible.
- * @param transportModeList The list of transport modes used in the journey.
+ * @param transportModeLineList The list of transport mode lines used in the journey.
  * @param onClick The action to perform when the card is clicked.
  * @param modifier The modifier to apply to the card.
  */
@@ -81,7 +81,7 @@ fun JourneyCard(
     totalTravelTime: String,
     isWheelchairAccessible: Boolean,
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
-    transportModeList: ImmutableList<TransportMode>,
+    transportModeLineList: ImmutableList<TransportModeLine>,
     onClick: () -> Unit,
     cardState: JourneyCardState,
     totalWalkTime: String?,
@@ -90,6 +90,11 @@ fun JourneyCard(
     onAlertClick: () -> Unit = {},
     onLegClick: (Boolean) -> Unit = {},
 ) {
+    // Derive transport modes for styling and colors
+    val transportModeList: ImmutableList<TransportMode> = remember(transportModeLineList) {
+        transportModeLineList.map { it.transportMode }.toImmutableList()
+    }
+
     val onSurface: Color = KrailTheme.colors.onSurface
     val borderColors = remember(transportModeList) { transportModeList.toColors(onSurface) }
     val isPastJourney by remember(timeToDeparture) {
@@ -145,7 +150,7 @@ fun JourneyCard(
                     totalTravelTime = totalTravelTime,
                     isWheelchairAccessible = isWheelchairAccessible,
                     themeColor = themeColor,
-                    transportModeList = transportModeList,
+                    transportModeLineList = transportModeLineList,
                     platformText = platformText,
                     totalWalkTime = totalWalkTime,
                     modifier = Modifier
@@ -336,7 +341,7 @@ fun DefaultJourneyCardContent(
     totalTravelTime: String,
     isWheelchairAccessible: Boolean,
     themeColor: Color,
-    transportModeList: ImmutableList<TransportMode>,
+    transportModeLineList: ImmutableList<TransportModeLine>,
     platformText: String?,
     totalWalkTime: String?,
     modifier: Modifier = Modifier,
@@ -359,18 +364,25 @@ fun DefaultJourneyCardContent(
                         .padding(end = 8.dp)
                         .align(Alignment.CenterVertically),
                 )
-                if (transportModeList.size < 4 || isFontScaleLessThanThreshold()) {
+                if (transportModeLineList.size < 4 || isFontScaleLessThanThreshold()) {
                     Row(
                         modifier = Modifier
                             .align(Alignment.CenterVertically),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        transportModeList.forEachIndexed { index, mode ->
+                        transportModeLineList.forEachIndexed { index, line ->
+                            // Show badge for Trains only
+                            if (line.transportMode is TransportMode.Bus) {
+                                TransportModeBadge(
+                                    backgroundColor = line.lineColorCode.hexToComposeColor(),
+                                    badgeText = line.lineName,
+                                )
+                            }
                             TransportModeIcon(
-                                transportMode = mode,
+                                transportMode = line.transportMode,
                                 size = TransportModeIconSize.Small,
                             )
-                            if (index != transportModeList.lastIndex) {
+                            if (index != transportModeLineList.lastIndex) {
                                 SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
                             }
                         }
@@ -497,9 +509,15 @@ private fun PreviewJourneyCard() {
             platformNumber = "18",
             platformText = "Platform 18",
             isWheelchairAccessible = true,
-            transportModeList = listOf(
-                TransportMode.Train(),
-                TransportMode.Bus(),
+            transportModeLineList = listOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
             ).toImmutableList(),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -523,9 +541,16 @@ private fun PreviewJourneyCardCollapsed() {
             platformNumber = "1",
             platformText = "Platform 1",
             isWheelchairAccessible = true,
-            transportModeList = listOf(
-                TransportMode.Train(),
-                TransportMode.Bus(),
+            transportModeLineList = listOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
+
             ).toImmutableList(),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
@@ -572,9 +597,15 @@ private fun PreviewJourneyCardExpanded() {
             platformNumber = "3",
             platformText = "Platform 3",
             isWheelchairAccessible = true,
-            transportModeList = listOf(
-                TransportMode.Train(),
-                TransportMode.Bus(),
+            transportModeLineList = listOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
             ).toImmutableList(),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
@@ -638,12 +669,27 @@ private fun PreviewJourneyCardLongData() {
             platformNumber = "A",
             platformText = "Stand A",
             isWheelchairAccessible = true,
-            transportModeList = listOf(
-                TransportMode.Ferry(),
-                TransportMode.Bus(),
-                TransportMode.Train(),
-                TransportMode.Coach(),
-                TransportMode.Metro(),
+            transportModeLineList = listOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Ferry(),
+                    lineName = "F2",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Coach(),
+                    lineName = "C1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Metro(),
+                    lineName = "M1",
+                ),
             ).toImmutableList(),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,

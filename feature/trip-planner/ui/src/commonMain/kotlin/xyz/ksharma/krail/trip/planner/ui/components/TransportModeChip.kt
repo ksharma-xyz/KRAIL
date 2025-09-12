@@ -84,7 +84,6 @@ fun TransportModeChip(
             TransportModeIcon(
                 transportMode = transportMode,
                 displayBorder = true,
-                adaptiveSize = true,
             )
 
             Text(text = transportMode.name, color = textColor)

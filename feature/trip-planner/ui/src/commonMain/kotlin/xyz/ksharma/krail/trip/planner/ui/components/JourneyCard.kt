@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -43,7 +45,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_a11y
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
@@ -57,7 +58,6 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.toAdaptiveSize
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
@@ -92,6 +92,7 @@ fun JourneyCard(
     modifier: Modifier = Modifier,
     onAlertClick: () -> Unit = {},
     onLegClick: (Boolean) -> Unit = {},
+    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     // Derive transport modes for styling and colors
     val transportModeList: ImmutableList<TransportMode> = remember(transportModeLineList) {
@@ -156,6 +157,7 @@ fun JourneyCard(
                     transportModeLineList = transportModeLineList,
                     platformText = platformText,
                     totalWalkTime = totalWalkTime,
+                    departureDeviation = departureDeviation,
                     modifier = Modifier
                         .semantics(mergeDescendants = true) { }
                         .clickable(
@@ -184,6 +186,41 @@ fun JourneyCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DepartureDeviationIndicator(
+    deviation: TimeTableState.JourneyCardInfo.DepartureDeviation,
+    modifier: Modifier = Modifier,
+) {
+    val (dotColor, label) = when (deviation) {
+        is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
+            KrailTheme.colors.deviationLate to deviation.text
+        is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
+            KrailTheme.colors.deviationEarly to deviation.text
+        TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime ->
+            KrailTheme.colors.deviationOnTime to "On time"
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.padding(start = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(
+                    color = dotColor.copy(alpha = LocalContentAlpha.current),
+                    shape = CircleShape
+                ),
+        )
+        Text(
+            text = label,
+            style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.onSurface,
+        )
     }
 }
 
@@ -348,35 +385,25 @@ fun DefaultJourneyCardContent(
     platformText: String?,
     totalWalkTime: String?,
     modifier: Modifier = Modifier,
+    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     Column(modifier = modifier) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            if (isLargeFontScale()) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        text = timeToDeparture,
-                        style = KrailTheme.typography.titleMedium,
-                        color = themeColor,
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .align(Alignment.Start),
-                    )
-                    // Always show badges/icons on a new line for large font scale; let FlowRow wrap
-                    TransportModesRow(
-                        transportModeLineList = transportModeLineList,
-                        showBadge = { it.transportMode is TransportMode.Bus },
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
+            if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
+                Text(
+                    text = timeToDeparture,
+                    style = KrailTheme.typography.titleMedium,
+                    color = themeColor,
+                    modifier = Modifier
+                        .padding(end = 8.dp),
+                )
             } else {
                 FlowRow(
                     horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
@@ -400,17 +427,31 @@ fun DefaultJourneyCardContent(
                     text = text,
                     textAlign = TextAlign.Center,
                     style = KrailTheme.typography.labelLarge,
-                    modifier = Modifier,
+                    modifier = Modifier.padding(start = 4.dp),
                 )
             }
         }
 
-        Text(
-            text = originTime,
-            style = KrailTheme.typography.titleMedium,
-            color = KrailTheme.colors.onSurface,
+        if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
+            // Always show badges/icons on a new line for large font scale; let FlowRow wrap
+            TransportModesRow(
+                transportModeLineList = transportModeLineList,
+                showBadge = { it.transportMode is TransportMode.Bus },
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+
+        // Origin time + deviation
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(top = 4.dp),
-        )
+        ) {
+            Text(
+                text = originTime,
+                style = KrailTheme.typography.titleMedium,
+                color = KrailTheme.colors.onSurface,
+            )
+        }
 
         FlowRow(
             horizontalArrangement = Arrangement.Start,
@@ -442,19 +483,18 @@ fun DefaultJourneyCardContent(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            if (isWheelchairAccessible) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_a11y),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-                    modifier = Modifier
-                        .size(14.dp.toAdaptiveSize())
-                        .align(Alignment.CenterVertically),
-                )
+            departureDeviation?.let { deviation ->
+                DepartureDeviationIndicator(deviation = deviation)
             }
         }
     }
 }
+
+@Composable
+private fun displayAdaptiveTransportModeList(
+    transportModeLineList: ImmutableList<TransportModeLine>,
+    platformText: String?,
+): Boolean = isLargeFontScale() || transportModeLineList.size > 2 && platformText != null
 
 @Composable
 private fun TransportModesRow(
@@ -466,6 +506,7 @@ private fun TransportModesRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         transportModeLineList.forEachIndexed { index, line ->
             if (showBadge(line)) {
@@ -571,6 +612,7 @@ private fun Preview_Default_InlineModesAndPlatform() {
             totalWalkTime = "10 mins",
             totalUniqueServiceAlerts = 0,
             onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("2 mins late"),
         )
     }
 }
@@ -597,6 +639,7 @@ private fun Preview_Default_InlineModesAndPlatform_Dark() {
             totalWalkTime = "10 mins",
             totalUniqueServiceAlerts = 0,
             onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
         )
     }
 }
@@ -623,6 +666,7 @@ private fun Preview_LargeFont_ModesNextLine() {
             totalWalkTime = null,
             totalUniqueServiceAlerts = 0,
             onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("1 min early"),
         )
     }
 }

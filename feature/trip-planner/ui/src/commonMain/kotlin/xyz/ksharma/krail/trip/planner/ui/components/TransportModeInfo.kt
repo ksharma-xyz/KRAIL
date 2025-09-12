@@ -5,8 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
-import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 @Composable
@@ -32,9 +33,20 @@ fun TransportModeInfo(
 
 // region Previews
 
+@Preview
 @Composable
 private fun TransportModeInfoPreview() {
-    KrailTheme {
+    PreviewTheme {
+        TransportModeInfo(
+            transportMode = TransportMode.Bus(),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TransportModeInfoPreview_LargeFont() {
+    PreviewTheme(fontScale = 2.0f) {
         TransportModeInfo(
             transportMode = TransportMode.Bus(),
         )

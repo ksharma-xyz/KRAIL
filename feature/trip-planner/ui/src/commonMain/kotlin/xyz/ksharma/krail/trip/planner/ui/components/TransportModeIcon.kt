@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -20,8 +21,8 @@ import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
-import xyz.ksharma.krail.taj.toAdaptiveSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
@@ -30,7 +31,6 @@ fun TransportModeIcon(
     transportMode: TransportMode,
     modifier: Modifier = Modifier,
     borderColor: Color = Color.White,
-    adaptiveSize: Boolean = false,
     displayBorder: Boolean = false,
     size: TransportModeIconSize = TransportModeIconSize.Medium,
 ) {
@@ -43,13 +43,8 @@ fun TransportModeIcon(
     ) {
         Box(
             modifier = modifier
-                .size(
-                    if (adaptiveSize) {
-                        size.dpSize.toAdaptiveSize()
-                    } else {
-                        size.dpSize.toAdaptiveDecorativeIconSize()
-                    }
-                )
+                .size(size.dpSize.toAdaptiveDecorativeIconSize())
+                .heightIn(min = size.dpSize)
                 .clip(CircleShape)
                 .background(
                     color = transportMode.colorCode.hexToComposeColor(),
@@ -101,6 +96,21 @@ private fun TrainPreview() {
         )
     }
 }
+
+@Preview(group = previewGroupName)
+@Composable
+private fun TrainPreviewLarge() {
+    PreviewTheme(
+        fontScale = 2.0f,
+        backgroundColor = Color.Transparent,
+    ) {
+        TransportModeIcon(
+            transportMode = TransportMode.Train(),
+            displayBorder = false,
+        )
+    }
+}
+
 
 @Preview(group = previewGroupName)
 @Composable

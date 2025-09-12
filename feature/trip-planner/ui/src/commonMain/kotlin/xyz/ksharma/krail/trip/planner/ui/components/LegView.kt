@@ -41,6 +41,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -283,10 +284,10 @@ private fun StopsRow(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    FlowRow(
+    Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         val buttonContainerColor by remember {
             mutableStateOf(line.transportMode.colorCode.hexToComposeColor())
@@ -456,7 +457,22 @@ private fun PreviewLegViewLightRail() {
 @Preview
 @Composable
 private fun PreviewStopsRow() {
-    KrailTheme {
+    PreviewTheme {
+        StopsRow(
+            stops = "3 stops",
+            line = TransportModeLine(
+                transportMode = TransportMode.Bus(),
+                lineName = "700",
+            ),
+            onClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewStopsRow_LargeFont() {
+    PreviewTheme(fontScale = 2.0f) {
         StopsRow(
             stops = "3 stops",
             line = TransportModeLine(
@@ -490,7 +506,7 @@ private fun PreviewRouteSummary() {
             routeText = "towards AVC via XYZ Rd",
             modifier = Modifier.background(KrailTheme.colors.surface),
             badgeText = "700",
-            badgeColor = "00B5EF".hexToComposeColor(),
+            badgeColor = Color.Red,
         )
     }
 }

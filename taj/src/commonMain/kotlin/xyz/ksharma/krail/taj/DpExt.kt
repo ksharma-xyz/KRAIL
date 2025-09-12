@@ -23,7 +23,7 @@ fun Dp.toAdaptiveSize(): Dp {
 fun Dp.toAdaptiveDecorativeIconSize(): Dp {
     val density = LocalDensity.current
     return if (density.fontScale > 1.5f) {
-        this.times(density.fontScale * 0.7f)
+        this.times(density.fontScale * 0.8f)
     } else {
         this.times(density.fontScale)
     }

@@ -18,9 +18,9 @@ val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
 
 // Light theme (Deviations colors)
-val md_theme_light_onTime = Color(0xFF43A047) // Green 600
-val md_theme_light_early = Color(0xFFF9A825) // Amber 800
-val md_theme_light_late = Color(0xFFC62828) // Red 800
+val md_theme_light_onTime = Color(0xFF31DB39)
+val md_theme_light_early = Color(0xFFFFC60F)
+val md_theme_light_late = Color(0xFFF12525)
 
 // Dark Color tokens
 val md_theme_dark_error = Color(0xFFFFB4AB)
@@ -37,9 +37,9 @@ val md_theme_dark_discover_chip_background = Color(0xFF292929)
 val md_theme_dark_discover_card_background = Color(0xFF292929)
 
 // Dark theme (Deviations colors)
-val md_theme_dark_onTime = Color(0xFF81C784) // Green 300
-val md_theme_dark_early = Color(0xFFFFD54F) // Amber 300
-val md_theme_dark_late = Color(0xFFEF5350) // Red 400
+val md_theme_dark_onTime = Color(0xFF31DB39)
+val md_theme_dark_early = Color(0xFFFFC60F)
+val md_theme_dark_late = Color(0xFFFF2B2B)
 
 val bus_theme = Color(0xFF00B5EF)
 val train_theme = Color(0xFFF6891F)

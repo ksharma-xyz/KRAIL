@@ -190,6 +190,41 @@ fun JourneyCard(
 }
 
 @Composable
+private fun DepartureDeviationIndicator(
+    deviation: TimeTableState.JourneyCardInfo.DepartureDeviation,
+    modifier: Modifier = Modifier,
+) {
+    val (dotColor, label) = when (deviation) {
+        is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
+            KrailTheme.colors.deviationLate to deviation.text
+        is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
+            KrailTheme.colors.deviationEarly to deviation.text
+        TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime ->
+            KrailTheme.colors.deviationOnTime to "On time"
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.padding(start = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(
+                    color = dotColor.copy(alpha = LocalContentAlpha.current),
+                    shape = CircleShape
+                ),
+        )
+        Text(
+            text = label,
+            style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.onSurface,
+        )
+    }
+}
+
+@Composable
 fun ExpandedJourneyCardContent(
     timeToDeparture: String,
     themeColor: Color,
@@ -449,36 +484,7 @@ fun DefaultJourneyCardContent(
             }
             Spacer(modifier = Modifier.weight(1f))
             departureDeviation?.let { deviation ->
-                val (dotColor, label) = when (deviation) {
-                    is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
-                        KrailTheme.colors.deviationLate to deviation.text
-
-                    is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
-                        KrailTheme.colors.deviationEarly to deviation.text
-
-                    TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime ->
-                        KrailTheme.colors.deviationOnTime to "On time"
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(
-                                color = dotColor.copy(alpha = LocalContentAlpha.current),
-                                shape = CircleShape
-                            ),
-                    )
-                    Text(
-                        text = label,
-                        style = KrailTheme.typography.bodyMedium,
-                        color = KrailTheme.colors.onSurface,
-                    )
-                }
+                DepartureDeviationIndicator(deviation = deviation)
             }
         }
     }

@@ -31,7 +31,6 @@ fun TransportModeBadge(
     ) {
         Box(
             modifier = modifier
-                //.requiredHeightIn(with(density) { 28.toDp() })
                 .clip(shape = RoundedCornerShape(percent = 20))
                 .background(color = backgroundColor),
             contentAlignment = Alignment.Center,

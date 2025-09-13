@@ -405,7 +405,6 @@ private fun JourneyCardItem(
             totalTravelTime = durationText,
             platformNumber = platformNumber,
             platformText = platformText,
-            isWheelchairAccessible = false,
             cardState = cardState,
             transportModeLineList = transportModeLineList,
             legList = legList,

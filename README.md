@@ -138,9 +138,9 @@ limitations under the License.
 
 - 🌐 Website: [krail.app](https://krail.app)
 - 📧 Email: [hey@krail.app](mailto:hey@krail.app)
-- 📘 Facebook: [facebook.com/krailapp](https://facebook.com/krailapp)
-- 📸 Instagram: [instagram.com/krailapp](https://instagram.com/krailapp)
-- 💼 LinkedIn: [linkedin.com/company/krail](https://www.linkedin.com/company/krail/)
+- 📘 Facebook: [/krailapp](https://facebook.com/krailapp)
+- 📸 Instagram: [/krailapp](https://instagram.com/krailapp)
+- 💼 LinkedIn: [/krail](https://www.linkedin.com/company/krail/)
 - 👾 Reddit: [r/krailapp](https://www.reddit.com/r/krailapp/)
 
 ---

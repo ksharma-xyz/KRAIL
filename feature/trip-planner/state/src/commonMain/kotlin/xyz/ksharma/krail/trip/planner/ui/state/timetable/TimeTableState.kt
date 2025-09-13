@@ -111,7 +111,7 @@ data class TimeTableState(
                 val transportModeLine: TransportModeLine,
 
                 // transportation.description -> "Burwood to Liverpool",
-                val displayText: String, // "towards X via X"
+                val displayText: String?, // "towards X via X"
 
                 // leg.stopSequence.size  (leg.duration seconds)
                 val totalDuration: String, // 12 min"

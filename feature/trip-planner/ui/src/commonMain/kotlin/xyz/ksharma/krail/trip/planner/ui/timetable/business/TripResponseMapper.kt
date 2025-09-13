@@ -119,9 +119,9 @@ private fun List<TripResponse.Leg>.logTransportModes() = forEachIndexed { index,
     log("Origin #$index: ${leg.origin?.disassembledName}")
     log(
         "TransportMode #$index: ${leg.transportation?.product?.productClass}, " +
-            "name: ${leg.transportation?.product?.name}, " +
-            "stops: ${leg.stopSequence?.size}, " +
-            "duration: ${leg.duration}",
+                "name: ${leg.transportation?.product?.name}, " +
+                "stops: ${leg.stopSequence?.size}, " +
+                "duration: ${leg.duration}",
     )
 }
 
@@ -151,12 +151,12 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
             ?.let { TransportMode.toTransportModeType(productClass = it) }
     val lineName = transportation?.disassembledName
 
-    val displayText =
-        if (transportation?.product?.productClass?.toInt() == TransportMode.Train().productClass) {
-            transportation?.destination?.name
-        } else {
-            transportation?.description
-        }
+    val productClass = transportation?.product?.productClass?.toInt()
+    val displayText = when (productClass) {
+        TransportMode.Train().productClass, TransportMode.Metro().productClass ->
+            "towards ${transportation?.destination?.name}"
+        else -> transportation?.description
+    }
     val numberOfStops = stopSequence?.size
     val displayDuration = duration?.seconds?.toFormattedDurationTimeString()
     val stops = stopSequence?.mapNotNull { it.toUiModel() }?.toImmutableList()
@@ -192,8 +192,8 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
             } else {
                 logError(
                     "Something is null - NOT adding Transport LEG: " +
-                        "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
-                        "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
+                            "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
+                            "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
                 )
                 null
             }
@@ -238,7 +238,7 @@ private fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInf
     // For first leg there is no arrival time, so using departure time.
     val time =
         departureTimeEstimated ?: departureTimePlanned ?: arrivalTimeEstimated
-            ?: arrivalTimePlanned
+        ?: arrivalTimePlanned
     return if (stopName != null && time != null) {
         TimeTableState.JourneyCardInfo.Stop(
             name = stopName,
@@ -271,6 +271,7 @@ private fun TripResponse.Leg?.getDepartureDeviation(): TimeTableState.JourneyCar
             val unit = if (abs == 1L) "min" else "mins"
             TimeTableState.JourneyCardInfo.DepartureDeviation.Late("$abs $unit late")
         }
+
         else -> {
             val abs = mins.absoluteValue
             val unit = if (abs == 1L) "min" else "mins"

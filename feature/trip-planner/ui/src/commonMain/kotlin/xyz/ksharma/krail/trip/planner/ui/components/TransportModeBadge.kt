@@ -13,11 +13,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 
 @Composable
 fun TransportModeBadge(
@@ -28,6 +30,8 @@ fun TransportModeBadge(
     CompositionLocalProvider(
         LocalTextColor provides Color.White,
         LocalTextStyle provides KrailTheme.typography.titleMedium,
+        // Alpha should always be 100%
+        LocalContentAlpha provides ContentAlphaTokens.EnabledContentAlpha,
     ) {
         Box(
             modifier = modifier

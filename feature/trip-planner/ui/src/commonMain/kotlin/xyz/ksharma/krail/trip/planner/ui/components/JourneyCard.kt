@@ -131,7 +131,8 @@ fun JourneyCard(
                         Modifier.border(
                             width = 2.dp,
                             shape = RoundedCornerShape(12.dp),
-                            color = KrailTheme.colors.onSurface,
+                            color = if (isPastJourney) KrailTheme.colors.pastJourney
+                            else KrailTheme.colors.futureJourney,
                         )
                     } else {
                         Modifier
@@ -543,8 +544,7 @@ private fun ResponsiveJourneyInfoRow(
         // Try 3: Split clock up (Row1: dest + clock) (Row2: walk start, deviation end)
         val firstRowSplitFits = (destW + clockW) <= maxW
         val secondRowSplitFits = walkW <= secondRowSpace
-        val splitClockUp =
-            !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
+        val splitClockUp = !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
 
         val layoutHeight = when {
             oneRowFits -> maxOf(destH, clockH, walkH, devH)

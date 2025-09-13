@@ -69,7 +69,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
  * @param destinationTime The time the journey ends.
  * @param totalTravelTime The total time the journey takes.
  * @param platformNumber The platform or stand number, the journey departs from.
- * @param isWheelchairAccessible Whether the journey is wheelchair accessible.
  * @param transportModeLineList The list of transport mode lines used in the journey.
  * @param onClick The action to perform when the card is clicked.
  * @param modifier The modifier to apply to the card.
@@ -82,7 +81,6 @@ fun JourneyCard(
     originTime: String,
     destinationTime: String,
     totalTravelTime: String,
-    isWheelchairAccessible: Boolean,
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
     transportModeLineList: ImmutableList<TransportModeLine>,
     onClick: () -> Unit,
@@ -152,7 +150,6 @@ fun JourneyCard(
                     originTime = originTime,
                     destinationTime = destinationTime,
                     totalTravelTime = totalTravelTime,
-                    isWheelchairAccessible = isWheelchairAccessible,
                     themeColor = themeColor,
                     transportModeLineList = transportModeLineList,
                     platformText = platformText,
@@ -379,7 +376,6 @@ fun DefaultJourneyCardContent(
     originTime: String,
     destinationTime: String,
     totalTravelTime: String,
-    isWheelchairAccessible: Boolean,
     themeColor: Color,
     transportModeLineList: ImmutableList<TransportModeLine>,
     platformText: String?,
@@ -576,7 +572,7 @@ private val PREVIEW_STOPS = persistentListOf(
     TimeTableState.JourneyCardInfo.Stop(
         name = "Stop 1",
         time = "8:30am",
-        isWheelchairAccessible = true,
+        isWheelchairAccessible = false,
     ),
     TimeTableState.JourneyCardInfo.Stop(
         name = "Stop 2",
@@ -601,7 +597,6 @@ private fun Preview_Default_InlineModesAndPlatform() {
             totalTravelTime = "30 mins",
             platformNumber = "1",
             platformText = "Platform 1",
-            isWheelchairAccessible = true,
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Bus(), lineName = "700"),
                 TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
@@ -628,7 +623,7 @@ private fun Preview_Default_InlineModesAndPlatform_Dark() {
             totalTravelTime = "30 mins",
             platformNumber = "1",
             platformText = "Platform 1",
-            isWheelchairAccessible = true,
+
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Bus(), lineName = "700"),
                 TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
@@ -655,7 +650,6 @@ private fun Preview_LargeFont_ModesNextLine() {
             totalTravelTime = "45 mins",
             platformNumber = "A",
             platformText = "Stand A",
-            isWheelchairAccessible = false,
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Bus(), lineName = "610X"),
                 TransportModeLine(transportMode = TransportMode.Train(), lineName = "T9"),
@@ -682,7 +676,7 @@ private fun Preview_ManyModes_Wrap() {
             totalTravelTime = "1h 5m",
             platformNumber = "3",
             platformText = "Platform 3",
-            isWheelchairAccessible = true,
+
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Bus(), lineName = "333"),
                 TransportModeLine(transportMode = TransportMode.Bus(), lineName = "610X"),
@@ -713,7 +707,7 @@ private fun Preview_JourneyCard_Expanded() {
             totalTravelTime = "15 mins",
             platformNumber = "3",
             platformText = "Platform 3",
-            isWheelchairAccessible = true,
+
             transportModeLineList = persistentListOf(
                 TransportModeLine(
                     transportMode = TransportMode.Train(),
@@ -768,7 +762,6 @@ private fun Preview_JourneyCard_Expanded_Dark() {
             totalTravelTime = "15 mins",
             platformNumber = "3",
             platformText = "Platform 3",
-            isWheelchairAccessible = true,
             transportModeLineList = persistentListOf(
                 TransportModeLine(
                     transportMode = TransportMode.Train(),

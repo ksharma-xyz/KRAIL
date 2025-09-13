@@ -29,10 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -129,11 +131,7 @@ fun JourneyCard(
                         Modifier.border(
                             width = 2.dp,
                             shape = RoundedCornerShape(12.dp),
-                            brush = if (!isPastJourney) {
-                                Brush.linearGradient(colors = borderColors)
-                            } else {
-                                Brush.linearGradient(listOf(pastJourneyColor, pastJourneyColor))
-                            },
+                            color = KrailTheme.colors.onSurface,
                         )
                     } else {
                         Modifier
@@ -545,7 +543,8 @@ private fun ResponsiveJourneyInfoRow(
         // Try 3: Split clock up (Row1: dest + clock) (Row2: walk start, deviation end)
         val firstRowSplitFits = (destW + clockW) <= maxW
         val secondRowSplitFits = walkW <= secondRowSpace
-        val splitClockUp = !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
+        val splitClockUp =
+            !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
 
         val layoutHeight = when {
             oneRowFits -> maxOf(destH, clockH, walkH, devH)

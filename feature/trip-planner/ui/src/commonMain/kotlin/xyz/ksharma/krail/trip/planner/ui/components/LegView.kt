@@ -54,7 +54,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
 @Composable
 fun LegView(
-    routeText: String, // AVC via XYZ
+    routeText: String?, // AVC via XYZ
     transportModeLine: TransportModeLine,
     stops: ImmutableList<TimeTableState.JourneyCardInfo.Stop>,
     modifier: Modifier = Modifier,
@@ -208,7 +208,7 @@ fun LegView(
 
 @Composable
 private fun RouteSummary(
-    routeText: String,
+    routeText: String?,
     badgeText: String,
     badgeColor: Color,
     modifier: Modifier = Modifier,
@@ -223,12 +223,14 @@ private fun RouteSummary(
             modifier = Modifier.padding(end = 10.dp)
         )
 
-        Text(
-            text = routeText,
-            style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal), // token todo
-            modifier = Modifier
-                .align(Alignment.CenterVertically),
-        )
+        routeText?.let {
+            Text(
+                text = routeText,
+                style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal), // token todo
+                modifier = Modifier
+                    .align(Alignment.CenterVertically),
+            )
+        }
     }
 }
 
@@ -250,8 +252,12 @@ private fun StopInfo(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            val textStyle = if (isProminent) KrailTheme.typography.titleSmall else KrailTheme.typography.bodySmall
-            val iconTint = if (isProminent) KrailTheme.colors.onSurface else KrailTheme.colors.onSurface.copy(alpha = 0.75f)
+            val textStyle =
+                if (isProminent) KrailTheme.typography.titleSmall else KrailTheme.typography.bodySmall
+            val iconTint =
+                if (isProminent) KrailTheme.colors.onSurface else KrailTheme.colors.onSurface.copy(
+                    alpha = 0.75f
+                )
 
             val annotated = remember(name, isWheelchairAccessible) {
                 buildAnnotatedString {

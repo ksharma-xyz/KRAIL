@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -197,8 +198,10 @@ private fun DepartureDeviationIndicator(
     val (dotColor, label) = when (deviation) {
         is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
             KrailTheme.colors.deviationLate to deviation.text
+
         is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
             KrailTheme.colors.deviationEarly to deviation.text
+
         TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime ->
             KrailTheme.colors.deviationOnTime to "On time"
     }
@@ -453,38 +456,163 @@ fun DefaultJourneyCardContent(
             )
         }
 
-        FlowRow(
-            horizontalArrangement = Arrangement.Start,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally),
-        ) {
+        // Responsive destination + group row
+        ResponsiveJourneyInfoRow(
+            destinationTime = destinationTime,
+            totalTravelTime = totalTravelTime,
+            totalWalkTime = totalWalkTime,
+            departureDeviation = departureDeviation,
+        )
+    }
+}
+
+@Composable
+private fun ResponsiveJourneyInfoRow(
+    destinationTime: String,
+    totalTravelTime: String,
+    totalWalkTime: String?,
+    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation?,
+) {
+    // Custom layout to implement the rules:
+    // 1) destination always at start of its row.
+    // 2) deviation always at end of its row.
+    // 3) clock and walk stay adjacent as a unit.
+    // 4) Layout modes:
+    //    a) One row if all fit: dest | clock+walk ... deviation
+    //    b) Two rows default: Row1 dest; Row2 clock+walk | ... deviation
+    //    c) Fallback: if Row2 doesn't fit clock+walk+deviation, move clock to Row1 (dest+clock);
+    //                 Row2 has walk at start and deviation at end.
+    SubcomposeLayout { constraints ->
+        // Measure destination
+        val destMeas = subcompose("dest") {
             Text(
                 text = destinationTime,
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.padding(end = 10.dp),
             )
+        }
+        val destPl = destMeas.map { it.measure(constraints) }
+        val destW = destPl.sumOf { it.width }
+        val destH = destPl.maxOfOrNull { it.height } ?: 0
+
+        // Measure clock (always present)
+        val clockMeas = subcompose("clock") {
             TextWithIcon(
                 painter = painterResource(Res.drawable.ic_clock),
                 text = totalTravelTime,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(end = 10.dp),
+                modifier = Modifier.padding(end = 10.dp),
             )
-            totalWalkTime?.let {
+        }
+        val clockPl = clockMeas.map { it.measure(constraints) }
+        val clockW = clockPl.maxOfOrNull { it.width } ?: 0
+        val clockH = clockPl.maxOfOrNull { it.height } ?: 0
+
+        // Measure walk (optional)
+        val walkMeas = subcompose("walk") {
+            if (totalWalkTime != null) {
                 TextWithIcon(
                     painter = painterResource(Res.drawable.ic_walk),
                     text = totalWalkTime,
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .padding(end = 10.dp),
+                    modifier = Modifier.padding(end = 10.dp),
                 )
+            } else {
+                Spacer(Modifier.size(0.dp))
             }
-            Spacer(modifier = Modifier.weight(1f))
-            departureDeviation?.let { deviation ->
-                DepartureDeviationIndicator(deviation = deviation)
+        }
+        val walkPl = walkMeas.map { it.measure(constraints) }
+        val walkW = walkPl.maxOfOrNull { it.width } ?: 0
+        val walkH = walkPl.maxOfOrNull { it.height } ?: 0
+
+        // Measure deviation (optional)
+        val devMeas = subcompose("dev") {
+            if (departureDeviation != null) {
+                DepartureDeviationIndicator(deviation = departureDeviation)
+            } else {
+                Spacer(Modifier.size(0.dp))
+            }
+        }
+        val devPl = devMeas.map { it.measure(constraints) }
+        val devW = devPl.maxOfOrNull { it.width } ?: 0
+        val devH = devPl.maxOfOrNull { it.height } ?: 0
+
+        val maxW = constraints.maxWidth
+
+        // Try 1: All in one row (dest + clock + walk) with deviation right-aligned
+        val spaceBetween = maxW - destW - devW
+        val oneRowFits = (clockW + walkW) <= spaceBetween
+
+        // Try 2: Two rows default (Row1: dest) (Row2: clock + walk start, deviation end)
+        val secondRowSpace = maxW - devW
+        val twoRowDefaultFits = (clockW + walkW) <= secondRowSpace
+
+        // Try 3: Split clock up (Row1: dest + clock) (Row2: walk start, deviation end)
+        val firstRowSplitFits = (destW + clockW) <= maxW
+        val secondRowSplitFits = walkW <= secondRowSpace
+        val splitClockUp = !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
+
+        val layoutHeight = when {
+            oneRowFits -> maxOf(destH, clockH, walkH, devH)
+            splitClockUp -> destH + maxOf(walkH, devH)
+            else -> destH + maxOf(clockH, walkH, devH)
+        }
+
+        layout(width = maxW, height = layoutHeight) {
+            if (oneRowFits) {
+                // Row 1 only: dest at start, deviation at end, clock+walk in between
+                var x = 0
+                destPl.forEach { p ->
+                    p.placeRelative(x, 0)
+                    x += p.width
+                }
+                val devX = maxW - devW
+                // Place clock, then walk, without crossing into deviation
+                var midX = x
+                clockPl.forEach { p ->
+                    p.placeRelative(midX, 0)
+                    midX += p.width
+                }
+                walkPl.forEach { p ->
+                    p.placeRelative(midX, 0)
+                    midX += p.width
+                }
+                devPl.forEach { p -> p.placeRelative(devX, 0) }
+            } else if (splitClockUp) {
+                // Row 1: dest + clock
+                var x = 0
+                destPl.forEach { p ->
+                    p.placeRelative(x, 0)
+                    x += p.width
+                }
+                clockPl.forEach { p ->
+                    p.placeRelative(x, 0)
+                }
+                // Row 2: walk start, deviation end
+                val y2 = destH
+                var x2 = 0
+                walkPl.forEach { p ->
+                    p.placeRelative(x2, y2)
+                    x2 += p.width
+                }
+                val devX = maxW - devW
+                devPl.forEach { p -> p.placeRelative(devX, y2) }
+            } else {
+                // Default two rows
+                // Row 1: destination only
+                destPl.forEach { p -> p.placeRelative(0, 0) }
+                // Row 2: clock + walk at start, deviation at end
+                val y2 = destH
+                var x2 = 0
+                clockPl.forEach { p ->
+                    p.placeRelative(x2, y2)
+                    x2 += p.width
+                }
+                walkPl.forEach { p ->
+                    p.placeRelative(x2, y2)
+                    x2 += p.width
+                }
+                val devX = maxW - devW
+                devPl.forEach { p -> p.placeRelative(devX, y2) }
             }
         }
     }

@@ -29,12 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
@@ -101,18 +98,19 @@ fun JourneyCard(
     }
 
     val onSurface: Color = KrailTheme.colors.onSurface
+    // todo - keep for people who would love the border effect - add to settings?
     val borderColors = remember(transportModeList) { transportModeList.toColors(onSurface) }
     val isPastJourney by remember(timeToDeparture) {
         mutableStateOf(
             timeToDeparture.contains(other = "ago", ignoreCase = true),
         )
     }
-    val pastJourneyColor = KrailTheme.colors.onSurface.copy(alpha = 0.5f)
-    val themeColor = if (!isPastJourney) { // TODO - animate
+
+    val firstLegTransportModeColor = if (!isPastJourney) {
         transportModeList.firstOrNull()?.colorCode?.hexToComposeColor()
             ?: KrailTheme.colors.onSurface
     } else {
-        pastJourneyColor
+        KrailTheme.colors.onSurface
     }
 
     val horizontalCardPadding by animateDpAsState(
@@ -150,7 +148,7 @@ fun JourneyCard(
                     originTime = originTime,
                     destinationTime = destinationTime,
                     totalTravelTime = totalTravelTime,
-                    themeColor = themeColor,
+                    firstLegTransportModeColor = firstLegTransportModeColor,
                     transportModeLineList = transportModeLineList,
                     platformText = platformText,
                     totalWalkTime = totalWalkTime,
@@ -167,7 +165,7 @@ fun JourneyCard(
 
                 JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
                     timeToDeparture = timeToDeparture,
-                    themeColor = themeColor,
+                    firstLegTransportModeColor = firstLegTransportModeColor,
                     platformText = platformText,
                     totalTravelTime = totalTravelTime,
                     legList = legList,
@@ -226,7 +224,7 @@ private fun DepartureDeviationIndicator(
 @Composable
 fun ExpandedJourneyCardContent(
     timeToDeparture: String,
-    themeColor: Color,
+    firstLegTransportModeColor: Color,
     platformText: String?,
     totalTravelTime: String,
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
@@ -245,14 +243,14 @@ fun ExpandedJourneyCardContent(
             Text(
                 text = timeToDeparture,
                 style = KrailTheme.typography.titleLarge,
-                color = themeColor,
+                color = firstLegTransportModeColor,
             )
 
             platformText?.let { text ->
                 Text(
                     text = text,
                     style = KrailTheme.typography.titleLarge,
-                    color = themeColor,
+                    color = firstLegTransportModeColor,
                     modifier = Modifier,
                 )
             }
@@ -378,7 +376,7 @@ fun DefaultJourneyCardContent(
     originTime: String,
     destinationTime: String,
     totalTravelTime: String,
-    themeColor: Color,
+    firstLegTransportModeColor: Color,
     transportModeLineList: ImmutableList<TransportModeLine>,
     platformText: String?,
     totalWalkTime: String?,
@@ -394,7 +392,7 @@ fun DefaultJourneyCardContent(
                 Text(
                     text = timeToDeparture,
                     style = KrailTheme.typography.titleMedium,
-                    color = themeColor,
+                    color = firstLegTransportModeColor,
                     modifier = Modifier
                         .padding(end = 8.dp),
                 )
@@ -407,7 +405,7 @@ fun DefaultJourneyCardContent(
                     Text(
                         text = timeToDeparture,
                         style = KrailTheme.typography.titleMedium,
-                        color = themeColor,
+                        color = firstLegTransportModeColor,
                         modifier = Modifier
                             .padding(end = 8.dp)
                             .align(Alignment.CenterVertically),
@@ -425,6 +423,7 @@ fun DefaultJourneyCardContent(
                     text = text,
                     textAlign = TextAlign.Center,
                     style = KrailTheme.typography.labelLarge,
+                    color = firstLegTransportModeColor,
                     modifier = Modifier.padding(start = 4.dp),
                 )
             }

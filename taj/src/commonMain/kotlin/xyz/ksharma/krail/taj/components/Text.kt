@@ -3,6 +3,7 @@ package xyz.ksharma.krail.taj.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +29,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+    inlineContent: Map<String, InlineTextContent> = emptyMap(),
 ) {
     Text(
         text = AnnotatedString(text),
@@ -38,6 +40,7 @@ fun Text(
         maxLines = maxLines,
         overflow = overflow,
         onTextLayout = onTextLayout,
+        inlineContent = inlineContent,
     )
 }
 
@@ -52,6 +55,7 @@ fun Text(
     overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
     fontFamily: FontFamily? = null,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+    inlineContent: Map<String, InlineTextContent> = emptyMap(),
 ) {
     val contentAlpha = LocalContentAlpha.current
     val textStyle = style.merge(LocalTextStyle.current)
@@ -69,6 +73,7 @@ fun Text(
         overflow = overflow,
         modifier = modifier,
         onTextLayout = onTextLayout,
+        inlineContent = inlineContent,
     )
 }
 

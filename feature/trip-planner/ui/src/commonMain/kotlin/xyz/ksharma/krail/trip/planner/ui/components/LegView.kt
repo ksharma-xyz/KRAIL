@@ -13,8 +13,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -28,6 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -42,7 +47,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -211,20 +215,18 @@ private fun RouteSummary(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TransportModeBadge(
             backgroundColor = badgeColor,
             badgeText = badgeText,
+            modifier = Modifier.padding(end = 10.dp)
         )
 
         Text(
             text = routeText,
-            style = KrailTheme.typography.titleSmall,
+            style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal), // token todo
             modifier = Modifier
-                .weight(1f)
-                .padding(end = 12.dp)
                 .align(Alignment.CenterVertically),
         )
     }
@@ -248,31 +250,44 @@ private fun StopInfo(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
+            val textStyle = if (isProminent) KrailTheme.typography.titleSmall else KrailTheme.typography.bodySmall
+            val iconTint = if (isProminent) KrailTheme.colors.onSurface else KrailTheme.colors.onSurface.copy(alpha = 0.75f)
+
+            val annotated = remember(name, isWheelchairAccessible) {
+                buildAnnotatedString {
+                    append(name)
+                    if (isWheelchairAccessible) {
+                        append(" ")
+                        appendInlineContent("a11y")
+                    }
+                }
+            }
+            val inline = if (isWheelchairAccessible) {
+                val sizeSp = textStyle.fontSize
+                mapOf(
+                    "a11y" to InlineTextContent(
+                        Placeholder(
+                            width = sizeSp,
+                            height = sizeSp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        )
+                    ) {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_a11y),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(iconTint),
+                        )
+                    }
+                )
+            } else emptyMap()
+
             Text(
-                text = name,
-                style = if (isProminent) KrailTheme.typography.titleSmall else KrailTheme.typography.bodySmall,
+                text = annotated,
+                style = textStyle,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.align(Alignment.CenterVertically),
+                inlineContent = inline,
             )
-            if (isWheelchairAccessible) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_a11y),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(
-                        color = if (isProminent) {
-                            KrailTheme.colors.onSurface
-                        } else {
-                            KrailTheme.colors.onSurface.copy(
-                                alpha = 0.75f,
-                            )
-                        },
-                    ),
-                    modifier = Modifier
-                        .size(16.dp.toAdaptiveDecorativeIconSize())
-                        .padding(end = 4.dp)
-                        .align(Alignment.CenterVertically),
-                )
-            }
         }
     }
 }

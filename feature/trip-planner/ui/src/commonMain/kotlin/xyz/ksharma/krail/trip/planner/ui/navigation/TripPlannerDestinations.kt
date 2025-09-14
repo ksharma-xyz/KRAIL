@@ -71,7 +71,7 @@ internal data object TripPlannerNavRoute
 data object SavedTripsRoute: KrailRoute
 
 @Serializable
-internal data class TimeTableRoute(
+data class TimeTableRoute(
     val fromStopId: String,
     val fromStopName: String,
     val toStopId: String,

@@ -48,5 +48,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- URL Scheme Configuration for Deep Links -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>xyz.ksharma.krail.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>krail</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

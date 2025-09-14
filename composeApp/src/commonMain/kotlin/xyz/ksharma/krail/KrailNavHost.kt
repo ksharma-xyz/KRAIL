@@ -12,13 +12,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.serialization.Serializable
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
+import xyz.ksharma.krail.core.deeplink.DeepLinkManager
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.deeplink.DeepLinkNavigationHandler
 import xyz.ksharma.krail.splash.SplashScreen
 import xyz.ksharma.krail.splash.SplashUiEvent
 import xyz.ksharma.krail.splash.SplashViewModel
@@ -32,29 +36,34 @@ import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.taj.unspecifiedColor
 import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.tripPlannerDestinations
-import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
 
-/**
- * TODO - I don't like [NavHost] defined in app module, I would love to refactor it to :core:navigation module
- *    but that results in a cyclic dependency. Feature module needs to depend on :core:navigation for navigation logic and
- *    then core:navigation needs to depend on feature module for the destinations / nested navigation graphs.
- *    This results in putting all nav logic in the app module, which will have negative impacts on the build time.
- *    Why is navigation so hard in Compose?
- *
- *   Navigation logic is currently taken from [NowInAndroid](https://github.com/android/nowinandroid] app,
- *   so fine for now. But I will want to refactor it to something nicer e.g. using Circuit library
- *   from Slack, but that would also mean refactoring to use MVP instead of MVVM.
- */
 @Composable
 fun KrailNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    val deepLinkManager: DeepLinkManager = koinInject()
+
     val themeColorHexCode = rememberSaveable { mutableStateOf(unspecifiedColor) }
     var themeId: Int? by rememberSaveable { mutableStateOf(null) }
     val themeContentColorHexCode = rememberSaveable { mutableStateOf(unspecifiedColor) }
+
     themeContentColorHexCode.value =
         getForegroundColor(
             backgroundColor = themeColorHexCode.value.hexToComposeColor(),
         ).toHex()
+
+    // Handle deep link navigation events
+    LaunchedEffect(navController) {
+        val navigationHandler = DeepLinkNavigationHandler(navController)
+
+        // Notify that navigation is ready to handle events
+        deepLinkManager.onNavigationReady()
+        log("KrailNavHost: Navigation system initialized and ready")
+
+        deepLinkManager.deepLinkEvents.collectLatest { event ->
+            log("KrailNavHost: Received deep link navigation event: $event")
+            navigationHandler.handleNavigationEvent(event)
+        }
+    }
 
     CompositionLocalProvider(
         LocalThemeColor provides themeColorHexCode,
@@ -72,7 +81,6 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
 
             composable<SplashScreen> {
                 val viewModel: SplashViewModel = koinViewModel<SplashViewModel>()
-                val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 // Set theme in CompositionLocal
@@ -81,16 +89,17 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
 
                 LaunchedEffect(uiState.navigationDestination) {
                     uiState.navigationDestination?.let { destination ->
-                        log("Splash complete Navigating to destination: $destination")
-                        navController.navigate(
-                            route = destination,
-                            navOptions = NavOptions.Builder()
-                                .setLaunchSingleTop(true)
-                                .setPopUpTo<SplashScreen>(inclusive = true)
-                                .build(),
-                        )
-                    } ?: run {
-                        log("navigationDestination is null, still loading?")
+                        log("KrailNavHost: Splash completed, navigating to: $destination")
+
+                        // Navigate to the destination and remove splash from back stack
+                        // This ensures SavedTripsRoute becomes the effective root
+                        navController.navigate(destination) {
+                            // Remove splash from back stack completely
+                            popUpTo<SplashScreen> {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     }
                 }
 
@@ -102,6 +111,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                     },
                     backgroundColor = KrailTheme.colors.surface,
                     onSplashAnimationComplete = {
+                        log("KrailNavHost: Splash animation completed")
                         viewModel.onUiEvent(SplashUiEvent.SplashAnimationComplete)
                     },
                 )

@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.timetable
 
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +13,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.deeplink.DeepLinkManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
@@ -28,9 +30,31 @@ internal fun NavGraphBuilder.timeTableDestination(navController: NavHostControll
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val route: TimeTableRoute = backStackEntry.toRoute()
         val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+
+        log("TimeTableDestination: Navigated to TimeTable screen with route: $route")
+        log("TimeTableDestination: fromStopId=${route.fromStopId}, toStopId=${route.toStopId}")
+        log("TimeTableDestination: fromStopName='${route.fromStopName}', toStopName='${route.toStopName}'")
+        log("TimeTableDestination: isLoading=$isLoading")
+
+        // Track navigation state for deep link management
+        val routeKey = "TimeTable_${route.fromStopId}_${route.toStopId}"
+
+        // Inject DeepLinkManager to track navigation state
+        val deepLinkManager: DeepLinkManager = org.koin.compose.koinInject()
+
+        // Notify when leaving this screen
+        DisposableEffect(routeKey) {
+            onDispose {
+                log("TimeTableDestination: Screen disposed, notifying DeepLinkManager")
+                deepLinkManager.onNavigatedAwayFromDeepLinkedScreen(routeKey)
+            }
+        }
+
         if (isLoading) {
+            log("TimeTableDestination: Loading timetable data for trip: ${route.toTrip()}")
             viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip = route.toTrip()))
         }
+
         // Subscribe to the isActive state flow - for updating the TimeText periodically.
         val isActive by viewModel.isActive.collectAsStateWithLifecycle()
         val autoRefreshTimeTable by viewModel.autoRefreshTimeTable.collectAsStateWithLifecycle()
@@ -48,26 +72,36 @@ internal fun NavGraphBuilder.timeTableDestination(navController: NavHostControll
 
         // Lookout for new updates
         LaunchedEffect(dateTimeSelectionJson) {
-            log("Changed dateTimeSelectionItem: $dateTimeSelectionItem")
+            log("TimeTableDestination: DateTimeSelection changed: $dateTimeSelectionItem")
             dateTimeSelectionItem = dateTimeSelectionJson?.let { fromJsonString(it) }
             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
         }
+
+        log("TimeTableDestination: Rendering TimeTableScreen with state isError=${timeTableState.isError}, journeyListSize=${timeTableState.journeyList.size}")
 
         TimeTableScreen(
             timeTableState = timeTableState,
             expandedJourneyId = expandedJourneyId,
             onEvent = { viewModel.onEvent(it) },
             onBackClick = {
+                log("TimeTableDestination: Back button clicked")
                 viewModel.onEvent(
                     TimeTableUiEvent.BackClick(
                         isPreviousBackStackEntryNull = navController.previousBackStackEntry == null
                     )
                 )
 
-                navController.navigate(
-                    route = SavedTripsRoute,
-                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
-                )
+                // Use proper back navigation instead of forcing SavedTripsRoute
+                if (navController.previousBackStackEntry != null) {
+                    log("TimeTableDestination: Navigating back to previous screen")
+                    navController.popBackStack()
+                } else {
+                    log("TimeTableDestination: No previous entry, navigating to SavedTripsRoute")
+                    navController.navigate(
+                        route = SavedTripsRoute,
+                        navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
+                    )
+                }
             },
             onAlertClick = { journeyId ->
                 log("AlertClicked for journeyId: $journeyId")

@@ -13,6 +13,10 @@ struct ComposeView: UIViewControllerRepresentable {
 struct ContentView: View {
     var body: some View {
         ComposeView()
-                .ignoresSafeArea()
+            .ignoresSafeArea()
+            .onOpenURL { url in
+                // Handle deep link through the KMP DeepLinkManager from core module
+                DeepLinkBridgeKt.handleDeepLinkFromIos(url: url.absoluteString)
+            }
     }
 }

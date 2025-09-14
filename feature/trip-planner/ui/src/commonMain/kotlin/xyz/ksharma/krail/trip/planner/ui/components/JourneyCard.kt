@@ -1,10 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +50,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SeparatorIcon
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -113,33 +112,12 @@ fun JourneyCard(
         KrailTheme.colors.onSurface
     }
 
-    val horizontalCardPadding by animateDpAsState(
-        targetValue = if (cardState == JourneyCardState.DEFAULT) 12.dp else 0.dp,
-        label = "cardPadding",
-    )
-
     CompositionLocalProvider(LocalContentAlpha provides if (isPastJourney) 0.5f else 1f) {
         Column(
             modifier = modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .background(color = KrailTheme.colors.surface)
-                .then(
-                    if (cardState == JourneyCardState.DEFAULT) {
-                        Modifier.border(
-                            width = 2.dp,
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isPastJourney) KrailTheme.colors.pastJourney
-                            else KrailTheme.colors.futureJourney,
-                        )
-                    } else {
-                        Modifier
-                    },
-                )
-                .padding(
-                    vertical = 8.dp,
-                    horizontal = horizontalCardPadding,
-                )
                 .animateContentSize(),
         ) {
             when (cardState) {
@@ -180,6 +158,8 @@ fun JourneyCard(
                     ),
                 )
             }
+
+            Divider(modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp))
         }
     }
 }
@@ -543,7 +523,8 @@ private fun ResponsiveJourneyInfoRow(
         // Try 3: Split clock up (Row1: dest + clock) (Row2: walk start, deviation end)
         val firstRowSplitFits = (destW + clockW) <= maxW
         val secondRowSplitFits = walkW <= secondRowSpace
-        val splitClockUp = !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
+        val splitClockUp =
+            !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
 
         val layoutHeight = when {
             oneRowFits -> maxOf(destH, clockH, walkH, devH)

@@ -16,13 +16,18 @@ val md_theme_light_softLabel = Color(0xFF767676)
 val md_theme_light_secondary_label = Color(0xFF2E2E2E)
 val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
-
 // Light theme (Deviations colors)
 val md_theme_light_onTime = Color(0xFF31DB39)
 val md_theme_light_early = Color(0xFFFFC60F)
 val md_theme_light_late = Color(0xFFF12525)
+// Future and past journey colors
+val md_theme_light_future_journey= Color(0xFF3A3A3A)
+val md_theme_light_past_journey = Color(0xFFBBBBBB)
 
-// Dark Color tokens
+
+/**
+ * KRAIL Dark theme color tokens
+ */
 val md_theme_dark_error = Color(0xFFFFB4AB)
 val md_theme_dark_errorContainer = Color(0xFF93000A)
 val md_theme_dark_onError = Color(0xFF690005)
@@ -40,7 +45,12 @@ val md_theme_dark_discover_card_background = Color(0xFF292929)
 val md_theme_dark_onTime = Color(0xFF31DB39)
 val md_theme_dark_early = Color(0xFFFFC60F)
 val md_theme_dark_late = Color(0xFFFF2B2B)
+// Future and past journey colors
+val md_theme_dark_future_journey= Color(0xFFEEEEEE)
+val md_theme_dark_past_journey = Color(0xFF8F8F8F)
 
+
+// Transport mode theme colors
 val bus_theme = Color(0xFF00B5EF)
 val train_theme = Color(0xFFF6891F)
 val metro_theme = Color(0xFF009B77)
@@ -77,6 +87,9 @@ data class KrailColors(
     val deviationOnTime: Color,
     val deviationEarly: Color,
     val deviationLate: Color,
+    // JourneyCard colors
+    val pastJourney: Color,
+    val futureJourney: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -98,6 +111,8 @@ internal val KrailLightColors = KrailColors(
     deviationOnTime = md_theme_light_onTime,
     deviationEarly = md_theme_light_early,
     deviationLate = md_theme_light_late,
+    pastJourney = md_theme_light_past_journey,
+    futureJourney = md_theme_light_future_journey,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -119,6 +134,8 @@ internal val KrailDarkColors = KrailColors(
     deviationOnTime = md_theme_dark_onTime,
     deviationEarly = md_theme_dark_early,
     deviationLate = md_theme_dark_late,
+    pastJourney = md_theme_dark_past_journey,
+    futureJourney = md_theme_dark_future_journey,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -141,5 +158,7 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         deviationOnTime = Color.Unspecified,
         deviationEarly = Color.Unspecified,
         deviationLate = Color.Unspecified,
+        pastJourney = Color.Unspecified,
+        futureJourney = Color.Unspecified,
     )
 }

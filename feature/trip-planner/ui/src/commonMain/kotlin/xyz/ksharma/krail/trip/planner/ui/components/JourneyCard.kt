@@ -612,11 +612,13 @@ private fun ResponsiveJourneyInfoRow(
     }
 }
 
+// TODO - support tablet mode separately
 @Composable
 private fun displayAdaptiveTransportModeList(
     transportModeLineList: ImmutableList<TransportModeLine>,
     platformText: String?,
 ): Boolean = isLargeFontScale() || transportModeLineList.size > 2 && platformText != null
+        || transportModeLineList.count { it.transportMode.productClass == TransportMode.Bus().productClass } > 1
 
 @Composable
 private fun TransportModesRow(

@@ -55,6 +55,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -193,7 +194,7 @@ fun TimeTableScreen(
                 FlowRow(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = 10.dp)
+                        .padding(horizontal = 12.dp)
                         .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)

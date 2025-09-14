@@ -60,11 +60,20 @@ class RealStopResultsManager(
     }
 
     override fun fetchLocalStopName(stopId: String): String? {
+        log("RealStopResultsManager: fetchLocalStopName called with stopId: $stopId")
         val resultsDb = sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())
-        return resultsDb
-            .firstOrNull { it.stopId == stopId }
-            ?.toStopResult()
-            ?.stopName
+        log("RealStopResultsManager: Database query returned ${resultsDb.size} results")
+
+        resultsDb.forEach { result ->
+            log("RealStopResultsManager: Found stop - stopId: ${result.stopId}, stopName: ${result.stopName}")
+        }
+
+        val matchingStop = resultsDb.firstOrNull { it.stopId == stopId }
+        val stopName = matchingStop?.toStopResult()?.stopName
+
+        log("RealStopResultsManager: Matching stop found: ${matchingStop != null}, stopName: $stopName")
+
+        return stopName
     }
 
 

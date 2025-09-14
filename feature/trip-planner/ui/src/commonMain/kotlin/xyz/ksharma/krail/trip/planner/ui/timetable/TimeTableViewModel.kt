@@ -136,6 +136,8 @@ class TimeTableViewModel(
         when (event) {
             is TimeTableUiEvent.LoadTimeTable -> onLoadTimeTable(event.trip)
 
+            is TimeTableUiEvent.UpdateTripFromDeepLink -> onUpdateTripFromDeepLink(event.trip)
+
             is TimeTableUiEvent.JourneyCardClicked -> onJourneyCardClicked(event.journeyId)
 
             TimeTableUiEvent.SaveTripButtonClicked -> onSaveTripButtonClicked()
@@ -405,6 +407,19 @@ class TimeTableViewModel(
             )
         }
         rateLimiter.triggerEvent()
+    }
+
+    private fun onUpdateTripFromDeepLink(trip: Trip) {
+        log("onUpdateTripFromDeepLink -- Updating trip with resolved stop names: ${trip.fromStopName} -> ${trip.toStopName}")
+        tripInfo = trip
+        val savedTrip = sandook.selectTripById(tripId = trip.tripId)
+        log("Saved Trip[${trip.tripId}]: $savedTrip")
+        updateUiState {
+            copy(
+                trip = trip,
+                isTripSaved = savedTrip != null,
+            )
+        }
     }
 
     private fun onReverseTripButtonClicked() {

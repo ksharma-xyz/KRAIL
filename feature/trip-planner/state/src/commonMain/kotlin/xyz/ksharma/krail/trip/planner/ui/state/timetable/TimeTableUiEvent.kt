@@ -8,6 +8,11 @@ sealed interface TimeTableUiEvent {
 
     data class LoadTimeTable(val trip: Trip) : TimeTableUiEvent
 
+    /**
+     * Updates the trip information with resolved stop names from deep links
+     */
+    data class UpdateTripFromDeepLink(val trip: Trip) : TimeTableUiEvent
+
     data class JourneyCardClicked(val journeyId: String) : TimeTableUiEvent
 
     data class DateTimeSelectionChanged(val dateTimeSelectionItem: DateTimeSelectionItem?) :

@@ -114,6 +114,70 @@ fun JourneyCard(
                 .background(color = KrailTheme.colors.surface)
                 .animateContentSize(),
         ) {
+
+            Column(
+                modifier = Modifier
+                    .clickable(
+                        role = Role.Button,
+                        onClick = onClick,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    )
+                    .padding(bottom = 4.dp),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
+                        Text(
+                            text = timeToDeparture,
+                            style = KrailTheme.typography.titleMedium,
+                            color = firstLegTransportModeColor,
+                            modifier = Modifier
+                                .padding(end = 8.dp),
+                        )
+                    } else {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                text = timeToDeparture,
+                                style = KrailTheme.typography.titleMedium,
+                                color = firstLegTransportModeColor,
+                                modifier = Modifier
+                                    .padding(end = 8.dp),
+                            )
+                            TransportModesRow(
+                                transportModeLineList = transportModeLineList,
+                                showBadge = { it.transportMode is TransportMode.Bus },
+                            )
+                        }
+                    }
+
+                    platformText?.let { text ->
+                        Text(
+                            text = text,
+                            textAlign = TextAlign.Center,
+                            style = KrailTheme.typography.titleMedium,
+                            color = firstLegTransportModeColor,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
+                }
+
+                if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
+                    // Always show badges/icons on a new line for large font scale; let FlowRow wrap
+                    TransportModesRow(
+                        transportModeLineList = transportModeLineList,
+                        showBadge = { it.transportMode is TransportMode.Bus },
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+
             when (cardState) {
                 JourneyCardState.DEFAULT -> DefaultJourneyCardContent(
                     timeToDeparture = timeToDeparture,
@@ -208,27 +272,6 @@ fun ExpandedJourneyCardContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = if (platformText != null) Arrangement.SpaceBetween else Arrangement.Start,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = timeToDeparture,
-                style = KrailTheme.typography.titleMedium,
-                color = firstLegTransportModeColor,
-            )
-
-            platformText?.let { text ->
-                Text(
-                    text = text,
-                    style = KrailTheme.typography.titleMedium,
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier,
-                )
-            }
-        }
         FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -358,58 +401,6 @@ fun DefaultJourneyCardContent(
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     Column(modifier = modifier) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-                Text(
-                    text = timeToDeparture,
-                    style = KrailTheme.typography.titleMedium,
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier
-                        .padding(end = 8.dp),
-                )
-            } else {
-                FlowRow(
-                    horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = timeToDeparture,
-                        style = KrailTheme.typography.titleMedium,
-                        color = firstLegTransportModeColor,
-                        modifier = Modifier
-                            .padding(end = 8.dp),
-                    )
-                    TransportModesRow(
-                        transportModeLineList = transportModeLineList,
-                        showBadge = { it.transportMode is TransportMode.Bus },
-                    )
-                }
-            }
-
-            platformText?.let { text ->
-                Text(
-                    text = text,
-                    textAlign = TextAlign.Center,
-                    style = KrailTheme.typography.titleMedium,
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
-
-        if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-            // Always show badges/icons on a new line for large font scale; let FlowRow wrap
-            TransportModesRow(
-                transportModeLineList = transportModeLineList,
-                showBadge = { it.transportMode is TransportMode.Bus },
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-
         // Origin time + deviation
         Row(
             verticalAlignment = Alignment.CenterVertically,

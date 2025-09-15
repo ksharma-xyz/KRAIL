@@ -115,78 +115,19 @@ fun JourneyCard(
                 .animateContentSize(),
         ) {
 
-            Column(
-                modifier = Modifier
-                    .clickable(
-                        role = Role.Button,
-                        onClick = onClick,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    )
-                    .padding(bottom = 4.dp),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-                        Text(
-                            text = timeToDeparture,
-                            style = KrailTheme.typography.titleMedium,
-                            color = firstLegTransportModeColor,
-                            modifier = Modifier
-                                .padding(end = 8.dp),
-                        )
-                    } else {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.Start,
-                            modifier = Modifier.weight(1f).padding(end = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = timeToDeparture,
-                                style = KrailTheme.typography.titleMedium,
-                                color = firstLegTransportModeColor,
-                                modifier = Modifier
-                                    .padding(end = 8.dp),
-                            )
-                            TransportModesRow(
-                                transportModeLineList = transportModeLineList,
-                                showBadge = { it.transportMode is TransportMode.Bus },
-                            )
-                        }
-                    }
-
-                    platformText?.let { text ->
-                        Text(
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = KrailTheme.typography.titleMedium,
-                            color = firstLegTransportModeColor,
-                            modifier = Modifier.padding(start = 4.dp),
-                        )
-                    }
-                }
-
-                if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-                    // Always show badges/icons on a new line for large font scale; let FlowRow wrap
-                    TransportModesRow(
-                        transportModeLineList = transportModeLineList,
-                        showBadge = { it.transportMode is TransportMode.Bus },
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
-            }
+            JourneyCardHeader(
+                transportModeLineList = transportModeLineList,
+                platformText = platformText,
+                timeToDeparture = timeToDeparture,
+                firstLegTransportModeColor = firstLegTransportModeColor,
+                onClick = onClick,
+            )
 
             when (cardState) {
                 JourneyCardState.DEFAULT -> DefaultJourneyCardContent(
-                    timeToDeparture = timeToDeparture,
                     originTime = originTime,
                     destinationTime = destinationTime,
                     totalTravelTime = totalTravelTime,
-                    firstLegTransportModeColor = firstLegTransportModeColor,
-                    transportModeLineList = transportModeLineList,
-                    platformText = platformText,
                     totalWalkTime = totalWalkTime,
                     departureDeviation = departureDeviation,
                     modifier = Modifier
@@ -200,9 +141,6 @@ fun JourneyCard(
                 )
 
                 JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
-                    timeToDeparture = timeToDeparture,
-                    firstLegTransportModeColor = firstLegTransportModeColor,
-                    platformText = platformText,
                     totalTravelTime = totalTravelTime,
                     legList = legList,
                     totalUniqueServiceAlerts = totalUniqueServiceAlerts,
@@ -217,7 +155,80 @@ fun JourneyCard(
                 )
             }
 
-            Divider(modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp))
+            Divider(modifier = Modifier.padding(top = 16.dp))
+        }
+    }
+}
+
+@Composable
+private fun JourneyCardHeader(
+    transportModeLineList: ImmutableList<TransportModeLine>,
+    platformText: String?,
+    timeToDeparture: String,
+    firstLegTransportModeColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            )
+            .padding(bottom = 4.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
+                Text(
+                    text = timeToDeparture,
+                    style = KrailTheme.typography.titleMedium,
+                    color = firstLegTransportModeColor,
+                    modifier = Modifier
+                        .padding(end = 8.dp),
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = timeToDeparture,
+                        style = KrailTheme.typography.titleMedium,
+                        color = firstLegTransportModeColor,
+                        modifier = Modifier
+                            .padding(end = 8.dp),
+                    )
+                    TransportModesRow(
+                        transportModeLineList = transportModeLineList,
+                        showBadge = { it.transportMode is TransportMode.Bus },
+                    )
+                }
+            }
+
+            platformText?.let { text ->
+                Text(
+                    text = text,
+                    textAlign = TextAlign.Center,
+                    style = KrailTheme.typography.titleMedium,
+                    color = firstLegTransportModeColor,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            }
+        }
+
+        if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
+            // Always show badges/icons on a new line for large font scale; let FlowRow wrap
+            TransportModesRow(
+                transportModeLineList = transportModeLineList,
+                showBadge = { it.transportMode is TransportMode.Bus },
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
     }
 }
@@ -261,9 +272,6 @@ private fun DepartureDeviationIndicator(
 
 @Composable
 fun ExpandedJourneyCardContent(
-    timeToDeparture: String,
-    firstLegTransportModeColor: Color,
-    platformText: String?,
     totalTravelTime: String,
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
     totalUniqueServiceAlerts: Int,
@@ -389,13 +397,9 @@ fun getPaddingValue(lastLeg: TimeTableState.JourneyCardInfo.Leg): Dp {
 
 @Composable
 fun DefaultJourneyCardContent(
-    timeToDeparture: String,
     originTime: String,
     destinationTime: String,
     totalTravelTime: String,
-    firstLegTransportModeColor: Color,
-    transportModeLineList: ImmutableList<TransportModeLine>,
-    platformText: String?,
     totalWalkTime: String?,
     modifier: Modifier = Modifier,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,

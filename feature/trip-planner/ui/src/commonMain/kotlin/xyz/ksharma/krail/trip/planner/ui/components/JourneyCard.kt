@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -96,15 +95,11 @@ fun JourneyCard(
         transportModeLineList.map { it.transportMode }.toImmutableList()
     }
 
-    val onSurface: Color = KrailTheme.colors.onSurface
-    // todo - keep for people who would love the border effect - add to settings?
-    val borderColors = remember(transportModeList) { transportModeList.toColors(onSurface) }
     val isPastJourney by remember(timeToDeparture) {
         mutableStateOf(
             timeToDeparture.contains(other = "ago", ignoreCase = true),
         )
     }
-
     val firstLegTransportModeColor = if (!isPastJourney) {
         transportModeList.firstOrNull()?.colorCode?.hexToComposeColor()
             ?: KrailTheme.colors.onSurface
@@ -116,7 +111,6 @@ fun JourneyCard(
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
                 .background(color = KrailTheme.colors.surface)
                 .animateContentSize(),
         ) {
@@ -222,14 +216,14 @@ fun ExpandedJourneyCardContent(
         ) {
             Text(
                 text = timeToDeparture,
-                style = KrailTheme.typography.titleLarge,
+                style = KrailTheme.typography.titleMedium,
                 color = firstLegTransportModeColor,
             )
 
             platformText?.let { text ->
                 Text(
                     text = text,
-                    style = KrailTheme.typography.titleLarge,
+                    style = KrailTheme.typography.titleMedium,
                     color = firstLegTransportModeColor,
                     modifier = Modifier,
                 )
@@ -387,13 +381,11 @@ fun DefaultJourneyCardContent(
                         style = KrailTheme.typography.titleMedium,
                         color = firstLegTransportModeColor,
                         modifier = Modifier
-                            .padding(end = 8.dp)
-                            .align(Alignment.CenterVertically),
+                            .padding(end = 8.dp),
                     )
                     TransportModesRow(
                         transportModeLineList = transportModeLineList,
                         showBadge = { it.transportMode is TransportMode.Bus },
-                        modifier = Modifier.align(Alignment.CenterVertically),
                     )
                 }
             }
@@ -402,7 +394,7 @@ fun DefaultJourneyCardContent(
                 Text(
                     text = text,
                     textAlign = TextAlign.Center,
-                    style = KrailTheme.typography.labelLarge,
+                    style = KrailTheme.typography.titleMedium,
                     color = firstLegTransportModeColor,
                     modifier = Modifier.padding(start = 4.dp),
                 )
@@ -660,16 +652,6 @@ private fun TextWithIcon(
             style = textStyle,
             color = color,
         )
-    }
-}
-
-// toColors() now accepts onSurface color as a parameter
-internal fun List<TransportMode>?.toColors(onSurface: Color): List<Color> = when {
-    this.isNullOrEmpty() -> listOf(onSurface, onSurface)
-    size >= 2 -> map { it.colorCode.hexToComposeColor() }
-    else -> {
-        val color = first().colorCode.hexToComposeColor()
-        listOf(color, color)
     }
 }
 

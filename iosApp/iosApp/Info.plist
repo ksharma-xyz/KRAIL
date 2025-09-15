@@ -60,5 +60,10 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Universal Links Configuration -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:krail.app</string>
+	</array>
 </dict>
 </plist>

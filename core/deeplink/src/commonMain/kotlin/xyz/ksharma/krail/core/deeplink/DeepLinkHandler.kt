@@ -5,12 +5,17 @@ import xyz.ksharma.krail.core.log.log
 /**
  * Handles parsing of deep links for the Krail app.
  *
- * Deep link format: krail://timetable/{fromStopId}_{toStopId}
- * Example: krail://timetable/123_456
+ * Supports both custom scheme and universal links:
+ * - Custom scheme: krail://timetable/{fromStopId}_{toStopId}
+ * - Universal link: https://krail.app/timetable/{fromStopId}_{toStopId}
+ *
+ * Example: https://krail.app/timetable/200060_200080
  */
 object DeepLinkHandler {
 
-    private const val SCHEME = "krail"
+    private const val CUSTOM_SCHEME = "krail"
+    private const val HTTPS_SCHEME = "https"
+    private const val UNIVERSAL_LINK_HOST = "krail.app"
     private const val HOST_TIMETABLE = "timetable"
 
     /**
@@ -27,9 +32,13 @@ object DeepLinkHandler {
             log("DeepLinkHandler: Parsed URI - scheme: ${uri.scheme}, host: ${uri.host}, path: ${uri.path}")
 
             when {
-                uri.scheme == SCHEME && uri.host == HOST_TIMETABLE -> {
-                    log("DeepLinkHandler: Valid timetable deep link detected")
+                uri.scheme == CUSTOM_SCHEME && uri.host == HOST_TIMETABLE -> {
+                    log("DeepLinkHandler: Valid timetable deep link detected (custom scheme)")
                     parseTimeTableDeepLink(uri.path)
+                }
+                uri.scheme == HTTPS_SCHEME && uri.host == UNIVERSAL_LINK_HOST && uri.path.startsWith("/$HOST_TIMETABLE/") -> {
+                    log("DeepLinkHandler: Valid timetable deep link detected (universal link)")
+                    parseTimeTableDeepLink(uri.path.removePrefix("/$HOST_TIMETABLE/"))
                 }
                 else -> {
                     log("DeepLinkHandler: Invalid deep link format - scheme: ${uri.scheme}, host: ${uri.host}")
@@ -86,7 +95,15 @@ object DeepLinkHandler {
      * Creates a deep link URL for a timetable route.
      */
     fun createTimeTableDeepLink(fromStopId: String, toStopId: String): String {
-        return "$SCHEME://$HOST_TIMETABLE/${fromStopId}_${toStopId}"
+        return "$CUSTOM_SCHEME://$HOST_TIMETABLE/${fromStopId}_${toStopId}"
+    }
+
+    /**
+     * Creates a universal link URL for sharing (clickable in messaging apps).
+     * Uses a custom parameter to help with app detection.
+     */
+    fun createShareableTimeTableLink(fromStopId: String, toStopId: String): String {
+        return "$HTTPS_SCHEME://$UNIVERSAL_LINK_HOST/$HOST_TIMETABLE/${fromStopId}_${toStopId}?app=krail"
     }
 
     private fun parseUri(url: String): Uri {

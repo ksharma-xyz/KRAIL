@@ -4,24 +4,27 @@ import xyz.ksharma.krail.core.log.log
 
 /**
  * Deep link validator that follows security best practices.
- * Validates and sanitizes krail:// deep links before processing.
+ * Validates and sanitizes both krail:// and https://krail.app deep links before processing.
  *
  * ✅ Valid URLs:
  * - krail://timetable/200060_200080
+ * - https://krail.app/timetable/200060_200080
  * - krail://timetable/G1232_T456
  *
  * ❌ Invalid URLs (blocked):
  * - krail://timetable/123_123 (same origin/destination)
  * - javascript://alert('xss') (malicious scheme)
  * - krail://timetable/ (missing parameters)
+ * - https://malicious.com/timetable/123_456 (wrong domain)
  */
 object DeepLinkValidator {
 
-    // Only allow krail:// scheme for simplicity
-    private const val ALLOWED_SCHEME = "krail"
+    // Allowed schemes
+    private val ALLOWED_SCHEMES = setOf("krail", "https")
 
-    // Allowed hosts for krail:// URLs
-    private val ALLOWED_HOSTS = setOf("timetable")
+    // Allowed hosts for different schemes
+    private val ALLOWED_KRAIL_HOSTS = setOf("timetable")
+    private val ALLOWED_HTTPS_HOSTS = setOf("krail.app")
 
     // Maximum URL length to prevent DoS attacks
     private const val MAX_URL_LENGTH = 200 // Reduced since we only support simple URLs
@@ -52,13 +55,16 @@ object DeepLinkValidator {
             val uri = parseAndValidateUri(url) ?: return ValidationResult.Invalid("Invalid URI format")
 
             // 3. Validate scheme (only krail://)
-            if (uri.scheme != ALLOWED_SCHEME) {
+            if (uri.scheme !in ALLOWED_SCHEMES) {
                 log("DeepLinkValidator: Invalid scheme: ${uri.scheme}")
-                return ValidationResult.Invalid("Only krail:// scheme is supported")
+                return ValidationResult.Invalid("Only krail:// and https://krail.app schemes are supported")
             }
 
             // 4. Validate host
-            if (uri.host !in ALLOWED_HOSTS) {
+            val isKrailScheme = uri.scheme == "krail"
+            val allowedHosts = if (isKrailScheme) ALLOWED_KRAIL_HOSTS else ALLOWED_HTTPS_HOSTS
+
+            if (uri.host !in allowedHosts) {
                 log("DeepLinkValidator: Invalid host: ${uri.host}")
                 return ValidationResult.Invalid("Unknown deep link type: ${uri.host}")
             }

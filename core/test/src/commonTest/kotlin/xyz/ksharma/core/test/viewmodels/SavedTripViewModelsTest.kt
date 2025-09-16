@@ -212,7 +212,7 @@ class SavedTripsViewModelTest {
     fun `GIVEN a trip WHEN AnalyticsReverseSavedTrip event is triggered THEN track ReverseStopClickEvent should be called`() =
         runTest {
             // WHEN the AnalyticsReverseSavedTrip event is triggered
-            viewModel.onEvent(SavedTripUiEvent.AnalyticsReverseSavedTrip)
+            viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
 
             // THEN verify that track is called with ReverseStopClickEvent
             val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics

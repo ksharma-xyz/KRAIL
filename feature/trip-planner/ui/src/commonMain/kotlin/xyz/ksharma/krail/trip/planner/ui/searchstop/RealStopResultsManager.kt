@@ -14,14 +14,50 @@ import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 class RealStopResultsManager(
     private val sandook: Sandook,
     private val flag: Flag,
 ) : StopResultsManager {
 
+    // Store selected stops with private setters
+    override var selectedFromStop: StopItem? = null
+        private set
+
+    override var selectedToStop: StopItem? = null
+        private set
+
     private val highPriorityStopIdList: List<String> by lazy {
         flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toStopsIdList()
+    }
+
+    // Methods to update selected stops
+    override fun setSelectedFromStop(stopItem: StopItem?) {
+        if (stopItem != null) {
+            selectedFromStop = stopItem
+        }
+        log("StopResultsManager - setSelectedFromStop: $stopItem")
+    }
+
+    override fun setSelectedToStop(stopItem: StopItem?) {
+        if(stopItem != null) {
+            selectedToStop = stopItem
+        }
+        log("StopResultsManager - setSelectedToStop: $stopItem")
+    }
+
+    override fun reverseSelectedStops() {
+        val temp = selectedFromStop
+        selectedFromStop = selectedToStop
+        selectedToStop = temp
+        log("StopResultsManager - reverseSelectedStops: from=$selectedFromStop, to=$selectedToStop")
+    }
+
+    override fun clearSelectedStops() {
+        selectedFromStop = null
+        selectedToStop = null
+        log("StopResultsManager - clearSelectedStops")
     }
 
     override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {

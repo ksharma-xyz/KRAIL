@@ -64,10 +64,7 @@ internal fun NavGraphBuilder.timeTableDestination(navController: NavHostControll
                     )
                 )
 
-                navController.navigate(
-                    route = SavedTripsRoute,
-                    navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
-                )
+                navController.navigateUp()
             },
             onAlertClick = { journeyId ->
                 log("AlertClicked for journeyId: $journeyId")

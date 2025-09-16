@@ -1,9 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop.model
 
-import kotlinx.collections.immutable.ImmutableSet
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.serialization.json.Json
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
  * Represents a Stop item in the search results when searching for stops.
@@ -12,7 +9,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 @kotlinx.serialization.Serializable
 data class StopItem(
     val stopName: String,
-    val transportModes: ImmutableSet<TransportMode> = persistentSetOf(),
     val stopId: String,
 ) {
     fun toJsonString() = Json.encodeToString(serializer(), this)

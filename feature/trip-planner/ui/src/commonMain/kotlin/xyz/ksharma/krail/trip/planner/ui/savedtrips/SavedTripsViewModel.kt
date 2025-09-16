@@ -51,6 +51,8 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopSelectionManager
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Clock.System
 import kotlin.time.Duration
@@ -72,6 +74,10 @@ class SavedTripsViewModel(
     private val infoTileManager: InfoTileManager,
     private val platformOps: PlatformOps,
 ) : ViewModel() {
+
+    init {
+        log("StopItem - SavedTripsViewModel created")
+    }
 
     private val nonPeakTimeCooldownSeconds: Long by lazy {
         flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key)
@@ -106,11 +112,21 @@ class SavedTripsViewModel(
             refreshFacilityDetails()
             updateDiscoverState()
             updateInfoTilesUiState()
+            updateSelectedStops()
         }
         .onCompletion {
             cleanupJobs()
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
+
+    private suspend fun updateSelectedStops() {
+        updateUiState {
+            copy(
+                fromStop = stopResultsManager.selectedFromStop,
+                toStop = stopResultsManager.selectedToStop,
+            )
+        }
+    }
 
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
@@ -123,7 +139,14 @@ class SavedTripsViewModel(
                 )
             }
 
-            SavedTripUiEvent.AnalyticsReverseSavedTrip -> {
+            SavedTripUiEvent.ReverseStopClick -> {
+                stopResultsManager.reverseSelectedStops()
+                updateUiState {
+                    copy(
+                        fromStop = stopResultsManager.selectedFromStop,
+                        toStop = stopResultsManager.selectedToStop,
+                    )
+                }
                 analytics.track(AnalyticsEvent.ReverseStopClickEvent)
             }
 
@@ -162,6 +185,31 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.InfoTileCtaClick -> onInfoTileCtaClick(event.infoTile)
 
             is SavedTripUiEvent.InfoTileExpand -> onInfoTileExpand(key = event.key)
+
+            is SavedTripUiEvent.FromStopChanged -> onFromStopChanged(event.fromJson)
+
+            is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
+
+        }
+    }
+
+    private fun onToStopChanged(toJson: String) {
+        log("StopItem - onToStopChanged: $toJson")
+        StopItem.fromJsonString(toJson)?.let { stop ->
+            stopResultsManager.setSelectedToStop(stop)
+            updateUiState { copy(toStop = stopResultsManager.selectedToStop) }
+        } ?: run {
+            log("StopItem - Failed to parse toStop from JSON: $toJson")
+        }
+    }
+
+    private fun onFromStopChanged(fromJson: String) {
+        log("StopItem - onFromStopChanged: $fromJson")
+        StopItem.fromJsonString(fromJson)?.let { stop ->
+            stopResultsManager.setSelectedFromStop(stop)
+            updateUiState { copy(fromStop = stopResultsManager.selectedFromStop) }
+        } ?: run {
+            log("StopItem - Failed to parse fromStop from JSON: $fromJson")
         }
     }
 
@@ -606,6 +654,7 @@ class SavedTripsViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        log("StopItem - onCleared called in SavedTripsViewModel")
         cleanupJobs()
     }
 

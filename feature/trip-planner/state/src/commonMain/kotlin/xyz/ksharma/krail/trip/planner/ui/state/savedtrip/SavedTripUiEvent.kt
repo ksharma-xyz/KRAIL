@@ -13,7 +13,7 @@ sealed interface SavedTripUiEvent {
     data class AnalyticsLoadTimeTableClick(val fromStopId: String, val toStopId: String) :
         SavedTripUiEvent
 
-    data object AnalyticsReverseSavedTrip : SavedTripUiEvent
+    data object ReverseStopClick : SavedTripUiEvent
 
     data object AnalyticsSettingsButtonClick : SavedTripUiEvent
 
@@ -32,4 +32,8 @@ sealed interface SavedTripUiEvent {
     data class InfoTileCtaClick(val infoTile: InfoTileData) : SavedTripUiEvent
 
     data class InfoTileExpand(val key: String): SavedTripUiEvent
+
+    // JSON-based events for navigation compatibility
+    data class FromStopChanged(val fromJson: String) : SavedTripUiEvent
+    data class ToStopChanged(val toJson: String) : SavedTripUiEvent
 }

@@ -58,8 +58,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
     modifier: Modifier = Modifier,
-    fromStopItem: StopItem? = null,
-    toStopItem: StopItem? = null,
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
     onReverseButtonClick: () -> Unit = {},
@@ -69,19 +67,6 @@ fun SavedTripsScreen(
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
 ) {
-    // TODO -  handle colors of status bar
-    /*    DisposableEffect(themeContentColor) {
-            context.getActivityOrNull()?.let { activity ->
-                (activity as ComponentActivity).enableEdgeToEdge(
-                    navigationBarStyle = SystemBarStyle.auto(
-                        lightScrim = themeContentColor.hexToComposeColor().toArgb(),
-                        darkScrim = themeContentColor.hexToComposeColor().toArgb(),
-                    ),
-                )
-            }
-            onDispose {}
-        }*/
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -190,8 +175,8 @@ fun SavedTripsScreen(
 
         SearchStopRow(
             modifier = Modifier.align(Alignment.BottomCenter),
-            fromStopItem = fromStopItem,
-            toStopItem = toStopItem,
+            fromStopItem = savedTripsState.fromStop,
+            toStopItem = savedTripsState.toStop,
             fromButtonClick = fromButtonClick,
             toButtonClick = toButtonClick,
             onReverseButtonClick = onReverseButtonClick,

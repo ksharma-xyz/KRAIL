@@ -38,12 +38,15 @@ import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.LocalTextColor
+import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -87,28 +90,36 @@ fun SearchStopRow(
                     targetState = fromStopItem?.stopName ?: "Starting from",
                     transitionSpec = {
                         (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { -it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
+                                fadeIn(
+                                    animationSpec = tween(200),
+                                ) + slideInVertically(
+                                    initialOffsetY = { it / 2 },
+                                    animationSpec = tween(500, easing = EaseOutBounce),
+                                )
+                                ) togetherWith (
+                                fadeOut(
+                                    animationSpec = tween(200),
+                                ) + slideOutVertically(
+                                    targetOffsetY = { -it / 2 },
+                                    animationSpec = tween(500),
+                                )
+                                )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "startingFromText",
                 ) { targetText ->
-                    Text(
-                        text = targetText,
-                        maxLines = 1,
-                    )
+                    CompositionLocalProvider(
+                        LocalTextColor provides
+                                if (fromStopItem != null) themeColor.hexToComposeColor()
+                                else KrailTheme.colors.labelPlaceholder,
+                        LocalTextStyle provides if (fromStopItem != null) KrailTheme.typography.titleLarge
+                        else KrailTheme.typography.bodyLarge,
+                    ) {
+                        Text(
+                            text = targetText,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
 
@@ -117,28 +128,35 @@ fun SearchStopRow(
                     targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
                         (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
+                                fadeIn(
+                                    animationSpec = tween(200),
+                                ) + slideInVertically(
+                                    initialOffsetY = { -it / 2 },
+                                    animationSpec = tween(500, easing = EaseOutBounce),
+                                )
+                                ) togetherWith (
+                                fadeOut(
+                                    animationSpec = tween(200),
+                                ) + slideOutVertically(
+                                    targetOffsetY = { it / 2 },
+                                    animationSpec = tween(500),
+                                )
+                                )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "destinationText",
                 ) { targetText ->
-                    Text(
-                        text = targetText,
-                        maxLines = 1,
-                    )
+                    CompositionLocalProvider(
+                        LocalTextColor provides if (toStopItem != null)
+                            themeColor.hexToComposeColor() else KrailTheme.colors.labelPlaceholder,
+                        LocalTextStyle provides if (toStopItem != null) KrailTheme.typography.titleLarge
+                        else KrailTheme.typography.bodyLarge,
+                    ) {
+                        Text(
+                            text = targetText,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
         }

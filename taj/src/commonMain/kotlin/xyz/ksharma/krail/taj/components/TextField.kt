@@ -149,7 +149,7 @@ fun TextField(
 
 @Composable
 private fun TextFieldPlaceholder(placeholder: String? = null) {
-    CompositionLocalProvider(LocalContentAlpha provides PlaceholderOpacity) {
+    CompositionLocalProvider(LocalTextColor provides KrailTheme.colors.labelPlaceholder) {
         Text(
             text = placeholder.orEmpty(),
             maxLines = 1,

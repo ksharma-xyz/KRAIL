@@ -39,8 +39,8 @@ import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.components.RoundIconButton
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -87,26 +87,28 @@ fun SearchStopRow(
                     targetState = fromStopItem?.stopName ?: "Starting from",
                     transitionSpec = {
                         (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { -it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
+                                fadeIn(
+                                    animationSpec = tween(200),
+                                ) + slideInVertically(
+                                    initialOffsetY = { it / 2 },
+                                    animationSpec = tween(500, easing = EaseOutBounce),
+                                )
+                                ) togetherWith (
+                                fadeOut(
+                                    animationSpec = tween(200),
+                                ) + slideOutVertically(
+                                    targetOffsetY = { -it / 2 },
+                                    animationSpec = tween(500),
+                                )
+                                )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "startingFromText",
                 ) { targetText ->
-                    Text(
+                    ThemeTextFieldPlaceholderText(
                         text = targetText,
+                        isActive = fromStopItem != null,
+                        activeColor = themeColor.hexToComposeColor(),
                         maxLines = 1,
                     )
                 }
@@ -117,26 +119,28 @@ fun SearchStopRow(
                     targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
                         (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
+                                fadeIn(
+                                    animationSpec = tween(200),
+                                ) + slideInVertically(
+                                    initialOffsetY = { -it / 2 },
+                                    animationSpec = tween(500, easing = EaseOutBounce),
+                                )
+                                ) togetherWith (
+                                fadeOut(
+                                    animationSpec = tween(200),
+                                ) + slideOutVertically(
+                                    targetOffsetY = { it / 2 },
+                                    animationSpec = tween(500),
+                                )
+                                )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "destinationText",
                 ) { targetText ->
-                    Text(
+                    ThemeTextFieldPlaceholderText(
                         text = targetText,
+                        isActive = toStopItem != null,
+                        activeColor = themeColor.hexToComposeColor(),
                         maxLines = 1,
                     )
                 }

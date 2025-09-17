@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,8 +43,8 @@ import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
-import xyz.ksharma.krail.taj.tokens.TextFieldTokens.PlaceholderOpacity
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextSelectionBackgroundOpacity
 
@@ -139,7 +140,7 @@ fun TextField(
                         TextFieldPlaceholder(placeholder = placeholder)
                     } else {
                         innerTextField()
-                        // add trailing icon here / Clear - todo
+                        // add trailing icon here if required / e.g. Clear / Scan QR code
                     }
                 }
             },
@@ -148,13 +149,38 @@ fun TextField(
 }
 
 @Composable
-private fun TextFieldPlaceholder(placeholder: String? = null) {
-    CompositionLocalProvider(LocalContentAlpha provides PlaceholderOpacity) {
-        Text(
-            text = placeholder.orEmpty(),
-            maxLines = 1,
+fun ThemeTextFieldPlaceholderText(
+    text: String,
+    isActive: Boolean,
+    activeColor: Color = themeColor(),
+    inactiveColor: Color = KrailTheme.colors.labelPlaceholder,
+    activeTextStyle: TextStyle = KrailTheme.typography.titleLarge,
+    inactiveStyle: TextStyle = KrailTheme.typography.bodyLarge,
+    maxLines: Int = 1,
+) {
+    CompositionLocalProvider(
+        LocalTextColor provides if (isActive) activeColor else inactiveColor,
+        LocalTextStyle provides if (isActive) activeTextStyle else inactiveStyle,
+    ) {
+        TextFieldPlaceholder(
+            placeholder = text,
+            color = LocalTextColor.current,
+            maxLines = maxLines,
         )
     }
+}
+
+@Composable
+private fun TextFieldPlaceholder(
+    placeholder: String? = null,
+    color: Color = KrailTheme.colors.labelPlaceholder,
+    maxLines: Int = 1,
+) {
+    Text(
+        text = placeholder.orEmpty(),
+        color = color,
+        maxLines = maxLines,
+    )
 }
 
 // region Previews

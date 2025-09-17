@@ -10,6 +10,7 @@ val md_theme_light_onError = Color(0xFFFFFFFF)
 val md_theme_light_onErrorContainer = Color(0xFF410002)
 val md_theme_light_surface = Color(0xFFFFFFFF)
 val md_theme_light_onSurface = Color(0xFF010101)
+val md_theme_light_onSurface_placeholder = Color(0xFF595959)
 val md_theme_light_scrim = Color(0xFF000000)
 val md_theme_light_alert = Color(0xFFFFBA27)
 val md_theme_light_softLabel = Color(0xFF767676)
@@ -34,6 +35,7 @@ val md_theme_dark_onError = Color(0xFF690005)
 val md_theme_dark_onErrorContainer = Color(0xFFFFDAD6)
 val md_theme_dark_surface = Color(0xFF1C1B1A)
 val md_theme_dark_onSurface = Color(0xFFFCF6F1)
+val md_theme_dark_onSurface_placeholder = Color(0xFFA9A5A2)
 val md_theme_dark_scrim = Color(0xFF000000)
 val md_theme_dark_alert = Color(0xFFF4B400)
 val md_theme_dark_softLabel = Color(0xFFB0B0B0)
@@ -75,6 +77,7 @@ data class KrailColors(
     val onErrorContainer: Color,
     val surface: Color,
     val onSurface: Color,
+    val labelPlaceholder: Color,
     val scrim: Color,
     val alert: Color,
     val softLabel: Color,
@@ -113,6 +116,7 @@ internal val KrailLightColors = KrailColors(
     deviationLate = md_theme_light_late,
     pastJourney = md_theme_light_past_journey,
     futureJourney = md_theme_light_future_journey,
+    labelPlaceholder = md_theme_light_onSurface_placeholder,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -136,6 +140,7 @@ internal val KrailDarkColors = KrailColors(
     deviationLate = md_theme_dark_late,
     pastJourney = md_theme_dark_past_journey,
     futureJourney = md_theme_dark_future_journey,
+    labelPlaceholder = md_theme_dark_onSurface_placeholder,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -160,5 +165,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         deviationLate = Color.Unspecified,
         pastJourney = Color.Unspecified,
         futureJourney = Color.Unspecified,
+        labelPlaceholder = Color.Unspecified,
     )
 }

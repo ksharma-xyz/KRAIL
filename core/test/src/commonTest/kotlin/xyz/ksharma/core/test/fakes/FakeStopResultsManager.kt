@@ -4,10 +4,15 @@ import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 class FakeStopResultsManager : StopResultsManager {
     // Add a flag to control whether fetchStopResults should throw an exception
     var shouldThrowError = false
+
+    // Track selected stops
+    private var _selectedFromStop: StopItem? = null
+    private var _selectedToStop: StopItem? = null
 
     private val testStopResults = listOf(
         SearchStopState.StopResult(
@@ -32,6 +37,12 @@ class FakeStopResultsManager : StopResultsManager {
         )
     )
 
+    override val selectedFromStop: StopItem?
+        get() = _selectedFromStop
+
+    override val selectedToStop: StopItem?
+        get() = _selectedToStop
+
     override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {
         // Throw an exception if shouldThrowError is true
         if (shouldThrowError) {
@@ -53,5 +64,31 @@ class FakeStopResultsManager : StopResultsManager {
 
     override fun fetchLocalStopName(stopId: String): String? {
         return testStopResults.firstOrNull { it.stopId == stopId }?.stopName
+    }
+
+    override fun setSelectedFromStop(stopItem: StopItem?) {
+        _selectedFromStop = stopItem
+    }
+
+    override fun setSelectedToStop(stopItem: StopItem?) {
+        _selectedToStop = stopItem
+    }
+
+    override fun reverseSelectedStops() {
+        val tempFrom = _selectedFromStop
+        _selectedFromStop = _selectedToStop
+        _selectedToStop = tempFrom
+    }
+
+    override fun clearSelectedStops() {
+        _selectedFromStop = null
+        _selectedToStop = null
+    }
+
+    // Helper methods for testing
+    fun reset() {
+        _selectedFromStop = null
+        _selectedToStop = null
+        shouldThrowError = false
     }
 }

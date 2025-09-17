@@ -140,7 +140,6 @@ class SearchStopViewModelTest {
                 SearchStopUiEvent.StopSelected(
                     StopItem(
                         stopName = "name",
-                        persistentSetOf(TransportMode.Train()),
                         stopId = "stopID",
                     )
                 )

@@ -38,15 +38,12 @@ import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.LocalTextColor
-import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.components.RoundIconButton
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -108,18 +105,12 @@ fun SearchStopRow(
                     contentAlignment = Alignment.CenterStart,
                     label = "startingFromText",
                 ) { targetText ->
-                    CompositionLocalProvider(
-                        LocalTextColor provides
-                                if (fromStopItem != null) themeColor.hexToComposeColor()
-                                else KrailTheme.colors.labelPlaceholder,
-                        LocalTextStyle provides if (fromStopItem != null) KrailTheme.typography.titleLarge
-                        else KrailTheme.typography.bodyLarge,
-                    ) {
-                        Text(
-                            text = targetText,
-                            maxLines = 1,
-                        )
-                    }
+                    ThemeTextFieldPlaceholderText(
+                        text = targetText,
+                        isActive = fromStopItem != null,
+                        activeColor = themeColor.hexToComposeColor(),
+                        maxLines = 1,
+                    )
                 }
             }
 
@@ -146,17 +137,12 @@ fun SearchStopRow(
                     contentAlignment = Alignment.CenterStart,
                     label = "destinationText",
                 ) { targetText ->
-                    CompositionLocalProvider(
-                        LocalTextColor provides if (toStopItem != null)
-                            themeColor.hexToComposeColor() else KrailTheme.colors.labelPlaceholder,
-                        LocalTextStyle provides if (toStopItem != null) KrailTheme.typography.titleLarge
-                        else KrailTheme.typography.bodyLarge,
-                    ) {
-                        Text(
-                            text = targetText,
-                            maxLines = 1,
-                        )
-                    }
+                    ThemeTextFieldPlaceholderText(
+                        text = targetText,
+                        isActive = toStopItem != null,
+                        activeColor = themeColor.hexToComposeColor(),
+                        maxLines = 1,
+                    )
                 }
             }
         }

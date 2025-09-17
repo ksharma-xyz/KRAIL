@@ -212,7 +212,7 @@ class SavedTripsViewModelTest {
     fun `GIVEN a trip WHEN AnalyticsReverseSavedTrip event is triggered THEN track ReverseStopClickEvent should be called`() =
         runTest {
             // WHEN the AnalyticsReverseSavedTrip event is triggered
-            viewModel.onEvent(SavedTripUiEvent.AnalyticsReverseSavedTrip)
+            viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
 
             // THEN verify that track is called with ReverseStopClickEvent
             val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
@@ -587,4 +587,252 @@ class SavedTripsViewModelTest {
     }
 
     // endregion Park and Ride Tests
+
+    // region Selected Stop Events Tests
+
+    @Test
+    fun `GIVEN FromStopChanged event with valid JSON WHEN triggered THEN fromStop is updated in UI state`() =
+        runTest {
+            // GIVEN a valid StopItem JSON
+            val stopItem = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Central Station",
+                stopId = "10101"
+            )
+            val stopJson = stopItem.toJsonString()
+
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                // WHEN FromStopChanged event is triggered
+                viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopJson))
+
+                // THEN fromStop should be updated in UI state
+                val item = awaitItem()
+                assertEquals(stopItem.stopId, item.fromStop?.stopId)
+                assertEquals(stopItem.stopName, item.fromStop?.stopName)
+
+                // AND stopResultsManager should have the selected stop
+                assertEquals(stopItem, fakeStopResultsManager.selectedFromStop)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN ToStopChanged event with valid JSON WHEN triggered THEN toStop is updated in UI state`() =
+        runTest {
+            // GIVEN a valid StopItem JSON
+            val stopItem = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Town Hall",
+                stopId = "10102"
+            )
+            val stopJson = stopItem.toJsonString()
+
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                // WHEN ToStopChanged event is triggered
+                viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopJson))
+
+                // THEN toStop should be updated in UI state
+                val item = awaitItem()
+                assertEquals(stopItem.stopId, item.toStop?.stopId)
+                assertEquals(stopItem.stopName, item.toStop?.stopName)
+
+                // AND stopResultsManager should have the selected stop
+                assertEquals(stopItem, fakeStopResultsManager.selectedToStop)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN FromStopChanged event with invalid JSON WHEN triggered THEN fromStop remains unchanged`() =
+        runTest {
+            // GIVEN invalid JSON
+            val invalidJson = "invalid json string"
+
+            viewModel.uiState.test {
+                val initialState = awaitItem()
+
+                // WHEN FromStopChanged event is triggered with invalid JSON
+                viewModel.onEvent(SavedTripUiEvent.FromStopChanged(invalidJson))
+
+                // THEN fromStop should remain unchanged (null in this case)
+                expectNoEvents() // No state update should occur
+                assertEquals(null, fakeStopResultsManager.selectedFromStop)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN ToStopChanged event with invalid JSON WHEN triggered THEN toStop remains unchanged`() =
+        runTest {
+            // GIVEN invalid JSON
+            val invalidJson = "invalid json string"
+
+            viewModel.uiState.test {
+                val initialState = awaitItem()
+
+                // WHEN ToStopChanged event is triggered with invalid JSON
+                viewModel.onEvent(SavedTripUiEvent.ToStopChanged(invalidJson))
+
+                // THEN toStop should remain unchanged (null in this case)
+                expectNoEvents() // No state update should occur
+                assertEquals(null, fakeStopResultsManager.selectedToStop)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN both from and to stops selected WHEN ReverseStopClick event is triggered THEN stops are swapped`() =
+        runTest {
+            // GIVEN both from and to stops are selected
+            val fromStop = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Central Station",
+                stopId = "10101"
+            )
+            val toStop = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Town Hall",
+                stopId = "10102"
+            )
+
+            // Set initial stops
+            fakeStopResultsManager.setSelectedFromStop(fromStop)
+            fakeStopResultsManager.setSelectedToStop(toStop)
+
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state that loads the selected stops
+
+                // WHEN ReverseStopClick event is triggered
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
+
+                // THEN stops should be swapped in UI state
+                val item = awaitItem()
+                assertEquals(toStop.stopId, item.fromStop?.stopId)
+                assertEquals(toStop.stopName, item.fromStop?.stopName)
+                assertEquals(fromStop.stopId, item.toStop?.stopId)
+                assertEquals(fromStop.stopName, item.toStop?.stopName)
+
+                // AND in the stopResultsManager
+                assertEquals(toStop, fakeStopResultsManager.selectedFromStop)
+                assertEquals(fromStop, fakeStopResultsManager.selectedToStop)
+
+                // AND analytics event should be tracked
+                val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
+                assertTrue(fakeAnalytics.isEventTracked(AnalyticsEvent.ReverseStopClickEvent.name))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN only from stop selected WHEN ReverseStopClick event is triggered THEN from becomes to and to becomes null`() =
+        runTest {
+            // GIVEN only from stop is selected
+            val fromStop = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Central Station",
+                stopId = "10101"
+            )
+
+            fakeStopResultsManager.setSelectedFromStop(fromStop)
+            fakeStopResultsManager.setSelectedToStop(null)
+
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                // WHEN ReverseStopClick event is triggered
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
+
+                // THEN from should become null and to should become the original from
+                val item = awaitItem()
+                assertEquals(null, item.fromStop)
+                assertEquals(fromStop.stopId, item.toStop?.stopId)
+                assertEquals(fromStop.stopName, item.toStop?.stopName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN no stops selected WHEN ReverseStopClick event is triggered THEN both remain null`() =
+        runTest {
+            // GIVEN no stops are selected
+            fakeStopResultsManager.setSelectedFromStop(null)
+            fakeStopResultsManager.setSelectedToStop(null)
+
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                // WHEN ReverseStopClick event is triggered
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
+
+                // THEN both should remain null
+                val item = awaitItem()
+                assertEquals(null, item.fromStop)
+                assertEquals(null, item.toStop)
+
+                // AND analytics event should still be tracked
+                val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
+                assertTrue(fakeAnalytics.isEventTracked(AnalyticsEvent.ReverseStopClickEvent.name))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN stops are selected WHEN multiple events are triggered in sequence THEN UI state updates correctly`() =
+        runTest {
+            // GIVEN initial stops
+            val centralStation = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Central Station",
+                stopId = "10101"
+            )
+            val townHall = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Town Hall",
+                stopId = "10102"
+            )
+            val airport = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                stopName = "Sydney Airport",
+                stopId = "10104"
+            )
+
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                // WHEN setting from stop
+                viewModel.onEvent(SavedTripUiEvent.FromStopChanged(centralStation.toJsonString()))
+                awaitItem().run {
+                    assertEquals(centralStation, fromStop)
+                    assertEquals(null, toStop)
+                }
+
+                // WHEN setting to stop
+                viewModel.onEvent(SavedTripUiEvent.ToStopChanged(townHall.toJsonString()))
+                awaitItem().run {
+                    assertEquals(centralStation, fromStop)
+                    assertEquals(townHall, toStop)
+                }
+
+                // WHEN reversing stops
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
+                awaitItem().run {
+                    assertEquals(townHall, fromStop)
+                    assertEquals(centralStation, toStop)
+                }
+
+                // WHEN changing from stop again
+                viewModel.onEvent(SavedTripUiEvent.FromStopChanged(airport.toJsonString()))
+                awaitItem().run {
+                    assertEquals(airport, fromStop)
+                    assertEquals(centralStation, toStop)
+                }
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion Selected Stop Events Tests
 }

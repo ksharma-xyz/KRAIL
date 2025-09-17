@@ -2,16 +2,13 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
@@ -19,13 +16,13 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem.Companion.fromJsonString
 
 @Suppress("LongMethod")
 internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostController) {
     composable<SavedTripsRoute> { backStackEntry ->
-        val viewModel: SavedTripsViewModel = koinViewModel<SavedTripsViewModel>()
+        // Use a stable key to ensure ViewModel survives navigation within the nav graph
+        val viewModel: SavedTripsViewModel =
+            koinViewModel<SavedTripsViewModel>(key = "SavedTripsNav")
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val fromArg: String? =
@@ -33,38 +30,28 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
         val toArg: String? =
             backStackEntry.savedStateHandle.get<String>(SearchStopFieldType.TO.key)
 
-/*        LifecycleStartEffect(Unit, backStackEntry) {
-            viewModel.onEvent(SavedTripUiEvent.LifecyleStarted)
-            onStopOrDispose {
-                viewModel.onEvent(SavedTripUiEvent.LifecycleStopped)
-            }
-        }*/
-
-        // Cannot use 'rememberSaveable' here because StopItem is not Parcelable.
-        // But it's saved in backStackEntry.savedStateHandle as json, so it's able to
-        // handle config changes properly.
-        var fromStopItem: StopItem? by remember {
-            mutableStateOf(fromArg?.let { fromJsonString(it) })
-        }
-        var toStopItem: StopItem? by remember { mutableStateOf(toArg?.let { fromJsonString(it) }) }
-
         LaunchedEffect(fromArg) {
-            fromArg?.let { fromStopItem = fromJsonString(it) }
-//            log(("Change fromStopItem: $fromStopItem")
+            log("StopItem - fromArg changed: $fromArg")
+            fromArg?.let { json ->
+                viewModel.onEvent(SavedTripUiEvent.FromStopChanged(json))
+                // Clear after processing
+                backStackEntry.savedStateHandle.remove<String>(SearchStopFieldType.FROM.key)
+            }
         }
 
         LaunchedEffect(toArg) {
-            toArg?.let { toStopItem = fromJsonString(it) }
-//            log(("Change toStopItem: $toStopItem")
+            log("StopItem - toArg changed: $toArg")
+            toArg?.let { json ->
+                viewModel.onEvent(SavedTripUiEvent.ToStopChanged(json))
+                // Clear after processing
+                backStackEntry.savedStateHandle.remove<String>(SearchStopFieldType.TO.key)
+            }
         }
 
         SavedTripsScreen(
             savedTripsState = savedTripState,
-            fromStopItem = fromStopItem,
-            toStopItem = toStopItem,
             fromButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
-                //              Timber.d("fromButtonClick - nav: ${SearchStopRoute(fieldType = SearchStopFieldType.FROM)}")
                 navController.navigate(
                     route = SearchStopRoute(fieldTypeKey = SearchStopFieldType.FROM.key),
                     navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
@@ -72,30 +59,18 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
             },
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
-                //              Timber.d("toButtonClick - nav: ${SearchStopRoute(fieldType = SearchStopFieldType.TO)}")
                 navController.navigate(
                     route = SearchStopRoute(fieldTypeKey = SearchStopFieldType.TO.key),
                     navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
                 )
             },
             onReverseButtonClick = {
-                //              log(("onReverseButtonClick:")
-                val bufferStop = fromStopItem
-                backStackEntry.savedStateHandle[SearchStopFieldType.FROM.key] =
-                    toStopItem?.toJsonString()
-                backStackEntry.savedStateHandle[SearchStopFieldType.TO.key] =
-                    bufferStop?.toJsonString()
-
-                fromStopItem = toStopItem
-                toStopItem = bufferStop
-                viewModel.onEvent(SavedTripUiEvent.AnalyticsReverseSavedTrip)
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
             },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {
-                    val fromStopId = fromStop.stopId
-                    val toStopId = toStop.stopId
                     viewModel.onEvent(
-                        SavedTripUiEvent.AnalyticsSavedTripCardClick(fromStopId, toStopId)
+                        SavedTripUiEvent.AnalyticsSavedTripCardClick(fromStop.stopId, toStop.stopId)
                     )
                     navController.navigate(
                         route = TimeTableRoute(
@@ -109,22 +84,22 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                 }
             },
             onSearchButtonClick = {
-                if (fromStopItem != null && toStopItem != null) {
-                    val fromStopId = fromStopItem!!.stopId
-                    val toStopId = toStopItem!!.stopId
+                val fromStopItem = savedTripState.fromStop
+                val toStopItem = savedTripState.toStop
 
+                if (fromStopItem != null && toStopItem != null) {
                     viewModel.onEvent(
                         SavedTripUiEvent.AnalyticsLoadTimeTableClick(
-                            fromStopId = fromStopId,
-                            toStopId = toStopId,
+                            fromStopId = fromStopItem.stopId,
+                            toStopId = toStopItem.stopId,
                         )
                     )
                     navController.navigate(
                         route = TimeTableRoute(
-                            fromStopId = fromStopId,
-                            fromStopName = fromStopItem!!.stopName,
-                            toStopId = toStopId,
-                            toStopName = toStopItem!!.stopName,
+                            fromStopId = fromStopItem.stopId,
+                            fromStopName = fromStopItem.stopName,
+                            toStopId = toStopItem.stopId,
+                            toStopName = toStopItem.stopName,
                         ),
                         navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),
                     )
@@ -138,7 +113,7 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                 )
             },
             onDiscoverButtonClick = {
-               viewModel.onEvent(SavedTripUiEvent.AnalyticsDiscoverButtonClick)
+                viewModel.onEvent(SavedTripUiEvent.AnalyticsDiscoverButtonClick)
                 navController.navigate(
                     route = DiscoverRoute,
                     navOptions = NavOptions.Builder().setLaunchSingleTop(true).build(),

@@ -1,8 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 interface StopResultsManager {
+
+    val selectedFromStop: StopItem?
+
+    val selectedToStop: StopItem?
 
     suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult>
 
@@ -15,4 +20,13 @@ interface StopResultsManager {
      * @return The name of the stop if found, or null if not found.
      */
     fun fetchLocalStopName(stopId: String): String?
+
+    // Selected stop management methods
+    fun setSelectedFromStop(stopItem: StopItem?)
+
+    fun setSelectedToStop(stopItem: StopItem?)
+
+    fun reverseSelectedStops()
+
+    fun clearSelectedStops()
 }

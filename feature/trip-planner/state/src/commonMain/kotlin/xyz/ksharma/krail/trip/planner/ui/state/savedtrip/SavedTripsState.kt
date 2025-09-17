@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 @Stable
@@ -17,4 +18,7 @@ data class SavedTripsState(
     val isDiscoverAvailable: Boolean = false,
     val displayDiscoverBadge: Boolean = false,
     val infoTiles: ImmutableList<InfoTileData>? = null,
+    // Stop selection state managed by ViewModel
+    val fromStop: StopItem? = null,
+    val toStop: StopItem? = null,
 )

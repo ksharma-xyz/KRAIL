@@ -332,10 +332,7 @@ fun SearchStopScreen(
                                     onClick = {
                                         onEvent(SearchStopUiEvent.ClearRecentSearchStops)
                                     }
-                                )
-                                .semantics {
-                                    contentDescription = "Clear recent stops"
-                                },
+                                ),
                         )
                     }
                 }

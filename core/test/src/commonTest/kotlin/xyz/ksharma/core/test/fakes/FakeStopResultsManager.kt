@@ -71,10 +71,18 @@ class FakeStopResultsManager : StopResultsManager {
 
     override fun setSelectedFromStop(stopItem: StopItem?) {
         _selectedFromStop = stopItem
+        // Add to recent search stops when a stop is selected (like the real implementation)
+        if (stopItem != null) {
+            addRecentSearchStopFromStopItem(stopItem)
+        }
     }
 
     override fun setSelectedToStop(stopItem: StopItem?) {
         _selectedToStop = stopItem
+        // Add to recent search stops when a stop is selected (like the real implementation)
+        if (stopItem != null) {
+            addRecentSearchStopFromStopItem(stopItem)
+        }
     }
 
     override fun reverseSelectedStops() {
@@ -111,5 +119,18 @@ class FakeStopResultsManager : StopResultsManager {
         if (_recentSearchStops.size > 5) {
             _recentSearchStops.removeAt(_recentSearchStops.size - 1)
         }
+    }
+
+    // Helper method to convert StopItem to StopResult and add to recent stops
+    private fun addRecentSearchStopFromStopItem(stopItem: StopItem) {
+        // Find the corresponding test stop result or create a basic one
+        val stopResult = testStopResults.find { it.stopId == stopItem.stopId }
+            ?: SearchStopState.StopResult(
+                stopId = stopItem.stopId,
+                stopName = stopItem.stopName,
+                transportModeType = persistentListOf(TransportMode.Train()) // Default transport mode
+            )
+
+        addRecentSearchStop(stopResult)
     }
 }

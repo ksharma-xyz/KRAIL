@@ -65,11 +65,6 @@ class RealStopResultsManager(
         log("StopResultsManager - clearSelectedStops")
     }
 
-    override fun clearRecentSearchStops() {
-        sandook.clearRecentSearchStops()
-        log("StopResultsManager - clearRecentSearchStops")
-    }
-
     override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {
         log("fetchStopResults from LOCAL_STOPS")
         val resultsDb: List<SelectProductClassesForStop> =
@@ -150,6 +145,8 @@ class RealStopResultsManager(
         }
     }
 
+    // region Recent Search Stop
+
     override suspend fun recentSearchStops(): List<SearchStopState.StopResult> {
         return sandook.selectRecentSearchStops().map { recentStop ->
             SearchStopState.StopResult(
@@ -160,9 +157,14 @@ class RealStopResultsManager(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun saveRecentSearchStop(stopItem: StopItem) {
         sandook.insertOrReplaceRecentSearchStop(stopId = stopItem.stopId)
+    }
+
+
+    override fun clearRecentSearchStops() {
+        sandook.clearRecentSearchStops()
+        log("StopResultsManager - clearRecentSearchStops")
     }
 
     /**
@@ -175,4 +177,6 @@ class RealStopResultsManager(
             }
             .toImmutableList()
     }
+
+    // endregion
 }

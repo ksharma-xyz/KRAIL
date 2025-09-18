@@ -64,4 +64,17 @@ interface Sandook {
         stopName: String,
         excludeProductClassList: List<Int>,
     ): List<SelectProductClassesForStop>
+    // endregion
+
+    // region RecentSearchStops
+    fun insertOrReplaceRecentSearchStop(stopId: String)
+
+    fun selectRecentSearchStops(): List<SelectRecentSearchStops>
+
+    fun clearRecentSearchStops()
+
+    fun cleanupOrphanedRecentSearchStops()
+
+    fun cleanupOldRecentSearchStops()
+    // endregion
 }

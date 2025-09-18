@@ -1,0 +1,40 @@
+-- Create RecentSearchStops Table --
+-- Only store stopId and timestamp, fetch details from NswStops when needed
+CREATE TABLE IF NOT EXISTS RecentSearchStops (
+    stopId TEXT NOT NULL PRIMARY KEY,
+    timestamp TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
+);
+
+insertOrReplaceRecentSearchStop:
+INSERT OR REPLACE INTO RecentSearchStops(stopId, timestamp)
+VALUES (?, datetime('now'));
+
+-- Join with NswStops to get current stop details and filter out non-existent stops
+-- Limited to 5 most recent items
+selectRecentSearchStops:
+SELECT rss.stopId, rss.timestamp, ns.stopName,
+       COALESCE(GROUP_CONCAT(nspc.productClass), '') AS productClasses
+FROM RecentSearchStops rss
+INNER JOIN NswStops ns ON rss.stopId = ns.stopId
+LEFT JOIN NswStopProductClass nspc ON ns.stopId = nspc.stopId
+GROUP BY rss.stopId, rss.timestamp, ns.stopName
+ORDER BY rss.timestamp DESC
+LIMIT 5;
+
+-- Clean up old entries to keep only the 5 most recent
+cleanupOldRecentSearchStops:
+DELETE FROM RecentSearchStops
+WHERE stopId NOT IN (
+    SELECT stopId FROM RecentSearchStops
+    ORDER BY timestamp DESC
+    LIMIT 5
+);
+
+clearRecentSearchStops:
+DELETE FROM RecentSearchStops;
+
+-- Optional: Clean up orphaned entries (stops that no longer exist)
+cleanupOrphanedRecentSearchStops:
+DELETE FROM RecentSearchStops
+WHERE stopId NOT IN (SELECT stopId FROM NswStops);

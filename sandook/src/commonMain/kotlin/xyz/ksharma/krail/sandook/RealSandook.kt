@@ -18,6 +18,8 @@ internal class RealSandook(
 
     private val nswParkRideQueries = sandook.nswParkRideQueries
 
+    private val recentSearchStopsQueries = sandook.recentSearchStopsQueries
+
     // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {
         query.insertOrReplaceProductClass(productClass)
@@ -149,4 +151,28 @@ internal class RealSandook(
     }
 
     // endregion NswStops
+
+    // region RecentSearchStops
+    override fun insertOrReplaceRecentSearchStop(stopId: String) {
+        recentSearchStopsQueries.insertOrReplaceRecentSearchStop(stopId)
+        // Automatically cleanup old entries to maintain max 5 items
+        recentSearchStopsQueries.cleanupOldRecentSearchStops()
+    }
+
+    override fun selectRecentSearchStops(): List<SelectRecentSearchStops> {
+        return recentSearchStopsQueries.selectRecentSearchStops().executeAsList()
+    }
+
+    override fun clearRecentSearchStops() {
+        recentSearchStopsQueries.clearRecentSearchStops()
+    }
+
+    override fun cleanupOrphanedRecentSearchStops() {
+        recentSearchStopsQueries.cleanupOrphanedRecentSearchStops()
+    }
+
+    override fun cleanupOldRecentSearchStops() {
+        recentSearchStopsQueries.cleanupOldRecentSearchStops()
+    }
+    // endregion
 }

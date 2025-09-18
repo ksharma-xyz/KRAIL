@@ -32,6 +32,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableSet
@@ -43,7 +44,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapLatest
-import kotlin.time.Clock
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -60,6 +60,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class)
@@ -269,6 +270,36 @@ fun SearchStopScreen(
             } else if (searchStopState.stops.isNotEmpty() && textFieldText.isNotBlank()) {
                 items(
                     items = searchStopState.stops,
+                    key = { it.stopId },
+                ) { stop ->
+                    StopSearchListItem(
+                        stopId = stop.stopId,
+                        stopName = stop.stopName,
+                        transportModeSet = stop.transportModeType.toImmutableSet(),
+                        textColor = KrailTheme.colors.label,
+                        onClick = { stopItem ->
+                            keyboard?.hide()
+                            focusRequester.freeFocus()
+                            selectedStop = stopItem
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                    )
+
+                    Divider()
+                }
+            } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Recent",
+                        style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp).padding(bottom = 20.dp)
+                    )
+                }
+
+                items(
+                    items = searchStopState.recentStops,
                     key = { it.stopId },
                 ) { stop ->
                     StopSearchListItem(

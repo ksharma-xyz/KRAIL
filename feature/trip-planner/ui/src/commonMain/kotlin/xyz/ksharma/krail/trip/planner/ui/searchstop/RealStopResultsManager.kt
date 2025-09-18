@@ -65,6 +65,11 @@ class RealStopResultsManager(
         log("StopResultsManager - clearSelectedStops")
     }
 
+    override fun clearRecentSearchStops() {
+        sandook.clearRecentSearchStops()
+        log("StopResultsManager - clearRecentSearchStops")
+    }
+
     override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {
         log("fetchStopResults from LOCAL_STOPS")
         val resultsDb: List<SelectProductClassesForStop> =
@@ -166,7 +171,7 @@ class RealStopResultsManager(
     private fun String.toTransportModeList(): ImmutableList<TransportMode> {
         return this.split(",")
             .mapNotNull { productClass ->
-                TransportMode.toTransportModeType(productClass.toIntOrNull() ?: 0)
+                productClass.toIntOrNull()?.let { TransportMode.toTransportModeType(it) }
             }
             .toImmutableList()
     }

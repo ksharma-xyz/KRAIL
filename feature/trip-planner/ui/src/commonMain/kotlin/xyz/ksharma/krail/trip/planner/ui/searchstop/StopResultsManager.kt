@@ -33,5 +33,13 @@ interface StopResultsManager {
 
     fun reverseSelectedStops()
 
+    /**
+     * Clears both selected 'from' and 'to' stops.
+     */
     fun clearSelectedStops()
+
+    /**
+     * Clears all recent search stops from local storage.
+     */
+    fun clearRecentSearchStops()
 }

@@ -42,6 +42,14 @@ class SearchStopViewModel(
             is SearchStopUiEvent.StopSelected -> {
                 analytics.track(AnalyticsEvent.StopSelectedEvent(stopId = event.stopItem.stopId))
             }
+
+            is SearchStopUiEvent.ClearRecentSearchStops -> {
+                stopResultsManager.clearRecentSearchStops()
+                // Refresh the state with empty recent stops
+                updateUiState {
+                    copy(recentStops = persistentListOf())
+                }
+            }
         }
     }
 

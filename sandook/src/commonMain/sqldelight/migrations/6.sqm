@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS RecentSearchStops (
+    stopId TEXT NOT NULL PRIMARY KEY,
+    timestamp TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
+);

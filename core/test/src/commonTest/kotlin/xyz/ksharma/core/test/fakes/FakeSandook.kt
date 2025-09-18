@@ -7,6 +7,7 @@ import xyz.ksharma.krail.sandook.NswStops
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
+import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 
 class FakeSandook : Sandook {
@@ -16,6 +17,7 @@ class FakeSandook : Sandook {
     private val alerts = mutableMapOf<String, List<SelectServiceAlertsByJourneyId>>()
     private val stops = mutableListOf<NswStops>()
     private val stopProductClasses = mutableMapOf<String, MutableList<Int>>()
+    private val recentSearchStops = mutableListOf<SelectRecentSearchStops>()
 
     // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {
@@ -133,6 +135,53 @@ class FakeSandook : Sandook {
                 stop.stopLon,
                 productClasses = stopProductClasses[stop.stopId]?.joinToString(",") ?: ""
             )
+        }
+    }
+
+    override fun insertOrReplaceRecentSearchStop(stopId: String) {
+        // Remove existing entry if it exists
+        recentSearchStops.removeAll { it.stopId == stopId }
+
+        // Find the corresponding stop details
+        val stop = stops.find { it.stopId == stopId }
+        if (stop != null) {
+            // Create a new recent search stop entry
+            val productClasses = stopProductClasses[stopId]?.joinToString(",") ?: ""
+            val recentStop = SelectRecentSearchStops(
+                stopId = stopId,
+                timestamp = "2028-01-01 12:00:00", // Mock timestamp
+                stopName = stop.stopName,
+                productClasses = productClasses
+            )
+            recentSearchStops.add(0, recentStop) // Add to beginning (most recent)
+
+            // Keep only the 5 most recent entries
+            if (recentSearchStops.size > 5) {
+                recentSearchStops.removeAt(recentSearchStops.size - 1)
+            }
+        }
+    }
+
+    override fun selectRecentSearchStops(): List<SelectRecentSearchStops> {
+        return recentSearchStops.toList()
+    }
+
+    override fun clearRecentSearchStops() {
+        recentSearchStops.clear()
+    }
+
+    override fun cleanupOrphanedRecentSearchStops() {
+        // Remove recent search stops that don't have corresponding stops
+        val validStopIds = stops.map { it.stopId }.toSet()
+        recentSearchStops.removeAll { it.stopId !in validStopIds }
+    }
+
+    override fun cleanupOldRecentSearchStops() {
+        // Keep only the 5 most recent entries
+        if (recentSearchStops.size > 5) {
+            val toKeep = recentSearchStops.take(5)
+            recentSearchStops.clear()
+            recentSearchStops.addAll(toKeep)
         }
     }
 }

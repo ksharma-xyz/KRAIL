@@ -193,6 +193,29 @@ class SearchStopViewModelTest {
         }
 
     @Test
+    fun `GIVEN stop A selected then stop B then stop A again WHEN recent stops are fetched THEN stop A is most recent and only appears once`() =
+        runTest {
+            // GIVEN - Create different stops
+            val stopA = StopItem(stopName = "Central Station", stopId = "central123")
+            val stopB = StopItem(stopName = "Town Hall", stopId = "townhall456")
+
+            // WHEN - Select stops in sequence: A -> B -> A
+            fakeStopResultsManager.setSelectedFromStop(stopA)
+            fakeStopResultsManager.setSelectedToStop(stopB)
+            fakeStopResultsManager.setSelectedFromStop(stopA) // Select A again
+
+            // THEN - Verify A is most recent and appears only once
+            val recentStops = fakeStopResultsManager.recentSearchStops()
+            assertEquals(2, recentStops.size)
+            assertEquals("central123", recentStops[0].stopId) // A should be most recent
+            assertEquals("townhall456", recentStops[1].stopId) // B should be second
+
+            // Verify A appears only once (not duplicated)
+            val stopACount = recentStops.count { it.stopId == "central123" }
+            assertEquals(1, stopACount)
+        }
+
+    @Test
     fun `GIVEN recent stops exist WHEN ClearRecentStops is triggered THEN recent stops are cleared from state`() =
         runTest {
             // GIVEN - Add some recent stops

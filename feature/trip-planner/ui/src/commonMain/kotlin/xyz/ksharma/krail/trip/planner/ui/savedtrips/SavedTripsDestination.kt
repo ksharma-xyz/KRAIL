@@ -87,7 +87,7 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                 val fromStopItem = savedTripState.fromStop
                 val toStopItem = savedTripState.toStop
 
-                if (fromStopItem != null && toStopItem != null) {
+                if (fromStopItem != null && toStopItem != null && fromStopItem.stopId != toStopItem.stopId) {
                     viewModel.onEvent(
                         SavedTripUiEvent.AnalyticsLoadTimeTableClick(
                             fromStopId = fromStopItem.stopId,

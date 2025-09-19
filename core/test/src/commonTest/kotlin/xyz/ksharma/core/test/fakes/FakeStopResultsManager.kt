@@ -14,6 +14,9 @@ class FakeStopResultsManager : StopResultsManager {
     private var _selectedFromStop: StopItem? = null
     private var _selectedToStop: StopItem? = null
 
+    // Track recent search stops for testing
+    private val _recentSearchStops = mutableListOf<SearchStopState.StopResult>()
+
     private val testStopResults = listOf(
         SearchStopState.StopResult(
             stopId = "10101",
@@ -85,10 +88,28 @@ class FakeStopResultsManager : StopResultsManager {
         _selectedToStop = null
     }
 
+    override suspend fun recentSearchStops(): List<SearchStopState.StopResult> {
+        return _recentSearchStops.toList()
+    }
+
+    override fun clearRecentSearchStops() {
+        _recentSearchStops.clear()
+    }
+
     // Helper methods for testing
     fun reset() {
         _selectedFromStop = null
         _selectedToStop = null
+        _recentSearchStops.clear()
         shouldThrowError = false
+    }
+
+    // Helper method to add recent stops for testing
+    fun addRecentSearchStop(stopResult: SearchStopState.StopResult) {
+        _recentSearchStops.removeAll { it.stopId == stopResult.stopId }
+        _recentSearchStops.add(0, stopResult)
+        if (_recentSearchStops.size > 5) {
+            _recentSearchStops.removeAt(_recentSearchStops.size - 1)
+        }
     }
 }

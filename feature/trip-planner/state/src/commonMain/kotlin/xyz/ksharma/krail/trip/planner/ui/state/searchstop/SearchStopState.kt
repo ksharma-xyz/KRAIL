@@ -6,6 +6,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 data class SearchStopState(
     val stops: ImmutableList<StopResult> = persistentListOf(),
+    val recentStops: ImmutableList<StopResult> = persistentListOf(),
     val isError: Boolean = false,
     val isLoading: Boolean = false,
 ) {

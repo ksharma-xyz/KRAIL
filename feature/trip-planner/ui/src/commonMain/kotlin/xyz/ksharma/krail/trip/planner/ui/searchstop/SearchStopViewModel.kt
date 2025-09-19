@@ -28,7 +28,9 @@ class SearchStopViewModel(
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
     val uiState: StateFlow<SearchStopState> = _uiState
         .onStart {
+            fetchRecentStops()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
+
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
     private var searchJob: Job? = null
@@ -39,6 +41,14 @@ class SearchStopViewModel(
 
             is SearchStopUiEvent.StopSelected -> {
                 analytics.track(AnalyticsEvent.StopSelectedEvent(stopId = event.stopItem.stopId))
+            }
+
+            is SearchStopUiEvent.ClearRecentSearchStops -> {
+                stopResultsManager.clearRecentSearchStops()
+                // Refresh the state with empty recent stops
+                updateUiState {
+                    copy(recentStops = persistentListOf())
+                }
             }
         }
     }
@@ -63,6 +73,11 @@ class SearchStopViewModel(
                 )
             }
         }
+    }
+
+    private suspend fun fetchRecentStops() {
+        val recentStops = stopResultsManager.recentSearchStops().toImmutableList()
+        updateUiState { copy(recentStops = recentStops) }
     }
 
     private fun SearchStopState.displayData(stopsResult: List<SearchStopState.StopResult>) = copy(

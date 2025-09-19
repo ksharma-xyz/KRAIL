@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -15,6 +16,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class RealStopResultsManager(
     private val sandook: Sandook,
@@ -36,13 +39,15 @@ class RealStopResultsManager(
     override fun setSelectedFromStop(stopItem: StopItem?) {
         if (stopItem != null) {
             selectedFromStop = stopItem
+            saveRecentSearchStop(stopItem)
         }
         log("StopResultsManager - setSelectedFromStop: $stopItem")
     }
 
     override fun setSelectedToStop(stopItem: StopItem?) {
-        if(stopItem != null) {
+        if (stopItem != null) {
             selectedToStop = stopItem
+            saveRecentSearchStop(stopItem)
         }
         log("StopResultsManager - setSelectedToStop: $stopItem")
     }
@@ -58,6 +63,11 @@ class RealStopResultsManager(
         selectedFromStop = null
         selectedToStop = null
         log("StopResultsManager - clearSelectedStops")
+    }
+
+    override fun clearRecentSearchStops() {
+        sandook.clearRecentSearchStops()
+        log("StopResultsManager - clearRecentSearchStops")
     }
 
     override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {
@@ -117,9 +127,7 @@ class RealStopResultsManager(
     private fun SelectProductClassesForStop.toStopResult() = SearchStopState.StopResult(
         stopId = stopId,
         stopName = stopName,
-        transportModeType = this.productClasses.split(",").mapNotNull {
-            TransportMode.toTransportModeType(it.toInt())
-        }.toImmutableList(),
+        transportModeType = this.productClasses.toTransportModeList(),
     )
 
     private fun FlagValue.toStopsIdList(): List<String> {
@@ -140,5 +148,31 @@ class RealStopResultsManager(
                 }
             }
         }
+    }
+
+    override suspend fun recentSearchStops(): List<SearchStopState.StopResult> {
+        return sandook.selectRecentSearchStops().map { recentStop ->
+            SearchStopState.StopResult(
+                stopId = recentStop.stopId,
+                stopName = recentStop.stopName,
+                transportModeType = recentStop.productClasses.toTransportModeList(),
+            )
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun saveRecentSearchStop(stopItem: StopItem) {
+        sandook.insertOrReplaceRecentSearchStop(stopId = stopItem.stopId)
+    }
+
+    /**
+     * Extension function to parse comma-separated product classes string into TransportMode list
+     */
+    private fun String.toTransportModeList(): ImmutableList<TransportMode> {
+        return this.split(",")
+            .mapNotNull { productClass ->
+                productClass.toIntOrNull()?.let { TransportMode.toTransportModeType(it) }
+            }
+            .toImmutableList()
     }
 }

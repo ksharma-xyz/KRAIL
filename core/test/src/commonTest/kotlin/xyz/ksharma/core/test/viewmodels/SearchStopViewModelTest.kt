@@ -1,7 +1,7 @@
 package xyz.ksharma.core.test.viewmodels
 
 import app.cash.turbine.test
-import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -10,16 +10,15 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.test.AfterTest
@@ -152,4 +151,126 @@ class SearchStopViewModelTest {
             assertIs<AnalyticsEvent.StopSelectedEvent>(event)
             assertEquals("stopID", event.stopId)
         }
+
+    // region RecentSearchStops
+
+    @Test
+    fun `GIVEN recent stops exist WHEN ViewModel is initialized THEN recent stops are loaded in state`() =
+        runTest {
+            // GIVEN - Add some recent stops to the fake manager
+            val recentStop1 = SearchStopState.StopResult(
+                stopId = "recent1",
+                stopName = "Recent Stop 1",
+                transportModeType = persistentListOf(TransportMode.Train())
+            )
+            val recentStop2 = SearchStopState.StopResult(
+                stopId = "recent2",
+                stopName = "Recent Stop 2",
+                transportModeType = persistentListOf(TransportMode.Bus())
+            )
+
+            fakeStopResultsManager.addRecentSearchStop(recentStop1)
+            fakeStopResultsManager.addRecentSearchStop(recentStop2)
+
+            // WHEN - Create a new ViewModel instance to trigger initialization
+            val newViewModel = SearchStopViewModel(
+                analytics = fakeAnalytics,
+                stopResultsManager = fakeStopResultsManager,
+            )
+
+            // THEN
+            newViewModel.uiState.test {
+                advanceUntilIdle()
+                skipItems(1) // Skip initial state
+
+                awaitItem().run {
+                    assertEquals(2, recentStops.size)
+                    assertEquals("recent2", recentStops[0].stopId) // Most recent first
+                    assertEquals("recent1", recentStops[1].stopId)
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN recent stops exist WHEN ClearRecentStops is triggered THEN recent stops are cleared from state`() =
+        runTest {
+            // GIVEN - Add some recent stops
+            val recentStop1 = SearchStopState.StopResult(
+                stopId = "recent1",
+                stopName = "Recent Stop 1",
+                transportModeType = persistentListOf(TransportMode.Train())
+            )
+            val recentStop2 = SearchStopState.StopResult(
+                stopId = "recent2",
+                stopName = "Recent Stop 2",
+                transportModeType = persistentListOf(TransportMode.Bus())
+            )
+
+            fakeStopResultsManager.addRecentSearchStop(recentStop1)
+            fakeStopResultsManager.addRecentSearchStop(recentStop2)
+
+            viewModel.uiState.test {
+                // Skip initial state
+                advanceUntilIdle()
+                skipItems(1)
+
+                awaitItem().run {
+                    assertTrue(recentStops.size == 2)
+                }
+
+                // WHEN - Trigger clear recent stops
+                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+
+                // THEN - Verify recent stops are cleared
+                awaitItem().run {
+                    assertTrue(recentStops.isEmpty())
+                    assertFalse(isLoading)
+                    assertFalse(isError)
+                }
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN no recent stops WHEN ClearRecentStops is triggered THEN state remains unchanged`() =
+        runTest {
+            // GIVEN - No recent stops (default state)
+            viewModel.uiState.test {
+                skipItems(1) // Skip initial state
+
+                // WHEN - Trigger clear recent stops on empty state
+                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+
+                // THEN - State should remain unchanged with empty recent stops
+                expectNoEvents()
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN recent stops exist WHEN ClearRecentStops is triggered THEN StopResultsManager clearRecentSearchStops is called`() =
+        runTest {
+            // GIVEN - Add some recent stops
+            val recentStop = SearchStopState.StopResult(
+                stopId = "recent1",
+                stopName = "Recent Stop 1",
+                transportModeType = persistentListOf(TransportMode.Train())
+            )
+            fakeStopResultsManager.addRecentSearchStop(recentStop)
+
+            // Verify recent stops exist before clearing
+            assertEquals(1, fakeStopResultsManager.recentSearchStops().size)
+
+            // WHEN - Trigger clear recent stops
+            viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+            advanceUntilIdle()
+
+            // THEN - Verify the manager's clear method was called
+            assertEquals(0, fakeStopResultsManager.recentSearchStops().size)
+        }
+
+    // endregion RecentSearchStops
 }

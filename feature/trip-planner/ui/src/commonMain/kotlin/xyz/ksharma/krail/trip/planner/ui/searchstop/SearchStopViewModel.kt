@@ -49,6 +49,11 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.ClearRecentSearchStops -> {
+                analytics.track(
+                    AnalyticsEvent.ClearRecentSearchClickEvent(
+                        recentSearchCount = event.recentSearchCount
+                    )
+                )
                 stopResultsManager.clearRecentSearchStops()
                 // Refresh the state with empty recent stops
                 updateUiState {

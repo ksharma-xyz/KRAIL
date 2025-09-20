@@ -70,6 +70,15 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         },
     )
 
+    data class ClearRecentSearchClickEvent(
+        val recentSearchCount: Int
+    ) : AnalyticsEvent(
+        name = "clear_recent_search_stops",
+        properties = mapOf(
+            "recentSearchCount" to recentSearchCount,
+        ),
+    )
+
     // endregion
 
     // region Theme

@@ -269,7 +269,7 @@ class SearchStopViewModelTest {
                 }
 
                 // WHEN - Trigger clear recent stops
-                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = 2))
 
                 // THEN - Verify recent stops are cleared
                 awaitItem().run {
@@ -290,7 +290,7 @@ class SearchStopViewModelTest {
                 skipItems(1) // Skip initial state
 
                 // WHEN - Trigger clear recent stops on empty state
-                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = 0))
 
                 // THEN - State should remain unchanged with empty recent stops
                 expectNoEvents()
@@ -314,11 +314,42 @@ class SearchStopViewModelTest {
             assertEquals(1, fakeStopResultsManager.recentSearchStops().size)
 
             // WHEN - Trigger clear recent stops
-            viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+            viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = 1))
             advanceUntilIdle()
 
             // THEN - Verify the manager's clear method was called
             assertEquals(0, fakeStopResultsManager.recentSearchStops().size)
+        }
+
+    @Test
+    fun `GIVEN recent stops exist WHEN ClearRecentSearchStops is triggered THEN ClearRecentSearchClickEvent analytics is tracked with correct count`() =
+        runTest {
+            // GIVEN - Recent stops count
+            val recentSearchCount = 3
+
+            // WHEN - Trigger clear recent stops
+            viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = recentSearchCount))
+
+            // THEN - Verify analytics event is tracked with correct count
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            assertTrue(fakeAnalytics.isEventTracked("clear_recent_search_stops"))
+            val event = fakeAnalytics.getTrackedEvent("clear_recent_search_stops")
+            assertIs<AnalyticsEvent.ClearRecentSearchClickEvent>(event)
+            assertEquals(recentSearchCount, event.recentSearchCount)
+        }
+
+    @Test
+    fun `GIVEN zero recent stops WHEN ClearRecentSearchStops is triggered THEN analytics event is tracked with zero count`() =
+        runTest {
+            // WHEN - Trigger clear recent stops with zero count
+            viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = 0))
+
+            // THEN - Verify analytics event is tracked with zero count
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            assertTrue(fakeAnalytics.isEventTracked("clear_recent_search_stops"))
+            val event = fakeAnalytics.getTrackedEvent("clear_recent_search_stops")
+            assertIs<AnalyticsEvent.ClearRecentSearchClickEvent>(event)
+            assertEquals(0, event.recentSearchCount)
         }
 
     // endregion RecentSearchStops

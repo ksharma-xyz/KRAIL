@@ -319,7 +319,9 @@ fun SearchStopScreen(
                                 .clip(CircleShape)
                                 .klickable(
                                     onClick = {
-                                        onEvent(SearchStopUiEvent.ClearRecentSearchStops)
+                                        onEvent(SearchStopUiEvent.ClearRecentSearchStops(
+                                            recentSearchCount = searchStopState.recentStops.size,
+                                        ))
                                     }
                                 ),
                         )

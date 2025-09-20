@@ -89,11 +89,6 @@ fun SearchStopScreen(
     val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }
-    var selectedStop: StopItem? by remember { mutableStateOf(null) }
-
-    LaunchedEffect(selectedStop) {
-        selectedStop?.let { onStopSelect(it) }
-    }
 
     LaunchedEffect(backClicked) {
         if (backClicked) {
@@ -291,7 +286,8 @@ fun SearchStopScreen(
                         onClick = { stopItem ->
                             keyboard?.hide()
                             focusRequester.freeFocus()
-                            selectedStop = stopItem
+                            onStopSelect(stopItem)
+                            onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
                         },
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -342,7 +338,13 @@ fun SearchStopScreen(
                         onClick = { stopItem ->
                             keyboard?.hide()
                             focusRequester.freeFocus()
-                            selectedStop = stopItem
+                            onStopSelect(stopItem)
+                            onEvent(
+                                SearchStopUiEvent.TrackStopSelected(
+                                    stopItem = stopItem,
+                                    isRecentSearch = true,
+                                )
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth(),

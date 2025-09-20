@@ -136,11 +136,12 @@ class SearchStopViewModelTest {
 
             // WHEN
             viewModel.onEvent(
-                SearchStopUiEvent.StopSelected(
+                SearchStopUiEvent.TrackStopSelected(
                     StopItem(
                         stopName = "name",
                         stopId = "stopID",
-                    )
+                    ),
+                    isRecentSearch = false
                 )
             )
 
@@ -150,6 +151,31 @@ class SearchStopViewModelTest {
             val event = fakeAnalytics.getTrackedEvent("stop_selected")
             assertIs<AnalyticsEvent.StopSelectedEvent>(event)
             assertEquals("stopID", event.stopId)
+            assertEquals(false, event.isRecentSearch)
+        }
+
+    @Test
+    fun `GIVEN recent stop item WHEN StopSelected with isRecentSearch true is triggered THEN analytics event is tracked with correct flag`() =
+        runTest {
+
+            // WHEN
+            viewModel.onEvent(
+                SearchStopUiEvent.TrackStopSelected(
+                    StopItem(
+                        stopName = "Recent Stop",
+                        stopId = "recentStopID",
+                    ),
+                    isRecentSearch = true
+                )
+            )
+
+            // THEN
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            assertTrue(fakeAnalytics.isEventTracked("stop_selected"))
+            val event = fakeAnalytics.getTrackedEvent("stop_selected")
+            assertIs<AnalyticsEvent.StopSelectedEvent>(event)
+            assertEquals("recentStopID", event.stopId)
+            assertEquals(true, event.isRecentSearch)
         }
 
     // region RecentSearchStops

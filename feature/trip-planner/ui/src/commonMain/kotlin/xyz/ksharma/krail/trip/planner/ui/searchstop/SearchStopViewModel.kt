@@ -39,8 +39,13 @@ class SearchStopViewModel(
         when (event) {
             is SearchStopUiEvent.SearchTextChanged -> onSearchTextChanged(event.query)
 
-            is SearchStopUiEvent.StopSelected -> {
-                analytics.track(AnalyticsEvent.StopSelectedEvent(stopId = event.stopItem.stopId))
+            is SearchStopUiEvent.TrackStopSelected -> {
+                analytics.track(
+                    AnalyticsEvent.StopSelectedEvent(
+                        stopId = event.stopItem.stopId,
+                        isRecentSearch = event.isRecentSearch
+                    )
+                )
             }
 
             is SearchStopUiEvent.ClearRecentSearchStops -> {

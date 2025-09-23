@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.splash.SplashScreen
 import xyz.ksharma.krail.splash.SplashUiEvent
@@ -32,7 +33,6 @@ import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.taj.unspecifiedColor
 import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.tripPlannerDestinations
-import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
 
 /**
  * TODO - I don't like [NavHost] defined in app module, I would love to refactor it to :core:navigation module

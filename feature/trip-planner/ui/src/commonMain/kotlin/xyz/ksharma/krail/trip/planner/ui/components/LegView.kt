@@ -75,7 +75,7 @@ fun LegView(
                 .animateContentSize()
                 .background(
                     color = transportModeBackgroundColor(transportMode = transportModeLine.transportMode),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                 )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },

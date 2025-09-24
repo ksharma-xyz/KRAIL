@@ -2,14 +2,17 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>CascadingCallWrapping:DateTimeHelper.kt$DateTimeHelper$date</ID>
     <ID>MagicNumber:DateTimeHelper.kt$DateTimeHelper$12</ID>
     <ID>MagicNumber:DateTimePickerInfo.kt$10</ID>
     <ID>MagicNumber:DateTimePickerInfo.kt$12</ID>
     <ID>MagicNumber:DateTimePickerInfo.kt$3</ID>
     <ID>MaxLineLength:DateTimeHelper.kt$DateTimeHelper$totalMinutes &lt; 0 -&gt; "${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"} ago"</ID>
-    <ID>MaxLineLength:DateTimePickerInfo.kt$"$dayOfWeek, ${date.dayOfMonth} ${month.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}"</ID>
+    <ID>MaxLineLength:DateTimePickerInfo.kt$"$dayOfWeek, ${date.day} ${month.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}"</ID>
     <ID>MaximumLineLength:DateTimeHelper.kt$DateTimeHelper$ </ID>
     <ID>MaximumLineLength:DateTimePickerInfo.kt$ </ID>
+    <ID>StringLiteralDuplication:DateTimeHelper.kt$DateTimeHelper$"$hour:$minute $amPm"</ID>
+    <ID>TooGenericExceptionCaught:DateTimeHelper.kt$DateTimeHelper$e: Exception</ID>
     <ID>TooManyFunctions:DateTimeHelper.kt$DateTimeHelper</ID>
   </CurrentIssues>
 </SmellBaseline>

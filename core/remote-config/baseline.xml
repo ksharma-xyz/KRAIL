@@ -2,8 +2,13 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>Indentation:RemoteConfigDefaults.kt$RemoteConfigDefaults$ </ID>
     <ID>LongMethod:RemoteConfigDefaults.kt$RemoteConfigDefaults$fun getDefaults(): Array&lt;Pair&lt;String, Any?&gt;&gt;</ID>
-    <ID>MaxLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$"""["200060", "200070", "200080", "206010", "2150106", "200017", "200039", "201016", "201039", "201080", "200066", "200030", "200046", "200050"]""".trimMargin()</ID>
+    <ID>MagicNumber:RemoteConfigDefaults.kt$RemoteConfigDefaults$120</ID>
+    <ID>MagicNumber:RemoteConfigDefaults.kt$RemoteConfigDefaults$600</ID>
+    <ID>MaxLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$"""["200060", "200070", "200080", "206010", "2150106", "200017", "200039", "201016", "201039", "201080", "200066", "200030", "200046", "200050", "2155384"]""".trimMargin()</ID>
+    <ID>MaxLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$"If something’s not quite right (or you just have thoughts), email us anytime at hey@krail.app or reach out via LinkedIn. 💕"</ID>
+    <ID>MaxLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$second</ID>
     <ID>MaximumLineLength:RemoteConfigDefaults.kt$RemoteConfigDefaults$ </ID>
     <ID>PackageName:Flag.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>
     <ID>PackageName:FlagKeys.kt$package xyz.ksharma.krail.core.remote_config.flag</ID>

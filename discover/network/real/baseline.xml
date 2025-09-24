@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CascadingCallWrapping:RealDiscoverSydneyManager.kt$RealDiscoverSydneyManager$second</ID>
+    <ID>MagicNumber:RealDiscoverCardOrderingEngine.kt$RealDiscoverCardOrderingEngine$10</ID>
+    <ID>MagicNumber:RealDiscoverCardOrderingEngine.kt$RealDiscoverCardOrderingEngine$6</ID>
+    <ID>TooGenericExceptionCaught:RealDiscoverCardOrderingEngine.kt$RealDiscoverCardOrderingEngine$e: Exception</ID>
+    <ID>TooManyFunctions:RealDiscoverCardOrderingEngine.kt$RealDiscoverCardOrderingEngine : DiscoverCardOrderingEngine</ID>
+  </CurrentIssues>
+</SmellBaseline>

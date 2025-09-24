@@ -2,7 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>Indentation:HttpClient.kt$ </ID>
-    <ID>Wrapping:HttpClient.kt$(</ID>
+    <ID>FinalNewline:HttpTimeouts.kt$xyz.ksharma.krail.core.network.HttpTimeouts.kt</ID>
+    <ID>NoUnusedImports:HttpClient.kt$xyz.ksharma.krail.core.network.HttpClient.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

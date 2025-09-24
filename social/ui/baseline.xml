@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>FunctionNaming:SocialConnectionRow.kt$@Composable fun SocialConnectionRow( socialLinks: List&lt;KrailSocialType&gt;, modifier: Modifier = Modifier, onClick: (KrailSocialType) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:SocialConnectionRow.kt$@Composable fun SocialConnectionRow( socialPartnerName: String, partnerSocialLinks: List&lt;PartnerSocialLink&gt;, modifier: Modifier = Modifier, onClick: (PartnerSocialLink) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:SocialConnectionRow.kt$@Preview @Composable private fun SocialConnectionRowPreview()</ID>
+    <ID>LambdaParameterEventTrailing:SocialConnectionRow.kt$onClick</ID>
+    <ID>NoConsecutiveBlankLines:SocialTypeExt.kt$ </ID>
+    <ID>UnusedPrivateMember:SocialConnectionRow.kt$@Preview @Composable private fun SocialConnectionRowPreview()</ID>
+  </CurrentIssues>
+</SmellBaseline>

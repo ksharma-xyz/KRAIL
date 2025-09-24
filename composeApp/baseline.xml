@@ -4,14 +4,17 @@
   <CurrentIssues>
     <ID>CascadingCallWrapping:SplashViewModel.kt$SplashViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)</ID>
     <ID>FunctionNaming:KrailApp.kt$@Composable fun KrailApp()</ID>
+    <ID>FunctionNaming:KrailApp.kt$@Composable private fun SetupCoilImageLoader()</ID>
     <ID>FunctionNaming:KrailNavHost.kt$@Composable fun KrailNavHost(modifier: Modifier = Modifier)</ID>
     <ID>FunctionNaming:MainViewController.kt$fun MainViewController()</ID>
-    <ID>FunctionNaming:SplashScreen.kt$@Composable fun SplashScreen( logoColor: Color?, backgroundColor: Color?, onSplashComplete: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:SplashScreen.kt$@Composable fun SplashScreen( logoColor: Color?, backgroundColor: Color?, onSplashAnimationComplete: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:SplashScreen.kt$@Composable private fun AnimatedKrailLogo( logoColor: Color, modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:SplashScreen.kt$@Composable private fun AnimatedLetter( letter: String, animationStarted: Boolean, logoColor: Color, modifier: Modifier = Modifier, fontSize: TextUnit = TextUnit(65F, TextUnitType.Sp), delayMillis: Int = 100, )</ID>
     <ID>FunctionNaming:SplashScreen.kt$@Preview @Composable private fun PreviewLogo()</ID>
     <ID>FunctionNaming:SplashScreen.kt$@Preview @Composable private fun PreviewSplashScreen()</ID>
+    <ID>LongMethod:KrailNavHost.kt$@Composable fun KrailNavHost(modifier: Modifier = Modifier)</ID>
     <ID>LongParameterList:SplashScreen.kt$( letter: String, animationStarted: Boolean, logoColor: Color, modifier: Modifier = Modifier, fontSize: TextUnit = TextUnit(65F, TextUnitType.Sp), delayMillis: Int = 100, )</ID>
+    <ID>LongParameterList:SplashViewModel.kt$SplashViewModel$( private val sandook: Sandook, private val analytics: Analytics, private val appInfoProvider: AppInfoProvider, private val ioDispatcher: CoroutineDispatcher, private val appStart: AppStart, private val preferences: SandookPreferences, private val appVersionManager: AppVersionManager, )</ID>
     <ID>MagicNumber:SplashScreen.kt$0.7f</ID>
     <ID>MagicNumber:SplashScreen.kt$0xFF009B77</ID>
     <ID>MagicNumber:SplashScreen.kt$0xFFF6891F</ID>

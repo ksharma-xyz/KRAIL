@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>NotImplementedDeclaration:RealAnalytics.kt$RealAnalytics$TODO("Not yet implemented")</ID>
-    <ID>ParameterListWrapping:AnalyticsEvent.kt$AnalyticsEvent.ModeSelectionDoneEvent$( val fromStopId: String, val toStopId: String, val unselectedProductClasses: Set&lt;Int&gt;, )</ID>
     <ID>StringLiteralDuplication:AnalyticsEvent.kt$AnalyticsEvent.SavedTripCardClickEvent$"fromStopId"</ID>
     <ID>StringLiteralDuplication:AnalyticsEvent.kt$AnalyticsEvent.SavedTripCardClickEvent$"toStopId"</ID>
   </CurrentIssues>

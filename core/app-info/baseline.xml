@@ -3,9 +3,9 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexInterface:AppInfo.kt$AppInfo</ID>
+    <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalAppInfo</ID>
     <ID>Indentation:AppInfo.android.kt$AndroidAppInfo$ </ID>
-    <ID>Indentation:AppInfo.ios.kt$IOSAppInfo$ </ID>
-    <ID>StringTemplate:AppInfo.android.kt$AndroidAppInfo$${isDebug}</ID>
-    <ID>StringTemplate:AppInfo.ios.kt$IOSAppInfo$${isDebug}</ID>
+    <ID>MultiLineIfElse:AppInfo.kt$AppInfo$"$appVersion ($appBuildNumber)"</ID>
+    <ID>MultiLineIfElse:AppInfo.kt$AppInfo$appVersion</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:AppVersionManager.kt$RealAppVersionManager$( "Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion")</ID>
+    <ID>ArgumentListWrapping:AppVersionManager.kt$RealAppVersionManager$( "Current version ($current) is ahead of latest flag ($latestAppVersion) -&gt; flag value is likely stale")</ID>
+    <ID>ArgumentListWrapping:AppVersionManager.kt$RealAppVersionManager$("Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion")</ID>
+    <ID>ArgumentListWrapping:AppVersionManager.kt$RealAppVersionManager$("Current version ($current) is ahead of latest flag ($latestAppVersion) -&gt; flag value is likely stale")</ID>
+    <ID>CascadingCallWrapping:AppVersionManager.kt$RealAppVersionManager$seg.filter { it.isDigit() } .takeIf { it.isNotEmpty() } ?.toIntOrNull() ?: 0</ID>
+    <ID>CommentSpacing:AppVersionManager.kt$RealAppVersionManager$//"This important update keeps KRAIL running smoothly and hope you enjoy latest\u00A0improvements!",</ID>
+    <ID>FunctionNaming:AppUpgradeScreen.kt$@Composable fun AppUpgradeScreen( modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:AppUpgradeScreen.kt$@Composable private fun AnimatedUpdateButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, startDelayMillis: Int = 300, fadeDurationMillis: Int = 520, scaleSpringDamping: Float = 0.68f )</ID>
+    <ID>FunctionNaming:AppUpgradeScreen.kt$@Preview @Composable fun AppUpgradeScreenPreview()</ID>
+    <ID>LongMethod:AppUpgradeScreen.kt$@Composable fun AppUpgradeScreen( modifier: Modifier = Modifier, )</ID>
+    <ID>MagicNumber:AppUpgradeScreen.kt$0.7f</ID>
+    <ID>MagicNumber:AppUpgradeScreen.kt$3000</ID>
+    <ID>MagicNumber:AppUpgradeScreen.kt$4000</ID>
+    <ID>MaxLineLength:AppVersionManager.kt$RealAppVersionManager$"Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion"</ID>
+    <ID>MaximumLineLength:AppVersionManager.kt$RealAppVersionManager$ </ID>
+    <ID>NoConsecutiveBlankLines:AppUpgradeScreen.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:AppVersionManager.kt$ </ID>
+    <ID>PreviewPublic:AppUpgradeScreen.kt$AppUpgradeScreenPreview</ID>
+  </CurrentIssues>
+</SmellBaseline>

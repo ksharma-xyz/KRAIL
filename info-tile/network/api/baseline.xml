@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CascadingCallWrapping:InfolTilePreferences.kt$getString(KEY_DISMISSED_INFO_TILES) ?.split(",") ?.filter { it.isNotBlank() } ?.toMutableSet() ?: mutableSetOf()</ID>
+    <ID>CascadingCallWrapping:InfolTilePreferences.kt$getString(KEY_DISMISSED_INFO_TILES) ?.split(",") ?.filter { it.isNotBlank() } ?.toSet() ?: emptySet()</ID>
+    <ID>NoConsecutiveBlankLines:InfoTileManager.kt$InfoTileManager$ </ID>
+  </CurrentIssues>
+</SmellBaseline>

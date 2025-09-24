@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$( "Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$( "Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates.")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$( "Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$( "Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$("Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$("Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates.")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$("Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate")</ID>
+    <ID>ArgumentListWrapping:RealFestivalManager.kt$RealFestivalManager$("Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate")</ID>
+    <ID>CascadingCallWrapping:RealFestivalManager.kt$RealFestivalManager$second</ID>
+    <ID>ImportOrdering:FestivalManager.kt$import kotlinx.datetime.LocalDate import kotlinx.datetime.TimeZone.Companion.currentSystemDefault import kotlinx.datetime.toLocalDateTime import xyz.ksharma.krail.core.festival.model.Festival import kotlinx.collections.immutable.persistentListOf import kotlin.time.Clock import kotlin.time.ExperimentalTime import kotlin.time.Instant</ID>
+    <ID>Indentation:RealFestivalManager.kt$RealFestivalManager$ </ID>
+    <ID>MaxLineLength:RealFestivalManager.kt$RealFestivalManager$"Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange"</ID>
+    <ID>MaxLineLength:RealFestivalManager.kt$RealFestivalManager$"Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates."</ID>
+    <ID>MaxLineLength:RealFestivalManager.kt$RealFestivalManager$"Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate"</ID>
+    <ID>MaxLineLength:RealFestivalManager.kt$RealFestivalManager$"Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate"</ID>
+    <ID>MaximumLineLength:RealFestivalManager.kt$RealFestivalManager$ </ID>
+    <ID>MultiLineIfElse:RealFestivalManager.kt$RealFestivalManager$log( "Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates." )</ID>
+    <ID>MultiLineIfElse:RealFestivalManager.kt$RealFestivalManager$log("No festivals found or error decoding festivals.")</ID>
+    <ID>ReturnCount:RealFestivalManager.kt$RealFestivalManager$override fun festivalOnDate(date: LocalDate): Festival?</ID>
+    <ID>StringTemplate:RealFestivalManager.kt$RealFestivalManager$${date}</ID>
+    <ID>StringTemplate:RealFestivalManager.kt$RealFestivalManager$${greeting}</ID>
+    <ID>TooGenericExceptionCaught:RealFestivalManager.kt$RealFestivalManager$e: Exception</ID>
+    <ID>UnusedParameter:RealFestivalManager.kt$RealFestivalManager$greeting: String</ID>
+  </CurrentIssues>
+</SmellBaseline>

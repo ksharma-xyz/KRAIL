@@ -2,8 +2,10 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ImportOrdering:GtfsModule.kt$import org.koin.core.qualifier.named import org.koin.dsl.module import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager import xyz.ksharma.krail.io.gtfs.nswstops.NswStopsManager</ID>
     <ID>InvalidPackageDeclaration:GtfsModule.kt$package xyz.ksharma.krail.io.gtfs.di</ID>
-    <ID>InvalidPackageDeclaration:ProtoParser.kt$package xyz.ksharma.krail.io.gtfs.nswstops</ID>
-    <ID>InvalidPackageDeclaration:StopsProtoParser.kt$package xyz.ksharma.krail.io.gtfs.nswstops</ID>
+    <ID>InvalidPackageDeclaration:NswStopsManager.kt$package xyz.ksharma.krail.io.gtfs.nswstops</ID>
+    <ID>InvalidPackageDeclaration:StopsManager.kt$package xyz.ksharma.krail.io.gtfs.nswstops</ID>
+    <ID>NoUnusedImports:NswStopsManager.kt$xyz.ksharma.krail.io.gtfs.nswstops.NswStopsManager.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

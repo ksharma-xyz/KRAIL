@@ -53,7 +53,9 @@ fun CookieShapeBox(
                         shape = shape,
                         shadow = cookieShadow
                     )
-                } else Modifier
+                } else {
+                    Modifier
+                }
             )
             .size(SIZE)
             .background(color = backgroundColor, shape = CookieShape()),
@@ -116,7 +118,6 @@ object CookieShapeBoxDefaults {
     )
 }
 
-
 @Preview
 @Composable
 private fun CookiePreviewBox() {
@@ -132,7 +133,6 @@ private fun CookiePreviewCanvas() {
         CookieShapeCanvas()
     }
 }
-
 
 @Preview
 @Composable

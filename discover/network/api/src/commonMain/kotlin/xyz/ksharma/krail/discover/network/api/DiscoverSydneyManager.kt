@@ -12,5 +12,4 @@ interface DiscoverSydneyManager {
     suspend fun markCardAsSeen(cardId: String)
 
     suspend fun resetAllDiscoverCardsDebugOnly()
-
 }

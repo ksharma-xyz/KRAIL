@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.discover
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,7 +18,6 @@ import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverChipDefaults.RowContentPadding
-import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverChipDefaults.RowSpacing
 
 @Composable
 fun DiscoverChipRow(

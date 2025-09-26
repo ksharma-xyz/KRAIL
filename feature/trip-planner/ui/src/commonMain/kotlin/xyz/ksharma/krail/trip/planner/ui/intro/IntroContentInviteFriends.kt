@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import app.krail.taj.resources.Res as TajRes
 import app.krail.taj.resources.ic_android_share
 import app.krail.taj.resources.ic_ios_share
 import org.jetbrains.compose.resources.painterResource
@@ -30,6 +29,7 @@ import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun IntroContentInviteFriends(

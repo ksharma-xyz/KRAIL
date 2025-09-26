@@ -39,4 +39,3 @@ fun KrailSocialType.toAnalyticsEventPlatform(): SocialConnectionLinkClickEvent.S
         KrailSocialType.Instagram -> SocialConnectionLinkClickEvent.SocialPlatformType.INSTAGRAM
         KrailSocialType.Facebook -> SocialConnectionLinkClickEvent.SocialPlatformType.FACEBOOK
     }
-

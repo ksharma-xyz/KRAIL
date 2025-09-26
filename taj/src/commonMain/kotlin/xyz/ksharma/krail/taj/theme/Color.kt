@@ -17,14 +17,15 @@ val md_theme_light_softLabel = Color(0xFF767676)
 val md_theme_light_secondary_label = Color(0xFF2E2E2E)
 val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
+
 // Light theme (Deviations colors)
 val md_theme_light_onTime = Color(0xFF31DB39)
 val md_theme_light_early = Color(0xFFFFC60F)
 val md_theme_light_late = Color(0xFFF12525)
-// Future and past journey colors
-val md_theme_light_future_journey= Color(0xFF3A3A3A)
-val md_theme_light_past_journey = Color(0xFFBBBBBB)
 
+// Future and past journey colors
+val md_theme_light_future_journey = Color(0xFF3A3A3A)
+val md_theme_light_past_journey = Color(0xFFBBBBBB)
 
 /**
  * KRAIL Dark theme color tokens
@@ -47,10 +48,10 @@ val md_theme_dark_discover_card_background = Color(0xFF292929)
 val md_theme_dark_onTime = Color(0xFF31DB39)
 val md_theme_dark_early = Color(0xFFFFC60F)
 val md_theme_dark_late = Color(0xFFFF2B2B)
-// Future and past journey colors
-val md_theme_dark_future_journey= Color(0xFFEEEEEE)
-val md_theme_dark_past_journey = Color(0xFF8F8F8F)
 
+// Future and past journey colors
+val md_theme_dark_future_journey = Color(0xFFEEEEEE)
+val md_theme_dark_past_journey = Color(0xFF8F8F8F)
 
 // Transport mode theme colors
 val bus_theme = Color(0xFF00B5EF)

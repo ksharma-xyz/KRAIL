@@ -341,7 +341,6 @@ data class ButtonDimensions(
     val shape: RoundedCornerShape = RoundedCornerShape(50),
 )
 
-
 // region Previews Button
 
 @Composable
@@ -459,7 +458,6 @@ fun PreviewSubtleButtonDimensionsDark() {
         }
     }
 }
-
 
 @Composable
 @Preview(name = "Subtle Button Disabled - Light")
@@ -595,7 +593,6 @@ fun PreviewAlertButtonDimensionsDark() {
         }
     }
 }
-
 
 @Composable
 @Preview(name = "Alert Button Disabled - Light")

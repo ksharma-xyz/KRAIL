@@ -74,9 +74,9 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
 
     override fun toString() =
         "AndroidAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
-                "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
-                "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
-                "timeZone=$timeZone)"
+            "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
+            "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
+            "timeZone=$timeZone)"
 }
 
 class AndroidAppInfoProvider(

@@ -161,7 +161,9 @@ fun DiscoverCardTablet(
                     onAppSocialLinkClicked = onAppSocialLinkClicked,
                     onPartnerSocialLinkClicked = { partnerSocialLink ->
                         onPartnerSocialLinkClicked(
-                            partnerSocialLink, discoverModel.cardId, discoverModel.type
+                            partnerSocialLink,
+                            discoverModel.cardId,
+                            discoverModel.type
                         )
                     },
                     onCtaClicked = { url ->

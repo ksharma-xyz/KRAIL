@@ -116,17 +116,21 @@ fun ThemeSelectionRadioButton(
             modifier = Modifier
                 .size(40.dp)
                 .then(
-                    if (selected) Modifier.drawBehind {
-                        val color = themeStyle.hexColorCode.hexToComposeColor()
-                        withTransform({
-                            scale(pulseScale, pulseScale, pivot = center)
-                        }) {
-                            drawCircle(
-                                color = color.copy(alpha = pulseAlpha),
-                                radius = size.minDimension / 2
-                            )
+                    if (selected) {
+                        Modifier.drawBehind {
+                            val color = themeStyle.hexColorCode.hexToComposeColor()
+                            withTransform({
+                                scale(pulseScale, pulseScale, pivot = center)
+                            }) {
+                                drawCircle(
+                                    color = color.copy(alpha = pulseAlpha),
+                                    radius = size.minDimension / 2
+                                )
+                            }
                         }
-                    } else Modifier
+                    } else {
+                        Modifier
+                    }
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -176,9 +180,12 @@ fun ThemeSelectionRadioButton(
                             val controlX2 = x + 2 * waveLength / 3
                             val endY = if (up) centerY - amplitude else centerY + amplitude
                             path.cubicTo(
-                                controlX1, centerY,
-                                controlX2, endY,
-                                nextX, endY
+                                controlX1,
+                                centerY,
+                                controlX2,
+                                endY,
+                                nextX,
+                                endY
                             )
                             x = nextX
                             up = !up

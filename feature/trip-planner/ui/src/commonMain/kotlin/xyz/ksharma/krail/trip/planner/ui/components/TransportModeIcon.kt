@@ -111,7 +111,6 @@ private fun TrainPreviewLarge() {
     }
 }
 
-
 @Preview(group = previewGroupName)
 @Composable
 private fun BusPreview() {

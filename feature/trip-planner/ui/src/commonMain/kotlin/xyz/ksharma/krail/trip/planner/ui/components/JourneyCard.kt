@@ -114,7 +114,6 @@ fun JourneyCard(
                 .background(color = KrailTheme.colors.surface)
                 .animateContentSize(),
         ) {
-
             JourneyCardHeader(
                 transportModeLineList = transportModeLineList,
                 platformText = platformText,

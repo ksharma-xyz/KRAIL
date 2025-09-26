@@ -1,13 +1,14 @@
 package xyz.ksharma.krail.core.analytics.event
 
-import kotlin.time.Clock
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
     data class ScreenViewEvent(val screen: AnalyticsScreen) : AnalyticsEvent(
-        name = "view_screen", properties = mapOf("name" to screen.name)
+        name = "view_screen",
+        properties = mapOf("name" to screen.name)
     )
 
     // region SavedTrips
@@ -204,7 +205,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val batteryLevel: Int,
         val timeZone: String,
     ) : AnalyticsEvent(
-        name = "app_start", properties = mapOf(
+        name = "app_start",
+        properties = mapOf(
             "platformType" to platformType.trim(),
             "appVersion" to appVersion.trim(),
             "osVersion" to osVersion.trim(),
@@ -229,7 +231,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * screen etc.
      */
     data class ReferFriend(val entryPoint: EntryPoint) : AnalyticsEvent(
-        name = "refer_friend", properties = mapOf(
+        name = "refer_friend",
+        properties = mapOf(
             "entryPoint" to entryPoint.from,
         )
     ) {
@@ -249,7 +252,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val pageType: InteractionPage,
         val pageNumber: Int,
     ) : AnalyticsEvent(
-        name = "intro_lets_krail", properties = mapOf(
+        name = "intro_lets_krail",
+        properties = mapOf(
             "completedOnPage" to pageType.name,
             "completedOnPageNumber" to pageNumber,
         )
@@ -297,7 +301,9 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * @param expand Indicates whether the card is being expanded or collapsed.
      * @param time - when the card was clicked, format - epoch time in seconds.
      */
-    data class ParkRideCardClickEvent @OptIn(ExperimentalTime::class) constructor(
+    data class ParkRideCardClickEvent
+    @OptIn(ExperimentalTime::class)
+    constructor(
         val stopId: String,
         val facilityId: String,
         val expand: Boolean,
@@ -326,8 +332,9 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val cardType: CardType,
         val partnerSocialLink: PartnerSocialLink? = null,
     ) : AnalyticsEvent(
-        name = "discover_card_click", properties = mutableMapOf(
-            //"location" to location,
+        name = "discover_card_click",
+        properties = mutableMapOf(
+            // "location" to location,
             "source" to source.actionName,
             "cardId" to cardId,
             "cardType" to cardType.displayName,
@@ -336,7 +343,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
                 put("partnerSocialPlatformName", socialLink.type.platformName)
                 put("partnerSocialPlatformUrl", socialLink.url)
             }
-        }) {
+        }
+    ) {
         data class PartnerSocialLink(
             val type: SocialConnectionLinkClickEvent.SocialPlatformType,
             val url: String,

@@ -55,18 +55,24 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 
             when {
                 startDate == null || endDate == null -> {
-                    log("Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate")
+                    log(
+                        "Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate"
+                    )
                     false
                 }
 
                 startDate > endDate -> {
-                    logError("Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate")
+                    logError(
+                        "Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate"
+                    )
                     false
                 }
 
                 else -> {
                     val inRange = date >= startDate && date <= endDate
-                    log("Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange")
+                    log(
+                        "Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange"
+                    )
                     inRange
                 }
             }
@@ -84,8 +90,13 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
         val flagValue = flag.getFlagValue(FlagKeys.FESTIVALS.key)
         log("Flag value for festivals: $flagValue")
         return flagValue.toFestivalData().also {
-            if (it == null) log("No festivals found or error decoding festivals.")
-            else log("Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates.")
+            if (it == null) {
+                log("No festivals found or error decoding festivals.")
+            } else {
+                log(
+                    "Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates."
+                )
+            }
         }
     }
 
@@ -115,7 +126,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
         runCatching { LocalDate.parse(date) }
             .onFailure { error ->
                 logError(
-                    "Failed to parse $tag:'${date}' for festival '${greeting}",
+                    "Failed to parse $tag:'$date' for festival '$greeting",
                     error,
                 )
             }

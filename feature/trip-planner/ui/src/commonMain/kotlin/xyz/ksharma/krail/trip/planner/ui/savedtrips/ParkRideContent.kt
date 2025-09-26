@@ -36,7 +36,6 @@ fun ParkRideLoadedContent(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-
         Column(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {

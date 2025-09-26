@@ -51,7 +51,6 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopSelectionManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Clock.System
@@ -189,7 +188,6 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.FromStopChanged -> onFromStopChanged(event.fromJson)
 
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
-
         }
     }
 
@@ -226,14 +224,18 @@ class SavedTripsViewModel(
         )
 
         if (isExpanded) {
-            log("Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}")
+            log(
+                "Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}"
+            )
             updateUiState {
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
                         // Loading is dictated by totalSpots being -1 because, when we do not have
                         // any facility detail data for first time, we set totalSpots to -1.
-                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
+                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
+                                it.totalSpots == -1 || it.spotsAvailable == -1
+                            }) {
                             uiState.copy(isLoading = true)
                         } else if (parkRideState.facilities.any { it.totalSpots >= 0 }) {
                             uiState.copy(isLoading = false)
@@ -249,14 +251,18 @@ class SavedTripsViewModel(
             }
             log("Park Ride card expanded done")
         } else {
-            log("Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}")
+            log(
+                "Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}"
+            )
             updateUiState {
                 copy(
                     observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
                     parkRideUiState = parkRideUiState.map { uiState ->
                         // Loading is dictated by totalSpots being -1 because, when we do not have
                         // any facility detail data for first time, we set totalSpots to -1.
-                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any { it.totalSpots == -1 || it.spotsAvailable == -1 }) {
+                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
+                                it.totalSpots == -1 || it.spotsAvailable == -1
+                            }) {
                             uiState.copy(isLoading = true)
                         } else {
                             uiState

@@ -28,9 +28,11 @@ interface AppInfo {
      * UI friendly display (debug: "1.7.6 (123)", release: "1.7.6").
      */
     val appVersionDisplay: String
-        get() = if (isDebug && appBuildNumber.isNotBlank())
+        get() = if (isDebug && appBuildNumber.isNotBlank()) {
             "$appVersion ($appBuildNumber)"
-        else appVersion
+        } else {
+            appVersion
+        }
 
     /**
      * OS version.

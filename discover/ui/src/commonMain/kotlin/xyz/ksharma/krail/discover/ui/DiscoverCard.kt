@@ -146,7 +146,9 @@ fun DiscoverCard(
                 onAppSocialLinkClicked = onAppSocialLinkClicked,
                 onPartnerSocialLinkClicked = { partnerSocialLink ->
                     onPartnerSocialLinkClicked(
-                        partnerSocialLink, discoverModel.cardId, discoverModel.type
+                        partnerSocialLink,
+                        discoverModel.cardId,
+                        discoverModel.type
                     )
                 },
                 onCtaClicked = { url ->
@@ -168,13 +170,13 @@ fun createAdaptiveBackground(): Color {
         // Dark mode: blend theme color with darkened surface (towards black)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
-            background = surfaceColor.darken(0.15f)     // More darkening towards black
+            background = surfaceColor.darken(0.15f) // More darkening towards black
         )
     } else {
         // Light mode: blend theme color with brightened surface (towards white)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
-            background = surfaceColor.brighten(0.15f)    // More brightening towards white
+            background = surfaceColor.brighten(0.15f) // More brightening towards white
         )
     }
 }
@@ -205,7 +207,7 @@ fun DiscoverCardButtonRow(
     if (state == null) {
         logError(
             "Invalid button combination or no buttons provided: " +
-                    "${buttonsList.map { it::class.simpleName }}"
+                "${buttonsList.map { it::class.simpleName }}"
         )
         return
     } else {

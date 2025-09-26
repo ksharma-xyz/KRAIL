@@ -30,7 +30,6 @@ class SearchStopViewModel(
         .onStart {
             fetchRecentStops()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
-
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
     private var searchJob: Job? = null

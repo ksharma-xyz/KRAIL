@@ -227,7 +227,6 @@ fun AppUpgradeScreen(
     }
 }
 
-
 @Preview
 @Composable
 fun AppUpgradeScreenPreview() {

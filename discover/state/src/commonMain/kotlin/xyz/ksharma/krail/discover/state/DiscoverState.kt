@@ -93,7 +93,6 @@ data class DiscoverCardButtonRowState(
 }
 
 fun List<Button>.toButtonRowState(): DiscoverCardButtonRowState? {
-
     if (!isValidButtonCombo()) {
         return null
     }
@@ -127,23 +126,23 @@ fun List<Button>.isValidButtonCombo(): Boolean {
 
     val leftTypes = listOf(
         Button.Cta::class,
-        Button.Social::class  // PartnerSocial is a subclass of Button.Social
+        Button.Social::class // PartnerSocial is a subclass of Button.Social
     )
 
     // Share button validation
     if (types.contains(Button.Share::class)) {
-        val leftCount = types.count { it in leftTypes }  // This is 1 (PartnerSocial)
+        val leftCount = types.count { it in leftTypes } // This is 1 (PartnerSocial)
         if (leftCount == 1) {
-            val hasCta = types.contains(Button.Cta::class)  // false
-            val hasPartnerSocial = this.any { it is Button.Social.PartnerSocial }  // true
-            val hasAppSocial = this.any { it is Button.Social.AppSocial }  // false
+            val hasCta = types.contains(Button.Cta::class) // false
+            val hasPartnerSocial = this.any { it is Button.Social.PartnerSocial } // true
+            val hasAppSocial = this.any { it is Button.Social.AppSocial } // false
 
             // Allow Cta + Share OR PartnerSocial + Share, but not AppSocial + Share
-            if (!hasCta && !hasPartnerSocial) {  // false && false = false
-                return false  // This line won't execute
+            if (!hasCta && !hasPartnerSocial) { // false && false = false
+                return false // This line won't execute
             }
-            if (hasAppSocial) {  // false
-                return false  // This line won't execute
+            if (hasAppSocial) { // false
+                return false // This line won't execute
             }
         }
     }

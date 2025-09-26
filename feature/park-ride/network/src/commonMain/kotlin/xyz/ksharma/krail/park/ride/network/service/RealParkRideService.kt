@@ -32,8 +32,7 @@ internal class RealParkRideService(
     }
 
     override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> =
-        suspendSafeResult(ioDispatcher)
-        {
+        suspendSafeResult(ioDispatcher) {
             val response: Map<String, String> =
                 httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/carpark") {}.body()
             response

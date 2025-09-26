@@ -2,7 +2,6 @@ package xyz.ksharma.krail.taj.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -27,7 +26,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import kotlin.compareTo
 import kotlin.math.absoluteValue
@@ -100,7 +98,7 @@ fun <T> DiscoverCardVerticalPager(
                 }
 
                 // region Shadow for card
-                val maxShadowAlpha = if(isSystemInDarkTheme()) 0.15f else 0.1f
+                val maxShadowAlpha = if (isSystemInDarkTheme()) 0.15f else 0.1f
                 val targetShadowAlpha = if (isCardSelected) maxShadowAlpha else 0f
                 val animatedShadowAlpha by animateFloatAsState(
                     targetValue = targetShadowAlpha,
@@ -127,7 +125,9 @@ fun <T> DiscoverCardVerticalPager(
                                     alpha = animatedShadowAlpha,
                                 )
                             )
-                        } else Modifier
+                        } else {
+                            Modifier
+                        }
                     )
                     .zIndex(1f - pageOffset)
                     .align(Alignment.Center)

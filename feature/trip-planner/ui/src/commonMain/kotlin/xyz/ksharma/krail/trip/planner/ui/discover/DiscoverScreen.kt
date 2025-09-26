@@ -108,14 +108,14 @@ fun DiscoverScreenCompact(
     Box(
         modifier = Modifier.fillMaxSize()
             .background(color = KrailTheme.colors.surface)
-            .systemBarsPadding()
+            .systemBarsPadding(),
     ) {
         if (isLargeFontScale()) {
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 200.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = modifier.fillMaxSize()
+                modifier = modifier.fillMaxSize(),
             ) {
                 item {
                     DiscoverTitleBar(onBackClick, resetAllSeenCards)
@@ -127,7 +127,7 @@ fun DiscoverScreenCompact(
 
                 items(
                     count = state.discoverCardsList.size,
-                    key = { index -> state.discoverCardsList[index].cardId }
+                    key = { index -> state.discoverCardsList[index].cardId },
                 ) { index ->
                     val cardModel = state.discoverCardsList[index]
 
@@ -170,9 +170,9 @@ fun DiscoverScreenCompact(
                                 cardModel.cardId,
                                 cardModel.type,
                             )
-                        }
+                        },
                     )
-                }
+                },
             )
 
             // Header with title bar
@@ -210,11 +210,11 @@ fun DiscoverScreenTablet(
                     contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     items(
                         count = state.discoverCardsList.size,
-                        key = { index -> state.discoverCardsList[index].cardId }
+                        key = { index -> state.discoverCardsList[index].cardId },
                     ) { index ->
                         val cardModel = state.discoverCardsList[index]
 
@@ -246,15 +246,15 @@ fun DiscoverScreenTablet(
                         top = 120.dp,
                         start = 24.dp,
                         end = 24.dp,
-                        bottom = 200.dp
+                        bottom = 200.dp,
                     ),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     items(
                         count = state.discoverCardsList.size,
-                        key = { index -> state.discoverCardsList[index].cardId }
+                        key = { index -> state.discoverCardsList[index].cardId },
                     ) { index ->
                         val cardModel = state.discoverCardsList[index]
 
@@ -308,7 +308,7 @@ private fun BoxScope.DiscoverFooterChipsRow(
                     ),
                     startY = 0f,
                     endY = Float.POSITIVE_INFINITY,
-                )
+                ),
             )
             .padding(vertical = 16.dp)
             .navigationBarsPadding(),
@@ -328,11 +328,11 @@ private fun BoxScope.DiscoverTitleBar(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         KrailTheme.colors.surface.copy(alpha = 0.8f),
-                        KrailTheme.colors.surface.copy(alpha = 0.95f)
+                        KrailTheme.colors.surface.copy(alpha = 0.95f),
                     ),
                     startY = 0f,
                     endY = Float.POSITIVE_INFINITY,
-                )
+                ),
             ),
     ) {
         TitleBar(
@@ -348,10 +348,10 @@ private fun BoxScope.DiscoverTitleBar(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
                             onClick = resetAllSeenCards,
-                        )
+                        ),
                     )
                 }
-            }
+            },
         )
         val density = LocalDensity.current
         val fontScale = density.fontScale
@@ -385,9 +385,9 @@ private fun DiscoverScreenTabletLightPreview() {
                     DiscoverCardType.Travel,
                     DiscoverCardType.Events,
                     DiscoverCardType.Food,
-                    DiscoverCardType.Sports
+                    DiscoverCardType.Sports,
                 ),
-                selectedType = DiscoverCardType.Travel
+                selectedType = DiscoverCardType.Travel,
             ),
             onBackClick = {},
             onAppSocialLinkClicked = {},
@@ -396,7 +396,7 @@ private fun DiscoverScreenTabletLightPreview() {
             onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
-            onChipSelected = {}
+            onChipSelected = {},
         )
     }
 }
@@ -417,9 +417,9 @@ private fun DiscoverScreenTabletDarkPreview() {
                     DiscoverCardType.Travel,
                     DiscoverCardType.Events,
                     DiscoverCardType.Food,
-                    DiscoverCardType.Sports
+                    DiscoverCardType.Sports,
                 ),
-                selectedType = DiscoverCardType.Events
+                selectedType = DiscoverCardType.Events,
             ),
             onBackClick = {},
             onAppSocialLinkClicked = {},
@@ -428,7 +428,7 @@ private fun DiscoverScreenTabletDarkPreview() {
             onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
-            onChipSelected = {}
+            onChipSelected = {},
         )
     }
 }
@@ -448,9 +448,9 @@ private fun DiscoverScreenCompactLightPreview() {
                 sortedDiscoverCardTypes = persistentListOf(
                     DiscoverCardType.Travel,
                     DiscoverCardType.Events,
-                    DiscoverCardType.Food
+                    DiscoverCardType.Food,
                 ),
-                selectedType = DiscoverCardType.Food
+                selectedType = DiscoverCardType.Food,
             ),
             onBackClick = {},
             onAppSocialLinkClicked = {},
@@ -459,7 +459,7 @@ private fun DiscoverScreenCompactLightPreview() {
             onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
-            onChipSelected = {}
+            onChipSelected = {},
         )
     }
 }
@@ -479,9 +479,9 @@ private fun DiscoverScreenCompactDarkPreview() {
                 sortedDiscoverCardTypes = persistentListOf(
                     DiscoverCardType.Travel,
                     DiscoverCardType.Events,
-                    DiscoverCardType.Food
+                    DiscoverCardType.Food,
                 ),
-                selectedType = DiscoverCardType.Sports
+                selectedType = DiscoverCardType.Sports,
             ),
             onBackClick = {},
             onAppSocialLinkClicked = {},
@@ -490,7 +490,7 @@ private fun DiscoverScreenCompactDarkPreview() {
             onShareClick = { _, _ -> },
             onCardSeen = {},
             resetAllSeenCards = {},
-            onChipSelected = {}
+            onChipSelected = {},
         )
     }
 }

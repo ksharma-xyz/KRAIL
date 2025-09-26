@@ -52,12 +52,12 @@ fun OutlineRadioButton(
                     when (type) {
                         RadioButtonType.SMALL -> 32.dp
                         RadioButtonType.DEFAULT -> 48.dp
-                    }
+                    },
                 )
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(
                     color = backgroundColor,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
                 )
                 .border(
                     width = 2.dp,

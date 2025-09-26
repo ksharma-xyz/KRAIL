@@ -103,7 +103,7 @@ fun SavedTripsScreen(
                             modifier = Modifier.size(24.dp),
                         )
                     }
-                }
+                },
             )
 
             val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
@@ -198,7 +198,7 @@ private fun LazyListScope.infoTiles(
             visible = visible,
             exit = slideOutHorizontally(
                 targetOffsetX = { it }, // slide fully to the right
-                animationSpec = tween(300)
+                animationSpec = tween(300),
             ),
         ) {
             InfoTile(
@@ -303,7 +303,7 @@ private fun SavedTripsTitle(
             .background(color = KrailTheme.colors.surface)
             .padding(vertical = 16.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.titleMedium) {
             content()

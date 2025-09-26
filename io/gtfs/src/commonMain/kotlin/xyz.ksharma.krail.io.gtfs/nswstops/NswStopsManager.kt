@@ -76,12 +76,12 @@ class NswStopsManager(
                     stopId = nswStop.stopId,
                     stopName = nswStop.stopName,
                     stopLat = nswStop.lat,
-                    stopLon = nswStop.lon
+                    stopLon = nswStop.lon,
                 )
                 nswStop.productClass.forEach { productClass ->
                     sandook.insertNswStopProductClass(
                         stopId = nswStop.stopId,
-                        productClass = productClass
+                        productClass = productClass,
                     )
                 }
             }

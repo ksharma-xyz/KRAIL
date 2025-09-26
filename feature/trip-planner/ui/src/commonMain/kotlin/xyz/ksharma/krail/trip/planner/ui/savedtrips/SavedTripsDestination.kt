@@ -70,7 +70,7 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {
                     viewModel.onEvent(
-                        SavedTripUiEvent.AnalyticsSavedTripCardClick(fromStop.stopId, toStop.stopId)
+                        SavedTripUiEvent.AnalyticsSavedTripCardClick(fromStop.stopId, toStop.stopId),
                     )
                     navController.navigate(
                         route = TimeTableRoute(
@@ -92,7 +92,7 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                         SavedTripUiEvent.AnalyticsLoadTimeTableClick(
                             fromStopId = fromStopItem.stopId,
                             toStopId = toStopItem.stopId,
-                        )
+                        ),
                     )
                     navController.navigate(
                         route = TimeTableRoute(

@@ -37,7 +37,7 @@ fun ParkAndRideIcon() {
         modifier = Modifier
             .size(height = 44.dp, width = 32.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(color = Color.White)
+            .background(color = Color.White),
     ) {
         Text(
             text = "P",
@@ -73,7 +73,7 @@ private fun ParkAndRideIconThemedPreview() {
         val themeColorHexCode =
             rememberSaveable { mutableStateOf(KrailThemeStyle.Metro.hexColorCode) }
         CompositionLocalProvider(
-            LocalThemeColor provides themeColorHexCode
+            LocalThemeColor provides themeColorHexCode,
         ) {
             ParkAndRideIcon()
         }

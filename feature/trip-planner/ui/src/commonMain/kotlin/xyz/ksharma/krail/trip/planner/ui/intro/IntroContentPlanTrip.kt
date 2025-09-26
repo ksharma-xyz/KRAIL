@@ -44,7 +44,7 @@ fun IntroContentPlanTrip(
         val currentDateTime = rememberCurrentDateTime()
         val timeStates = listOf(
             10 to 10, // 10:10 AM
-            currentDateTime.hour to currentDateTime.minute // system time
+            currentDateTime.hour to currentDateTime.minute, // system time
         )
         var timeStep by remember { mutableStateOf(0) }
         val timePickerState = rememberTimePickerState(
@@ -98,7 +98,7 @@ fun IntroContentPlanTrip(
             TagLineWithEmoji(
                 tagline = tagline,
                 emoji = "\uD83D\uDD2E",
-                tagColor = style.hexToComposeColor()
+                tagColor = style.hexToComposeColor(),
             )
         }
     }

@@ -43,7 +43,7 @@ fun ParkRideCard(
             }
             .animateContentSize()
             .padding(top = 20.dp, start = 16.dp, end = 12.dp, bottom = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ParkRideIcon(modifier = Modifier.padding(top = 2.dp))
 
@@ -140,7 +140,7 @@ private fun ParkRideCardPreview() {
         ParkRideCard(
             parkRideUiState = previewParkRideUiState,
             isExpanded = false,
-            onClick = { }
+            onClick = { },
         )
     }
 }
@@ -165,7 +165,7 @@ private val previewParkRideUiState = ParkRideUiState(
             timeText = "9:00 AM",
             facilityId = "10",
             totalSpots = 190,
-        )
+        ),
     ).toImmutableSet(),
     stopId = "12345",
     isLoading = false,

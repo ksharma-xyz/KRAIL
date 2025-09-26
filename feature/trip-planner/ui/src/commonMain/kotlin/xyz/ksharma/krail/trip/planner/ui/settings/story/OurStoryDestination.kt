@@ -16,7 +16,7 @@ internal fun NavGraphBuilder.aboutUsDestination(navController: NavHostController
 
         OurStoryScreen(
             state = ourStoryState,
-            onBackClick = { navController.popBackStack() }
+            onBackClick = { navController.popBackStack() },
         )
     }
 }

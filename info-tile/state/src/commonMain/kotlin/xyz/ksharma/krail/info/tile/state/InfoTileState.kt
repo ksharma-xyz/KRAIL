@@ -46,5 +46,5 @@ data class InfoTileCta(
 
 enum class InfoTileState {
     COLLAPSED,
-    EXPANDED
+    EXPANDED,
 }

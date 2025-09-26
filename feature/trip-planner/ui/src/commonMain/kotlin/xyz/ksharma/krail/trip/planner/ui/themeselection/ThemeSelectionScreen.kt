@@ -95,8 +95,8 @@ fun ThemeSelectionScreen(
                         visible = visibleStates[index],
                         enter = slideInHorizontally(
                             initialOffsetX = { fullWidth -> fullWidth },
-                            animationSpec = tween(durationMillis = 400)
-                        )
+                            animationSpec = tween(durationMillis = 400),
+                        ),
                     ) {
                         ThemeSelectionRadioButton(
                             themeStyle = theme,
@@ -116,7 +116,7 @@ fun ThemeSelectionScreen(
             Column(
                 modifier = Modifier.align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 10.dp)
+                    .padding(bottom = 10.dp),
             ) {
                 Button(
                     colors = ButtonColors(
@@ -124,7 +124,7 @@ fun ThemeSelectionScreen(
                         contentColor = getForegroundColor(buttonBackgroundColor),
                         disabledContainerColor = buttonBackgroundColor.copy(alpha = DisabledContentAlpha),
                         disabledContentColor = getForegroundColor(
-                            buttonBackgroundColor
+                            buttonBackgroundColor,
                         ).copy(alpha = DisabledContentAlpha),
                     ),
                     onClick = {

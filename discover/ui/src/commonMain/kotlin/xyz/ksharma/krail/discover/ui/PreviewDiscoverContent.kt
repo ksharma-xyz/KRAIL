@@ -19,7 +19,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 fun PreviewDiscoverContent(
     krailThemeStyle: KrailThemeStyle = KrailThemeStyle.Train,
     imageColor: Color = Color.Blue,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val previewHandler = AsyncImagePreviewHandler {
         ColorImage(color = imageColor.toArgb())

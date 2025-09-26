@@ -119,7 +119,7 @@ fun LegView(
                         .timeLineCenter(
                             color = timelineColor,
                             strokeWidth = strokeWidth,
-                        )
+                        ),
                 )
 
                 Column(
@@ -155,7 +155,7 @@ fun LegView(
                                 .timeLineCenter(
                                     color = timelineColor,
                                     strokeWidth = strokeWidth,
-                                )
+                                ),
                         )
 
                         StopInfo(
@@ -185,7 +185,7 @@ fun LegView(
                         .timeLineCenter(
                             color = timelineColor,
                             strokeWidth = strokeWidth,
-                        )
+                        ),
                 )
 
                 StopInfo(
@@ -220,7 +220,7 @@ private fun RouteSummary(
         TransportModeBadge(
             backgroundColor = badgeColor,
             badgeText = badgeText,
-            modifier = Modifier.padding(end = 10.dp)
+            modifier = Modifier.padding(end = 10.dp),
         )
 
         routeText?.let {
@@ -234,6 +234,7 @@ private fun RouteSummary(
     }
 }
 
+@Suppress("LongParameterList", "LongMethod")
 @Composable
 private fun StopInfo(
     time: String,
@@ -259,7 +260,7 @@ private fun StopInfo(
                     KrailTheme.colors.onSurface
                 } else {
                     KrailTheme.colors.onSurface.copy(
-                        alpha = 0.75f
+                        alpha = 0.75f,
                     )
                 }
 
@@ -280,14 +281,14 @@ private fun StopInfo(
                             width = sizeSp,
                             height = sizeSp,
                             placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                        )
+                        ),
                     ) {
                         Image(
                             painter = painterResource(Res.drawable.ic_a11y),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(iconTint),
                         )
-                    }
+                    },
                 )
             } else {
                 emptyMap()

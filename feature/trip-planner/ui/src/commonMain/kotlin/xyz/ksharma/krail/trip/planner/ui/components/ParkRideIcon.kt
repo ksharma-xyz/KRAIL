@@ -48,7 +48,7 @@ internal fun ParkRideIconContainer(
             .size(width = 36.dp, height = 44.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(color = backgroundColor)
-            .clearAndSetSemantics {}
+            .clearAndSetSemantics {},
     ) {
         content()
     }

@@ -59,6 +59,7 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import app.krail.taj.resources.Res as TajRes
 
+@Suppress("LongMethod", "LongParameterList")
 @Composable
 fun DiscoverCard(
     discoverModel: DiscoverState.DiscoverUiModel,
@@ -67,7 +68,7 @@ fun DiscoverCard(
     onPartnerSocialLinkClicked: (
         Button.Social.PartnerSocial.PartnerSocialLink,
         String,
-        DiscoverCardType
+        DiscoverCardType,
     ) -> Unit = { _, _, _ -> },
     onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -> Unit = { _, _, _ -> },
     onShareClick: () -> Unit = {},
@@ -82,7 +83,7 @@ fun DiscoverCard(
             .height(discoverCardHeight)
             .background(
                 color = KrailTheme.colors.discoverCardBackground,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
             )
             .border(
                 width = 1.dp,
@@ -148,14 +149,14 @@ fun DiscoverCard(
                     onPartnerSocialLinkClicked(
                         partnerSocialLink,
                         discoverModel.cardId,
-                        discoverModel.type
+                        discoverModel.type,
                     )
                 },
                 onCtaClicked = { url ->
                     onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                 },
                 onShareClick = onShareClick,
-                modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp)
+                modifier = Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp),
             )
         }
     }
@@ -170,13 +171,13 @@ fun createAdaptiveBackground(): Color {
         // Dark mode: blend theme color with darkened surface (towards black)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
-            background = surfaceColor.darken(0.15f) // More darkening towards black
+            background = surfaceColor.darken(0.15f), // More darkening towards black
         )
     } else {
         // Light mode: blend theme color with brightened surface (towards white)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety
-            background = surfaceColor.brighten(0.15f) // More brightening towards white
+            background = surfaceColor.brighten(0.15f), // More brightening towards white
         )
     }
 }
@@ -190,7 +191,7 @@ private fun blendColors(foreground: Color, background: Color): Color {
         red = foreground.red * alpha + background.red * (1 - alpha),
         green = foreground.green * alpha + background.green * (1 - alpha),
         blue = foreground.blue * alpha + background.blue * (1 - alpha),
-        alpha = 1f
+        alpha = 1f,
     )
 }
 
@@ -207,7 +208,7 @@ fun DiscoverCardButtonRow(
     if (state == null) {
         logError(
             "Invalid button combination or no buttons provided: " +
-                "${buttonsList.map { it::class.simpleName }}"
+                "${buttonsList.map { it::class.simpleName }}",
         )
         return
     } else {
@@ -373,7 +374,7 @@ val previewDiscoverCardList = listOf(
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1752624906994-d94727d34c9b"),
         type = DiscoverCardType.Food,
-        buttons = persistentListOf(Button.Social.AppSocial)
+        buttons = persistentListOf(Button.Social.AppSocial),
     ),
     DiscoverState.DiscoverUiModel(
         cardId = "cta_card_4",
@@ -387,11 +388,11 @@ val previewDiscoverCardList = listOf(
                 links = persistentListOf(
                     Button.Social.PartnerSocial.PartnerSocialLink(
                         type = SocialType.Facebook,
-                        url = "https://example.com"
+                        url = "https://example.com",
                     ),
-                )
-            )
-        )
+                ),
+            ),
+        ),
     ),
     DiscoverState.DiscoverUiModel(
         cardId = "cta_card_4",
@@ -399,7 +400,7 @@ val previewDiscoverCardList = listOf(
         description = "This is a sample description for the Discover Card. It can be used to display additional information.",
         imageList = persistentListOf("https://plus.unsplash.com/premium_photo-1751906599846-2e31345c8014"),
         type = DiscoverCardType.Travel,
-        buttons = persistentListOf(Button.Share)
+        buttons = persistentListOf(Button.Share),
     ),
     DiscoverState.DiscoverUiModel(
         cardId = "cta_card_5",
@@ -413,7 +414,7 @@ val previewDiscoverCardList = listOf(
                 url = "https://example.com/cta",
             ),
             Button.Share,
-        )
+        ),
     ),
     DiscoverState.DiscoverUiModel(
         cardId = "cta_card_7",
@@ -427,7 +428,7 @@ val previewDiscoverCardList = listOf(
                 label = "Cta Button",
                 url = "https://example.com/feedback",
             ),
-        )
+        ),
     ),
 )
 

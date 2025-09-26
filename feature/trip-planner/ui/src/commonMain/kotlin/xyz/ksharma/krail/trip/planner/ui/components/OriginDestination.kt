@@ -40,7 +40,7 @@ internal fun OriginDestination(
                     color = timeLineColor,
                     strokeWidth = 3.dp,
                     circleRadius = 5.dp,
-                )
+                ),
         ) {
             AnimatedContent(
                 targetState = trip.fromStopName,
@@ -76,7 +76,7 @@ internal fun OriginDestination(
         Spacer(
             modifier = Modifier.fillMaxWidth()
                 .height(12.dp)
-                .timeLineCenter(color = timeLineColor, strokeWidth = 3.dp)
+                .timeLineCenter(color = timeLineColor, strokeWidth = 3.dp),
         )
 
         Row(
@@ -85,7 +85,7 @@ internal fun OriginDestination(
                     color = timeLineColor,
                     strokeWidth = 3.dp,
                     circleRadius = 5.dp,
-                )
+                ),
         ) {
             AnimatedContent(
                 targetState = trip.toStopName,

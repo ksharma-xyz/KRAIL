@@ -258,7 +258,7 @@ private fun DepartureDeviationIndicator(
                 .clip(CircleShape)
                 .background(
                     color = dotColor.copy(alpha = LocalContentAlpha.current),
-                    shape = CircleShape
+                    shape = CircleShape,
                 ),
         )
         Text(
@@ -356,11 +356,11 @@ fun ExpandedJourneyCardContent(
                             modifier = Modifier.padding(
                                 top = if (index > 0) {
                                     getPaddingValue(
-                                        lastLeg = legList[(index - 1).coerceAtLeast(0)]
+                                        lastLeg = legList[(index - 1).coerceAtLeast(0)],
                                     )
                                 } else {
                                     0.dp
-                                }
+                                },
                             ),
                             onClick = {
                                 displayAllStops = !displayAllStops

@@ -138,7 +138,7 @@ data class IntroState(
                     primaryStyle = KrailThemeStyle.BarbiePink.hexColorCode,
                     type = IntroPageType.INVITE_FRIENDS,
                 ),
-            )
+            ),
         )
     }
 }

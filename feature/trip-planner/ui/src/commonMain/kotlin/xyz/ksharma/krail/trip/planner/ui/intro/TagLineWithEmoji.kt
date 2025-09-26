@@ -16,11 +16,11 @@ internal fun TagLineWithEmoji(
     emoji: String,
     emojiColor: Color? = null,
     tagColor: Color? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.padding(top = 20.dp, end = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = emoji,

@@ -14,7 +14,7 @@ inline fun <reified T> CoroutineScope.launchWithExceptionHandler(
     context = dispatcher + coroutineExceptionHandler(
         message = T::class.simpleName,
         errorBlock = errorBlock,
-    )
+    ),
 ) {
     block()
 }

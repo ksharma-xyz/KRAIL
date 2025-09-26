@@ -44,7 +44,7 @@ class IntroViewModel(
                 analytics.track(
                     AnalyticsEvent.ReferFriend(
                         entryPoint = event.analyticsEntryPoint,
-                    )
+                    ),
                 )
             }
 
@@ -56,7 +56,7 @@ class IntroViewModel(
                         AnalyticsEvent.IntroLetsKrailClickEvent(
                             pageType = event.pageType.toInteractionPage(),
                             pageNumber = event.pageNumber,
-                        )
+                        ),
                     )
                 }
             }

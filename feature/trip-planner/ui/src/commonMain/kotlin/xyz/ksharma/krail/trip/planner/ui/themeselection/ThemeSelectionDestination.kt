@@ -56,7 +56,7 @@ internal fun NavGraphBuilder.themeSelectionDestination(navController: NavHostCon
                 // Save the selected theme color to db.
                 viewModel.onEvent(ThemeSelectionEvent.ThemeSelected(themeId))
             },
-            onBackClick = { navController.popBackStack() }
+            onBackClick = { navController.popBackStack() },
         )
     }
 }

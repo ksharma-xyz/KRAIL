@@ -40,8 +40,8 @@ fun SandookPreferences.markInfoTileAsDismissed(key: String) {
     log(
         "Marked info tile key '$key' as dismissed. Updated dismissed keys: ${
             dismissed.joinToString(
-                ","
+                ",",
             )
-        }"
+        }",
     )
 }

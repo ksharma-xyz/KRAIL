@@ -40,7 +40,7 @@ fun OurStoryScreen(
 
         Crossfade(
             targetState = state.isLoading,
-            label = "OurStoryContent"
+            label = "OurStoryContent",
         ) { isLoading ->
             if (!isLoading) {
                 LazyColumn(
@@ -51,7 +51,7 @@ fun OurStoryScreen(
                         Text(
                             state.story,
                             style = KrailTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
                         )
                     }
 
@@ -59,7 +59,7 @@ fun OurStoryScreen(
                         Text(
                             text = state.disclaimer,
                             style = KrailTheme.typography.labelLarge,
-                            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp),
                         )
                     }
 

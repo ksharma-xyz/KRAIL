@@ -10,7 +10,7 @@ actual fun tripPlannerHttpClient(baseClient: HttpClient): HttpClient {
         defaultRequest {
             headers.append(
                 HttpHeaders.Authorization,
-                "apikey $ANDROID_NSW_TRANSPORT_API_KEY"
+                "apikey $ANDROID_NSW_TRANSPORT_API_KEY",
             )
         }
     }

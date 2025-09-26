@@ -88,7 +88,7 @@ fun IntroContentSelectTransportMode(
         TagLineWithEmoji(
             tagline = tagline,
             emoji = "\uD83D\uDE0E",
-            tagColor = style.hexToComposeColor()
+            tagColor = style.hexToComposeColor(),
         )
     }
 }

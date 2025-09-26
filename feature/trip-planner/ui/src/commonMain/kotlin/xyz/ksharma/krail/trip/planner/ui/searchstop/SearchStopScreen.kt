@@ -151,7 +151,7 @@ fun SearchStopScreen(
         var runPlaceholderAnimation by rememberSaveable { mutableStateOf(true) }
         var currentModePriority by rememberSaveable {
             mutableStateOf(
-                TransportMode.Train().priority
+                TransportMode.Train().priority,
             )
         } // Start with Train's priority
         var placeholderText by rememberSaveable { mutableStateOf("Search here") }
@@ -174,7 +174,7 @@ fun SearchStopScreen(
                         is TransportMode.LightRail -> "Search light rail stop"
                         else -> "Search here"
                     }
-                }
+                },
             )
         }
 
@@ -235,9 +235,9 @@ fun SearchStopScreen(
                         keyboard?.hide()
                         focusRequester.freeFocus()
                         backClicked = true
-                    }
+                    },
                 )
-            }
+            },
         ) { value ->
             // log(("value: $value")
             log("value: $value")
@@ -307,7 +307,7 @@ fun SearchStopScreen(
                         Text(
                             text = "Recent",
                             style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
-                            modifier = Modifier
+                            modifier = Modifier,
                         )
 
                         Image(
@@ -322,9 +322,9 @@ fun SearchStopScreen(
                                         onEvent(
                                             SearchStopUiEvent.ClearRecentSearchStops(
                                                 recentSearchCount = searchStopState.recentStops.size,
-                                            )
+                                            ),
                                         )
-                                    }
+                                    },
                                 ),
                         )
                     }
@@ -347,7 +347,7 @@ fun SearchStopScreen(
                                 SearchStopUiEvent.TrackStopSelected(
                                     stopItem = stopItem,
                                     isRecentSearch = true,
-                                )
+                                ),
                             )
                         },
                         modifier = Modifier
@@ -527,7 +527,7 @@ fun AnimatedPlaceholderTextField(modifier: Modifier) {
         TransportMode.Train(),
         TransportMode.Metro(),
         TransportMode.Ferry(),
-        TransportMode.LightRail()
+        TransportMode.LightRail(),
     )
 
     var currentModeIndex by remember { mutableStateOf(0) }
@@ -568,16 +568,16 @@ fun AnimatedPlaceholderTextField(modifier: Modifier) {
     Column(
         modifier = modifier
             .padding(16.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(),
     ) {
         Text(
             text = "Mode: ${transportModes[currentModeIndex].name}",
             color = transportModes[currentModeIndex].colorCode.hexToComposeColor(),
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         TextField(
             placeholder = currentText,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

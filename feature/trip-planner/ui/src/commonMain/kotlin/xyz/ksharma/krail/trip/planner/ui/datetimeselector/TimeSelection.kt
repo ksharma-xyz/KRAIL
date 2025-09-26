@@ -50,7 +50,7 @@ fun TimeSelection(
         CompositionLocalProvider(
             LocalDensity provides Density(
                 (density.density - 0.6f).coerceIn(1.5f, 3f),
-                fontScale = density.fontScale
+                fontScale = density.fontScale,
             ),
         ) {
             TimePicker(
@@ -69,7 +69,7 @@ fun TimeSelection(
                     timeSelectorSelectedContainerColor = themeColor,
                     timeSelectorUnselectedContainerColor = KrailTheme.colors.surface,
                     timeSelectorSelectedContentColor = themeContentColor,
-                    timeSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(alpha = 0.8f)
+                    timeSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(alpha = 0.8f),
                 ),
                 layoutType = TimePickerLayoutType.Vertical,
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),

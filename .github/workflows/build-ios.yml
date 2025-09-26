@@ -48,4 +48,4 @@ jobs:
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGNING_ALLOWED=NO \
-                     -destination 'platform=iOS Simulator,name=iPhone 12,OS=latest'
+                     -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest'

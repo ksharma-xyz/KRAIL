@@ -1,0 +1,44 @@
+name: Code Quality (Detekt)
+
+on:
+  workflow_call:
+    outputs:
+      detekt-passed:
+        description: "Whether Detekt checks passed"
+        value: ${{ jobs.detekt.outputs.passed }}
+
+jobs:
+  detekt:
+    runs-on: ubuntu-latest
+    environment: Firebase
+    outputs:
+      passed: ${{ steps.detekt.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Run Detekt
+        id: detekt
+        run: ./gradlew detekt
+
+      - name: Upload Detekt reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-reports
+          path: |
+            **/build/reports/detekt/
+          retention-days: 7

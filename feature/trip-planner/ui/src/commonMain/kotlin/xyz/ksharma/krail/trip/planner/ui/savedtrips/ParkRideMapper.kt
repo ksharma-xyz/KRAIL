@@ -3,13 +3,13 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
 import kotlinx.collections.immutable.toImmutableSet
-import kotlin.time.Clock
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
@@ -44,8 +44,8 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(
 
     log(
         "[$facilityName - $facilityId - $tsn] " +
-                "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
-                "Spots available: $spotsAvailable, Percentage full: $percentageFull%, time: $timeText"
+            "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
+            "Spots available: $spotsAvailable, Percentage full: $percentageFull%, time: $timeText"
     )
 
     return NSWParkRideFacilityDetail(
@@ -114,7 +114,9 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
                     error = null,
                     isLoading = false,
                 )
-            } else null
+            } else {
+                null
+            }
         }
         .filterNotNull()
 }

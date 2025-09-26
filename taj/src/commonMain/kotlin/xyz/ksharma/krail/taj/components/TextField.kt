@@ -189,7 +189,6 @@ private fun TextFieldPlaceholder(
 @Composable
 private fun TextFieldEnabledPreviewLight() {
     PreviewTextFieldContent {
-
         TextField(placeholder = "Station", initialText = "Central")
         Spacer(Modifier.height(8.dp))
         TextField(placeholder = "Search here")

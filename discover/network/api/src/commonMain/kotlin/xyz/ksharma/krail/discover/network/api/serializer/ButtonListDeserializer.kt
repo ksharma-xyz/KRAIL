@@ -11,9 +11,9 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import xyz.ksharma.krail.social.state.SocialType
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.discover.state.Button
+import xyz.ksharma.krail.social.state.SocialType
 
 // TODO - ADD UT TESTS FOR THIS SERIALIZER
 object ButtonListSerializer : KSerializer<List<Button>> {
@@ -50,7 +50,9 @@ object ButtonListSerializer : KSerializer<List<Button>> {
 
                 "partnersocial" -> {
                     val partnerName = buttonObj["socialPartnerName"]?.jsonPrimitive?.content
-                    require(!partnerName.isNullOrBlank()) { "Button PartnerSocial socialPartnerName cannot be null or blank" }
+                    require(
+                        !partnerName.isNullOrBlank()
+                    ) { "Button PartnerSocial socialPartnerName cannot be null or blank" }
                     val linksA = buttonObj["links"]?.jsonArray
                     require(!linksA.isNullOrEmpty()) { "Button PartnerSocial links cannot be null or empty" }
 

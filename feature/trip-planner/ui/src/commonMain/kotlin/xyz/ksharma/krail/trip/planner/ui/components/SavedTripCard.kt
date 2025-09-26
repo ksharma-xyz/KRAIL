@@ -32,7 +32,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
-import xyz.ksharma.krail.taj.modifier.cardBorder
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode

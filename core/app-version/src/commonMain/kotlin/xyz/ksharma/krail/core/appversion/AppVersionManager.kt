@@ -91,10 +91,14 @@ class RealAppVersionManager(
         if (current.isBlank()) return AppVersionUpdateState.UpToDate
 
         if (compareVersions(current, latestAppVersion) > 0) {
-            logError("Current version ($current) is ahead of latest flag ($latestAppVersion) -> flag value is likely stale")
+            logError(
+                "Current version ($current) is ahead of latest flag ($latestAppVersion) -> flag value is likely stale"
+            )
         }
 
-        log("Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion")
+        log(
+            "Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion"
+        )
 
         val state = when {
             compareVersions(current, minimumSupportedAppVersion) < 0 ->
@@ -125,7 +129,7 @@ class RealAppVersionManager(
             is AppVersionUpdateState.ForcedUpdateRequired -> AppVersionManager.AppVersionUpdateCopy(
                 title = "\uD83D\uDEA7 Time to Update \uD83D\uDEA7",
                 description = "Important fixes and updates ahead — required to keep KRAIL running at its best.",
-                //"This important update keeps KRAIL running smoothly and hope you enjoy latest\u00A0improvements!",
+                // "This important update keeps KRAIL running smoothly and hope you enjoy latest\u00A0improvements!",
                 ctaText = "Update Now",
             )
         }
@@ -170,7 +174,6 @@ class RealAppVersionManager(
                     ?.toIntOrNull() ?: 0
             }
 }
-
 
 sealed interface AppVersionUpdateState {
 

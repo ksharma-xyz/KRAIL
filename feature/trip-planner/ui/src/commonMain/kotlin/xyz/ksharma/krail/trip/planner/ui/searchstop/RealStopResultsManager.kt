@@ -16,8 +16,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class RealStopResultsManager(
     private val sandook: Sandook,
@@ -108,7 +106,6 @@ class RealStopResultsManager(
             ?.stopName
     }
 
-
     private fun filterProductClasses(
         stopResults: List<SearchStopState.StopResult>,
         excludedProductClasses: List<Int> = emptyList(),
@@ -160,7 +157,6 @@ class RealStopResultsManager(
     private fun saveRecentSearchStop(stopItem: StopItem) {
         sandook.insertOrReplaceRecentSearchStop(stopId = stopItem.stopId)
     }
-
 
     override fun clearRecentSearchStops() {
         sandook.clearRecentSearchStops()

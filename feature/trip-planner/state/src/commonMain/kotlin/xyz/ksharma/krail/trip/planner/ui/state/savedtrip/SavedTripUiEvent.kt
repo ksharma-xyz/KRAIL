@@ -24,14 +24,15 @@ sealed interface SavedTripUiEvent {
     data object AnalyticsDiscoverButtonClick : SavedTripUiEvent
 
     data class ParkRideCardClick(
-        val parkRideState: ParkRideUiState, val isExpanded: Boolean
+        val parkRideState: ParkRideUiState,
+        val isExpanded: Boolean
     ) : SavedTripUiEvent
 
     data class DismissInfoTile(val infoTile: InfoTileData) : SavedTripUiEvent
 
     data class InfoTileCtaClick(val infoTile: InfoTileData) : SavedTripUiEvent
 
-    data class InfoTileExpand(val key: String): SavedTripUiEvent
+    data class InfoTileExpand(val key: String) : SavedTripUiEvent
 
     // JSON-based events for navigation compatibility
     data class FromStopChanged(val fromJson: String) : SavedTripUiEvent

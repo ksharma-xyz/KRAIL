@@ -72,7 +72,6 @@ private fun ParkRideIconMetroThemePreview() {
     }
 }
 
-
 @Preview
 @Composable
 private fun ParkRideIconBusThemePreview() {
@@ -80,7 +79,6 @@ private fun ParkRideIconBusThemePreview() {
         ParkRideIcon()
     }
 }
-
 
 @Preview
 @Composable

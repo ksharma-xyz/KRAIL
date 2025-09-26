@@ -14,7 +14,6 @@ import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ServiceAlertRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem

@@ -67,4 +67,3 @@ internal fun buildCookiePath(
     path.close()
     return path
 }
-

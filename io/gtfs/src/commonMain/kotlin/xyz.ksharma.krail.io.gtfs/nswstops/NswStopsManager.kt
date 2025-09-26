@@ -2,7 +2,6 @@ package xyz.ksharma.krail.io.gtfs.nswstops
 
 import app.krail.kgtfs.proto.NswStopList
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import krail.io.gtfs.generated.resources.Res
 import xyz.ksharma.krail.core.log.log

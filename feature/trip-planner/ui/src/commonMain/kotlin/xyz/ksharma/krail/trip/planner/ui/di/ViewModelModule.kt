@@ -18,7 +18,6 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopSelectionManager
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 

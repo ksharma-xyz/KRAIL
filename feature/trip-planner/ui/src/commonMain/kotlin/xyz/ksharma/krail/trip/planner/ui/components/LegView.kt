@@ -255,9 +255,13 @@ private fun StopInfo(
             val textStyle =
                 if (isProminent) KrailTheme.typography.titleSmall else KrailTheme.typography.bodySmall
             val iconTint =
-                if (isProminent) KrailTheme.colors.onSurface else KrailTheme.colors.onSurface.copy(
-                    alpha = 0.75f
-                )
+                if (isProminent) {
+                    KrailTheme.colors.onSurface
+                } else {
+                    KrailTheme.colors.onSurface.copy(
+                        alpha = 0.75f
+                    )
+                }
 
             val annotated = remember(name, isWheelchairAccessible) {
                 buildAnnotatedString {
@@ -285,7 +289,9 @@ private fun StopInfo(
                         )
                     }
                 )
-            } else emptyMap()
+            } else {
+                emptyMap()
+            }
 
             Text(
                 text = annotated,

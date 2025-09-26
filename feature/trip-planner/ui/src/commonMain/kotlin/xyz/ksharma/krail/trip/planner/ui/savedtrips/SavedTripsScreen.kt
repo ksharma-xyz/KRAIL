@@ -111,14 +111,12 @@ fun SavedTripsScreen(
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 300.dp),
             ) {
-
                 when {
                     savedTripsState.isSavedTripsLoading -> {
                         Unit // display nothing while loading
                     }
 
                     savedTripsState.savedTrips.isEmpty() -> {
-
                         savedTripsState.infoTiles?.let { infoTiles ->
                             infoTiles(
                                 infoTiles = infoTiles,

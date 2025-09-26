@@ -20,7 +20,6 @@ interface InfoTileManager {
      */
     fun isInfoTileActive(key: String): Boolean
 
-
     /**
      * Marks the given info tile as dismissed, preventing it from being shown again.
      *

@@ -9,7 +9,6 @@ import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
 fun NavGraphBuilder.searchStopDestination(navController: NavHostController) {
     composable<SearchStopRoute> { backStackEntry ->

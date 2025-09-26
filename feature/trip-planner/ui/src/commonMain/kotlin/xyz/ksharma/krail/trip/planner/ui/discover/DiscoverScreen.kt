@@ -110,7 +110,6 @@ fun DiscoverScreenCompact(
             .background(color = KrailTheme.colors.surface)
             .systemBarsPadding()
     ) {
-
         if (isLargeFontScale()) {
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 200.dp),
@@ -344,7 +343,8 @@ private fun BoxScope.DiscoverTitleBar(
                 val appInfo = LocalAppInfo.current
                 if (appInfo?.isDebug == true) {
                     Text(
-                        "Reset", modifier = Modifier.clickable(
+                        "Reset",
+                        modifier = Modifier.clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
                             onClick = resetAllSeenCards,

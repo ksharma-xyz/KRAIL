@@ -307,7 +307,6 @@ fun TimeTableScreen(
                     )
                 }
             } else if (timeTableState.isLoading) {
-
                 timeTableState.loadingEmoji?.let { emoji ->
                     item(key = "loading") {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -51,10 +51,10 @@ fun getForegroundColor(
     // Return the color with a sufficient contrast ratio
     return if (lightForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
         lightForegroundColor
-    } else if (darkForegroundColor.contrastRatio( backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
+    } else if (darkForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
         darkForegroundColor
-    } else if(highContrastLightForegroundColor.contrastRatio( backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
-       highContrastLightForegroundColor
+    } else if (highContrastLightForegroundColor.contrastRatio(backgroundColor) >= DEFAULT_TEXT_SIZE_CONTRAST_AA) {
+        highContrastLightForegroundColor
     } else {
         highContrastDarkForegroundColor
     }

@@ -159,7 +159,6 @@ class DiscoverViewModel(
         fetchDiscoverCardsJob =
             viewModelScope.launchWithExceptionHandler<DiscoverViewModel>(ioDispatcher) {
                 val data = discoverSydneyManager.fetchDiscoverData()
-
                     .toDiscoverUiModelList()
                 log("Fetched Discover Sydney data: ${data.size}")
                 _allCards.value = data // Update _allCards instead of _uiState
@@ -221,7 +220,6 @@ fun DiscoverState.getCtaOrPartnerSocialLinkForCard(cardId: String): String? {
     val card = discoverCardsList.firstOrNull { it.cardId == cardId }
     card?.buttons?.forEach { button ->
         when (button) {
-
             is Button.Cta -> return button.url
 
             is Button.Social.PartnerSocial -> {

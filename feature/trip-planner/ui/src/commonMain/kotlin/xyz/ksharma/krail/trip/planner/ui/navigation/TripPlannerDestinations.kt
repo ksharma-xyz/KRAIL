@@ -68,7 +68,7 @@ interface KrailRoute
 internal data object TripPlannerNavRoute
 
 @Serializable
-data object SavedTripsRoute: KrailRoute
+data object SavedTripsRoute : KrailRoute
 
 @Serializable
 internal data class TimeTableRoute(
@@ -99,10 +99,10 @@ data object SettingsRoute
 data object OurStoryRoute
 
 @Serializable
-data object IntroRoute: KrailRoute
+data object IntroRoute : KrailRoute
 
 @Serializable
-data object AppUpgradeRoute: KrailRoute
+data object AppUpgradeRoute : KrailRoute
 
 @Serializable
 data class DateTimeSelectorRoute(

@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>NoUnusedImports:CoroutinesExt.kt$xyz.ksharma.krail.coroutines.ext.CoroutinesExt.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

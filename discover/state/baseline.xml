@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>NoEmptyFirstLineInMethodBlock:DiscoverState.kt$ </ID>
+    <ID>NoMultipleSpaces:DiscoverState.kt$ </ID>
+    <ID>ReturnCount:DiscoverState.kt$fun List&lt;Button&gt;.isValidButtonCombo(): Boolean</ID>
+  </CurrentIssues>
+</SmellBaseline>

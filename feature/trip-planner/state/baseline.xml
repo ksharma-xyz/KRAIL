@@ -2,8 +2,11 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ImportOrdering:TimeTableState.kt$import androidx.compose.runtime.Stable import kotlinx.collections.immutable.ImmutableList import kotlinx.collections.immutable.ImmutableSet import kotlinx.collections.immutable.persistentListOf import kotlinx.collections.immutable.persistentSetOf import kotlin.time.Clock import kotlin.time.Instant import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert import kotlin.time.ExperimentalTime</ID>
     <ID>LongMethod:IntroState.kt$IntroState.Companion$fun default(): IntroState</ID>
-    <ID>StringLiteralDuplication:IntroState.kt$IntroState.Companion$"#FFC800"</ID>
+    <ID>ParameterListWrapping:SavedTripUiEvent.kt$SavedTripUiEvent.ParkRideCardClick$( val parkRideState: ParkRideUiState, val isExpanded: Boolean )</ID>
+    <ID>SpacingAroundColon:SavedTripUiEvent.kt$SavedTripUiEvent.InfoTileExpand$:</ID>
+    <ID>SpacingAroundColon:SettingsEvent.kt$SettingsEvent.SocialLinkClick$:</ID>
     <ID>StringLiteralDuplication:IntroState.kt$IntroState.Companion$"LET'S KRAIL"</ID>
   </CurrentIssues>
 </SmellBaseline>

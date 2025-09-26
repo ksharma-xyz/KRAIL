@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComposableParamOrder:InfoTile.kt$InfoTile</ID>
+    <ID>FinalNewline:InfoTile.kt$xyz.ksharma.krail.info.tiles.ui.InfoTile.kt</ID>
+    <ID>ForbiddenComment:InfoTile.kt$// TODO: the text color in preview is not visible properly as background colors are calculates as</ID>
+    <ID>FunctionNaming:InfoTile.kt$@Composable fun InfoTile( infoTileData: InfoTileData, infoTileState: InfoTileState = InfoTileState.COLLAPSED, modifier: Modifier = Modifier, onCtaClick: (InfoTileData) -&gt; Unit, onDismissClick: (InfoTileData) -&gt; Unit, // required for analytics only onTileExpand: (InfoTileData) -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:InfoTile.kt$@Preview(name = "InfoTile Dark") @Composable private fun InfoTileDarkPreview()</ID>
+    <ID>FunctionNaming:InfoTile.kt$@Preview(name = "InfoTile Light") @Composable private fun InfoTileLightPreview()</ID>
+    <ID>LongMethod:InfoTile.kt$@Composable fun InfoTile( infoTileData: InfoTileData, infoTileState: InfoTileState = InfoTileState.COLLAPSED, modifier: Modifier = Modifier, onCtaClick: (InfoTileData) -&gt; Unit, onDismissClick: (InfoTileData) -&gt; Unit, // required for analytics only onTileExpand: (InfoTileData) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:InfoTile.kt$( infoTileData: InfoTileData, infoTileState: InfoTileState = InfoTileState.COLLAPSED, modifier: Modifier = Modifier, onCtaClick: (InfoTileData) -&gt; Unit, onDismissClick: (InfoTileData) -&gt; Unit, // required for analytics only onTileExpand: (InfoTileData) -&gt; Unit = {}, )</ID>
+    <ID>MatchingDeclarationName:InfoTile.kt$InfoTileDefaults</ID>
+    <ID>UnusedPrivateMember:InfoTile.kt$@Preview(name = "InfoTile Dark") @Composable private fun InfoTileDarkPreview()</ID>
+    <ID>UnusedPrivateMember:InfoTile.kt$@Preview(name = "InfoTile Light") @Composable private fun InfoTileLightPreview()</ID>
+  </CurrentIssues>
+</SmellBaseline>

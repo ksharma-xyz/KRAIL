@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:DiscoverCard.kt$( partnerSocialLink, discoverModel.cardId, discoverModel.type )</ID>
+    <ID>ArgumentListWrapping:DiscoverCardTablet.kt$( partnerSocialLink, discoverModel.cardId, discoverModel.type )</ID>
+    <ID>ComposableParamOrder:DiscoverCard.kt$DiscoverCardButtonRow</ID>
+    <ID>FinalNewline:DiscoverCardTablet.kt$xyz.ksharma.krail.discover.ui.DiscoverCardTablet.kt</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Composable fun DiscoverCard( discoverModel: DiscoverState.DiscoverUiModel, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit = {}, onPartnerSocialLinkClicked: ( Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType ) -&gt; Unit = { _, _, _ -&gt; }, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit = { _, _, _ -&gt; }, onShareClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Composable fun DiscoverCardButtonRow( buttonsList: List&lt;Button&gt;, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit, onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -&gt; Unit, onCtaClicked: (String) -&gt; Unit, onShareClick: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardCtaPreview()</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardCtaSharePreview()</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardFeedbackPreview()</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardNoButtonsPreview()</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardSharePreview()</ID>
+    <ID>FunctionNaming:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardSocialPreview()</ID>
+    <ID>FunctionNaming:DiscoverCardTablet.kt$@Composable fun DiscoverCardTablet( discoverModel: DiscoverState.DiscoverUiModel, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit = {}, onPartnerSocialLinkClicked: ( Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType, ) -&gt; Unit = { _, _, _ -&gt; }, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit = { _, _, _ -&gt; }, onShareClick: () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:PreviewDiscoverContent.kt$@OptIn(ExperimentalCoilApi::class) @Composable fun PreviewDiscoverContent( krailThemeStyle: KrailThemeStyle = KrailThemeStyle.Train, imageColor: Color = Color.Blue, content: @Composable () -&gt; Unit )</ID>
+    <ID>Indentation:DiscoverCard.kt$ </ID>
+    <ID>LambdaParameterEventTrailing:DiscoverCard.kt$onShareClick</ID>
+    <ID>LongMethod:DiscoverCard.kt$@Composable fun DiscoverCard( discoverModel: DiscoverState.DiscoverUiModel, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit = {}, onPartnerSocialLinkClicked: ( Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType ) -&gt; Unit = { _, _, _ -&gt; }, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit = { _, _, _ -&gt; }, onShareClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:DiscoverCard.kt$@Composable fun DiscoverCardButtonRow( buttonsList: List&lt;Button&gt;, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit, onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -&gt; Unit, onCtaClicked: (String) -&gt; Unit, onShareClick: () -&gt; Unit, )</ID>
+    <ID>LongMethod:DiscoverCardTablet.kt$@Composable fun DiscoverCardTablet( discoverModel: DiscoverState.DiscoverUiModel, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit = {}, onPartnerSocialLinkClicked: ( Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType, ) -&gt; Unit = { _, _, _ -&gt; }, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit = { _, _, _ -&gt; }, onShareClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:DiscoverCard.kt$( buttonsList: List&lt;Button&gt;, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit, onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink) -&gt; Unit, onCtaClicked: (String) -&gt; Unit, onShareClick: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:DiscoverCard.kt$( discoverModel: DiscoverState.DiscoverUiModel, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit = {}, onPartnerSocialLinkClicked: ( Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType ) -&gt; Unit = { _, _, _ -&gt; }, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit = { _, _, _ -&gt; }, onShareClick: () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:DiscoverCardTablet.kt$( discoverModel: DiscoverState.DiscoverUiModel, modifier: Modifier = Modifier, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit = {}, onPartnerSocialLinkClicked: ( Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType, ) -&gt; Unit = { _, _, _ -&gt; }, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit = { _, _, _ -&gt; }, onShareClick: () -&gt; Unit = {}, )</ID>
+    <ID>MagicNumber:DiscoverCard.kt$0.15f</ID>
+    <ID>MagicNumber:DiscoverCardTablet.kt$1.1f</ID>
+    <ID>MagicNumber:DiscoverCardTablet.kt$1.4f</ID>
+    <ID>MagicNumber:DiscoverCardTablet.kt$16f</ID>
+    <ID>MagicNumber:DiscoverCardTablet.kt$9f</ID>
+    <ID>MaxLineLength:DiscoverCard.kt$description = "This is a sample description for the Discover Card. It can be used to display additional information."</ID>
+    <ID>MaximumLineLength:DiscoverCard.kt$ </ID>
+    <ID>NoMultipleSpaces:DiscoverCard.kt$ </ID>
+    <ID>ParameterNaming:DiscoverCard.kt$onAppSocialLinkClicked</ID>
+    <ID>ParameterNaming:DiscoverCard.kt$onCtaClicked</ID>
+    <ID>ParameterNaming:DiscoverCard.kt$onPartnerSocialLinkClicked</ID>
+    <ID>ParameterNaming:DiscoverCardTablet.kt$onAppSocialLinkClicked</ID>
+    <ID>ParameterNaming:DiscoverCardTablet.kt$onCtaClicked</ID>
+    <ID>ParameterNaming:DiscoverCardTablet.kt$onPartnerSocialLinkClicked</ID>
+    <ID>StringLiteralDuplication:DiscoverCard.kt$"This is a sample description for the Discover Card. It can be used to display additional information."</ID>
+    <ID>UnusedPrivateClass:DiscoverCard.kt$DiscoverCardProvider : PreviewParameterProvider</ID>
+    <ID>UnusedPrivateMember:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardCtaPreview()</ID>
+    <ID>UnusedPrivateMember:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardCtaSharePreview()</ID>
+    <ID>UnusedPrivateMember:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardFeedbackPreview()</ID>
+    <ID>UnusedPrivateMember:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardNoButtonsPreview()</ID>
+    <ID>UnusedPrivateMember:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardSharePreview()</ID>
+    <ID>UnusedPrivateMember:DiscoverCard.kt$@Preview(showBackground = true) @Composable private fun DiscoverCardSocialPreview()</ID>
+    <ID>UnusedPrivateProperty:DiscoverCard.kt$val rightButton = state.right</ID>
+  </CurrentIssues>
+</SmellBaseline>

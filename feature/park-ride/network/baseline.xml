@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>SpacingAroundCurly:RealParkRideService.kt$RealParkRideService${</ID>
+  </CurrentIssues>
+</SmellBaseline>

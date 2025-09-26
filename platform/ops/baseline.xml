@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ArgumentListWrapping:PlatformOps.ios.kt$IosPlatformOps$( nsUrl, options = mapOf&lt;Any?, Any?&gt;(), completionHandler = { result: Boolean -&gt; log("Attempted to open URL: $url, result: $result") })</ID>
+    <ID>Filename:PlatformOps.android.kt$xyz.ksharma.krail.platform.ops.PlatformOps.android.kt</ID>
+    <ID>Filename:PlatformOps.ios.kt$xyz.ksharma.krail.platform.ops.PlatformOps.ios.kt</ID>
+    <ID>FinalNewline:PlatformOps.ios.kt$xyz.ksharma.krail.platform.ops.PlatformOps.ios.kt</ID>
+    <ID>MatchingDeclarationName:PlatformOps.android.kt$AndroidPlatformOps : PlatformOps</ID>
+    <ID>MatchingDeclarationName:PlatformOps.ios.kt$IosPlatformOps : PlatformOps</ID>
+    <ID>UnusedParameter:PlatformOps.ios.kt$IosPlatformOps$title: String</ID>
+  </CurrentIssues>
+</SmellBaseline>

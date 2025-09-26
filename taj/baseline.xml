@@ -2,40 +2,91 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CascadingCallWrapping:Button.kt$klickable( enabled = enabled, onClick = onClick, )</ID>
+    <ID>ComposableParamOrder:DiscoverCardVerticalPager.kt$DiscoverCardVerticalPager</ID>
+    <ID>ComposableParamOrder:PreviewTheme.kt$PreviewTheme</ID>
+    <ID>ComposableParamOrder:SocialConnectionIcon.kt$SocialConnectionIcon</ID>
     <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalContainerColor</ID>
     <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalThemeColor</ID>
     <ID>CompositionLocalAllowlist:CompositionLocals.kt$LocalThemeContentColor</ID>
+    <ID>FinalNewline:ColorsExt.kt$xyz.ksharma.krail.taj.ColorsExt.kt</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Alert Button - Dark") fun PreviewAlertButtonDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Alert Button - Light") fun PreviewAlertButtonLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Alert Button Dimensions - Dark") fun PreviewAlertButtonDimensionsDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Alert Button Dimensions - Light") fun PreviewAlertButtonDimensionsLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Alert Button Disabled - Dark") fun PreviewAlertButtonDisabledDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Alert Button Disabled - Light") fun PreviewAlertButtonDisabledLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Primary Button - Dark") fun PreviewPrimaryButtonDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Primary Button - Light") fun PreviewPrimaryButtonLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Primary Button Dimensions - Dark") fun PreviewPrimaryButtonDimensionsDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Primary Button Dimensions - Light") fun PreviewPrimaryButtonDimensionsLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Primary Button Disabled - Dark") fun PreviewPrimaryButtonDisabledDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Primary Button Disabled - Light") fun PreviewPrimaryButtonDisabledLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Subtle Button - Dark") fun PreviewSubtleButtonDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Subtle Button - Light") fun PreviewSubtleButtonLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Subtle Button Dimensions - Dark") fun PreviewSubtleButtonDimensionsDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Subtle Button Dimensions - Light") fun PreviewSubtleButtonDimensionsLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Subtle Button Disabled - Dark") fun PreviewSubtleButtonDisabledDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Subtle Button Disabled - Light") fun PreviewSubtleButtonDisabledLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Text Button - Dark") fun PreviewTextButtonDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Text Button - Light") fun PreviewTextButtonLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Text Button Dimensions - Dark") fun PreviewTextButtonDimensionsDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Text Button Dimensions - Light") fun PreviewTextButtonDimensionsLight()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Text Button Disabled - Dark") fun PreviewTextButtonDisabledDark()</ID>
+    <ID>FunctionNaming:Button.kt$@Composable @Preview(name = "Text Button Disabled - Light") fun PreviewTextButtonDisabledLight()</ID>
     <ID>FunctionNaming:Button.kt$@Composable fun AlertButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, dimensions: ButtonDimensions = ButtonDefaults.smallButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:Button.kt$@Composable fun Button( onClick: () -&gt; Unit, modifier: Modifier = Modifier, colors: ButtonColors = ButtonDefaults.buttonColors(), dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, // RowScope and place )</ID>
+    <ID>FunctionNaming:Button.kt$@Composable fun Button( onClick: () -&gt; Unit, modifier: Modifier = Modifier, colors: ButtonColors = ButtonDefaults.buttonColors(), dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:Button.kt$@Composable fun SubtleButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:Button.kt$@Composable fun TextButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, dimensions: ButtonDimensions = ButtonDefaults.smallButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:CookieShapeBox.kt$@Composable fun CookieShapeBox( modifier: Modifier = Modifier, backgroundColor: Color = KrailTheme.colors.surface, strokeColor: Color = Color.Transparent, outlineBrush: Brush? = null, cookieShadow: Shadow? = null, content: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:CookieShapeBox.kt$@Composable fun CookieShapeCanvas( modifier: Modifier = Modifier, backgroundColor: Color = KrailTheme.colors.surface, stroke: Color = Color.Transparent, )</ID>
+    <ID>FunctionNaming:CookieShapeBox.kt$@Preview @Composable private fun CookiePreviewBox()</ID>
+    <ID>FunctionNaming:CookieShapeBox.kt$@Preview @Composable private fun CookiePreviewCanvas()</ID>
+    <ID>FunctionNaming:CookieShapeBox.kt$@Preview @Composable private fun CookieShapeBoxRadialGradient()</ID>
+    <ID>FunctionNaming:CookieShapeBox.kt$@Preview @Composable private fun CookieShapeBoxSweepGradient()</ID>
+    <ID>FunctionNaming:DiscoverCardVerticalPager.kt$@Composable fun &lt;T&gt; DiscoverCardVerticalPager( pages: List&lt;T&gt;, modifier: Modifier = Modifier, keySelector: (T) -&gt; String, content: @Composable (T, isCardSelected: Boolean) -&gt; Unit, )</ID>
     <ID>FunctionNaming:Divider.kt$@Composable fun Divider( modifier: Modifier = Modifier, type: DividerType = DividerType.HORIZONTAL, color: Color? = null, )</ID>
     <ID>FunctionNaming:Divider.kt$@Composable private fun DividerPreview()</ID>
     <ID>FunctionNaming:Divider.kt$@Composable private fun DividerVerticalPreview()</ID>
-    <ID>FunctionNaming:RoundIconButton.kt$@Composable fun RoundIconButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, color: Color? = null, onClickLabel: String? = null, content: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:PreviewTheme.kt$@Composable fun PreviewTheme( themeStyle: KrailThemeStyle = KrailThemeStyle.Train, modifier: Modifier = Modifier, darkTheme: Boolean = false, fontScale: Float = 1.0f, // temporary measure until font scale support is added to compose multiplatform backgroundColor: Color = KrailTheme.colors.surface, content: @Composable () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:RoundIconButton.kt$@Composable fun RoundIconButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, showBadge: Boolean = false, color: Color? = null, onClickLabel: String? = null, content: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:RoundIconButton.kt$@Preview @Composable private fun PreviewRoundIconButton()</ID>
+    <ID>FunctionNaming:RoundIconButton.kt$@Preview @Composable private fun PreviewRoundIconButtonWithBadge()</ID>
     <ID>FunctionNaming:SeparatorIcon.kt$@Composable fun SeparatorIcon(modifier: Modifier = Modifier, color: Color = KrailTheme.colors.onSurface)</ID>
     <ID>FunctionNaming:SeparatorIcon.kt$@Composable private fun SeparatorIconPreview()</ID>
-    <ID>FunctionNaming:Text.kt$@Composable fun Text( text: AnnotatedString, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, fontFamily: FontFamily? = null, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, )</ID>
-    <ID>FunctionNaming:Text.kt$@Composable fun Text( text: String, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, )</ID>
+    <ID>FunctionNaming:SocialConnectionIcon.kt$@Composable fun SocialConnectionIcon( modifier: Modifier = Modifier, onClick: () -&gt; Unit, content: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:Text.kt$@Composable fun Text( text: AnnotatedString, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, fontFamily: FontFamily? = null, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, inlineContent: Map&lt;String, InlineTextContent&gt; = emptyMap(), )</ID>
+    <ID>FunctionNaming:Text.kt$@Composable fun Text( text: String, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, inlineContent: Map&lt;String, InlineTextContent&gt; = emptyMap(), )</ID>
     <ID>FunctionNaming:Text.kt$@Preview @Composable private fun TextPreview()</ID>
     <ID>FunctionNaming:Text.kt$@Preview @Composable private fun TextWithColorPreview()</ID>
     <ID>FunctionNaming:TextField.kt$@Composable fun TextField( modifier: Modifier = Modifier, placeholder: String? = null, initialText: String? = null, enabled: Boolean = true, textStyle: TextStyle? = null, readOnly: Boolean = false, leadingIcon: (@Composable () -&gt; Unit)? = null, imeAction: ImeAction = ImeAction.Default, filter: (CharSequence) -&gt; CharSequence = { it }, maxLength: Int = Int.MAX_VALUE, onTextChange: (CharSequence) -&gt; Unit = {}, )</ID>
-    <ID>FunctionNaming:TextField.kt$@Composable private fun TextFieldDisabledPlaceholderPreview()</ID>
-    <ID>FunctionNaming:TextField.kt$@Composable private fun TextFieldDisabledPreview()</ID>
-    <ID>FunctionNaming:TextField.kt$@Composable private fun TextFieldEnabledPlaceholderPreview()</ID>
-    <ID>FunctionNaming:TextField.kt$@Composable private fun TextFieldEnabledPreview()</ID>
-    <ID>FunctionNaming:TextField.kt$@Composable private fun TextFieldPlaceholder(placeholder: String? = null)</ID>
+    <ID>FunctionNaming:TextField.kt$@Composable fun ThemeTextFieldPlaceholderText( text: String, isActive: Boolean, activeColor: Color = themeColor(), inactiveColor: Color = KrailTheme.colors.labelPlaceholder, activeTextStyle: TextStyle = KrailTheme.typography.titleLarge, inactiveStyle: TextStyle = KrailTheme.typography.bodyLarge, maxLines: Int = 1, )</ID>
+    <ID>FunctionNaming:TextField.kt$@Composable private fun PreviewTextFieldContent(content: @Composable () -&gt; Unit)</ID>
+    <ID>FunctionNaming:TextField.kt$@Composable private fun TextFieldPlaceholder( placeholder: String? = null, color: Color = KrailTheme.colors.labelPlaceholder, maxLines: Int = 1, )</ID>
+    <ID>FunctionNaming:TextField.kt$@Preview(name = "Text Field Disabled - Dark") @Composable private fun TextFieldDisabledPreviewDark()</ID>
+    <ID>FunctionNaming:TextField.kt$@Preview(name = "Text Field Disabled - Light") @Composable private fun TextFieldDisabledPreviewLight()</ID>
+    <ID>FunctionNaming:TextField.kt$@Preview(name = "Text Field Enabled - Dark") @Composable private fun TextFieldEnabledPreviewDark()</ID>
+    <ID>FunctionNaming:TextField.kt$@Preview(name = "Text Field Enabled - Light") @Composable private fun TextFieldEnabledPreviewLight()</ID>
     <ID>FunctionNaming:TextFieldButton.kt$@Composable fun TextFieldButton( onClick: () -&gt; Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:Theme.kt$@Composable fun KrailTheme( darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -&gt; Unit, )</ID>
     <ID>FunctionNaming:TitleBar.kt$@Composable fun NavActionButton( icon: ImageVector, iconContentDescription: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:TitleBar.kt$@Composable fun TitleBar( title: @Composable () -&gt; Unit, modifier: Modifier = Modifier, onNavActionClick: (() -&gt; Unit)? = null, actions: @Composable (() -&gt; Unit)? = null, )</ID>
+    <ID>Indentation:A11yColors.kt$ </ID>
+    <ID>LongMethod:DiscoverCardVerticalPager.kt$@Composable fun &lt;T&gt; DiscoverCardVerticalPager( pages: List&lt;T&gt;, modifier: Modifier = Modifier, keySelector: (T) -&gt; String, content: @Composable (T, isCardSelected: Boolean) -&gt; Unit, )</ID>
     <ID>LongMethod:TextField.kt$@Composable fun TextField( modifier: Modifier = Modifier, placeholder: String? = null, initialText: String? = null, enabled: Boolean = true, textStyle: TextStyle? = null, readOnly: Boolean = false, leadingIcon: (@Composable () -&gt; Unit)? = null, imeAction: ImeAction = ImeAction.Default, filter: (CharSequence) -&gt; CharSequence = { it }, maxLength: Int = Int.MAX_VALUE, onTextChange: (CharSequence) -&gt; Unit = {}, )</ID>
-    <ID>LongParameterList:Button.kt$( onClick: () -&gt; Unit, modifier: Modifier = Modifier, colors: ButtonColors = ButtonDefaults.buttonColors(), dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, // RowScope and place )</ID>
-    <ID>LongParameterList:Text.kt$( text: AnnotatedString, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, fontFamily: FontFamily? = null, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, )</ID>
-    <ID>LongParameterList:Text.kt$( text: String, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, )</ID>
+    <ID>LongParameterList:Button.kt$( onClick: () -&gt; Unit, modifier: Modifier = Modifier, colors: ButtonColors = ButtonDefaults.buttonColors(), dimensions: ButtonDimensions = ButtonDefaults.largeButtonSize(), enabled: Boolean = true, content: @Composable () -&gt; Unit, )</ID>
+    <ID>LongParameterList:CookieShapeBox.kt$( modifier: Modifier = Modifier, backgroundColor: Color = KrailTheme.colors.surface, strokeColor: Color = Color.Transparent, outlineBrush: Brush? = null, cookieShadow: Shadow? = null, content: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:PreviewTheme.kt$( themeStyle: KrailThemeStyle = KrailThemeStyle.Train, modifier: Modifier = Modifier, darkTheme: Boolean = false, fontScale: Float = 1.0f, // temporary measure until font scale support is added to compose multiplatform backgroundColor: Color = KrailTheme.colors.surface, content: @Composable () -&gt; Unit, )</ID>
+    <ID>LongParameterList:RoundIconButton.kt$( onClick: () -&gt; Unit, modifier: Modifier = Modifier, showBadge: Boolean = false, color: Color? = null, onClickLabel: String? = null, content: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:Text.kt$( text: AnnotatedString, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, fontFamily: FontFamily? = null, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, inlineContent: Map&lt;String, InlineTextContent&gt; = emptyMap(), )</ID>
+    <ID>LongParameterList:Text.kt$( text: String, modifier: Modifier = Modifier, style: TextStyle = LocalTextStyle.current, color: Color? = null, textAlign: TextAlign = TextAlign.Start, maxLines: Int = Int.MAX_VALUE, overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis, onTextLayout: ((TextLayoutResult) -&gt; Unit)? = null, inlineContent: Map&lt;String, InlineTextContent&gt; = emptyMap(), )</ID>
     <ID>LongParameterList:TextField.kt$( modifier: Modifier = Modifier, placeholder: String? = null, initialText: String? = null, enabled: Boolean = true, textStyle: TextStyle? = null, readOnly: Boolean = false, leadingIcon: (@Composable () -&gt; Unit)? = null, imeAction: ImeAction = ImeAction.Default, filter: (CharSequence) -&gt; CharSequence = { it }, maxLength: Int = Int.MAX_VALUE, onTextChange: (CharSequence) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:TextField.kt$( text: String, isActive: Boolean, activeColor: Color = themeColor(), inactiveColor: Color = KrailTheme.colors.labelPlaceholder, activeTextStyle: TextStyle = KrailTheme.typography.titleLarge, inactiveStyle: TextStyle = KrailTheme.typography.bodyLarge, maxLines: Int = 1, )</ID>
     <ID>MagicNumber:A11yColors.kt$0.05f</ID>
+    <ID>MagicNumber:A11yColors.kt$0xFF000000</ID>
+    <ID>MagicNumber:A11yColors.kt$0xFFFFFFFF</ID>
+    <ID>MagicNumber:A11yExt.kt$0.45f</ID>
+    <ID>MagicNumber:A11yExt.kt$0.5f</ID>
+    <ID>MagicNumber:A11yExt.kt$0.6f</ID>
     <ID>MagicNumber:Button.kt$ButtonDimensions$50</ID>
     <ID>MagicNumber:ColorsExt.kt$0xFF</ID>
     <ID>MagicNumber:ColorsExt.kt$120</ID>
@@ -50,23 +101,86 @@
     <ID>MagicNumber:ColorsExt.kt$6</ID>
     <ID>MagicNumber:ColorsExt.kt$60</ID>
     <ID>MagicNumber:ColorsExt.kt$8</ID>
-    <ID>MagicNumber:DpExt.kt$0.7f</ID>
+    <ID>MagicNumber:CookieShape.kt$40</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0.018f</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0xFF03A9F4</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0xFF4CAF50</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0xFFF57F17</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0xFFFF5722</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0xFFFFC107</ID>
+    <ID>MagicNumber:CookieShapeBox.kt$0xFFFFEE58</ID>
+    <ID>MagicNumber:DiscoverCardVerticalPager.kt$0.15f</ID>
+    <ID>MagicNumber:DiscoverCardVerticalPager.kt$0.1f</ID>
+    <ID>MagicNumber:DiscoverCardVerticalPager.kt$0.25f</ID>
+    <ID>MagicNumber:DiscoverCardVerticalPager.kt$0.90f</ID>
+    <ID>MagicNumber:DiscoverCardVerticalPager.kt$1.3f</ID>
+    <ID>MagicNumber:DiscoverCardVerticalPager.kt$1.7f</ID>
+    <ID>MagicNumber:DpExt.kt$0.8f</ID>
     <ID>MagicNumber:DpExt.kt$1.5f</ID>
     <ID>MagicNumber:ScalingIndication.kt$ScaleIndicationNode$0.9f</ID>
     <ID>MagicNumber:TextFieldButton.kt$50</ID>
-    <ID>ModifierComposable:Klickable.kt$klickable</ID>
-    <ID>ModifierComposable:Klickable.kt$scalingKlickable</ID>
+    <ID>MultiLineIfElse:CookieShapeBox.kt$Modifier</ID>
+    <ID>MultiLineIfElse:DiscoverCardVerticalPager.kt$Modifier</ID>
+    <ID>NoConsecutiveBlankLines:Button.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:Color.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:CookieShape.kt$ </ID>
+    <ID>NoConsecutiveBlankLines:CookieShapeBox.kt$ </ID>
+    <ID>NoEmptyFirstLineInMethodBlock:TextField.kt$ </ID>
+    <ID>NoMultipleSpaces:A11yExt.kt$ </ID>
+    <ID>NoUnusedImports:DiscoverCardVerticalPager.kt$xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager.kt</ID>
+    <ID>PreviewPublic:Button.kt$PreviewAlertButtonDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewAlertButtonDimensionsDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewAlertButtonDimensionsLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewAlertButtonDisabledDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewAlertButtonDisabledLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewAlertButtonLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewPrimaryButtonDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewPrimaryButtonDimensionsDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewPrimaryButtonDimensionsLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewPrimaryButtonDisabledDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewPrimaryButtonDisabledLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewPrimaryButtonLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewSubtleButtonDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewSubtleButtonDimensionsDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewSubtleButtonDimensionsLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewSubtleButtonDisabledDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewSubtleButtonDisabledLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewSubtleButtonLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewTextButtonDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewTextButtonDimensionsDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewTextButtonDimensionsLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewTextButtonDisabledDark</ID>
+    <ID>PreviewPublic:Button.kt$PreviewTextButtonDisabledLight</ID>
+    <ID>PreviewPublic:Button.kt$PreviewTextButtonLight</ID>
+    <ID>ReturnCount:DiscoverCardVerticalPager.kt$@Composable fun rememberCardHeight(): Dp</ID>
+    <ID>SpacingAroundKeyword:A11yColors.kt$if</ID>
+    <ID>SpacingAroundKeyword:DiscoverCardVerticalPager.kt$if</ID>
+    <ID>SpacingAroundOperators:Color.kt$=</ID>
+    <ID>SpacingAroundParens:A11yColors.kt$(</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:Color.kt$// Future and past journey colors</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:Color.kt$// Light theme (Deviations colors)</ID>
+    <ID>StringLiteralDuplication:Button.kt$"Extra Small"</ID>
+    <ID>StringLiteralDuplication:Button.kt$"Large"</ID>
+    <ID>StringLiteralDuplication:Button.kt$"Medium"</ID>
+    <ID>StringLiteralDuplication:Button.kt$"Small"</ID>
+    <ID>TooManyFunctions:Button.kt$xyz.ksharma.krail.taj.components.Button.kt</ID>
     <ID>TooManyFunctions:ColorsExt.kt$xyz.ksharma.krail.taj.ColorsExt.kt</ID>
     <ID>UnusedParameter:RoundIconButton.kt$onClickLabel: String? = null</ID>
+    <ID>UnusedPrivateMember:CookieShapeBox.kt$@Preview @Composable private fun CookiePreviewBox()</ID>
+    <ID>UnusedPrivateMember:CookieShapeBox.kt$@Preview @Composable private fun CookiePreviewCanvas()</ID>
+    <ID>UnusedPrivateMember:CookieShapeBox.kt$@Preview @Composable private fun CookieShapeBoxRadialGradient()</ID>
+    <ID>UnusedPrivateMember:CookieShapeBox.kt$@Preview @Composable private fun CookieShapeBoxSweepGradient()</ID>
     <ID>UnusedPrivateMember:Divider.kt$@Composable private fun DividerPreview()</ID>
     <ID>UnusedPrivateMember:Divider.kt$@Composable private fun DividerVerticalPreview()</ID>
+    <ID>UnusedPrivateMember:RoundIconButton.kt$@Preview @Composable private fun PreviewRoundIconButton()</ID>
+    <ID>UnusedPrivateMember:RoundIconButton.kt$@Preview @Composable private fun PreviewRoundIconButtonWithBadge()</ID>
     <ID>UnusedPrivateMember:SeparatorIcon.kt$@Composable private fun SeparatorIconPreview()</ID>
     <ID>UnusedPrivateMember:Text.kt$@Preview @Composable private fun TextPreview()</ID>
     <ID>UnusedPrivateMember:Text.kt$@Preview @Composable private fun TextWithColorPreview()</ID>
-    <ID>UnusedPrivateMember:TextField.kt$@Composable private fun TextFieldDisabledPlaceholderPreview()</ID>
-    <ID>UnusedPrivateMember:TextField.kt$@Composable private fun TextFieldDisabledPreview()</ID>
-    <ID>UnusedPrivateMember:TextField.kt$@Composable private fun TextFieldEnabledPlaceholderPreview()</ID>
-    <ID>UnusedPrivateMember:TextField.kt$@Composable private fun TextFieldEnabledPreview()</ID>
+    <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Disabled - Dark") @Composable private fun TextFieldDisabledPreviewDark()</ID>
+    <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Disabled - Light") @Composable private fun TextFieldDisabledPreviewLight()</ID>
+    <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Enabled - Dark") @Composable private fun TextFieldEnabledPreviewDark()</ID>
+    <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Enabled - Light") @Composable private fun TextFieldEnabledPreviewLight()</ID>
     <ID>UnusedPrivateProperty:A11yColors.kt$// when font scale greater than 1.2f. Text size is 18dp default and 14dp bold. private const val LARGE_TEXT_SIZE_CONTRAST_AA = 3.0f</ID>
   </CurrentIssues>
 </SmellBaseline>

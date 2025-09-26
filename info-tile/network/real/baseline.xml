@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CascadingCallWrapping:RealInfoTileManager.kt$RealInfoTileManager$second</ID>
+    <ID>CommentOverPrivateProperty:RealInfoTileManager.kt$RealInfoTileManager$/** * Cache the last fetched [FlagValue] and the parsed list of [InfoTileData]. */ private var cachedInfoTilesFlagValue: FlagValue? = null</ID>
+    <ID>CommentOverPrivateProperty:RealInfoTileManager.kt$RealInfoTileManager$/** This cache is only valid for the lifetime of this instance. * If the [FlagValue] changes, the cache will be updated on the next call to [getInfoTiles]. */ private var cachedParsedTiles: List&lt;InfoTileData&gt;? = null</ID>
+    <ID>TooGenericExceptionCaught:RealInfoTileManager.kt$RealInfoTileManager$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

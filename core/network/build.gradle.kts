@@ -65,28 +65,54 @@ kotlin {
 
 // READ API KEY
 val localProperties = gradleLocalProperties(rootProject.rootDir, providers)
+
+// Check if we're in CI environment running Detekt only
+val isDetektOnlyBuild = gradle.startParameter.taskNames.any { it.contains("detekt", ignoreCase = true) }
+val isCIEnvironment = System.getenv("CI") == "true" || System.getenv("GITHUB_ACTIONS") == "true"
+
 val androidNswTransportApiKey: String = localProperties.getProperty("ANDROID_NSW_TRANSPORT_API_KEY")
     ?: System.getenv("ANDROID_NSW_TRANSPORT_API_KEY")
-require(androidNswTransportApiKey.isNotEmpty()) {
-    "Register API key and put in local.properties as `ANDROID_NSW_TRANSPORT_API_KEY`"
-}
+    ?: ""
 
 val iosNswTransportApiKey: String = localProperties.getProperty("IOS_NSW_TRANSPORT_API_KEY")
     ?: System.getenv("IOS_NSW_TRANSPORT_API_KEY")
-require(iosNswTransportApiKey.isNotEmpty()) {
-    "Register API key and put in local.properties as `IOS_NSW_TRANSPORT_API_KEY`"
+    ?: ""
+
+// Only require API keys for non-CI builds or non-Detekt builds
+if (!(isCIEnvironment && isDetektOnlyBuild)) {
+    require(androidNswTransportApiKey.isNotEmpty()) {
+        "Register API key and put in local.properties as `ANDROID_NSW_TRANSPORT_API_KEY`"
+    }
+    require(iosNswTransportApiKey.isNotEmpty()) {
+        "Register API key and put in local.properties as `IOS_NSW_TRANSPORT_API_KEY`"
+    }
 }
 
 buildkonfig {
     packageName = "xyz.ksharma.krail.core.network"
     exposeObjectWithName = "NetworkBuildKonfig"
 
-    require(androidNswTransportApiKey.isNotEmpty() && iosNswTransportApiKey.isNotEmpty()) {
-        "Register API key and put in local.properties"
-    }
-
     defaultConfigs {
-        buildConfigField(FieldSpec.Type.STRING, "ANDROID_NSW_TRANSPORT_API_KEY", androidNswTransportApiKey)
-        buildConfigField(FieldSpec.Type.STRING, "IOS_NSW_TRANSPORT_API_KEY", iosNswTransportApiKey)
+        // Use placeholder values for CI Detekt builds, real values otherwise
+        val androidKey = if (isCIEnvironment && isDetektOnlyBuild && androidNswTransportApiKey.isEmpty()) {
+            "placeholder-android-key"
+        } else {
+            require(androidNswTransportApiKey.isNotEmpty()) {
+                "Register API key and put in local.properties as `ANDROID_NSW_TRANSPORT_API_KEY`"
+            }
+            androidNswTransportApiKey
+        }
+
+        val iosKey = if (isCIEnvironment && isDetektOnlyBuild && iosNswTransportApiKey.isEmpty()) {
+            "placeholder-ios-key"
+        } else {
+            require(iosNswTransportApiKey.isNotEmpty()) {
+                "Register API key and put in local.properties as `IOS_NSW_TRANSPORT_API_KEY`"
+            }
+            iosNswTransportApiKey
+        }
+
+        buildConfigField(FieldSpec.Type.STRING, "ANDROID_NSW_TRANSPORT_API_KEY", androidKey)
+        buildConfigField(FieldSpec.Type.STRING, "IOS_NSW_TRANSPORT_API_KEY", iosKey)
     }
 }

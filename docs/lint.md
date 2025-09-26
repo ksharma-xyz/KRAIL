@@ -53,3 +53,35 @@ To see all available Detekt tasks, you can run:
 # Suppress existing issues (create baseline)
 ./gradlew detektBaseline
 ```
+
+## Detekt Integration
+
+### Configuration Architecture
+
+```
+config/
+├── detekt.yml          ← Global rules
+└── baseline.xml        ← Global baseline
+
+module/
+└── baseline.xml        ← Module-specific baseline
+```
+
+### Gradle Convention Plugin
+
+```kotlin
+// Centralized Detekt configuration
+fun Project.configureDetekt() {
+    extensions.configure<DetektExtension>("detekt") {
+        config.setFrom("${rootProject.projectDir}/config/detekt.yml")
+        baseline = file("$projectDir/baseline.xml")
+    }
+}
+```
+
+**Benefits:**
+
+- **Consistent Rules**: Same rules across all modules
+- **Centralized Management**: One place to update rules
+- **Module Flexibility**: Each module can have specific baselines
+- **Auto-correction**: Formatting issues fixed automatically

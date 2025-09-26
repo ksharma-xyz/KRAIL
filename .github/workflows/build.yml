@@ -12,8 +12,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  code-quality:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    uses: ./.github/workflows/code-quality.yml
+
   build-android-debug:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: code-quality
     uses: ./.github/workflows/build-android.yml
     with:
       variant: debug
@@ -21,6 +26,7 @@ jobs:
 
   build-android-release:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: code-quality
     uses: ./.github/workflows/build-android.yml
     with:
       variant: release
@@ -28,6 +34,7 @@ jobs:
 
   build-ios:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: code-quality
     uses: ./.github/workflows/build-ios.yml
     secrets: inherit
 

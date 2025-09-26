@@ -1,0 +1,54 @@
+name: Code Quality
+
+on:
+  workflow_call:
+    outputs:
+      detekt-passed:
+        description: "Whether Detekt checks passed"
+        value: ${{ jobs.detekt.outputs.passed }}
+
+jobs:
+  detekt:
+    runs-on: ubuntu-latest
+    environment: Firebase
+    outputs:
+      passed: ${{ steps.detekt.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Run Detekt
+        id: detekt
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          CI: true
+          GITHUB_ACTIONS: true
+        run: ./gradlew detekt
+
+      - name: Upload Detekt reports
+        if: always() && steps.detekt.conclusion != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-reports-${{ github.run_id }}
+          path: |
+            **/build/reports/detekt/detekt.html
+            **/build/reports/detekt/detekt.xml
+            **/build/reports/detekt/detekt.md
+            **/build/reports/detekt/detekt.txt
+            build/reports/problems/problems-report.html
+          if-no-files-found: ignore
+          retention-days: 7

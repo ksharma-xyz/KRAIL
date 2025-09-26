@@ -10,7 +10,7 @@ class AndroidSandookDriverFactory(private val context: Context) : SandookDriverF
             schema = KrailSandook.Schema,
             context = context,
             name = "krailSandook.db",
-            callback = SandookCallback(KrailSandook.Schema)
+            callback = SandookCallback(KrailSandook.Schema),
         )
     }
 }

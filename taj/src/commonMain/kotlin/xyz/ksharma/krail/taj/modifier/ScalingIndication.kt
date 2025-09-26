@@ -28,7 +28,7 @@ object ScalingIndication : IndicationNodeFactory {
  * https://developer.android.com/develop/ui/compose/touch-input/user-interactions/migrate-indication-ripple
  */
 class ScaleIndicationNode(
-    private val interactionSource: InteractionSource
+    private val interactionSource: InteractionSource,
 ) : Modifier.Node(), DrawModifierNode {
     private var currentPressPosition: Offset = Offset.Zero
     private val animatedScalePercent = Animatable(1f)
@@ -57,7 +57,7 @@ class ScaleIndicationNode(
     override fun ContentDrawScope.draw() {
         scale(
             scale = animatedScalePercent.value,
-            pivot = currentPressPosition
+            pivot = currentPressPosition,
         ) {
             this@draw.drawContent()
         }

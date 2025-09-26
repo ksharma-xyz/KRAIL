@@ -64,8 +64,8 @@ fun AppUpgradeScreen(
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
             animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
+            repeatMode = RepeatMode.Restart,
+        ),
     )
 
     val mainGearRotation by infiniteTransition.animateFloat(
@@ -73,8 +73,8 @@ fun AppUpgradeScreen(
         targetValue = -360f, // Counter-clockwise rotation
         animationSpec = infiniteRepeatable(
             animation = tween(3000, easing = LinearEasing), // Slightly faster
-            repeatMode = RepeatMode.Restart
-        )
+            repeatMode = RepeatMode.Restart,
+        ),
     )
 
     // region Cookie Shape Box rotation animations
@@ -84,8 +84,8 @@ fun AppUpgradeScreen(
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 60_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
+            repeatMode = RepeatMode.Restart,
+        ),
     )
 
     // gentle breathing scale (slight, reversible)
@@ -94,8 +94,8 @@ fun AppUpgradeScreen(
         targetValue = 1.1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 5000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        )
+            repeatMode = RepeatMode.Reverse,
+        ),
     )
     // endregion
 
@@ -131,7 +131,7 @@ fun AppUpgradeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 32.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 // Cookie shape with subtle animated rotation + scale
                 CookieShapeBox(
@@ -183,7 +183,7 @@ fun AppUpgradeScreen(
                         fontSize = 45.sp,
                     ),
                     modifier = Modifier
-                        .offset(x = (-55).dp, y = 0.dp)
+                        .offset(x = (-55).dp, y = 0.dp),
                 )
 
                 // Tool box positioned at bottom right of person with minimal padding
@@ -222,7 +222,7 @@ fun AppUpgradeScreen(
             modifier = Modifier
                 .navigationBarsPadding()
                 .align(Alignment.BottomCenter)
-                .padding(vertical = 20.dp)
+                .padding(vertical = 20.dp),
         )
     }
 }
@@ -241,7 +241,7 @@ private fun AnimatedUpdateButton(
     modifier: Modifier = Modifier,
     startDelayMillis: Int = 300,
     fadeDurationMillis: Int = 520,
-    scaleSpringDamping: Float = 0.68f
+    scaleSpringDamping: Float = 0.68f,
 ) {
     var hasAnimated by rememberSaveable { mutableStateOf(false) }
 
@@ -259,7 +259,7 @@ private fun AnimatedUpdateButton(
                 // Gentle ease to slight overshoot
                 scale.animateTo(
                     targetValue = 1.06f,
-                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
                 )
                 // Natural settle using spring
                 scale.animateTo(
@@ -267,7 +267,7 @@ private fun AnimatedUpdateButton(
                     animationSpec = spring(
                         dampingRatio = scaleSpringDamping,
                         stiffness = Spring.StiffnessMediumLow,
-                    )
+                    ),
                 )
             }
             val alphaJob = launch {
@@ -275,8 +275,8 @@ private fun AnimatedUpdateButton(
                     targetValue = 1f,
                     animationSpec = tween(
                         durationMillis = fadeDurationMillis,
-                        easing = FastOutSlowInEasing
-                    )
+                        easing = FastOutSlowInEasing,
+                    ),
                 )
             }
             scaleJob.join()
@@ -292,7 +292,7 @@ private fun AnimatedUpdateButton(
             scaleY = scale.value
             this.alpha = alpha.value
         },
-        enabled = alpha.value > 0.5f
+        enabled = alpha.value > 0.5f,
     ) {
         Text("Update Now")
     }

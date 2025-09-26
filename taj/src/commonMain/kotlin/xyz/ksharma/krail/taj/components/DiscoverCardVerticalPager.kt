@@ -54,7 +54,7 @@ fun <T> DiscoverCardVerticalPager(
 
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { pages.size }
+        pageCount = { pages.size },
     )
     val discoverCardHeight = rememberCardHeight()
 
@@ -66,7 +66,7 @@ fun <T> DiscoverCardVerticalPager(
     }
 
     BoxWithConstraints(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
     ) {
         val maxCardWidth = maxWidth - 24.dp
         val screenHeight = maxHeight
@@ -81,7 +81,7 @@ fun <T> DiscoverCardVerticalPager(
                 if (page < pages.size) keySelector(pages[page]) else "empty_$page"
             },
             contentPadding = PaddingValues(vertical = topPadding.coerceAtLeast(0.dp)),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) { page ->
             // Add bounds check before accessing pages
             if (page < pages.size) {
@@ -102,7 +102,7 @@ fun <T> DiscoverCardVerticalPager(
                 val targetShadowAlpha = if (isCardSelected) maxShadowAlpha else 0f
                 val animatedShadowAlpha by animateFloatAsState(
                     targetValue = targetShadowAlpha,
-                    animationSpec = tween(durationMillis = 50)
+                    animationSpec = tween(durationMillis = 50),
                 )
                 // endregion Shadow for card
 
@@ -123,11 +123,11 @@ fun <T> DiscoverCardVerticalPager(
                                     color = themeColor(),
                                     spread = 2.dp,
                                     alpha = animatedShadowAlpha,
-                                )
+                                ),
                             )
                         } else {
                             Modifier
-                        }
+                        },
                     )
                     .zIndex(1f - pageOffset)
                     .align(Alignment.Center)

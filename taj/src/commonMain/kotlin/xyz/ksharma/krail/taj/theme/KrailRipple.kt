@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.Dp
 fun krailRipple(
     bounded: Boolean = true,
     radius: Dp = Dp.Unspecified,
-    color: Color = Color.Unspecified
+    color: Color = Color.Unspecified,
 ): IndicationNodeFactory {
     return ripple(bounded, radius, color)
 }
@@ -20,7 +20,7 @@ fun krailRipple(
 fun krailRipple(
     color: ColorProducer,
     bounded: Boolean = true,
-    radius: Dp = Dp.Unspecified
+    radius: Dp = Dp.Unspecified,
 ): IndicationNodeFactory {
     return ripple(color, bounded, radius)
 }

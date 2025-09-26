@@ -8,31 +8,31 @@ enum class KrailThemeStyle(val hexColorCode: String, val id: Int, val tagLine: S
     Train(
         hexColorCode = train_theme.toHex(),
         id = 1,
-        tagLine = "On the track, no lookin' back!"
+        tagLine = "On the track, no lookin' back!",
     ),
     Metro(
         hexColorCode = metro_theme.toHex(),
         id = 2,
-        tagLine = "Surf the sub, no cap!"
+        tagLine = "Surf the sub, no cap!",
     ),
     Bus(
         hexColorCode = bus_theme.toHex(),
         id = 5,
-        tagLine = "Hoppin' the concrete jungle!"
+        tagLine = "Hoppin' the concrete jungle!",
     ),
     PurpleDrip(
         hexColorCode = purple_drip_theme.toHex(),
         id = 7,
-        tagLine = "Purple drip, endless trip!"
+        tagLine = "Purple drip, endless trip!",
     ),
     Ferry(
         hexColorCode = ferry_theme.toHex(),
         id = 9,
-        tagLine = "Smooth sail, no fail!"
+        tagLine = "Smooth sail, no fail!",
     ),
     BarbiePink(
         hexColorCode = barbie_pink_theme.toHex(),
         id = 100,
-        tagLine = "Dressed in pink, fastest link!"
+        tagLine = "Dressed in pink, fastest link!",
     ),
 }

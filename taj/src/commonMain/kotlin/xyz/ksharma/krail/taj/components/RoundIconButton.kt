@@ -49,7 +49,7 @@ fun RoundIconButton(
     ) {
         Box(
             modifier = modifier
-                .size(RoundButtonSize)
+                .size(RoundButtonSize),
         ) {
             Box(
                 modifier = Modifier
@@ -69,7 +69,7 @@ fun RoundIconButton(
                         .align(Alignment.TopEnd)
                         .offset(x = BadgeTokens.BadgeOffsetX, y = BadgeTokens.BadgeOffsetY)
                         .clip(CircleShape)
-                        .background(KrailTheme.colors.badge)
+                        .background(KrailTheme.colors.badge),
                 )
             }
         }
@@ -83,11 +83,11 @@ fun RoundIconButton(
 private fun PreviewRoundIconButton() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         RoundIconButton(
-            onClick = { }
+            onClick = { },
         ) {
             Image(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Add"
+                contentDescription = "Add",
             )
         }
     }
@@ -99,11 +99,11 @@ private fun PreviewRoundIconButtonWithBadge() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         RoundIconButton(
             showBadge = true,
-            onClick = { }
+            onClick = { },
         ) {
             Image(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Add"
+                contentDescription = "Add",
             )
         }
     }

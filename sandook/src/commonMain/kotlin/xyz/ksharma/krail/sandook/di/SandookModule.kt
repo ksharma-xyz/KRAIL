@@ -51,14 +51,14 @@ val sandookModule = module {
     single<NswParkRideSandook> {
         RealNswParkRideSandook(
             parkRideQueries = get(),
-            ioDispatcher = get(named(DispatchersComponent.IODispatcher))
+            ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
         )
     }
 
     single<Sandook> {
         RealSandook(
             factory = get(),
-            ioDispatcher = get(named(DispatchersComponent.IODispatcher))
+            ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
         )
     }
 }

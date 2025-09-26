@@ -27,7 +27,7 @@ fun PreviewTheme(
         val density = LocalDensity.current
         CompositionLocalProvider(
             LocalThemeColor provides color,
-            LocalDensity provides Density(density = density.density, fontScale = fontScale)
+            LocalDensity provides Density(density = density.density, fontScale = fontScale),
         ) {
             Column(modifier = modifier.systemBarsPadding().background(backgroundColor)) {
                 content()

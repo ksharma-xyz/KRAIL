@@ -23,7 +23,7 @@ interface NswParkRideSandook {
 
     fun getFacilitiesByStopIdAndSource(
         stopId: String,
-        source: SavedParkRideSource = SavedParkRideSource.SavedTrips
+        source: SavedParkRideSource = SavedParkRideSource.SavedTrips,
     ): Flow<List<String>>
 
     /**
@@ -32,7 +32,7 @@ interface NswParkRideSandook {
      */
     suspend fun insertOrReplaceSavedParkRides(
         parkRideInfoList: Set<SavedParkRide>,
-        source: SavedParkRideSource
+        source: SavedParkRideSource,
     )
 
     /**
@@ -135,7 +135,7 @@ internal class RealNswParkRideSandook(
 
     override suspend fun insertOrReplaceSavedParkRides(
         parkRideInfoList: Set<SavedParkRide>,
-        source: NswParkRideSandook.Companion.SavedParkRideSource
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
     ) {
         parkRideQueries.transaction {
             parkRideInfoList.forEach { info ->
@@ -144,7 +144,7 @@ internal class RealNswParkRideSandook(
                     facilityId = info.facilityId,
                     stopName = info.stopName,
                     facilityName = info.facilityName,
-                    source = source.value
+                    source = source.value,
                 )
             }
         }

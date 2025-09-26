@@ -48,7 +48,7 @@ interface AppVersionManager {
     data class AppVersionUpdateCopy(
         val title: String,
         val description: String,
-        val ctaText: String
+        val ctaText: String,
     )
 }
 
@@ -92,12 +92,12 @@ class RealAppVersionManager(
 
         if (compareVersions(current, latestAppVersion) > 0) {
             logError(
-                "Current version ($current) is ahead of latest flag ($latestAppVersion) -> flag value is likely stale"
+                "Current version ($current) is ahead of latest flag ($latestAppVersion) -> flag value is likely stale",
             )
         }
 
         log(
-            "Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion"
+            "Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion",
         )
 
         val state = when {

@@ -20,7 +20,7 @@ class CookieShape(
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
-        density: Density
+        density: Density,
     ): Outline {
         val path = buildCookiePath(size, bumps, depthFraction, smooth)
         return Outline.Generic(path)
@@ -31,7 +31,7 @@ internal fun buildCookiePath(
     size: Size,
     bumps: Int,
     depthFraction: Float,
-    smooth: Boolean
+    smooth: Boolean,
 ): Path {
     val w = size.width
     val h = size.height

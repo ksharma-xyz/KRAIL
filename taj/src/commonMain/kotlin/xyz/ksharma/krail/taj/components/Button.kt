@@ -69,7 +69,7 @@ fun Button(
                     when (dimensions) {
                         ButtonDefaults.largeButtonSize() -> Modifier.fillMaxWidth()
                         else -> Modifier
-                    }
+                    },
                 )
                 .scalingKlickable(
                     enabled = enabled,
@@ -111,7 +111,7 @@ fun SubtleButton(
                     when (dimensions) {
                         ButtonDefaults.largeButtonSize() -> Modifier.fillMaxWidth()
                         else -> Modifier
-                    }
+                    },
                 )
                 .heightIn(dimensions.height)
                 .clip(dimensions.shape)
@@ -192,7 +192,7 @@ fun AlertButton(
                     when (dimensions) {
                         ButtonDefaults.largeButtonSize() -> Modifier.fillMaxWidth()
                         else -> Modifier
-                    }
+                    },
                 )
                 .clickable(
                     role = Role.Button,
@@ -270,7 +270,7 @@ object ButtonDefaults {
     @Composable
     fun buttonColors(
         customContainerColor: Color? = null,
-        customContentColor: Color? = null
+        customContentColor: Color? = null,
     ): ButtonColors {
         val hexThemeColor: String by LocalThemeColor.current
         val hexContainerColor: String by remember(hexThemeColor) {
@@ -283,8 +283,8 @@ object ButtonDefaults {
         val defaultContentColor: Color by remember {
             mutableStateOf(
                 getForegroundColor(
-                    containerColor
-                )
+                    containerColor,
+                ),
             )
         }
         val contentColor = customContentColor ?: defaultContentColor

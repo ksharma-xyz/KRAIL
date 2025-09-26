@@ -221,13 +221,13 @@ fun themeSolidBackgroundColor(): Color {
         // Blend the theme color with dark surface for solid color
         blendColors(
             foreground = themeColor.hexToComposeColor().copy(alpha = 0.45f),
-            background = KrailTheme.colors.surface
+            background = KrailTheme.colors.surface,
         )
     } else {
         // Blend the theme color with light surface for solid color
         blendColors(
             foreground = themeColor.hexToComposeColor().copy(alpha = 0.15f),
-            background = KrailTheme.colors.surface
+            background = KrailTheme.colors.surface,
         )
     }
 }
@@ -250,7 +250,7 @@ private fun blendColors(foreground: Color, background: Color): Color {
         red = foreground.red * alpha + background.red * (1 - alpha),
         green = foreground.green * alpha + background.green * (1 - alpha),
         blue = foreground.blue * alpha + background.blue * (1 - alpha),
-        alpha = 1f
+        alpha = 1f,
     )
 }
 

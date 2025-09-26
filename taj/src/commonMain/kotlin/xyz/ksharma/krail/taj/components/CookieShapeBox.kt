@@ -51,11 +51,11 @@ fun CookieShapeBox(
                 if (cookieShadow != null) {
                     Modifier.dropShadow(
                         shape = shape,
-                        shadow = cookieShadow
+                        shadow = cookieShadow,
                     )
                 } else {
                     Modifier
-                }
+                },
             )
             .size(SIZE)
             .background(color = backgroundColor, shape = CookieShape()),
@@ -114,7 +114,7 @@ object CookieShapeBoxDefaults {
             start = Offset.Zero,
             end = SHADOW_GRADIENT_END,
         ),
-        alpha = SHADOW_ALPHA
+        alpha = SHADOW_ALPHA,
     )
 }
 
@@ -144,8 +144,8 @@ private fun CookieShapeBoxSweepGradient() {
                 Color(0xFFFFC107),
                 Color(0xFF4CAF50),
                 Color(0xFF03A9F4),
-            )
-        )
+            ),
+        ),
     )
 }
 
@@ -156,8 +156,8 @@ private fun CookieShapeBoxRadialGradient() {
         CookieShapeBox(
             outlineBrush = Brush.radialGradient(
                 colors = listOf(Color(0xFFFFEE58), Color(0xFFF57F17)),
-                center = Offset.Unspecified
-            )
+                center = Offset.Unspecified,
+            ),
         )
     }
 }

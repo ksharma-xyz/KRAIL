@@ -3,7 +3,7 @@ package xyz.ksharma.krail.taj
 enum class PlatformType {
     IOS,
     ANDROID,
-    UNKNOWN
+    UNKNOWN,
 }
 
 expect fun getAppPlatformType(): PlatformType

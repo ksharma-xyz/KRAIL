@@ -8,7 +8,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     data class ScreenViewEvent(val screen: AnalyticsScreen) : AnalyticsEvent(
         name = "view_screen",
-        properties = mapOf("name" to screen.name)
+        properties = mapOf("name" to screen.name),
     )
 
     // region SavedTrips
@@ -72,7 +72,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     )
 
     data class ClearRecentSearchClickEvent(
-        val recentSearchCount: Int
+        val recentSearchCount: Int,
     ) : AnalyticsEvent(
         name = "clear_recent_search_stops",
         properties = mapOf(
@@ -102,7 +102,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class ReverseTimeTableClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "reverse_time_table_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId)
+            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
         )
 
     data class SaveTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
@@ -218,7 +218,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "locale" to locale.trim(),
             "batteryLevel" to batteryLevel,
             "timeZone" to timeZone.trim(),
-        )
+        ),
     )
     // endregion
 
@@ -234,7 +234,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "refer_friend",
         properties = mapOf(
             "entryPoint" to entryPoint.from,
-        )
+        ),
     ) {
         enum class EntryPoint(val from: String) {
             SETTINGS("settings"), INTRO_BUTTON("intro_button"), INTRO_CONTENT_BUTTON("intro_content_button"),
@@ -256,7 +256,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         properties = mapOf(
             "completedOnPage" to pageType.name,
             "completedOnPageNumber" to pageNumber,
-        )
+        ),
     ) {
         enum class InteractionPage {
             SAVE_TRIPS, REAL_TIME_ROUTES, ALERTS, PLAN_TRIP, SELECT_MODE, INVITE_FRIENDS, PARK_RIDE,
@@ -343,7 +343,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
                 put("partnerSocialPlatformName", socialLink.type.platformName)
                 put("partnerSocialPlatformUrl", socialLink.url)
             }
-        }
+        },
     ) {
         data class PartnerSocialLink(
             val type: SocialConnectionLinkClickEvent.SocialPlatformType,
@@ -373,7 +373,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         properties = mapOf(
             "cardSeenCount" to cardSeenCount,
             "location" to location,
-        )
+        ),
     )
 
     data class DiscoverFilterChipSelected(
@@ -381,8 +381,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "discover_filter_chip_selected",
         properties = mapOf(
-            "cardType" to cardType.displayName
-        )
+            "cardType" to cardType.displayName,
+        ),
     )
 
     // endregion
@@ -402,7 +402,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             dismiss?.let { put("dismiss", dismiss) }
             ctaUrl?.let { put("cta_click", ctaUrl) }
             expand?.let { put("expand", expand) }
-        }
+        },
     )
 
     // endregion

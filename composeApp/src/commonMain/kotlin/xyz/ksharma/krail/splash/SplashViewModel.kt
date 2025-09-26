@@ -82,8 +82,8 @@ class SplashViewModel(
                 krailTheme = _uiState.value.themeStyle.id,
                 locale = locale,
                 batteryLevel = batteryLevel,
-                timeZone = timeZone
-            )
+                timeZone = timeZone,
+            ),
         )
     }
 
@@ -94,7 +94,7 @@ class SplashViewModel(
 
         updateUiState {
             copy(
-                themeStyle = themeStyle ?: DEFAULT_THEME_STYLE
+                themeStyle = themeStyle ?: DEFAULT_THEME_STYLE,
             )
         }
     }.onFailure {
@@ -109,7 +109,7 @@ class SplashViewModel(
             errorBlock = {
                 logError("Error during splash animation completion, navigating to saved trips.")
                 updateUiState { copy(navigationDestination = SavedTripsRoute) }
-            }
+            },
         ) {
             when (appVersionManager.checkForUpdates()) {
                 AppVersionUpdateState.ForcedUpdateRequired -> {

@@ -7,5 +7,5 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.KrailRoute
 data class SplashState(
     val hasSeenIntro: Boolean = true,
     val themeStyle: KrailThemeStyle = DEFAULT_THEME_STYLE,
-    val navigationDestination: KrailRoute? = null
+    val navigationDestination: KrailRoute? = null,
 )

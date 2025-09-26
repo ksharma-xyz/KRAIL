@@ -28,7 +28,7 @@ fun DiscoverChipRow(
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = RowContentPadding)
+        contentPadding = PaddingValues(horizontal = RowContentPadding),
     ) {
         items(
             items = chipTypes,
@@ -46,7 +46,7 @@ fun DiscoverChipRow(
                         interactionSource = remember { MutableInteractionSource() },
                     ) {
                         onChipSelected(type)
-                    }
+                    },
             )
         }
     }
@@ -66,7 +66,7 @@ private fun DiscoverChipRowPreview() {
                 DiscoverCardType.Sports,
             ).toImmutableList(),
             selectedType = DiscoverCardType.Travel,
-            onChipSelected = { }
+            onChipSelected = { },
         )
     }
 }

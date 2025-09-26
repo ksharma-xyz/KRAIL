@@ -20,14 +20,14 @@ internal fun NavGraphBuilder.alertsDestination(navController: NavHostController)
         val serviceAlertState by viewModel.uiState.collectAsStateWithLifecycle()
         val alerts by remember(route.journeyId) {
             mutableStateOf(
-                viewModel.fetchAlerts(journeyId = route.journeyId)
+                viewModel.fetchAlerts(journeyId = route.journeyId),
             )
         }
         ServiceAlertScreen(
             serviceAlerts = alerts?.toImmutableSet() ?: persistentSetOf(),
             onBackClick = {
                 navController.popBackStack()
-            }
+            },
         )
     }
 }

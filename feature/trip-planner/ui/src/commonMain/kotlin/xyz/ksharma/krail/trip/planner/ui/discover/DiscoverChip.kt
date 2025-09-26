@@ -55,16 +55,16 @@ fun DiscoverChip(
             // When becoming selected: quick grow then settle
             tween(
                 durationMillis = 400,
-                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                easing = androidx.compose.animation.core.FastOutSlowInEasing,
             )
         } else {
             // When becoming deselected: quick shrink
             tween(
                 durationMillis = 200,
-                easing = androidx.compose.animation.core.FastOutLinearInEasing
+                easing = androidx.compose.animation.core.FastOutLinearInEasing,
             )
         },
-        label = "bubble_scale"
+        label = "bubble_scale",
     )
 
     val textMeasurer = rememberTextMeasurer()
@@ -74,12 +74,12 @@ fun DiscoverChip(
     val chipWidth = remember(type.displayName, textStyle, density, horizontalPadding) {
         val boldTextWidth = textMeasurer.measure(
             text = type.displayName,
-            style = textStyle.copy(fontWeight = FontWeight.Bold)
+            style = textStyle.copy(fontWeight = FontWeight.Bold),
         ).size.width
 
         val normalTextWidth = textMeasurer.measure(
             text = type.displayName,
-            style = textStyle.copy(fontWeight = FontWeight.Normal)
+            style = textStyle.copy(fontWeight = FontWeight.Normal),
         ).size.width
 
         with(density) {
@@ -98,18 +98,18 @@ fun DiscoverChip(
             .border(
                 width = 1.dp,
                 color = if (selected) Color.Transparent else themeColor(),
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
             )
             .background(
                 color = if (selected) if (isSystemInDarkTheme()) themeColor().darken() else themeColor() else KrailTheme.colors.discoverChipBackground,
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
             ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = type.displayName,
             style = textStyle.copy(
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             ),
             maxLines = 1,
             color = textColor,
@@ -127,7 +127,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(8.dp),
         )
     }
 }
@@ -140,7 +140,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(8.dp),
         )
     }
 }
@@ -153,7 +153,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(8.dp),
         )
     }
 }
@@ -166,7 +166,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected_DarkMode() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(8.dp),
         )
     }
 }

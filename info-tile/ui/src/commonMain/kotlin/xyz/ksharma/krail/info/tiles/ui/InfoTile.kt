@@ -79,7 +79,7 @@ fun InfoTile(
                     color = themeBackgroundColor(),
                     spread = shadowSpread,
                     alpha = SHADOW_ALPHA,
-                )
+                ),
             )
             // clip shape added before clickable so that ripple indication is bounded within shape
             .clip(shape)

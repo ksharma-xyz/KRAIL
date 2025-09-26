@@ -74,7 +74,7 @@ fun SearchStopRow(
                         .getBottom(this)
                         .toDp()
                 },
-                top = 8.dp
+                top = 8.dp,
             ),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -154,7 +154,7 @@ fun SearchStopRow(
         ) {
             val rotation by animateFloatAsState(
                 targetValue = if (isReverseButtonRotated) 180f else 0f,
-                animationSpec = tween(durationMillis = 300)
+                animationSpec = tween(durationMillis = 300),
             )
 
             RoundIconButton(
@@ -172,7 +172,7 @@ fun SearchStopRow(
                 },
                 modifier = Modifier.graphicsLayer {
                     rotationZ = rotation
-                }
+                },
             )
 
             RoundIconButton(

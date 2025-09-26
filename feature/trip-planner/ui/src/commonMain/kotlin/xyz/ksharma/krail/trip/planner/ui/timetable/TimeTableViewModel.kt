@@ -153,7 +153,7 @@ class TimeTableViewModel(
                     AnalyticsEvent.PlanTripClickEvent(
                         fromStopId = tripInfo?.fromStopId ?: "NA",
                         toStopId = tripInfo?.toStopId ?: "NA",
-                    )
+                    ),
                 )
             }
 
@@ -175,7 +175,7 @@ class TimeTableViewModel(
                 fromStopId = tripInfo?.fromStopId ?: "NA",
                 toStopId = tripInfo?.toStopId ?: "NA",
                 displayModeSelectionRow = displayModeSelectionRow,
-            )
+            ),
         )
     }
 
@@ -189,7 +189,7 @@ class TimeTableViewModel(
             updateUiState {
                 copy(
                     isLoading = true,
-                    unselectedModes = this@TimeTableViewModel.unselectedModes.toImmutableSet()
+                    unselectedModes = this@TimeTableViewModel.unselectedModes.toImmutableSet(),
                 )
             }
 
@@ -199,7 +199,7 @@ class TimeTableViewModel(
                     fromStopId = tripInfo?.fromStopId ?: "NA",
                     toStopId = tripInfo?.toStopId ?: "NA",
                     unselectedProductClasses = this.unselectedModes,
-                )
+                ),
             )
         } else {
             // do nothing.
@@ -231,7 +231,7 @@ class TimeTableViewModel(
                         .toLocalDateTime(currentSystemDefault()).toHHMM(),
                     journeyOption = item?.option?.name ?: JourneyTimeOptions.LEAVE.name,
                     isReset = item == null,
-                )
+                ),
             )
         }
     }
@@ -295,14 +295,14 @@ class TimeTableViewModel(
             log(
                 "TripsCache - Started tripCode:[${it.journeyId}], Time: ${
                     it.originUtcDateTime.utcToLocalDateTimeAEST().toHHMM()
-                }"
+                }",
             )
         }
         newJourneyList?.forEach {
             log(
                 "TripsCache - New tripCode:[${it.journeyId}], Time: ${
                     it.originUtcDateTime.utcToLocalDateTimeAEST().toHHMM()
-                }"
+                }",
             )
         }
     }
@@ -370,7 +370,7 @@ class TimeTableViewModel(
                         fromStopId = trip.fromStopId,
                         fromStopName = trip.fromStopName,
                         toStopId = trip.toStopId,
-                        toStopName = trip.toStopName
+                        toStopName = trip.toStopName,
                     )
                     log("Saved Trip (Pref): $trip")
                     updateUiState { copy(isTripSaved = true) }
@@ -424,7 +424,7 @@ class TimeTableViewModel(
             AnalyticsEvent.ReverseTimeTableClickEvent(
                 fromStopId = tripInfo!!.fromStopId,
                 toStopId = tripInfo!!.toStopId,
-            )
+            ),
         )
 
         val savedTrip = sandook.selectTripById(tripId = reverseTrip.tripId)
@@ -463,7 +463,7 @@ class TimeTableViewModel(
             journeyCardInfo.copy(
                 timeText = calculateTimeDifferenceFromNow(
                     utcDateString = journeyCardInfo.originUtcDateTime,
-                ).toGenericFormattedTimeString()
+                ).toGenericFormattedTimeString(),
             )
         }
     }
@@ -512,8 +512,8 @@ class TimeTableViewModel(
         analytics.track(
             AnalyticsEvent.BackClickEvent(
                 fromScreen = AnalyticsScreen.TimeTable,
-                isPreviousBackStackEntryNull = isPreviousBackStackEntryNull
-            )
+                isPreviousBackStackEntryNull = isPreviousBackStackEntryNull,
+            ),
         )
     }
 
@@ -523,7 +523,7 @@ class TimeTableViewModel(
                 loadingEmoji = TimeTableState.LoadingEmoji(
                     emoji = greetingAndEmoji.second,
                     greeting = greetingAndEmoji.first,
-                )
+                ),
             )
         }
     }

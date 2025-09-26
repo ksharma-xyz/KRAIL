@@ -25,7 +25,7 @@ sealed interface SavedTripUiEvent {
 
     data class ParkRideCardClick(
         val parkRideState: ParkRideUiState,
-        val isExpanded: Boolean
+        val isExpanded: Boolean,
     ) : SavedTripUiEvent
 
     data class DismissInfoTile(val infoTile: InfoTileData) : SavedTripUiEvent

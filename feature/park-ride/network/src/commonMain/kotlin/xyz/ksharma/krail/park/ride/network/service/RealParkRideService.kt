@@ -11,11 +11,11 @@ import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 
 internal class RealParkRideService(
     private val httpClient: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ParkRideService {
 
     override suspend fun fetchCarParkFacilities(
-        facilityId: String
+        facilityId: String,
     ): Result<CarParkFacilityDetailResponse> = suspendSafeResult(ioDispatcher) {
         require(facilityId.isNotBlank()) { "Facility ID must not be blank" }
 

@@ -8,7 +8,7 @@ internal fun Analytics.trackDeleteSavedTrip(fromStopId: String, toStopId: String
         AnalyticsEvent.DeleteSavedTripClickEvent(
             fromStopId = fromStopId,
             toStopId = toStopId,
-        )
+        ),
     )
 }
 

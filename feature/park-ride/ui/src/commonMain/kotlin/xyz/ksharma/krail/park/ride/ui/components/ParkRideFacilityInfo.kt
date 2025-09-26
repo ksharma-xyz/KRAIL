@@ -173,7 +173,7 @@ private fun ParkRideInfoCardPreview_SingleStop() {
                         ),
                     ).toImmutableList(),
                 ).toImmutableMap(),
-                onNavigateToMapsClick = { _ -> }
+                onNavigateToMapsClick = { _ -> },
             )
         }
     }
@@ -203,7 +203,7 @@ private fun ParkRideInfoCardPreview_SingleStopMultipleFacilities() {
                         ),
                     ).toImmutableList(),
                 ).toImmutableMap(),
-                onNavigateToMapsClick = { _ -> }
+                onNavigateToMapsClick = { _ -> },
             )
         }
     }
@@ -243,9 +243,9 @@ private fun ParkRideInfoCardPreview_MultipleStops() {
                             availableSpots = "200",
                             fullPercentage = "75%",
                         ),
-                    ).toImmutableList()
+                    ).toImmutableList(),
                 ).toImmutableMap(),
-                onNavigateToMapsClick = { _ -> }
+                onNavigateToMapsClick = { _ -> },
             )
         }
     }
@@ -261,7 +261,7 @@ private fun ParkRideFacilityItemPreview() {
                     facilityName = "Tallawong P1",
                     availableSpots = "100",
                     fullPercentage = "50%",
-                )
+                ),
             )
         }
     }

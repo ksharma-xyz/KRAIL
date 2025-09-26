@@ -67,7 +67,7 @@ fun IntroContentInviteFriends(
                         interactionSource = remember { MutableInteractionSource() },
                         onClick = {
                             onShareClick()
-                        }
+                        },
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -87,7 +87,7 @@ fun IntroContentInviteFriends(
         TagLineWithEmoji(
             tagline = tagline,
             emoji = "\uD83D\uDC95",
-            tagColor = style.hexToComposeColor()
+            tagColor = style.hexToComposeColor(),
         )
     }
 }

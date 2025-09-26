@@ -111,7 +111,7 @@ fun TimeTableScreen(
                 title = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "Timetable",
@@ -125,7 +125,7 @@ fun TimeTableScreen(
                         ) {
                             AnimatedDots(
                                 color = themeColor,
-                                modifier = Modifier.padding(start = 24.dp)
+                                modifier = Modifier.padding(start = 24.dp),
                             )
                         }
                     }
@@ -133,7 +133,7 @@ fun TimeTableScreen(
                 actions = {
                     val rotation by animateFloatAsState(
                         targetValue = if (isReverseButtonRotated) 180f else 0f,
-                        animationSpec = tween(durationMillis = 300)
+                        animationSpec = tween(durationMillis = 300),
                     )
                     ActionButton(
                         modifier = Modifier
@@ -196,7 +196,7 @@ fun TimeTableScreen(
                         .padding(horizontal = 12.dp)
                         .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     SubtleButton(
                         onClick = dateTimeSelectorClicked,
@@ -243,7 +243,7 @@ fun TimeTableScreen(
                     ) {
                         items(
                             items = TransportMode.values().toList(),
-                            key = { item -> item.productClass }
+                            key = { item -> item.productClass },
                         ) {
                             TransportModeChip(
                                 transportMode = it,
@@ -271,7 +271,7 @@ fun TimeTableScreen(
                         },
                         modifier = Modifier
                             .padding(vertical = 8.dp, horizontal = 12.dp)
-                            .animateItem()
+                            .animateItem(),
                     ) {
                         // todo -  handle in Button
                         Row(

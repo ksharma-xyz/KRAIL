@@ -81,7 +81,7 @@ fun IntroScreen(
             1f - (offsetFraction * 2f)
         } else {
             (offsetFraction - 0.5f) * 2f
-        }
+        },
     )
 
     // Compute continuous button color by interpolating between current and next page colors.
@@ -106,7 +106,7 @@ fun IntroScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 32.dp, horizontal = 24.dp)
+                    .padding(vertical = 32.dp, horizontal = 24.dp),
             ) {
                 IntroTitle(
                     offsetFraction,
@@ -114,14 +114,14 @@ fun IntroScreen(
                     startPage,
                     animatedButtonColor,
                     animatedAlpha,
-                    targetPage
+                    targetPage,
                 )
             }
 
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp)
+                    .padding(top = 24.dp),
             ) {
                 val screenHeight = maxHeight
                 val selectedHeight = screenHeight * 0.75f
@@ -131,7 +131,7 @@ fun IntroScreen(
                     state = pagerState,
                     contentPadding = PaddingValues(horizontal = 64.dp),
                     pageSpacing = 20.dp,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) { pageNumber ->
                     val pageOffset =
                         pagerState.calculateCurrentOffsetForPage(pageNumber).absoluteValue
@@ -139,14 +139,14 @@ fun IntroScreen(
                         targetValue = xyz.ksharma.krail.trip.planner.ui.components.modifier.lerp(
                             start = selectedHeight,
                             end = unselectedHeight,
-                            fraction = min(1f, pageOffset)
+                            fraction = min(1f, pageOffset),
                         ),
-                        label = "cardHeight"
+                        label = "cardHeight",
                     )
                     val scale = xyz.ksharma.krail.trip.planner.ui.components.modifier.lerp(
                         start = 1f,
                         end = 0.9f,
-                        fraction = min(1f, pageOffset)
+                        fraction = min(1f, pageOffset),
                     )
                     val pageData: IntroState.IntroPage = state.pages[pageNumber]
 
@@ -168,7 +168,9 @@ fun IntroScreen(
                             pageData = pageData,
                             onShareClick = {
                                 onEvent(
-                                    IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_CONTENT_BUTTON)
+                                    IntroUiEvent.ReferFriend(
+                                        AnalyticsEvent.ReferFriend.EntryPoint.INTRO_CONTENT_BUTTON,
+                                    ),
                                 )
                             },
                             modifier = Modifier.fillMaxSize(),
@@ -182,7 +184,7 @@ fun IntroScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 10.dp)
+                .padding(bottom = 10.dp),
         ) {
             AnimatedVisibility(
                 visible = displayKRAILButton,
@@ -216,6 +218,7 @@ fun IntroScreen(
     }
 }
 
+@Suppress("LongParameterList")
 @Composable
 private fun IntroTitle(
     offsetFraction: Float,
@@ -223,7 +226,7 @@ private fun IntroTitle(
     startPage: Int,
     animatedButtonColor: Color,
     animatedAlpha: Float,
-    targetPage: Int
+    targetPage: Int,
 ) {
     if (offsetFraction < 0.5f) {
         Text(
@@ -233,7 +236,7 @@ private fun IntroTitle(
             color = animatedButtonColor,
             modifier = Modifier
                 .fillMaxWidth()
-                .alpha(animatedAlpha)
+                .alpha(animatedAlpha),
         )
     } else {
         Text(
@@ -243,7 +246,7 @@ private fun IntroTitle(
             color = animatedButtonColor,
             modifier = Modifier
                 .fillMaxWidth()
-                .alpha(animatedAlpha)
+                .alpha(animatedAlpha),
         )
     }
 }

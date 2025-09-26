@@ -93,8 +93,8 @@ class RealStopResultsManager(
                         transportModePriorityMap[it.productClass] ?: Int.MAX_VALUE
                     } ?: Int.MAX_VALUE
                 },
-                { it.stopName }
-            )
+                { it.stopName },
+            ),
         )
     }
 

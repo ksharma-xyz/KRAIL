@@ -40,7 +40,7 @@ fun DateSelection(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
                 painter = painterResource(Res.drawable.ic_chevron_left),

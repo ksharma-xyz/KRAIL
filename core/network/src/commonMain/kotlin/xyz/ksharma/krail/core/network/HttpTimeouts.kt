@@ -10,5 +10,5 @@ val SOCKET_TIMEOUT = 30.seconds.inWholeMilliseconds
 val DEFAULT_TIMEOUTS = HttpTimeoutConfig(
     requestTimeoutMillis = REQUEST_TIMEOUT,
     connectTimeoutMillis = CONNECT_TIMEOUT,
-    socketTimeoutMillis = SOCKET_TIMEOUT
+    socketTimeoutMillis = SOCKET_TIMEOUT,
 )

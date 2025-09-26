@@ -42,16 +42,16 @@ class SearchStopViewModel(
                 analytics.track(
                     AnalyticsEvent.StopSelectedEvent(
                         stopId = event.stopItem.stopId,
-                        isRecentSearch = event.isRecentSearch
-                    )
+                        isRecentSearch = event.isRecentSearch,
+                    ),
                 )
             }
 
             is SearchStopUiEvent.ClearRecentSearchStops -> {
                 analytics.track(
                     AnalyticsEvent.ClearRecentSearchClickEvent(
-                        recentSearchCount = event.recentSearchCount
-                    )
+                        recentSearchCount = event.recentSearchCount,
+                    ),
                 )
                 stopResultsManager.clearRecentSearchStops()
                 // Refresh the state with empty recent stops
@@ -72,13 +72,13 @@ class SearchStopViewModel(
                 val stopResults = stopResultsManager.fetchStopResults(query)
                 updateUiState { displayData(stopResults) }
                 analytics.track(
-                    AnalyticsEvent.SearchStopQuery(query = query, resultsCount = stopResults.size)
+                    AnalyticsEvent.SearchStopQuery(query = query, resultsCount = stopResults.size),
                 )
             }.getOrElse {
                 delay(1000) // buffer for API response before displaying error.
                 updateUiState { displayError() }
                 analytics.track(
-                    AnalyticsEvent.SearchStopQuery(query = query, isError = true)
+                    AnalyticsEvent.SearchStopQuery(query = query, isError = true),
                 )
             }
         }

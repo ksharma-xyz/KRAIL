@@ -7,5 +7,5 @@ enum class KrailSocialType(val socialType: SocialType, val url: String) {
 
     Instagram(socialType = SocialType.Instagram, url = "https://www.instagram.com/krailapp/"),
 
-    Facebook(socialType = SocialType.Facebook, url = "https://www.facebook.com/krailapp")
+    Facebook(socialType = SocialType.Facebook, url = "https://www.facebook.com/krailapp"),
 }

@@ -83,7 +83,7 @@ fun DateTimeSelectorScreen(
     // Selected Date
     var selectedDateStr: String by rememberSaveable(dateTimeSelection) {
         mutableStateOf(
-            dateTimeSelection?.date?.toString() ?: today.toString()
+            dateTimeSelection?.date?.toString() ?: today.toString(),
         )
     }
     val selectedDate = LocalDate.parse(selectedDateStr)
@@ -129,7 +129,7 @@ fun DateTimeSelectorScreen(
                 ) {
                     Text("Reset")
                 }
-            }
+            },
         )
 
         LazyColumn(
@@ -187,7 +187,7 @@ fun DateTimeSelectorScreen(
                                     minute = timePickerState.minute,
                                     date = selectedDate,
                                 )
-                            }
+                            },
                         )
                     },
                     dimensions = ButtonDefaults.largeButtonSize(),

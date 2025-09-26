@@ -26,14 +26,14 @@ fun Modifier.gradientBorder(
     val gradientBrush = Brush.linearGradient(
         colors = gradientColors,
         start = Offset(0f, 0f),
-        end = Offset(size.width, size.height)
+        end = Offset(size.width, size.height),
     )
     drawContent()
     drawRoundRect(
         brush = gradientBrush,
         size = size,
         cornerRadius = CornerRadius(cornerRadius.toPx(), cornerRadius.toPx()),
-        style = Stroke(width = borderThickness.toPx())
+        style = Stroke(width = borderThickness.toPx()),
     )
 }
 

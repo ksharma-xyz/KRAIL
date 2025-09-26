@@ -37,7 +37,7 @@ fun ParkRideLoadedContent(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             // Facility Name
             Text(
@@ -140,7 +140,7 @@ fun ParkRideLoadedContentPreview_Barbie() {
             parkRideFacilityDetail = parkRideFacilityDetailPreview.copy(
                 spotsAvailable = 130,
                 percentageFull = 10,
-                timeText = "Just now"
+                timeText = "Just now",
             ),
         )
     }

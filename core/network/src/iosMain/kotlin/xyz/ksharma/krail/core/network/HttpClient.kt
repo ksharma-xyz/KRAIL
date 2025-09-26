@@ -24,7 +24,7 @@ actual fun baseHttpClient(
                     ignoreUnknownKeys = true
                     isLenient = true
                     prettyPrint = true
-                }
+                },
             )
         }
         install(Logging) {

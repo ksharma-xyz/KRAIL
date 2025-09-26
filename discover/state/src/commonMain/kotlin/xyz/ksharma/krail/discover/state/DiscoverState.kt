@@ -45,7 +45,7 @@ enum class DiscoverCardType(val displayName: String, val sortOrder: Int) {
     Events("Events", 2), // concerts, festivals etc.
     Food("Food", 3), // restaurants, cafes etc.
     Sports("Sports", 4), // football, cricket etc.
-    Unknown("Unknown", 999); // fallback for unknown types - always last
+    Unknown("Unknown", 999), // fallback for unknown types - always last
 }
 
 sealed class Button {
@@ -62,7 +62,7 @@ sealed class Button {
 
         data class PartnerSocial(
             val socialPartnerName: String,
-            val links: List<PartnerSocialLink>
+            val links: List<PartnerSocialLink>,
         ) : Social() {
 
             init {
@@ -126,7 +126,7 @@ fun List<Button>.isValidButtonCombo(): Boolean {
 
     val leftTypes = listOf(
         Button.Cta::class,
-        Button.Social::class // PartnerSocial is a subclass of Button.Social
+        Button.Social::class, // PartnerSocial is a subclass of Button.Social
     )
 
     // Share button validation

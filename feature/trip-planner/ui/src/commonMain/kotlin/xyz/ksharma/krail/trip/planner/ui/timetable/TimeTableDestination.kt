@@ -59,8 +59,8 @@ internal fun NavGraphBuilder.timeTableDestination(navController: NavHostControll
             onBackClick = {
                 viewModel.onEvent(
                     TimeTableUiEvent.BackClick(
-                        isPreviousBackStackEntryNull = navController.previousBackStackEntry == null
-                    )
+                        isPreviousBackStackEntryNull = navController.previousBackStackEntry == null,
+                    ),
                 )
 
                 navController.navigateUp()
@@ -94,7 +94,7 @@ internal fun NavGraphBuilder.timeTableDestination(navController: NavHostControll
             },
             onModeClick = { displayModeSelectionRow ->
                 viewModel.onEvent(TimeTableUiEvent.ModeClicked(displayModeSelectionRow))
-            }
+            },
         )
     }
 }

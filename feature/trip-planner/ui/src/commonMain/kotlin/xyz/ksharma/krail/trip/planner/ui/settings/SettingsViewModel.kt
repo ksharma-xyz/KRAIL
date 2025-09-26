@@ -60,7 +60,7 @@ class SettingsViewModel(
         analytics.track(
             AnalyticsEvent.ReferFriend(
                 entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SETTINGS,
-            )
+            ),
         )
     }
 

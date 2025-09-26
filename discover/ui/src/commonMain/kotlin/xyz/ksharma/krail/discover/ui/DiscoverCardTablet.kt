@@ -84,10 +84,10 @@ fun DiscoverCardTablet(
                     colors = listOf(
                         KrailTheme.colors.surface,
                         blendedBackground.copy(alpha = 0.3f),
-                        blendedBackground.copy(alpha = 0.6f)
-                    )
+                        blendedBackground.copy(alpha = 0.6f),
+                    ),
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
             )
             .border(
                 width = 1.dp,
@@ -124,7 +124,7 @@ fun DiscoverCardTablet(
                         mod.wrapContentHeight()
                     }
                 }
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 12.dp),
         ) {
             Text(
                 text = discoverModel.title,
@@ -163,14 +163,14 @@ fun DiscoverCardTablet(
                         onPartnerSocialLinkClicked(
                             partnerSocialLink,
                             discoverModel.cardId,
-                            discoverModel.type
+                            discoverModel.type,
                         )
                     },
                     onCtaClicked = { url ->
                         onCtaClicked(url, discoverModel.cardId, discoverModel.type)
                     },
                     onShareClick = onShareClick,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    modifier = Modifier.padding(bottom = 12.dp),
                 )
             }
         }

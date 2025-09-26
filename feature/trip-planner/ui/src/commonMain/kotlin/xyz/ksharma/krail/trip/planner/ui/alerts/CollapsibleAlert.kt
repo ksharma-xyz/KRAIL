@@ -102,7 +102,7 @@ fun CollapsibleAlert(
                         onClick = onClick,
                         color = getForegroundColor(backgroundColor),
                         urlColor = getForegroundColor(backgroundColor),
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 } else {
                     Text(
@@ -129,8 +129,8 @@ fun CollapsibleAlert(
                     dimensions = ButtonDefaults.extraSmallButtonSize(),
                     modifier = Modifier.padding(
                         start = 12.dp + 24.dp.toAdaptiveSize(),
-                        bottom = 8.dp
-                    )
+                        bottom = 8.dp,
+                    ),
                 ) {
                     Text(text = "Read More")
                 }

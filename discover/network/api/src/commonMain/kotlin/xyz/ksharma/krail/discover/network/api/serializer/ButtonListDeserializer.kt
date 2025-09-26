@@ -51,7 +51,7 @@ object ButtonListSerializer : KSerializer<List<Button>> {
                 "partnersocial" -> {
                     val partnerName = buttonObj["socialPartnerName"]?.jsonPrimitive?.content
                     require(
-                        !partnerName.isNullOrBlank()
+                        !partnerName.isNullOrBlank(),
                     ) { "Button PartnerSocial socialPartnerName cannot be null or blank" }
                     val linksA = buttonObj["links"]?.jsonArray
                     require(!linksA.isNullOrEmpty()) { "Button PartnerSocial links cannot be null or empty" }
@@ -69,7 +69,7 @@ object ButtonListSerializer : KSerializer<List<Button>> {
                     }
                     Button.Social.PartnerSocial(
                         socialPartnerName = partnerName,
-                        links = links
+                        links = links,
                     )
                 }
 

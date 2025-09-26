@@ -24,24 +24,24 @@ fun AnimatedDots(modifier: Modifier = Modifier, color: Color = KrailTheme.colors
         targetValue = -30f,
         animationSpec = infiniteRepeatable(
             animation = tween(600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        )
+            repeatMode = RepeatMode.Reverse,
+        ),
     )
     val dot2Offset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = -30f,
         animationSpec = infiniteRepeatable(
             animation = tween(600, easing = LinearEasing, delayMillis = 200),
-            repeatMode = RepeatMode.Reverse
-        )
+            repeatMode = RepeatMode.Reverse,
+        ),
     )
     val dot3Offset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = -30f,
         animationSpec = infiniteRepeatable(
             animation = tween(600, easing = LinearEasing, delayMillis = 400),
-            repeatMode = RepeatMode.Reverse
-        )
+            repeatMode = RepeatMode.Reverse,
+        ),
     )
 
     Canvas(modifier = modifier) {
@@ -54,17 +54,17 @@ fun AnimatedDots(modifier: Modifier = Modifier, color: Color = KrailTheme.colors
         drawCircle(
             color = color,
             radius = dotRadius,
-            center = Offset(centerX - spacing, centerY + dot1Offset)
+            center = Offset(centerX - spacing, centerY + dot1Offset),
         )
         drawCircle(
             color = color,
             radius = dotRadius,
-            center = Offset(centerX, centerY + dot2Offset)
+            center = Offset(centerX, centerY + dot2Offset),
         )
         drawCircle(
             color = color,
             radius = dotRadius,
-            center = Offset(centerX + spacing, centerY + dot3Offset)
+            center = Offset(centerX + spacing, centerY + dot3Offset),
         )
     }
 }

@@ -32,7 +32,7 @@ class IosPlatformOps : PlatformOps {
                 options = mapOf<Any?, Any?>(),
                 completionHandler = { result: Boolean ->
                     log("Attempted to open URL: $url, result: $result")
-                }
+                },
             )
         }
     }

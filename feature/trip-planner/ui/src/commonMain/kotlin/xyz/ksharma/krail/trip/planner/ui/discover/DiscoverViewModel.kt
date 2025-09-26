@@ -49,7 +49,7 @@ class DiscoverViewModel(
     private val _selectedType = MutableStateFlow<DiscoverCardType?>(null)
     val uiState: StateFlow<DiscoverState> = combine(
         _allCards,
-        _selectedType
+        _selectedType,
     ) { allCards, selectedType ->
         val filteredCards = filterDiscoverCards(selectedType, allCards)
         DiscoverState(
@@ -88,7 +88,7 @@ class DiscoverViewModel(
                         partnerSocialLink = PartnerSocialLink(
                             type = event.partnerSocialLink.type.toAnalyticsSocialType(),
                             url = event.partnerSocialLink.url,
-                        )
+                        ),
                     ),
                 )
             }
@@ -190,7 +190,7 @@ class DiscoverViewModel(
 
     private fun filterDiscoverCards(
         selectedType: DiscoverCardType?,
-        allCards: List<DiscoverUiModel>
+        allCards: List<DiscoverUiModel>,
     ): List<DiscoverUiModel> = if (selectedType != null) {
         allCards.filter { it.type == selectedType }
     } else {
@@ -207,7 +207,7 @@ class DiscoverViewModel(
             analytics.track(
                 event = AnalyticsEvent.DiscoverCardSessionComplete(
                     cardSeenCount = analyticsSessionSeenCardIds.size,
-                )
+                ),
             )
         }
     }
@@ -237,7 +237,7 @@ private fun createShareText(
     cardTitle: String?,
     cardDescription: String?,
     cardType: DiscoverCardType,
-    ctaLink: String? = null
+    ctaLink: String? = null,
 ): String {
     log("ctaLink: $ctaLink")
     val letsKrailText = "\n#LetsKRAIL https://krail.app"

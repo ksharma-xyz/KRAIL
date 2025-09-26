@@ -21,7 +21,7 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
             },
             onAppSocialLinkClicked = { krailSocialType ->
                 viewModel.onEvent(
-                    event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType)
+                    event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType),
                 )
             },
             onPartnerSocialLinkClicked = { partnerSocialLink, cardId, cardType ->
@@ -30,7 +30,7 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                         partnerSocialLink = partnerSocialLink,
                         cardId = cardId,
                         cardType = cardType,
-                    )
+                    ),
                 )
             },
             onCtaClicked = { url, cardId, cardType ->
@@ -39,7 +39,7 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                         url = url,
                         cardId = cardId,
                         cardType = cardType,
-                    )
+                    ),
                 )
             },
             onShareClick = { cardId, cardType ->
@@ -47,12 +47,12 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
                     event = DiscoverEvent.ShareButtonClicked(
                         cardId = cardId,
                         cardType = cardType,
-                    )
+                    ),
                 )
             },
             onCardSeen = { cardId ->
                 viewModel.onEvent(
-                    event = DiscoverEvent.CardSeen(cardId = cardId)
+                    event = DiscoverEvent.CardSeen(cardId = cardId),
                 )
             },
             resetAllSeenCards = {
@@ -60,9 +60,9 @@ internal fun NavGraphBuilder.discoverDestination(navController: NavHostControlle
             },
             onChipSelected = { cardType ->
                 viewModel.onEvent(
-                    event = DiscoverEvent.FilterChipClicked(cardType = cardType)
+                    event = DiscoverEvent.FilterChipClicked(cardType = cardType),
                 )
-            }
+            },
         )
     }
 }

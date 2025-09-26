@@ -61,7 +61,7 @@ class RealDiscoverCardOrderingEngine(
     private fun sortCardsByPriority(
         cards: List<DiscoverModel>,
         seenCardIds: Set<String>,
-        today: LocalDate
+        today: LocalDate,
     ): List<DiscoverModel> {
         val (todayEvents, otherCards) = cards.partition { it.isTodayEvent(today) }
 
@@ -75,7 +75,7 @@ class RealDiscoverCardOrderingEngine(
         originalSize: Int,
         activeSize: Int,
         sortedCards: List<DiscoverModel>,
-        seenCardIds: Set<String>
+        seenCardIds: Set<String>,
     ) {
         log("Filtered out ${originalSize - activeSize} past events")
 

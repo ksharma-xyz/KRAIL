@@ -72,7 +72,7 @@ fun IntroContentAlerts(
 @Composable
 fun AnimatedAlertsOneByOne(
     displayAlert: Boolean,
-    delayMillis: Long = 300L // delay before starting second animation
+    delayMillis: Long = 300L, // delay before starting second animation
 ) {
     var showFirst by rememberSaveable { mutableStateOf(false) }
     var showSecond by rememberSaveable { mutableStateOf(false) }
@@ -95,42 +95,42 @@ fun AnimatedAlertsOneByOne(
             visible = showFirst,
             enter = scaleIn(
                 initialScale = 0f,
-                animationSpec = tween(durationMillis = 300)
+                animationSpec = tween(durationMillis = 300),
             ) + fadeIn(animationSpec = tween(durationMillis = 300)),
             exit = scaleOut(
                 targetScale = 0f,
-                animationSpec = tween(durationMillis = 300)
-            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+                animationSpec = tween(durationMillis = 300),
+            ) + fadeOut(animationSpec = tween(durationMillis = 300)),
         ) {
             CollapsibleAlert(
                 serviceAlert = ServiceAlert(
                     heading = "Running late. Please allow extra travel time.",
-                    message = ""
+                    message = "",
                 ),
                 index = 1,
                 collapsed = false,
-                onClick = {}
+                onClick = {},
             )
         }
         AnimatedVisibility(
             visible = showSecond,
             enter = scaleIn(
                 initialScale = 0f,
-                animationSpec = tween(durationMillis = 300)
+                animationSpec = tween(durationMillis = 300),
             ) + fadeIn(animationSpec = tween(durationMillis = 300)),
             exit = scaleOut(
                 targetScale = 0f,
-                animationSpec = tween(durationMillis = 300)
-            ) + fadeOut(animationSpec = tween(durationMillis = 300))
+                animationSpec = tween(durationMillis = 300),
+            ) + fadeOut(animationSpec = tween(durationMillis = 300)),
         ) {
             CollapsibleAlert(
                 serviceAlert = ServiceAlert(
                     heading = "Platforms may change, listen for announcements.",
-                    message = ""
+                    message = "",
                 ),
                 index = 2,
                 collapsed = false,
-                onClick = {}
+                onClick = {},
             )
         }
     }

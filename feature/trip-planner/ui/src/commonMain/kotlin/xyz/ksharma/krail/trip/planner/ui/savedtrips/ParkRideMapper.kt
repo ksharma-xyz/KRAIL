@@ -32,7 +32,7 @@ import kotlin.time.ExperimentalTime
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
 fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(
     stopName: String,
-    stopId: String
+    stopId: String,
 ): NSWParkRideFacilityDetail {
     val totalSpots = spots.toIntOrNull() ?: 0
     val occupiedSpots = zones.sumOf {
@@ -45,7 +45,7 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(
     log(
         "[$facilityName - $facilityId - $tsn] " +
             "Total spots: $totalSpots, Occupied spots: $occupiedSpots, " +
-            "Spots available: $spotsAvailable, Percentage full: $percentageFull%, time: $timeText"
+            "Spots available: $spotsAvailable, Percentage full: $percentageFull%, time: $timeText",
     )
 
     return NSWParkRideFacilityDetail(

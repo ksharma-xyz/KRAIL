@@ -80,7 +80,7 @@ fun IntroContentSaveTrips(
                     while (isActive) {
                         rotation.animateTo(
                             targetValue = rotation.value + 360f * autoRotationDir,
-                            animationSpec = tween(durationMillis = 2000)
+                            animationSpec = tween(durationMillis = 2000),
                         )
                         autoRotationDir *= -1f
                         delay(200) // Small pause between rotations
@@ -106,12 +106,12 @@ fun IntroContentSaveTrips(
                             coroutineScope.launch {
                                 rotation.animateTo(
                                     targetValue = rotation.value + 360f,
-                                    animationSpec = tween(durationMillis = 500)
+                                    animationSpec = tween(durationMillis = 500),
                                 )
                                 startAutoRotation()
                             }
                             isTripSaved = !isTripSaved
-                        }
+                        },
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -136,7 +136,7 @@ fun IntroContentSaveTrips(
         TagLineWithEmoji(
             tagline = tagline,
             emoji = "\uD83C\uDF1F",
-            tagColor = style.hexToComposeColor()
+            tagColor = style.hexToComposeColor(),
         )
     }
 }
@@ -145,5 +145,5 @@ private val trip = Trip(
     fromStopName = "Wynyard Station",
     toStopName = "Central Station",
     fromStopId = "1",
-    toStopId = "2"
+    toStopId = "2",
 )

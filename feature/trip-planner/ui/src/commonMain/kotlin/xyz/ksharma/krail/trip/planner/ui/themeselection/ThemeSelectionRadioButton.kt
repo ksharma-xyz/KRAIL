@@ -75,7 +75,7 @@ fun ThemeSelectionRadioButton(
             animate(
                 initialValue = 0f,
                 targetValue = totalPathLength,
-                animationSpec = tween(durationMillis = duration)
+                animationSpec = tween(durationMillis = duration),
             ) { value, _ ->
                 currentPathLength = value
             }
@@ -91,18 +91,18 @@ fun ThemeSelectionRadioButton(
         targetValue = 1.6f,
         animationSpec = infiniteRepeatable(
             animation = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "pulseScale"
+        label = "pulseScale",
     )
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.35f,
         targetValue = 0.10f,
         animationSpec = infiniteRepeatable(
             animation = tween(900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "pulseAlpha"
+        label = "pulseAlpha",
     )
 
     Row(
@@ -124,34 +124,34 @@ fun ThemeSelectionRadioButton(
                             }) {
                                 drawCircle(
                                     color = color.copy(alpha = pulseAlpha),
-                                    radius = size.minDimension / 2
+                                    radius = size.minDimension / 2,
                                 )
                             }
                         }
                     } else {
                         Modifier
-                    }
+                    },
                 ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Box(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(color = themeStyle.hexColorCode.hexToComposeColor())
+                    .background(color = themeStyle.hexColorCode.hexToComposeColor()),
             )
         }
 
         Box(
             modifier = Modifier
-                .padding(start = 16.dp)
+                .padding(start = 16.dp),
         ) {
             if (selected && textLayoutResult != null) {
                 val textWidth = with(density) { textLayoutResult!!.size.width.toDp() }
                 Canvas(
                     modifier = Modifier
                         .width(textWidth)
-                        .padding(horizontal = 12.dp)
+                        .padding(horizontal = 12.dp),
                 ) {
                     val layout = textLayoutResult!!
                     val lineCount = layout.lineCount
@@ -185,7 +185,7 @@ fun ThemeSelectionRadioButton(
                                 controlX2,
                                 endY,
                                 nextX,
-                                endY
+                                endY,
                             )
                             x = nextX
                             up = !up
@@ -197,7 +197,7 @@ fun ThemeSelectionRadioButton(
                                 width = strokeWidth,
                                 cap = StrokeCap.Round,
                                 join = StrokeJoin.Round,
-                            )
+                            ),
                         )
                         remaining -= lineWidth
                     }

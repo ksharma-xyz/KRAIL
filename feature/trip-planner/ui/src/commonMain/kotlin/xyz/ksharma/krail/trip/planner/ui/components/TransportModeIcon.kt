@@ -71,7 +71,7 @@ private fun Modifier.borderIfEnabled(enabled: Boolean, color: Color): Modifier =
                 width = 3.dp,
                 color = color,
                 shape = CircleShape,
-            )
+            ),
         )
     } else {
         this
@@ -92,7 +92,7 @@ private fun TrainPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Train(),
-            displayBorder = false
+            displayBorder = false,
         )
     }
 }
@@ -117,7 +117,7 @@ private fun BusPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Bus(),
-            displayBorder = false
+            displayBorder = false,
         )
     }
 }
@@ -128,7 +128,7 @@ private fun MetroPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Metro(),
-            displayBorder = false
+            displayBorder = false,
         )
     }
 }
@@ -139,7 +139,7 @@ private fun LightRailPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.LightRail(),
-            displayBorder = false
+            displayBorder = false,
         )
     }
 }
@@ -150,7 +150,7 @@ private fun FerryPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Ferry(),
-            displayBorder = false
+            displayBorder = false,
         )
     }
 }
@@ -161,7 +161,7 @@ private fun TrainWithBackgroundPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Train(),
-            displayBorder = true
+            displayBorder = true,
         )
     }
 }
@@ -172,7 +172,7 @@ private fun BusWithBackgroundPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Bus(),
-            displayBorder = true
+            displayBorder = true,
         )
     }
 }
@@ -183,7 +183,7 @@ private fun MetroWithBackgroundPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.Metro(),
-            displayBorder = true
+            displayBorder = true,
         )
     }
 }
@@ -194,7 +194,7 @@ private fun LightRailWithBackgroundPreview() {
     KrailTheme {
         TransportModeIcon(
             transportMode = TransportMode.LightRail(),
-            displayBorder = true
+            displayBorder = true,
         )
     }
 }

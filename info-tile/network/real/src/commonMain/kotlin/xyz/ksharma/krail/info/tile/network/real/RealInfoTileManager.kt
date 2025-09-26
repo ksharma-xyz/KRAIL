@@ -74,7 +74,7 @@ class RealInfoTileManager(
             primaryCta = InfoTileCta(
                 text = appUpdateCopy.ctaText,
                 url = appInfoProvider.getAppInfo().appStoreUrl,
-            )
+            ),
         )
     }
 
@@ -88,9 +88,9 @@ class RealInfoTileManager(
         log(
             "Checking if info tile key '$key' is not in dismissed tiles. : ${
                 preferences.isInfoTileDismissed(
-                    key
+                    key,
                 )
-            }"
+            }",
         )
         return !preferences.isInfoTileDismissed(key)
     }

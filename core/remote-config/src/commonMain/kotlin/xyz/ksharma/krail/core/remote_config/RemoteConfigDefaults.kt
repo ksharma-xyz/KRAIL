@@ -17,7 +17,7 @@ object RemoteConfigDefaults {
         return arrayOf(
             Pair(
                 FlagKeys.HIGH_PRIORITY_STOP_IDS.key,
-                """["200060", "200070", "200080", "206010", "2150106", "200017", "200039", "201016", "201039", "201080", "200066", "200030", "200046", "200050", "2155384"]""".trimMargin()
+                """["200060", "200070", "200080", "206010", "2150106", "200017", "200039", "201016", "201039", "201080", "200066", "200030", "200046", "200050", "2155384"]""".trimMargin(),
             ),
             Pair(
                 FlagKeys.OUR_STORY_TEXT.key,
@@ -89,7 +89,7 @@ object RemoteConfigDefaults {
                     |{"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Manly Vale"},
                     |{"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Manly Vale"},
                     |{"stopId":"210017","parkRideFacilityId":"490","parkRideName":"Brookvale"}]"""
-                    .trimMargin()
+                    .trimMargin(),
             ),
             Pair(FlagKeys.NSW_PARK_RIDE_PEAK_TIME_COOLDOWN.key, 120),
             Pair(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key, 600),
@@ -128,7 +128,7 @@ object RemoteConfigDefaults {
             Pair(
                 first = FlagKeys.INFO_TILES.key,
                 second = "[]",
-            )
+            ),
         )
     }
 }

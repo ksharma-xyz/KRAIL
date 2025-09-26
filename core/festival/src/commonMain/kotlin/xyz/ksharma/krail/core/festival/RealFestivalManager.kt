@@ -56,14 +56,14 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
             when {
                 startDate == null || endDate == null -> {
                     log(
-                        "Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate"
+                        "Skipping festival '${festival.greeting}' due to invalid date(s): startDate=$startDate, endDate=$endDate",
                     )
                     false
                 }
 
                 startDate > endDate -> {
                     logError(
-                        "Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate"
+                        "Invalid date range for festival '${festival.greeting}': startDate=$startDate is after endDate=$endDate",
                     )
                     false
                 }
@@ -71,7 +71,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
                 else -> {
                     val inRange = date >= startDate && date <= endDate
                     log(
-                        "Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange"
+                        "Checking festival '${festival.greeting}': date=$date, startDate=$startDate, endDate=$endDate, inRange=$inRange",
                     )
                     inRange
                 }
@@ -94,7 +94,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
                 log("No festivals found or error decoding festivals.")
             } else {
                 log(
-                    "Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates."
+                    "Festivals fetched successfully. : ${it.confirmedDates.size} fixed and ${it.variableDates.size} variable dates.",
                 )
             }
         }

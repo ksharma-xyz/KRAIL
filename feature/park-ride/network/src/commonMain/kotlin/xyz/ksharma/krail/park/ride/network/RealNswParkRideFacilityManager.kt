@@ -24,7 +24,7 @@ class RealNswParkRideFacilityManager(
                     NswParkRideFacility(
                         stopId = obj["stopId"]?.jsonPrimitive?.content ?: "",
                         parkRideFacilityId = obj["parkRideFacilityId"]?.jsonPrimitive?.content ?: "",
-                        parkRideName = obj["parkRideName"]?.jsonPrimitive?.content ?: ""
+                        parkRideName = obj["parkRideName"]?.jsonPrimitive?.content ?: "",
                     )
                 }
             }

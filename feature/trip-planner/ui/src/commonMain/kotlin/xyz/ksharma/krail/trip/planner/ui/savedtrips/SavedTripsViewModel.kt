@@ -170,7 +170,7 @@ class SavedTripsViewModel(
 
             is SavedTripUiEvent.ParkRideCardClick -> onParkRideCardClick(
                 parkRideState = event.parkRideState,
-                isExpanded = event.isExpanded
+                isExpanded = event.isExpanded,
             )
 
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
@@ -220,12 +220,12 @@ class SavedTripsViewModel(
                 stopId = parkRideState.stopId,
                 expand = isExpanded,
                 facilityId = parkRideState.facilities.joinToString(),
-            )
+            ),
         )
 
         if (isExpanded) {
             log(
-                "Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}"
+                "Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}",
             )
             updateUiState {
                 copy(
@@ -235,14 +235,15 @@ class SavedTripsViewModel(
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
                                 it.totalSpots == -1 || it.spotsAvailable == -1
-                            }) {
+                            }
+                        ) {
                             uiState.copy(isLoading = true)
                         } else if (parkRideState.facilities.any { it.totalSpots >= 0 }) {
                             uiState.copy(isLoading = false)
                         } else {
                             uiState
                         }
-                    }.toImmutableList()
+                    }.toImmutableList(),
                 )
             }
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
@@ -252,7 +253,7 @@ class SavedTripsViewModel(
             log("Park Ride card expanded done")
         } else {
             log(
-                "Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}"
+                "Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}",
             )
             updateUiState {
                 copy(
@@ -262,12 +263,13 @@ class SavedTripsViewModel(
                         // any facility detail data for first time, we set totalSpots to -1.
                         if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
                                 it.totalSpots == -1 || it.spotsAvailable == -1
-                            }) {
+                            }
+                        ) {
                             uiState.copy(isLoading = true)
                         } else {
                             uiState
                         }
-                    }.toImmutableList()
+                    }.toImmutableList(),
                 )
             }
         }
@@ -359,7 +361,7 @@ class SavedTripsViewModel(
         if (savedParkRideList.isNotEmpty()) {
             parkRideSandook.insertOrReplaceSavedParkRides(
                 parkRideInfoList = savedParkRideList,
-                source = SavedTrips
+                source = SavedTrips,
             )
         }
     }
@@ -415,7 +417,7 @@ class SavedTripsViewModel(
                     log(
                         " - Facility Detail Table: ${
                             facilityDetails.map { it.facilityName }.toSet()
-                        }"
+                        }",
                     )
 
                     // Map details by facilityId for quick lookup
@@ -428,7 +430,7 @@ class SavedTripsViewModel(
                         detail ?: NSWParkRideFacilityDetail(
                             facilityId = mapping.facilityId,
                             facilityName = nswParkRideFacilityManager.getParkRideFacilityById(
-                                facilityId = mapping.facilityId
+                                facilityId = mapping.facilityId,
                             )?.parkRideName.orEmpty(),
                             stopId = mapping.stopId,
                             spotsAvailable = -1,
@@ -454,7 +456,7 @@ class SavedTripsViewModel(
                             copy(
                                 parkRideUiState = mergedList
                                     .toParkRideUiState()
-                                    .toImmutableList()
+                                    .toImmutableList(),
                             )
                         }
                     }
@@ -647,7 +649,7 @@ class SavedTripsViewModel(
                     ctaUrl = url,
                     dismiss = dismiss,
                     expand = expand,
-                )
+                ),
             )
         }
     }

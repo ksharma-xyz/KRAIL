@@ -59,7 +59,7 @@ data class CarParkFacilityDetailResponse(
      * "tfnsw_facility_id": "214710TPR001"
      */
     @SerialName("tfnsw_facility_id")
-    val tfnswFacilityId: String
+    val tfnswFacilityId: String,
 )
 
 @Serializable
@@ -78,7 +78,7 @@ data class Zone(
     val zoneName: String,
 
     @SerialName("parent_zone_id")
-    val parentZoneId: String
+    val parentZoneId: String,
 )
 
 /**
@@ -105,7 +105,7 @@ data class Occupancy(
 
     /** Number of spots available for short-term or transient parkers. */
     @SerialName("transients")
-    val transients: String?
+    val transients: String?,
 )
 
 @Serializable

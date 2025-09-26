@@ -55,7 +55,7 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
             },
             onSocialLinkClick = { socialType ->
                 viewModel.onEvent(SettingsEvent.SocialLinkClick(socialType))
-            }
+            },
         )
     }
 }

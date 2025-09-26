@@ -19,7 +19,7 @@ fun JourneyTimeOptionsGroup(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         JourneyTimeOptions.entries.forEach { option ->
             OutlineRadioButton(

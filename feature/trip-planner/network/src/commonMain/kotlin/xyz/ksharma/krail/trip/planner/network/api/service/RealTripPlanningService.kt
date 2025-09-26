@@ -104,5 +104,5 @@ internal class RealTripPlanningService(
 
 enum class DepArr(val macro: String) {
     DEP("dep"),
-    ARR("arr")
+    ARR("arr"),
 }

@@ -86,7 +86,7 @@ val viewModelsModule = module {
             analytics = get(),
             platformOps = get(),
             appInfoProvider = get(),
-            appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
         )
     }
 

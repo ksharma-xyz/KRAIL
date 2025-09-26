@@ -81,7 +81,7 @@ fun SettingsScreen(
                         text = "Change Theme",
                         onClick = {
                             onChangeThemeClick()
-                        }
+                        },
                     )
                 }
 
@@ -91,7 +91,7 @@ fun SettingsScreen(
                         text = "Invite your friends \uD83D\uDC95",
                         onClick = {
                             onReferFriendClick()
-                        }
+                        },
                     )
                 }
 
@@ -117,7 +117,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = painterResource(Res.drawable.ic_pen),
                         text = "Our story",
-                        onClick = { onAboutUsClick() }
+                        onClick = { onAboutUsClick() },
                     )
                 }
 
@@ -130,7 +130,7 @@ fun SettingsScreen(
                                 socialLinks = KrailSocialType.entries,
                                 modifier = Modifier
                                     .padding(start = (24 + 16 + 6).dp, end = 16.dp),
-                                onClick = { onSocialLinkClick(it) }
+                                onClick = { onSocialLinkClick(it) },
                             )
                         },
                     )

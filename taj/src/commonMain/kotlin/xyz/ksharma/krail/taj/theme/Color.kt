@@ -53,6 +53,17 @@ val md_theme_dark_late = Color(0xFFFF2B2B)
 val md_theme_dark_future_journey = Color(0xFFEEEEEE)
 val md_theme_dark_past_journey = Color(0xFF8F8F8F)
 
+/**
+ * Intermediate colors for smooth theme transitions
+ */
+// Intermediate colors when transitioning TO dark mode
+val md_theme_intermediate_to_dark_surface = Color(0xFF3A3540) // Warm dark purple-gray
+val md_theme_intermediate_to_dark_glow = Color(0xFF4A4550) // Lighter glow variant
+
+// Intermediate colors when transitioning TO light mode
+val md_theme_intermediate_to_light_surface = Color(0xFFF2F4F8) // Cool light blue-gray
+val md_theme_intermediate_to_light_glow = Color(0xFFE8ECF0) // Darker glow variant
+
 // Transport mode theme colors
 val bus_theme = Color(0xFF00B5EF)
 val train_theme = Color(0xFFF6891F)

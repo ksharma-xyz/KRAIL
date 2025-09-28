@@ -19,7 +19,7 @@ fun KrailTheme(
     val themeController = remember(currentThemeMode) {
         ThemeController(
             currentMode = currentThemeMode,
-            setThemeMode = { newMode -> currentThemeMode = newMode }
+            setThemeMode = { newMode -> currentThemeMode = newMode },
         )
     }
 

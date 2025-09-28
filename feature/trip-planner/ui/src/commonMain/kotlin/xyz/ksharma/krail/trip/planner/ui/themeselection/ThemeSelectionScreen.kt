@@ -88,8 +88,11 @@ fun ThemeSelectionScreen(
                     ) {
                         Image(
                             painter = painterResource(
-                                resource = if ((themeController.isAppDarkMode())) TajRes.drawable.ic_light
-                                else TajRes.drawable.ic_dark_mode,
+                                resource = if ((themeController.isAppDarkMode())) {
+                                    TajRes.drawable.ic_light
+                                } else {
+                                    TajRes.drawable.ic_dark_mode
+                                },
                             ),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),

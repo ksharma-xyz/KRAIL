@@ -10,11 +10,11 @@ import androidx.compose.runtime.setValue
 
 @Composable
 fun KrailTheme(
-    initialThemeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {
     val systemInDarkTheme = isSystemInDarkTheme()
-    var currentThemeMode by remember { mutableStateOf(initialThemeMode) }
+    var currentThemeMode by remember { mutableStateOf(themeMode) }
 
     val themeController = remember(currentThemeMode) {
         ThemeController(

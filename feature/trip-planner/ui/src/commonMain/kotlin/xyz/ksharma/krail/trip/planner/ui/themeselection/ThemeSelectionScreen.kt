@@ -35,7 +35,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_dark_mode
-import app.krail.taj.resources.ic_light
+import app.krail.taj.resources.ic_light_mode
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Button
@@ -89,7 +89,7 @@ fun ThemeSelectionScreen(
                         Image(
                             painter = painterResource(
                                 resource = if ((themeController.isAppDarkMode())) {
-                                    TajRes.drawable.ic_light
+                                    TajRes.drawable.ic_light_mode
                                 } else {
                                     TajRes.drawable.ic_dark_mode
                                 },

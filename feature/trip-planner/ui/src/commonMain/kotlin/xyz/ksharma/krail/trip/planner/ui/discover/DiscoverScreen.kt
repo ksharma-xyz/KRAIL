@@ -378,7 +378,7 @@ private fun BoxScope.DiscoverTitleBar(
 )
 @Composable
 private fun DiscoverScreenTabletLightPreview() {
-    KrailTheme(initialThemeMode = ThemeMode.DARK) {
+    KrailTheme(themeMode = ThemeMode.DARK) {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
@@ -410,7 +410,7 @@ private fun DiscoverScreenTabletLightPreview() {
 )
 @Composable
 private fun DiscoverScreenTabletDarkPreview() {
-    KrailTheme(initialThemeMode = ThemeMode.DARK) {
+    KrailTheme(themeMode = ThemeMode.DARK) {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
@@ -442,7 +442,7 @@ private fun DiscoverScreenTabletDarkPreview() {
 )
 @Composable
 private fun DiscoverScreenCompactLightPreview() {
-    KrailTheme(initialThemeMode = ThemeMode.LIGHT) {
+    KrailTheme(themeMode = ThemeMode.LIGHT) {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),
@@ -473,7 +473,7 @@ private fun DiscoverScreenCompactLightPreview() {
 )
 @Composable
 private fun DiscoverScreenCompactDarkPreview() {
-    KrailTheme(initialThemeMode = ThemeMode.DARK) {
+    KrailTheme(themeMode = ThemeMode.DARK) {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),

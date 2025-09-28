@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.taj.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -13,9 +12,7 @@ fun KrailTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {
-    val systemInDarkTheme = isSystemInDarkTheme()
     var currentThemeMode by remember { mutableStateOf(themeMode) }
-
     val themeController = remember(currentThemeMode) {
         ThemeController(
             currentMode = currentThemeMode,
@@ -23,16 +20,7 @@ fun KrailTheme(
         )
     }
 
-    val darkTheme = when (currentThemeMode) {
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-        ThemeMode.SYSTEM -> systemInDarkTheme
-    }
-
-    val krailColors = when {
-        darkTheme -> KrailDarkColors
-        else -> KrailLightColors
-    }
+    val krailColors = if (themeController.isAppDarkMode()) KrailDarkColors else KrailLightColors
 
     CompositionLocalProvider(
         LocalKrailColors provides krailColors,

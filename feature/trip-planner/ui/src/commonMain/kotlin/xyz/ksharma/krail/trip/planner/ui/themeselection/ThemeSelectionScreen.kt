@@ -5,7 +5,9 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -28,17 +31,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.krail.taj.resources.ic_dark_mode
+import app.krail.taj.resources.ic_light_mode
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
+import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun ThemeSelectionScreen(
@@ -63,11 +73,33 @@ fun ThemeSelectionScreen(
             label = "buttonBackgroundColor",
             animationSpec = tween(durationMillis = 300, easing = LinearEasing),
         )
+        val themeController = LocalThemeController.current
+        val systemInDarkTheme = isSystemInDarkTheme()
 
         Column {
             TitleBar(
                 onNavActionClick = onBackClick,
                 title = {},
+                actions = {
+                    RoundIconButton(
+                        onClick = {
+                            themeController.toggleDarkMode(systemInDarkTheme)
+                        },
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                resource = if ((themeController.isAppDarkMode())) {
+                                    TajRes.drawable.ic_light_mode
+                                } else {
+                                    TajRes.drawable.ic_dark_mode
+                                },
+                            ),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -140,42 +172,3 @@ fun ThemeSelectionScreen(
         }
     }
 }
-
-/*
-@Composable
-private fun ThemeSelectionRadioButton(
-    themeStyle: KrailThemeStyle,
-    onClick: (KrailThemeStyle) -> Unit,
-    modifier: Modifier = Modifier,
-    selected: Boolean = false,
-) {
-    val backgroundColor by animateColorAsState(
-        targetValue = if (selected) themeBackgroundColor(themeStyle) else Color.Transparent,
-        label = "backgroundColor",
-        animationSpec = tween(durationMillis = 300, easing = LinearEasing),
-    )
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .scalingKlickable { onClick(themeStyle) }
-            .background(color = backgroundColor, shape = RoundedCornerShape(12.dp))
-            .padding(vertical = 24.dp, horizontal = 24.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(color = themeStyle.hexColorCode.hexToComposeColor()),
-        )
-
-        Text(
-            text = themeStyle.tagLine,
-            style = KrailTheme.typography.title.copy(fontWeight = FontWeight.Normal),
-            modifier = Modifier.padding(start = 16.dp),
-        )
-    }
-}
-*/

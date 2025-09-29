@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,6 +10,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.delay
+
+// Animation stage enum for exhaustive checking
+private enum class AnimationStage {
+    INITIAL,
+    GLOW,
+    INTERMEDIATE,
+    FINAL
+}
+
+// Animation timing constants
+private object AnimationTiming {
+    const val GLOW_DELAY_MS = 80L
+    const val INTERMEDIATE_DELAY_MS = 100L
+    const val SURFACE_DURATION_MS = 1500
+    const val TEXT_DURATION_MS = 350
+    const val ON_SURFACE_DELAY_MS = 100
+    const val LABEL_DELAY_MS = 100
+    const val SOFT_LABEL_DELAY_MS = 150
+    const val SECONDARY_LABEL_DELAY_MS = 200
+}
 
 /**
  * Handles smooth theme color transitions with intermediate color stages
@@ -33,25 +55,25 @@ internal fun createAnimatedColors(
         // Animated text colors
         onSurface = animateColorAsState(
             targetValue = targetColors.onSurface,
-            animationSpec = createTextAnimationSpec(delayMillis = 100),
+            animationSpec = createTextAnimationSpec(delayMillis = AnimationTiming.ON_SURFACE_DELAY_MS),
             label = "onSurface",
         ).value,
 
         label = animateColorAsState(
             targetValue = targetColors.label,
-            animationSpec = createTextAnimationSpec(delayMillis = 100),
+            animationSpec = createTextAnimationSpec(delayMillis = AnimationTiming.LABEL_DELAY_MS),
             label = "label",
         ).value,
 
         softLabel = animateColorAsState(
             targetValue = targetColors.softLabel,
-            animationSpec = createTextAnimationSpec(delayMillis = 150),
+            animationSpec = createTextAnimationSpec(delayMillis = AnimationTiming.SOFT_LABEL_DELAY_MS),
             label = "softLabel",
         ).value,
 
         secondaryLabel = animateColorAsState(
             targetValue = targetColors.secondaryLabel,
-            animationSpec = createTextAnimationSpec(delayMillis = 200),
+            animationSpec = createTextAnimationSpec(delayMillis = AnimationTiming.SECONDARY_LABEL_DELAY_MS),
             label = "secondaryLabel",
         ).value,
 
@@ -107,26 +129,26 @@ private fun createSurfaceTransition(
     targetSurface: Color,
     intermediateColors: IntermediateColors,
 ): Color {
-    var animationStage by remember { mutableStateOf(0) }
+    var animationStage by remember { mutableStateOf(AnimationStage.INITIAL) }
 
     LaunchedEffect(targetSurface) {
         // Stage 1: Brief glow effect using glow design token
-        animationStage = 1
-        kotlinx.coroutines.delay(80) // Quick glow
+        animationStage = AnimationStage.GLOW
+        delay(AnimationTiming.GLOW_DELAY_MS)
 
         // Stage 2: Main intermediate color using surface design token
-        animationStage = 2
-        kotlinx.coroutines.delay(100) // Pause at intermediate
+        animationStage = AnimationStage.INTERMEDIATE
+        delay(AnimationTiming.INTERMEDIATE_DELAY_MS)
 
         // Stage 3: Final target color
-        animationStage = 3
+        animationStage = AnimationStage.FINAL
     }
 
     return when (animationStage) {
-        1 -> intermediateColors.glowVariant // Brief glow using design token
-        2 -> intermediateColors.surface // Intermediate using design token
-        3 -> targetSurface // Final target
-        else -> targetSurface
+        AnimationStage.INITIAL -> targetSurface // Default state
+        AnimationStage.GLOW -> intermediateColors.glowVariant // Brief glow using design token
+        AnimationStage.INTERMEDIATE -> intermediateColors.surface // Intermediate using design token
+        AnimationStage.FINAL -> targetSurface // Final target
     }
 }
 
@@ -134,12 +156,12 @@ private fun createSurfaceTransition(
  * Animation specs for different color types
  */
 private fun createSurfaceAnimationSpec() = tween<Color>(
-    durationMillis = 1500,
-    easing = androidx.compose.animation.core.FastOutSlowInEasing,
+    durationMillis = AnimationTiming.SURFACE_DURATION_MS,
+    easing = FastOutSlowInEasing,
 )
 
 private fun createTextAnimationSpec(delayMillis: Int) = tween<Color>(
-    durationMillis = 350,
+    durationMillis = AnimationTiming.TEXT_DURATION_MS,
     delayMillis = delayMillis,
-    easing = androidx.compose.animation.core.FastOutSlowInEasing,
+    easing = FastOutSlowInEasing,
 )

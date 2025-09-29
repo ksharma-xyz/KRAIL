@@ -29,7 +29,7 @@ private enum class ThemeTransitionStage {
     INITIAL,
     GLOW,
     INTERMEDIATE,
-    FINAL
+    FINAL,
 }
 
 /**
@@ -149,6 +149,11 @@ internal fun createLightDarkModeAnimatedColors(
 
 /**
  * Gets intermediate colors for smooth light/dark mode transitions.
+ * These colors are design tokens that provide a visually appealing bridge
+ * between light and dark themes.
+ *
+ * @param isDarkMode Whether transitioning to dark mode (true) or light mode (false)
+ * @return ThemeTransitionColors containing intermediate surface and glow colors
  */
 private fun getLightDarkModeIntermediateColors(isDarkMode: Boolean): ThemeTransitionColors {
     return if (isDarkMode) {
@@ -168,6 +173,13 @@ private fun getLightDarkModeIntermediateColors(isDarkMode: Boolean): ThemeTransi
 
 /**
  * Creates multi-stage surface transition for light/dark mode switching.
+ * This involves a brief glow effect followed by an intermediate color before settling on the
+ * final surface color to ensure a smooth and visually appealing transition.
+ *
+ * @param targetSurface The final target surface color after the transition
+ * @param intermediateColors The intermediate colors used during the transition stages
+ *
+ * @return The current surface color based on the transition stage
  */
 @Composable
 private fun createLightDarkModeSurfaceTransition(

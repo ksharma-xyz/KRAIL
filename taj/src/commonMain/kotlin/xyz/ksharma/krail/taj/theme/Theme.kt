@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import xyz.ksharma.krail.taj.animations.createLightDarkModeAnimatedColors
 
 @Composable
 fun KrailTheme(
@@ -20,10 +21,14 @@ fun KrailTheme(
         )
     }
 
-    val krailColors = if (themeController.isAppDarkMode()) KrailDarkColors else KrailLightColors
+    val targetColors = if (themeController.isAppDarkMode()) KrailDarkColors else KrailLightColors
+    val animatedColors = createLightDarkModeAnimatedColors(
+        targetColors = targetColors,
+        isDarkMode = themeController.isAppDarkMode(),
+    )
 
     CompositionLocalProvider(
-        LocalKrailColors provides krailColors,
+        LocalKrailColors provides animatedColors,
         LocalKrailTypography provides krailTypography,
         LocalThemeController provides themeController,
         content = content,

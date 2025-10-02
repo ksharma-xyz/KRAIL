@@ -108,7 +108,7 @@ fun ThemeSelectionRadioButton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 24.dp)
+            .padding(horizontal = 12.dp, vertical = 16.dp)
             .scalingKlickable { onClick(themeStyle) },
         verticalAlignment = Alignment.CenterVertically,
     ) {

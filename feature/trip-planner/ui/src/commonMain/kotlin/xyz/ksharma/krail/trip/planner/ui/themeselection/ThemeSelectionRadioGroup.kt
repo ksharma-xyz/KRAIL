@@ -73,7 +73,7 @@ fun ThemeSelectionRadioGroup(
             .fillMaxWidth()
             .height(56.dp)
             .background(
-                color = KrailTheme.colors.discoverCardBackground,
+                color = KrailTheme.colors.themeSelectionBackground,
                 shape = RoundedCornerShape(32.dp)
             )
             .padding(4.dp)

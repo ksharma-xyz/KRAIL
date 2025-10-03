@@ -140,6 +140,7 @@ internal fun createLightDarkModeAnimatedColors(
         deviationLate = targetColors.deviationLate,
         pastJourney = targetColors.pastJourney,
         futureJourney = targetColors.futureJourney,
+        themeSelectionBackground = targetColors.themeSelectionBackground,
     )
 }
 

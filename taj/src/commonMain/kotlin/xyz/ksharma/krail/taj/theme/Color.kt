@@ -27,6 +27,9 @@ val md_theme_light_late = Color(0xFFF12525)
 val md_theme_light_future_journey = Color(0xFF3A3A3A)
 val md_theme_light_past_journey = Color(0xFFBBBBBB)
 
+// Theme selection
+val md_theme_light_theme_selection_background = Color(0xFFF5F5F5)
+
 /**
  * KRAIL Dark theme color tokens
  */
@@ -52,6 +55,9 @@ val md_theme_dark_late = Color(0xFFFF2B2B)
 // Future and past journey colors
 val md_theme_dark_future_journey = Color(0xFFEEEEEE)
 val md_theme_dark_past_journey = Color(0xFF8F8F8F)
+
+// Theme selection
+val md_theme_dark_theme_selection_background = Color(0xFF292929)
 
 /**
  * Intermediate colors for smooth theme transitions
@@ -105,6 +111,8 @@ data class KrailColors(
     // JourneyCard colors
     val pastJourney: Color,
     val futureJourney: Color,
+    // theme settings
+    val themeSelectionBackground: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -129,6 +137,7 @@ internal val KrailLightColors = KrailColors(
     pastJourney = md_theme_light_past_journey,
     futureJourney = md_theme_light_future_journey,
     labelPlaceholder = md_theme_light_onSurface_placeholder,
+    themeSelectionBackground = md_theme_light_theme_selection_background,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -153,6 +162,7 @@ internal val KrailDarkColors = KrailColors(
     pastJourney = md_theme_dark_past_journey,
     futureJourney = md_theme_dark_future_journey,
     labelPlaceholder = md_theme_dark_onSurface_placeholder,
+    themeSelectionBackground = md_theme_dark_theme_selection_background,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -178,5 +188,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         pastJourney = Color.Unspecified,
         futureJourney = Color.Unspecified,
         labelPlaceholder = Color.Unspecified,
+        themeSelectionBackground = Color.Unspecified,
     )
 }

@@ -27,7 +27,7 @@ jobs:
 
       - run: brew install swiftlint
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
 

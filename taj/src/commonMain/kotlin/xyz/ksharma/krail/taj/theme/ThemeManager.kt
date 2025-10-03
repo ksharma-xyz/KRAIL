@@ -7,7 +7,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 /**
  * Theme mode options for the app
  */
-enum class ThemeMode(val  displayName: String) {
+enum class ThemeMode(val displayName: String) {
     LIGHT("Light"),
     DARK("Dark"),
     SYSTEM("System"),

@@ -39,11 +39,11 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.animations.ThemeTransitionTiming.TEXT_DURATION_MS
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
@@ -51,6 +51,8 @@ import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import kotlin.math.roundToInt
+
+private const val WIDTH_ = 0.6f
 
 @Composable
 fun ThemeSelectionRadioGroup(
@@ -74,15 +76,15 @@ fun ThemeSelectionRadioGroup(
             .height(56.dp)
             .background(
                 color = KrailTheme.colors.themeSelectionBackground,
-                shape = RoundedCornerShape(32.dp)
+                shape = RoundedCornerShape(32.dp),
             )
-            .padding(4.dp)
+            .padding(4.dp),
     ) {
         val containerWidth = constraints.maxWidth.toFloat()
         val optionWidth = containerWidth / options.size
 
         // Fallback: if no measurement, default to 0.6 * optionWidth
-        val fallbackWidth = optionWidth * 0.6f
+        val fallbackWidth = optionWidth * WIDTH_
 
         // Current handle width based on selected text + padding
         val currentHandleWidth = textWidths[targetIndex] ?: fallbackWidth
@@ -92,18 +94,21 @@ fun ThemeSelectionRadioGroup(
         val animatedWidth by animateFloatAsState(
             targetValue = paddedHandleWidth,
             animationSpec = spring(),
-            label = "handleWidth"
+            label = "handleWidth",
         )
 
         // Animate handle offset (centered under label)
         val animatedOffset by animateFloatAsState(
-            targetValue = if (isDragging) dragOffset
-            else targetIndex * optionWidth + (optionWidth - animatedWidth) / 2f,
+            targetValue = if (isDragging) {
+                dragOffset
+            } else {
+                targetIndex * optionWidth + (optionWidth - animatedWidth) / 2f
+            },
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
+                stiffness = Spring.StiffnessMedium,
             ),
-            label = "selectorOffset"
+            label = "selectorOffset",
         )
 
         // Tap detection
@@ -117,7 +122,7 @@ fun ThemeSelectionRadioGroup(
                         targetIndex = tappedIndex
                         themeController.setThemeMode(options[tappedIndex])
                     }
-                }
+                },
         )
 
         // Handle
@@ -139,7 +144,7 @@ fun ThemeSelectionRadioGroup(
                                 .coerceIn(0, options.lastIndex)
                             targetIndex = snappedIndex
                             themeController.setThemeMode(options[snappedIndex])
-                        }
+                        },
                     ) { change, dragAmount ->
                         change.consume()
                         val horizontalPaddingPx = with(density) { 4.dp.toPx() }
@@ -149,12 +154,11 @@ fun ThemeSelectionRadioGroup(
                         dragOffset = (dragOffset + dragAmount.x)
                             .coerceIn(minOffset, maxOffset)
                     }
-                }
+                },
         ) {
             ThemeSelectorHandle(
-                selectedMode = options[targetIndex],
                 isDragging = isDragging,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -163,32 +167,28 @@ fun ThemeSelectionRadioGroup(
             modifier = Modifier.fillMaxSize()
                 .padding(horizontal = 4.dp), // push edge labels inward
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             options.forEachIndexed { index, option ->
                 ThemeOptionLabel(
                     text = option.displayName,
                     isSelected = targetIndex == index,
-                    onClick = {
-                        targetIndex = index
-                        themeController.setThemeMode(option)
-                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 8.dp) // spacing between text and handle edges
                         .onGloballyPositioned { coords ->
                             val width = coords.size.width.toFloat()
                             textWidths[index] = width
-                        }
+                        },
                 )
             }
         }
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
 private fun ThemeSelectorHandle(
-    selectedMode: ThemeMode,
     isDragging: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -202,26 +202,25 @@ private fun ThemeSelectorHandle(
     val pressedShadowColors = listOf(
         Color(0xFFFFB300).copy(alpha = 0.3f),
         Color(0xFFFF8F00).copy(alpha = 0.2f),
-        Color(0xFFFF6F00).copy(alpha = 0.1f)
-
+        Color(0xFFFF6F00).copy(alpha = 0.1f),
     )
 
     val shadowRadius by animateDpAsState(
         targetValue = if (isDragging) 20.dp else 14.dp,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "shadowRadius"
+        label = "shadowRadius",
     )
 
     val scale by animateFloatAsState(
         targetValue = if (isDragging) 1.06f else 1.0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "scale"
+        label = "scale",
     )
 
     val shadowAlpha by animateFloatAsState(
         targetValue = if (isDragging) 1.0f else 0.8f,
         animationSpec = tween(300),
-        label = "shadowAlpha"
+        label = "shadowAlpha",
     )
 
     val currentShadowColors = if (isDragging) pressedShadowColors else shadowGradientColors
@@ -237,7 +236,7 @@ private fun ThemeSelectorHandle(
                     radius = shadowRadius,
                     spread = 0.dp,
                     alpha = shadowAlpha,
-                )
+                ),
             )
             .dropShadow(
                 shape = RoundedCornerShape(28.dp),
@@ -246,7 +245,7 @@ private fun ThemeSelectorHandle(
                     radius = (shadowRadius.value * 0.7f).dp,
                     spread = 1.dp,
                     alpha = shadowAlpha,
-                )
+                ),
             )
             .dropShadow(
                 shape = RoundedCornerShape(28.dp),
@@ -255,19 +254,19 @@ private fun ThemeSelectorHandle(
                     radius = (shadowRadius.value * 0.4f).dp,
                     spread = 2.dp,
                     alpha = shadowAlpha,
-                )
+                ),
             )
             // Handle background uses surface color
             .background(
                 color = KrailTheme.colors.surface,
-                shape = RoundedCornerShape(28.dp)
+                shape = RoundedCornerShape(28.dp),
             )
             // Subtle border for definition
             .border(
                 width = 0.5.dp,
                 color = KrailTheme.colors.onSurface.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(28.dp)
-            )
+                shape = RoundedCornerShape(28.dp),
+            ),
     )
 }
 
@@ -275,7 +274,6 @@ private fun ThemeSelectorHandle(
 private fun ThemeOptionLabel(
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val textColor by animateColorAsState(
@@ -283,51 +281,42 @@ private fun ThemeOptionLabel(
             isSelected -> KrailTheme.colors.onSurface // Use onSurface for contrast against surface-colored handle
             else -> KrailTheme.colors.onSurface.copy(alpha = 0.7f)
         },
-        animationSpec = tween(300),
-        label = "textColor"
+        animationSpec = tween(TEXT_DURATION_MS),
+        label = "textColor",
     )
-
-    val textShadow = if (isSelected) {
-        androidx.compose.ui.graphics.Shadow(
-            color = KrailTheme.colors.surface.copy(alpha = 0.8f), // Light shadow for contrast
-            blurRadius = 2f
-        )
-    } else null
 
     Box(
         modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            style = if (isSelected) KrailTheme.typography.bodyLarge
-            else KrailTheme.typography.bodyMedium,
+            style = if (isSelected) {
+                KrailTheme.typography.bodyLarge
+            } else {
+                KrailTheme.typography.bodyMedium
+            },
             color = textColor,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
 
-private data class ThemeOption(
-    val label: String,
-    val mode: ThemeMode,
-)
-
 @Preview
 @Composable
-fun ThemeSelectionRadioGroupPreview() {
+private fun ThemeSelectionRadioGroupPreview() {
     // Create a dummy theme controller for preview
     var currentMode by remember { mutableStateOf(ThemeMode.LIGHT) }
     val dummyThemeController = remember {
         ThemeController(
             currentMode = currentMode,
-            setThemeMode = { newMode -> currentMode = newMode }
+            setThemeMode = { newMode -> currentMode = newMode },
         )
     }
 
     KrailTheme(themeMode = currentMode) {
         CompositionLocalProvider(
-            LocalThemeController provides dummyThemeController
+            LocalThemeController provides dummyThemeController,
         ) {
             Box(
                 modifier = Modifier
@@ -335,7 +324,7 @@ fun ThemeSelectionRadioGroupPreview() {
                     .fillMaxWidth()
                     .background(KrailTheme.colors.surface)
                     .padding(24.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 ThemeSelectionRadioGroup()
             }

@@ -26,6 +26,10 @@ complexity:
   LargeClass:
     active: true
     excludes: ['**/test/**', '**/*.Test.kt', '**/*.Spec.kt']
+  LongMethod:
+    active: true
+    threshold: 60
+    ignoreAnnotated: ['Composable']
   MethodOverloading:
     active: true
   TooManyFunctions:
@@ -232,6 +236,9 @@ style:
   UnnecessaryInnerClass:
     active: true
     ignoreAnnotated: ['Nested']
+  UnusedPrivateMember:
+    active: true
+    ignoreAnnotated: ['Preview', 'PreviewParameter', 'PreviewParameterProvider', 'Test', 'Composable']
   UseAnyOrNoneInsteadOfFind:
     active: true
   UseCheckOrError:

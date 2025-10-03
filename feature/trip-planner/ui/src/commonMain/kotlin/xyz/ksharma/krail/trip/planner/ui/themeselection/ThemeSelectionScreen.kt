@@ -150,6 +150,10 @@ fun ThemeSelectionScreen(
                     .navigationBarsPadding()
                     .padding(bottom = 10.dp),
             ) {
+                ThemeSelectionRadioGroup(
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+                )
+
                 Button(
                     colors = ButtonColors(
                         containerColor = buttonBackgroundColor,

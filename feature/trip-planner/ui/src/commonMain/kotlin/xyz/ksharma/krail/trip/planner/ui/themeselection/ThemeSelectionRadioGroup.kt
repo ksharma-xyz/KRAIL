@@ -49,7 +49,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import kotlin.math.roundToInt
 
 private const val WIDTH_ = 0.6f
@@ -57,6 +56,7 @@ private const val WIDTH_ = 0.6f
 @Composable
 fun ThemeSelectionRadioGroup(
     modifier: Modifier = Modifier,
+    glowColor: Color = KrailTheme.colors.surface, // New parameter for dynamic glow color
 ) {
     val themeController = LocalThemeController.current
     val currentMode = themeController.currentMode
@@ -158,7 +158,8 @@ fun ThemeSelectionRadioGroup(
         ) {
             ThemeSelectorHandle(
                 isDragging = isDragging,
-                modifier = Modifier.fillMaxSize(),
+                glowColor = glowColor,
+                modifier = Modifier.fillMaxSize()
             )
         }
 
@@ -190,23 +191,18 @@ fun ThemeSelectionRadioGroup(
 @Composable
 private fun ThemeSelectorHandle(
     isDragging: Boolean,
+    glowColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    // Shadow gradient colors based on theme
-    val shadowGradientColors = listOf(
-        themeBackgroundColor(),
-        themeBackgroundColor(),
-        themeBackgroundColor(),
-    )
-
+    // Use glowColor for pressed shadow colors with different alpha values
     val pressedShadowColors = listOf(
-        Color(0xFFFFB300).copy(alpha = 0.3f),
-        Color(0xFFFF8F00).copy(alpha = 0.2f),
-        Color(0xFFFF6F00).copy(alpha = 0.1f),
+        glowColor.copy(alpha = 0.4f),
+        glowColor.copy(alpha = 0.3f),
+        glowColor.copy(alpha = 0.2f)
     )
 
     val shadowRadius by animateDpAsState(
-        targetValue = if (isDragging) 20.dp else 14.dp,
+        targetValue = if (isDragging) 20.dp else 0.dp, // No shadow in normal state
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "shadowRadius",
     )
@@ -218,55 +214,62 @@ private fun ThemeSelectorHandle(
     )
 
     val shadowAlpha by animateFloatAsState(
-        targetValue = if (isDragging) 1.0f else 0.8f,
+        targetValue = if (isDragging) 1.0f else 0f, // No shadow alpha in normal state
         animationSpec = tween(300),
         label = "shadowAlpha",
     )
 
-    val currentShadowColors = if (isDragging) pressedShadowColors else shadowGradientColors
-
     Box(
         modifier = modifier
             .scale(scale)
-            // Multiple shadow layers for gradient effect
-            .dropShadow(
-                shape = RoundedCornerShape(28.dp),
-                shadow = Shadow(
-                    color = currentShadowColors[0],
-                    radius = shadowRadius,
-                    spread = 0.dp,
-                    alpha = shadowAlpha,
-                ),
-            )
-            .dropShadow(
-                shape = RoundedCornerShape(28.dp),
-                shadow = Shadow(
-                    color = currentShadowColors[1],
-                    radius = (shadowRadius.value * 0.7f).dp,
-                    spread = 1.dp,
-                    alpha = shadowAlpha,
-                ),
-            )
-            .dropShadow(
-                shape = RoundedCornerShape(28.dp),
-                shadow = Shadow(
-                    color = currentShadowColors[2],
-                    radius = (shadowRadius.value * 0.4f).dp,
-                    spread = 2.dp,
-                    alpha = shadowAlpha,
-                ),
-            )
+
+            // Glow shadow layers - only visible when dragging
+            .let { baseModifier ->
+                if (isDragging) {
+                    baseModifier
+                        .dropShadow(
+                            shape = RoundedCornerShape(28.dp),
+                            shadow = Shadow(
+                                color = pressedShadowColors[0],
+                                radius = shadowRadius,
+                                spread = 0.dp,
+                                alpha = shadowAlpha,
+                            )
+                        )
+                        .dropShadow(
+                            shape = RoundedCornerShape(28.dp),
+                            shadow = Shadow(
+                                color = pressedShadowColors[1],
+                                radius = (shadowRadius.value * 0.7f).dp,
+                                spread = 1.dp,
+                                alpha = shadowAlpha,
+                            )
+                        )
+                        .dropShadow(
+                            shape = RoundedCornerShape(28.dp),
+                            shadow = Shadow(
+                                color = pressedShadowColors[2],
+                                radius = (shadowRadius.value * 0.4f).dp,
+                                spread = 2.dp,
+                                alpha = shadowAlpha,
+                            )
+                        )
+                } else {
+                    baseModifier // No shadows in normal state
+                }
+            }
             // Handle background uses surface color
             .background(
                 color = KrailTheme.colors.surface,
                 shape = RoundedCornerShape(28.dp),
             )
-            // Subtle border for definition
+            // Border: 1dp with glowColor in normal state, subtle border when dragging
             .border(
-                width = 0.5.dp,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(28.dp),
-            ),
+                width = 1.dp,
+                color = if (isDragging) KrailTheme.colors.onSurface.copy(alpha = 0.1f)
+                       else glowColor,
+                shape = RoundedCornerShape(28.dp)
+            )
     )
 }
 
@@ -291,11 +294,8 @@ private fun ThemeOptionLabel(
     ) {
         Text(
             text = text,
-            style = if (isSelected) {
-                KrailTheme.typography.bodyLarge
-            } else {
-                KrailTheme.typography.bodyMedium
-            },
+            style = if (isSelected) KrailTheme.typography.titleLarge
+            else KrailTheme.typography.bodyMedium,
             color = textColor,
             textAlign = TextAlign.Center,
         )

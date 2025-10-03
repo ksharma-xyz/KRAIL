@@ -52,10 +52,10 @@ import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun ThemeSelectionScreen(
-    selectedThemeStyle: KrailThemeStyle = KrailThemeStyle.Train,
     onThemeSelected: (Int) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selectedThemeStyle: KrailThemeStyle = KrailThemeStyle.Train,
 ) {
     Box(
         modifier = modifier
@@ -151,7 +151,7 @@ fun ThemeSelectionScreen(
         ) {
             ThemeSelectionRadioGroup(
                 glowColor = buttonBackgroundColor,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
             )
 
             Button(

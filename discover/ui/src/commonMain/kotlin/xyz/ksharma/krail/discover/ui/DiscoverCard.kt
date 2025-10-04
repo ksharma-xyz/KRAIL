@@ -3,7 +3,6 @@ package xyz.ksharma.krail.discover.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -55,6 +54,7 @@ import xyz.ksharma.krail.taj.components.rememberCardHeight
 import xyz.ksharma.krail.taj.darken
 import xyz.ksharma.krail.taj.getImageHeightRatio
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import app.krail.taj.resources.Res as TajRes
@@ -167,7 +167,7 @@ fun createAdaptiveBackground(): Color {
     val themeColor = themeColor()
     val surfaceColor = KrailTheme.colors.surface
 
-    return if (isSystemInDarkTheme()) {
+    return if (isAppInDarkMode()) {
         // Dark mode: blend theme color with darkened surface (towards black)
         blendColors(
             foreground = themeColor.copy(alpha = 0.1f), // Reduced alpha for subtlety

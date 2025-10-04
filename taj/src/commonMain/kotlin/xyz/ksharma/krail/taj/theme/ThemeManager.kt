@@ -33,7 +33,19 @@ data class ThemeController(
     }
 
     @Composable
-    fun isAppDarkMode(): Boolean = when (currentMode) {
+    fun isAppDarkMode(systemInDarkTheme: Boolean = isSystemInDarkTheme()): Boolean {
+        return when (currentMode) {
+            ThemeMode.DARK -> true
+            ThemeMode.LIGHT -> false
+            ThemeMode.SYSTEM -> systemInDarkTheme
+        }
+    }
+}
+
+@Composable
+fun isAppInDarkMode(): Boolean {
+    val themeController = LocalThemeController.current
+    return when (themeController.currentMode) {
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
         ThemeMode.SYSTEM -> isSystemInDarkTheme()

@@ -1,12 +1,12 @@
 package xyz.ksharma.krail.taj
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import kotlin.math.absoluteValue
 
 fun String.hexToComposeColor(): Color {
@@ -64,7 +64,7 @@ fun themeColor(): Color {
 @Composable
 fun themeBackgroundColor(): Color {
     val themeColor by LocalThemeColor.current
-    return if (isSystemInDarkTheme()) {
+    return if (isAppInDarkMode()) {
         themeColor.hexToComposeColor().copy(alpha = 0.45f)
     } else {
         themeColor.hexToComposeColor().copy(alpha = 0.15f)
@@ -191,7 +191,7 @@ fun Color.darken(factor: Float = 0.2f): Color {
 
 @Composable
 fun backgroundColorOf(color: Color): Color {
-    return if (isSystemInDarkTheme()) {
+    return if (isAppInDarkMode()) {
         color.darken()
     } else {
         color.brighten()
@@ -217,7 +217,7 @@ fun darkenColor(color: Int, factor: Float = 0.2f): Int {
 @Composable
 fun themeSolidBackgroundColor(): Color {
     val themeColor by LocalThemeColor.current
-    return if (isSystemInDarkTheme()) {
+    return if (isAppInDarkMode()) {
         // Blend the theme color with dark surface for solid color
         blendColors(
             foreground = themeColor.hexToComposeColor().copy(alpha = 0.45f),

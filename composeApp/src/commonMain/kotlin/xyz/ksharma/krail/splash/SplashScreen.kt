@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,14 +40,25 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.LocalThemeController
 
 @Composable
 fun SplashScreen(
+    splashState: SplashState,
     logoColor: Color?,
     backgroundColor: Color?,
     onSplashAnimationComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val themeController = LocalThemeController.current
+    SideEffect {
+        splashState.themeMode?.let { themeMode ->
+            if (themeController.currentMode != themeMode) {
+                themeController.setThemeMode(themeMode)
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -196,6 +208,7 @@ private fun PreviewLogo() {
 private fun PreviewSplashScreen() {
     KrailTheme {
         SplashScreen(
+            splashState = SplashState(),
             onSplashAnimationComplete = {},
             logoColor = KrailTheme.colors.onSurface,
             backgroundColor = Color(0xFF009B77),

@@ -21,6 +21,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.splash.SplashScreen
+import xyz.ksharma.krail.splash.SplashState
 import xyz.ksharma.krail.splash.SplashUiEvent
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -73,14 +74,14 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
             composable<SplashScreen> {
                 val viewModel: SplashViewModel = koinViewModel<SplashViewModel>()
                 val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val splashState: SplashState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 // Set theme in CompositionLocal
-                themeId = uiState.themeStyle.id
-                themeColorHexCode.value = uiState.themeStyle.hexColorCode
+                themeId = splashState.themeStyle.id
+                themeColorHexCode.value = splashState.themeStyle.hexColorCode
 
-                LaunchedEffect(uiState.navigationDestination) {
-                    uiState.navigationDestination?.let { destination ->
+                LaunchedEffect(splashState.navigationDestination) {
+                    splashState.navigationDestination?.let { destination ->
                         log("Splash complete Navigating to destination: $destination")
                         navController.navigate(
                             route = destination,
@@ -95,6 +96,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
                 }
 
                 SplashScreen(
+                    splashState = splashState,
                     logoColor = if (themeId != null && themeColorHexCode.value != unspecifiedColor) {
                         themeColorHexCode.value.hexToComposeColor()
                     } else {

@@ -14,20 +14,28 @@ import org.koin.compose.koinInject
 import xyz.ksharma.krail.core.appinfo.AppInfo
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
+import xyz.ksharma.krail.theme.ThemeManager
 
 @Composable
 fun KrailApp() {
     val appInfo = rememberAppInfo()
+    val themeManager: ThemeManager = koinInject()
 
     var currentThemeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
     val themeController = remember(currentThemeMode) {
         ThemeController(
             currentMode = currentThemeMode,
-            setThemeMode = { newMode -> currentThemeMode = newMode },
+            setThemeMode = { newMode ->
+                log("Theme mode changed to $newMode")
+                currentThemeMode = newMode
+                // Apply theme changes to platform-specific system UI
+                themeManager.applyThemeMode(newMode)
+            },
         )
     }
 
@@ -37,7 +45,7 @@ fun KrailApp() {
     ) {
         SetupCoilImageLoader()
 
-        KrailTheme {
+        KrailTheme(themeController = themeController) {
             KrailNavHost()
         }
     }

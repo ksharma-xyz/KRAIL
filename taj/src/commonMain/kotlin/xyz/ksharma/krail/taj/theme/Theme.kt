@@ -10,17 +10,12 @@ import xyz.ksharma.krail.taj.animations.createLightDarkModeAnimatedColors
 
 @Composable
 fun KrailTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    themeController: ThemeController = ThemeController(
+        currentMode = ThemeMode.SYSTEM,
+        setThemeMode = {},
+    ),
     content: @Composable () -> Unit,
 ) {
-    var currentThemeMode by remember { mutableStateOf(themeMode) }
-    val themeController = remember(currentThemeMode) {
-        ThemeController(
-            currentMode = currentThemeMode,
-            setThemeMode = { newMode -> currentThemeMode = newMode },
-        )
-    }
-
     val targetColors = if (themeController.isAppDarkMode()) KrailDarkColors else KrailLightColors
     val animatedColors = createLightDarkModeAnimatedColors(
         targetColors = targetColors,

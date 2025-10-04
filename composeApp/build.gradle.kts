@@ -101,6 +101,7 @@ kotlin {
             dependencies {
                 implementation(compose.preview)
                 implementation(libs.activity.compose)
+                implementation(libs.androidx.appcompat)
                 implementation(compose.foundation)
                 implementation(libs.core.ktx)
                 implementation(libs.kotlinx.serialization.json)

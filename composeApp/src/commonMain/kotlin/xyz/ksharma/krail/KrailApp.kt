@@ -2,7 +2,11 @@ package xyz.ksharma.krail
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
@@ -11,12 +15,26 @@ import xyz.ksharma.krail.core.appinfo.AppInfo
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.LocalThemeController
+import xyz.ksharma.krail.taj.theme.ThemeController
+import xyz.ksharma.krail.taj.theme.ThemeMode
 
 @Composable
 fun KrailApp() {
     val appInfo = rememberAppInfo()
 
-    CompositionLocalProvider(LocalAppInfo provides appInfo) {
+    var currentThemeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+    val themeController = remember(currentThemeMode) {
+        ThemeController(
+            currentMode = currentThemeMode,
+            setThemeMode = { newMode -> currentThemeMode = newMode },
+        )
+    }
+
+    CompositionLocalProvider(
+        LocalAppInfo provides appInfo,
+        LocalThemeController provides themeController,
+    ) {
         SetupCoilImageLoader()
 
         KrailTheme {

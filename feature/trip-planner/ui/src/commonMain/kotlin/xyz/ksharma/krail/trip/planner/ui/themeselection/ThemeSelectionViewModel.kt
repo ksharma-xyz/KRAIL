@@ -15,6 +15,7 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.usualride.ThemeSelectionEvent
@@ -24,6 +25,7 @@ class ThemeSelectionViewModel(
     private val sandook: Sandook,
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
+    private val preferences: SandookPreferences,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<ThemeSelectionState> =
@@ -40,7 +42,12 @@ class ThemeSelectionViewModel(
     fun onEvent(event: ThemeSelectionEvent) {
         when (event) {
             is ThemeSelectionEvent.ThemeSelected -> onThemeSelected(event.themeId)
+            is ThemeSelectionEvent.ThemeModeSelected -> onThemeModeSelected(event.themeMode)
         }
+    }
+
+    private fun onThemeModeSelected(themeMode: Long) {
+        preferences.setLong(SandookPreferences.KEY_THEME_MODE, themeMode)
     }
 
     private fun onThemeSelected(productClass: Int) {

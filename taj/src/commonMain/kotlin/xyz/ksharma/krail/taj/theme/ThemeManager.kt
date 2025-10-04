@@ -7,11 +7,14 @@ import androidx.compose.runtime.staticCompositionLocalOf
 /**
  * Theme mode options for the app
  */
-enum class ThemeMode(val displayName: String) {
-    LIGHT("Light"),
-    DARK("Dark"),
-    SYSTEM("System"),
+enum class ThemeMode(val displayName: String, val code: Long) {
+    LIGHT(displayName = "Light", code = 1),
+    DARK(displayName = "Dark", code = 2),
+    SYSTEM(displayName = "System", code = 9),
 }
+
+fun Long?.toThemeMode(): ThemeMode =
+    ThemeMode.entries.firstOrNull { it.code == this } ?: ThemeMode.SYSTEM
 
 /**
  * Theme controller that provides current theme mode and allows changing it

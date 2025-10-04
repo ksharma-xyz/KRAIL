@@ -44,6 +44,7 @@ import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 @Composable
 fun ThemeSelectionScreen(
     onThemeSelected: (Int) -> Unit,
+    onThemeModeSelect: (Long) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     selectedThemeStyle: KrailThemeStyle = KrailThemeStyle.Train,
@@ -126,6 +127,7 @@ fun ThemeSelectionScreen(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
                 onThemeSelect = { newTheme ->
                     themeController.setThemeMode(newTheme)
+                    onThemeModeSelect(newTheme.code)
                 },
             )
 

@@ -23,8 +23,10 @@ import xyz.ksharma.krail.coroutines.ext.safeResult
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_HAS_SEEN_INTRO
+import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_THEME_MODE
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.toThemeMode
 import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
@@ -47,6 +49,7 @@ class SplashViewModel(
         .onStart {
             coroutineScope {
                 loadKrailThemeStyle()
+                loadThemeMode()
                 displayIntroScreen()
                 appStart.start()
                 trackAppStartEvent()
@@ -101,6 +104,14 @@ class SplashViewModel(
         logError("Error loading KRAIL theme style: $it", it)
     }.onSuccess {
         log("Krail theme style loaded: $it")
+    }
+
+    private fun loadThemeMode() {
+        val savedThemeModeCode = preferences.getLong(KEY_THEME_MODE)
+        val savedThemeMode = savedThemeModeCode.toThemeMode()
+        updateUiState {
+            copy(themeMode = savedThemeMode)
+        }
     }
 
     private fun onSplashAnimationComplete() {

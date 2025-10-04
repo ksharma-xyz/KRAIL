@@ -101,7 +101,11 @@ fun DiscoverChip(
                 shape = RoundedCornerShape(50),
             )
             .background(
-                color = if (selected) if (isAppInDarkMode()) themeColor().darken() else themeColor() else KrailTheme.colors.discoverChipBackground,
+                color = if (selected) {
+                    if (isAppInDarkMode()) themeColor().darken() else themeColor()
+                } else {
+                    KrailTheme.colors.discoverChipBackground
+                },
                 shape = RoundedCornerShape(50),
             ),
         contentAlignment = Alignment.Center,

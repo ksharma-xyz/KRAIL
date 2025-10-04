@@ -31,6 +31,15 @@ data class ThemeController(
         }
         setThemeMode(if (isDarkMode) ThemeMode.LIGHT else ThemeMode.DARK)
     }
+
+    @Composable
+    fun isAppDarkMode(systemInDarkTheme: Boolean = isSystemInDarkTheme()): Boolean {
+        return when (currentMode) {
+            ThemeMode.DARK -> true
+            ThemeMode.LIGHT -> false
+            ThemeMode.SYSTEM -> systemInDarkTheme
+        }
+    }
 }
 
 @Composable

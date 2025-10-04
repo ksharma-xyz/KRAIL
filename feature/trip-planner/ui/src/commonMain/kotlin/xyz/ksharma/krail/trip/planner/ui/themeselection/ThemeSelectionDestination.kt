@@ -57,6 +57,9 @@ internal fun NavGraphBuilder.themeSelectionDestination(navController: NavHostCon
                 viewModel.onEvent(ThemeSelectionEvent.ThemeSelected(themeId))
             },
             onBackClick = { navController.popBackStack() },
+            onThemeModeSelect = { code ->
+                viewModel.onEvent(ThemeSelectionEvent.ThemeModeSelected(code))
+            },
         )
     }
 }

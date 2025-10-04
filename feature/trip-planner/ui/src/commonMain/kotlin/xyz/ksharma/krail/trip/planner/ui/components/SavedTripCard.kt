@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +32,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -86,7 +86,7 @@ fun SavedTripCard(
                 painter = painterResource(Res.drawable.ic_star_filled),
                 contentDescription = "Save Trip",
                 colorFilter = ColorFilter.tint(
-                    if (isSystemInDarkTheme().not()) {
+                    if (isAppInDarkMode().not()) {
                         primaryTransportMode?.colorCode
                             ?.hexToComposeColor() ?: themeColor()
                     } else {

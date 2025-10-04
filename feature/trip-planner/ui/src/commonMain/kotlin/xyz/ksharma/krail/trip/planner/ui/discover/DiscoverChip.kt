@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -30,6 +29,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
 
 @Composable
@@ -42,7 +42,7 @@ fun DiscoverChip(
 ) {
     val textColor = if (selected) {
         getForegroundColor(
-            backgroundColor = if (isSystemInDarkTheme()) themeColor().darken() else themeColor(),
+            backgroundColor = if (isAppInDarkMode()) themeColor().darken() else themeColor(),
         )
     } else {
         KrailTheme.colors.label
@@ -101,7 +101,7 @@ fun DiscoverChip(
                 shape = RoundedCornerShape(50),
             )
             .background(
-                color = if (selected) if (isSystemInDarkTheme()) themeColor().darken() else themeColor() else KrailTheme.colors.discoverChipBackground,
+                color = if (selected) if (isAppInDarkMode()) themeColor().darken() else themeColor() else KrailTheme.colors.discoverChipBackground,
                 shape = RoundedCornerShape(50),
             ),
         contentAlignment = Alignment.Center,

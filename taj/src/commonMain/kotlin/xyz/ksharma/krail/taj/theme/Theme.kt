@@ -21,10 +21,10 @@ fun KrailTheme(
         )
     }
 
-    val targetColors = if (themeController.isAppDarkMode()) KrailDarkColors else KrailLightColors
+    val targetColors = if (isAppInDarkMode()) KrailDarkColors else KrailLightColors
     val animatedColors = createLightDarkModeAnimatedColors(
         targetColors = targetColors,
-        isDarkMode = themeController.isAppDarkMode(),
+        isDarkMode = isAppInDarkMode(),
     )
 
     CompositionLocalProvider(

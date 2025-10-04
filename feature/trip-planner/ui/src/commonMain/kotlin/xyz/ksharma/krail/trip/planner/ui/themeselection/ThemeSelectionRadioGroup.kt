@@ -7,7 +7,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -42,27 +41,25 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.taj.animations.ThemeTransitionTiming.TEXT_DURATION_MS
+import xyz.ksharma.krail.taj.animations.ThemeTransitionTiming
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import kotlin.math.roundToInt
-
-private const val WIDTH_ = 0.6f
 
 @Composable
 fun ThemeSelectionRadioGroup(
+    glowColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val themeController = LocalThemeController.current
     val currentMode = themeController.currentMode
-    val options = ThemeMode.entries
 
-    var targetIndex by remember { mutableStateOf(options.indexOfFirst { it == currentMode }) }
+    var targetIndex by remember { mutableStateOf(ThemeMode.entries.indexOfFirst { it == currentMode }) }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
 
@@ -81,10 +78,9 @@ fun ThemeSelectionRadioGroup(
             .padding(4.dp),
     ) {
         val containerWidth = constraints.maxWidth.toFloat()
-        val optionWidth = containerWidth / options.size
+        val optionWidth = containerWidth / ThemeMode.entries.size
 
-        // Fallback: if no measurement, default to 0.6 * optionWidth
-        val fallbackWidth = optionWidth * WIDTH_
+        val fallbackWidth = optionWidth * FALLBACK_WIDTH_RATIO
 
         // Current handle width based on selected text + padding
         val currentHandleWidth = textWidths[targetIndex] ?: fallbackWidth
@@ -118,9 +114,9 @@ fun ThemeSelectionRadioGroup(
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
                         val tappedIndex = (offset.x / optionWidth).toInt()
-                            .coerceIn(0, options.lastIndex)
+                            .coerceIn(0, ThemeMode.entries.lastIndex)
                         targetIndex = tappedIndex
-                        themeController.setThemeMode(options[tappedIndex])
+                        themeController.setThemeMode(ThemeMode.entries[tappedIndex])
                     }
                 },
         )
@@ -141,9 +137,9 @@ fun ThemeSelectionRadioGroup(
                         onDragEnd = {
                             isDragging = false
                             val snappedIndex = (dragOffset / optionWidth).roundToInt()
-                                .coerceIn(0, options.lastIndex)
+                                .coerceIn(0, ThemeMode.entries.lastIndex)
                             targetIndex = snappedIndex
-                            themeController.setThemeMode(options[snappedIndex])
+                            themeController.setThemeMode(ThemeMode.entries[snappedIndex])
                         },
                     ) { change, dragAmount ->
                         change.consume()
@@ -158,6 +154,7 @@ fun ThemeSelectionRadioGroup(
         ) {
             ThemeSelectorHandle(
                 isDragging = isDragging,
+                glowColor = glowColor,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -169,7 +166,7 @@ fun ThemeSelectionRadioGroup(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            options.forEachIndexed { index, option ->
+            ThemeMode.entries.forEachIndexed { index, option ->
                 ThemeOptionLabel(
                     text = option.displayName,
                     isSelected = targetIndex == index,
@@ -190,23 +187,18 @@ fun ThemeSelectionRadioGroup(
 @Composable
 private fun ThemeSelectorHandle(
     isDragging: Boolean,
+    glowColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    // Shadow gradient colors based on theme
-    val shadowGradientColors = listOf(
-        themeBackgroundColor(),
-        themeBackgroundColor(),
-        themeBackgroundColor(),
-    )
-
+    // Use glowColor for pressed shadow colors with different alpha values
     val pressedShadowColors = listOf(
-        Color(0xFFFFB300).copy(alpha = 0.3f),
-        Color(0xFFFF8F00).copy(alpha = 0.2f),
-        Color(0xFFFF6F00).copy(alpha = 0.1f),
+        glowColor.copy(alpha = 0.4f),
+        glowColor.copy(alpha = 0.3f),
+        glowColor.copy(alpha = 0.2f),
     )
 
     val shadowRadius by animateDpAsState(
-        targetValue = if (isDragging) 20.dp else 14.dp,
+        targetValue = if (isDragging) 20.dp else 14.dp, // Always have shadow, more when dragging
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "shadowRadius",
     )
@@ -218,21 +210,18 @@ private fun ThemeSelectorHandle(
     )
 
     val shadowAlpha by animateFloatAsState(
-        targetValue = if (isDragging) 1.0f else 0.8f,
-        animationSpec = tween(300),
+        targetValue = if (isDragging) 1.0f else 0.8f, // Always visible, more opaque when dragging
+        animationSpec = tween(ThemeTransitionTiming.TEXT_DURATION_MS), // Use centralized timing constant
         label = "shadowAlpha",
     )
-
-    val currentShadowColors = if (isDragging) pressedShadowColors else shadowGradientColors
 
     Box(
         modifier = modifier
             .scale(scale)
-            // Multiple shadow layers for gradient effect
             .dropShadow(
                 shape = RoundedCornerShape(28.dp),
                 shadow = Shadow(
-                    color = currentShadowColors[0],
+                    color = pressedShadowColors[0],
                     radius = shadowRadius,
                     spread = 0.dp,
                     alpha = shadowAlpha,
@@ -241,7 +230,7 @@ private fun ThemeSelectorHandle(
             .dropShadow(
                 shape = RoundedCornerShape(28.dp),
                 shadow = Shadow(
-                    color = currentShadowColors[1],
+                    color = pressedShadowColors[1],
                     radius = (shadowRadius.value * 0.7f).dp,
                     spread = 1.dp,
                     alpha = shadowAlpha,
@@ -250,7 +239,7 @@ private fun ThemeSelectorHandle(
             .dropShadow(
                 shape = RoundedCornerShape(28.dp),
                 shadow = Shadow(
-                    color = currentShadowColors[2],
+                    color = pressedShadowColors[2],
                     radius = (shadowRadius.value * 0.4f).dp,
                     spread = 2.dp,
                     alpha = shadowAlpha,
@@ -259,12 +248,6 @@ private fun ThemeSelectorHandle(
             // Handle background uses surface color
             .background(
                 color = KrailTheme.colors.surface,
-                shape = RoundedCornerShape(28.dp),
-            )
-            // Subtle border for definition
-            .border(
-                width = 0.5.dp,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(28.dp),
             ),
     )
@@ -281,8 +264,30 @@ private fun ThemeOptionLabel(
             isSelected -> KrailTheme.colors.onSurface // Use onSurface for contrast against surface-colored handle
             else -> KrailTheme.colors.onSurface.copy(alpha = 0.7f)
         },
-        animationSpec = tween(TEXT_DURATION_MS),
+        animationSpec = tween(ThemeTransitionTiming.TEXT_DURATION_MS),
         label = "textColor",
+    )
+
+    // Animate text size
+    val animatedFontSize by animateFloatAsState(
+        targetValue = if (isSelected) {
+            KrailTheme.typography.titleLarge.fontSize.value
+        } else {
+            KrailTheme.typography.bodyMedium.fontSize.value
+        },
+        animationSpec = tween(ThemeTransitionTiming.TEXT_DURATION_MS),
+        label = "fontSize",
+    )
+
+    // Animate letter spacing
+    val animatedLetterSpacing by animateFloatAsState(
+        targetValue = if (isSelected) {
+            KrailTheme.typography.titleLarge.letterSpacing.value
+        } else {
+            KrailTheme.typography.bodyMedium.letterSpacing.value
+        },
+        animationSpec = tween(ThemeTransitionTiming.TEXT_DURATION_MS),
+        label = "letterSpacing",
     )
 
     Box(
@@ -291,16 +296,24 @@ private fun ThemeOptionLabel(
     ) {
         Text(
             text = text,
-            style = if (isSelected) {
-                KrailTheme.typography.bodyLarge
-            } else {
-                KrailTheme.typography.bodyMedium
-            },
+            style = KrailTheme.typography.bodyMedium.copy(
+                fontSize = animatedFontSize.sp,
+                letterSpacing = animatedLetterSpacing.sp,
+                fontWeight = if (isSelected) {
+                    KrailTheme.typography.titleLarge.fontWeight
+                } else {
+                    KrailTheme.typography.bodyMedium.fontWeight
+                },
+            ),
             color = textColor,
             textAlign = TextAlign.Center,
         )
     }
 }
+
+private const val FALLBACK_WIDTH_RATIO = 0.6f
+
+// region Previews
 
 @Preview
 @Composable
@@ -326,8 +339,12 @@ private fun ThemeSelectionRadioGroupPreview() {
                     .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                ThemeSelectionRadioGroup()
+                ThemeSelectionRadioGroup(
+                    glowColor = KrailTheme.colors.onSurface,
+                )
             }
         }
     }
 }
+
+// endregion

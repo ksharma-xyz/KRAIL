@@ -64,6 +64,7 @@ object ThemeTransitionTiming {
  * @param isDarkMode Whether transitioning to dark mode (true) or light mode (false)
  * @return KrailColors with animated transitions applied
  */
+@Suppress("LongMethod")
 @Composable
 internal fun createLightDarkModeAnimatedColors(
     targetColors: KrailColors,

@@ -52,10 +52,10 @@ import app.krail.taj.resources.Res as TajRes
 
 @Composable
 fun ThemeSelectionScreen(
-    selectedThemeStyle: KrailThemeStyle?,
     onThemeSelected: (Int) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selectedThemeStyle: KrailThemeStyle = KrailThemeStyle.Train,
 ) {
     Box(
         modifier = modifier
@@ -63,11 +63,11 @@ fun ThemeSelectionScreen(
             .background(color = KrailTheme.colors.surface)
             .statusBarsPadding(),
     ) {
-        var selectedThemeColorId: Int? by rememberSaveable(selectedThemeStyle) {
-            mutableStateOf(selectedThemeStyle?.id)
+        var selectedThemeColorId: Int by rememberSaveable(selectedThemeStyle) {
+            mutableStateOf(selectedThemeStyle.id)
         }
         val buttonBackgroundColor by animateColorAsState(
-            targetValue = selectedThemeColorId?.let { themeId ->
+            targetValue = selectedThemeColorId.let { themeId ->
                 KrailThemeStyle.entries.find { it.id == themeId }?.hexColorCode?.hexToComposeColor()
             } ?: KrailTheme.colors.surface,
             label = "buttonBackgroundColor",
@@ -144,34 +144,31 @@ fun ThemeSelectionScreen(
             }
         }
 
-        if (selectedThemeColorId != null) {
-            Column(
-                modifier = Modifier.align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(bottom = 10.dp),
-            ) {
-                ThemeSelectionRadioGroup(
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
-                )
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 10.dp),
+        ) {
+            ThemeSelectionRadioGroup(
+                glowColor = buttonBackgroundColor,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+            )
 
-                Button(
-                    colors = ButtonColors(
-                        containerColor = buttonBackgroundColor,
-                        contentColor = getForegroundColor(buttonBackgroundColor),
-                        disabledContainerColor = buttonBackgroundColor.copy(alpha = DisabledContentAlpha),
-                        disabledContentColor = getForegroundColor(
-                            buttonBackgroundColor,
-                        ).copy(alpha = DisabledContentAlpha),
-                    ),
-                    onClick = {
-                        selectedThemeColorId?.let { productClass ->
-                            onThemeSelected(productClass)
-                        }
-                    },
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
-                ) {
-                    Text(text = "Let's #KRAIL")
-                }
+            Button(
+                colors = ButtonColors(
+                    containerColor = buttonBackgroundColor,
+                    contentColor = getForegroundColor(buttonBackgroundColor),
+                    disabledContainerColor = buttonBackgroundColor.copy(alpha = DisabledContentAlpha),
+                    disabledContentColor = getForegroundColor(
+                        buttonBackgroundColor,
+                    ).copy(alpha = DisabledContentAlpha),
+                ),
+                onClick = {
+                    onThemeSelected(selectedThemeColorId)
+                },
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+            ) {
+                Text(text = "Let's #KRAIL")
             }
         }
     }

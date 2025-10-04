@@ -45,7 +45,7 @@ internal fun NavGraphBuilder.themeSelectionDestination(navController: NavHostCon
         }
 
         ThemeSelectionScreen(
-            selectedThemeStyle = state.selectedThemeStyle,
+            selectedThemeStyle = state.selectedThemeStyle ?: KrailThemeStyle.Train,
             onThemeSelected = { themeId ->
                 val hexColorCode =
                     KrailThemeStyle.entries.firstOrNull { it.id == themeId }?.hexColorCode

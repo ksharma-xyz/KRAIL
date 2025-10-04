@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -53,15 +54,21 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ThemeSelectionRadioGroup(
+    selectedTheme: ThemeMode,
+    onThemeSelect: (ThemeMode) -> Unit,
     glowColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val themeController = LocalThemeController.current
-    val currentMode = themeController.currentMode
-
-    var targetIndex by remember { mutableStateOf(ThemeMode.entries.indexOfFirst { it == currentMode }) }
+    var targetIndex by remember {
+        mutableStateOf(ThemeMode.entries.indexOfFirst { it == selectedTheme })
+    }
     var dragOffset by remember { mutableFloatStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
+
+    // Update targetIndex when selectedTheme changes from outside
+    LaunchedEffect(selectedTheme) {
+        targetIndex = ThemeMode.entries.indexOfFirst { it == selectedTheme }
+    }
 
     // Store measured text widths
     val textWidths = remember { mutableStateMapOf<Int, Float>() }
@@ -116,7 +123,7 @@ fun ThemeSelectionRadioGroup(
                         val tappedIndex = (offset.x / optionWidth).toInt()
                             .coerceIn(0, ThemeMode.entries.lastIndex)
                         targetIndex = tappedIndex
-                        themeController.setThemeMode(ThemeMode.entries[tappedIndex])
+                        onThemeSelect(ThemeMode.entries[tappedIndex])
                     }
                 },
         )
@@ -139,7 +146,7 @@ fun ThemeSelectionRadioGroup(
                             val snappedIndex = (dragOffset / optionWidth).roundToInt()
                                 .coerceIn(0, ThemeMode.entries.lastIndex)
                             targetIndex = snappedIndex
-                            themeController.setThemeMode(ThemeMode.entries[snappedIndex])
+                            onThemeSelect(ThemeMode.entries[snappedIndex])
                         },
                     ) { change, dragAmount ->
                         change.consume()
@@ -340,6 +347,11 @@ private fun ThemeSelectionRadioGroupPreview() {
                 contentAlignment = Alignment.Center,
             ) {
                 ThemeSelectionRadioGroup(
+                    selectedTheme = currentMode,
+                    onThemeSelect = { newMode ->
+                        currentMode = newMode
+                        dummyThemeController.setThemeMode(newMode)
+                    },
                     glowColor = KrailTheme.colors.onSurface,
                 )
             }

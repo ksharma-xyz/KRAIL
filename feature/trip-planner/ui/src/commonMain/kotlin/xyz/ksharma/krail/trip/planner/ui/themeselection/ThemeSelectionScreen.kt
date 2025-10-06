@@ -1,10 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.themeselection
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,18 +17,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -73,16 +67,6 @@ fun ThemeSelectionScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            val visibleStates =
-                remember { mutableStateListOf(*Array(KrailThemeStyle.entries.size) { false }) }
-
-            LaunchedEffect(Unit) {
-                KrailThemeStyle.entries.forEachIndexed { index, _ ->
-                    delay(150L) // Stagger delay
-                    visibleStates[index] = true
-                }
-            }
-
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(
                     text = "Let's set the vibe!",
@@ -93,21 +77,13 @@ fun ThemeSelectionScreen(
                 )
 
                 KrailThemeStyle.entries.forEachIndexed { index, theme ->
-                    AnimatedVisibility(
-                        visible = visibleStates[index],
-                        enter = slideInHorizontally(
-                            initialOffsetX = { fullWidth -> fullWidth },
-                            animationSpec = tween(durationMillis = 400),
-                        ),
-                    ) {
-                        ThemeSelectionRadioButton(
-                            themeStyle = theme,
-                            selected = selectedThemeColorId == theme.id,
-                            onClick = { clickedThemeStyle ->
-                                selectedThemeColorId = clickedThemeStyle.id
-                            },
-                        )
-                    }
+                    ThemeSelectionRadioButton(
+                        themeStyle = theme,
+                        selected = selectedThemeColorId == theme.id,
+                        onClick = { clickedThemeStyle ->
+                            selectedThemeColorId = clickedThemeStyle.id
+                        },
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(96.dp))

@@ -19,9 +19,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
 @Composable
@@ -30,8 +32,6 @@ fun ServiceAlertScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
 ) {
-//    DefaultSystemBarColors()
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -74,10 +74,10 @@ fun ServiceAlertScreen(
     }
 }
 
-// @Preview
+@Preview
 @Composable
 private fun PreviewServiceAlertScreen() {
-    KrailTheme {
+    PreviewTheme {
         ServiceAlertScreen(
             serviceAlerts = persistentSetOf(
                 ServiceAlert(

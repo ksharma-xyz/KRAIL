@@ -6,11 +6,7 @@ import xyz.ksharma.krail.taj.animations.createLightDarkModeAnimatedColors
 
 @Composable
 fun KrailTheme(
-    // default value is only set for usage in Previews, in prod code, this is be passed from KrailApp
-    themeController: ThemeController = ThemeController(
-        currentMode = ThemeMode.SYSTEM,
-        setThemeMode = {},
-    ),
+    themeController: ThemeController,
     content: @Composable () -> Unit,
 ) {
     val targetColors = if (themeController.isAppDarkMode()) KrailDarkColors else KrailLightColors

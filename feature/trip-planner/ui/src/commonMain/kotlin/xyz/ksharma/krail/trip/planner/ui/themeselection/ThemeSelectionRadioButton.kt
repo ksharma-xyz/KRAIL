@@ -42,6 +42,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.scalingKlickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.themeBackgroundColor
 
 @Composable
@@ -221,7 +222,7 @@ fun ThemeSelectionRadioButton(
 @Preview
 @Composable
 private fun ThemeSelectionRadioButtonPreview() {
-    KrailTheme {
+    PreviewTheme {
         ThemeSelectionRadioButton(
             themeStyle = KrailThemeStyle.Bus,
             onClick = {},
@@ -233,7 +234,7 @@ private fun ThemeSelectionRadioButtonPreview() {
 @Preview
 @Composable
 private fun ThemeSelectionRadioButtonUnselectedPreview() {
-    KrailTheme {
+    PreviewTheme {
         ThemeSelectionRadioButton(
             themeStyle = KrailThemeStyle.Bus,
             onClick = {},

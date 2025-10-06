@@ -64,6 +64,7 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
@@ -375,7 +376,7 @@ fun SearchStopScreen(
 
 @Composable
 private fun PreviewSearchStopScreenLoading() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -388,7 +389,7 @@ private fun PreviewSearchStopScreenLoading() {
 
 @Composable
 private fun PreviewSearchStopScreenError() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -401,7 +402,7 @@ private fun PreviewSearchStopScreenError() {
 
 @Composable
 private fun PreviewSearchStopScreenEmpty() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -418,7 +419,7 @@ private fun PreviewSearchStopScreenEmpty() {
 
 @Composable
 private fun PreviewSearchStopScreenTrain() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -431,7 +432,7 @@ private fun PreviewSearchStopScreenTrain() {
 
 @Composable
 private fun PreviewSearchStopScreenCoach() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Coach().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -444,7 +445,7 @@ private fun PreviewSearchStopScreenCoach() {
 
 @Composable
 private fun PreviewSearchStopScreenFerry() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -457,7 +458,7 @@ private fun PreviewSearchStopScreenFerry() {
 
 @Composable
 private fun PreviewSearchStopScreenMetro() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Metro().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -470,7 +471,7 @@ private fun PreviewSearchStopScreenMetro() {
 
 @Composable
 private fun PreviewSearchStopScreenLightRail() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.LightRail().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
@@ -483,7 +484,7 @@ private fun PreviewSearchStopScreenLightRail() {
 
 @Composable
 private fun PreviewSearchStopScreenBus() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(

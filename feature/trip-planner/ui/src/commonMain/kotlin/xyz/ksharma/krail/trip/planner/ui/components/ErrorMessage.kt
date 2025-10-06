@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 @Composable
@@ -83,12 +85,12 @@ data class ActionData(
 )
 
 // region Preview
-
+@Preview
 @Composable
 private fun PreviewErrorMessage() {
     val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
     CompositionLocalProvider(LocalThemeColor provides themeColor) {
-        KrailTheme {
+        PreviewTheme {
             ErrorMessage(
                 title = "Eh! That's not looking right mate.",
                 message = "Let's try again.",

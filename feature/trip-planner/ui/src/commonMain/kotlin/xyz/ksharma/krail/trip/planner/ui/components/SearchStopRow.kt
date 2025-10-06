@@ -43,7 +43,7 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -194,7 +194,7 @@ fun SearchStopRow(
 
 @Composable
 private fun SearchStopColumnPreview() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopRow(

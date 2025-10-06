@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +60,7 @@ fun ThemeSelectionRadioGroup(
     glowColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    var targetIndex by remember {
+    var targetIndex by rememberSaveable {
         mutableStateOf(ThemeMode.entries.indexOfFirst { it == selectedTheme })
     }
     var dragOffset by remember { mutableFloatStateOf(0f) }
@@ -330,11 +331,11 @@ private fun ThemeSelectionRadioGroupPreview() {
     val dummyThemeController = remember {
         ThemeController(
             currentMode = currentMode,
-            setThemeMode = { newMode -> currentMode = newMode },
+            setThemeMode = { },
         )
     }
 
-    KrailTheme(themeMode = currentMode) {
+    KrailTheme(dummyThemeController) {
         CompositionLocalProvider(
             LocalThemeController provides dummyThemeController,
         ) {

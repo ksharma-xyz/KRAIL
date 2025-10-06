@@ -43,7 +43,6 @@ import xyz.ksharma.krail.taj.components.DiscoverCardVerticalPager
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
 
 @Composable
@@ -378,7 +377,7 @@ private fun BoxScope.DiscoverTitleBar(
 )
 @Composable
 private fun DiscoverScreenTabletLightPreview() {
-    KrailTheme(themeMode = ThemeMode.DARK) {
+    KrailTheme {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
@@ -410,7 +409,7 @@ private fun DiscoverScreenTabletLightPreview() {
 )
 @Composable
 private fun DiscoverScreenTabletDarkPreview() {
-    KrailTheme(themeMode = ThemeMode.DARK) {
+    KrailTheme {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(4).toImmutableList(),
@@ -442,7 +441,7 @@ private fun DiscoverScreenTabletDarkPreview() {
 )
 @Composable
 private fun DiscoverScreenCompactLightPreview() {
-    KrailTheme(themeMode = ThemeMode.LIGHT) {
+    KrailTheme {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),
@@ -473,7 +472,7 @@ private fun DiscoverScreenCompactLightPreview() {
 )
 @Composable
 private fun DiscoverScreenCompactDarkPreview() {
-    KrailTheme(themeMode = ThemeMode.DARK) {
+    KrailTheme {
         DiscoverScreen(
             state = DiscoverState(
                 discoverCardsList = previewDiscoverCardList.take(3).toImmutableList(),

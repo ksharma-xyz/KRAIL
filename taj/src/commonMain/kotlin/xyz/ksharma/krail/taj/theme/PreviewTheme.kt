@@ -22,7 +22,12 @@ fun PreviewTheme(
     backgroundColor: Color = KrailTheme.colors.surface,
     content: @Composable () -> Unit,
 ) {
-    KrailTheme(themeMode = if (darkTheme) ThemeMode.DARK else ThemeMode.LIGHT) {
+    KrailTheme(
+        themeController = ThemeController(
+            currentMode = if (darkTheme) ThemeMode.DARK else ThemeMode.LIGHT,
+            setThemeMode = {},
+        ),
+    ) {
         val color = remember { mutableStateOf(themeStyle.hexColorCode) }
         val density = LocalDensity.current
         CompositionLocalProvider(

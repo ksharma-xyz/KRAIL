@@ -1,3 +1,4 @@
+
 package xyz.ksharma.krail.di
 
 import org.koin.core.context.startKoin
@@ -22,6 +23,7 @@ import xyz.ksharma.krail.park.ride.network.di.parkRideNetworkModule
 import xyz.ksharma.krail.platform.ops.di.opsModule
 import xyz.ksharma.krail.sandook.di.sandookModule
 import xyz.ksharma.krail.splash.SplashViewModel
+import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.trip.planner.network.api.di.tripPlannerNetworkModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 
@@ -33,6 +35,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             coreNetworkModule,
             viewModelsModule,
             sandookModule,
+            themeManagerModule,
             splashModule,
             appInfoModule,
             appVersionModule,

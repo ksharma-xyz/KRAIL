@@ -2,14 +2,11 @@ package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import xyz.ksharma.krail.taj.animations.createLightDarkModeAnimatedColors
 
 @Composable
 fun KrailTheme(
+    // default value is only set for usage in Previews, in prod code, this is be passed from KrailApp
     themeController: ThemeController = ThemeController(
         currentMode = ThemeMode.SYSTEM,
         setThemeMode = {},

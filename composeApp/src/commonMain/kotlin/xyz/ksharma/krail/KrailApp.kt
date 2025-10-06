@@ -30,11 +30,11 @@ fun KrailApp() {
     val themeController = remember(currentThemeMode) {
         ThemeController(
             currentMode = currentThemeMode,
-            setThemeMode = { newMode ->
-                log("Theme mode changed to $newMode")
-                currentThemeMode = newMode
+            setThemeMode = { newThemeMode ->
+                log("Theme mode changed to $newThemeMode")
+                currentThemeMode = newThemeMode
                 // Apply theme changes to platform-specific system UI
-                themeManager.applyThemeMode(newMode)
+                themeManager.applyThemeMode(newThemeMode)
             },
         )
     }

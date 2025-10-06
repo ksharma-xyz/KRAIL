@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,8 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -60,9 +61,10 @@ fun StopSearchListItem(
 
 // region Preview
 
+@Preview
 @Composable
 private fun StopSearchListItemPreview() {
-    KrailTheme {
+    PreviewTheme {
         StopSearchListItem(
             stopId = "123",
             stopName = "Stop Name",
@@ -71,14 +73,14 @@ private fun StopSearchListItemPreview() {
                 TransportMode.LightRail(),
             ),
             textColor = KrailTheme.colors.onSurface,
-            modifier = Modifier.background(color = KrailTheme.colors.surface),
         )
     }
 }
 
+@Preview
 @Composable
 private fun StopSearchListItemLongNamePreview() {
-    KrailTheme {
+    PreviewTheme {
         StopSearchListItem(
             stopId = "123",
             stopName = "This is a very long stop name that should wrap to the next line",
@@ -87,7 +89,6 @@ private fun StopSearchListItemLongNamePreview() {
                 TransportMode.Ferry(),
             ),
             textColor = KrailTheme.colors.onSurface,
-            modifier = Modifier.background(color = KrailTheme.colors.surface),
         )
     }
 }

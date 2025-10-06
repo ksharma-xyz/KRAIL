@@ -21,6 +21,7 @@ import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.shapes.CookieShape
 import xyz.ksharma.krail.taj.shapes.buildCookiePath
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 /**
  * A box with a cookie-shaped background and optional multi-color stroke.
@@ -121,7 +122,7 @@ object CookieShapeBoxDefaults {
 @Preview
 @Composable
 private fun CookiePreviewBox() {
-    KrailTheme {
+    PreviewTheme {
         CookieShapeBox()
     }
 }
@@ -129,7 +130,7 @@ private fun CookiePreviewBox() {
 @Preview
 @Composable
 private fun CookiePreviewCanvas() {
-    KrailTheme {
+    PreviewTheme {
         CookieShapeCanvas()
     }
 }
@@ -152,7 +153,7 @@ private fun CookieShapeBoxSweepGradient() {
 @Preview
 @Composable
 private fun CookieShapeBoxRadialGradient() {
-    KrailTheme {
+    PreviewTheme {
         CookieShapeBox(
             outlineBrush = Brush.radialGradient(
                 colors = listOf(Color(0xFFFFEE58), Color(0xFFF57F17)),

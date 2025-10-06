@@ -89,7 +89,7 @@ private const val previewWithBackground = "Transport Mode Icons With Background"
 @Preview(group = previewGroupName)
 @Composable
 private fun TrainPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Train(),
             displayBorder = false,
@@ -114,7 +114,7 @@ private fun TrainPreviewLarge() {
 @Preview(group = previewGroupName)
 @Composable
 private fun BusPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Bus(),
             displayBorder = false,
@@ -125,7 +125,7 @@ private fun BusPreview() {
 @Preview(group = previewGroupName)
 @Composable
 private fun MetroPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Metro(),
             displayBorder = false,
@@ -136,7 +136,7 @@ private fun MetroPreview() {
 @Preview(group = previewGroupName)
 @Composable
 private fun LightRailPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.LightRail(),
             displayBorder = false,
@@ -147,7 +147,7 @@ private fun LightRailPreview() {
 @Preview(group = previewGroupName)
 @Composable
 private fun FerryPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Ferry(),
             displayBorder = false,
@@ -158,7 +158,7 @@ private fun FerryPreview() {
 @Preview(group = previewWithBackground)
 @Composable
 private fun TrainWithBackgroundPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Train(),
             displayBorder = true,
@@ -169,7 +169,7 @@ private fun TrainWithBackgroundPreview() {
 @Preview(group = previewWithBackground)
 @Composable
 private fun BusWithBackgroundPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Bus(),
             displayBorder = true,
@@ -180,7 +180,7 @@ private fun BusWithBackgroundPreview() {
 @Preview(group = previewWithBackground)
 @Composable
 private fun MetroWithBackgroundPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Metro(),
             displayBorder = true,
@@ -191,7 +191,7 @@ private fun MetroWithBackgroundPreview() {
 @Preview(group = previewWithBackground)
 @Composable
 private fun LightRailWithBackgroundPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.LightRail(),
             displayBorder = true,
@@ -202,7 +202,7 @@ private fun LightRailWithBackgroundPreview() {
 @Preview(group = previewWithBackground)
 @Composable
 private fun FerryWithBackgroundPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Ferry(),
             displayBorder = true,

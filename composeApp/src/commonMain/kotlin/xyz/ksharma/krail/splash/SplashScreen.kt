@@ -41,6 +41,7 @@ import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun SplashScreen(
@@ -196,17 +197,15 @@ private fun AnimatedLetter(
 @Preview
 @Composable
 private fun PreviewLogo() {
-    KrailTheme {
-        Column(modifier = Modifier.background(color = KrailTheme.colors.surface)) {
-            AnimatedKrailLogo(logoColor = Color(0xFFF6891F))
-        }
+    PreviewTheme {
+        AnimatedKrailLogo(logoColor = Color(0xFFF6891F))
     }
 }
 
 @Preview
 @Composable
 private fun PreviewSplashScreen() {
-    KrailTheme {
+    PreviewTheme {
         SplashScreen(
             splashState = SplashState(),
             onSplashAnimationComplete = {},

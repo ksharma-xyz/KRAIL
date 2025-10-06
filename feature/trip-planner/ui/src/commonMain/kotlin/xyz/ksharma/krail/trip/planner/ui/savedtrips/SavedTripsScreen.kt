@@ -45,6 +45,7 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
@@ -315,7 +316,7 @@ private fun SavedTripsTitle(
 
 @Composable
 private fun SavedTripsScreenPreview() {
-    KrailTheme {
+    PreviewTheme {
         SavedTripsScreen(savedTripsState = SavedTripsState())
     }
 }

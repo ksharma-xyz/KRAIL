@@ -61,6 +61,7 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.ActionData
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -443,7 +444,7 @@ fun ActionButton(
 
 @Composable
 private fun PreviewTimeTableScreen() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             TimeTableScreen(
@@ -488,7 +489,7 @@ private fun PreviewTimeTableScreen() {
 
 @Composable
 private fun PreviewTimeTableScreenError() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             TimeTableScreen(
@@ -515,7 +516,7 @@ private fun PreviewTimeTableScreenError() {
 
 @Composable
 private fun PreviewTimeTableScreenNoResults() {
-    KrailTheme {
+    PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             TimeTableScreen(

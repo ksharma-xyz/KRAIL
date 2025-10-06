@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +25,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun ParkAndRideIcon() {
@@ -61,7 +59,7 @@ fun ParkAndRideIcon() {
 @Preview
 @Composable
 private fun ParkAndRideIconPreview() {
-    KrailTheme {
+    PreviewTheme {
         ParkAndRideIcon()
     }
 }
@@ -69,13 +67,7 @@ private fun ParkAndRideIconPreview() {
 @Preview
 @Composable
 private fun ParkAndRideIconThemedPreview() {
-    KrailTheme {
-        val themeColorHexCode =
-            rememberSaveable { mutableStateOf(KrailThemeStyle.Metro.hexColorCode) }
-        CompositionLocalProvider(
-            LocalThemeColor provides themeColorHexCode,
-        ) {
-            ParkAndRideIcon()
-        }
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        ParkAndRideIcon()
     }
 }

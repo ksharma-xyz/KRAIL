@@ -28,10 +28,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 data class ParkRideFacilityInfo(
     val facilityName: String,
@@ -157,113 +157,93 @@ fun ParkRideInfoText(
 @Preview
 @Composable
 private fun ParkRideInfoCardPreview_SingleStop() {
-    KrailTheme {
-        Column(
-            modifier = Modifier.background(
-                color = KrailThemeStyle.Metro.hexColorCode.hexToComposeColor(),
-            ),
-        ) {
-            ParkRideInfoCard(
-                parkRideInfo = mapOf(
-                    "211" to listOf(
-                        ParkRideFacilityInfo(
-                            facilityName = "Tallawong P1",
-                            availableSpots = "100",
-                            fullPercentage = "50%",
-                        ),
-                    ).toImmutableList(),
-                ).toImmutableMap(),
-                onNavigateToMapsClick = { _ -> },
-            )
-        }
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        ParkRideInfoCard(
+            parkRideInfo = mapOf(
+                "211" to listOf(
+                    ParkRideFacilityInfo(
+                        facilityName = "Tallawong P1",
+                        availableSpots = "100",
+                        fullPercentage = "50%",
+                    ),
+                ).toImmutableList(),
+            ).toImmutableMap(),
+            onNavigateToMapsClick = { _ -> },
+        )
     }
 }
 
 @Preview
 @Composable
 private fun ParkRideInfoCardPreview_SingleStopMultipleFacilities() {
-    KrailTheme {
-        Column(
-            modifier = Modifier.background(
-                color = KrailThemeStyle.Metro.hexColorCode.hexToComposeColor(),
-            ),
-        ) {
-            ParkRideInfoCard(
-                parkRideInfo = mapOf(
-                    "999" to listOf(
-                        ParkRideFacilityInfo(
-                            facilityName = "Alpha P1",
-                            availableSpots = "10",
-                            fullPercentage = "10%",
-                        ),
-                        ParkRideFacilityInfo(
-                            facilityName = "Alpha P2",
-                            availableSpots = "20",
-                            fullPercentage = "20%",
-                        ),
-                    ).toImmutableList(),
-                ).toImmutableMap(),
-                onNavigateToMapsClick = { _ -> },
-            )
-        }
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        ParkRideInfoCard(
+            parkRideInfo = mapOf(
+                "999" to listOf(
+                    ParkRideFacilityInfo(
+                        facilityName = "Alpha P1",
+                        availableSpots = "10",
+                        fullPercentage = "10%",
+                    ),
+                    ParkRideFacilityInfo(
+                        facilityName = "Alpha P2",
+                        availableSpots = "20",
+                        fullPercentage = "20%",
+                    ),
+                ).toImmutableList(),
+            ).toImmutableMap(),
+            onNavigateToMapsClick = { _ -> },
+        )
     }
 }
 
 @Preview
 @Composable
 private fun ParkRideInfoCardPreview_MultipleStops() {
-    KrailTheme {
-        Column(
-            modifier = Modifier.background(
-                color = KrailThemeStyle.Metro.hexColorCode.hexToComposeColor(),
-            ),
-        ) {
-            ParkRideInfoCard(
-                parkRideInfo = mapOf(
-                    "211" to listOf(
-                        ParkRideFacilityInfo(
-                            facilityName = "Tallawong P1",
-                            availableSpots = "100",
-                            fullPercentage = "50%",
-                        ),
-                        ParkRideFacilityInfo(
-                            facilityName = "Tallawong P2",
-                            availableSpots = "200",
-                            fullPercentage = "75%",
-                        ),
-                    ).toImmutableList(),
-                    "212" to listOf(
-                        ParkRideFacilityInfo(
-                            facilityName = "Hornsby P1",
-                            availableSpots = "100",
-                            fullPercentage = "50%",
-                        ),
-                        ParkRideFacilityInfo(
-                            facilityName = "Hornsby P2",
-                            availableSpots = "200",
-                            fullPercentage = "75%",
-                        ),
-                    ).toImmutableList(),
-                ).toImmutableMap(),
-                onNavigateToMapsClick = { _ -> },
-            )
-        }
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        ParkRideInfoCard(
+            parkRideInfo = mapOf(
+                "211" to listOf(
+                    ParkRideFacilityInfo(
+                        facilityName = "Tallawong P1",
+                        availableSpots = "100",
+                        fullPercentage = "50%",
+                    ),
+                    ParkRideFacilityInfo(
+                        facilityName = "Tallawong P2",
+                        availableSpots = "200",
+                        fullPercentage = "75%",
+                    ),
+                ).toImmutableList(),
+                "212" to listOf(
+                    ParkRideFacilityInfo(
+                        facilityName = "Hornsby P1",
+                        availableSpots = "100",
+                        fullPercentage = "50%",
+                    ),
+                    ParkRideFacilityInfo(
+                        facilityName = "Hornsby P2",
+                        availableSpots = "200",
+                        fullPercentage = "75%",
+                    ),
+                ).toImmutableList(),
+            ).toImmutableMap(),
+            onNavigateToMapsClick = { _ -> },
+        )
     }
 }
 
 @Preview
 @Composable
 private fun ParkRideFacilityItemPreview() {
-    KrailTheme {
-        Column(modifier = Modifier.background(color = Color.White)) {
-            ParkRideFacilityItem(
-                parkRideFacilityInfo = ParkRideFacilityInfo(
-                    facilityName = "Tallawong P1",
-                    availableSpots = "100",
-                    fullPercentage = "50%",
-                ),
-            )
-        }
+    PreviewTheme {
+        ParkRideFacilityItem(
+            parkRideFacilityInfo = ParkRideFacilityInfo(
+                facilityName = "Tallawong P1",
+                availableSpots = "100",
+                fullPercentage = "50%",
+            ),
+        )
     }
 }
 

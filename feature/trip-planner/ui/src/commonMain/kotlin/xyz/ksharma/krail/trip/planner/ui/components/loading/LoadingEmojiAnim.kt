@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun LoadingEmojiAnim(
@@ -75,7 +76,7 @@ fun LoadingEmojiAnim(
 @Preview
 @Composable
 private fun Preview() {
-    KrailTheme {
+    PreviewTheme {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             LoadingEmojiAnim(emoji = "\uD83D\uDE80")
         }

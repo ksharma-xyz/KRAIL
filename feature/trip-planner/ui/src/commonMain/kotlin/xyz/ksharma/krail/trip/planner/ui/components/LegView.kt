@@ -345,7 +345,7 @@ private fun StopsRow(
 @Preview
 @Composable
 private fun PreviewLegView() {
-    KrailTheme {
+    PreviewTheme {
         LegView(
             routeText = "towards AVC via XYZ Rd",
             transportModeLine = TransportModeLine(
@@ -377,7 +377,7 @@ private fun PreviewLegView() {
 @Preview
 @Composable
 private fun PreviewLegViewTwoStops() {
-    KrailTheme {
+    PreviewTheme {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
@@ -404,7 +404,7 @@ private fun PreviewLegViewTwoStops() {
 @Preview
 @Composable
 private fun PreviewLegViewMetro() {
-    KrailTheme {
+    PreviewTheme {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
@@ -431,7 +431,7 @@ private fun PreviewLegViewMetro() {
 @Preview
 @Composable
 private fun PreviewLegViewFerry() {
-    KrailTheme {
+    PreviewTheme {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
@@ -458,7 +458,7 @@ private fun PreviewLegViewFerry() {
 @Preview
 @Composable
 private fun PreviewLegViewLightRail() {
-    KrailTheme {
+    PreviewTheme {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
@@ -515,7 +515,7 @@ private fun PreviewStopsRow_LargeFont() {
 @Preview
 @Composable
 private fun PreviewProminentStopInfo() {
-    KrailTheme {
+    PreviewTheme {
         StopInfo(
             time = "12:00",
             name = "XYZ Station, Platform 1",
@@ -529,7 +529,7 @@ private fun PreviewProminentStopInfo() {
 @Preview
 @Composable
 private fun PreviewRouteSummary() {
-    KrailTheme {
+    PreviewTheme {
         RouteSummary(
             routeText = "towards AVC via XYZ Rd",
             modifier = Modifier.background(KrailTheme.colors.surface),

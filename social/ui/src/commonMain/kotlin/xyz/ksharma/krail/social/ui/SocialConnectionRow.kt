@@ -15,6 +15,7 @@ import xyz.ksharma.krail.discover.state.Button.Social.PartnerSocial.PartnerSocia
 import xyz.ksharma.krail.social.state.KrailSocialType
 import xyz.ksharma.krail.taj.components.SocialConnectionIcon
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun SocialConnectionRow(
@@ -72,7 +73,7 @@ fun SocialConnectionRow(
 @Preview
 @Composable
 private fun SocialConnectionRowPreview() {
-    KrailTheme {
+    PreviewTheme {
         SocialConnectionRow(
             socialLinks = KrailSocialType.entries,
             onClick = {},

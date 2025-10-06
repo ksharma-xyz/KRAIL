@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun Divider(
@@ -50,7 +51,7 @@ enum class DividerType {
 
 @Composable
 private fun DividerPreview() {
-    KrailTheme {
+    PreviewTheme {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -65,7 +66,7 @@ private fun DividerPreview() {
 
 @Composable
 private fun DividerVerticalPreview() {
-    KrailTheme {
+    PreviewTheme {
         Box(
             modifier = Modifier
                 .size(30.dp)

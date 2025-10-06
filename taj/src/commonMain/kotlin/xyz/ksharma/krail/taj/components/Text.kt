@@ -18,6 +18,7 @@ import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun Text(
@@ -82,7 +83,7 @@ fun Text(
 @Preview
 @Composable
 private fun TextPreview() {
-    KrailTheme {
+    PreviewTheme {
         Column(modifier = Modifier.background(color = KrailTheme.colors.surface)) {
             Text(text = "Typography")
             Text(text = "DisplayLarge", style = KrailTheme.typography.displayLarge)
@@ -95,7 +96,7 @@ private fun TextPreview() {
 @Preview
 @Composable
 private fun TextWithColorPreview() {
-    KrailTheme {
+    PreviewTheme {
         Column(modifier = Modifier.background(color = KrailTheme.colors.surface)) {
             Text(text = "Typography", color = KrailTheme.colors.error)
         }

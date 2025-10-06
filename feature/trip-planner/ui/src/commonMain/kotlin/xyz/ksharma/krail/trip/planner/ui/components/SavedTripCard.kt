@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,12 +23,13 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -103,33 +101,27 @@ fun SavedTripCard(
 @Preview
 @Composable
 private fun SavedTripCardPreview() {
-    KrailTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SavedTripCard(
-                trip = Trip(
-                    fromStopId = "1",
-                    fromStopName = "Edmondson Park Station",
-                    toStopId = "2",
-                    toStopName = "Harris Park Station",
-                ),
-                primaryTransportMode = TransportMode.Train(),
-                onCardClick = {},
-                onStarClick = {},
-                modifier = Modifier.background(color = KrailTheme.colors.surface),
-            )
-        }
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
+        SavedTripCard(
+            trip = Trip(
+                fromStopId = "1",
+                fromStopName = "Edmondson Park Station",
+                toStopId = "2",
+                toStopName = "Harris Park Station",
+            ),
+            primaryTransportMode = TransportMode.Train(),
+            onCardClick = {},
+            onStarClick = {},
+        )
     }
 }
 
 @Preview
 @Composable
 private fun SavedTripCardListPreview() {
-    KrailTheme {
+    PreviewTheme {
         Column(
-            modifier = Modifier
-                .background(color = KrailTheme.colors.surface)
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SavedTripCard(
@@ -171,11 +163,11 @@ private fun SavedTripCardListPreview() {
             SavedTripCard(
                 trip = Trip(
                     fromStopId = "1",
-                    fromStopName = "Manly Wharf",
+                    fromStopName = "Central Station",
                     toStopId = "2",
-                    toStopName = "Circular Quay Wharf",
+                    toStopName = "Town Hall Station",
                 ),
-                primaryTransportMode = null,
+                primaryTransportMode = TransportMode.Metro(),
                 onCardClick = {},
                 onStarClick = {},
             )

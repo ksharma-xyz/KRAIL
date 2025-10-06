@@ -19,6 +19,7 @@ import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 
 @Composable
@@ -55,7 +56,7 @@ fun TransportModeBadge(
 @Preview
 @Composable
 private fun TransportModeBadgeBusPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeBadge(
             badgeText = "700",
             backgroundColor = "00B5EF".hexToComposeColor(),
@@ -63,9 +64,10 @@ private fun TransportModeBadgeBusPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun TransportModeBadgeTrainPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeBadge(
             badgeText = "T1",
             backgroundColor = "#F6891F".hexToComposeColor(),
@@ -73,9 +75,10 @@ private fun TransportModeBadgeTrainPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun TransportModeBadgeFerryPreview() {
-    KrailTheme {
+    PreviewTheme {
         TransportModeBadge(
             badgeText = "F1",
             backgroundColor = "#5AB031".hexToComposeColor(),

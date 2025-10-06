@@ -1,9 +1,9 @@
 package xyz.ksharma.krail
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 
 class MainActivity : AppCompatActivity() {

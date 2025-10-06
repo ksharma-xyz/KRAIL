@@ -4,7 +4,6 @@ import android.app.UiModeManager
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
-import kotlinx.coroutines.Job
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.theme.ThemeMode
 

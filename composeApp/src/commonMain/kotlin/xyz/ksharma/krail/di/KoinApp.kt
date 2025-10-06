@@ -22,8 +22,8 @@ import xyz.ksharma.krail.io.gtfs.di.gtfsModule
 import xyz.ksharma.krail.park.ride.network.di.parkRideNetworkModule
 import xyz.ksharma.krail.platform.ops.di.opsModule
 import xyz.ksharma.krail.sandook.di.sandookModule
-import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.splash.SplashViewModel
+import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.trip.planner.network.api.di.tripPlannerNetworkModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 

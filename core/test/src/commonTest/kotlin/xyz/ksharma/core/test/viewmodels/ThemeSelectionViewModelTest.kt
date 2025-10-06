@@ -10,11 +10,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
 import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.trip.planner.ui.state.usualride.ThemeSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import kotlin.test.AfterTest
@@ -34,6 +37,7 @@ class ThemeSelectionViewModelTest {
     private lateinit var viewModel: ThemeSelectionViewModel
 
     private val testDispatcher = StandardTestDispatcher()
+    private val fakePreferences = FakeSandookPreferences()
 
     @BeforeTest
     fun setUp() {
@@ -41,7 +45,8 @@ class ThemeSelectionViewModelTest {
         viewModel = ThemeSelectionViewModel(
             sandook = fakeSandook,
             analytics = fakeAnalytics,
-            ioDispatcher = testDispatcher
+            ioDispatcher = testDispatcher,
+            preferences = fakePreferences,
         )
     }
 
@@ -156,5 +161,23 @@ class ThemeSelectionViewModelTest {
 
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `GIVEN different theme modes WHEN ThemeModeSelected is triggered multiple times THEN preferences updates with latest theme mode code`() =
+        runTest {
+            // WHEN - Set to dark mode first
+            viewModel.onEvent(ThemeSelectionEvent.ThemeModeSelected(ThemeMode.DARK.code))
+            advanceUntilIdle()
+
+            // THEN
+            assertEquals(ThemeMode.DARK.code, fakePreferences.getLong(SandookPreferences.KEY_THEME_MODE))
+
+            // WHEN - Change to system mode
+            viewModel.onEvent(ThemeSelectionEvent.ThemeModeSelected(ThemeMode.SYSTEM.code))
+            advanceUntilIdle()
+
+            // THEN
+            assertEquals(ThemeMode.SYSTEM.code, fakePreferences.getLong(SandookPreferences.KEY_THEME_MODE))
         }
 }

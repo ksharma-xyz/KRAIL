@@ -4,10 +4,7 @@ import android.app.UiModeManager
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import org.koin.core.component.KoinComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.theme.ThemeMode
 
@@ -18,23 +15,17 @@ import xyz.ksharma.krail.taj.theme.ThemeMode
  */
 class AndroidThemeManagerImpl(
     val context: Context,
-    val coroutineScope: CoroutineScope,
 ) : ThemeManager {
 
-    var job: Job? = null
-
     override fun applyThemeMode(themeMode: ThemeMode) {
-        job?.cancel()
-        job = coroutineScope.launch {
-            log("Applying theme mode: $themeMode")
-            val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-            val nightMode = themeMode.toNightMode()
+        log("Applying theme mode: $themeMode")
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        val nightMode = themeMode.toNightMode()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                uiModeManager.setApplicationNightMode(nightMode)
-            } else {
-                AppCompatDelegate.setDefaultNightMode(nightMode)
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            uiModeManager.setApplicationNightMode(nightMode)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(nightMode)
         }
     }
 

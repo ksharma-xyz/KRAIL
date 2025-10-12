@@ -153,7 +153,7 @@ fun ThemeTextFieldPlaceholderText(
     text: String,
     isActive: Boolean,
     activeColor: Color = themeColor(),
-    inactiveColor: Color = KrailTheme.colors.labelPlaceholder,
+    inactiveColor: Color = KrailTheme.colors.onSurface,
     activeTextStyle: TextStyle = KrailTheme.typography.titleLarge,
     inactiveStyle: TextStyle = KrailTheme.typography.bodyLarge,
     maxLines: Int = 1,

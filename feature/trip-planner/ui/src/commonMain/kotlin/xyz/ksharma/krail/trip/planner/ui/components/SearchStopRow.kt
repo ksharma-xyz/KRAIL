@@ -21,10 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,14 +35,15 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 @Composable
@@ -84,7 +83,7 @@ fun SearchStopRow(
         ) {
             TextFieldButton(onClick = fromButtonClick) {
                 AnimatedContent(
-                    targetState = fromStopItem?.stopName ?: "Starting from",
+                    targetState = fromStopItem?.stopName ?: "From:",
                     transitionSpec = {
                         (
                             fadeIn(
@@ -116,7 +115,7 @@ fun SearchStopRow(
 
             TextFieldButton(onClick = toButtonClick) {
                 AnimatedContent(
-                    targetState = toStopItem?.stopName ?: "Destination",
+                    targetState = toStopItem?.stopName ?: "To:",
                     transitionSpec = {
                         (
                             fadeIn(
@@ -192,16 +191,26 @@ fun SearchStopRow(
 
 // region Previews
 
+@Preview
 @Composable
 private fun SearchStopColumnPreview() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopRow(
-                fromButtonClick = {},
-                toButtonClick = {},
-            )
-        }
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        SearchStopRow(
+            fromButtonClick = {},
+            toButtonClick = {},
+        )
+    }
+}
+
+
+@Preview
+@Composable
+private fun SearchStopColumnMetroPreview() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        SearchStopRow(
+            fromButtonClick = {},
+            toButtonClick = {},
+        )
     }
 }
 

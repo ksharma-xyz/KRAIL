@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,15 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.LocalThemeController
-import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 
 @Composable
 fun ThemeSelectionScreen(
@@ -69,8 +65,8 @@ fun ThemeSelectionScreen(
 
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(
-                    text = "Let's set the vibe!",
-                    style = KrailTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal),
+                    text = "Pick your favourite colour!",
+                    style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
                     modifier = Modifier
                         .padding(horizontal = 24.dp)
                         .padding(bottom = 32.dp),
@@ -82,6 +78,7 @@ fun ThemeSelectionScreen(
                         selected = selectedThemeColorId == theme.id,
                         onClick = { clickedThemeStyle ->
                             selectedThemeColorId = clickedThemeStyle.id
+                            onThemeSelected(clickedThemeStyle.id)
                         },
                     )
                 }
@@ -106,23 +103,6 @@ fun ThemeSelectionScreen(
                     onThemeModeSelect(newTheme.code)
                 },
             )
-
-            Button(
-                colors = ButtonColors(
-                    containerColor = buttonBackgroundColor,
-                    contentColor = getForegroundColor(buttonBackgroundColor),
-                    disabledContainerColor = buttonBackgroundColor.copy(alpha = DisabledContentAlpha),
-                    disabledContentColor = getForegroundColor(
-                        buttonBackgroundColor,
-                    ).copy(alpha = DisabledContentAlpha),
-                ),
-                onClick = {
-                    onThemeSelected(selectedThemeColorId)
-                },
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
-            ) {
-                Text(text = "Let's #KRAIL")
-            }
         }
     }
 }

@@ -83,7 +83,7 @@ fun SearchStopRow(
         ) {
             TextFieldButton(onClick = fromButtonClick) {
                 AnimatedContent(
-                    targetState = fromStopItem?.stopName ?: "From:",
+                    targetState = fromStopItem?.stopName ?: "Starting from",
                     transitionSpec = {
                         (
                             fadeIn(
@@ -107,15 +107,13 @@ fun SearchStopRow(
                     ThemeTextFieldPlaceholderText(
                         text = targetText,
                         isActive = fromStopItem != null,
-                        activeColor = themeColor.hexToComposeColor(),
-                        maxLines = 1,
                     )
                 }
             }
 
             TextFieldButton(onClick = toButtonClick) {
                 AnimatedContent(
-                    targetState = toStopItem?.stopName ?: "To:",
+                    targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
                         (
                             fadeIn(
@@ -139,8 +137,6 @@ fun SearchStopRow(
                     ThemeTextFieldPlaceholderText(
                         text = targetText,
                         isActive = toStopItem != null,
-                        activeColor = themeColor.hexToComposeColor(),
-                        maxLines = 1,
                     )
                 }
             }
@@ -201,7 +197,6 @@ private fun SearchStopColumnPreview() {
         )
     }
 }
-
 
 @Preview
 @Composable

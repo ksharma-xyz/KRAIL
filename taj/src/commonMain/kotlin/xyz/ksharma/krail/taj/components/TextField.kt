@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
+import xyz.ksharma.krail.taj.components.TextFieldPlaceholderDefaults.MAX_LINES
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -148,40 +150,84 @@ fun TextField(
     }
 }
 
+// region Placeholder
+
 @Composable
 fun ThemeTextFieldPlaceholderText(
     text: String,
     isActive: Boolean,
-    activeColor: Color = themeColor(),
-    inactiveColor: Color = KrailTheme.colors.onSurface,
-    activeTextStyle: TextStyle = KrailTheme.typography.titleLarge,
-    inactiveStyle: TextStyle = KrailTheme.typography.bodyLarge,
-    maxLines: Int = 1,
+    modifier: Modifier = Modifier,
+    colors: TextFieldPlaceholderColors = TextFieldPlaceholderDefaults.colors(),
+    textStyles: TextFieldPlaceholderTextStyles = TextFieldPlaceholderDefaults.textStyles(),
 ) {
     CompositionLocalProvider(
-        LocalTextColor provides if (isActive) activeColor else inactiveColor,
-        LocalTextStyle provides if (isActive) activeTextStyle else inactiveStyle,
+        LocalTextColor provides if (isActive) colors.activeColor else colors.inactiveColor,
+        LocalTextStyle provides if (isActive) textStyles.activeTextStyle else textStyles.inactiveTextStyle,
     ) {
         TextFieldPlaceholder(
             placeholder = text,
             color = LocalTextColor.current,
-            maxLines = maxLines,
+            maxLines = MAX_LINES,
+            modifier = modifier,
+        )
+    }
+}
+
+@Immutable
+data class TextFieldPlaceholderColors(
+    val activeColor: Color,
+    val inactiveColor: Color,
+)
+
+@Immutable
+data class TextFieldPlaceholderTextStyles(
+    val activeTextStyle: TextStyle,
+    val inactiveTextStyle: TextStyle,
+)
+
+object TextFieldPlaceholderDefaults {
+
+    const val MAX_LINES: Int = 1
+
+    @Composable
+    fun colors(
+        activeColor: Color = themeColor(),
+        inactiveColor: Color = KrailTheme.colors.onSurface,
+    ): TextFieldPlaceholderColors {
+        return TextFieldPlaceholderColors(
+            activeColor = activeColor,
+            inactiveColor = inactiveColor,
+        )
+    }
+
+    @Composable
+    fun textStyles(
+        activeTextStyle: TextStyle = KrailTheme.typography.titleLarge,
+        inactiveTextStyle: TextStyle = KrailTheme.typography.bodyLarge,
+    ): TextFieldPlaceholderTextStyles {
+        return TextFieldPlaceholderTextStyles(
+            activeTextStyle = activeTextStyle,
+            inactiveTextStyle = inactiveTextStyle,
         )
     }
 }
 
 @Composable
 private fun TextFieldPlaceholder(
+    modifier: Modifier = Modifier,
     placeholder: String? = null,
     color: Color = KrailTheme.colors.labelPlaceholder,
-    maxLines: Int = 1,
+    maxLines: Int = MAX_LINES,
 ) {
     Text(
         text = placeholder.orEmpty(),
         color = color,
         maxLines = maxLines,
+        modifier = modifier,
     )
 }
+
+// endregion
 
 // region Previews
 

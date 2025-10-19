@@ -83,7 +83,7 @@ class RealDiscoverCardOrderingEngineTest {
     }
 
     @Test
-    fun `getSortedCards - seen today events are filtered out`() = runTest {
+    fun `getSortedCards - seen today events appear at top of seen cards`() = runTest {
         val cards = listOf(
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Seen Event", today.toString(), today.toString()),
@@ -95,11 +95,11 @@ class RealDiscoverCardOrderingEngineTest {
 
         val result = orderingEngine.getSortedCards(cards)
 
-        assertEquals(3, result.size) // Seen today event filtered out
+        assertEquals(4, result.size) // Seen today event now included
         assertEquals("card3", result[0].cardId) // Unseen today event first
         assertEquals("card1", result[1].cardId) // Regular unseen second
         assertEquals("card4", result[2].cardId) // Regular unseen third
-        // card2 (seen today event) should not appear in results
+        assertEquals("card2", result[3].cardId) // Seen today event at top of seen cards
     }
 
     @Test
@@ -158,7 +158,7 @@ class RealDiscoverCardOrderingEngineTest {
     }
 
     @Test
-    fun `getSortedCards - today seen event is filtered out`() = runTest {
+    fun `getSortedCards - today seen event appears at top of seen cards`() = runTest {
         val cards = listOf(
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Seen", today.toString(), today.toString()),
@@ -169,10 +169,10 @@ class RealDiscoverCardOrderingEngineTest {
 
         val result = orderingEngine.getSortedCards(cards)
 
-        assertEquals(2, result.size) // Seen today event filtered out
+        assertEquals(3, result.size) // Seen today event now included
         assertEquals("card1", result[0].cardId) // Regular unseen first
         assertEquals("card3", result[1].cardId) // Regular unseen second
-        // card2 should not appear in results
+        assertEquals("card2", result[2].cardId) // Seen today event at top of seen cards
     }
 
     @Test
@@ -190,12 +190,13 @@ class RealDiscoverCardOrderingEngineTest {
 
         val result = orderingEngine.getSortedCards(cards)
 
-        assertEquals(4, result.size) // Past event AND seen today event filtered out
+        assertEquals(5, result.size) // Only past event filtered out, seen today event now included
         assertEquals("card2", result[0].cardId) // Today single unseen first
         assertEquals("card1", result[1].cardId) // Regular unseen second
         assertEquals("card4", result[2].cardId) // Today multi-day unseen third
-        assertEquals("card5", result[3].cardId) // Regular seen fourth
-        // card6 (seen today event) and card3 (past event) should not appear
+        assertEquals("card6", result[3].cardId) // Seen today event at top of seen cards
+        assertEquals("card5", result[4].cardId) // Regular seen fifth
+        // Only card3 (past event) should not appear
     }
 
     @Test

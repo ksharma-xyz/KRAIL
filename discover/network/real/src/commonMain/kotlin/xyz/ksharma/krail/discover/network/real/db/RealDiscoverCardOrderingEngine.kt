@@ -56,7 +56,8 @@ class RealDiscoverCardOrderingEngine(
      * Sorts the cards based on the following priority:
      * 1. Unseen today events (where startDate == endDate == today) at the top.
      * 2. All other unseen cards.
-     * 3. All other seen cards.
+     * 3. Seen today events.
+     * 4. All other seen cards.
      */
     private fun sortCardsByPriority(
         cards: List<DiscoverModel>,
@@ -66,9 +67,10 @@ class RealDiscoverCardOrderingEngine(
         val (todayEvents, otherCards) = cards.partition { it.isTodayEvent(today) }
 
         val unseenTodayEvents = todayEvents.filterNot { it.cardId in seenCardIds }
+        val seenTodayEvents = todayEvents.filter { it.cardId in seenCardIds }
         val (seenOthers, unseenOthers) = otherCards.partition { it.cardId in seenCardIds }
 
-        return unseenTodayEvents + unseenOthers + seenOthers
+        return unseenTodayEvents + unseenOthers + seenTodayEvents + seenOthers
     }
 
     private fun logSortingResults(

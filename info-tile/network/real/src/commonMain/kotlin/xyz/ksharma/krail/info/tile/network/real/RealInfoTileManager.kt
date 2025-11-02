@@ -2,13 +2,13 @@ package xyz.ksharma.krail.info.tile.network.real
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.remote_config.JsonConfig
 import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remote_config.flag.Flag
 import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
@@ -119,7 +119,7 @@ class RealInfoTileManager(
         }
 
         return try {
-            Json.decodeFromString<List<InfoTileData>>(jsonStr)
+            JsonConfig.lenient.decodeFromString<List<InfoTileData>>(jsonStr)
         } catch (e: Exception) {
             logError("Error decoding info tiles json : $jsonStr", e)
             emptyList()

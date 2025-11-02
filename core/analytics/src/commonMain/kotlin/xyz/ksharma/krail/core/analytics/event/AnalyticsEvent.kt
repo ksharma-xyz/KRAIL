@@ -237,7 +237,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     ) {
         enum class EntryPoint(val from: String) {
-            SETTINGS("settings"), INTRO_BUTTON("intro_button"), INTRO_CONTENT_BUTTON("intro_content_button"),
+            SETTINGS("settings"),
+            INTRO_BUTTON("intro_button"),
+            INTRO_CONTENT_BUTTON("intro_content_button"),
+            SAVED_TRIPS("saved_trips_tile"),
         }
     }
 

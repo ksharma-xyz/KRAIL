@@ -37,7 +37,9 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import krail.feature.trip_planner.ui.generated.resources.ic_sydney
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -161,6 +163,43 @@ fun SavedTripsScreen(
                             )
                         }
 
+                        // Show invite friends tile only if user has 2+ saved trips and it's not in remote config
+                        val hasInviteFriendsInRemoteConfig =
+                            savedTripsState.infoTiles?.any { tile ->
+                                tile.key.startsWith("invite_friends", ignoreCase = true) ||
+                                        tile.type == InfoTileData.InfoTileType.INVITE_FRIENDS
+                            } ?: false
+
+                        val shouldShowInviteFriends = savedTripsState.savedTrips.size >= 2 &&
+                                !hasInviteFriendsInRemoteConfig
+
+                        if (shouldShowInviteFriends) {
+                            item(key = "invite_friends_tile_hardcoded") {
+                                InfoTile(
+                                    infoTileData = InfoTileData(
+                                        key = "invite_friends_hardcoded",
+                                        title = "Invite Your Friends",
+                                        description = "You’re the reason KRAIL is ad-free. Share it with friends and help Sydney ride better.",
+                                        primaryCta = InfoTileCta(
+                                            text = "Invite",
+                                            url = null, // Using nullable url from this version
+                                        ),
+                                        type = InfoTileData.InfoTileType.INVITE_FRIENDS,
+                                        showDismissButton = false,
+                                    ),
+                                    initialState = InfoTileState.EXPANDED,
+                                    onCtaClick = { tileData ->
+                                        onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                    },
+                                    onDismissClick = { },
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 8.dp
+                                    ),
+                                )
+                            }
+                        }
+
                         savedTripsContent(
                             savedTripsState = savedTripsState,
                             onEvent = onEvent,
@@ -206,7 +245,6 @@ private fun LazyListScope.infoTiles(
                 infoTileData = tileData,
                 onCtaClick = onCtaClick,
                 onDismissClick = {
-                    visible = false
                     onDismissClick(tileData)
                 },
                 onTileExpand = onTileExpand,

@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.core.festival
 
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.festival.model.*
 import xyz.ksharma.krail.core.remote_config.flag.Flag

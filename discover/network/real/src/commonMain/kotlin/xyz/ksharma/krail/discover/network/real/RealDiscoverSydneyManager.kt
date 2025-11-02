@@ -2,11 +2,11 @@ package xyz.ksharma.krail.discover.network.real
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.remoteconfig.JsonConfig
 import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
@@ -25,11 +25,6 @@ internal class RealDiscoverSydneyManager(
     // Cache the parsed JSON card list to avoid repeated parsing.
     private var cachedFlagValue: FlagValue? = null
     private var cachedParsedCards: List<DiscoverModel>? = null
-
-    private val json = Json {
-        ignoreUnknownKeys = true // Ignore unknown keys in JSON
-        isLenient = true // Allow lenient parsing
-    }
 
     /**
      * Fetches Discover cards for the UI.
@@ -74,8 +69,8 @@ internal class RealDiscoverSydneyManager(
         return withContext(defaultDispatcher) {
             when (flagValue) {
                 is FlagValue.JsonValue -> {
-                    val jsonArray = json.parseToJsonElement(flagValue.value).jsonArray
-                    jsonArray.map { json.decodeFromJsonElement<DiscoverModel>(it) }
+                    val jsonArray = JsonConfig.lenient.parseToJsonElement(flagValue.value).jsonArray
+                    jsonArray.map { JsonConfig.lenient.decodeFromJsonElement<DiscoverModel>(it) }
                 }
 
                 else -> {
@@ -85,8 +80,8 @@ internal class RealDiscoverSydneyManager(
                     if (defaultJson == null) {
                         emptyList()
                     } else {
-                        val jsonArray = json.parseToJsonElement(defaultJson).jsonArray
-                        jsonArray.map { json.decodeFromJsonElement<DiscoverModel>(it) }
+                        val jsonArray = JsonConfig.lenient.parseToJsonElement(defaultJson).jsonArray
+                        jsonArray.map { JsonConfig.lenient.decodeFromJsonElement<DiscoverModel>(it) }
                     }
                 }
             }

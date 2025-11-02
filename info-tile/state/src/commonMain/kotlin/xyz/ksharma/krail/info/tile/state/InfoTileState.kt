@@ -34,6 +34,7 @@ data class InfoTileData(
         CRITICAL_ALERT(1), // highest priority, should be shown at top of list
         INFO(priority = 100), // higher priority than app update
         APP_UPDATE(priority = 200), // lower priority than info, should be shown at bottom of list
+        INVITE_FRIENDS(priority = 500), // lowest priority
     }
 }
 
@@ -41,7 +42,7 @@ data class InfoTileData(
 @Serializable
 data class InfoTileCta(
     val text: String,
-    val url: String,
+    val url: String? = null,
 )
 
 enum class InfoTileState {

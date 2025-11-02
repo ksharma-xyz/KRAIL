@@ -56,17 +56,19 @@ object InfoTileDefaults {
     // endregion
 }
 
+@Suppress("LongParameterList")
 @Composable
 fun InfoTile(
     infoTileData: InfoTileData,
-    infoTileState: InfoTileState = InfoTileState.COLLAPSED,
     modifier: Modifier = Modifier,
+    initialState: InfoTileState = InfoTileState.COLLAPSED,
+    showDismissButton: Boolean = true,
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
     // required for analytics only
     onTileExpand: (InfoTileData) -> Unit = {},
 ) {
-    var state by rememberSaveable { mutableStateOf(infoTileState) }
+    var state by rememberSaveable { mutableStateOf(initialState) }
 
     Column(
         modifier = modifier
@@ -123,12 +125,14 @@ fun InfoTile(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             ) {
-                TextButton(
-                    onClick = { onDismissClick(infoTileData) },
-                    dimensions = ButtonDefaults.mediumButtonSize(),
-                    modifier = Modifier.padding(end = 12.dp),
-                ) {
-                    Text(text = infoTileData.dismissCtaText)
+                if (showDismissButton) {
+                    TextButton(
+                        onClick = { onDismissClick(infoTileData) },
+                        dimensions = ButtonDefaults.mediumButtonSize(),
+                        modifier = Modifier.padding(end = 12.dp),
+                    ) {
+                        Text(text = infoTileData.dismissCtaText)
+                    }
                 }
 
                 infoTileData.primaryCta?.let { cta ->
@@ -183,6 +187,28 @@ private fun InfoTileDarkPreview() {
                 description = "All lines are now operating on their regular schedules.",
                 type = InfoTileData.InfoTileType.INFO,
             ),
+            onCtaClick = {},
+            onDismissClick = {},
+        )
+    }
+}
+
+@Preview(name = "InfoTile Expanded No Dismiss")
+@Composable
+private fun InfoTileExpandedNoDismissPreview() {
+    PreviewTheme {
+        InfoTile(
+            infoTileData = InfoTileData(
+                key = "expanded_tile",
+                title = "Always Expanded Tile",
+                description = "This tile starts expanded and has no dismiss button, perfect for persistent content.",
+                primaryCta = InfoTileCta(
+                    text = "Take Action",
+                ),
+                type = InfoTileData.InfoTileType.INFO,
+            ),
+            initialState = InfoTileState.EXPANDED,
+            showDismissButton = false,
             onCtaClick = {},
             onDismissClick = {},
         )

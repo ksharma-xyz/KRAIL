@@ -2,10 +2,10 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.remoteconfig.JsonConfig
 import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
@@ -126,7 +126,7 @@ class RealStopResultsManager(
         return when (this) {
             is FlagValue.JsonValue -> {
                 log("flagValue: ${this.value}")
-                val jsonObject = Json.parseToJsonElement(value).jsonObject
+                val jsonObject = JsonConfig.lenient.parseToJsonElement(value).jsonObject
                 jsonObject["stop_ids"]?.jsonArray?.map {
                     it.toString().trim('"')
                 } ?: emptyList()
@@ -135,7 +135,7 @@ class RealStopResultsManager(
             else -> {
                 val defaultJson: String = RemoteConfigDefaults.getDefaults()
                     .firstOrNull { it.first == FlagKeys.HIGH_PRIORITY_STOP_IDS.key }?.second as String
-                Json.parseToJsonElement(defaultJson).jsonArray.map {
+                JsonConfig.lenient.parseToJsonElement(defaultJson).jsonArray.map {
                     it.toString().trim('"')
                 }
             }

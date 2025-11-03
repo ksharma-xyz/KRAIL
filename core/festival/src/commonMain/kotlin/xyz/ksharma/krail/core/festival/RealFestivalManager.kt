@@ -2,22 +2,17 @@ package xyz.ksharma.krail.core.festival
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
-import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.festival.model.Festival
 import xyz.ksharma.krail.core.festival.model.FestivalData
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.remoteconfig.JsonConfig
 import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 
 internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
-
-    val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
 
     override fun emojiForDate(date: LocalDate): String {
         log("Fetching emoji for date: $date")
@@ -100,24 +95,26 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
         }
     }
 
-    private fun FlagValue.toFestivalData(): FestivalData? = when (this) {
-        is FlagValue.JsonValue -> {
-            try {
-                json.decodeFromString<FestivalData>(this.value)
-            } catch (e: Exception) {
-                logError("Error decoding festivals: ${e.message}", e)
-                null
+    private fun FlagValue.toFestivalData(): FestivalData? {
+        return when (this) {
+            is FlagValue.JsonValue -> {
+                try {
+                    JsonConfig.lenient.decodeFromString<FestivalData>(this.value)
+                } catch (e: Exception) {
+                    logError("Error decoding festivals: ${e.message}", e)
+                    null
+                }
             }
-        }
 
-        else -> {
-            val defaultJson: String = RemoteConfigDefaults.getDefaults()
-                .firstOrNull { it.first == FlagKeys.FESTIVALS.key }?.second as? String ?: "{}"
-            try {
-                json.decodeFromString<FestivalData>(defaultJson)
-            } catch (e: Exception) {
-                logError("Error decoding fallback, default festivals: ${e.message}", e)
-                null
+            else -> {
+                val defaultJson: String = RemoteConfigDefaults.getDefaults()
+                    .firstOrNull { it.first == FlagKeys.FESTIVALS.key }?.second as? String ?: "{}"
+                try {
+                    JsonConfig.lenient.decodeFromString<FestivalData>(defaultJson)
+                } catch (e: Exception) {
+                    logError("Error decoding fallback, default festivals: ${e.message}", e)
+                    null
+                }
             }
         }
     }

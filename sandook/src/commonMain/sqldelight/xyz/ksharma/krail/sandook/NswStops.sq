@@ -54,3 +54,9 @@ WHERE (
     OR s.stopName LIKE '%' || :stopName || '%'  -- Use named parameter :stopName
 )
 GROUP BY s.stopId;
+
+-- Check if a stop exists by stopId --
+checkStopExists:
+SELECT COUNT(*)
+FROM NswStops
+WHERE stopId = ?;

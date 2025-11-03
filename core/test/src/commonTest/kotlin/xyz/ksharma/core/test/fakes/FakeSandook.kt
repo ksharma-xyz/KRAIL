@@ -47,7 +47,9 @@ class FakeSandook : Sandook {
             fromStopName,
             toStopId,
             toStopName,
-            timestamp = null,
+            null, // timestamp
+            1L, // isFromStopValid - Long like database
+            1L, // isToStopValid - Long like database
         )
         val current = tripsFlow.value.toMutableList()
         current.removeAll { it.tripId == tripId }
@@ -75,6 +77,27 @@ class FakeSandook : Sandook {
 
     override fun clearSavedTrips() {
         tripsFlow.value = emptyList()
+    }
+
+    override fun updateStopValidity(
+        tripId: String,
+        isFromStopValid: Boolean,
+        isToStopValid: Boolean
+    ) {
+        val current = tripsFlow.value.toMutableList()
+        val index = current.indexOfFirst { it.tripId == tripId }
+        if (index != -1) {
+            val trip = current[index]
+            current[index] = trip.copy(
+                isFromStopValid = if (isFromStopValid) 1L else 0L,
+                isToStopValid = if (isToStopValid) 1L else 0L
+            )
+            tripsFlow.value = current
+        }
+    }
+
+    override fun checkStopExists(stopId: String): Boolean {
+        return stops.any { it.stopId == stopId }
     }
 
     // endregion

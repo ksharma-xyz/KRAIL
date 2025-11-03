@@ -11,9 +11,14 @@ data class Trip(
     val fromStopName: String,
     val toStopId: String,
     val toStopName: String,
+    val isFromStopValid: Boolean = true,
+    val isToStopValid: Boolean = true,
 ) {
     val tripId: String
         get() = "$fromStopId$toStopId"
+
+    val isValidTrip: Boolean
+        get() = isFromStopValid && isToStopValid
 
     fun toJsonString() = Json.encodeToString(serializer(), this)
 

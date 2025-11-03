@@ -7,6 +7,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.DefaultDispatcher
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
@@ -35,6 +36,7 @@ val viewModelsModule = module {
             platformOps = get(),
             preferences = get(),
             stopsManager = get(),
+            defaultDispatcher = get(named(DefaultDispatcher)),
         )
     }
 

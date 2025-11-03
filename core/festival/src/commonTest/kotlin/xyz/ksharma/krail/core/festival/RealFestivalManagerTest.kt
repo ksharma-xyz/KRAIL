@@ -1,12 +1,11 @@
 package xyz.ksharma.krail.core.festival
 
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.festival.model.*
-import xyz.ksharma.krail.core.remote_config.flag.Flag
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import kotlin.test.*
 
 class RealFestivalManagerTest {

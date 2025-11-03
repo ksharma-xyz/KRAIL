@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.core.remote_config.flag
+package xyz.ksharma.krail.core.remoteconfig.flag
 
 interface Flag {
     fun getFlagValue(key: String): FlagValue

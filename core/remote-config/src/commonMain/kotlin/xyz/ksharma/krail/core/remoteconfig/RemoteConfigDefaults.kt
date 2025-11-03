@@ -1,6 +1,6 @@
-package xyz.ksharma.krail.core.remote_config
+package xyz.ksharma.krail.core.remoteconfig
 
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 
 /**
  * Holds the default values for remote configuration.

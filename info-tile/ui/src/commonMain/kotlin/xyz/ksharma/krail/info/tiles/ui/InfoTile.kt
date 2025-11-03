@@ -62,7 +62,6 @@ fun InfoTile(
     infoTileData: InfoTileData,
     modifier: Modifier = Modifier,
     initialState: InfoTileState = InfoTileState.COLLAPSED,
-    showDismissButton: Boolean = true,
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
     // required for analytics only
@@ -125,7 +124,7 @@ fun InfoTile(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
             ) {
-                if (showDismissButton) {
+                if (infoTileData.showDismissButton) {
                     TextButton(
                         onClick = { onDismissClick(infoTileData) },
                         dimensions = ButtonDefaults.mediumButtonSize(),
@@ -206,9 +205,9 @@ private fun InfoTileExpandedNoDismissPreview() {
                     text = "Take Action",
                 ),
                 type = InfoTileData.InfoTileType.INFO,
+                showDismissButton = false,
             ),
             initialState = InfoTileState.EXPANDED,
-            showDismissButton = false,
             onCtaClick = {},
             onDismissClick = {},
         )

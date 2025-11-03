@@ -29,10 +29,10 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.core.remote_config.flag.Flag
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.asBoolean
-import xyz.ksharma.krail.core.remote_config.flag.asNumber
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
+import xyz.ksharma.krail.core.remoteconfig.flag.asNumber
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.info.tile.network.api.InfoTileManager
 import xyz.ksharma.krail.info.tile.state.InfoTileData
@@ -48,6 +48,7 @@ import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -623,12 +624,31 @@ class SavedTripsViewModel(
     }
 
     private fun onInfoTileCtaClick(infoTile: InfoTileData) {
-        infoTile.primaryCta?.url?.let { url ->
-            platformOps.openUrl(url)
-            trackInfoTileInteraction(
-                key = infoTile.key,
-                url = url,
-            )
+        when (infoTile.type) {
+            InfoTileData.InfoTileType.INVITE_FRIENDS -> {
+                platformOps.sharePlainText(
+                    text = getReferText(),
+                    title = "Invite your Friends",
+                )
+                analytics.track(
+                    event = AnalyticsEvent.ReferFriend(
+                        entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SAVED_TRIPS,
+                    ),
+                )
+            }
+
+            InfoTileData.InfoTileType.CRITICAL_ALERT,
+            InfoTileData.InfoTileType.INFO,
+            InfoTileData.InfoTileType.APP_UPDATE,
+            -> {
+                infoTile.primaryCta?.url?.let { url ->
+                    platformOps.openUrl(url)
+                    trackInfoTileInteraction(
+                        key = infoTile.key,
+                        url = url,
+                    )
+                }
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.core.remote_config.flag
+package xyz.ksharma.krail.core.remoteconfig.flag
 
 sealed class FlagValue {
     data class BooleanValue(val value: Boolean) : FlagValue()

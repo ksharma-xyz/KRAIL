@@ -8,11 +8,11 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.core.remote_config.JsonConfig
-import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
-import xyz.ksharma.krail.core.remote_config.flag.Flag
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.JsonConfig
+import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.info.tile.network.api.InfoTileManager
 import xyz.ksharma.krail.info.tile.network.api.InfoTileManager.Companion.MAX_INFO_TILE_COUNT
 import xyz.ksharma.krail.info.tile.network.api.db.isInfoTileDismissed

@@ -15,7 +15,7 @@ import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.core.di.coroutineDispatchersModule
 import xyz.ksharma.krail.core.festival.di.festivalModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
-import xyz.ksharma.krail.core.remote_config.di.remoteConfigModule
+import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
 import xyz.ksharma.krail.info.tile.network.real.di.infoTileModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule

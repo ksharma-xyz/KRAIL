@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
-import xyz.ksharma.krail.core.remote_config.flag.Flag
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.asString
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asString
 import xyz.ksharma.krail.trip.planner.ui.MoleculeViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryEvent
 import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryState

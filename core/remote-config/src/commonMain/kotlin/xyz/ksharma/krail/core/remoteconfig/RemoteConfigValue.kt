@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.core.remote_config
+package xyz.ksharma.krail.core.remoteconfig
 
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfigValue
 import dev.gitlive.firebase.remoteconfig.ValueSource

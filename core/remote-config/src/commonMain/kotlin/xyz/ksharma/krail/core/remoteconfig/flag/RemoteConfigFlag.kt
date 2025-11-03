@@ -1,8 +1,8 @@
-package xyz.ksharma.krail.core.remote_config.flag
+package xyz.ksharma.krail.core.remoteconfig.flag
 
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.remote_config.RemoteConfig
-import xyz.ksharma.krail.core.remote_config.RemoteConfigValue
+import xyz.ksharma.krail.core.remoteconfig.RemoteConfig
+import xyz.ksharma.krail.core.remoteconfig.RemoteConfigValue
 
 internal class RemoteConfigFlag(private val remoteConfig: RemoteConfig) : Flag {
 

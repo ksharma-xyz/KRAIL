@@ -7,10 +7,10 @@ import xyz.ksharma.krail.core.festival.model.Festival
 import xyz.ksharma.krail.core.festival.model.FestivalData
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.core.remote_config.RemoteConfigDefaults
-import xyz.ksharma.krail.core.remote_config.flag.Flag
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 
 internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
 

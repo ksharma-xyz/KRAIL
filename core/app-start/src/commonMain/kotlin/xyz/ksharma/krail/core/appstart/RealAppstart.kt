@@ -2,7 +2,7 @@ package xyz.ksharma.krail.core.appstart
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import xyz.ksharma.krail.core.remote_config.RemoteConfig
+import xyz.ksharma.krail.core.remoteconfig.RemoteConfig
 import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
 
 class RealAppStart(

@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.core.remote_config
+package xyz.ksharma.krail.core.remoteconfig
 
 import kotlinx.serialization.json.Json
 

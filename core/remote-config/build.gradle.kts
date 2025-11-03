@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "xyz.ksharma.krail.core.remote_config"
+    namespace = "xyz.ksharma.krail.core.remoteconfig"
 }
 
 kotlin {

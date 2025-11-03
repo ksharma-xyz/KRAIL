@@ -7,8 +7,8 @@ import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appversion.RealAppVersionManager
-import xyz.ksharma.krail.core.remote_config.flag.FlagKeys
-import xyz.ksharma.krail.core.remote_config.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

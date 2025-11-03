@@ -167,11 +167,11 @@ fun SavedTripsScreen(
                         val hasInviteFriendsInRemoteConfig =
                             savedTripsState.infoTiles?.any { tile ->
                                 tile.key.startsWith("invite_friends", ignoreCase = true) ||
-                                        tile.type == InfoTileData.InfoTileType.INVITE_FRIENDS
+                                    tile.type == InfoTileData.InfoTileType.INVITE_FRIENDS
                             } ?: false
 
                         val shouldShowInviteFriends = savedTripsState.savedTrips.size >= 2 &&
-                                !hasInviteFriendsInRemoteConfig
+                            !hasInviteFriendsInRemoteConfig
 
                         if (shouldShowInviteFriends) {
                             item(key = "invite_friends_tile_hardcoded") {
@@ -179,7 +179,8 @@ fun SavedTripsScreen(
                                     infoTileData = InfoTileData(
                                         key = "invite_friends_hardcoded",
                                         title = "Invite Your Friends",
-                                        description = "You’re the reason KRAIL is ad-free. Share it with friends and help Sydney ride better.",
+                                        description = "You're the reason KRAIL is ad-free. Share it " +
+                                            "with friends and help Sydney ride better.",
                                         primaryCta = InfoTileCta(
                                             text = "Invite",
                                             url = null, // Using nullable url from this version
@@ -194,7 +195,7 @@ fun SavedTripsScreen(
                                     onDismissClick = { },
                                     modifier = Modifier.padding(
                                         horizontal = 16.dp,
-                                        vertical = 8.dp
+                                        vertical = 8.dp,
                                     ),
                                 )
                             }

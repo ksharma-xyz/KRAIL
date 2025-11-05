@@ -158,4 +158,25 @@ object DateTimeHelper {
             false
         }
     }
+
+    /**
+     * Checks if the string represents today's date or a future date.
+     * The string should be in ISO-8601 format (e.g., "2023-12-31").
+     * Returns true if the date is today or in the future, false if it's in the past.
+     *
+     * @receiver String The date string to check.
+     * @return Boolean true if the date is today or in the future, false otherwise.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun String.isDateTodayOrInFuture(): Boolean {
+        return try {
+            val localDate = LocalDate.parse(this)
+            val today = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            localDate >= today
+        } catch (e: Exception) {
+            logError("Error parsing date string: $this", e)
+            false
+        }
+    }
 }

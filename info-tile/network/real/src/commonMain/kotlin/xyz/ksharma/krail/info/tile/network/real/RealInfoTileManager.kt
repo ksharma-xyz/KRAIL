@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appversion.AppVersionManager
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateTodayOrInFuture
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -82,7 +82,10 @@ class RealInfoTileManager(
         filter { isKeyNotInDismissedTiles(it.key) }
 
     private fun List<InfoTileData>.filterExpiredTiles(): List<InfoTileData> =
-        filter { it.endDate?.isDateInFuture() != false }
+        filter { tile ->
+            val endDate = tile.endDate
+            endDate == null || endDate.isDateTodayOrInFuture()
+        }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {
         log(

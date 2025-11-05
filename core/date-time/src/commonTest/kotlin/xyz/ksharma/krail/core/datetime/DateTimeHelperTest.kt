@@ -7,6 +7,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateTodayOrInFuture
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToAEST
@@ -134,6 +135,43 @@ class DateTimeHelperTest {
     @Test
     fun testIsDateInFuture_invalidFormat() {
         assertEquals(false, "not-a-date".isDateInFuture())
+    }
+
+    // endregion
+
+    // region isDateTodayOrInFuture tests
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun testIsDateTodayOrInFuture_validFutureDate() {
+        val futureDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .plus(1, DateTimeUnit.DAY)
+            .toString()
+        assertEquals(true, futureDate.isDateTodayOrInFuture())
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun testIsDateTodayOrInFuture_todayDate() {
+        val todayDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toString()
+        assertEquals(true, todayDate.isDateTodayOrInFuture())
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun testIsDateTodayOrInFuture_pastDate() {
+        val pastDate = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .minus(1, DateTimeUnit.DAY)
+            .toString()
+        assertEquals(false, pastDate.isDateTodayOrInFuture())
+    }
+
+    @Test
+    fun testIsDateTodayOrInFuture_invalidFormat() {
+        assertEquals(false, "not-a-date".isDateTodayOrInFuture())
     }
 
     // endregion

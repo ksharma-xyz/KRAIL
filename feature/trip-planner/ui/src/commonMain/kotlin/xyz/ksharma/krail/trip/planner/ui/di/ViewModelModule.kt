@@ -12,6 +12,8 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
@@ -57,6 +59,7 @@ val viewModelsModule = module {
             preferences = get(),
             platformOps = get(),
             infoTileManager = get(),
+            inviteFriendsTileManager = get(),
         )
     }
 
@@ -92,4 +95,6 @@ val viewModelsModule = module {
     }
 
     single<StopResultsManager> { RealStopResultsManager(get(), get()) }
+
+    single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
 }

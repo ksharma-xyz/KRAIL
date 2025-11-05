@@ -21,4 +21,5 @@ data class SavedTripsState(
     // Stop selection state managed by ViewModel
     val fromStop: StopItem? = null,
     val toStop: StopItem? = null,
+    val hasSeenInviteFriendsTile: Boolean = false,
 )

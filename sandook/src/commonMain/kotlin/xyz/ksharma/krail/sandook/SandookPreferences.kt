@@ -30,5 +30,6 @@ interface SandookPreferences {
         const val KEY_DISCOVER_CLICKED_BEFORE = "KEY_DISCOVER_CLICKED_BEFORE"
         const val KEY_DISMISSED_INFO_TILES = "KEY_DISMISSED_INFO_TILES"
         const val KEY_THEME_MODE = "KEY_THEME_MODE"
+        const val KEY_HAS_SEEN_INVITE_FRIENDS_TILE = "KEY_HAS_SEEN_INVITE_FRIENDS_TILE"
     }
 }

@@ -70,7 +70,7 @@ fun SavedTripsScreen(
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
-    onInviteFriendsTileDisplayed: () -> Unit = {},
+    onInviteFriendsTileDisplay: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -178,9 +178,9 @@ fun SavedTripsScreen(
                         if (shouldShowInviteFriends) {
                             item(key = "invite_friends_tile_hardcoded") {
                                 // Mark tile as seen when displayed (only if not already seen)
-                                LaunchedEffect(Unit) {
+                                LaunchedEffect(!savedTripsState.hasSeenInviteFriendsTile) {
                                     if (!savedTripsState.hasSeenInviteFriendsTile) {
-                                        onInviteFriendsTileDisplayed()
+                                        onInviteFriendsTileDisplay()
                                     }
                                 }
 

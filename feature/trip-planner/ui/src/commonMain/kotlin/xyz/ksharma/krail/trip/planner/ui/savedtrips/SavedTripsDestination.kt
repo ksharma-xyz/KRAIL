@@ -120,7 +120,7 @@ internal fun NavGraphBuilder.savedTripsDestination(navController: NavHostControl
                 )
             },
             onEvent = { event -> viewModel.onEvent(event) },
-            onInviteFriendsTileDisplayed = { viewModel.markInviteFriendsTileAsSeen() },
+            onInviteFriendsTileDisplay = { viewModel.markInviteFriendsTileAsSeen() },
         )
     }
 }

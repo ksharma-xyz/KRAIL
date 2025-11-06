@@ -61,6 +61,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+@Suppress("LongParameterList")
 class SavedTripsViewModel(
     private val sandook: Sandook,
     private val analytics: Analytics,

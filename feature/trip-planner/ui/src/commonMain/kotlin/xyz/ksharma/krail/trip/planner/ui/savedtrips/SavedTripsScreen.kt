@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,7 @@ fun SavedTripsScreen(
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
+    onInviteFriendsTileDisplay: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -175,6 +177,13 @@ fun SavedTripsScreen(
 
                         if (shouldShowInviteFriends) {
                             item(key = "invite_friends_tile_hardcoded") {
+                                // Mark tile as seen when displayed (only if not already seen)
+                                LaunchedEffect(!savedTripsState.hasSeenInviteFriendsTile) {
+                                    if (!savedTripsState.hasSeenInviteFriendsTile) {
+                                        onInviteFriendsTileDisplay()
+                                    }
+                                }
+
                                 InfoTile(
                                     infoTileData = InfoTileData(
                                         key = "invite_friends_hardcoded",
@@ -188,11 +197,18 @@ fun SavedTripsScreen(
                                         type = InfoTileData.InfoTileType.INVITE_FRIENDS,
                                         showDismissButton = false,
                                     ),
-                                    initialState = InfoTileState.EXPANDED,
+                                    initialState = if (savedTripsState.hasSeenInviteFriendsTile) {
+                                        InfoTileState.COLLAPSED
+                                    } else {
+                                        InfoTileState.EXPANDED
+                                    },
                                     onCtaClick = { tileData ->
                                         onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
                                     },
                                     onDismissClick = { },
+                                    onTileExpand = { tileData ->
+                                        onEvent(SavedTripUiEvent.InfoTileExpand(tileData.key))
+                                    },
                                     modifier = Modifier.padding(
                                         horizontal = 16.dp,
                                         vertical = 8.dp,

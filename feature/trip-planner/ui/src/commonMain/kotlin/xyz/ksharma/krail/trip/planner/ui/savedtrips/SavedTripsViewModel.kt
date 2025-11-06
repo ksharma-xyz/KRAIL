@@ -61,6 +61,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+@Suppress("LongParameterList")
 class SavedTripsViewModel(
     private val sandook: Sandook,
     private val analytics: Analytics,
@@ -73,6 +74,7 @@ class SavedTripsViewModel(
     private val preferences: SandookPreferences,
     private val infoTileManager: InfoTileManager,
     private val platformOps: PlatformOps,
+    private val inviteFriendsTileManager: InviteFriendsTileManager,
 ) : ViewModel() {
 
     init {
@@ -113,6 +115,7 @@ class SavedTripsViewModel(
             updateDiscoverState()
             updateInfoTilesUiState()
             updateSelectedStops()
+            updateInviteFriendsTileSeenState()
         }
         .onCompletion {
             cleanupJobs()
@@ -126,6 +129,13 @@ class SavedTripsViewModel(
                 toStop = stopResultsManager.selectedToStop,
             )
         }
+    }
+
+    fun markInviteFriendsTileAsSeen() {
+        // Manager handles both saving to preferences and updating the cached value
+        // State is not updated immediately to prevent animation during current session
+        // State will be loaded from cache (which reflects the preference) on next app launch
+        inviteFriendsTileManager.markAsSeen()
     }
 
     fun onEvent(event: SavedTripUiEvent) {
@@ -596,6 +606,14 @@ class SavedTripsViewModel(
                 isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable && savedTrips.isNotEmpty(),
                 displayDiscoverBadge = !preferences.hasDiscoverBeenClicked(),
             )
+        }
+    }
+
+    private suspend fun updateInviteFriendsTileSeenState() {
+        log("onStart - updateInviteFriendsTileSeenState called")
+        // Manager caches the value, so this will only read from preferences once
+        updateUiState {
+            copy(hasSeenInviteFriendsTile = inviteFriendsTileManager.hasSeenInviteFriendsTile())
         }
     }
 

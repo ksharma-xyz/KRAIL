@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.wire)
 }
 
 kotlin {
@@ -45,6 +46,7 @@ kotlin {
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.kotlinx.datetime)
                 implementation(compose.runtime)
+                implementation(libs.wire.runtime)
 
                 api(libs.di.koinComposeViewmodel)
             }
@@ -63,5 +65,18 @@ kotlin {
                 implementation(libs.test.kotlinxCoroutineTest)
             }
         }
+    }
+}
+
+wire {
+    kotlin {
+        javaInterop = true
+        out = "$projectDir/build/generated/source/wire"
+    }
+    protoPath {
+        srcDir("src/commonMain/proto")
+    }
+    sourcePath {
+        srcDir("src/commonMain/proto")
     }
 }

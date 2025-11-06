@@ -51,6 +51,7 @@ class SettingsViewModel(
         updateUiState {
             copy(
                 appVersion = appInfoProvider.getAppInfo().appVersionDisplay,
+                isDebug = appInfoProvider.getAppInfo().isDebug,
             )
         }
     }

@@ -23,6 +23,7 @@ internal fun NavGraphBuilder.settingsDestination(navController: NavHostControlle
 
         SettingsScreen(
             appVersion = settingsState.appVersion,
+            isDebug = settingsState.isDebug,
             onChangeThemeClick = {
                 navController.navigate(
                     route = ThemeSelectionRoute,

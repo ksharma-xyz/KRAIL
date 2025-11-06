@@ -19,6 +19,7 @@ val tripPlannerNetworkModule = module {
         RealTripPlanningService(
             httpClient = tripPlannerHttpClient(get()),
             ioDispatcher = get(named(IODispatcher)),
+            apiEnvironmentProvider = get(),
         )
     } bind TripPlanningService::class
 }

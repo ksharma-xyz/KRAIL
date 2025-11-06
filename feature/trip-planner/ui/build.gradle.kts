@@ -29,6 +29,7 @@ kotlin {
                 implementation(projects.core.analytics)
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)
+                implementation(projects.core.debugConfig)
                 implementation(projects.core.di)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)

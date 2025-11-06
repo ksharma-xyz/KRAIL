@@ -50,6 +50,8 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             discoverModule,
             infoTileModule,
         )
+        // Load debug module after other modules are loaded so we can access appInfoProvider
+        modules(getDebugModule(koin.get()))
     }
 }
 

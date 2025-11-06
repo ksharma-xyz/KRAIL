@@ -7,16 +7,17 @@ import io.ktor.http.ParametersBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.service.stop_finder.StopFinderRequestParams
 import xyz.ksharma.krail.trip.planner.network.api.service.trip.TripRequestParams
+import xyz.ksharma.krail.core.network.ApiEnvironmentProvider
 
 internal class RealTripPlanningService(
     private val httpClient: HttpClient,
     private val ioDispatcher: CoroutineDispatcher,
+    private val apiEnvironmentProvider: ApiEnvironmentProvider,
 ) : TripPlanningService {
 
     override suspend fun trip(
@@ -27,7 +28,10 @@ internal class RealTripPlanningService(
         time: String?,
         excludeProductClassSet: Set<Int>,
     ): TripResponse = withContext(ioDispatcher) {
-        httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/tp/trip") {
+        val baseUrl = apiEnvironmentProvider.getBaseUrl()
+        log("TripPlanningService: Using base URL: $baseUrl")
+
+        httpClient.get("$baseUrl/v1/tp/trip") {
             url {
                 parameters.append(TripRequestParams.nameOrigin, originStopId)
                 parameters.append(TripRequestParams.nameDestination, destinationStopId)
@@ -88,7 +92,9 @@ internal class RealTripPlanningService(
         stopSearchQuery: String,
         stopType: StopType,
     ): StopFinderResponse = withContext(ioDispatcher) {
-        httpClient.get("${NSW_TRANSPORT_BASE_URL}/v1/tp/stop_finder") {
+        val baseUrl = apiEnvironmentProvider.getBaseUrl()
+
+        httpClient.get("${baseUrl}/v1/tp/stop_finder") {
             url {
                 parameters.append(StopFinderRequestParams.nameSf, stopSearchQuery)
 

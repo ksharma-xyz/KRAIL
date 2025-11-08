@@ -1,61 +1,145 @@
-# Snapshot Testing - Future Improvements & TODOs
+# Snapshot Testing - Progress & TODOs
 
-## Priority 1: Setup & Foundation ✅ (Week 1)
-- [ ] Choose testing library (Roborazzi + ComposablePreviewScanner)
-- [ ] Add dependencies to `libs.versions.toml`
-- [ ] Add plugin to root `build.gradle.kts`
-- [ ] Configure `composeApp/build.gradle.kts`
-- [ ] Create `@ScreenshotTest` annotation in taj module
-- [ ] Create test file in `androidUnitTest/`
-- [ ] Create `ScreenshotConfig.kt` for default settings
-- [ ] Setup Git LFS for screenshot storage
-- [ ] Create `.gitattributes` file
-- [ ] Update `.gitignore` file
-- [ ] Create monitoring script (`scripts/snapshot-stats.sh`)
-- [ ] Document usage and workflow
+## 🎉 Current Status (Updated: November 9, 2025)
 
-## Priority 2: Coverage & Quality (Week 2-3)
+### ✅ Completed
+- **Infrastructure:** BaseSnapshotTest class created - makes adding tests super easy!
+- **Configuration:** All defaults configured (font scales, dark mode, etc.)
+- **Documentation:** 3 comprehensive README files created
+- **Git LFS:** Configured for all screenshot PNGs
+- **Taj Module:** Test class created and ready to run
 
-### Annotate Critical Components (Target: 50% coverage)
-- [ ] **Trip Planner Module**
-  - [ ] SavedTripCard
-  - [ ] SearchStopRow
-  - [ ] StopSearchListItem
-  - [ ] ErrorMessage
-  - [ ] TransportModeIcon (all variants)
-- [ ] **Park & Ride Module**
-  - [ ] ParkRideFacilityInfo
-  - [ ] ParkAndRideIcon
-  - [ ] Facility details components
-- [ ] **Design System (Taj)**
-  - [ ] TextField variants
-  - [ ] Divider
-  - [ ] CookieShapeBox
-  - [ ] SeparatorIcon
-  - [ ] Text components
+### 🎯 Next Milestone: First Screenshots Generated
+**Goal:** Validate the entire setup by generating and committing first real screenshots
 
-### Initial Baseline Generation
-- [ ] Run first screenshot generation
+**Immediate Actions:**
+1. Run `./gradlew :taj:testDebugUnitTest --tests "*TajSnapshotTest*"`
+2. Verify screenshots are generated in `taj/screenshots/`
+3. Commit screenshots to Git
+4. Test another module to prove scalability
+
+### 📊 Progress Overview
+- **Priority 1 (Setup):** ✅ 100% Complete
+- **Priority 2 (Coverage):** 🔄 10% Complete (infrastructure ready, need to generate snapshots)
+- **Priority 3 (Optimization):** ⏸️ Not Started (waiting for initial data)
+- **Priority 4 (Advanced):** ⏸️ Not Started
+- **Priority 5 (Monitoring):** ⏸️ Not Started
+
+---
+
+## Priority 1: Setup & Foundation ✅ COMPLETED
+- [x] Choose testing library (Roborazzi + ComposablePreviewScanner) ✅
+- [x] Add dependencies to `libs.versions.toml` ✅
+- [x] Add Roborazzi plugin ✅
+- [x] Configure `taj/build.gradle.kts` with Roborazzi ✅
+- [x] Create `@ScreenshotTest` annotation in core/snapshot-testing ✅
+- [x] Create `BaseSnapshotTest` base class for reusability ✅
+- [x] Create test file in `androidUnitTest/` (TajSnapshotTest) ✅
+- [x] Create `SnapshotDefaults` for default settings ✅
+- [x] Setup Git LFS for screenshot storage ✅
+- [x] Create `.gitattributes` file ✅
+- [x] Fix file path issues (screenshots/ not taj/screenshots/) ✅
+- [x] Document usage and workflow ✅
+  - [x] core/snapshot-testing/README.md
+  - [x] taj/screenshots/README.md
+  - [x] docs/snapshot-test/snapshot-testing-quick-reference.md
+
+## Priority 2: Coverage & Validation 🔄 IN PROGRESS
+
+### ✅ Infrastructure Ready
+- [x] BaseSnapshotTest class working
+- [x] Test execution working (TajSnapshotTest)
+- [x] File paths fixed
+- [x] Documentation complete
+
+### 🎯 Immediate Next Steps (This Week)
+
+#### 1. Verify Test Execution & Generate First Screenshots
+- [ ] Run test and verify screenshots are generated:
   ```bash
-  ./gradlew composeApp:recordRoborazziDebug
+  ./gradlew :taj:testDebugUnitTest --tests "*TajSnapshotTest*" --rerun-tasks
   ```
-- [ ] Review all generated screenshots manually
-- [ ] Check file sizes (target: <150KB average)
-- [ ] Verify screenshot quality
-- [ ] Commit baseline to git with LFS
+- [ ] Verify screenshots appear in `taj/screenshots/`
+- [ ] Check screenshot file sizes (<150KB target)
+- [ ] Inspect screenshot quality manually
+- [ ] Run `recordRoborazziDebug` task:
   ```bash
-  git add composeApp/screenshots/
-  git commit -m "test: add baseline screenshots"
+  ./gradlew :taj:recordRoborazziDebug
+  ```
+- [ ] Commit initial screenshots to Git with LFS:
+  ```bash
+  git add taj/screenshots/
+  git commit -m "test: add initial Taj component snapshots"
   ```
 
-### CI/CD Integration
-- [ ] Create `.github/workflows/screenshot-tests.yml`
-- [ ] Add screenshot verification job
+#### 2. Add More Taj Component Previews
+- [ ] Identify existing Taj components without snapshots
+- [ ] Add `@ScreenshotTest` annotations to existing `@Preview` functions
+- [ ] Create new preview functions for components without them
+- [ ] Target: 5-10 Taj components initially
+
+#### 3. Test Another Module (Proof of Concept)
+- [ ] Choose a feature module (e.g., `discover/ui` or `info-tile/ui`)
+- [ ] Add Roborazzi plugin to module's `build.gradle.kts`
+- [ ] Add `implementation(projects.core.snapshotTesting)` dependency
+- [ ] Create `ModuleSnapshotTest` extending `BaseSnapshotTest`
+- [ ] Add `@ScreenshotTest` to 2-3 previews
+- [ ] Run and verify it works
+- [ ] Document any issues or improvements needed
+
+#### 4. Create Monitoring Script
+- [ ] Create `scripts/snapshot-stats.sh` to report:
+  - Total screenshot count
+  - Average file size
+  - Largest files
+  - Screenshots per module
+  ```bash
+  #!/bin/bash
+  # Report snapshot statistics
+  find . -name "screenshots" -type d -exec sh -c '
+    module=$(dirname {})
+    count=$(find {} -name "*.png" | wc -l)
+    size=$(du -sh {} | cut -f1)
+    echo "$module: $count files, $size"
+  ' \;
+  ```
+
+### Annotate Components by Module
+
+#### Design System (Taj) - Target: Complete Coverage
+- [ ] TextField variants
+- [ ] Button variants
+- [ ] Divider types
+- [ ] CookieShapeBox
+- [ ] SeparatorIcon
+- [ ] Text components
+- [ ] Card components
+- [ ] Icon components
+- [ ] Layout components
+
+#### Trip Planner Module - Target: Critical Components
+- [ ] SavedTripCard
+- [ ] SearchStopRow
+- [ ] StopSearchListItem
+- [ ] ErrorMessage
+- [ ] TransportModeIcon (all variants)
+- [ ] Loading states
+- [ ] Empty states
+
+#### Other Modules (Lower Priority)
+- [ ] Discover UI components
+- [ ] Info Tile components
+- [ ] Social UI components
+- [ ] Park & Ride components
+
+### CI/CD Integration (After Initial Validation)
+- [ ] Review existing CI/CD workflow files
+- [ ] Add screenshot verification job to existing workflow
 - [ ] Configure PR checks for screenshot tests
-- [ ] Setup artifact upload for failed tests
-- [ ] Add diff image upload on failure
-- [ ] Create screenshot quality check workflow
-- [ ] Document CI/CD process
+- [ ] Setup artifact upload for diff images on failure
+- [ ] Add screenshot size check (fail if >200KB average)
+- [ ] Test CI/CD flow with dummy PR
+- [ ] Document CI/CD integration in main README
 
 ## Priority 3: Optimization (Month 2)
 

@@ -1,0 +1,18 @@
+# Git LFS Configuration for KRAIL Snapshot Testing
+# Track PNG screenshot files with Git LFS to keep repository size manageable
+
+# Taj Design System Screenshots
+taj/screenshots/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Other module screenshots (add as you expand snapshot testing)
+# composeApp/screenshots/**/*.png filter=lfs diff=lfs merge=lfs -text
+# feature/trip-planner/ui/screenshots/**/*.png filter=lfs diff=lfs merge=lfs -text
+# feature/park-ride/ui/screenshots/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Pattern for all screenshots in any module
+**/screenshots/**/*.png filter=lfs diff=lfs merge=lfs -text
+
+# Optional: Track other large binary files
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+

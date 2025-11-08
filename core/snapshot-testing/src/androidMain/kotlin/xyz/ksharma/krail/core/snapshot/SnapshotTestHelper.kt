@@ -23,11 +23,12 @@ object SnapshotTestHelper {
      * Format: {ClassName}_{PreviewName}_{theme}_{fontScale}.png
      * Example: TextField_Preview_light_normal.png
      */
+    @Suppress("MagicNumber")
     fun buildScreenshotFileName(
         preview: ComposablePreview<AndroidPreviewInfo>,
         fontScale: Float = 1.0f,
         isDarkMode: Boolean = false,
-        variant: String = ""
+        variant: String = "",
     ): String {
         val className = preview.declaringClass.substringAfterLast(".")
         val methodName = preview.methodName
@@ -44,7 +45,7 @@ object SnapshotTestHelper {
 
         val variantSuffix = if (variant.isNotBlank()) "_$variant" else ""
 
-        return "${className}_${previewName}_${themeText}_${scaleText}${variantSuffix}"
+        return "${className}_${previewName}_${themeText}_${scaleText}$variantSuffix"
             .replace(" ", "_")
             .replace("[^a-zA-Z0-9_]".toRegex(), "")
     }
@@ -55,14 +56,14 @@ object SnapshotTestHelper {
     @Composable
     fun ProvidePreviewEnvironment(
         fontScale: Float = 1.0f,
-        content: @Composable () -> Unit
+        content: @Composable () -> Unit,
     ) {
         CompositionLocalProvider(
             LocalInspectionMode provides true,
             LocalDensity provides Density(
                 density = LocalDensity.current.density,
-                fontScale = fontScale
-            )
+                fontScale = fontScale,
+            ),
         ) {
             content()
         }
@@ -78,13 +79,14 @@ object SnapshotTestHelper {
      * @param screenshotsDir Base directory for screenshots (relative to module root)
      * @param roborazziOptions Roborazzi options for comparison
      */
+    @Suppress("LongParameterList")
     fun captureScreenshot(
         composeTestRule: ComposeContentTestRule,
         preview: ComposablePreview<AndroidPreviewInfo>,
         fontScale: Float = 1.0f,
         isDarkMode: Boolean = false,
         screenshotsDir: String = "screenshots",
-        roborazziOptions: com.github.takahirom.roborazzi.RoborazziOptions = SnapshotDefaults.roborazziOptions()
+        roborazziOptions: com.github.takahirom.roborazzi.RoborazziOptions = SnapshotDefaults.roborazziOptions(),
     ) {
         val fileName = buildScreenshotFileName(preview, fontScale, isDarkMode)
         val filePath = "$screenshotsDir/$fileName.png"
@@ -97,7 +99,7 @@ object SnapshotTestHelper {
 
         composeTestRule.onRoot().captureRoboImage(
             filePath = filePath,
-            roborazziOptions = roborazziOptions
+            roborazziOptions = roborazziOptions,
         )
     }
 
@@ -107,6 +109,7 @@ object SnapshotTestHelper {
      * - Dark mode: 1.0f font scale
      * Total: 3 screenshots per preview
      */
+    @Suppress("LongParameterList")
     fun captureWithDefaults(
         composeTestRule: ComposeContentTestRule,
         preview: ComposablePreview<AndroidPreviewInfo>,
@@ -114,7 +117,7 @@ object SnapshotTestHelper {
         threshold: Double = SnapshotDefaults.defaultThreshold,
         lightModeFontScales: List<Float> = SnapshotDefaults.lightModeFontScales,
         darkModeFontScales: List<Float> = SnapshotDefaults.darkModeFontScales,
-        testDarkMode: Boolean = SnapshotDefaults.testDarkMode
+        testDarkMode: Boolean = SnapshotDefaults.testDarkMode,
     ) {
         val roborazziOptions = SnapshotDefaults.roborazziOptions(threshold = threshold)
 
@@ -126,7 +129,7 @@ object SnapshotTestHelper {
                 fontScale = fontScale,
                 isDarkMode = false,
                 screenshotsDir = screenshotsDir,
-                roborazziOptions = roborazziOptions
+                roborazziOptions = roborazziOptions,
             )
         }
 
@@ -139,10 +142,9 @@ object SnapshotTestHelper {
                     fontScale = fontScale,
                     isDarkMode = true,
                     screenshotsDir = screenshotsDir,
-                    roborazziOptions = roborazziOptions
+                    roborazziOptions = roborazziOptions,
                 )
             }
         }
     }
 }
-

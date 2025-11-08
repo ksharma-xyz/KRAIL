@@ -5,14 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.robolectric.Robolectric
-import sergio.sastre.composable.preview.scanner.android.AndroidComposablePreviewScanner
-import sergio.sastre.composable.preview.scanner.android.AndroidPreviewInfo
-import sergio.sastre.composable.preview.scanner.android.screenshotid.AndroidPreviewScreenshotIdBuilder
+import sergio.sastre.composable.preview.scanner.common.CommonComposablePreviewScanner
+import sergio.sastre.composable.preview.scanner.common.CommonPreviewInfo
+import sergio.sastre.composable.preview.scanner.common.screenshotid.CommonPreviewScreenshotIdBuilder
 import sergio.sastre.composable.preview.scanner.core.preview.ComposablePreview
 import sergio.sastre.composable.preview.scanner.core.preview.getAnnotation
 
@@ -83,7 +84,7 @@ abstract class BaseSnapshotTest {
      * Call this from your @Test method.
      */
     protected fun generateSnapshots() {
-        val scanner = AndroidComposablePreviewScanner()
+        val scanner = CommonComposablePreviewScanner()
             .scanPackageTrees(packageToScan)
             .includeAnnotationInfoForAllOf(ScreenshotTest::class.java)
             .includeIfAnnotatedWithAnyOf(ScreenshotTest::class.java)
@@ -96,7 +97,7 @@ abstract class BaseSnapshotTest {
 
         val previews = scannerWithPrivacy.getPreviews()
 
-        println("✅ Found ${previews.size} previews with @ScreenshotTest in $packageToScan")
+        println("Found ${previews.size} previews with @ScreenshotTest in $packageToScan")
 
         previews.forEach { preview ->
             capturePreviewSnapshots(preview)
@@ -106,7 +107,7 @@ abstract class BaseSnapshotTest {
     /**
      * Captures all configured snapshot variations for a preview.
      */
-    private fun capturePreviewSnapshots(preview: ComposablePreview<AndroidPreviewInfo>) {
+    private fun capturePreviewSnapshots(preview: ComposablePreview<CommonPreviewInfo>) {
         val screenshotConfig = preview.getAnnotation<ScreenshotTest>()
         val threshold = screenshotConfig?.threshold ?: SnapshotDefaults.defaultThreshold
 
@@ -128,15 +129,15 @@ abstract class BaseSnapshotTest {
      * Captures a single screenshot with the specified configuration.
      */
     private fun captureScreenshot(
-        preview: ComposablePreview<AndroidPreviewInfo>,
+        preview: ComposablePreview<CommonPreviewInfo>,
         fontScale: Float,
         isDarkMode: Boolean,
-        threshold: Double
+        threshold: Double,
     ) {
         val fileName = buildScreenshotFileName(preview, fontScale, isDarkMode)
         val filePath = "$screenshotsDir/$fileName.png"
 
-        println("📷 Capturing: $fileName")
+        println("Capturing: $fileName")
 
         val activityController = Robolectric.buildActivity(ComponentActivity::class.java)
 
@@ -149,7 +150,7 @@ abstract class BaseSnapshotTest {
 
         val composeView = ComposeView(activity).apply {
             setContent {
-                ApplyPreviewEnvironment(fontScale) {
+                ApplyPreviewEnvironment(fontScale, isDarkMode) {
                     preview()
                 }
             }
@@ -157,24 +158,28 @@ abstract class BaseSnapshotTest {
 
         activity.setContentView(composeView)
 
+        // Capture the screenshot
         composeView.captureRoboImage(
             filePath = filePath,
-            roborazziOptions = SnapshotDefaults.roborazziOptions(threshold = threshold)
+            roborazziOptions = SnapshotDefaults.roborazziOptions(threshold = threshold),
         )
 
+        // Cleanup
         activityController.pause().stop().destroy()
     }
 
     /**
      * Applies dark mode to the activity configuration.
      */
-    private fun applyDarkMode(activityController: org.robolectric.android.controller.ActivityController<ComponentActivity>) {
+    private fun applyDarkMode(
+        activityController: org.robolectric.android.controller.ActivityController<ComponentActivity>,
+    ) {
         val config = Configuration(activityController.get().resources.configuration)
         config.uiMode = Configuration.UI_MODE_NIGHT_YES or
-                (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv())
+            (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv())
         activityController.get().resources.updateConfiguration(
             config,
-            activityController.get().resources.displayMetrics
+            activityController.get().resources.displayMetrics,
         )
     }
 
@@ -184,17 +189,28 @@ abstract class BaseSnapshotTest {
     @Composable
     private fun ApplyPreviewEnvironment(
         fontScale: Float,
-        content: @Composable () -> Unit
+        isDarkMode: Boolean,
+        content: @Composable () -> Unit,
     ) {
         val density = LocalDensity.current
         val customDensity = Density(
             density = density.density,
-            fontScale = fontScale
+            fontScale = fontScale,
         )
+
+        val currentConfig = LocalConfiguration.current
+        val config = Configuration(currentConfig).apply {
+            uiMode = if (isDarkMode) {
+                Configuration.UI_MODE_NIGHT_YES or (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv())
+            } else {
+                Configuration.UI_MODE_NIGHT_NO or (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv())
+            }
+        }
 
         CompositionLocalProvider(
             LocalDensity provides customDensity,
-            LocalInspectionMode provides true
+            LocalInspectionMode provides true,
+            LocalConfiguration provides config,
         ) {
             content()
         }
@@ -205,11 +221,11 @@ abstract class BaseSnapshotTest {
      * Format: {PreviewName}_{theme}_{fontScale}
      */
     private fun buildScreenshotFileName(
-        preview: ComposablePreview<AndroidPreviewInfo>,
+        preview: ComposablePreview<CommonPreviewInfo>,
         fontScale: Float,
-        isDarkMode: Boolean
+        isDarkMode: Boolean,
     ): String {
-        val baseName = AndroidPreviewScreenshotIdBuilder(preview)
+        val baseName = CommonPreviewScreenshotIdBuilder(preview)
             .ignoreClassName()
             .build()
 
@@ -221,7 +237,6 @@ abstract class BaseSnapshotTest {
             else -> "scale_${fontScale}x"
         }
 
-        return "${baseName}_${themeText}_${scaleText}"
+        return "${baseName}_${themeText}_$scaleText"
     }
 }
-

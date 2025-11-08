@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
@@ -17,24 +18,28 @@ import xyz.ksharma.krail.taj.LocalThemeColor
 fun PreviewTheme(
     themeStyle: KrailThemeStyle = KrailThemeStyle.Train,
     modifier: Modifier = Modifier,
-    darkTheme: Boolean = false,
-    fontScale: Float = 1.0f, // temporary measure until font scale support is added to compose multiplatform
-    backgroundColor: Color = KrailTheme.colors.surface,
+    darkTheme: Boolean? = null,
+    // temporary measure until font scale support is added to compose multiplatform
+    fontScale: Float = 1.0f,
+    backgroundColor: Color? = null,
     content: @Composable () -> Unit,
 ) {
+    val isDarkTheme = darkTheme ?: isSystemInDarkTheme()
+
     KrailTheme(
         themeController = ThemeController(
-            currentMode = if (darkTheme) ThemeMode.DARK else ThemeMode.LIGHT,
+            currentMode = if (isDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT,
             setThemeMode = {},
         ),
     ) {
+        val bgColor = backgroundColor ?: KrailTheme.colors.surface
         val color = remember { mutableStateOf(themeStyle.hexColorCode) }
         val density = LocalDensity.current
         CompositionLocalProvider(
             LocalThemeColor provides color,
             LocalDensity provides Density(density = density.density, fontScale = fontScale),
         ) {
-            Column(modifier = modifier.systemBarsPadding().background(backgroundColor)) {
+            Column(modifier = modifier.systemBarsPadding().background(bgColor)) {
                 content()
             }
         }

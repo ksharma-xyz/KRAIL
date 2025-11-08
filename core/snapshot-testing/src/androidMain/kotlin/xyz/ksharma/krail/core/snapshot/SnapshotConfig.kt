@@ -65,14 +65,14 @@ object SnapshotDefaults {
     @OptIn(com.github.takahirom.roborazzi.ExperimentalRoborazziApi::class)
     fun roborazziOptions(
         threshold: Double = defaultThreshold,
-        resizeScale: Double = 1.0
+        resizeScale: Double = 1.0,
     ) = RoborazziOptions(
         compareOptions = RoborazziOptions.CompareOptions(
-            changeThreshold = threshold.toFloat()
+            changeThreshold = threshold.toFloat(),
         ),
         recordOptions = RoborazziOptions.RecordOptions(
-            resizeScale = resizeScale
-        )
+            resizeScale = resizeScale,
+        ),
     )
 }
 
@@ -85,6 +85,5 @@ data class SnapshotTestConfig(
     val devices: List<String> = listOf(SnapshotDefaults.defaultDevice),
     val testDarkMode: Boolean = SnapshotDefaults.testDarkMode,
     val threshold: Double = SnapshotDefaults.defaultThreshold,
-    val animationTimestamps: List<Long> = emptyList() // For animation testing
+    val animationTimestamps: List<Long> = emptyList(), // For animation testing
 )
-

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -80,20 +81,19 @@ fun Text(
 
 // region Previews
 
-@Preview
+@ScreenshotTest
+@Preview(name = "Typography")
 @Composable
 private fun TextPreview() {
     PreviewTheme {
-        Column(modifier = Modifier.background(color = KrailTheme.colors.surface)) {
-            Text(text = "Typography")
-            Text(text = "DisplayLarge", style = KrailTheme.typography.displayLarge)
-            Text(text = "displayMedium", style = KrailTheme.typography.displayMedium)
-            Text(text = "displaySmall", style = KrailTheme.typography.displaySmall)
-        }
+        Text(text = "Typography")
+        Text(text = "DisplayLarge", style = KrailTheme.typography.displayLarge)
+        Text(text = "displayMedium", style = KrailTheme.typography.displayMedium)
+        Text(text = "displaySmall", style = KrailTheme.typography.displaySmall)
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun TextWithColorPreview() {
     PreviewTheme {

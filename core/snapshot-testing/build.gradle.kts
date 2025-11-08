@@ -46,6 +46,8 @@ kotlin {
                 api(libs.roborazzi.junit)
 
                 // ComposablePreviewScanner (needed by BaseSnapshotTest)
+                // Using common scanner to support previews in commonMain
+                api(libs.preview.scanner.common)
                 api(libs.preview.scanner.android)
 
                 // Robolectric for running tests (needed by BaseSnapshotTest)
@@ -60,4 +62,3 @@ kotlin {
         }
     }
 }
-

@@ -36,9 +36,9 @@ detekt = "1.23.8"
 detektCompose = "0.4.27"
 coil3 = "3.3.0"
 appcompat = "1.7.1"
-roborazzi = "1.31.0"
+roborazzi = "1.51.0"
 composablePreviewScanner = "0.7.1"
-robolectric = "4.14.1"
+robolectric = "4.16"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -122,6 +122,7 @@ roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = 
 roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-junit = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi" }
 preview-scanner-android = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composablePreviewScanner" }
+preview-scanner-common = { module = "io.github.sergio-sastre.ComposablePreviewScanner:common", version.ref = "composablePreviewScanner" }
 test-robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 ## Formatting

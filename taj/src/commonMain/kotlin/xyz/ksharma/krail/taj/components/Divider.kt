@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -49,8 +50,9 @@ enum class DividerType {
     VERTICAL,
 }
 
+@Preview
 @Composable
-private fun DividerPreview() {
+private fun DividerHorizontalPreview() {
     PreviewTheme {
         Box(
             modifier = Modifier
@@ -64,6 +66,7 @@ private fun DividerPreview() {
     }
 }
 
+@Preview
 @Composable
 private fun DividerVerticalPreview() {
     PreviewTheme {

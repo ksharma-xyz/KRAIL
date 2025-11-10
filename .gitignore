@@ -2,6 +2,12 @@
 .gradle/
 build/
 
+# Roborazzi temporary files (keep master screenshots in screenshots/ folders)
+**/build/outputs/roborazzi/
+**/*_compare.png
+**/*_actual.png
+**/reports/roborazzi/
+
 # Local configuration file (sdk path, etc)
 local.properties
 

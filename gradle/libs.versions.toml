@@ -36,6 +36,9 @@ detekt = "1.23.8"
 detektCompose = "0.4.27"
 coil3 = "3.3.0"
 appcompat = "1.7.1"
+roborazzi = "1.51.0"
+composablePreviewScanner = "0.7.1"
+robolectric = "4.16"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -114,6 +117,14 @@ coil3-networkKtor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", v
 # Compose
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui-tooling" }
 
+# Screenshot Testing
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-junit = { module = "io.github.takahirom.roborazzi:roborazzi-junit-rule", version.ref = "roborazzi" }
+preview-scanner-android = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composablePreviewScanner" }
+preview-scanner-common = { module = "io.github.sergio-sastre.ComposablePreviewScanner:common", version.ref = "composablePreviewScanner" }
+test-robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+
 ## Formatting
 ### Formatting is required by configureDetekt() in build-logic
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
@@ -135,6 +146,7 @@ firebase-crashlyticsPlugin = { id = "com.google.firebase.crashlytics", version =
 firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version = "2.0.2" }
 wire = { id = "com.squareup.wire", version = "5.4.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 
 #Convention Plugins
 krail-android-application = { id = "krail.android.application", version = "unspecified" }

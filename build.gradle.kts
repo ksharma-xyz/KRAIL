@@ -14,4 +14,5 @@ plugins {
     alias(libs.plugins.firebase.performancePlugin) apply false
     alias(libs.plugins.wire) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.roborazzi) apply false
 }

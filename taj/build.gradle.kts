@@ -3,10 +3,18 @@ plugins {
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.krail.android.library)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
     namespace = "xyz.ksharma.krail.taj"
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 kotlin {
@@ -35,12 +43,39 @@ kotlin {
                 implementation(compose.ui)
 
                 implementation(libs.material.icons.core)
+
+                // Snapshot testing annotation only - compileOnly to prevent test deps in release
+                compileOnly(projects.core.snapshotTesting)
             }
         }
         commonTest {
             dependencies {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
+            }
+        }
+
+        val androidUnitTest by getting {
+            dependencies {
+                // Snapshot testing infrastructure
+                implementation(projects.core.snapshotTesting)
+                implementation(libs.androidx.ui.tooling)
+
+                // Roborazzi for screenshot testing
+                implementation(libs.roborazzi)
+                implementation(libs.roborazzi.compose)
+                implementation(libs.roborazzi.junit)
+
+                // ComposablePreviewScanner for scanning @Preview annotations
+                implementation(libs.preview.scanner.android)
+
+                // Robolectric for running tests
+                implementation(libs.test.robolectric)
+
+                // Testing framework
+                implementation(libs.test.junit)
+                implementation(libs.test.kotlin)
+                implementation(libs.test.composeUiTestJunit4)
             }
         }
     }

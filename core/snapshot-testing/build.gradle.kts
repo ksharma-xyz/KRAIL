@@ -38,7 +38,7 @@ kotlin {
                 implementation(compose.foundation)
 
                 // Required for @Preview support
-                implementation(libs.androidx.ui.tooling)
+                api(libs.androidx.ui.tooling)
 
                 // Roborazzi for screenshot testing (needed by SnapshotConfig)
                 api(libs.roborazzi)

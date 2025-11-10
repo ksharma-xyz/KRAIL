@@ -44,8 +44,8 @@ kotlin {
 
                 implementation(libs.material.icons.core)
 
-                // Snapshot testing annotation
-                implementation(projects.core.snapshotTesting)
+                // Snapshot testing annotation only - compileOnly to prevent test deps in release
+                compileOnly(projects.core.snapshotTesting)
             }
         }
         commonTest {

@@ -50,6 +50,14 @@
 
 -keepattributes *Annotation*
 
+# Remove test dependencies from release builds
+# These should never be included in production code
+-dontwarn org.robolectric.**
+-dontwarn com.github.takahirom.roborazzi.**
+-dontwarn sergio.sastre.composable.preview.scanner.**
+-dontwarn com.google.auto.service.AutoService
+-dontwarn java.awt.**
+
 -keepclassmembers,allowobfuscation class * {
     @javax.inject.* *;
     @dagger.* *;

@@ -360,9 +360,15 @@ data class ButtonDimensions(
 // COMPOSITE PREVIEWS - For Visual Design Review in IDE
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════════════════
-// COMPOSITE PREVIEWS - For Visual Design Review in IDE
-// ═══════════════════════════════════════════════════════════════════════════
+// Preview string constants
+private const val PREVIEW_TEXT_ALL_SIZES = "All Sizes"
+private const val PREVIEW_TEXT_STATES = "States"
+private const val PREVIEW_TEXT_EXTRA_SMALL = "Extra Small"
+private const val PREVIEW_TEXT_SMALL = "Small"
+private const val PREVIEW_TEXT_MEDIUM = "Medium"
+private const val PREVIEW_TEXT_LARGE = "Large"
+private const val PREVIEW_TEXT_ENABLED = "Enabled"
+private const val PREVIEW_TEXT_DISABLED = "Disabled"
 
 // region Primary Button - Composite Previews
 
@@ -374,29 +380,29 @@ private fun PrimaryButtonShowcaseLight() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             Button(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             Button(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             Button(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             Button(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             Button(onClick = {}, enabled = true, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             Button(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -410,29 +416,29 @@ private fun PrimaryButtonShowcaseDark() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             Button(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             Button(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             Button(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             Button(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             Button(onClick = {}, enabled = true, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             Button(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -450,37 +456,37 @@ private fun SubtleButtonShowcaseLight() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             SubtleButton(
                 onClick = {},
                 enabled = true,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             SubtleButton(
                 onClick = {},
                 enabled = false,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -494,37 +500,37 @@ private fun SubtleButtonShowcaseDark() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             SubtleButton(
                 onClick = {},
                 enabled = true,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             SubtleButton(
                 onClick = {},
                 enabled = false,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -542,37 +548,37 @@ private fun TextButtonShowcaseLight() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             TextButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             TextButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             TextButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             TextButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             TextButton(
                 onClick = {},
                 enabled = true,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             TextButton(
                 onClick = {},
                 enabled = false,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -586,37 +592,37 @@ private fun TextButtonShowcaseDark() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             TextButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             TextButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             TextButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             TextButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             TextButton(
                 onClick = {},
                 enabled = true,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             TextButton(
                 onClick = {},
                 enabled = false,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -634,37 +640,37 @@ private fun AlertButtonShowcaseLight() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             AlertButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             AlertButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             AlertButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             AlertButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             AlertButton(
                 onClick = {},
                 enabled = true,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             AlertButton(
                 onClick = {},
                 enabled = false,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -678,37 +684,37 @@ private fun AlertButtonShowcaseDark() {
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("All Sizes", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             AlertButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
-                Text("Extra Small")
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
             }
             AlertButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
-                Text("Small")
+                Text(PREVIEW_TEXT_SMALL)
             }
             AlertButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
-                Text("Medium")
+                Text(PREVIEW_TEXT_MEDIUM)
             }
             AlertButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
-                Text("Large")
+                Text(PREVIEW_TEXT_LARGE)
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("States", style = KrailTheme.typography.titleMedium)
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             AlertButton(
                 onClick = {},
                 enabled = true,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Enabled")
+                Text(PREVIEW_TEXT_ENABLED)
             }
             AlertButton(
                 onClick = {},
                 enabled = false,
-                dimensions = ButtonDefaults.mediumButtonSize()
+                dimensions = ButtonDefaults.mediumButtonSize(),
             ) {
-                Text("Disabled")
+                Text(PREVIEW_TEXT_DISABLED)
             }
         }
     }
@@ -934,7 +940,7 @@ private fun AlertButtonMediumDark() {
 private fun PrimaryButtonDisabledLight() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = false) {
         Button(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -945,7 +951,7 @@ private fun PrimaryButtonDisabledLight() {
 private fun PrimaryButtonDisabledDark() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
         Button(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -958,9 +964,9 @@ private fun SubtleButtonDisabledLight() {
         SubtleButton(
             onClick = {},
             enabled = false,
-            dimensions = ButtonDefaults.mediumButtonSize()
+            dimensions = ButtonDefaults.mediumButtonSize(),
         ) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -973,9 +979,9 @@ private fun SubtleButtonDisabledDark() {
         SubtleButton(
             onClick = {},
             enabled = false,
-            dimensions = ButtonDefaults.mediumButtonSize()
+            dimensions = ButtonDefaults.mediumButtonSize(),
         ) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -986,7 +992,7 @@ private fun SubtleButtonDisabledDark() {
 private fun TextButtonDisabledLight() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = false) {
         TextButton(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -997,7 +1003,7 @@ private fun TextButtonDisabledLight() {
 private fun TextButtonDisabledDark() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro, darkTheme = true) {
         TextButton(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -1008,7 +1014,7 @@ private fun TextButtonDisabledDark() {
 private fun AlertButtonDisabledLight() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = false) {
         AlertButton(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }
@@ -1019,7 +1025,7 @@ private fun AlertButtonDisabledLight() {
 private fun AlertButtonDisabledDark() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
         AlertButton(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
-            Text("Disabled")
+            Text(PREVIEW_TEXT_DISABLED)
         }
     }
 }

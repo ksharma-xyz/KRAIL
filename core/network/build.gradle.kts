@@ -33,6 +33,7 @@ kotlin {
                 implementation(projects.core.appInfo)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
+                implementation(projects.sandook)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)

@@ -42,10 +42,12 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
+import xyz.ksharma.krail.core.debug.DebugFloatingButton
 
 @Composable
 fun SettingsScreen(
     appVersion: String,
+    isDebug: Boolean,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
@@ -156,6 +158,11 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 textAlign = TextAlign.Center,
             )
+        }
+
+        // Debug floating button - only visible in debug builds
+        if (isDebug) {
+            DebugFloatingButton()
         }
     }
 }

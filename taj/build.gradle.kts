@@ -43,7 +43,11 @@ kotlin {
                 implementation(compose.ui)
 
                 implementation(libs.material.icons.core)
+            }
+        }
 
+        androidMain {
+            dependencies {
                 // Snapshot testing annotation only - compileOnly to prevent test deps in release
                 compileOnly(projects.core.snapshotTesting)
             }

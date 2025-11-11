@@ -17,6 +17,9 @@ kotlin {
         }
     }
 
+    iosArm64()
+    iosSimulatorArm64()
+
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.majorVersion))

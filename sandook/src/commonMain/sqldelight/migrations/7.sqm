@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS SavedTrip (
+    tripId TEXT PRIMARY KEY,
+    fromStopId TEXT NOT NULL,
+    fromStopName TEXT NOT NULL,
+    toStopId TEXT NOT NULL,
+    toStopName TEXT NOT NULL,
+    timestamp TEXT DEFAULT (datetime('now'))
+);
+
+ALTER TABLE SavedTrip ADD COLUMN isFromStopValid INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE SavedTrip ADD COLUMN isToStopValid INTEGER NOT NULL DEFAULT 1;

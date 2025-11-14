@@ -12,6 +12,7 @@ val gtfsModule = module {
             ioDispatcher = get(named(IODispatcher)),
             sandook = get(),
             preferences = get(),
+            savedTripValidator = get(),
         )
     }
 }

@@ -83,7 +83,7 @@ internal class RealFestivalManager(private val flag: Flag) : FestivalManager {
     private fun getFestivalData(): FestivalData? {
         log("Fetching festivals from remote config")
         val flagValue = flag.getFlagValue(FlagKeys.FESTIVALS.key)
-        log("Flag value for festivals: $flagValue")
+        // log("Flag value for festivals: $flagValue")
         return flagValue.toFestivalData().also {
             if (it == null) {
                 log("No festivals found or error decoding festivals.")

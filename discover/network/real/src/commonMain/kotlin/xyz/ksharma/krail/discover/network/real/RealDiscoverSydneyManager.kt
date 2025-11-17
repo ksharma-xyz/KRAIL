@@ -1,11 +1,15 @@
 package xyz.ksharma.krail.discover.network.real
 
+import androidx.annotation.VisibleForTesting
+import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remoteconfig.JsonConfig
 import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
@@ -15,8 +19,8 @@ import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 
-// TODO - ADD UT TESTS FOR THIS MANAGER
-internal class RealDiscoverSydneyManager(
+@VisibleForTesting(otherwise = PACKAGE_PRIVATE)
+class RealDiscoverSydneyManager(
     private val flag: Flag,
     private val defaultDispatcher: CoroutineDispatcher = DispatchersComponent().defaultDispatcher,
     private val discoverCardOrderingEngine: DiscoverCardOrderingEngine,
@@ -63,14 +67,23 @@ internal class RealDiscoverSydneyManager(
     /**
      * Parses the Discover cards from the given flag value.
      * Uses default value if flag is not a JSON value.
+     * Returns empty list if parsing fails.
      */
     private suspend fun parseCardsFromFlag(flagValue: FlagValue): List<DiscoverModel> {
         log("Parsing Discover Sydney data from flag: ${FlagKeys.DISCOVER_SYDNEY.key}")
         return withContext(defaultDispatcher) {
             when (flagValue) {
                 is FlagValue.JsonValue -> {
-                    val jsonArray = JsonConfig.lenient.parseToJsonElement(flagValue.value).jsonArray
-                    jsonArray.map { JsonConfig.lenient.decodeFromJsonElement<DiscoverModel>(it) }
+                    try {
+                        val jsonArray = JsonConfig.lenient.parseToJsonElement(flagValue.value).jsonArray
+                        jsonArray.map { JsonConfig.lenient.decodeFromJsonElement<DiscoverModel>(it) }
+                    } catch (e: SerializationException) {
+                        logError("Failed to parse Discover Sydney JSON from flag", e)
+                        emptyList()
+                    } catch (e: IllegalArgumentException) {
+                        logError("Failed to parse Discover Sydney JSON from flag", e)
+                        emptyList()
+                    }
                 }
 
                 else -> {
@@ -80,8 +93,16 @@ internal class RealDiscoverSydneyManager(
                     if (defaultJson == null) {
                         emptyList()
                     } else {
-                        val jsonArray = JsonConfig.lenient.parseToJsonElement(defaultJson).jsonArray
-                        jsonArray.map { JsonConfig.lenient.decodeFromJsonElement<DiscoverModel>(it) }
+                        try {
+                            val jsonArray = JsonConfig.lenient.parseToJsonElement(defaultJson).jsonArray
+                            jsonArray.map { JsonConfig.lenient.decodeFromJsonElement<DiscoverModel>(it) }
+                        } catch (e: SerializationException) {
+                            logError("Failed to parse default Discover Sydney JSON", e)
+                            emptyList()
+                        } catch (e: IllegalArgumentException) {
+                            logError("Failed to parse default Discover Sydney JSON", e)
+                            emptyList()
+                        }
                     }
                 }
             }

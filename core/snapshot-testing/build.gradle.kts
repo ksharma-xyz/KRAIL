@@ -29,6 +29,9 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                // Annotation module (lightweight, no test dependencies)
+                api(projects.core.snapshotTestingAnnotations)
+
                 // Required for annotation to be visible
                 implementation(compose.runtime)
             }

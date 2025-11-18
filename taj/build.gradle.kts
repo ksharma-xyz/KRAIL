@@ -43,15 +43,12 @@ kotlin {
                 implementation(compose.ui)
 
                 implementation(libs.material.icons.core)
+
+                // Lightweight annotation only - no Roborazzi/Robolectric bloat!
+                implementation(projects.core.snapshotTestingAnnotations)
             }
         }
 
-        androidMain {
-            dependencies {
-                // Snapshot testing annotation only - compileOnly to prevent test deps in release
-                compileOnly(projects.core.snapshotTesting)
-            }
-        }
         commonTest {
             dependencies {
                 implementation(libs.test.kotlin)
@@ -59,27 +56,10 @@ kotlin {
             }
         }
 
-        val androidUnitTest by getting {
+        // Test infrastructure with all the heavy dependencies
+        androidUnitTest {
             dependencies {
-                // Snapshot testing infrastructure
                 implementation(projects.core.snapshotTesting)
-                implementation(libs.androidx.ui.tooling)
-
-                // Roborazzi for screenshot testing
-                implementation(libs.roborazzi)
-                implementation(libs.roborazzi.compose)
-                implementation(libs.roborazzi.junit)
-
-                // ComposablePreviewScanner for scanning @Preview annotations
-                implementation(libs.preview.scanner.android)
-
-                // Robolectric for running tests
-                implementation(libs.test.robolectric)
-
-                // Testing framework
-                implementation(libs.test.junit)
-                implementation(libs.test.kotlin)
-                implementation(libs.test.composeUiTestJunit4)
             }
         }
     }

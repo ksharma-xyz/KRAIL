@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-15
     environment: Firebase
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup environment variables
         run: |

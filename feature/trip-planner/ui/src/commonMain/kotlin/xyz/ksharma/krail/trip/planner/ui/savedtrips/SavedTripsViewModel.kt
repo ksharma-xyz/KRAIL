@@ -295,6 +295,7 @@ class SavedTripsViewModel(
                 .distinctUntilChanged()
                 .collectLatest { savedTrips ->
                     log("Saved trips updated: $savedTrips")
+                    // Use pre-computed validity from database - no need to check again
                     val trips = savedTrips.map { it.toTrip() }.toImmutableList()
                     updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
@@ -712,11 +713,14 @@ class SavedTripsViewModel(
         observeParkRideFacilityFromDatabaseJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
-}
 
-private fun SavedTrip.toTrip(): Trip = Trip(
-    fromStopId = fromStopId,
-    fromStopName = fromStopName,
-    toStopId = toStopId,
-    toStopName = toStopName,
-)
+    private fun SavedTrip.toTrip(): Trip = Trip(
+        fromStopId = fromStopId,
+        fromStopName = fromStopName,
+        toStopId = toStopId,
+        toStopName = toStopName,
+        // Convert from database INTEGER (Long) to Boolean
+        isFromStopValid = isFromStopValid == 1L,
+        isToStopValid = isToStopValid == 1L,
+    )
+}

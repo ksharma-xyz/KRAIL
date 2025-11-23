@@ -74,6 +74,22 @@ internal class RealSandook(
         query.clearSavedTrips()
     }
 
+    override fun updateStopValidity(
+        tripId: String,
+        isFromStopValid: Boolean,
+        isToStopValid: Boolean,
+    ) {
+        query.updateStopValidity(
+            isFromStopValid = if (isFromStopValid) 1L else 0L,
+            isToStopValid = if (isToStopValid) 1L else 0L,
+            tripId = tripId,
+        )
+    }
+
+    override fun checkStopExists(stopId: String): Boolean {
+        return nswStopsQueries.checkStopExists(stopId).executeAsOne() > 0
+    }
+
     // endregion
 
     // region Alerts

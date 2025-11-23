@@ -2,18 +2,19 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.InteractionPage
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.SandookPreferences
@@ -26,6 +27,7 @@ class IntroViewModel(
     private val platformOps: PlatformOps,
     private val preferences: SandookPreferences,
     private val stopsManager: StopsManager,
+    private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<IntroState> = MutableStateFlow(IntroState.default())
@@ -49,7 +51,7 @@ class IntroViewModel(
             }
 
             is IntroUiEvent.Complete -> {
-                viewModelScope.launch {
+                viewModelScope.launchWithExceptionHandler<IntroViewModel>(defaultDispatcher) {
                     stopsManager.insertStops()
                     preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
                     analytics.track(

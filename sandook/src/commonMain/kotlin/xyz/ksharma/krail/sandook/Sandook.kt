@@ -26,6 +26,8 @@ interface Sandook {
 
     fun selectTripById(tripId: String): SavedTrip?
     fun clearSavedTrips()
+    fun updateStopValidity(tripId: String, isFromStopValid: Boolean, isToStopValid: Boolean)
+    fun checkStopExists(stopId: String): Boolean
     // endregion
 
     // region Alerts

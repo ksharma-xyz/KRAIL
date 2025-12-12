@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload Detekt reports
         if: always() && steps.detekt.conclusion != 'skipped'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: detekt-reports-${{ github.run_id }}
           path: |

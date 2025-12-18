@@ -18,3 +18,4 @@ class KrailApplication : Application() {
         Firebase.initialize(context = this)
     }
 }
+

@@ -73,7 +73,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
 
@@ -106,14 +105,4 @@ dependencies {
 
     // Koin for Android
     implementation(libs.di.koinAndroid)
-
-    // Firebase - All Firebase dependencies require app-level plugins and google-services.json
-    implementation(libs.firebase.gitLiveAnalytics)
-    implementation(libs.firebase.gitLiveCrashlytics)
-    implementation(libs.firebase.gitLivePerformance)
-
-    // Required when using Firebase GitLive RemoteConfig.
-    // https://developer.android.com/studio/write/java8-support#library-desugaring
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
-

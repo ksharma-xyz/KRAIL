@@ -82,5 +82,14 @@ gradlePlugin {
             id = "krail.maplibre"
             implementationClass = "xyz.ksharma.krail.gradle.MapLibreConventionPlugin"
         }
+
+        /**
+         * Configures Android library for KMP projects using the new android-kotlin-multiplatform-library plugin.
+         * Automatically sets compileSdk and minSdk from AndroidVersion constants.
+         */
+        register("androidKmpLibrary") {
+            id = "krail.android.kmp.library"
+            implementationClass = "xyz.ksharma.krail.gradle.AndroidKmpLibraryConventionPlugin"
+        }
     }
 }

@@ -32,6 +32,7 @@ slf4jAndroid = "1.7.36"
 sqlDelight = "2.2.1"
 koin = "4.1.1"
 firebaseGitLive = "2.4.0"
+firebaseBom = "34.8.0"
 uiGeometryAndroid = "1.10.1"
 foundationLayoutAndroid = "1.10.1"
 ui-tooling = "1.10.1"
@@ -109,6 +110,7 @@ db-sqlRuntime = { module = "app.cash.sqldelight:runtime", version.ref = "sqlDeli
 db-sqlCoroutinesExtensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqlDelight" }
 
 # Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-gitLiveCrashlytics = { module = "dev.gitlive:firebase-crashlytics", version.ref = "firebaseGitLive" }
 firebase-gitLiveAnalytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebaseGitLive" }
 firebase-gitLivePerformance = { module = "dev.gitlive:firebase-perf", version.ref = "firebaseGitLive" }
@@ -166,6 +168,7 @@ spmForKmp = { id = "io.github.frankois944.spmForKmp", version.ref = "spmForKmp" 
 krail-android-application = { id = "krail.android.application", version = "unspecified" }
 krail-compose-multiplatform = { id = "krail.compose.multiplatform", version = "unspecified" }
 krail-android-library = { id = "krail.android.library", version = "unspecified" }
+krail-android-kmp-library = { id = "krail.android.kmp.library", version = "unspecified" }
 krail-kotlin-android = { id = "krail.kotlin.android", version = "unspecified" }
 krail-kotlin-multiplatform = { id = "krail.kotlin.multiplatform", version = "unspecified" }
 krail-maplibre = { id = "krail.maplibre", version = "unspecified" }

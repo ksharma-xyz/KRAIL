@@ -1,17 +1,19 @@
+import xyz.ksharma.krail.gradle.AndroidVersion
+
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.krail.android.library)
+    alias(libs.plugins.krail.android.kmp.library)
     alias(libs.plugins.roborazzi)
 }
 
-android {
-    namespace = "xyz.ksharma.krail.core.snapshot"
-}
-
 kotlin {
-    androidTarget {
+    androidLibrary {
+        namespace = "xyz.ksharma.krail.core.snapshottesting"
+        compileSdk = AndroidVersion.COMPILE_SDK
+        minSdk = AndroidVersion.MIN_SDK
+
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }

@@ -1,12 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import xyz.ksharma.krail.gradle.AndroidVersion
 
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
-    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.krail.android.kmp.library)
 }
 
 kotlin {
@@ -14,8 +15,8 @@ kotlin {
 
     androidLibrary {
         namespace = "xyz.ksharma.krail.shared"
-        compileSdk = 36
-        minSdk = 28
+        compileSdk = AndroidVersion.COMPILE_SDK
+        minSdk = AndroidVersion.MIN_SDK
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
@@ -42,6 +43,12 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(libs.ktor.client.okhttp)
+
+                implementation(project.dependencies.platform(libs.firebase.bom))
+                implementation("com.google.firebase:firebase-analytics")
+                implementation("com.google.firebase:firebase-crashlytics")
+                implementation("com.google.firebase:firebase-perf")
+                implementation("com.google.firebase:firebase-config")
             }
         }
 
@@ -88,8 +95,9 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
 
             api(libs.di.koinComposeViewmodel)
-            // Note: All Firebase dependencies moved to androidApp
-            // They require the Firebase Gradle plugins and google-services.json
+            implementation(libs.firebase.gitLiveCrashlytics)
+            implementation(libs.firebase.gitLiveAnalytics)
+            implementation(libs.firebase.gitLivePerformance)
 
             implementation(libs.coil3.compose)
             implementation(libs.coil3.networkKtor)
@@ -102,5 +110,3 @@ kotlin {
         }
     }
 }
-
-

@@ -1,24 +1,27 @@
+import xyz.ksharma.krail.gradle.AndroidVersion
+
 plugins {
-    alias(libs.plugins.krail.android.library)
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
-}
-
-android {
-    namespace = "xyz.ksharma.krail.core.test"
-
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
+    alias(libs.plugins.krail.android.kmp.library)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    androidTarget()
+    androidLibrary {
+        namespace = "xyz.ksharma.krail.core.test"
+        compileSdk = AndroidVersion.COMPILE_SDK
+        minSdk = AndroidVersion.MIN_SDK
+
+        // Opt-in to enable host-side (unit) tests
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
+    }
 
     iosArm64()
     iosSimulatorArm64()

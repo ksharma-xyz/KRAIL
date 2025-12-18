@@ -1,21 +1,24 @@
-android {
-    namespace = "xyz.ksharma.krail.io.gtfs"
-}
+
+import xyz.ksharma.krail.gradle.AndroidVersion
 
 plugins {
-    alias(libs.plugins.krail.android.library)
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.wire)
+    alias(libs.plugins.krail.android.kmp.library)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    androidTarget()
+    androidLibrary {
+        namespace = "xyz.ksharma.krail.io.gtfs"
+        compileSdk = AndroidVersion.COMPILE_SDK
+        minSdk = AndroidVersion.MIN_SDK
+    }
     iosArm64()
     iosSimulatorArm64()
 
@@ -40,7 +43,6 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(compose.runtime)
                 implementation(compose.components.resources)
-                implementation(libs.firebase.gitLivePerformance)
 
                 api(libs.di.koinComposeViewmodel)
             }

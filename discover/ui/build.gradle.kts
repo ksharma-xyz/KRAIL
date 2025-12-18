@@ -1,24 +1,24 @@
+import xyz.ksharma.krail.gradle.AndroidVersion
+
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.krail.android.library)
-}
-
-android {
-    namespace = "xyz.ksharma.krail.discover.ui"
-
-    // Required when using Firebase GitLive RemoteConfig. Adding here for running previews on device.
-    // https://developer.android.com/studio/write/java8-support#library-desugaring
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-    }
+    alias(libs.plugins.krail.android.kmp.library)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    androidTarget()
+    androidLibrary {
+        namespace = "xyz.ksharma.krail.discover.ui"
+        compileSdk = AndroidVersion.COMPILE_SDK
+        minSdk = AndroidVersion.MIN_SDK
+
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
 
     iosArm64()
     iosSimulatorArm64()
@@ -33,6 +33,9 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.ktor.client.okhttp)
+
+                // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio
+                implementation(libs.androidx.ui.tooling)
             }
         }
 
@@ -75,11 +78,4 @@ kotlin {
     }
 }
 
-dependencies {
-    // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio#focus=Comments-27-11400795.0-0Add commentMore actions
-    debugImplementation(libs.androidx.ui.tooling)
 
-    // Required when using Firebase GitLive RemoteConfig.
-    // https://developer.android.com/studio/write/java8-support#library-desugaring
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-}

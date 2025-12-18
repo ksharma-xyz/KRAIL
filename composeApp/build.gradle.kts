@@ -1,84 +1,22 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-android {
-    namespace = "xyz.ksharma.krail"
-
-    defaultConfig {
-        applicationId = "xyz.ksharma.krail"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = rootProject.file("keystore.jks")
-            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-        }
-    }
-
-    buildTypes {
-
-        debug {
-            applicationIdSuffix = ".debug"
-            isDebuggable = true
-            ndk {
-                isDebuggable = true
-                debugSymbolLevel = "FULL"
-            }
-            packaging {
-                jniLibs {
-                    keepDebugSymbols += "**/*.so"
-                }
-            }
-        }
-
-        release {
-            isMinifyEnabled = true
-            isDebuggable = false
-            isShrinkResources = true
-            ndk {
-                isDebuggable = false
-                debugSymbolLevel = "FULL"
-            }
-            packaging {
-                jniLibs {
-                    keepDebugSymbols += "**/*.so"
-                }
-            }
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-    }
-}
-
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
-    alias(libs.plugins.krail.android.application)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.google.services)
-    alias(libs.plugins.firebase.crashlyticsPlugin)
-    alias(libs.plugins.firebase.performancePlugin)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    androidTarget {
+    androidLibrary {
+        namespace = "xyz.ksharma.krail.shared"
+        compileSdk = 36
+        minSdk = 28
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
             freeCompilerArgs.add("-Xannotation-default-target=param-property")
@@ -100,13 +38,8 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(compose.preview)
-                implementation(libs.activity.compose)
-                implementation(libs.androidx.appcompat)
                 implementation(compose.foundation)
-                implementation(libs.core.ktx)
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.lifecycle.runtime.ktx)
-                api(libs.di.koinAndroid)
 
                 implementation(libs.ktor.client.okhttp)
             }
@@ -150,9 +83,8 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
 
             api(libs.di.koinComposeViewmodel)
-            implementation(libs.firebase.gitLiveCrashlytics)
-            implementation(libs.firebase.gitLiveAnalytics)
-            implementation(libs.firebase.gitLivePerformance)
+            // Note: All Firebase dependencies moved to androidApp
+            // They require the Firebase Gradle plugins and google-services.json
 
             implementation(libs.coil3.compose)
             implementation(libs.coil3.networkKtor)
@@ -166,9 +98,4 @@ kotlin {
     }
 }
 
-dependencies {
-    implementation(projects.sandook)
-    // Required when using Firebase GitLive RemoteConfig.
-    // https://developer.android.com/studio/write/java8-support#library-desugaring
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-}
+

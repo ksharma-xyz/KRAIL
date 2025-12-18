@@ -37,7 +37,7 @@ detektCompose = "0.4.28"
 coil3 = "3.3.0"
 appcompat = "1.7.1"
 roborazzi = "1.52.0"
-composablePreviewScanner = "0.7.2"
+composablePreviewScanner = "0.8.0"
 robolectric = "4.16"
 
 [libraries]

@@ -39,6 +39,7 @@ fun Project.configureAndroid() {
     }
 }
 
+
 object AndroidVersion {
     // https://developer.android.com/build/releases/gradle-plugin#api-level-support
     const val COMPILE_SDK = 36

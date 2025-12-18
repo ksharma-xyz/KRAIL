@@ -17,9 +17,9 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
         extensions.configure<KotlinMultiplatformExtension> {
             applyDefaultHierarchyTemplate()
 
-            if (pluginManager.hasPlugin("com.android.library")) {
-                androidTarget()
-            }
+            // Note: androidLibrary configuration (namespace, compileSdk, minSdk) must be done
+            // in each module's build.gradle.kts as it varies per module
+            // The androidLibrary block is provided by the android-kotlin-multiplatform-library plugin
 
             iosArm64()
             iosSimulatorArm64()

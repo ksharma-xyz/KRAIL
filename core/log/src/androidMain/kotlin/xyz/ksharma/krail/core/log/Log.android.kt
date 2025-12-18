@@ -5,15 +5,16 @@ import co.touchlab.kermit.Logger
 private const val MAX_TAG_LENGTH: Int = 23
 
 actual fun log(message: String) {
-    if (BuildConfig.DEBUG) {
+    // TODO -  fix it
+//    if (BuildConfig.DEBUG) {
         Logger.d(messageString = message, tag = getTag())
-    }
+ //   }
 }
 
 actual fun logError(message: String, throwable: Throwable?) {
-    if (BuildConfig.DEBUG) {
+   // if (BuildConfig.DEBUG) {
         Logger.e(messageString = message, throwable = throwable, tag = getTag())
-    }
+    //}
 }
 
 private fun getTag(): String {

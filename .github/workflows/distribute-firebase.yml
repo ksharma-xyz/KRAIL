@@ -17,7 +17,7 @@ jobs:
       - name: Download APK artifact
         uses: actions/download-artifact@v7
         with:
-          name: composeApp-${{ inputs.variant }}-apk-${{ github.run_id }}
+          name: androidApp-${{ inputs.variant }}-apk-${{ github.run_id }}
 
       - name: List files in extracted artifact
         run: ls
@@ -47,12 +47,12 @@ jobs:
           COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n1 | tr -d '\n' | tr -d '\r')
 
           if [ "${{ inputs.variant }}" = "debug" ]; then
-            firebase appdistribution:distribute composeApp-debug.apk \
+            firebase appdistribution:distribute androidApp-debug.apk \
               --app "$FIREBASE_APP_ID" \
               --groups "Internal" \
               --release-notes "Debug: $COMMIT_TITLE"
           else
-            firebase appdistribution:distribute composeApp-release.apk \
+            firebase appdistribution:distribute androidApp-release.apk \
               --app "$FIREBASE_APP_ID" \
               --groups "Friends" \
               --release-notes "Release: $COMMIT_TITLE"

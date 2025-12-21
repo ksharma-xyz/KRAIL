@@ -11,9 +11,11 @@ import xyz.ksharma.krail.sandook.RealDiscoverCardSeenPreferences
 import xyz.ksharma.krail.sandook.RealNswParkRideSandook
 import xyz.ksharma.krail.sandook.RealSandook
 import xyz.ksharma.krail.sandook.RealSandookPreferences
+import xyz.ksharma.krail.sandook.RealSavedTripValidator
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookDriverFactory
 import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.sandook.SavedTripValidator
 
 val sandookModule = module {
     includes(sqlDriverModule)
@@ -58,6 +60,13 @@ val sandookModule = module {
     single<Sandook> {
         RealSandook(
             factory = get(),
+            ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
+        )
+    }
+
+    single<SavedTripValidator> {
+        RealSavedTripValidator(
+            sandook = get(),
             ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
         )
     }

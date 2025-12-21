@@ -54,7 +54,7 @@ kotlin {
                 implementation(compose.components.uiToolingPreview)
                 implementation(compose.animation)
                 implementation(compose.foundation)
-                implementation(compose.material3)
+                implementation(libs.material.icons.core)
                 implementation(compose.ui)
 
                 api(libs.di.koinComposeViewmodel)

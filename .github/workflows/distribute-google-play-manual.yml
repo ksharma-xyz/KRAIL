@@ -20,6 +20,6 @@ jobs:
     needs: build-android-release
     uses: ./.github/workflows/distribute-google-play.yml
     with:
-      artifact-name: composeApp-release-aab-${{ github.run_id }}
+      artifact-name: androidApp-release-aab-${{ github.run_id }}
       track: ${{ github.event.inputs.track }}
     secrets: inherit

@@ -58,59 +58,94 @@ class RealAppVersionManager(
 ) : AppVersionManager {
 
     private val minimumSupportedAppVersion: String by lazy {
-        flag.getFlagValue(FlagKeys.MIN_SUPPORTED_APP_VERSION.key).asString()
+        val configValue = flag.getFlagValue(FlagKeys.MIN_SUPPORTED_APP_VERSION.key).asString()
+        configValue.ifBlank {
+            logError("MIN_SUPPORTED_APP_VERSION is blank in Remote Config, using fallback")
+            "1.0.0" // Fallback to a very low version so all users can use the app
+        }
     }
 
     private val latestAppVersion: String by lazy {
-
-        when (appInfoProvider.getAppInfo().devicePlatformType) {
+        val configValue = when (appInfoProvider.getAppInfo().devicePlatformType) {
             DevicePlatformType.ANDROID -> {
-                log("Fetching latest app version for Android: ")
-                flag.getFlagValue(FlagKeys.LATEST_APP_VERSION_ANDROID.key)
-                    .asString()
+                log("Fetching latest app version for Android")
+                flag.getFlagValue(FlagKeys.LATEST_APP_VERSION_ANDROID.key).asString()
             }
 
             DevicePlatformType.IOS -> {
-                log("Fetching latest app version for iOS: ")
-                flag.getFlagValue(FlagKeys.LATEST_APP_VERSION_IOS.key)
-                    .asString()
+                log("Fetching latest app version for iOS")
+                flag.getFlagValue(FlagKeys.LATEST_APP_VERSION_IOS.key).asString()
             }
 
             DevicePlatformType.UNKNOWN -> {
-                logError("Cannot fetch latest app version for unknown platform: ")
-                // If the platform is unknown, we can't determine the latest version
+                logError("Cannot fetch latest app version for unknown platform")
                 ""
             }
         }
+
+        // If Remote Config value is empty, use current app version as fallback
+        // This ensures the app doesn't crash and users won't see update prompts
+        configValue.ifBlank {
+            val currentVersion = getCurrentVersion()
+            logError(
+                "Latest app version is blank in Remote Config, using current version as fallback: $currentVersion",
+            )
+            currentVersion
+        }
     }
 
-    override suspend fun checkForUpdates(): AppVersionUpdateState {
+    override suspend fun checkForUpdates(): AppVersionUpdateState = runCatching {
         log("Checking app version updates...")
         val current = getCurrentVersion()
         log("Current app version: $current")
-        if (current.isBlank()) return AppVersionUpdateState.UpToDate
 
-        if (compareVersions(current, latestAppVersion) > 0) {
+        // Guard: If current version is blank, we can't check for updates
+        if (current.isBlank()) {
+            logError("Current app version is blank, cannot check for updates")
+            return@runCatching AppVersionUpdateState.UpToDate
+        }
+
+        val minimumSupported = minimumSupportedAppVersion
+        val latest = latestAppVersion
+
+        // Guard: If Remote Config values are blank/empty, skip version check
+        if (minimumSupported.isBlank() || latest.isBlank()) {
             logError(
-                "Current version ($current) is ahead of latest flag ($latestAppVersion) -> flag value is likely stale",
+                "Remote Config version values are blank " +
+                    "(minimumSupported='$minimumSupported', latest='$latest'). " +
+                    "Skipping version check - assuming app is up to date.",
+            )
+            return@runCatching AppVersionUpdateState.UpToDate
+        }
+
+        // Log warning if current version is ahead of the latest flag
+        if (compareVersions(current, latest) > 0) {
+            logError(
+                "Current version ($current) is ahead of latest flag ($latest) -> " +
+                    "Remote Config value may be stale or not updated yet",
             )
         }
 
-        log(
-            "Checking app version: current=$current, minimumSupported=$minimumSupportedAppVersion, latest=$latestAppVersion",
-        )
+        log("Version check: current=$current, minimumSupported=$minimumSupported, latest=$latest")
 
-        val state = when {
-            compareVersions(current, minimumSupportedAppVersion) < 0 ->
+        when {
+            compareVersions(current, minimumSupported) < 0 -> {
+                log("App version update state: ForcedUpdateRequired")
                 AppVersionUpdateState.ForcedUpdateRequired
-
-            compareVersions(current, latestAppVersion) < 0 ->
+            }
+            compareVersions(current, latest) < 0 -> {
+                log("App version update state: UpdateRequired")
                 AppVersionUpdateState.UpdateRequired
+            }
 
-            else -> AppVersionUpdateState.UpToDate
+            else -> {
+                log("App version update state: UpToDate")
+                AppVersionUpdateState.UpToDate
+            }
         }
-        log("App version update state: $state")
-        return state
+    }.getOrElse { error ->
+        logError("Error checking for app updates: ${error.message}", error)
+        AppVersionUpdateState.UpToDate
     }
 
     override fun getCurrentVersion(): String = appInfoProvider.getAppInfo().appVersion

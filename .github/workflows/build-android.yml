@@ -1,4 +1,4 @@
-name: Build Android
+name: Build Android App
 
 on:
   workflow_call:
@@ -31,12 +31,12 @@ jobs:
       - name: Firebase Android (Release) - Google Services.json file
         env:
           DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_RELEASE }}
-        run: echo $DATA | base64 -di > composeApp/src/release/google-services.json
+        run: echo $DATA | base64 -di > androidApp/src/release/google-services.json
 
       - name: Firebase (Debug) - Google Services.json file
         env:
           DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
-        run: echo $DATA | base64 -di > composeApp/src/debug/google-services.json
+        run: echo $DATA | base64 -di > androidApp/src/debug/google-services.json
 
 #      - name: Clean Gradle Build
 #        run: ./gradlew clean
@@ -76,9 +76,9 @@ jobs:
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace --no-configuration-cache
+            ./gradlew :androidApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace --no-configuration-cache
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${VERSION_CODE}" --no-configuration-cache
+            ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease -PversionCode="${VERSION_CODE}" --no-configuration-cache
           fi
 
       - name: Upload Debug APK
@@ -86,20 +86,20 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           retention-days: 1
-          name: composeApp-debug-apk-${{ github.run_id }}
-          path: composeApp/build/outputs/apk/debug/composeApp-debug.apk
+          name: androidApp-debug-apk-${{ github.run_id }}
+          path: androidApp/build/outputs/apk/debug/androidApp-debug.apk
 
       # Release APK Signing and Uploading
-      - name: List files in composeApp/build/outputs/apk/release
-        run: ls -lR composeApp/build/outputs/apk/release || echo "Directory not found"
+      - name: List files in androidApp/build/outputs/apk/release
+        run: ls -lR androidApp/build/outputs/apk/release || echo "Directory not found"
 
       - name: Upload Release APK
         if: ${{ inputs.variant == 'release' }}
         uses: actions/upload-artifact@v6
         with:
           retention-days: 1
-          name: composeApp-release-apk-${{ github.run_id }}
-          path: composeApp/build/outputs/apk/release/composeApp-release.apk
+          name: androidApp-release-apk-${{ github.run_id }}
+          path: androidApp/build/outputs/apk/release/androidApp-release.apk
 
       # Release AAB Signing and Uploading
       - name: Sign Android Release AAB
@@ -107,7 +107,7 @@ jobs:
         id: signed_release_aab
         uses: filippoLeporati93/android-release-signer@v1
         with:
-          releaseDirectory: composeApp/build/outputs/bundle/release
+          releaseDirectory: androidApp/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE }}
           alias: ${{ secrets.ANDROID_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -118,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           retention-days: 1
-          name: composeApp-release-aab-${{ github.run_id }}
+          name: androidApp-release-aab-${{ github.run_id }}
           path: ${{ steps.signed_release_aab.outputs.signedReleaseFile }}
 
       - name: Cleanup sensitive files

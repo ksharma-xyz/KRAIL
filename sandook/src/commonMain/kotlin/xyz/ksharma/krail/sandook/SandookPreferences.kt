@@ -23,7 +23,7 @@ interface SandookPreferences {
 
     companion object {
         // Increment this when bundling new stops data
-        const val NSW_STOPS_VERSION = 15L
+        const val NSW_STOPS_VERSION = 16L
 
         const val KEY_NSW_STOPS_VERSION = "KEY_NSW_STOPS_VERSION"
         const val KEY_HAS_SEEN_INTRO = "KEY_HAS_SEEN_INTRO"

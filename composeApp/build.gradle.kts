@@ -128,13 +128,19 @@ kotlin {
             implementation(projects.feature.tripPlanner.network)
             implementation(projects.feature.tripPlanner.state)
             implementation(projects.feature.tripPlanner.ui)
+            // Only depend on api module for navigation contracts
+            implementation(projects.feature.tripPlanner.ui.api)
             implementation(projects.io.gtfs)
             implementation(projects.infoTile.network.real)
             implementation(projects.platform.ops)
             implementation(projects.sandook)
             implementation(projects.taj)
 
-            implementation(libs.navigation.compose)
+            // Navigation 3
+            implementation(libs.jetbrains.navigation3.ui)
+            implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+            implementation(libs.jetbrains.material3.adaptiveNavigation3)
+            implementation(libs.jetbrains.material3.adaptiveNavigation3)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

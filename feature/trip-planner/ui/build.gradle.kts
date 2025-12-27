@@ -24,6 +24,9 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                // Add dependency on the new api module
+                api(projects.feature.tripPlanner.ui.api)
+
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)
                 implementation(projects.core.analytics)
@@ -62,7 +65,11 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.lifecycle.viewmodel.compose)
-                implementation(libs.navigation.compose)
+
+                // Navigation 3
+                implementation(libs.jetbrains.navigation3.ui)
+                implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+                implementation(libs.jetbrains.material3.adaptiveNavigation3)
 
                 implementation(libs.molecule.runtime)
                 implementation(libs.material.adaptive)

@@ -63,6 +63,10 @@ class TimeTableViewModel(
     private val festivalManager: FestivalManager,
 ) : ViewModel() {
 
+    init {
+        println("TimeTableViewModel: $this")
+    }
+
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
 

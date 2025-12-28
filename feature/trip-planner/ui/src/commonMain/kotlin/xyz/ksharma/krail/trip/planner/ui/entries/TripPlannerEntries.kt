@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.entries
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -8,17 +11,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.discover.state.DiscoverEvent
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
-import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverScreen
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
@@ -58,7 +63,7 @@ fun EntryProviderScope<NavKey>.tripPlannerEntries(
     searchStopEntry(tripPlannerNavigator)
     timeTableEntry(tripPlannerNavigator)
     themeSelectionEntry(tripPlannerNavigator)
-    alertsEntry(tripPlannerNavigator)
+    // alertsEntry removed - alerts shown as modal within TimeTable
     settingsEntry(tripPlannerNavigator)
     dateTimeSelectorEntry(tripPlannerNavigator)
     ourStoryEntry(tripPlannerNavigator)
@@ -239,11 +244,17 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         // CRITICAL: Must collect isLoading to trigger the onStart block that calls fetchTrip()
         val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
+        // State for showing service alerts modal
+        var showAlertsModal by remember { mutableStateOf(false) }
+        var alertsToDisplay by remember { mutableStateOf(persistentSetOf<xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert>()) }
+
         // Capture the ResultEventBus reference in composable scope
         val resultEventBus = LocalResultEventBus.current
 
         // State for date/time selection - keyed to route so it resets when route changes
         var dateTimeSelectionItem by remember(key) { mutableStateOf<DateTimeSelectionItem?>(null) }
+
+        // ...existing code for ResultEffect and LaunchedEffects...
 
         // Listen for DateTimeSelector results using ResultEffect
         ResultEffect<DateTimeSelectedResult>(resultEventBus = resultEventBus) { result ->
@@ -299,41 +310,60 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
             log("=== TimeTable LaunchedEffect END ===")
         }
 
-        TimeTableScreen(
-            timeTableState = timeTableState,
-            expandedJourneyId = expandedJourneyId,
-            onEvent = { viewModel.onEvent(it) },
-            onBackClick = {
-                tripPlannerNavigator.goBack()
-            },
-            onAlertClick = { journeyId ->
-                log("AlertClicked for journeyId: $journeyId")
-                viewModel.fetchAlertsForJourney(journeyId) { alerts ->
-                    if (alerts.isNotEmpty()) {
-                        tripPlannerNavigator.navigateToAlerts(journeyId)
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Main TimeTable Screen
+            TimeTableScreen(
+                timeTableState = timeTableState,
+                expandedJourneyId = expandedJourneyId,
+                onEvent = { viewModel.onEvent(it) },
+                onBackClick = {
+                    tripPlannerNavigator.goBack()
+                },
+                onAlertClick = { journeyId ->
+                    log("AlertClicked for journeyId: $journeyId")
+                    viewModel.fetchAlertsForJourney(journeyId) { alerts ->
+                        if (alerts.isNotEmpty()) {
+                            alertsToDisplay = alerts.toPersistentSet()
+                            showAlertsModal = true
+                        }
                     }
+                },
+                dateTimeSelectionItem = dateTimeSelectionItem,
+                dateTimeSelectorClicked = {
+                    // Just navigate - result will come back via ResultEventBus
+                    tripPlannerNavigator.navigateToDateTimeSelector(
+                        dateTimeSelectionItem?.toJsonString()
+                    )
+                },
+                onJourneyLegClick = { isExpanded ->
+                    // Journey leg click is handled internally by the TimeTableScreen
+                    // No additional action needed here
+                },
+                onModeSelectionChanged = { selectedModes ->
+                    // Handle mode filter selection changes
+                    viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(selectedModes))
+                },
+                onModeClick = { isVisible ->
+                    // Handle mode filter visibility toggle
+                    viewModel.onEvent(TimeTableUiEvent.ModeClicked(isVisible))
                 }
-            },
-            dateTimeSelectionItem = dateTimeSelectionItem,
-            dateTimeSelectorClicked = {
-                // Just navigate - result will come back via ResultEventBus
-                tripPlannerNavigator.navigateToDateTimeSelector(
-                    dateTimeSelectionItem?.toJsonString()
-                )
-            },
-            onJourneyLegClick = { isExpanded ->
-                // Journey leg click is handled internally by the TimeTableScreen
-                // No additional action needed here
-            },
-            onModeSelectionChanged = { selectedModes ->
-                // Handle mode filter selection changes
-                viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(selectedModes))
-            },
-            onModeClick = { isVisible ->
-                // Handle mode filter visibility toggle
-                viewModel.onEvent(TimeTableUiEvent.ModeClicked(isVisible))
+            )
+
+            // Service Alerts Modal Overlay
+            // Note: ServiceAlertScreen handles system back press internally using NavigationBackHandler
+            if (showAlertsModal) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(KrailTheme.colors.surface)
+                ) {
+                    ServiceAlertScreen(
+                        serviceAlerts = alertsToDisplay,
+                        onBackClick = { showAlertsModal = false }
+                    )
+                }
             }
-        )
+        }
     }
 }
 
@@ -373,28 +403,6 @@ private fun EntryProviderScope<NavKey>.themeSelectionEntry(
     }
 }
 
-/**
- * Alerts Entry - Detail Screen in List-Detail pattern
- */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Composable
-private fun EntryProviderScope<NavKey>.alertsEntry(
-    tripPlannerNavigator: TripPlannerNavigator
-) {
-    entry<ServiceAlertRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
-    ) { key ->
-        val viewModel: ServiceAlertsViewModel = koinViewModel()
-        val alertState by viewModel.uiState.collectAsStateWithLifecycle()
-
-        ServiceAlertScreen(
-            serviceAlerts = alertState.serviceAlerts.toImmutableSet(),
-            onBackClick = {
-                tripPlannerNavigator.goBack()
-            }
-        )
-    }
-}
 
 /**
  * Settings Entry - Detail Screen in List-Detail pattern

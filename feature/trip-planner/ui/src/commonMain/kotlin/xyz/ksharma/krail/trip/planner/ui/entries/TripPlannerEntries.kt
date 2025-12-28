@@ -87,11 +87,10 @@ private fun EntryProviderScope<NavKey>.savedTripsEntry(
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        // Listen for StopSelected results using ResultEffect
+        // Listen for StopSelected results from SearchStop screen
+        // This uses the singleton ResultEventBus to ensure results are received
+        // even when screens are in different composition scopes (two-pane layout)
         ResultEffect<StopSelectedResult> { result ->
-            log("SavedTrips: ===== STOP SELECTED RESULT RECEIVED =====")
-            log("SavedTrips: fieldType=${result.fieldType}, stopId=${result.stopId}, stopName=${result.stopName}")
-
             val stopItem = StopItem(
                 stopId = result.stopId,
                 stopName = result.stopName
@@ -99,15 +98,12 @@ private fun EntryProviderScope<NavKey>.savedTripsEntry(
 
             when (result.fieldType) {
                 SearchStopFieldType.FROM -> {
-                    log("SavedTrips: Setting FROM stop")
                     viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
                 }
                 SearchStopFieldType.TO -> {
-                    log("SavedTrips: Setting TO stop")
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
                 }
             }
-            log("SavedTrips: ✅ Stop selection processed")
         }
 
         SavedTripsScreen(
@@ -198,21 +194,21 @@ private fun EntryProviderScope<NavKey>.searchStopEntry(
         }
 
         // Capture ResultEventBus in composable scope for use in callbacks
+        // This uses the singleton instance to ensure results reach SavedTrips
+        // even in two-pane layouts where screens are in different composition scopes
         val resultEventBus = LocalResultEventBus.current
 
         SearchStopScreen(
             searchStopState = searchStopState,
             onStopSelect = { stopItem ->
-                log("SearchStop: onStopSelected: fieldType=${key.fieldType}, stopItem: ${stopItem.stopName} (${stopItem.stopId})")
-
                 // Send result using captured bus reference
                 val result = StopSelectedResult(
                     fieldType = key.fieldType,
                     stopId = stopItem.stopId,
                     stopName = stopItem.stopName
                 )
+
                 resultEventBus.sendResult(result = result)
-                log("SearchStop: ✅ Result sent via ResultEventBus")
 
                 // Navigate back
                 tripPlannerNavigator.goBack()
@@ -236,13 +232,9 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
     entry<TimeTableRoute>(
         metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
     ) { key ->
-        // Log entry composition
-        log("🎬 TimeTable ENTRY COMPOSING - Route: ${key.fromStopId}->${key.toStopId}")
-
         // ViewModel is scoped to this NavEntry - no need for vmKey
         // When entry is removed from backstack, ViewModel is destroyed
         val viewModel: TimeTableViewModel = koinViewModel()
-        log("🎯 ViewModel instance: ${viewModel.hashCode()}")
 
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val expandedJourneyId by viewModel.expandedJourneyId.collectAsStateWithLifecycle()
@@ -261,21 +253,12 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         val tripId = remember(key.fromStopId, key.toStopId) {
             "${key.fromStopId}->${key.toStopId}"
         }
-        log("🆔 Trip ID: $tripId")
 
-        // Custom Saver for DateTimeSelectionItem - defined inline to ensure it's used
+        // Custom Saver for DateTimeSelectionItem
         val dateTimeSelectionSaver = remember {
             androidx.compose.runtime.saveable.Saver<DateTimeSelectionItem?, String>(
-                save = { item ->
-                    val json = item?.toJsonString() ?: ""
-                    log("💾 SAVING dateTimeSelection: $item → JSON: $json")
-                    json
-                },
-                restore = { json ->
-                    val restored = if (json.isEmpty()) null else DateTimeSelectionItem.fromJsonString(json)
-                    log("📂 RESTORING dateTimeSelection: JSON: $json → Item: $restored")
-                    restored
-                }
+                save = { item -> item?.toJsonString() ?: "" },
+                restore = { json -> if (json.isEmpty()) null else DateTimeSelectionItem.fromJsonString(json) }
             )
         }
 
@@ -285,40 +268,42 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
             tripId,
             stateSaver = dateTimeSelectionSaver,
         ) {
-            log("🆕 INITIALIZING dateTimeSelection state for tripId: $tripId")
             mutableStateOf<DateTimeSelectionItem?>(null)
         }
 
-        log("📅 DateTimeSelection state after rememberSaveable: $dateTimeSelectionItem")
-
-        // Track composition lifecycle
-        androidx.compose.runtime.DisposableEffect(Unit) {
-            log("✅ TimeTable COMPOSABLE CREATED - VM: ${viewModel.hashCode()}")
-            onDispose {
-                log("❌ TimeTable COMPOSABLE DISPOSED - VM: ${viewModel.hashCode()}")
-            }
-        }
-
-        // Sync ViewModel's dateTimeSelection with UI state when composable is created
-        // This handles the case where you navigate back to SavedTrips and click the same trip again:
-        // - The ViewModel still has the old dateTimeSelection (because it's not destroyed)
-        // - But the UI's rememberSaveable state is null (new composable instance)
-        // - We need to sync them to avoid showing cached data with "Plan Your Trip" text
+        /**
+         * CRITICAL SYNC MECHANISM
+         *
+         * Why this is needed:
+         * In two-pane layouts (tablets/foldables), the TimeTableViewModel is scoped to survive
+         * navigation. When you:
+         * 1. Select date/time on TimeTable screen (stored in ViewModel)
+         * 2. Navigate back to SavedTrips
+         * 3. Click the same trip again
+         *
+         * The ViewModel still exists with the old dateTimeSelection, BUT the composable
+         * is recreated with a fresh rememberSaveable state (null).
+         *
+         * Without this sync:
+         * - ViewModel has: DateTimeSelection(2025-12-29, 23:20)
+         * - UI state has: null
+         * - Result: Shows cached journey cards with "Plan Your Trip" text (wrong!)
+         *
+         * This LaunchedEffect syncs the UI state to ViewModel on composition, ensuring:
+         * - If UI state is null → Clear ViewModel's selection (fresh start)
+         * - If UI state has value → Update ViewModel (restored from savedInstanceState)
+         *
+         * This ensures the ViewModel and UI stay in sync, preventing stale cached data
+         * from being displayed with incorrect date/time selection state.
+         */
         LaunchedEffect(Unit) {
-            log("🔄 SYNC EFFECT - Syncing ViewModel dateTimeSelection with UI state")
-            log("🔄 UI dateTimeSelection: $dateTimeSelectionItem")
-            log("🔄 Syncing to ViewModel...")
-
             // Always sync UI state to ViewModel on first composition
             // If UI state is null, this will clear the ViewModel's selection
             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
-            log("🔄 Sync complete")
         }
 
         // Set trip info and load data
         LaunchedEffect(tripId) {
-            log("🔄 LOAD TIMETABLE EFFECT - tripId: $tripId")
-
             // Create trip object
             val trip = Trip(
                 fromStopId = key.fromStopId,
@@ -327,14 +312,10 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
                 toStopName = key.toStopName
             )
 
-            log("🔄 Sending LoadTimeTable event to ViewModel")
-            log("🔄 ViewModel will determine if API call is needed based on trip change")
-
             // Always call LoadTimeTable - ViewModel will handle the logic:
             // - If trip changed: Clear date/time, clear cache, fetch from API
             // - If same trip (rotation/nav back): Preserve state, skip API call
             viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip = trip))
-            log("🔄 LoadTimeTable event sent")
         }
 
         Box(modifier = Modifier.fillMaxSize()) {

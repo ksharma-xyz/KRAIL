@@ -41,8 +41,9 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     val navigator = rememberNavigator(navigationState)
     val tripPlannerNavigator = remember { TripPlannerNavigatorImpl(navigator) }
 
-    // Create ResultEventBus for passing results between screens
-    val resultEventBus = remember { ResultEventBus() }
+    // Get the singleton ResultEventBus instance for passing results between screens
+    // Using singleton ensures the same instance is shared across list and detail panes
+    val resultEventBus = remember { ResultEventBus.getInstance() }
 
     // Use Navigator's theme color instead of local state
     val themeContentColor = getForegroundColor(

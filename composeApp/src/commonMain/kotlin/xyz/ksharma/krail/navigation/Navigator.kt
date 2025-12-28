@@ -47,7 +47,7 @@ fun rememberNavigator(state: NavigationState): Navigator {
 class Navigator(val state: NavigationState) {
 
     // Event bus for passing results between screens
-    val resultEventBus = ResultEventBus()
+    val resultEventBus = ResultEventBus.getInstance()
 
     /**
      * App theme color state.

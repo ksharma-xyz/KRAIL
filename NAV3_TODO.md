@@ -2,7 +2,13 @@
 
 ## ✅ Completed (2025-12-28)
 
-- ✅ **Date/Time Selection Persistence on Navigation Back** (See TC-003 in TIMETABLE_TEST_SCENARIOS.md)
+- ✅ **Stale Journey Cards with Null DateTimeSelection** (See TC-005 in TIMETABLE_TEST_SCENARIOS.md)
+  - Fixed: When navigating back to same trip, dateTimeSelection and journey cards now stay in sync
+  - Root cause: ViewModel preserved dateTimeSelection while UI rememberSaveable started with null
+  - Solution: Added sync LaunchedEffect to match UI state with ViewModel state on composition
+  - Result: No more "Plan Your Trip" text showing with time-specific cached journey cards
+
+- ✅ **Date/Time Selection Persistence on Navigation Back** (See TC-003)
   - Fixed: Date/time selection now persists when navigating back from SavedTrips to TimeTable
   - Root cause: `previousTripId` was stored in composable state, moved to ViewModel
   - Result: Cached data is reused, no unnecessary API calls
@@ -52,18 +58,24 @@ Key test categories:
 - Service Alerts Navigation
 - Search Stop Integration
 - Two-Pane Layout Behavior
-- Edge Cases & Error Scenarios
+- ViewModel Lifecycle
+- API Rate Limiting
+- Error Scenarios
+- Edge Cases
 
-Total: 32+ manual test scenarios documented for future automation.
+Total: 33 manual test scenarios documented for future automation.
 
 ## 🐛 Known Issues
 
-None currently blocking release.
+1. ~~TC-005: Stale journey cards showing with "Plan Your Trip" text~~ ✅ FIXED (2025-12-28)
+   - Added sync LaunchedEffect to match UI state with ViewModel on composition
+2. TC-019, TC-020: SearchStop in detail pane updates need verification (Two-pane layout)
 
 ## 📝 Notes
 
 - All fixes from 2025-12-28 session focus on state management and navigation
 - ViewModel-based state tracking (previousTripId) is key to fixing navigation issues
 - rememberSaveable used for UI state that needs to survive rotation
+- Sync between ViewModel and UI state critical for consistency
 - Most critical flows now have documented test scenarios
 

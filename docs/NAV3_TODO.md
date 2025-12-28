@@ -79,3 +79,6 @@ Total: 33 manual test scenarios documented for future automation.
 - Sync between ViewModel and UI state critical for consistency
 - Most critical flows now have documented test scenarios
 
+## TimeTable
+1. How auto refresh time table works, how time text is changed
+2. 

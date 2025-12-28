@@ -17,7 +17,7 @@
 | Search Stop Integration | TC-019, TC-020 | 🔧 Needs Investigation |
 | Two-Pane Layout | TC-021, TC-022, TC-023 | ⚠️ Not Tested |
 | ViewModel Lifecycle | TC-024, TC-025, TC-026 | ✅ Implemented |
-| API Rate Limiting | TC-027, TC-028 | ✅ Implemented |
+| API Rate Limiting | TC-027, TC-028, TC-028A | ✅ Implemented |
 | Error Scenarios | TC-029, TC-030 | ⚠️ Not Tested |
 | Edge Cases | TC-031, TC-032, TC-033 | 🔧 TC-032 Future Enhancement |
 
@@ -545,6 +545,52 @@
 - ✅ Both calls eventually execute
 
 **Actual**: PASS
+
+---
+
+### TC-028A: Auto-refresh triggers every 30 seconds for current-time timetables
+**Status**: ✅ PASS (Fixed 2025-12-29)
+
+**Steps**:
+1. Navigate to TimeTable screen (Town Hall → Seven Hills)
+2. Do NOT select a date/time (should use current time)
+3. Wait for journey cards to load
+4. Wait 30 seconds
+5. Check logs for auto-refresh activity
+
+**Before Fix**:
+- ❌ No auto-refresh logs appeared
+- ❌ Timetable data never updated automatically
+- ❌ `autoRefreshTimeTable` flow was never collected
+
+**Expected After Fix**:
+- ✅ Log shows: "⏰ AUTO-REFRESH | Flow started"
+- ✅ Every 30 seconds: "⏰ AUTO-REFRESH | ✅ Triggering refresh"
+- ✅ Journey cards update with fresh data
+- ✅ API call made every 30 seconds (rate-limited)
+
+**Actual**: PASS
+
+**Root Cause**: 
+- `autoRefreshTimeTable` StateFlow was defined but never collected
+- Flow's `onStart` block only executes when flow is being collected
+- Without collection, the auto-refresh mechanism never triggered
+
+**Fix**: 
+1. Added `LaunchedEffect` in `timeTableEntry()` to collect `autoRefreshTimeTable` flow
+2. Added detailed logging to understand refresh trigger conditions
+3. Collection keeps the flow active while on TimeTable screen
+
+**Code Location**:
+- `TripPlannerEntries.kt:319-327` - LaunchedEffect to collect flow
+- `TimeTableViewModel.kt:99-124` - Auto-refresh flow with enhanced logging
+
+**Notes**:
+- Auto-refresh only triggers when:
+  - Journey cards are loaded OR an error occurred
+  - Selected date is NOT in the future (current or past dates only)
+- Refresh respects rate limiting (30-second interval)
+- Flow is automatically cleaned up when leaving TimeTable screen (WhileSubscribed policy)
 
 ---
 

@@ -242,6 +242,14 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         // CRITICAL: Must collect isLoading to trigger the onStart block that calls fetchTrip()
         val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
+        // CRITICAL: Must collect isActive for updating the TimeText periodically.
+        val isActive by viewModel.isActive.collectAsStateWithLifecycle()
+
+        // CRITICAL: Must collect autoRefreshTimeTable to trigger periodic refresh
+        // The flow's onStart block runs the auto-refresh logic with 30s intervals
+        // We collect it to keep the flow active while the screen is visible
+        val autoRefreshTimeTable by viewModel.autoRefreshTimeTable.collectAsStateWithLifecycle()
+
         // State for showing service alerts modal
         var showAlertsModal by rememberSaveable { mutableStateOf(false) }
         var alertsToDisplay by remember { mutableStateOf(persistentSetOf<xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert>()) }
@@ -317,6 +325,7 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
             // - If same trip (rotation/nav back): Preserve state, skip API call
             viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip = trip))
         }
+
 
         Box(modifier = Modifier.fillMaxSize()) {
             // Main TimeTable Screen

@@ -63,10 +63,6 @@ class TimeTableViewModel(
     private val festivalManager: FestivalManager,
 ) : ViewModel() {
 
-    init {
-        println("TimeTableViewModel: $this")
-    }
-
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
 
@@ -82,6 +78,10 @@ class TimeTableViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTable)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), true)
 
+    /**
+     * Flow that updates time text every 10 seconds while the screen is visible.
+     * Uses WhileSubscribed to automatically stop when no collectors are active.
+     */
     private val _isActive: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isActive: StateFlow<Boolean> = _isActive.onStart {
         while (true) {
@@ -96,14 +96,22 @@ class TimeTableViewModel(
         initialValue = true,
     )
 
+    /**
+     * Flow that auto-refreshes timetable every 30 seconds while the screen is visible.
+     * Uses WhileSubscribed to automatically stop when no collectors are active (screen not visible).
+     * This ensures we don't make API calls in the background when the user has navigated away.
+     */
     private val _autoRefreshTimeTable: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val autoRefreshTimeTable: StateFlow<Boolean> = _autoRefreshTimeTable.onStart {
         while (true) {
-            if ((_uiState.value.journeyList.isEmpty().not() || _uiState.value.isError) &&
-                dateTimeSelectionItem?.date.isFuture().not()
-            ) {
+            val hasJourneys = _uiState.value.journeyList.isEmpty().not()
+            val hasError = _uiState.value.isError
+            val isFutureDate = dateTimeSelectionItem?.date.isFuture()
+
+            if ((hasJourneys || hasError) && !isFutureDate) {
                 rateLimiter.triggerEvent()
             }
+
             delay(AUTO_REFRESH_TIME_TABLE_DURATION)
         }
     }.stateIn(
@@ -142,7 +150,6 @@ class TimeTableViewModel(
     fun onEvent(event: TimeTableUiEvent) {
         when (event) {
             is TimeTableUiEvent.LoadTimeTable -> onLoadTimeTable(event.trip)
-
 
             is TimeTableUiEvent.JourneyCardClicked -> onJourneyCardClicked(event.journeyId)
 
@@ -400,29 +407,21 @@ class TimeTableViewModel(
     }
 
     private fun onLoadTimeTable(trip: Trip) {
-        log("onLoadTimeTable -- Trigger fromStopItem: ${trip.fromStopId}, toStopItem: ${trip.toStopId}")
+        log("onLoadTimeTable -- fromStopId: ${trip.fromStopId}, toStopId: ${trip.toStopId}")
 
         // Check if this is the same trip or a different one
-        // Use previousTripId (stored in VM) to handle navigation back/forward
         val currentTripId = trip.tripId
         val isSameTrip = previousTripId == currentTripId
 
-        log("onLoadTimeTable -- previousTripId: $previousTripId")
-        log("onLoadTimeTable -- currentTripId: $currentTripId")
-        log("onLoadTimeTable -- isSameTrip: $isSameTrip")
-        log("onLoadTimeTable -- Current dateTimeSelection: $dateTimeSelectionItem")
-
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
-        log("Saved Trip[${trip.tripId}]: $savedTrip")
 
         if (!isSameTrip) {
             // Different trip - clear state and fetch new data
-            log("onLoadTimeTable -- Different trip detected, clearing dateTimeSelection and cache")
+            log("onLoadTimeTable -- Different trip, triggering API call")
             dateTimeSelectionItem = null
-            journeys.clear() // Clear cached journeys for different trip
+            journeys.clear()
 
-            // Update UI state and trigger API call
             updateUiState {
                 copy(
                     isLoading = true,
@@ -432,15 +431,10 @@ class TimeTableViewModel(
                 )
             }
 
-            // Trigger API call for new trip
             rateLimiter.triggerEvent()
-            log("onLoadTimeTable -- API call triggered for new trip")
         } else {
-            // Same trip (rotation or nav back) - just update UI state, no API call
-            log("onLoadTimeTable -- Same trip, preserving dateTimeSelection: $dateTimeSelectionItem")
-            log("onLoadTimeTable -- Using cached data, NO API call")
-
-            // Update UI state WITHOUT setting isLoading (no API call)
+            // Same trip - preserve state, no API call
+            log("onLoadTimeTable -- Same trip, using cached data")
             updateUiState {
                 copy(
                     trip = trip,
@@ -449,11 +443,8 @@ class TimeTableViewModel(
             }
         }
 
-        // Update previousTripId for next comparison
         previousTripId = currentTripId
-        log("onLoadTimeTable -- Updated previousTripId to: $previousTripId")
     }
-
 
     private fun onReverseTripButtonClicked() {
         log("Reverse Trip Button Clicked -- Trigger")
@@ -578,7 +569,24 @@ class TimeTableViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        log("TimeTableViewModel cleared")
+        cleanupJobs()
+    }
+
+    /**
+     * Cleanup jobs and resources.
+     * Called when ViewModel is cleared (onCleared).
+     *
+     * Note: This is NOT called when user just navigates away from the screen.
+     * The flows (isActive, autoRefreshTimeTable) use WhileSubscribed to automatically
+     * stop when the screen is not visible, so they don't make API calls in background.
+     */
+    @VisibleForTesting
+    fun cleanupJobs() {
         sandook.clearAlerts()
+        fetchTripJob?.cancel()
+        fetchTripJob = null
+        log("Cleanup jobs completed")
     }
 
     companion object {

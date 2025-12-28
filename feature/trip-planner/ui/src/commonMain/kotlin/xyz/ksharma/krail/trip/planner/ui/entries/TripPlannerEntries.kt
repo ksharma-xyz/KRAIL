@@ -291,14 +291,6 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
 
         log("📅 DateTimeSelection state after rememberSaveable: $dateTimeSelectionItem")
 
-        // Track the previous tripId to detect actual trip changes (not just recompositions/rotations)
-        var previousTripId by rememberSaveable(stateSaver = androidx.compose.runtime.saveable.Saver(
-            save = { it },
-            restore = { it }
-        )) { mutableStateOf<String?>(null) }
-
-        log("🔍 Previous tripId: $previousTripId, Current tripId: $tripId")
-
         // Track composition lifecycle
         androidx.compose.runtime.DisposableEffect(Unit) {
             log("✅ TimeTable COMPOSABLE CREATED - VM: ${viewModel.hashCode()}")
@@ -307,50 +299,41 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
             }
         }
 
-        // Clear date/time selection ONLY when trip actually changes (different tripId), not on rotation
-        LaunchedEffect(tripId) {
-            log("⚠️ TRIP EFFECT TRIGGERED - tripId: $tripId")
-            log("⚠️ previousTripId: $previousTripId")
-            log("⚠️ Current dateTimeSelection: $dateTimeSelectionItem")
+        // Sync ViewModel's dateTimeSelection with UI state when composable is created
+        // This handles the case where you navigate back to SavedTrips and click the same trip again:
+        // - The ViewModel still has the old dateTimeSelection (because it's not destroyed)
+        // - But the UI's rememberSaveable state is null (new composable instance)
+        // - We need to sync them to avoid showing cached data with "Plan Your Trip" text
+        LaunchedEffect(Unit) {
+            log("🔄 SYNC EFFECT - Syncing ViewModel dateTimeSelection with UI state")
+            log("🔄 UI dateTimeSelection: $dateTimeSelectionItem")
+            log("🔄 Syncing to ViewModel...")
 
-            // Only clear if this is a DIFFERENT trip (previousTripId != null and different)
-            if (previousTripId != null && previousTripId != tripId) {
-                log("⚠️ DIFFERENT trip detected! Clearing dateTimeSelection")
-                log("⚠️ Changed from $previousTripId to $tripId")
-                if (dateTimeSelectionItem != null) {
-                    dateTimeSelectionItem = null
-                    viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
-                }
-            } else {
-                log("✅ Same trip or first load - preserving dateTimeSelection: $dateTimeSelectionItem")
-            }
+            // Always sync UI state to ViewModel on first composition
+            // If UI state is null, this will clear the ViewModel's selection
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
+            log("🔄 Sync complete")
         }
 
-        // Update previousTripId after the effect runs (using SideEffect to ensure it happens after composition)
-        androidx.compose.runtime.SideEffect {
-            if (previousTripId != tripId) {
-                log("✅ Updating previousTripId from $previousTripId to $tripId")
-                previousTripId = tripId
-            }
-        }
-
-        // Reload data whenever the trip changes (different stops selected)
+        // Set trip info and load data
         LaunchedEffect(tripId) {
             log("🔄 LOAD TIMETABLE EFFECT - tripId: $tripId")
-            log("🔄 Route: ${key.fromStopId} -> ${key.toStopId}")
-            log("🔄 fromStopName = ${key.fromStopName}")
-            log("🔄 toStopName = ${key.toStopName}")
 
-            // Load fresh timetable data for the new trip
+            // Create trip object
             val trip = Trip(
                 fromStopId = key.fromStopId,
                 fromStopName = key.fromStopName,
                 toStopId = key.toStopId,
                 toStopName = key.toStopName
             )
-            log("🔄 Sending LoadTimeTable event to ViewModel")
-            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip = trip))
 
+            log("🔄 Sending LoadTimeTable event to ViewModel")
+            log("🔄 ViewModel will determine if API call is needed based on trip change")
+
+            // Always call LoadTimeTable - ViewModel will handle the logic:
+            // - If trip changed: Clear date/time, clear cache, fetch from API
+            // - If same trip (rotation/nav back): Preserve state, skip API call
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip = trip))
             log("🔄 LoadTimeTable event sent")
         }
 

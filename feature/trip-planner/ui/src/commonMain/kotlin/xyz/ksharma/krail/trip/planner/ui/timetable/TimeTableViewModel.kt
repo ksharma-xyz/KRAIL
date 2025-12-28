@@ -115,6 +115,9 @@ class TimeTableViewModel(
     private val _expandedJourneyId: MutableStateFlow<String?> = MutableStateFlow(null)
     val expandedJourneyId: StateFlow<String?> = _expandedJourneyId
 
+    // Track previous trip to determine if we need to reload data
+    private var previousTripId: String? = null
+
     private var tripInfo: Trip? = null
     private val unselectedModes: MutableSet<Int> = mutableSetOf() // all are selected by default
 
@@ -139,6 +142,7 @@ class TimeTableViewModel(
     fun onEvent(event: TimeTableUiEvent) {
         when (event) {
             is TimeTableUiEvent.LoadTimeTable -> onLoadTimeTable(event.trip)
+
 
             is TimeTableUiEvent.JourneyCardClicked -> onJourneyCardClicked(event.journeyId)
 
@@ -398,33 +402,58 @@ class TimeTableViewModel(
     private fun onLoadTimeTable(trip: Trip) {
         log("onLoadTimeTable -- Trigger fromStopItem: ${trip.fromStopId}, toStopItem: ${trip.toStopId}")
 
-        // Check if we're loading the same trip (e.g., on rotation) or a different trip
-        val isSameTrip = tripInfo?.tripId == trip.tripId
-        log("onLoadTimeTable -- isSameTrip: $isSameTrip, Current dateTimeSelection: $dateTimeSelectionItem")
+        // Check if this is the same trip or a different one
+        // Use previousTripId (stored in VM) to handle navigation back/forward
+        val currentTripId = trip.tripId
+        val isSameTrip = previousTripId == currentTripId
+
+        log("onLoadTimeTable -- previousTripId: $previousTripId")
+        log("onLoadTimeTable -- currentTripId: $currentTripId")
+        log("onLoadTimeTable -- isSameTrip: $isSameTrip")
+        log("onLoadTimeTable -- Current dateTimeSelection: $dateTimeSelectionItem")
 
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
         log("Saved Trip[${trip.tripId}]: $savedTrip")
 
-        // Only clear date/time selection when loading a DIFFERENT trip
-        // Don't clear when reloading the same trip (e.g., on rotation)
         if (!isSameTrip) {
-            log("onLoadTimeTable -- Different trip detected, clearing dateTimeSelection")
+            // Different trip - clear state and fetch new data
+            log("onLoadTimeTable -- Different trip detected, clearing dateTimeSelection and cache")
             dateTimeSelectionItem = null
+            journeys.clear() // Clear cached journeys for different trip
+
+            // Update UI state and trigger API call
+            updateUiState {
+                copy(
+                    isLoading = true,
+                    trip = trip,
+                    isTripSaved = savedTrip != null,
+                    isError = false,
+                )
+            }
+
+            // Trigger API call for new trip
+            rateLimiter.triggerEvent()
+            log("onLoadTimeTable -- API call triggered for new trip")
         } else {
+            // Same trip (rotation or nav back) - just update UI state, no API call
             log("onLoadTimeTable -- Same trip, preserving dateTimeSelection: $dateTimeSelectionItem")
+            log("onLoadTimeTable -- Using cached data, NO API call")
+
+            // Update UI state WITHOUT setting isLoading (no API call)
+            updateUiState {
+                copy(
+                    trip = trip,
+                    isTripSaved = savedTrip != null,
+                )
+            }
         }
 
-        updateUiState {
-            copy(
-                isLoading = true,
-                trip = trip,
-                isTripSaved = savedTrip != null,
-                isError = false,
-            )
-        }
-        rateLimiter.triggerEvent()
+        // Update previousTripId for next comparison
+        previousTripId = currentTripId
+        log("onLoadTimeTable -- Updated previousTripId to: $previousTripId")
     }
+
 
     private fun onReverseTripButtonClicked() {
         log("Reverse Trip Button Clicked -- Trigger")

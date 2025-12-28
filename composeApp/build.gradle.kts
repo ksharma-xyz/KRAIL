@@ -121,6 +121,7 @@ kotlin {
             implementation(projects.core.di)
             implementation(projects.core.festival)
             implementation(projects.core.log)
+            implementation(projects.core.navigation)
             implementation(projects.core.network)
             implementation(projects.core.remoteConfig)
             implementation(projects.discover.network.real)

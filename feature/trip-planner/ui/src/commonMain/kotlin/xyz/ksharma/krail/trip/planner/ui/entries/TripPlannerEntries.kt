@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.entries
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +39,7 @@ import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryScreen
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItemSaver
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -64,8 +66,8 @@ fun EntryProviderScope<NavKey>.tripPlannerEntries(
     timeTableEntry(tripPlannerNavigator)
     themeSelectionEntry(tripPlannerNavigator)
     // alertsEntry removed - alerts shown as modal within TimeTable
+    // dateTimeSelectorEntry removed - date/time selector shown as modal within TimeTable
     settingsEntry(tripPlannerNavigator)
-    dateTimeSelectorEntry(tripPlannerNavigator)
     ourStoryEntry(tripPlannerNavigator)
     introEntry(tripPlannerNavigator)
     discoverEntry(tripPlannerNavigator)
@@ -227,7 +229,7 @@ private fun EntryProviderScope<NavKey>.searchStopEntry(
 /**
  * TimeTable Entry - Detail Screen in List-Detail pattern
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun EntryProviderScope<NavKey>.timeTableEntry(
     tripPlannerNavigator: TripPlannerNavigator
@@ -245,38 +247,17 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
         // State for showing service alerts modal
-        var showAlertsModal by remember { mutableStateOf(false) }
+        var showAlertsModal by rememberSaveable { mutableStateOf(false) }
         var alertsToDisplay by remember { mutableStateOf(persistentSetOf<xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert>()) }
 
-        // Capture the ResultEventBus reference in composable scope
-        val resultEventBus = LocalResultEventBus.current
+        // State for showing date/time selector modal
+        var showDateTimeSelectorModal by rememberSaveable { mutableStateOf(false) }
 
-        // State for date/time selection - keyed to route so it resets when route changes
-        var dateTimeSelectionItem by remember(key) { mutableStateOf<DateTimeSelectionItem?>(null) }
-
-        // ...existing code for ResultEffect and LaunchedEffects...
-
-        // Listen for DateTimeSelector results using ResultEffect
-        ResultEffect<DateTimeSelectedResult>(resultEventBus = resultEventBus) { result ->
-            log("TimeTable: ===== DATETIME RESULT RECEIVED =====")
-            log("TimeTable: dateTimeJson=${result.dateTimeJson}")
-            log("TimeTable: Current route: ${key.fromStopId}->${key.toStopId}")
-
-            if (result.dateTimeJson.isNotEmpty()) {
-                log("TimeTable: Parsing dateTimeJson")
-                dateTimeSelectionItem = DateTimeSelectionItem.fromJsonString(result.dateTimeJson)
-                log("TimeTable: Parsed item: $dateTimeSelectionItem")
-                log("TimeTable: Sending DateTimeSelectionChanged event to ViewModel")
-                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
-                log("TimeTable: ✅ DateTimeSelectionChanged event sent!")
-            } else {
-                // Reset was clicked
-                log("TimeTable: Reset detected - clearing date/time selection")
-                dateTimeSelectionItem = null
-                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
-            }
-            log("TimeTable: ✅ DateTimeSelected processing complete")
-        }
+        // State for date/time selection - survives configuration changes using custom Saver
+        var dateTimeSelectionItem by rememberSaveable(
+            key,
+            stateSaver = DateTimeSelectionItemSaver,
+        ) { mutableStateOf<DateTimeSelectionItem?>(null) }
 
         // Clear date/time selection when route changes (new trip selected)
         LaunchedEffect(key) {
@@ -330,10 +311,8 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
                 },
                 dateTimeSelectionItem = dateTimeSelectionItem,
                 dateTimeSelectorClicked = {
-                    // Just navigate - result will come back via ResultEventBus
-                    tripPlannerNavigator.navigateToDateTimeSelector(
-                        dateTimeSelectionItem?.toJsonString()
-                    )
+                    // Show modal instead of navigating
+                    showDateTimeSelectorModal = true
                 },
                 onJourneyLegClick = { isExpanded ->
                     // Journey leg click is handled internally by the TimeTableScreen
@@ -349,17 +328,42 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
                 }
             )
 
-            // Service Alerts Modal Overlay
-            // Note: ServiceAlertScreen handles system back press internally using NavigationBackHandler
+            // Service Alerts Modal - using ModalBottomSheet for better UX
             if (showAlertsModal) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(KrailTheme.colors.surface)
+                androidx.compose.material3.ModalBottomSheet(
+                    onDismissRequest = { showAlertsModal = false },
+                    containerColor = KrailTheme.colors.surface,
                 ) {
                     ServiceAlertScreen(
                         serviceAlerts = alertsToDisplay,
                         onBackClick = { showAlertsModal = false }
+                    )
+                }
+            }
+
+            // Date/Time Selector Modal - using ModalBottomSheet for better UX
+            if (showDateTimeSelectorModal) {
+                androidx.compose.material3.ModalBottomSheet(
+                    onDismissRequest = { showDateTimeSelectorModal = false },
+                    containerColor = KrailTheme.colors.surface,
+                ) {
+                    DateTimeSelectorScreen(
+                        dateTimeSelection = dateTimeSelectionItem,
+                        onBackClick = {
+                            showDateTimeSelectorModal = false
+                        },
+                        onDateTimeSelected = { selection ->
+                            // Update state immediately for real-time feedback
+                            dateTimeSelectionItem = selection
+                            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))
+                            showDateTimeSelectorModal = false
+                        },
+                        onResetClick = {
+                            // Clear selection
+                            dateTimeSelectionItem = null
+                            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
+                            showDateTimeSelectorModal = false
+                        }
                     )
                 }
             }
@@ -449,53 +453,6 @@ private fun EntryProviderScope<NavKey>.settingsEntry(
     }
 }
 
-/**
- * DateTimeSelector Entry - Detail Screen in List-Detail pattern
- */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Composable
-private fun EntryProviderScope<NavKey>.dateTimeSelectorEntry(
-    tripPlannerNavigator: TripPlannerNavigator
-) {
-    entry<DateTimeSelectorRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
-    ) { key ->
-        // Parse the JSON to get the current selection
-        val currentSelection = remember(key.dateTimeSelectionItemJson) {
-            key.dateTimeSelectionItemJson?.let { DateTimeSelectionItem.fromJsonString(it) }
-        }
-
-        // Capture the ResultEventBus reference in composable scope
-        val resultEventBus = LocalResultEventBus.current
-
-        DateTimeSelectorScreen(
-            dateTimeSelection = currentSelection,
-            onBackClick = {
-                tripPlannerNavigator.goBack()
-            },
-            onDateTimeSelected = { dateTimeSelection ->
-                // Send result using captured bus reference
-                dateTimeSelection?.let {
-                    log("DateTimeSelector: Sending result: ${it.toJsonString()}")
-                    val result = DateTimeSelectedResult(dateTimeJson = it.toJsonString())
-                    resultEventBus.sendResult(result = result)
-                    log("DateTimeSelector: ✅ Result sent via ResultEventBus")
-                }
-                // Navigate back after sending result
-                tripPlannerNavigator.goBack()
-            },
-            onResetClick = {
-                // Send empty result to indicate reset
-                log("DateTimeSelector: Sending reset (empty result)")
-                val result = DateTimeSelectedResult(dateTimeJson = "")
-                resultEventBus.sendResult(result = result)
-                log("DateTimeSelector: ✅ Reset result sent via ResultEventBus")
-                // Navigate back after sending result
-                tripPlannerNavigator.goBack()
-            }
-        )
-    }
-}
 
 /**
  * OurStory Entry - Detail Screen in List-Detail pattern

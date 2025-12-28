@@ -1,24 +1,53 @@
 package xyz.ksharma.krail.navigation
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavKey
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
+import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
-import xyz.ksharma.krail.trip.planner.ui.api.SearchStopFieldType
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.entries.ResultEventBus
+
+/**
+ * Remember Navigator with theme loaded from database.
+ * This ensures theme persists across activity recreations (rotation, etc).
+ */
+@Composable
+fun rememberNavigator(state: NavigationState): Navigator {
+    val sandook: Sandook = koinInject()
+
+    val navigator = remember(state) {
+        Navigator(state)
+    }
+
+    // Load theme from database on initialization
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.Default) {
+            val themeId = sandook.getProductClass()?.toInt()
+            val themeStyle = KrailThemeStyle.entries.find { it.id == themeId } ?: DEFAULT_THEME_STYLE
+            log("Navigator - Loading theme from DB: themeId=$themeId, themeStyle=${themeStyle.name}, color=${themeStyle.hexColorCode}")
+            navigator.updateTheme(themeStyle.hexColorCode)
+        }
+    }
+
+    return navigator
+}
 
 /**
  * Handles navigation events and result passing between screens.
  */
 class Navigator(val state: NavigationState) {
 
-    // For passing results between screens
-    // replay = 1 ensures the result is cached for when the destination screen becomes active
-    private val _results = MutableSharedFlow<NavigationResult>(replay = 1)
-    val results: SharedFlow<NavigationResult> = _results.asSharedFlow()
+    // Event bus for passing results between screens
+    val resultEventBus = ResultEventBus()
 
     /**
      * App theme color state.
@@ -54,26 +83,6 @@ class Navigator(val state: NavigationState) {
     }
 
     /**
-     * Emit a result without navigating.
-     * Caller should call goBack() separately after emitting.
-     */
-    suspend fun emitResult(result: NavigationResult) {
-        println("Navigator: Emitting result: $result")
-        _results.emit(result)
-        println("Navigator: Result emitted")
-    }
-
-    /**
-     * Navigate back with a result.
-     * This is a convenience method that emits and then navigates back.
-     */
-    suspend fun goBackWithResult(result: NavigationResult) {
-        emitResult(result)
-        println("Navigator: Navigating back after result")
-        goBack()
-    }
-
-    /**
      * Navigate and replace current screen (like navigate with popUpTo inclusive).
      * Used for Splash → SavedTrips/Intro navigation.
      */
@@ -103,18 +112,3 @@ class Navigator(val state: NavigationState) {
     }
 }
 
-/**
- * Sealed interface for typed results between screens.
- * Must match xyz.ksharma.krail.trip.planner.ui.api.NavigationResult exactly.
- */
-sealed interface NavigationResult {
-    data class StopSelected(
-        val fieldType: SearchStopFieldType,
-        val stopId: String,
-        val stopName: String
-    ) : NavigationResult
-
-    data class DateTimeSelected(
-        val dateTimeJson: String
-    ) : NavigationResult
-}

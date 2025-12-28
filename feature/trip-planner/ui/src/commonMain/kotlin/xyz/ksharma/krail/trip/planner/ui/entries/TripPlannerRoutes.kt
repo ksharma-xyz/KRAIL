@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.api
+package xyz.ksharma.krail.trip.planner.ui.entries
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

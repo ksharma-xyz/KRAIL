@@ -17,6 +17,8 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
+import xyz.ksharma.krail.trip.planner.ui.entries.LocalResultEventBus
+import xyz.ksharma.krail.trip.planner.ui.entries.ResultEventBus
 
 /**
  * Main navigation host using Navigation 3 with List-Detail adaptive layout.
@@ -36,8 +38,11 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
         topLevelRoutes = setOf(SplashRoute)
     )
 
-    val navigator = remember { Navigator(navigationState) }
+    val navigator = rememberNavigator(navigationState)
     val tripPlannerNavigator = remember { TripPlannerNavigatorImpl(navigator) }
+
+    // Create ResultEventBus for passing results between screens
+    val resultEventBus = remember { ResultEventBus() }
 
     // Use Navigator's theme color instead of local state
     val themeContentColor = getForegroundColor(
@@ -57,6 +62,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
         LocalThemeColor provides mutableStateOf(navigator.themeColor),
         LocalThemeContentColor provides mutableStateOf(themeContentColor),
         LocalTextColor provides KrailTheme.colors.onSurface,
+        LocalResultEventBus provides resultEventBus,
     ) {
         NavDisplay<NavKey>(
             entries = navigationState.toEntries(entryProvider),

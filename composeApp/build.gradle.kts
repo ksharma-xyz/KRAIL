@@ -128,8 +128,6 @@ kotlin {
             implementation(projects.feature.tripPlanner.network)
             implementation(projects.feature.tripPlanner.state)
             implementation(projects.feature.tripPlanner.ui)
-            // Only depend on api module for navigation contracts
-            implementation(projects.feature.tripPlanner.ui.api)
             implementation(projects.io.gtfs)
             implementation(projects.infoTile.network.real)
             implementation(projects.platform.ops)

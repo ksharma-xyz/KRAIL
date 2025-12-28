@@ -19,20 +19,6 @@ import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
-import xyz.ksharma.krail.trip.planner.ui.api.DateTimeSelectedResult
-import xyz.ksharma.krail.trip.planner.ui.api.DateTimeSelectorRoute
-import xyz.ksharma.krail.trip.planner.ui.api.DiscoverRoute
-import xyz.ksharma.krail.trip.planner.ui.api.IntroRoute
-import xyz.ksharma.krail.trip.planner.ui.api.OurStoryRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SavedTripsRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SearchStopFieldType
-import xyz.ksharma.krail.trip.planner.ui.api.SearchStopRoute
-import xyz.ksharma.krail.trip.planner.ui.api.ServiceAlertRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SettingsRoute
-import xyz.ksharma.krail.trip.planner.ui.api.StopSelectedResult
-import xyz.ksharma.krail.trip.planner.ui.api.ThemeSelectionRoute
-import xyz.ksharma.krail.trip.planner.ui.api.TimeTableRoute
-import xyz.ksharma.krail.trip.planner.ui.api.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverScreen
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
@@ -67,7 +53,6 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
  */
 @Composable
 fun EntryProviderScope<NavKey>.tripPlannerEntries(
-    navigator: Any, // Ignored - kept for signature compatibility
     tripPlannerNavigator: TripPlannerNavigator
 ) {
     savedTripsEntry(tripPlannerNavigator)
@@ -97,36 +82,27 @@ private fun EntryProviderScope<NavKey>.savedTripsEntry(
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        // Listen for results from SearchStopScreen using SharedFlow
-        LaunchedEffect(tripPlannerNavigator) {
-            log("SavedTrips: Starting to collect results")
-            tripPlannerNavigator.navigationResults.collect { result ->
-                log("SavedTrips: Received result: $result (type: ${result::class.simpleName})")
-                when (result) {
-                    is StopSelectedResult -> {
-                        log("SavedTrips received StopSelected result: ${result.stopId}")
+        // Listen for StopSelected results using ResultEffect
+        ResultEffect<StopSelectedResult> { result ->
+            log("SavedTrips: ===== STOP SELECTED RESULT RECEIVED =====")
+            log("SavedTrips: fieldType=${result.fieldType}, stopId=${result.stopId}, stopName=${result.stopName}")
 
-                        val stopItem = StopItem(
-                            stopId = result.stopId,
-                            stopName = result.stopName
-                        )
+            val stopItem = StopItem(
+                stopId = result.stopId,
+                stopName = result.stopName
+            )
 
-                        when (result.fieldType) {
-                            SearchStopFieldType.FROM -> {
-                                log("SavedTrips: Updating FROM stop")
-                                viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
-                            }
-                            SearchStopFieldType.TO -> {
-                                log("SavedTrips: Updating TO stop")
-                                viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
-                            }
-                        }
-                    }
-                    else -> {
-                        log("SavedTrips: Ignoring result type: ${result::class.simpleName}")
-                    }
+            when (result.fieldType) {
+                SearchStopFieldType.FROM -> {
+                    log("SavedTrips: Setting FROM stop")
+                    viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
+                }
+                SearchStopFieldType.TO -> {
+                    log("SavedTrips: Setting TO stop")
+                    viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
                 }
             }
+            log("SavedTrips: ✅ Stop selection processed")
         }
 
         SavedTripsScreen(
@@ -203,23 +179,30 @@ private fun EntryProviderScope<NavKey>.searchStopEntry(
     entry<SearchStopRoute>(
         metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
     ) { key ->
+        // ViewModel is scoped to this NavEntry and will be recreated each time
+        // This ensures recent stops are refreshed when the screen is opened
         val viewModel: SearchStopViewModel = koinViewModel()
         val searchStopState by viewModel.uiState.collectAsStateWithLifecycle()
-        val scope = rememberCoroutineScope()
+
+        // Capture ResultEventBus in composable scope for use in callbacks
+        val resultEventBus = LocalResultEventBus.current
 
         SearchStopScreen(
             searchStopState = searchStopState,
             onStopSelect = { stopItem ->
-                log("SearchStop: onStopSelected: fieldType=${key.fieldType}, stopItem: $stopItem")
+                log("SearchStop: onStopSelected: fieldType=${key.fieldType}, stopItem: ${stopItem.stopName} (${stopItem.stopId})")
 
-                // Emit result using the typed method
-                scope.launch {
-                    tripPlannerNavigator.emitStopSelected(
-                        fieldType = key.fieldType,
-                        stopId = stopItem.stopId,
-                        stopName = stopItem.stopName
-                    )
-                }
+                // Send result using captured bus reference
+                val result = StopSelectedResult(
+                    fieldType = key.fieldType,
+                    stopId = stopItem.stopId,
+                    stopName = stopItem.stopName
+                )
+                resultEventBus.sendResult(result = result)
+                log("SearchStop: ✅ Result sent via ResultEventBus")
+
+                // Navigate back
+                tripPlannerNavigator.goBack()
             },
             goBack = {
                 tripPlannerNavigator.goBack()
@@ -249,34 +232,44 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         // CRITICAL: Must collect isLoading to trigger the onStart block that calls fetchTrip()
         val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
+        // Capture the ResultEventBus reference in composable scope
+        val resultEventBus = LocalResultEventBus.current
+
         // State for date/time selection - keyed to route so it resets when route changes
         var dateTimeSelectionItem by remember(key) { mutableStateOf<DateTimeSelectionItem?>(null) }
 
-        // Listen for DateTimeSelector results using SharedFlow
-        // Key this to 'key' so it restarts (and clears) when navigating to a different trip
-        LaunchedEffect(key, tripPlannerNavigator) {
-            tripPlannerNavigator.navigationResults.collect { result ->
-                when (result) {
-                    is DateTimeSelectedResult -> {
-                        log("TimeTable received DateTimeSelected result for route: ${key.fromStopId}->${key.toStopId}")
-                        if (result.dateTimeJson.isNotEmpty()) {
-                            dateTimeSelectionItem = DateTimeSelectionItem.fromJsonString(result.dateTimeJson)
-                            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
-                        } else {
-                            // Reset was clicked
-                            dateTimeSelectionItem = null
-                            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
-                        }
-                    }
-                    else -> { /* Ignore other result types */ }
-                }
+        // Listen for DateTimeSelector results using ResultEffect
+        ResultEffect<DateTimeSelectedResult>(resultEventBus = resultEventBus) { result ->
+            log("TimeTable: ===== DATETIME RESULT RECEIVED =====")
+            log("TimeTable: dateTimeJson=${result.dateTimeJson}")
+            log("TimeTable: Current route: ${key.fromStopId}->${key.toStopId}")
+
+            if (result.dateTimeJson.isNotEmpty()) {
+                log("TimeTable: Parsing dateTimeJson")
+                dateTimeSelectionItem = DateTimeSelectionItem.fromJsonString(result.dateTimeJson)
+                log("TimeTable: Parsed item: $dateTimeSelectionItem")
+                log("TimeTable: Sending DateTimeSelectionChanged event to ViewModel")
+                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
+                log("TimeTable: ✅ DateTimeSelectionChanged event sent!")
+            } else {
+                // Reset was clicked
+                log("TimeTable: Reset detected - clearing date/time selection")
+                dateTimeSelectionItem = null
+                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
             }
+            log("TimeTable: ✅ DateTimeSelected processing complete")
+        }
+
+        // Clear date/time selection when route changes (new trip selected)
+        LaunchedEffect(key) {
+            log("TimeTable: ===== ROUTE CHANGE EFFECT =====")
+            log("TimeTable: Route changed to ${key.fromStopId}->${key.toStopId}")
+            log("TimeTable: Clearing stale date/time selection")
+            dateTimeSelectionItem = null
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
         }
 
         // Reload data whenever the route changes (different trip selected)
-        // key is the TimeTableRoute object - it changes when from/to stops change
-        // Note: dateTimeSelectionItem is already keyed to 'key' via remember(key) on line 243,
-        // so it automatically resets to null when navigating to a different trip
         LaunchedEffect(key) {
             log("=== TimeTable LaunchedEffect TRIGGERED ===")
             log("TimeTable: Route = ${key.fromStopId} -> ${key.toStopId}")
@@ -299,7 +292,6 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
             log("=== TimeTable LaunchedEffect END ===")
         }
 
-
         TimeTableScreen(
             timeTableState = timeTableState,
             expandedJourneyId = expandedJourneyId,
@@ -317,7 +309,7 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
             },
             dateTimeSelectionItem = dateTimeSelectionItem,
             dateTimeSelectorClicked = {
-                // Just navigate - result will come back via SharedFlow
+                // Just navigate - result will come back via ResultEventBus
                 tripPlannerNavigator.navigateToDateTimeSelector(
                     dateTimeSelectionItem?.toJsonString()
                 )
@@ -441,12 +433,13 @@ private fun EntryProviderScope<NavKey>.dateTimeSelectorEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
     entry<DateTimeSelectorRoute> { key ->
-        val scope = rememberCoroutineScope()
-
         // Parse the JSON to get the current selection
         val currentSelection = remember(key.dateTimeSelectionItemJson) {
             key.dateTimeSelectionItemJson?.let { DateTimeSelectionItem.fromJsonString(it) }
         }
+
+        // Capture the ResultEventBus reference in composable scope
+        val resultEventBus = LocalResultEventBus.current
 
         DateTimeSelectorScreen(
             dateTimeSelection = currentSelection,
@@ -454,18 +447,24 @@ private fun EntryProviderScope<NavKey>.dateTimeSelectorEntry(
                 tripPlannerNavigator.goBack()
             },
             onDateTimeSelected = { dateTimeSelection ->
-                // Emit result using the typed method
-                scope.launch {
-                    dateTimeSelection?.let {
-                        tripPlannerNavigator.emitDateTimeSelected(it.toJsonString())
-                    }
+                // Send result using captured bus reference
+                dateTimeSelection?.let {
+                    log("DateTimeSelector: Sending result: ${it.toJsonString()}")
+                    val result = DateTimeSelectedResult(dateTimeJson = it.toJsonString())
+                    resultEventBus.sendResult(result = result)
+                    log("DateTimeSelector: ✅ Result sent via ResultEventBus")
                 }
+                // Navigate back after sending result
+                tripPlannerNavigator.goBack()
             },
             onResetClick = {
-                // Emit empty result
-                scope.launch {
-                    tripPlannerNavigator.emitDateTimeSelected("")
-                }
+                // Send empty result to indicate reset
+                log("DateTimeSelector: Sending reset (empty result)")
+                val result = DateTimeSelectedResult(dateTimeJson = "")
+                resultEventBus.sendResult(result = result)
+                log("DateTimeSelector: ✅ Reset result sent via ResultEventBus")
+                // Navigate back after sending result
+                tripPlannerNavigator.goBack()
             }
         )
     }

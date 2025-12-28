@@ -17,6 +17,7 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
@@ -86,6 +87,7 @@ class SearchStopViewModel(
 
     private suspend fun fetchRecentStops() {
         val recentStops = stopResultsManager.recentSearchStops().toImmutableList()
+        log("fetchRecentStops: ${recentStops.map { it.stopName }}")
         updateUiState { copy(recentStops = recentStops) }
     }
 

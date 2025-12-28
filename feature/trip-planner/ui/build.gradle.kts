@@ -24,9 +24,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                // Add dependency on the new api module
-                api(projects.feature.tripPlanner.ui.api)
-
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)
                 implementation(projects.core.analytics)

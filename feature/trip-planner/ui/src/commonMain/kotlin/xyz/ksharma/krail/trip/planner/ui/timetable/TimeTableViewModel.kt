@@ -400,6 +400,10 @@ class TimeTableViewModel(
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
         log("Saved Trip[${trip.tripId}]: $savedTrip")
+
+        // Clear date/time selection when loading a new trip
+        dateTimeSelectionItem = null
+
         updateUiState {
             copy(
                 isLoading = true,

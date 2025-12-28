@@ -28,8 +28,8 @@ import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.toThemeMode
 import xyz.ksharma.krail.navigation.AppUpgradeRoute
-import xyz.ksharma.krail.trip.planner.ui.api.IntroRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SavedTripsRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.SavedTripsRoute
 
 class SplashViewModel(
     private val sandook: Sandook,

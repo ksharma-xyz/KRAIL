@@ -1,47 +1,26 @@
 package xyz.ksharma.krail.navigation
 
 import androidx.navigation3.runtime.NavKey
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
-import xyz.ksharma.krail.trip.planner.ui.api.*
+import xyz.ksharma.krail.trip.planner.ui.entries.DateTimeSelectorRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.DiscoverRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.OurStoryRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.entries.SearchStopRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.ServiceAlertRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.SettingsRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.ThemeSelectionRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.TimeTableRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.TripPlannerNavigator
 
 /**
  * Implementation of TripPlannerNavigator using the Navigator.
- * Maps between app module's NavigationResult and api module's NavResult types.
+ * Results are sent via ResultEventBus which is provided via LocalResultEventBus composition local.
  */
 class TripPlannerNavigatorImpl(
     private val navigator: Navigator
 ) : TripPlannerNavigator {
 
-    // Scope for the shared flow
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-
-    // Map Navigator's results to api module's NavResult types
-    override val navigationResults: SharedFlow<NavResult> =
-        navigator.results.map { result ->
-            println("TripPlannerNavigatorImpl: Mapping result: $result")
-            val mapped = when (result) {
-                is NavigationResult.StopSelected -> StopSelectedResult(
-                    fieldType = result.fieldType,
-                    stopId = result.stopId,
-                    stopName = result.stopName
-                )
-                is NavigationResult.DateTimeSelected -> DateTimeSelectedResult(
-                    dateTimeJson = result.dateTimeJson
-                )
-            }
-            println("TripPlannerNavigatorImpl: Mapped to: $mapped")
-            mapped
-        }.shareIn(
-            scope = scope,
-            started = SharingStarted.Eagerly,
-            replay = 1  // Cache last result for new collectors
-        )
 
     override fun navigateToSearchStop(fieldType: SearchStopFieldType) {
         navigator.navigate(SearchStopRoute(fieldType))
@@ -104,22 +83,4 @@ class TripPlannerNavigatorImpl(
             navigator.clearBackStackAndNavigate(route)
         }
     }
-
-    // Emit typed results using app module's NavigationResult
-    override suspend fun emitStopSelected(fieldType: SearchStopFieldType, stopId: String, stopName: String) {
-        navigator.goBackWithResult(
-            NavigationResult.StopSelected(
-                fieldType = fieldType,
-                stopId = stopId,
-                stopName = stopName
-            )
-        )
-    }
-
-    override suspend fun emitDateTimeSelected(dateTimeJson: String) {
-        navigator.goBackWithResult(
-            NavigationResult.DateTimeSelected(dateTimeJson = dateTimeJson)
-        )
-    }
 }
-

@@ -4,16 +4,16 @@ import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import xyz.ksharma.krail.trip.planner.ui.api.DateTimeSelectorRoute
-import xyz.ksharma.krail.trip.planner.ui.api.DiscoverRoute
-import xyz.ksharma.krail.trip.planner.ui.api.IntroRoute
-import xyz.ksharma.krail.trip.planner.ui.api.OurStoryRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SavedTripsRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SearchStopRoute
-import xyz.ksharma.krail.trip.planner.ui.api.ServiceAlertRoute
-import xyz.ksharma.krail.trip.planner.ui.api.SettingsRoute
-import xyz.ksharma.krail.trip.planner.ui.api.ThemeSelectionRoute
-import xyz.ksharma.krail.trip.planner.ui.api.TimeTableRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.DateTimeSelectorRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.DiscoverRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.OurStoryRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.SavedTripsRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.SearchStopRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.ServiceAlertRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.SettingsRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.ThemeSelectionRoute
+import xyz.ksharma.krail.trip.planner.ui.entries.TimeTableRoute
 
 /**
  * Serialization config for multiplatform support (iOS, Web).

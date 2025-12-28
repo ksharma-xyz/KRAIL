@@ -16,7 +16,6 @@ import xyz.ksharma.krail.splash.SplashUiEvent
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.api.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.entries.tripPlannerEntries
 
 /**
@@ -34,7 +33,7 @@ fun krailEntryProvider(
         appUpgradeEntry()
 
         // Trip planner feature entries
-        tripPlannerEntries(navigator, tripPlannerNavigator)
+        tripPlannerEntries(tripPlannerNavigator)
     }
 }
 

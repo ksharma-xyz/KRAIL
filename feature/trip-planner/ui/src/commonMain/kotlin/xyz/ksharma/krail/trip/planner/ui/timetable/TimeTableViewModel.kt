@@ -397,12 +397,23 @@ class TimeTableViewModel(
 
     private fun onLoadTimeTable(trip: Trip) {
         log("onLoadTimeTable -- Trigger fromStopItem: ${trip.fromStopId}, toStopItem: ${trip.toStopId}")
+
+        // Check if we're loading the same trip (e.g., on rotation) or a different trip
+        val isSameTrip = tripInfo?.tripId == trip.tripId
+        log("onLoadTimeTable -- isSameTrip: $isSameTrip, Current dateTimeSelection: $dateTimeSelectionItem")
+
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
         log("Saved Trip[${trip.tripId}]: $savedTrip")
 
-        // Clear date/time selection when loading a new trip
-        dateTimeSelectionItem = null
+        // Only clear date/time selection when loading a DIFFERENT trip
+        // Don't clear when reloading the same trip (e.g., on rotation)
+        if (!isSameTrip) {
+            log("onLoadTimeTable -- Different trip detected, clearing dateTimeSelection")
+            dateTimeSelectionItem = null
+        } else {
+            log("onLoadTimeTable -- Same trip, preserving dateTimeSelection: $dateTimeSelectionItem")
+        }
 
         updateUiState {
             copy(

@@ -39,7 +39,6 @@ import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryScreen
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
-import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItemSaver
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -237,9 +236,14 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
     entry<TimeTableRoute>(
         metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
     ) { key ->
+        // Log entry composition
+        log("🎬 TimeTable ENTRY COMPOSING - Route: ${key.fromStopId}->${key.toStopId}")
+
         // ViewModel is scoped to this NavEntry - no need for vmKey
         // When entry is removed from backstack, ViewModel is destroyed
         val viewModel: TimeTableViewModel = koinViewModel()
+        log("🎯 ViewModel instance: ${viewModel.hashCode()}")
+
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val expandedJourneyId by viewModel.expandedJourneyId.collectAsStateWithLifecycle()
 
@@ -253,27 +257,89 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         // State for showing date/time selector modal
         var showDateTimeSelectorModal by rememberSaveable { mutableStateOf(false) }
 
-        // State for date/time selection - survives configuration changes using custom Saver
-        var dateTimeSelectionItem by rememberSaveable(
-            key,
-            stateSaver = DateTimeSelectionItemSaver,
-        ) { mutableStateOf<DateTimeSelectionItem?>(null) }
+        // Create a stable trip ID that only changes when actual stops change
+        val tripId = remember(key.fromStopId, key.toStopId) {
+            "${key.fromStopId}->${key.toStopId}"
+        }
+        log("🆔 Trip ID: $tripId")
 
-        // Clear date/time selection when route changes (new trip selected)
-        LaunchedEffect(key) {
-            log("TimeTable: ===== ROUTE CHANGE EFFECT =====")
-            log("TimeTable: Route changed to ${key.fromStopId}->${key.toStopId}")
-            log("TimeTable: Clearing stale date/time selection")
-            dateTimeSelectionItem = null
-            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
+        // Custom Saver for DateTimeSelectionItem - defined inline to ensure it's used
+        val dateTimeSelectionSaver = remember {
+            androidx.compose.runtime.saveable.Saver<DateTimeSelectionItem?, String>(
+                save = { item ->
+                    val json = item?.toJsonString() ?: ""
+                    log("💾 SAVING dateTimeSelection: $item → JSON: $json")
+                    json
+                },
+                restore = { json ->
+                    val restored = if (json.isEmpty()) null else DateTimeSelectionItem.fromJsonString(json)
+                    log("📂 RESTORING dateTimeSelection: JSON: $json → Item: $restored")
+                    restored
+                }
+            )
         }
 
-        // Reload data whenever the route changes (different trip selected)
-        LaunchedEffect(key) {
-            log("=== TimeTable LaunchedEffect TRIGGERED ===")
-            log("TimeTable: Route = ${key.fromStopId} -> ${key.toStopId}")
-            log("TimeTable: fromStopName = ${key.fromStopName}")
-            log("TimeTable: toStopName = ${key.toStopName}")
+        // State for date/time selection - survives rotation but clears when trip changes
+        // Using tripId (based on stopIds) instead of key (route object) for stability
+        var dateTimeSelectionItem by rememberSaveable(
+            tripId,
+            stateSaver = dateTimeSelectionSaver,
+        ) {
+            log("🆕 INITIALIZING dateTimeSelection state for tripId: $tripId")
+            mutableStateOf<DateTimeSelectionItem?>(null)
+        }
+
+        log("📅 DateTimeSelection state after rememberSaveable: $dateTimeSelectionItem")
+
+        // Track the previous tripId to detect actual trip changes (not just recompositions/rotations)
+        var previousTripId by rememberSaveable(stateSaver = androidx.compose.runtime.saveable.Saver(
+            save = { it },
+            restore = { it }
+        )) { mutableStateOf<String?>(null) }
+
+        log("🔍 Previous tripId: $previousTripId, Current tripId: $tripId")
+
+        // Track composition lifecycle
+        androidx.compose.runtime.DisposableEffect(Unit) {
+            log("✅ TimeTable COMPOSABLE CREATED - VM: ${viewModel.hashCode()}")
+            onDispose {
+                log("❌ TimeTable COMPOSABLE DISPOSED - VM: ${viewModel.hashCode()}")
+            }
+        }
+
+        // Clear date/time selection ONLY when trip actually changes (different tripId), not on rotation
+        LaunchedEffect(tripId) {
+            log("⚠️ TRIP EFFECT TRIGGERED - tripId: $tripId")
+            log("⚠️ previousTripId: $previousTripId")
+            log("⚠️ Current dateTimeSelection: $dateTimeSelectionItem")
+
+            // Only clear if this is a DIFFERENT trip (previousTripId != null and different)
+            if (previousTripId != null && previousTripId != tripId) {
+                log("⚠️ DIFFERENT trip detected! Clearing dateTimeSelection")
+                log("⚠️ Changed from $previousTripId to $tripId")
+                if (dateTimeSelectionItem != null) {
+                    dateTimeSelectionItem = null
+                    viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
+                }
+            } else {
+                log("✅ Same trip or first load - preserving dateTimeSelection: $dateTimeSelectionItem")
+            }
+        }
+
+        // Update previousTripId after the effect runs (using SideEffect to ensure it happens after composition)
+        androidx.compose.runtime.SideEffect {
+            if (previousTripId != tripId) {
+                log("✅ Updating previousTripId from $previousTripId to $tripId")
+                previousTripId = tripId
+            }
+        }
+
+        // Reload data whenever the trip changes (different stops selected)
+        LaunchedEffect(tripId) {
+            log("🔄 LOAD TIMETABLE EFFECT - tripId: $tripId")
+            log("🔄 Route: ${key.fromStopId} -> ${key.toStopId}")
+            log("🔄 fromStopName = ${key.fromStopName}")
+            log("🔄 toStopName = ${key.toStopName}")
 
             // Load fresh timetable data for the new trip
             val trip = Trip(
@@ -282,13 +348,10 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
                 toStopId = key.toStopId,
                 toStopName = key.toStopName
             )
-            log("TimeTable: Created Trip object: $trip")
-            log("TimeTable: Sending LoadTimeTable event to ViewModel")
-
+            log("🔄 Sending LoadTimeTable event to ViewModel")
             viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip = trip))
 
-            log("TimeTable: LoadTimeTable event sent")
-            log("=== TimeTable LaunchedEffect END ===")
+            log("🔄 LoadTimeTable event sent")
         }
 
         Box(modifier = Modifier.fillMaxSize()) {

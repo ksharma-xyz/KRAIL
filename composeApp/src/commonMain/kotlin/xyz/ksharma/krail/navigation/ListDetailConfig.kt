@@ -31,11 +31,18 @@ fun <T : NavKey> rememberListDetailSceneStrategy(): ListDetailSceneStrategy<T> {
     // Calculate the pane scaffold directive based on window size
     val directive = calculatePaneScaffoldDirective(adaptiveInfo)
 
-    return remember(adaptiveInfo) {
+    // Debug: Log the window size class to see what's being detected
+    println("📱 ADAPTIVE | Window size: ${adaptiveInfo.windowSizeClass}")
+    println("📱 ADAPTIVE | Directive maxHorizontalPartitions: ${directive.maxHorizontalPartitions}")
+    println("📱 ADAPTIVE | Window width dp: ${adaptiveInfo.windowSizeClass.minWidthDp}")
+
+    return remember(directive) {
         ListDetailSceneStrategy(
             backNavigationBehavior = BackNavigationBehavior.PopLatest,
             directive = directive,
             adaptStrategies = ThreePaneScaffoldAdaptStrategies(
+                // For list-detail layout, we want to show both panes side-by-side on wide screens
+                // Use AdaptStrategy.Hide to collapse to single pane on narrow screens
                 primaryPaneAdaptStrategy = AdaptStrategy.Hide,
                 secondaryPaneAdaptStrategy = AdaptStrategy.Hide,
                 tertiaryPaneAdaptStrategy = AdaptStrategy.Hide

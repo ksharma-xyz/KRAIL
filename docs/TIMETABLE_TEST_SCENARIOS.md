@@ -665,7 +665,7 @@
 ---
 
 ## 🔗 Related Documentation
-- [NAV3_TODO.md](./NAV3_TODO.md) - Navigation 3.0 migration checklist
+- [NAV3_TODO.md](NAV3_TODO.md) - Navigation 3.0 migration checklist
 - [Implementation Notes] - See inline comments in TripPlannerEntries.kt, TimeTableViewModel.kt
 
 **Next Steps**:

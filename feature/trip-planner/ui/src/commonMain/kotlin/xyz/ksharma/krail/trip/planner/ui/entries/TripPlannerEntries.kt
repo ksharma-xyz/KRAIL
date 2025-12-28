@@ -35,6 +35,7 @@ import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
@@ -44,8 +45,6 @@ import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionScreen
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableScreen
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
-
-// Note: NavigationResult is from app module, accessed via reflection to avoid circular dependency
 
 /**
  * Entry provider for Trip Planner feature.
@@ -183,6 +182,14 @@ private fun EntryProviderScope<NavKey>.searchStopEntry(
         // This ensures recent stops are refreshed when the screen is opened
         val viewModel: SearchStopViewModel = koinViewModel()
         val searchStopState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        // Refresh recent stops every time screen opens.
+        // Note: Cannot rely on StateFlow's onStart because WhileSubscribed(5000) keeps the
+        // flow alive for 5 seconds after screen closes. If user returns within that window,
+        // onStart won't run again and recent stops won't refresh.
+        LaunchedEffect(Unit) {
+            viewModel.onEvent(SearchStopUiEvent.RefreshRecentStopsList)
+        }
 
         // Capture ResultEventBus in composable scope for use in callbacks
         val resultEventBus = LocalResultEventBus.current
@@ -331,13 +338,16 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
 }
 
 /**
- * ThemeSelection Entry
+ * ThemeSelection Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.themeSelectionEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<ThemeSelectionRoute> { key ->
+    entry<ThemeSelectionRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         val viewModel: ThemeSelectionViewModel = koinViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -364,13 +374,16 @@ private fun EntryProviderScope<NavKey>.themeSelectionEntry(
 }
 
 /**
- * Alerts Entry
+ * Alerts Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.alertsEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<ServiceAlertRoute> { key ->
+    entry<ServiceAlertRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         val viewModel: ServiceAlertsViewModel = koinViewModel()
         val alertState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -384,13 +397,16 @@ private fun EntryProviderScope<NavKey>.alertsEntry(
 }
 
 /**
- * Settings Entry
+ * Settings Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.settingsEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<SettingsRoute> { key ->
+    entry<SettingsRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         val viewModel: SettingsViewModel = koinViewModel()
         val settingsState by viewModel.uiState.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
@@ -426,13 +442,16 @@ private fun EntryProviderScope<NavKey>.settingsEntry(
 }
 
 /**
- * DateTimeSelector Entry
+ * DateTimeSelector Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.dateTimeSelectorEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<DateTimeSelectorRoute> { key ->
+    entry<DateTimeSelectorRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         // Parse the JSON to get the current selection
         val currentSelection = remember(key.dateTimeSelectionItemJson) {
             key.dateTimeSelectionItemJson?.let { DateTimeSelectionItem.fromJsonString(it) }
@@ -471,13 +490,16 @@ private fun EntryProviderScope<NavKey>.dateTimeSelectorEntry(
 }
 
 /**
- * OurStory Entry
+ * OurStory Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.ourStoryEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<OurStoryRoute> { key ->
+    entry<OurStoryRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         val viewModel: OurStoryViewModel = koinViewModel()
         val ourStoryState by viewModel.models.collectAsStateWithLifecycle()
 
@@ -489,13 +511,16 @@ private fun EntryProviderScope<NavKey>.ourStoryEntry(
 }
 
 /**
- * Intro Entry
+ * Intro Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.introEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<IntroRoute> { key ->
+    entry<IntroRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         val viewModel = koinViewModel<IntroViewModel>()
         val introState by viewModel.uiState.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
@@ -514,13 +539,16 @@ private fun EntryProviderScope<NavKey>.introEntry(
 }
 
 /**
- * Discover Entry
+ * Discover Entry - Detail Screen in List-Detail pattern
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun EntryProviderScope<NavKey>.discoverEntry(
     tripPlannerNavigator: TripPlannerNavigator
 ) {
-    entry<DiscoverRoute> { key ->
+    entry<DiscoverRoute>(
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+    ) { key ->
         val viewModel: DiscoverViewModel = koinViewModel()
         val discoverState by viewModel.uiState.collectAsStateWithLifecycle()
 

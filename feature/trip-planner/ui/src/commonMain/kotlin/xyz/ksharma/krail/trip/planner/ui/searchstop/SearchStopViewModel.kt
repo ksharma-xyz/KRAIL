@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +18,10 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.*
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
@@ -29,11 +33,11 @@ class SearchStopViewModel(
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
     val uiState: StateFlow<SearchStopState> = _uiState
         .onStart {
-            fetchRecentStops()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
     private var searchJob: Job? = null
+    private var fetchRecentStopsJob: Job? = null
 
     fun onEvent(event: SearchStopUiEvent) {
         when (event) {
@@ -41,7 +45,7 @@ class SearchStopViewModel(
 
             is SearchStopUiEvent.TrackStopSelected -> {
                 analytics.track(
-                    AnalyticsEvent.StopSelectedEvent(
+                    StopSelectedEvent(
                         stopId = event.stopItem.stopId,
                         isRecentSearch = event.isRecentSearch,
                     ),
@@ -50,7 +54,7 @@ class SearchStopViewModel(
 
             is SearchStopUiEvent.ClearRecentSearchStops -> {
                 analytics.track(
-                    AnalyticsEvent.ClearRecentSearchClickEvent(
+                    ClearRecentSearchClickEvent(
                         recentSearchCount = event.recentSearchCount,
                     ),
                 )
@@ -59,6 +63,16 @@ class SearchStopViewModel(
                 updateUiState {
                     copy(recentStops = persistentListOf())
                 }
+            }
+
+            SearchStopUiEvent.RefreshRecentStopsList -> {
+                fetchRecentStopsJob?.cancel()
+                fetchRecentStopsJob =
+                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(
+                        Dispatchers.IO
+                    ) {
+                        fetchRecentStops()
+                    }
             }
         }
     }

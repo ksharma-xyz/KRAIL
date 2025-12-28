@@ -25,10 +25,18 @@ class SandookCallback(
         log("Configuring database: ${db.version}")
     }
 
+    @Suppress("MagicNumber")
     override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
         super.onUpgrade(db, oldVersion, newVersion)
         log(
             "Upgrading database from version $oldVersion to $newVersion",
         )
+
+        // Log specific migrations for better debugging
+        when {
+            oldVersion < 8 && newVersion >= 8 -> {
+                log("Migration: Added isFromStopValid and isToStopValid columns to SavedTrip table")
+            }
+        }
     }
 }

@@ -20,12 +20,14 @@ CREATE TABLE SavedTrip (
     fromStopName TEXT NOT NULL,
     toStopId TEXT NOT NULL,
     toStopName TEXT NOT NULL,
-    timestamp TEXT DEFAULT (datetime('now'))
+    timestamp TEXT DEFAULT (datetime('now')),
+    isFromStopValid INTEGER NOT NULL DEFAULT 1,
+    isToStopValid INTEGER NOT NULL DEFAULT 1
 );
 
 insertOrReplaceTrip:
-INSERT OR REPLACE INTO SavedTrip(tripId, fromStopId, fromStopName, toStopId, toStopName, timestamp)
-VALUES (?, ?, ?, ?, ?, datetime('now'));
+INSERT OR REPLACE INTO SavedTrip(tripId, fromStopId, fromStopName, toStopId, toStopName, timestamp, isFromStopValid, isToStopValid)
+VALUES (?, ?, ?, ?, ?, datetime('now'), 1, 1);
 
 deleteTrip:
 DELETE FROM SavedTrip WHERE tripId = ?;
@@ -40,6 +42,13 @@ WHERE tripId = ?;
 
 clearSavedTrips:
 DELETE FROM SavedTrip;
+
+
+-- Update individual stop validity --
+updateStopValidity:
+UPDATE SavedTrip
+SET isFromStopValid = ?, isToStopValid = ?
+WHERE tripId = ?;
 
 -- Service Alerts Table --
 CREATE TABLE IF NOT EXISTS ServiceAlertsTable (

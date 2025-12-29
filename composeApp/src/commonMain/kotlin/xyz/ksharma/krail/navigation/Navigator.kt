@@ -11,10 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.navigation.NavigationState
+import xyz.ksharma.krail.core.navigation.NavigatorBase
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.trip.planner.ui.entries.ResultEventBus
 
 /**
  * Remember Navigator with theme loaded from database.
@@ -32,7 +33,8 @@ fun rememberNavigator(state: NavigationState): Navigator {
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
             val themeId = sandook.getProductClass()?.toInt()
-            val themeStyle = KrailThemeStyle.entries.find { it.id == themeId } ?: DEFAULT_THEME_STYLE
+            val themeStyle =
+                KrailThemeStyle.entries.find { it.id == themeId } ?: DEFAULT_THEME_STYLE
             log("Navigator - Loading theme from DB: themeId=$themeId, themeStyle=${themeStyle.name}, color=${themeStyle.hexColorCode}")
             navigator.updateTheme(themeStyle.hexColorCode)
         }
@@ -43,11 +45,10 @@ fun rememberNavigator(state: NavigationState): Navigator {
 
 /**
  * Handles navigation events and result passing between screens.
+ * Implements NavigatorBase so feature modules can depend on the interface
+ * without circular dependencies.
  */
-class Navigator(val state: NavigationState) {
-
-    // Event bus for passing results between screens
-    val resultEventBus = ResultEventBus.getInstance()
+class Navigator(val state: NavigationState) : NavigatorBase {
 
     /**
      * App theme color state.
@@ -56,11 +57,11 @@ class Navigator(val state: NavigationState) {
     var themeColor: String by mutableStateOf(DEFAULT_THEME_STYLE.hexColorCode)
         private set
 
-    fun updateTheme(hexColorCode: String) {
+    override fun updateTheme(hexColorCode: String) {
         themeColor = hexColorCode
     }
 
-    fun navigate(route: NavKey) {
+    override fun navigate(route: NavKey) {
         if (route in state.backStacks.keys) {
             // This is a top level route, just switch to it.
             state.topLevelRoute = route
@@ -69,7 +70,7 @@ class Navigator(val state: NavigationState) {
         }
     }
 
-    fun goBack() {
+    override fun goBack() {
         val currentStack = state.backStacks[state.topLevelRoute]
             ?: error("Stack for ${state.topLevelRoute} not found")
         val currentRoute = currentStack.last()
@@ -96,7 +97,7 @@ class Navigator(val state: NavigationState) {
      * Clear entire back stack and navigate to route.
      * Used for Intro → SavedTrips (user shouldn't go back to intro).
      */
-    fun clearBackStackAndNavigate(route: NavKey) {
+    override fun clearBackStackAndNavigate(route: NavKey) {
         val currentStack = state.backStacks[state.topLevelRoute]
         currentStack?.clear()
         currentStack?.add(route)
@@ -111,4 +112,3 @@ class Navigator(val state: NavigationState) {
         return currentStack.size > 1
     }
 }
-

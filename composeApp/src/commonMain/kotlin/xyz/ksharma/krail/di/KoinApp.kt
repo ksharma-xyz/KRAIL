@@ -19,12 +19,14 @@ import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
 import xyz.ksharma.krail.info.tile.network.real.di.infoTileModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule
+import xyz.ksharma.krail.navigation.di.appNavigationModule
 import xyz.ksharma.krail.park.ride.network.di.parkRideNetworkModule
 import xyz.ksharma.krail.platform.ops.di.opsModule
 import xyz.ksharma.krail.sandook.di.sandookModule
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.trip.planner.network.api.di.tripPlannerNetworkModule
+import xyz.ksharma.krail.trip.planner.ui.di.tripPlannerNavigationModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 
 fun initKoin(config: KoinAppDeclaration? = null) {
@@ -49,6 +51,9 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             festivalModule,
             discoverModule,
             infoTileModule,
+            // Navigation modules
+            appNavigationModule,
+            tripPlannerNavigationModule,
         )
     }
 }

@@ -27,6 +27,15 @@ kotlin {
                 implementation(projects.core.log)
 
                 implementation(compose.runtime)
+                implementation(compose.ui)
+
+                // Navigation 3
+                implementation(libs.jetbrains.navigation3.ui)
+                implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+                implementation(libs.jetbrains.material3.adaptiveNavigation3)
+
+                // Serialization for navigation
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 

@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.entries
 
+import androidx.navigation3.runtime.NavKey
+
 /**
  * Navigation events for Trip Planner feature.
  * This interface decouples the UI from the Navigator implementation.
@@ -21,7 +23,7 @@ interface TripPlannerNavigator {
 
     // Special operations
     fun updateTheme(hexColorCode: String)
-    fun clearBackStackAndNavigate(route: Any)
+    fun clearBackStackAndNavigate(route: NavKey)
 }
 
 /**
@@ -31,11 +33,4 @@ data class StopSelectedResult(
     val fieldType: SearchStopFieldType,
     val stopId: String,
     val stopName: String
-)
-
-/**
- * Result when date/time is selected
- */
-data class DateTimeSelectedResult(
-    val dateTimeJson: String
 )

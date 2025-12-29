@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.navigation
+package xyz.ksharma.krail.core.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -14,15 +14,22 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.savedstate.serialization.SavedStateConfiguration
 
 /**
  * Create a navigation state that persists config changes and process death.
  * Uses polymorphic serialization for multiplatform support (iOS, Web).
+ *
+ * @param startRoute The initial route to show
+ * @param topLevelRoutes All top-level routes in the app
+ * @param serializationConfig Serialization configuration for NavKey persistence
+ * @return NavigationState instance
  */
 @Composable
 fun rememberNavigationState(
     startRoute: NavKey,
-    topLevelRoutes: Set<NavKey>
+    topLevelRoutes: Set<NavKey>,
+    serializationConfig: SavedStateConfiguration,
 ): NavigationState {
     // Use remember instead of rememberSaveable since NavBackStack handles persistence
     val topLevelRoute = remember {
@@ -31,14 +38,14 @@ fun rememberNavigationState(
 
     // Use polymorphic serialization config for multiplatform support
     val backStacks = topLevelRoutes.associateWith { key ->
-        rememberNavBackStack(krailNavSerializationConfig, key)
+        rememberNavBackStack(serializationConfig, key)
     }
 
     return remember(startRoute, topLevelRoutes) {
         NavigationState(
             startRoute = startRoute,
             topLevelRoute = topLevelRoute,
-            backStacks = backStacks
+            backStacks = backStacks,
         )
     }
 }
@@ -46,14 +53,20 @@ fun rememberNavigationState(
 /**
  * State holder for navigation state.
  *
- * @param startRoute - the start route. The user will exit the app through this route.
- * @param topLevelRoute - the current top level route
- * @param backStacks - the back stacks for each top level route
+ * Manages the navigation back stacks for different top-level routes.
+ * This enables features like:
+ * - Multiple back stacks (e.g., for bottom navigation)
+ * - State preservation across configuration changes
+ * - Proper back navigation behavior
+ *
+ * @param startRoute The start route. The user will exit the app through this route.
+ * @param topLevelRoute The current top level route
+ * @param backStacks The back stacks for each top level route
  */
 class NavigationState(
     val startRoute: NavKey,
     topLevelRoute: MutableState<NavKey>,
-    val backStacks: Map<NavKey, NavBackStack<NavKey>>
+    val backStacks: Map<NavKey, NavBackStack<NavKey>>,
 ) {
     var topLevelRoute: NavKey by topLevelRoute
 
@@ -63,14 +76,47 @@ class NavigationState(
         } else {
             listOf(startRoute, topLevelRoute)
         }
+
+    fun navigate(route: NavKey) {
+        if (route in backStacks.keys) {
+            topLevelRoute = route
+        } else {
+            backStacks[topLevelRoute]?.add(route)
+        }
+    }
+
+    fun goBack() {
+        val currentStack = backStacks[topLevelRoute] ?: return
+        val currentRoute = currentStack.last()
+
+        if (currentRoute == topLevelRoute) {
+            topLevelRoute = startRoute
+        } else {
+            currentStack.removeLastOrNull()
+        }
+    }
+
+    fun clearBackStackAndNavigate(route: NavKey) {
+        val currentStack = backStacks[topLevelRoute]
+        currentStack?.clear()
+        currentStack?.add(route)
+    }
+
+    fun navigateAndReplace(route: NavKey) {
+        val currentStack = backStacks[topLevelRoute]
+        currentStack?.removeLastOrNull()
+        navigate(route)
+    }
+
+    fun hasPreviousEntry(): Boolean {
+        val currentStack = backStacks[topLevelRoute] ?: return false
+        return currentStack.size > 1
+    }
 }
 
-/**
- * Convert NavigationState into NavEntries for NavDisplay.
- */
 @Composable
 fun NavigationState.toEntries(
-    entryProvider: (NavKey) -> NavEntry<NavKey>
+    entryProvider: (NavKey) -> NavEntry<NavKey>,
 ): SnapshotStateList<NavEntry<NavKey>> {
     val decoratedEntries = backStacks.mapValues { (_, stack) ->
         val decorators = listOf(
@@ -79,7 +125,7 @@ fun NavigationState.toEntries(
         rememberDecoratedNavEntries(
             backStack = stack,
             entryDecorators = decorators,
-            entryProvider = entryProvider
+            entryProvider = entryProvider,
         )
     }
 

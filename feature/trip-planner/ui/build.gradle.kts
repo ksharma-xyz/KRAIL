@@ -32,6 +32,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
+                implementation(projects.core.navigation)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.discover.network.api)
                 implementation(projects.discover.state)

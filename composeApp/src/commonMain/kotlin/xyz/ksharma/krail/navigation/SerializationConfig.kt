@@ -4,6 +4,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
+import xyz.ksharma.krail.core.navigation.SplashRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute

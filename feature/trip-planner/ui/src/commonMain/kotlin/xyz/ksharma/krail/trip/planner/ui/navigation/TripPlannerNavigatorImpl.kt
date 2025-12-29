@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.navigation
+package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
+import xyz.ksharma.krail.core.navigation.NavigatorBase
 import xyz.ksharma.krail.trip.planner.ui.entries.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute
@@ -14,16 +15,20 @@ import xyz.ksharma.krail.trip.planner.ui.entries.TimeTableRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.TripPlannerNavigator
 
 /**
- * Implementation of TripPlannerNavigator using the Navigator.
+ * Implementation of TripPlannerNavigator for the trip planner feature module.
+ *
+ * This class wraps NavigatorBase to provide feature-specific navigation methods,
+ * keeping the feature module decoupled from the app module's Navigator implementation.
  * Results are sent via ResultEventBus which is provided via LocalResultEventBus composition local.
+ *
+ * @param baseNavigator The base navigator interface from core:navigation module
  */
 class TripPlannerNavigatorImpl(
-    private val navigator: Navigator
+    private val baseNavigator: NavigatorBase
 ) : TripPlannerNavigator {
 
-
     override fun navigateToSearchStop(fieldType: SearchStopFieldType) {
-        navigator.navigate(SearchStopRoute(fieldType))
+        baseNavigator.navigate(SearchStopRoute(fieldType))
     }
 
     override fun navigateToTimeTable(
@@ -32,7 +37,7 @@ class TripPlannerNavigatorImpl(
         toStopId: String,
         toStopName: String
     ) {
-        navigator.navigate(
+        baseNavigator.navigate(
             TimeTableRoute(
                 fromStopId = fromStopId,
                 fromStopName = fromStopName,
@@ -43,44 +48,42 @@ class TripPlannerNavigatorImpl(
     }
 
     override fun navigateToSettings() {
-        navigator.navigate(SettingsRoute)
+        baseNavigator.navigate(SettingsRoute)
     }
 
     override fun navigateToDiscover() {
-        navigator.navigate(DiscoverRoute)
+        baseNavigator.navigate(DiscoverRoute)
     }
 
     override fun navigateToThemeSelection() {
-        navigator.navigate(ThemeSelectionRoute)
+        baseNavigator.navigate(ThemeSelectionRoute)
     }
 
     override fun navigateToAlerts(journeyId: String) {
-        navigator.navigate(ServiceAlertRoute(journeyId))
+        baseNavigator.navigate(ServiceAlertRoute(journeyId))
     }
 
     override fun navigateToDateTimeSelector(json: String?) {
-        navigator.navigate(DateTimeSelectorRoute(json))
+        baseNavigator.navigate(DateTimeSelectorRoute(json))
     }
 
     override fun navigateToOurStory() {
-        navigator.navigate(OurStoryRoute)
+        baseNavigator.navigate(OurStoryRoute)
     }
 
     override fun navigateToIntro() {
-        navigator.navigate(IntroRoute)
+        baseNavigator.navigate(IntroRoute)
     }
 
     override fun goBack() {
-        navigator.goBack()
+        baseNavigator.goBack()
     }
 
     override fun updateTheme(hexColorCode: String) {
-        navigator.updateTheme(hexColorCode)
+        baseNavigator.updateTheme(hexColorCode)
     }
 
-    override fun clearBackStackAndNavigate(route: Any) {
-        if (route is NavKey) {
-            navigator.clearBackStackAndNavigate(route)
-        }
+    override fun clearBackStackAndNavigate(route: NavKey) {
+        baseNavigator.clearBackStackAndNavigate(route)
     }
 }

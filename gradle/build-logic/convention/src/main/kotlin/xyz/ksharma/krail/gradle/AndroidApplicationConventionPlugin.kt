@@ -16,7 +16,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             androidAppExtension().apply {
                 defaultConfig {
                     versionCode = findProperty("versionCode")?.toString()?.toInt() ?: 115
-                    versionName = "1.12.0"
+                    versionName = "1.13.0"
                 }
             }
 

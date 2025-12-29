@@ -180,8 +180,9 @@ class SearchStopViewModelTest {
 
     // region RecentSearchStops
 
+    // kotlin
     @Test
-    fun `GIVEN recent stops exist WHEN ViewModel is initialized THEN recent stops are loaded in state`() =
+    fun `GIVEN recent stops exist WHEN RefreshRecentStopsList is triggered THEN recent stops are loaded in state`() =
         runTest {
             // GIVEN - Add some recent stops to the fake manager
             val recentStop1 = SearchStopState.StopResult(
@@ -198,22 +199,86 @@ class SearchStopViewModelTest {
             fakeStopResultsManager.addRecentSearchStop(recentStop1)
             fakeStopResultsManager.addRecentSearchStop(recentStop2)
 
-            // WHEN - Create a new ViewModel instance to trigger initialization
-            val newViewModel = SearchStopViewModel(
-                analytics = fakeAnalytics,
-                stopResultsManager = fakeStopResultsManager,
-            )
-
-            // THEN
-            newViewModel.uiState.test {
+            // WHEN - Trigger refresh on the existing ViewModel
+            viewModel.uiState.test {
+                skipItems(1) // initial state
+                viewModel.onEvent(SearchStopUiEvent.RefreshRecentStopsList)
                 advanceUntilIdle()
-                skipItems(1) // Skip initial state
 
                 awaitItem().run {
                     assertEquals(2, recentStops.size)
-                    assertEquals("recent2", recentStops[0].stopId) // Most recent first
+                    assertEquals("recent2", recentStops[0].stopId)
                     assertEquals("recent1", recentStops[1].stopId)
                 }
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN recent stops exist WHEN ClearRecentStops is triggered THEN recent stops are cleared from state`() =
+        runTest {
+            // GIVEN - Add some recent stops
+            val recentStop1 = SearchStopState.StopResult(
+                stopId = "recent1",
+                stopName = "Recent Stop 1",
+                transportModeType = persistentListOf(TransportMode.Train())
+            )
+            val recentStop2 = SearchStopState.StopResult(
+                stopId = "recent2",
+                stopName = "Recent Stop 2",
+                transportModeType = persistentListOf(TransportMode.Bus())
+            )
+
+            fakeStopResultsManager.addRecentSearchStop(recentStop1)
+            fakeStopResultsManager.addRecentSearchStop(recentStop2)
+
+            viewModel.uiState.test {
+                skipItems(1) // initial state
+                // Load recents into the ViewModel first
+                viewModel.onEvent(SearchStopUiEvent.RefreshRecentStopsList)
+                advanceUntilIdle()
+
+                awaitItem().run {
+                    assertEquals(2, recentStops.size)
+                }
+
+                // WHEN - Trigger clear recent stops
+                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = 2))
+                advanceUntilIdle()
+
+                // THEN - Verify recent stops are cleared
+                awaitItem().run {
+                    assertTrue(recentStops.isEmpty())
+                    assertFalse(isLoading)
+                    assertFalse(isError)
+                }
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN recent stops exist WHEN ViewModel is initialized THEN recent stops are not auto-loaded`() =
+        runTest {
+            // GIVEN - Add a recent stop to the manager
+            val recentStop = SearchStopState.StopResult(
+                stopId = "recent1",
+                stopName = "Recent Stop 1",
+                transportModeType = persistentListOf(TransportMode.Train())
+            )
+            fakeStopResultsManager.addRecentSearchStop(recentStop)
+
+            // WHEN - Create a fresh ViewModel
+            val vm = SearchStopViewModel(
+                analytics = fakeAnalytics,
+                stopResultsManager = fakeStopResultsManager
+            )
+
+            // THEN - Initial state should not include recents (screen triggers refresh)
+            vm.uiState.test {
+                val initial = awaitItem()
+                assertTrue(initial.recentStops.isEmpty())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -239,47 +304,6 @@ class SearchStopViewModelTest {
             // Verify A appears only once (not duplicated)
             val stopACount = recentStops.count { it.stopId == "central123" }
             assertEquals(1, stopACount)
-        }
-
-    @Test
-    fun `GIVEN recent stops exist WHEN ClearRecentStops is triggered THEN recent stops are cleared from state`() =
-        runTest {
-            // GIVEN - Add some recent stops
-            val recentStop1 = SearchStopState.StopResult(
-                stopId = "recent1",
-                stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(TransportMode.Train())
-            )
-            val recentStop2 = SearchStopState.StopResult(
-                stopId = "recent2",
-                stopName = "Recent Stop 2",
-                transportModeType = persistentListOf(TransportMode.Bus())
-            )
-
-            fakeStopResultsManager.addRecentSearchStop(recentStop1)
-            fakeStopResultsManager.addRecentSearchStop(recentStop2)
-
-            viewModel.uiState.test {
-                // Skip initial state
-                advanceUntilIdle()
-                skipItems(1)
-
-                awaitItem().run {
-                    assertTrue(recentStops.size == 2)
-                }
-
-                // WHEN - Trigger clear recent stops
-                viewModel.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = 2))
-
-                // THEN - Verify recent stops are cleared
-                awaitItem().run {
-                    assertTrue(recentStops.isEmpty())
-                    assertFalse(isLoading)
-                    assertFalse(isError)
-                }
-
-                cancelAndIgnoreRemainingEvents()
-            }
         }
 
     @Test

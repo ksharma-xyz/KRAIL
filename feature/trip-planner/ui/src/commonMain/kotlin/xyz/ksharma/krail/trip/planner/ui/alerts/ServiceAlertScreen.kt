@@ -16,6 +16,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
@@ -26,12 +29,24 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
+// Concrete implementation of NavigationEventInfo for alert modal back handling
+private data object AlertEventInfo : NavigationEventInfo()
+
 @Composable
 fun ServiceAlertScreen(
     serviceAlerts: ImmutableSet<ServiceAlert>,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
 ) {
+    // Intercept system back press (gesture navigation or hardware back button)
+    val navigationEventState = rememberNavigationEventState(
+        currentInfo = AlertEventInfo,
+    )
+    NavigationBackHandler(
+        state = navigationEventState,
+        onBackCompleted = onBackClick,
+    )
+
     Column(
         modifier = modifier
             .fillMaxSize()

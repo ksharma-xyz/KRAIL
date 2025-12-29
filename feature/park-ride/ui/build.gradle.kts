@@ -40,7 +40,6 @@ kotlin {
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.lifecycle.viewmodel.compose)
-                implementation(libs.navigation.compose)
             }
         }
         commonTest {

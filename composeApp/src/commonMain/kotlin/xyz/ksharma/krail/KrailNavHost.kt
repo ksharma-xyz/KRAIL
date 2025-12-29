@@ -1,29 +1,26 @@
 package xyz.ksharma.krail
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import kotlinx.serialization.Serializable
-import org.koin.compose.viewmodel.koinViewModel
-import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
-import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.splash.SplashScreen
-import xyz.ksharma.krail.splash.SplashState
-import xyz.ksharma.krail.splash.SplashUiEvent
-import xyz.ksharma.krail.splash.SplashViewModel
+import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.ui.NavDisplay
+import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
+import xyz.ksharma.krail.core.navigation.ResultEventBus
+import xyz.ksharma.krail.core.navigation.SplashRoute
+import xyz.ksharma.krail.core.navigation.rememberNavigationState
+import xyz.ksharma.krail.core.navigation.toEntries
+import xyz.ksharma.krail.navigation.di.collectEntryProviders
+import xyz.ksharma.krail.navigation.krailNavSerializationConfig
+import xyz.ksharma.krail.navigation.rememberNavigator
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.LocalThemeContentColor
@@ -31,90 +28,65 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
-import xyz.ksharma.krail.taj.unspecifiedColor
-import xyz.ksharma.krail.trip.planner.ui.navigation.AppUpgradeRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.tripPlannerDestinations
 
 /**
- * TODO - I don't like [NavHost] defined in app module, I would love to refactor it to :core:navigation module
- *    but that results in a cyclic dependency. Feature module needs to depend on :core:navigation for navigation logic and
- *    then core:navigation needs to depend on feature module for the destinations / nested navigation graphs.
- *    This results in putting all nav logic in the app module, which will have negative impacts on the build time.
- *    Why is navigation so hard in Compose?
+ * Main navigation host using Navigation 3 with List-Detail adaptive layout.
  *
- *   Navigation logic is currently taken from [NowInAndroid](https://github.com/android/nowinandroid] app,
- *   so fine for now. But I will want to refactor it to something nicer e.g. using Circuit library
- *   from Slack, but that would also mean refactoring to use MVP instead of MVVM.
+ * Navigation 3 solves the previous issues:
+ * - No circular dependencies (routes defined in :ui:api modules)
+ * - Direct back stack control
+ * - Better modularity and scalability
+ * - Supports adaptive layouts (list-detail for tablets/foldables)
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Suppress("RememberMissing")
 @Composable
 fun KrailNavHost(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
-    val themeColorHexCode = rememberSaveable { mutableStateOf(unspecifiedColor) }
-    var themeId: Int? by rememberSaveable { mutableStateOf(null) }
-    val themeContentColorHexCode = rememberSaveable { mutableStateOf(unspecifiedColor) }
-    themeContentColorHexCode.value =
-        getForegroundColor(
-            backgroundColor = themeColorHexCode.value.hexToComposeColor(),
-        ).toHex()
+    // Navigation state - start with SplashRoute
+    val navigationState = rememberNavigationState(
+        startRoute = SplashRoute,
+        topLevelRoutes = setOf(SplashRoute),
+        serializationConfig = krailNavSerializationConfig,
+    )
+
+    val navigator = rememberNavigator(navigationState)
+
+    // Get the singleton ResultEventBus instance for passing results between screens
+    // Using singleton ensures the same instance is shared across list and detail panes
+    val resultEventBus = remember { ResultEventBus.getInstance() }
+
+    // Use Navigator's theme color instead of local state
+    val themeContentColor = getForegroundColor(
+        backgroundColor = navigator.themeColor.hexToComposeColor(),
+    ).toHex()
+
+    // Entry provider using multibinding approach
+    // Collects all entry builders from Koin modules
+    val entryProvider = collectEntryProviders(navigator = navigator)
+
+    // Calculate directive with custom spacing at top level
+    // Override the defaults so that there isn't a horizontal space between the panes.
+    // See b/418201867
+    val windowAdaptiveInfo = currentWindowAdaptiveInfo()
+    val directive = remember(windowAdaptiveInfo) {
+        calculatePaneScaffoldDirective(windowAdaptiveInfo)
+            .copy(horizontalPartitionSpacerSize = 0.dp)
+    }
+
+    // List-Detail scene strategy for adaptive layout with custom directive
+    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
     CompositionLocalProvider(
-        LocalThemeColor provides themeColorHexCode,
-        LocalThemeContentColor provides themeContentColorHexCode,
+        LocalThemeColor provides mutableStateOf(navigator.themeColor),
+        LocalThemeContentColor provides mutableStateOf(themeContentColor),
         LocalTextColor provides KrailTheme.colors.onSurface,
+        LocalResultEventBusObj provides resultEventBus,
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = SplashScreen,
+        NavDisplay(
+            entries = navigationState.toEntries(entryProvider),
+            onBack = { navigator.pop() },
+            sceneStrategy = listDetailStrategy,
             modifier = modifier.fillMaxSize(),
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-        ) {
-            tripPlannerDestinations(navController = navController)
-
-            composable<SplashScreen> {
-                val viewModel: SplashViewModel = koinViewModel<SplashViewModel>()
-                val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-                val splashState: SplashState by viewModel.uiState.collectAsStateWithLifecycle()
-
-                // Set theme in CompositionLocal
-                themeId = splashState.themeStyle.id
-                themeColorHexCode.value = splashState.themeStyle.hexColorCode
-
-                LaunchedEffect(splashState.navigationDestination) {
-                    splashState.navigationDestination?.let { destination ->
-                        log("Splash complete Navigating to destination: $destination")
-                        navController.navigate(
-                            route = destination,
-                            navOptions = NavOptions.Builder()
-                                .setLaunchSingleTop(true)
-                                .setPopUpTo<SplashScreen>(inclusive = true)
-                                .build(),
-                        )
-                    } ?: run {
-                        log("navigationDestination is null, still loading?")
-                    }
-                }
-
-                SplashScreen(
-                    splashState = splashState,
-                    logoColor = if (themeId != null && themeColorHexCode.value != unspecifiedColor) {
-                        themeColorHexCode.value.hexToComposeColor()
-                    } else {
-                        KrailTheme.colors.onSurface
-                    },
-                    backgroundColor = KrailTheme.colors.surface,
-                    onSplashAnimationComplete = {
-                        viewModel.onUiEvent(SplashUiEvent.SplashAnimationComplete)
-                    },
-                )
-            }
-
-            composable<AppUpgradeRoute> {
-                AppUpgradeScreen()
-            }
-        }
+        )
     }
 }
-
-@Serializable
-private data object SplashScreen

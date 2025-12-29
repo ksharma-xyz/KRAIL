@@ -32,6 +32,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
+                implementation(projects.core.navigation)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.discover.network.api)
                 implementation(projects.discover.state)
@@ -62,7 +63,11 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.lifecycle.viewmodel.compose)
-                implementation(libs.navigation.compose)
+
+                // Navigation 3
+                implementation(libs.jetbrains.navigation3.ui)
+                implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+                implementation(libs.jetbrains.material3.adaptiveNavigation3)
 
                 implementation(libs.molecule.runtime)
                 implementation(libs.material.adaptive)

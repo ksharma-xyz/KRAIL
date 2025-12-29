@@ -121,6 +121,7 @@ kotlin {
             implementation(projects.core.di)
             implementation(projects.core.festival)
             implementation(projects.core.log)
+            implementation(projects.core.navigation)
             implementation(projects.core.network)
             implementation(projects.core.remoteConfig)
             implementation(projects.discover.network.real)
@@ -134,7 +135,11 @@ kotlin {
             implementation(projects.sandook)
             implementation(projects.taj)
 
-            implementation(libs.navigation.compose)
+            // Navigation 3
+            implementation(libs.jetbrains.navigation3.ui)
+            implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+            implementation(libs.jetbrains.material3.adaptiveNavigation3)
+            implementation(libs.jetbrains.material3.adaptiveNavigation3)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

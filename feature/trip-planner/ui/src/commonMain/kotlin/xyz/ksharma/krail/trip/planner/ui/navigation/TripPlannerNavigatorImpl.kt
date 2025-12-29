@@ -84,6 +84,6 @@ class TripPlannerNavigatorImpl(
     }
 
     override fun clearBackStackAndNavigate(route: NavKey) {
-        baseNavigator.clearBackStackAndNavigate(route)
+        baseNavigator.resetRoot(route)
     }
 }

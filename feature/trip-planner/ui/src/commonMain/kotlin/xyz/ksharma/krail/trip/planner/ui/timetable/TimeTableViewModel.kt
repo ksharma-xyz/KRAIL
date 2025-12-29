@@ -147,6 +147,29 @@ class TimeTableViewModel(
     @VisibleForTesting
     val journeys: MutableMap<String, TimeTableState.JourneyCardInfo> = mutableMapOf()
 
+    /**
+     * Initialize trip from entry.
+     * Handles trip loading and ensures ViewModel state stays in sync.
+     */
+    fun initializeTrip(
+        fromStopId: String,
+        fromStopName: String,
+        toStopId: String,
+        toStopName: String
+    ) {
+        val trip = Trip(
+            fromStopId = fromStopId,
+            fromStopName = fromStopName,
+            toStopId = toStopId,
+            toStopName = toStopName
+        )
+
+        // Always call LoadTimeTable - it will handle logic:
+        // - If trip changed: Clear date/time, clear cache, fetch from API
+        // - If same trip (rotation/nav back): Preserve state, skip API call
+        onLoadTimeTable(trip)
+    }
+
     fun onEvent(event: TimeTableUiEvent) {
         when (event) {
             is TimeTableUiEvent.LoadTimeTable -> onLoadTimeTable(event.trip)
@@ -172,7 +195,7 @@ class TimeTableViewModel(
                 )
             }
 
-            is TimeTableUiEvent.JourneyLegClicked -> {
+            is TimeTableUiEvent.AnalyticsJourneyLegClicked -> {
                 analytics.track(AnalyticsEvent.JourneyLegClickEvent(expanded = event.expanded))
             }
 

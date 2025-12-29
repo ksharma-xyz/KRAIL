@@ -636,7 +636,7 @@ class TimeTableViewModelTest {
             val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
 
             // WHEN JourneyLegClicked is triggered
-            viewModel.onEvent(TimeTableUiEvent.JourneyLegClicked(expanded))
+            viewModel.onEvent(TimeTableUiEvent.AnalyticsJourneyLegClicked(expanded))
 
             // THEN analytics event should be tracked
             assertTrue(analytics.isEventTracked("journey_leg_click"))

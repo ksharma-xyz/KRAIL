@@ -4,7 +4,7 @@ import org.koin.dsl.module
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.NavigatorBase
-import xyz.ksharma.krail.trip.planner.ui.entries.tripPlannerEntries
+import xyz.ksharma.krail.trip.planner.ui.entries.TripPlannerEntries
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigatorImpl
 
 /**
@@ -27,7 +27,7 @@ val tripPlannerNavigationModule = module {
                 // Wrap in feature-specific implementation
                 val tripPlannerNavigator = TripPlannerNavigatorImpl(baseNavigator)
                 // Provide entries
-                tripPlannerEntries(tripPlannerNavigator)
+                TripPlannerEntries(tripPlannerNavigator)
             }
         )
     }

@@ -72,7 +72,7 @@ private fun EntryProviderScope<NavKey>.splashEntry(
         LaunchedEffect(splashState.navigationDestination) {
             splashState.navigationDestination?.let { destination ->
                 log("Splash complete. Navigating to: $destination")
-                navigator.navigateAndReplace(destination)
+                navigator.replaceCurrent(destination)
             }
         }
 

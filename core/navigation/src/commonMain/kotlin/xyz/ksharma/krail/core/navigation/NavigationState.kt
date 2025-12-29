@@ -77,7 +77,12 @@ class NavigationState(
             listOf(startRoute, topLevelRoute)
         }
 
-    fun navigate(route: NavKey) {
+    /**
+     * Navigate to a route.
+     * - If route is a top-level route → Switch to that stack
+     * - If route is nested → Add to current stack
+     */
+    fun goTo(route: NavKey) {
         if (route in backStacks.keys) {
             topLevelRoute = route
         } else {
@@ -85,7 +90,12 @@ class NavigationState(
         }
     }
 
-    fun goBack() {
+    /**
+     * Navigate back in the current stack.
+     * - If at top-level route → Switch to start route
+     * - If in nested navigation → Remove current route from stack
+     */
+    fun pop() {
         val currentStack = backStacks[topLevelRoute] ?: return
         val currentRoute = currentStack.last()
 
@@ -96,18 +106,29 @@ class NavigationState(
         }
     }
 
-    fun clearBackStackAndNavigate(route: NavKey) {
+    /**
+     * Clear entire back stack and navigate to route.
+     * Used when user shouldn't be able to navigate back.
+     */
+    fun resetRoot(route: NavKey) {
         val currentStack = backStacks[topLevelRoute]
         currentStack?.clear()
         currentStack?.add(route)
     }
 
-    fun navigateAndReplace(route: NavKey) {
+    /**
+     * Replace current screen with new route.
+     * Equivalent to navigate with popUpTo inclusive.
+     */
+    fun replaceCurrent(route: NavKey) {
         val currentStack = backStacks[topLevelRoute]
         currentStack?.removeLastOrNull()
-        navigate(route)
+        goTo(route)
     }
 
+    /**
+     * Check if there's a previous entry in the back stack.
+     */
     fun hasPreviousEntry(): Boolean {
         val currentStack = backStacks[topLevelRoute] ?: return false
         return currentStack.size > 1

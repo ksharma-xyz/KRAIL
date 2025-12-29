@@ -19,7 +19,60 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 
 /**
  * Remember Navigator with theme loaded from database.
- * This ensures theme persists across activity recreations (rotation, etc).
+ *
+ * ## Purpose
+ *
+ * Creates and remembers a Navigator instance that:
+ * 1. Handles all navigation events
+ * 2. Loads user's saved theme preference from database
+ * 3. Ensures theme persists across activity recreations (rotation, etc)
+ *
+ * ## App Launch Flow
+ *
+ * ```
+ * App Start → MainActivity.onCreate()
+ *           → KrailApp composable
+ *           → rememberNavigator(state)
+ *           → LaunchedEffect loads theme from Sandook DB
+ *           → navigator.updateTheme(savedColor)
+ *           → LocalThemeColor provides theme to all screens
+ *           → KrailTheme applies Material 3 color scheme
+ * ```
+ *
+ * ## Theme Loading Details
+ *
+ * **On First App Launch:**
+ * - No saved theme in DB → Uses DEFAULT_THEME_STYLE (Sydney Trains yellow)
+ * - User can change theme in ThemeSelectionScreen
+ * - New theme saved to DB via `productClass` field
+ *
+ * **On Subsequent Launches:**
+ * - Loads saved `productClass` (theme ID) from Sandook DB
+ * - Converts to KrailThemeStyle enum
+ * - Updates Navigator.themeColor
+ * - App opens with user's preferred theme
+ *
+ * **On Screen Rotation:**
+ * - Activity recreated → rememberNavigator() called again
+ * - LaunchedEffect reloads theme from DB
+ * - Theme restored instantly (no flash to default)
+ * - Navigation state preserved via NavigationState
+ *
+ * ## Why LaunchedEffect for Theme Loading?
+ *
+ * - **Asynchronous** - DB query runs on Dispatchers.Default (background thread)
+ * - **One-time** - LaunchedEffect(Unit) only runs on first composition
+ * - **Safe** - Avoids blocking main thread during app initialization
+ *
+ * ## Related Components
+ *
+ * - **Sandook.getProductClass()** - Retrieves saved theme ID from DB
+ * - **KrailThemeStyle** - Enum of available themes (Sydney, Blue, Green, etc.)
+ * - **LocalThemeColor** - CompositionLocal that provides theme to all screens
+ * - **KrailTheme** - Root theme composable that applies Material 3 colors
+ *
+ * @param state NavigationState containing backstack and route management
+ * @return Navigator instance with theme loaded from database
  */
 @Composable
 fun rememberNavigator(state: NavigationState): Navigator {
@@ -29,9 +82,11 @@ fun rememberNavigator(state: NavigationState): Navigator {
         Navigator(state)
     }
 
-    // Load theme from database on initialization
+    // Load user's saved theme from database on app initialization
+    // This ensures the theme persists across app restarts and rotations
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
+            // productClass stores theme ID (historical field name from train product classes)
             val themeId = sandook.getProductClass()?.toInt()
             val themeStyle =
                 KrailThemeStyle.entries.find { it.id == themeId } ?: DEFAULT_THEME_STYLE
@@ -50,57 +105,246 @@ fun rememberNavigator(state: NavigationState): Navigator {
  */
 class Navigator(val state: NavigationState) : NavigatorBase {
 
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // THEME MANAGEMENT (Temporary Coupling - See Migration Plan Below)
+    // ═══════════════════════════════════════════════════════════════════════════════
+
     /**
-     * App theme color state.
-     * Exposed for ThemeSelectionScreen to update global theme.
+     * App theme color state stored in Navigator.
+     *
+     * ⚠️ IMPORTANT: This is NOT navigation logic! ⚠️
+     *
+     * ## Why Theme Lives in Navigator (Current Design)
+     *
+     * This is a **temporary coupling** for convenience during Nav 2 → Nav 3 migration.
+     * The Navigator holds theme state to enable:
+     *
+     * 1. **Global Theme Access** - All screens access theme via `LocalThemeColor`
+     * 2. **Persistence** - Theme loads from DB on app start and survives navigation
+     * 3. **Dynamic Updates** - Theme selection screen can update theme globally
+     *
+     * ## Usage Scenarios
+     *
+     * ### Scenario 1: App Launch (Cold Start)
+     * ```
+     * 1. User opens app
+     * 2. rememberNavigator() creates Navigator
+     * 3. LaunchedEffect loads theme from Sandook DB
+     * 4. navigator.updateTheme(savedColor) sets themeColor
+     * 5. KrailTheme observes LocalThemeColor and applies theme
+     * ```
+     *
+     * ### Scenario 2: Theme Selection
+     * ```
+     * 1. User navigates to ThemeSelectionScreen
+     * 2. User picks a new theme (e.g., "Blue" #1976D2)
+     * 3. ThemeSelectionScreen calls tripPlannerNavigator.updateTheme("#1976D2")
+     * 4. Navigator.themeColor updates (triggers recomposition)
+     * 5. All screens instantly reflect new theme via LocalThemeColor
+     * 6. Theme saved to DB for next app launch
+     * ```
+     *
+     * ### Scenario 3: Screen Rotation
+     * ```
+     * 1. Activity destroyed/recreated
+     * 2. rememberNavigator() re-creates Navigator
+     * 3. LaunchedEffect reloads theme from DB
+     * 4. Theme state restored (no flash to default theme)
+     * ```
+     *
+     * ## Who Uses This?
+     *
+     * - **rememberNavigator()** - Loads theme from DB on initialization
+     * - **KrailTheme** - Observes `LocalThemeColor.current` (which reads navigator.themeColor)
+     * - **ThemeSelectionScreen** - Calls `updateTheme()` when user changes theme
+     * - **TripPlannerNavigator** - Exposes `updateTheme()` to feature module
+     *
+     * ## Why Not in ViewModel or Separate ThemeManager?
+     *
+     * **Historical Reason:** In Nav 2.x, Navigator was a singleton-like object that
+     * survived across the entire app lifecycle, making it a convenient place to store
+     * global state like theme.
+     *
+     * **Current Limitation:** During Nav 3 migration, we kept this pattern to minimize
+     * changes. Extracting theme management would require:
+     * - New ThemeManager class/module
+     * - Update all feature navigator interfaces
+     * - Migrate theme persistence logic
+     * - Test across all screens
+     *
+     * For a small project mid-migration, keeping it here is acceptable.
+     *
+     * ## Migration Plan (Future Work)
+     *
+     * When Navigation 3 stabilizes and the project grows, extract theme management:
+     *
+     * **Step 1: Create ThemeManager**
+     * ```kotlin
+     * interface ThemeManager {
+     *     val themeColor: StateFlow<String>
+     *     fun updateTheme(hexColorCode: String)
+     * }
+     *
+     * class ThemeManagerImpl(sandook: Sandook) : ThemeManager {
+     *     private val _themeColor = MutableStateFlow(DEFAULT_THEME_STYLE.hexColorCode)
+     *     override val themeColor = _themeColor.asStateFlow()
+     *
+     *     init {
+     *         // Load from DB
+     *     }
+     *
+     *     override fun updateTheme(hexColorCode: String) {
+     *         _themeColor.value = hexColorCode
+     *         // Save to DB
+     *     }
+     * }
+     * ```
+     *
+     * **Step 2: Remove from Navigator**
+     * ```kotlin
+     * // Delete themeColor and updateTheme() from Navigator
+     * class Navigator(val state: NavigationState) : NavigatorBase {
+     *     // Only navigation logic
+     * }
+     * ```
+     *
+     * **Step 3: Update Feature Interfaces**
+     * ```kotlin
+     * interface TripPlannerNavigator {
+     *     fun navigate(route: NavKey)
+     *     fun goBack()
+     *     // Remove: fun updateTheme(hexColorCode: String)
+     * }
+     * ```
+     *
+     * **Step 4: Inject ThemeManager in ThemeSelectionScreen**
+     * ```kotlin
+     * @Composable
+     * fun ThemeSelectionScreen(
+     *     themeManager: ThemeManager = koinInject()
+     * ) {
+     *     themeManager.updateTheme(selectedColor)
+     * }
+     * ```
+     *
+     * **Benefits After Migration:**
+     * - ✅ Single Responsibility - Navigator only handles navigation
+     * - ✅ Testability - Can mock ThemeManager independently
+     * - ✅ Reusability - ThemeManager can be used outside navigation
+     * - ✅ Cleaner Architecture - No coupling between navigation and theming
+     *
+     * ## References
+     *
+     * See: `docs/navigation-architecture.md` - FAQ: "Why does Navigator have updateTheme()?"
      */
     var themeColor: String by mutableStateOf(DEFAULT_THEME_STYLE.hexColorCode)
         private set
 
+    /**
+     * Updates the app's global theme color.
+     *
+     * Called by:
+     * - rememberNavigator() on app launch (loads from DB)
+     * - ThemeSelectionScreen when user picks a new theme
+     *
+     * This triggers recomposition of all screens observing LocalThemeColor.
+     *
+     * @param hexColorCode Hex color string (e.g., "#1976D2" for blue)
+     */
     override fun updateTheme(hexColorCode: String) {
         themeColor = hexColorCode
     }
 
-    override fun navigate(route: NavKey) {
-        if (route in state.backStacks.keys) {
-            // This is a top level route, just switch to it.
-            state.topLevelRoute = route
-        } else {
-            state.backStacks[state.topLevelRoute]?.add(route)
-        }
-    }
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // NAVIGATION LOGIC (Core Responsibility)
+    // ═══════════════════════════════════════════════════════════════════════════════
 
-    override fun goBack() {
-        val currentStack = state.backStacks[state.topLevelRoute]
-            ?: error("Stack for ${state.topLevelRoute} not found")
-        val currentRoute = currentStack.last()
-
-        // If we're at the base of the current route, go back to the start route stack.
-        if (currentRoute == state.topLevelRoute) {
-            state.topLevelRoute = state.startRoute
-        } else {
-            currentStack.removeLastOrNull()
-        }
+    /**
+     * Navigate to a route.
+     *
+     * Handles both top-level and nested navigation:
+     * - If route is a top-level route → Switch to that stack
+     * - If route is nested → Add to current stack
+     *
+     * @param route The destination route
+     */
+    override fun goTo(route: NavKey) {
+        state.goTo(route)
     }
 
     /**
-     * Navigate and replace current screen (like navigate with popUpTo inclusive).
-     * Used for Splash → SavedTrips/Intro navigation.
+     * Navigate back in the current stack.
+     *
+     * ## Navigation 3 Behavior (Important!)
+     *
+     * Unlike traditional navigation where "pop" destroys the screen immediately,
+     * Navigation 3 keeps the **NavEntry alive** even after removing from backstack:
+     *
+     * 1. **Backstack Update** - Route removed from `NavBackStack` immediately
+     * 2. **Composable Lifecycle** - Screen remains composed during exit animation
+     * 3. **State Preservation** - SavedStateHandle preserves state until fully destroyed
+     * 4. **Disposal** - Entry disposed only after exit animation completes
+     *
+     * **Why This Matters:**
+     * - ViewModels stay alive during back navigation animation
+     * - Ongoing coroutines continue until animation finishes
+     * - State is accessible for shared element transitions
+     * - `rememberSaveable` state survives the animation period
+     *
+     * **Example Flow:**
+     * ```
+     * TimeTableScreen visible
+     *   ↓
+     * User presses back
+     *   ↓
+     * pop() removes route from backstack
+     *   ↓
+     * TimeTableScreen still composed (exit animation playing)
+     *   ↓
+     * ViewModel still collecting flows
+     *   ↓
+     * Animation completes (~300ms)
+     *   ↓
+     * TimeTableScreen disposed
+     *   ↓
+     * ViewModel cleared
+     * ```
+     *
+     * This is different from Nav 2.x where `popBackStack()` immediately
+     * destroyed the destination. Nav 3's approach enables smoother animations
+     * and better state preservation.
+     *
+     * ## Behavior
+     * - If at top-level route → Switch to start route
+     * - If in nested navigation → Remove current route from stack
      */
-    fun navigateAndReplace(route: NavKey) {
-        val currentStack = state.backStacks[state.topLevelRoute]
-        currentStack?.removeLastOrNull()
-        navigate(route)
+    override fun pop() {
+        state.pop()
+    }
+
+    /**
+     * Replace current screen with new route.
+     * Equivalent to navigate with popUpTo inclusive.
+     *
+     * Used for transitions like: Splash → SavedTrips/Intro
+     *
+     * @param route The replacement route
+     */
+    override fun replaceCurrent(route: NavKey) {
+        state.replaceCurrent(route)
     }
 
     /**
      * Clear entire back stack and navigate to route.
-     * Used for Intro → SavedTrips (user shouldn't go back to intro).
+     *
+     * Used when user shouldn't be able to navigate back, such as:
+     * - Intro → SavedTrips (user completes onboarding)
+     * - Logout → Login (clear authenticated state)
+     *
+     * @param route The new root route
      */
-    override fun clearBackStackAndNavigate(route: NavKey) {
-        val currentStack = state.backStacks[state.topLevelRoute]
-        currentStack?.clear()
-        currentStack?.add(route)
+    override fun resetRoot(route: NavKey) {
+        state.resetRoot(route)
     }
 
     /**
@@ -108,7 +352,6 @@ class Navigator(val state: NavigationState) : NavigatorBase {
      * Used for analytics in TimeTableScreen.
      */
     fun hasPreviousEntry(): Boolean {
-        val currentStack = state.backStacks[state.topLevelRoute] ?: return false
-        return currentStack.size > 1
+        return state.hasPreviousEntry()
     }
 }

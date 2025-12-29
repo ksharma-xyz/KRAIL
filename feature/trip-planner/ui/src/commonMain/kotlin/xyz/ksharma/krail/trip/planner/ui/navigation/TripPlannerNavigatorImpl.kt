@@ -28,7 +28,7 @@ class TripPlannerNavigatorImpl(
 ) : TripPlannerNavigator {
 
     override fun navigateToSearchStop(fieldType: SearchStopFieldType) {
-        baseNavigator.navigate(SearchStopRoute(fieldType))
+        baseNavigator.goTo(SearchStopRoute(fieldType))
     }
 
     override fun navigateToTimeTable(
@@ -37,7 +37,7 @@ class TripPlannerNavigatorImpl(
         toStopId: String,
         toStopName: String
     ) {
-        baseNavigator.navigate(
+        baseNavigator.goTo(
             TimeTableRoute(
                 fromStopId = fromStopId,
                 fromStopName = fromStopName,
@@ -48,35 +48,35 @@ class TripPlannerNavigatorImpl(
     }
 
     override fun navigateToSettings() {
-        baseNavigator.navigate(SettingsRoute)
+        baseNavigator.goTo(SettingsRoute)
     }
 
     override fun navigateToDiscover() {
-        baseNavigator.navigate(DiscoverRoute)
+        baseNavigator.goTo(DiscoverRoute)
     }
 
     override fun navigateToThemeSelection() {
-        baseNavigator.navigate(ThemeSelectionRoute)
+        baseNavigator.goTo(ThemeSelectionRoute)
     }
 
     override fun navigateToAlerts(journeyId: String) {
-        baseNavigator.navigate(ServiceAlertRoute(journeyId))
+        baseNavigator.goTo(ServiceAlertRoute(journeyId))
     }
 
     override fun navigateToDateTimeSelector(json: String?) {
-        baseNavigator.navigate(DateTimeSelectorRoute(json))
+        baseNavigator.goTo(DateTimeSelectorRoute(json))
     }
 
     override fun navigateToOurStory() {
-        baseNavigator.navigate(OurStoryRoute)
+        baseNavigator.goTo(OurStoryRoute)
     }
 
     override fun navigateToIntro() {
-        baseNavigator.navigate(IntroRoute)
+        baseNavigator.goTo(IntroRoute)
     }
 
     override fun goBack() {
-        baseNavigator.goBack()
+        baseNavigator.pop()
     }
 
     override fun updateTheme(hexColorCode: String) {

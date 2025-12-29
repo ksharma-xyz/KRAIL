@@ -10,9 +10,21 @@ import androidx.navigation3.runtime.NavKey
  * and feature modules depend on.
  */
 interface NavigatorBase {
-    fun navigate(route: NavKey)
-    fun goBack()
-    fun updateTheme(hexColorCode: String)
-    fun clearBackStackAndNavigate(route: NavKey)
-}
+    /** Navigate to a route */
+    fun goTo(route: NavKey)
 
+    /** Navigate back */
+    fun pop()
+
+    /** Clear backstack and navigate to route */
+    fun resetRoot(route: NavKey)
+
+    /** Replace current screen with new route */
+    fun replaceCurrent(route: NavKey)
+
+    /** Update app theme (temporary - see Navigator.kt for migration plan) */
+    fun updateTheme(hexColorCode: String)
+
+    @Deprecated("Use resetRoot() instead", ReplaceWith("resetRoot(route)"))
+    fun clearBackStackAndNavigate(route: NavKey) = resetRoot(route)
+}

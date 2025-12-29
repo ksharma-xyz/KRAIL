@@ -83,7 +83,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     ) {
         NavDisplay<NavKey>(
             entries = navigationState.toEntries(entryProvider),
-            onBack = { navigator.goBack() },
+            onBack = { navigator.pop() },
             sceneStrategy = listDetailStrategy,
             modifier = modifier.fillMaxSize()
         )

@@ -84,8 +84,8 @@ fun rememberNavigator(state: NavigationState): Navigator {
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
             val themeId = sandook.getProductClass()?.toInt()
-            val themeStyle = KrailThemeStyle.entries
-                .find { it.id == themeId } ?: DEFAULT_THEME_STYLE
+            val themeStyle =
+                KrailThemeStyle.entries.find { it.id == themeId } ?: DEFAULT_THEME_STYLE
             log("Navigator - Loading theme from DB:")
             log("\tthemeId=$themeId, themeStyle=${themeStyle.name}, color=${themeStyle.hexColorCode}")
             navigator.updateTheme(themeStyle.hexColorCode)

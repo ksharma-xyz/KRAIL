@@ -4,8 +4,8 @@ import org.koin.dsl.module
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.NavigatorBase
-import xyz.ksharma.krail.trip.planner.ui.navigation.entries.TripPlannerEntries
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigatorImpl
+import xyz.ksharma.krail.trip.planner.ui.navigation.entries.TripPlannerEntries
 
 /**
  * Koin module for Trip Planner feature navigation entries.

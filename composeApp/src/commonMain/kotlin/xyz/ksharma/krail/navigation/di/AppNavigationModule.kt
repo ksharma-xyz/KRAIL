@@ -25,7 +25,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
  * Koin module for app-level navigation entries (Splash, App Upgrade, etc.)
  *
  * This module provides entry builders following the Google multibinding approach.
- * Each entry builder is provided as an EntryBuilderDescriptor that can be collected
+ * Each entry builder is provided as an [EntryBuilderDescriptor] that can be collected
  * into a Set by the app's navigation system.
  */
 val appNavigationModule = module {

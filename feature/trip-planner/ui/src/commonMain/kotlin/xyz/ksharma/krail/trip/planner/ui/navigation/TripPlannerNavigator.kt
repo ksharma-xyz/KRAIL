@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 

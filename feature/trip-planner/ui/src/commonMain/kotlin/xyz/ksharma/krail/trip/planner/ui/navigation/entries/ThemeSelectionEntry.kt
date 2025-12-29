@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -8,6 +9,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.state.usualride.ThemeSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionScreen
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
@@ -21,7 +24,7 @@ internal fun EntryProviderScope<NavKey>.ThemeSelectionEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<ThemeSelectionRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
+        metadata = ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: ThemeSelectionViewModel = koinViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()

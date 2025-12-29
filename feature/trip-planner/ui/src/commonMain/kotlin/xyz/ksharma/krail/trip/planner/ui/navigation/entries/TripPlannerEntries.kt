@@ -1,8 +1,9 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 
 /**
  * Entry provider for Trip Planner feature.

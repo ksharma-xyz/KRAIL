@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,6 +10,9 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -22,7 +26,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SearchStopRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
+        metadata = ListDetailSceneStrategy.detailPane(),
     ) { key ->
         // ViewModel is scoped to this NavEntry and will be recreated each time
         // This ensures recent stops are refreshed when the screen is opened

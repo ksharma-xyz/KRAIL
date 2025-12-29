@@ -2,17 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.core.navigation.NavigatorBase
-import xyz.ksharma.krail.trip.planner.ui.entries.DateTimeSelectorRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.DiscoverRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.OurStoryRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.SearchStopFieldType
-import xyz.ksharma.krail.trip.planner.ui.entries.SearchStopRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.ServiceAlertRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.SettingsRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.ThemeSelectionRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.TimeTableRoute
-import xyz.ksharma.krail.trip.planner.ui.entries.TripPlannerNavigator
 
 /**
  * Implementation of TripPlannerNavigator for the trip planner feature module.
@@ -24,7 +13,7 @@ import xyz.ksharma.krail.trip.planner.ui.entries.TripPlannerNavigator
  * @param baseNavigator The base navigator interface from core:navigation module
  */
 @Suppress("TooManyFunctions")
-class TripPlannerNavigatorImpl(
+internal class TripPlannerNavigatorImpl(
     private val baseNavigator: NavigatorBase,
 ) : TripPlannerNavigator {
 

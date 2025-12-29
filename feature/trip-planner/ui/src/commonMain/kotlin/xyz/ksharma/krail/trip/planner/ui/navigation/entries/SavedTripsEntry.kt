@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -8,6 +9,10 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.ResultEffect
+import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -22,7 +27,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SavedTripsRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.listPane(),
+        metadata = ListDetailSceneStrategy.listPane(),
     ) {
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")

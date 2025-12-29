@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
  * resultEventBus.sendResult(result = StopSelectedResult(...))
  * navigator.goBack()
  * ```
+ * reference - https://github.com/android/nav3-recipes/blob/main/app/src/main/java/com/example/nav3recipes/results/event/ResultEffect.kt
  *
  * ## How It Works
  * 1. Creates a channel for the result type if it doesn't exist

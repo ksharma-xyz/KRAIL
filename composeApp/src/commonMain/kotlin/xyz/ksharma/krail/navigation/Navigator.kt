@@ -18,11 +18,11 @@ import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 
 /**
- * Remember Navigator with theme loaded from database.
+ * Remember [Navigator] with theme loaded from database.
  *
  * ## Purpose
  *
- * Creates and remembers a Navigator instance that:
+ * Creates and remembers a [Navigator] instance that:
  * 1. Handles all navigation events
  * 2. Loads user's saved theme preference from database
  * 3. Ensures theme persists across activity recreations (rotation, etc)
@@ -77,19 +77,15 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 @Composable
 fun rememberNavigator(state: NavigationState): Navigator {
     val sandook: Sandook = koinInject()
-
-    val navigator = remember(state) {
-        Navigator(state)
-    }
+    val navigator = remember(state) { Navigator(state) }
 
     // Load user's saved theme from database on app initialization
-    // This ensures the theme persists across app restarts and rotations
+    // This ensures the theme persists across app restarts and rotations (configuration changes)
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Default) {
-            // productClass stores theme ID (historical field name from train product classes)
             val themeId = sandook.getProductClass()?.toInt()
-            val themeStyle =
-                KrailThemeStyle.entries.find { it.id == themeId } ?: DEFAULT_THEME_STYLE
+            val themeStyle = KrailThemeStyle.entries
+                .find { it.id == themeId } ?: DEFAULT_THEME_STYLE
             log("Navigator - Loading theme from DB:")
             log("\tthemeId=$themeId, themeStyle=${themeStyle.name}, color=${themeStyle.hexColorCode}")
             navigator.updateTheme(themeStyle.hexColorCode)
@@ -346,13 +342,5 @@ class Navigator(val state: NavigationState) : NavigatorBase {
      */
     override fun resetRoot(route: NavKey) {
         state.resetRoot(route)
-    }
-
-    /**
-     * Check if there's a previous entry in the back stack.
-     * Used for analytics in TimeTableScreen.
-     */
-    fun hasPreviousEntry(): Boolean {
-        return state.hasPreviousEntry()
     }
 }

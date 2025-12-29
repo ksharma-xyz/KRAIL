@@ -1,8 +1,9 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
@@ -23,8 +24,10 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
-import xyz.ksharma.krail.trip.planner.ui.savers.dateTimeSelectionSaver
-import xyz.ksharma.krail.trip.planner.ui.savers.serviceAlertSaver
+import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.navigation.savers.dateTimeSelectionSaver
+import xyz.ksharma.krail.trip.planner.ui.navigation.savers.serviceAlertSaver
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableScreen
@@ -127,7 +130,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
 
             // Service Alerts Modal
             if (showAlertsModal) {
-                androidx.compose.material3.ModalBottomSheet(
+                ModalBottomSheet(
                     onDismissRequest = { showAlertsModal = false },
                     containerColor = KrailTheme.colors.surface,
                 ) {
@@ -140,7 +143,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
 
             // Date/Time Selector Modal
             if (showDateTimeSelectorModal) {
-                androidx.compose.material3.ModalBottomSheet(
+                ModalBottomSheet(
                     onDismissRequest = { showDateTimeSelectorModal = false },
                     containerColor = KrailTheme.colors.surface,
                 ) {

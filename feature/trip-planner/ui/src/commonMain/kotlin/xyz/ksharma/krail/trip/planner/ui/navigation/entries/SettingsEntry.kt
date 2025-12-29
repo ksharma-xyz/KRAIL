@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -9,6 +10,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsScreen
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
@@ -22,7 +25,7 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SettingsRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
+        metadata = ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: SettingsViewModel = koinViewModel()
         val settingsState by viewModel.uiState.collectAsStateWithLifecycle()

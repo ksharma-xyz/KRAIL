@@ -32,9 +32,7 @@ fun rememberNavigationState(
     serializationConfig: SavedStateConfiguration,
 ): NavigationState {
     // Use remember instead of rememberSaveable since NavBackStack handles persistence
-    val topLevelRoute = remember {
-        mutableStateOf(startRoute)
-    }
+    val topLevelRoute = remember { mutableStateOf(startRoute) }
 
     // Use polymorphic serialization config for multiplatform support
     val backStacks = topLevelRoutes.associateWith { key ->
@@ -124,14 +122,6 @@ class NavigationState(
         val currentStack = backStacks[topLevelRoute]
         currentStack?.removeLastOrNull()
         goTo(route)
-    }
-
-    /**
-     * Check if there's a previous entry in the back stack.
-     */
-    fun hasPreviousEntry(): Boolean {
-        val currentStack = backStacks[topLevelRoute] ?: return false
-        return currentStack.size > 1
     }
 }
 

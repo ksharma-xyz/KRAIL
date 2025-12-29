@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -11,6 +12,9 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroScreen
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 
 /**
@@ -22,7 +26,7 @@ internal fun EntryProviderScope<NavKey>.IntroEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<IntroRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
+        metadata = ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel = koinViewModel<IntroViewModel>()
         val introState by viewModel.uiState.collectAsStateWithLifecycle()

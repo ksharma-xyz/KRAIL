@@ -1,6 +1,7 @@
-package xyz.ksharma.krail.trip.planner.ui.entries
+package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -10,6 +11,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.discover.state.DiscoverEvent
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverScreen
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
+import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 
 /**
  * Discover Entry - Detail Screen in List-Detail pattern
@@ -20,7 +23,7 @@ internal fun EntryProviderScope<NavKey>.DiscoverEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<DiscoverRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
+        metadata = ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: DiscoverViewModel = koinViewModel()
         val discoverState by viewModel.uiState.collectAsStateWithLifecycle()

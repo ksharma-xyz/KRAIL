@@ -76,12 +76,9 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     // List-Detail scene strategy for adaptive layout with custom directive
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
-    val themeHexColorCode = rememberSaveable { mutableStateOf(navigator.themeColor) }
-    val themeContentHexColorCode = rememberSaveable { mutableStateOf(themeContentColor) }
-
     CompositionLocalProvider(
-        LocalThemeColor provides themeHexColorCode,
-        LocalThemeContentColor provides themeContentHexColorCode,
+        LocalThemeColor provides mutableStateOf(navigator.themeColor),
+        LocalThemeContentColor provides mutableStateOf(themeContentColor),
         LocalTextColor provides KrailTheme.colors.onSurface,
         LocalResultEventBusObj provides resultEventBus,
     ) {

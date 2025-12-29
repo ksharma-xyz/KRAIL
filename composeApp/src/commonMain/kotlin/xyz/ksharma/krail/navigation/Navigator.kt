@@ -344,7 +344,7 @@ class Navigator(val state: NavigationState) : NavigatorBase {
         state.resetRoot(route)
     }
 
-    override fun goToSingleTopOrReplace(route: NavKey) {
+    override fun pushSingleInstance(route: NavKey) {
         val currentTopRoute = try {
             state.backStacks[state.topLevelRoute]?.lastOrNull()
         } catch (t: Throwable) {
@@ -354,19 +354,19 @@ class Navigator(val state: NavigationState) : NavigatorBase {
 
         // If identical object is already on top -> no-op
         if (currentTopRoute == route) {
-            log("Navigator - goToSingleTopOrReplace ignored (same instance on top): $route")
+            log("Navigator - pushSingleInstance ignored (same instance on top): $route")
             return
         }
 
         // If same route *type* (class) is on top -> replace it with new params
         if (currentTopRoute != null && currentTopRoute::class == route::class) {
-            log("Navigator - goToSingleTopOrReplace replacing top route of same type: ${route::class.simpleName}")
+            log("Navigator - pushSingleInstance replacing top route of same type: ${route::class.simpleName}")
             state.replaceCurrent(route)
             return
         }
 
         // Default: push new route
-        log("Navigator - goToSingleTopOrReplace pushing new route: $route")
+        log("Navigator - pushSingleInstance pushing new route: $route")
         state.goTo(route)
     }
 }

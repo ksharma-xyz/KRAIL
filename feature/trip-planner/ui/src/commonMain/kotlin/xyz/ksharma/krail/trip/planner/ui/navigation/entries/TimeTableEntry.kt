@@ -48,6 +48,9 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
     entry<TimeTableRoute>(
         metadata = ListDetailSceneStrategy.detailPane(),
     ) { key ->
+        LaunchedEffect(key) {
+            log("TimeTableRoute key: from-${key.fromStopId}, to: ${key.toStopId}")
+        }
         val viewModel: TimeTableViewModel = koinViewModel()
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val expandedJourneyId by viewModel.expandedJourneyId.collectAsStateWithLifecycle()

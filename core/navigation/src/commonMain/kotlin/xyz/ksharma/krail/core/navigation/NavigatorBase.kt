@@ -27,4 +27,6 @@ interface NavigatorBase {
 
     @Deprecated("Use resetRoot() instead", ReplaceWith("resetRoot(route)"))
     fun clearBackStackAndNavigate(route: NavKey) = resetRoot(route)
+
+    fun goToSingleTopOrReplace(route: NavKey)
 }

@@ -343,4 +343,30 @@ class Navigator(val state: NavigationState) : NavigatorBase {
     override fun resetRoot(route: NavKey) {
         state.resetRoot(route)
     }
+
+    override fun goToSingleTopOrReplace(route: NavKey) {
+        val currentTopRoute = try {
+            state.backStacks[state.topLevelRoute]?.lastOrNull()
+        } catch (t: Throwable) {
+            log("Navigator - unable to read current top route: $t")
+            null
+        }
+
+        // If identical object is already on top -> no-op
+        if (currentTopRoute == route) {
+            log("Navigator - goToSingleTopOrReplace ignored (same instance on top): $route")
+            return
+        }
+
+        // If same route *type* (class) is on top -> replace it with new params
+        if (currentTopRoute != null && currentTopRoute::class == route::class) {
+            log("Navigator - goToSingleTopOrReplace replacing top route of same type: ${route::class.simpleName}")
+            state.replaceCurrent(route)
+            return
+        }
+
+        // Default: push new route
+        log("Navigator - goToSingleTopOrReplace pushing new route: $route")
+        state.goTo(route)
+    }
 }

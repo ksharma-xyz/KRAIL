@@ -27,7 +27,7 @@ internal class TripPlannerNavigatorImpl(
         toStopId: String,
         toStopName: String,
     ) {
-        baseNavigator.goTo(
+        baseNavigator.goToSingleTopOrReplace(
             TimeTableRoute(
                 fromStopId = fromStopId,
                 fromStopName = fromStopName,

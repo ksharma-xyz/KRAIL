@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
@@ -40,6 +39,7 @@ import xyz.ksharma.krail.taj.toHex
  * - Supports adaptive layouts (list-detail for tablets/foldables)
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Suppress("RememberMissing")
 @Composable
 fun KrailNavHost(modifier: Modifier = Modifier) {
     // Navigation state - start with SplashRoute

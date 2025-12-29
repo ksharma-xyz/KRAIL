@@ -345,11 +345,10 @@ class Navigator(val state: NavigationState) : NavigatorBase {
     }
 
     override fun pushSingleInstance(route: NavKey) {
-        val currentTopRoute = try {
+        val currentTopRoute = runCatching {
             state.backStacks[state.topLevelRoute]?.lastOrNull()
-        } catch (t: Throwable) {
-            log("Navigator - unable to read current top route: $t")
-            null
+        }.getOrElse { error ->
+            log("Navigator - unable to read current top route: $error")
         }
 
         // If identical object is already on top -> no-op

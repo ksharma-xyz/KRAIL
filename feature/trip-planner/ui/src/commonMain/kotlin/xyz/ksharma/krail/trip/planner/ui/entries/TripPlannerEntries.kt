@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.launch
@@ -254,7 +255,6 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
 
         // State for showing service alerts modal
         var showAlertsModal by rememberSaveable { mutableStateOf(false) }
-        var alertsToDisplay by remember { mutableStateOf(persistentSetOf<xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert>()) }
 
         // State for showing date/time selector modal
         var showDateTimeSelectorModal by rememberSaveable { mutableStateOf(false) }
@@ -262,6 +262,30 @@ private fun EntryProviderScope<NavKey>.timeTableEntry(
         // Create a stable trip ID that only changes when actual stops change
         val tripId = remember(key.fromStopId, key.toStopId) {
             "${key.fromStopId}->${key.toStopId}"
+        }
+
+        // Custom Saver for ServiceAlert Set to survive rotation
+        val serviceAlertsSaver = remember {
+            androidx.compose.runtime.saveable.Saver<PersistentSet<xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert>, String>(
+                save = { alerts ->
+                    // Serialize the set of alerts to JSON
+                    alerts.joinToString(separator = "|||") { it.toJsonString() }
+                },
+                restore = { savedString ->
+                    if (savedString.isEmpty()) {
+                        persistentSetOf()
+                    } else {
+                        savedString.split("|||")
+                            .mapNotNull { xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert.fromJsonString(it) }
+                            .toPersistentSet()
+                    }
+                }
+            )
+        }
+
+        // State for service alerts - survives rotation
+        var alertsToDisplay by rememberSaveable(stateSaver = serviceAlertsSaver) {
+            mutableStateOf(persistentSetOf<xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert>())
         }
 
         // Custom Saver for DateTimeSelectionItem

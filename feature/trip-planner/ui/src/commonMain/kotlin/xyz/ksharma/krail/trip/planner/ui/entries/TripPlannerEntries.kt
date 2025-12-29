@@ -13,7 +13,7 @@ import androidx.navigation3.runtime.NavKey
  */
 @Composable
 fun EntryProviderScope<NavKey>.TripPlannerEntries(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     SavedTripsEntry(tripPlannerNavigator)
     SearchStopEntry(tripPlannerNavigator)

@@ -40,10 +40,10 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 @Suppress("UNUSED_VARIABLE")
 @Composable
 internal fun EntryProviderScope<NavKey>.TimeTableEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<TimeTableRoute>(
-        metadata = ListDetailSceneStrategy.detailPane()
+        metadata = ListDetailSceneStrategy.detailPane(),
     ) { key ->
         val viewModel: TimeTableViewModel = koinViewModel()
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -87,7 +87,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 fromStopId = key.fromStopId,
                 fromStopName = key.fromStopName,
                 toStopId = key.toStopId,
-                toStopName = key.toStopName
+                toStopName = key.toStopName,
             )
         }
 
@@ -122,7 +122,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 },
                 onModeClick = { isVisible ->
                     viewModel.onEvent(TimeTableUiEvent.ModeClicked(isVisible))
-                }
+                },
             )
 
             // Service Alerts Modal
@@ -133,7 +133,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 ) {
                     ServiceAlertScreen(
                         serviceAlerts = alertsToDisplay,
-                        onBackClick = { showAlertsModal = false }
+                        onBackClick = { showAlertsModal = false },
                     )
                 }
             }
@@ -158,7 +158,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                             dateTimeSelectionItem = null
                             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
                             showDateTimeSelectorModal = false
-                        }
+                        },
                     )
                 }
             }

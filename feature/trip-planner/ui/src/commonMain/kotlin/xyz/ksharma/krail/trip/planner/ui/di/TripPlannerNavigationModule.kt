@@ -28,7 +28,7 @@ val tripPlannerNavigationModule = module {
                 val tripPlannerNavigator = TripPlannerNavigatorImpl(baseNavigator)
                 // Provide entries
                 TripPlannerEntries(tripPlannerNavigator)
-            }
+            },
         )
     }
 }

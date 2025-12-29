@@ -18,6 +18,7 @@ import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.coroutines.ext.safeResult
 import xyz.ksharma.krail.sandook.Sandook
@@ -27,7 +28,6 @@ import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_THEME_MODE
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.toThemeMode
-import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.entries.SavedTripsRoute
 

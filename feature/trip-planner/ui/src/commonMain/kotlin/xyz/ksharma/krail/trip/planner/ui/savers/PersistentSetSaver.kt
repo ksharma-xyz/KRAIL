@@ -16,7 +16,7 @@ import kotlinx.collections.immutable.toPersistentSet
 fun <T> persistentSetSaver(
     serialize: (T) -> String,
     deserialize: (String) -> T?,
-    separator: String = "|||"
+    separator: String = "|||",
 ): Saver<PersistentSet<T>, String> = Saver(
     save = { set ->
         set.joinToString(separator = separator) { serialize(it) }
@@ -29,6 +29,5 @@ fun <T> persistentSetSaver(
                 .mapNotNull(deserialize)
                 .toPersistentSet()
         }
-    }
+    },
 )
-

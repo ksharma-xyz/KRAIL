@@ -9,10 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
+import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
+import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.navigation.SplashRoute
 import xyz.ksharma.krail.core.navigation.rememberNavigationState
 import xyz.ksharma.krail.core.navigation.toEntries
@@ -26,8 +29,6 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
-import xyz.ksharma.krail.core.navigation.LocalResultEventBus
-import xyz.ksharma.krail.core.navigation.ResultEventBus
 
 /**
  * Main navigation host using Navigation 3 with List-Detail adaptive layout.
@@ -56,7 +57,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
 
     // Use Navigator's theme color instead of local state
     val themeContentColor = getForegroundColor(
-        backgroundColor = navigator.themeColor.hexToComposeColor()
+        backgroundColor = navigator.themeColor.hexToComposeColor(),
     ).toHex()
 
     // Entry provider using multibinding approach
@@ -75,17 +76,20 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     // List-Detail scene strategy for adaptive layout with custom directive
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
+    val themeHexColorCode = rememberSaveable { mutableStateOf(navigator.themeColor) }
+    val themeContentHexColorCode = rememberSaveable { mutableStateOf(themeContentColor) }
+
     CompositionLocalProvider(
-        LocalThemeColor provides mutableStateOf(navigator.themeColor),
-        LocalThemeContentColor provides mutableStateOf(themeContentColor),
+        LocalThemeColor provides themeHexColorCode,
+        LocalThemeContentColor provides themeContentHexColorCode,
         LocalTextColor provides KrailTheme.colors.onSurface,
-        LocalResultEventBus provides resultEventBus,
+        LocalResultEventBusObj provides resultEventBus,
     ) {
-        NavDisplay<NavKey>(
+        NavDisplay(
             entries = navigationState.toEntries(entryProvider),
             onBack = { navigator.pop() },
             sceneStrategy = listDetailStrategy,
-            modifier = modifier.fillMaxSize()
+            modifier = modifier.fillMaxSize(),
         )
     }
 }

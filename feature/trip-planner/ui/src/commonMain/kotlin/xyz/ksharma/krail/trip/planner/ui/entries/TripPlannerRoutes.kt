@@ -19,13 +19,13 @@ data object SavedTripsRoute : TripPlannerRoute
  */
 @Serializable
 data class SearchStopRoute(
-    val fieldType: SearchStopFieldType
+    val fieldType: SearchStopFieldType,
 ) : TripPlannerRoute
 
 @Serializable
 enum class SearchStopFieldType {
     FROM,
-    TO
+    TO,
 }
 
 /**
@@ -70,4 +70,3 @@ data class DateTimeSelectorRoute(
 
 @Serializable
 data object DiscoverRoute : TripPlannerRoute
-

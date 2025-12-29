@@ -8,7 +8,6 @@ sealed interface TimeTableUiEvent {
 
     data class LoadTimeTable(val trip: Trip) : TimeTableUiEvent
 
-
     data class JourneyCardClicked(val journeyId: String) : TimeTableUiEvent
 
     data class DateTimeSelectionChanged(val dateTimeSelectionItem: DateTimeSelectionItem?) :

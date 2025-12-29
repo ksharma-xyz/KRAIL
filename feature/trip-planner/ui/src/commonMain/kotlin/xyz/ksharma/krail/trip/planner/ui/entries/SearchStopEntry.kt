@@ -8,7 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
-import xyz.ksharma.krail.core.navigation.LocalResultEventBus
+import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -19,10 +19,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SearchStopEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SearchStopRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
     ) { key ->
         // ViewModel is scoped to this NavEntry and will be recreated each time
         // This ensures recent stops are refreshed when the screen is opened
@@ -40,7 +40,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
         // Capture ResultEventBus in composable scope for use in callbacks
         // This uses the singleton instance to ensure results reach SavedTrips
         // even in two-pane layouts where screens are in different composition scopes
-        val resultEventBus = LocalResultEventBus.current
+        val resultEventBus = LocalResultEventBusObj.current
 
         SearchStopScreen(
             searchStopState = searchStopState,
@@ -49,7 +49,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                 val result = StopSelectedResult(
                     fieldType = key.fieldType,
                     stopId = stopItem.stopId,
-                    stopName = stopItem.stopName
+                    stopName = stopItem.stopName,
                 )
 
                 resultEventBus.sendResult(result = result)
@@ -60,8 +60,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             goBack = {
                 tripPlannerNavigator.goBack()
             },
-            onEvent = { event -> viewModel.onEvent(event) }
+            onEvent = { event -> viewModel.onEvent(event) },
         )
     }
 }
-

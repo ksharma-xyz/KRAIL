@@ -19,10 +19,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.IntroEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<IntroRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel = koinViewModel<IntroViewModel>()
         val introState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -36,8 +36,7 @@ internal fun EntryProviderScope<NavKey>.IntroEntry(
                     // Clear entire back stack - user shouldn't go back to intro
                     tripPlannerNavigator.clearBackStackAndNavigate(SavedTripsRoute)
                 }
-            }
+            },
         ) { event -> viewModel.onEvent(event) }
     }
 }
-

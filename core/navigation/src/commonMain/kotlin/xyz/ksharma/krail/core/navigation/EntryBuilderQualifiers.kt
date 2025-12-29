@@ -35,4 +35,3 @@ object EntryBuilderQualifiers {
     // val PARK_RIDE = named(Names.PARK_RIDE)
     // val INFO_TILE = named(Names.INFO_TILE)
 }
-

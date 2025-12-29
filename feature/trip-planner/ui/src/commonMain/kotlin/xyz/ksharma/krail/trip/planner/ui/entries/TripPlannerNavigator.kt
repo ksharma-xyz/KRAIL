@@ -8,6 +8,7 @@ import androidx.navigation3.runtime.NavKey
  *
  * Results are passed using ResultEventBus for event-based communication.
  */
+@Suppress("ComplexInterface", "TooManyFunctions")
 interface TripPlannerNavigator {
 
     fun navigateToSearchStop(fieldType: SearchStopFieldType)
@@ -32,5 +33,5 @@ interface TripPlannerNavigator {
 data class StopSelectedResult(
     val fieldType: SearchStopFieldType,
     val stopId: String,
-    val stopName: String
+    val stopName: String,
 )

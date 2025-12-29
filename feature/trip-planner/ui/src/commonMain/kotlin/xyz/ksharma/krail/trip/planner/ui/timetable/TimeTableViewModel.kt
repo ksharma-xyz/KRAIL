@@ -78,11 +78,12 @@ class TimeTableViewModel(
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTable)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), true)
 
+    private val _isActive: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     /**
      * Flow that updates time text every 10 seconds while the screen is visible.
      * Uses WhileSubscribed to automatically stop when no collectors are active.
      */
-    private val _isActive: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isActive: StateFlow<Boolean> = _isActive.onStart {
         while (true) {
             if (_uiState.value.journeyList.isEmpty().not()) {
@@ -96,12 +97,13 @@ class TimeTableViewModel(
         initialValue = true,
     )
 
+    private val _autoRefreshTimeTable: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     /**
      * Flow that auto-refreshes timetable every 30 seconds while the screen is visible.
      * Uses WhileSubscribed to automatically stop when no collectors are active (screen not visible).
      * This ensures we don't make API calls in the background when the user has navigated away.
      */
-    private val _autoRefreshTimeTable: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val autoRefreshTimeTable: StateFlow<Boolean> = _autoRefreshTimeTable.onStart {
         while (true) {
             val hasJourneys = _uiState.value.journeyList.isEmpty().not()
@@ -155,13 +157,13 @@ class TimeTableViewModel(
         fromStopId: String,
         fromStopName: String,
         toStopId: String,
-        toStopName: String
+        toStopName: String,
     ) {
         val trip = Trip(
             fromStopId = fromStopId,
             fromStopName = fromStopName,
             toStopId = toStopId,
-            toStopName = toStopName
+            toStopName = toStopName,
         )
 
         // Always call LoadTimeTable - it will handle logic:

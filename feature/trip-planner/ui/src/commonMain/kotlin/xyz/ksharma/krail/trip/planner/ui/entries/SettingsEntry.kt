@@ -19,10 +19,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SettingsEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SettingsRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: SettingsViewModel = koinViewModel()
         val settingsState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -53,8 +53,7 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
             },
             onSocialLinkClick = { socialType ->
                 viewModel.onEvent(SettingsEvent.SocialLinkClick(socialType))
-            }
+            },
         )
     }
 }
-

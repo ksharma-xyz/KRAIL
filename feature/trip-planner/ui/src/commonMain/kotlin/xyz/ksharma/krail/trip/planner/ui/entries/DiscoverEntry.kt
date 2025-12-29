@@ -17,10 +17,10 @@ import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.DiscoverEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<DiscoverRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: DiscoverViewModel = koinViewModel()
         val discoverState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -32,7 +32,7 @@ internal fun EntryProviderScope<NavKey>.DiscoverEntry(
             },
             onAppSocialLinkClicked = { krailSocialType ->
                 viewModel.onEvent(
-                    event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType)
+                    event = DiscoverEvent.AppSocialLinkClicked(krailSocialType = krailSocialType),
                 )
             },
             onPartnerSocialLinkClicked = { partnerSocialLink, cardId, cardType ->
@@ -40,8 +40,8 @@ internal fun EntryProviderScope<NavKey>.DiscoverEntry(
                     event = DiscoverEvent.PartnerSocialLinkClicked(
                         partnerSocialLink = partnerSocialLink,
                         cardId = cardId,
-                        cardType = cardType
-                    )
+                        cardType = cardType,
+                    ),
                 )
             },
             onCtaClicked = { url, cardId, cardType ->
@@ -49,21 +49,21 @@ internal fun EntryProviderScope<NavKey>.DiscoverEntry(
                     event = DiscoverEvent.CtaButtonClicked(
                         url = url,
                         cardId = cardId,
-                        cardType = cardType
-                    )
+                        cardType = cardType,
+                    ),
                 )
             },
             onShareClick = { cardId, cardType ->
                 viewModel.onEvent(
                     event = DiscoverEvent.ShareButtonClicked(
                         cardId = cardId,
-                        cardType = cardType
-                    )
+                        cardType = cardType,
+                    ),
                 )
             },
             onCardSeen = { cardId ->
                 viewModel.onEvent(
-                    event = DiscoverEvent.CardSeen(cardId = cardId)
+                    event = DiscoverEvent.CardSeen(cardId = cardId),
                 )
             },
             resetAllSeenCards = {
@@ -71,8 +71,7 @@ internal fun EntryProviderScope<NavKey>.DiscoverEntry(
             },
             onChipSelected = { cardType ->
                 viewModel.onEvent(event = DiscoverEvent.FilterChipClicked(cardType))
-            }
+            },
         )
     }
 }
-

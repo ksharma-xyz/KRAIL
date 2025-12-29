@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
  * The singleton pattern ensures both panes share the same event bus, enabling proper
  * communication across composition boundaries.
  */
-object LocalResultEventBus {
+object LocalResultEventBusObj {
     private val LocalResultEventBus: ProvidableCompositionLocal<ResultEventBus> =
         compositionLocalOf { ResultEventBus.getInstance() }
 
@@ -42,7 +42,7 @@ object LocalResultEventBus {
      * **Note**: This is kept for API compatibility, but always returns the singleton instance.
      */
     infix fun provides(
-        bus: ResultEventBus
+        bus: ResultEventBus,
     ): ProvidedValue<ResultEventBus> {
         return LocalResultEventBus.provides(bus)
     }
@@ -80,25 +80,9 @@ object LocalResultEventBus {
  * breaking communication between panes.
  *
  * @see ResultEffect for the composable consumer API
- * @see LocalResultEventBus for accessing the singleton instance
+ * @see LocalResultEventBusObj for accessing the singleton instance
  */
 class ResultEventBus private constructor() {
-    companion object {
-        /**
-         * Singleton instance shared across all composition scopes.
-         * This ensures that the same EventBus is used by both list and detail panes
-         * in adaptive layouts.
-         */
-        private var INSTANCE: ResultEventBus? = null
-
-        fun getInstance(): ResultEventBus {
-            if (INSTANCE == null) {
-                INSTANCE = ResultEventBus()
-            }
-            return INSTANCE!!
-        }
-    }
-
     /**
      * Map from the result key to a channel of results.
      */
@@ -130,5 +114,15 @@ class ResultEventBus private constructor() {
     inline fun <reified T> removeResult(resultKey: String = T::class.toString()) {
         channelMap.remove(resultKey)
     }
-}
 
+    companion object {
+        private var INSTANCE: ResultEventBus? = null
+
+        fun getInstance(): ResultEventBus {
+            if (INSTANCE == null) {
+                INSTANCE = ResultEventBus()
+            }
+            return INSTANCE!!
+        }
+    }
+}

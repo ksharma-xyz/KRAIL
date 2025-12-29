@@ -16,18 +16,17 @@ import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.OurStoryEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<OurStoryRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: OurStoryViewModel = koinViewModel()
         val ourStoryState by viewModel.models.collectAsStateWithLifecycle()
 
         OurStoryScreen(
             state = ourStoryState,
-            onBackClick = { tripPlannerNavigator.goBack() }
+            onBackClick = { tripPlannerNavigator.goBack() },
         )
     }
 }
-

@@ -18,6 +18,5 @@ import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 fun serviceAlertSaver(): Saver<PersistentSet<ServiceAlert>, String> =
     persistentSetSaver(
         serialize = { it.toJsonString() },
-        deserialize = { ServiceAlert.fromJsonString(it) }
+        deserialize = { ServiceAlert.fromJsonString(it) },
     )
-

@@ -17,8 +17,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectio
 fun dateTimeSelectionSaver(): Saver<DateTimeSelectionItem?, String> = Saver(
     save = { item -> item?.toJsonString() ?: "" },
     restore = { json ->
-        if (json.isEmpty()) null
-        else DateTimeSelectionItem.fromJsonString(json)
-    }
+        if (json.isEmpty()) {
+            null
+        } else {
+            DateTimeSelectionItem.fromJsonString(json)
+        }
+    },
 )
-

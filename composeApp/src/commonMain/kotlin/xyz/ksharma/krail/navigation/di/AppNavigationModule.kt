@@ -35,7 +35,7 @@ val appNavigationModule = module {
             name = EntryBuilderQualifiers.Names.SPLASH,
             builder = { navigator ->
                 splashEntry(navigator as Navigator)
-            }
+            },
         )
     }
 
@@ -45,7 +45,7 @@ val appNavigationModule = module {
             name = EntryBuilderQualifiers.Names.APP_UPGRADE,
             builder = { _ ->
                 appUpgradeEntry()
-            }
+            },
         )
     }
 }
@@ -56,7 +56,7 @@ val appNavigationModule = module {
  */
 @Composable
 private fun EntryProviderScope<NavKey>.splashEntry(
-    navigator: Navigator
+    navigator: Navigator,
 ) {
     entry<SplashRoute> { key ->
         val viewModel: SplashViewModel = koinViewModel()
@@ -82,7 +82,7 @@ private fun EntryProviderScope<NavKey>.splashEntry(
             backgroundColor = KrailTheme.colors.surface,
             onSplashAnimationComplete = {
                 viewModel.onUiEvent(SplashUiEvent.SplashAnimationComplete)
-            }
+            },
         )
     }
 }
@@ -96,4 +96,3 @@ private fun EntryProviderScope<NavKey>.appUpgradeEntry() {
         AppUpgradeScreen()
     }
 }
-

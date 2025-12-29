@@ -19,10 +19,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SavedTripsRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.listPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.listPane(),
     ) {
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
@@ -34,7 +34,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         ResultEffect<StopSelectedResult> { result ->
             val stopItem = StopItem(
                 stopId = result.stopId,
-                stopName = result.stopName
+                stopName = result.stopName,
             )
 
             when (result.fieldType) {
@@ -65,14 +65,14 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     viewModel.onEvent(
                         SavedTripUiEvent.AnalyticsSavedTripCardClick(
                             fromStop.stopId,
-                            toStop.stopId
-                        )
+                            toStop.stopId,
+                        ),
                     )
                     tripPlannerNavigator.navigateToTimeTable(
                         fromStopId = fromStop.stopId,
                         fromStopName = fromStop.stopName,
                         toStopId = toStop.stopId,
-                        toStopName = toStop.stopName
+                        toStopName = toStop.stopName,
                     )
                 }
             },
@@ -81,18 +81,19 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 val toStopItem = savedTripState.toStop
 
                 if (fromStopItem != null && toStopItem != null &&
-                    fromStopItem.stopId != toStopItem.stopId) {
+                    fromStopItem.stopId != toStopItem.stopId
+                ) {
                     viewModel.onEvent(
                         SavedTripUiEvent.AnalyticsLoadTimeTableClick(
                             fromStopId = fromStopItem.stopId,
-                            toStopId = toStopItem.stopId
-                        )
+                            toStopId = toStopItem.stopId,
+                        ),
                     )
                     tripPlannerNavigator.navigateToTimeTable(
                         fromStopId = fromStopItem.stopId,
                         fromStopName = fromStopItem.stopName,
                         toStopId = toStopItem.stopId,
-                        toStopName = toStopItem.stopName
+                        toStopName = toStopItem.stopName,
                     )
                 }
             },
@@ -105,8 +106,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 tripPlannerNavigator.navigateToDiscover()
             },
             onEvent = { event -> viewModel.onEvent(event) },
-            onInviteFriendsTileDisplay = { viewModel.markInviteFriendsTileAsSeen() }
+            onInviteFriendsTileDisplay = { viewModel.markInviteFriendsTileAsSeen() },
         )
     }
 }
-

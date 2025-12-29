@@ -37,19 +37,19 @@ import androidx.compose.runtime.LaunchedEffect
  * 4. Automatically cleaned up when the composable leaves composition
  *
  * @param resultEventBus the ResultEventBus to retrieve the result from. Defaults to
- * the singleton instance from [LocalResultEventBus.current]
+ * the singleton instance from [LocalResultEventBusObj.current]
  * @param resultKey the key that should be associated with this effect. Defaults to
  * the class name of type T
  * @param onResult the callback to invoke when a result is received
  *
  * @see ResultEventBus for the underlying event bus implementation
- * @see LocalResultEventBus for accessing the singleton instance
+ * @see LocalResultEventBusObj for accessing the singleton instance
  */
 @Composable
 inline fun <reified T> ResultEffect(
-    resultEventBus: ResultEventBus = LocalResultEventBus.current,
+    resultEventBus: ResultEventBus = LocalResultEventBusObj.current,
     resultKey: String = T::class.toString(),
-    crossinline onResult: suspend (T) -> Unit
+    crossinline onResult: suspend (T) -> Unit,
 ) {
     LaunchedEffect(resultKey) {
         // Ensure the channel exists by calling getResultFlow (which creates it if needed)
@@ -60,7 +60,7 @@ inline fun <reified T> ResultEffect(
             if (!resultEventBus.channelMap.contains(resultKey)) {
                 resultEventBus.channelMap[resultKey] = kotlinx.coroutines.channels.Channel(
                     capacity = kotlinx.coroutines.channels.Channel.BUFFERED,
-                    onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.SUSPEND
+                    onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.SUSPEND,
                 )
             }
             // Get the flow again

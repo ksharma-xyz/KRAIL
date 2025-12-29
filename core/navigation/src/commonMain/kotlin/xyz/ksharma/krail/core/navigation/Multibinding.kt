@@ -25,5 +25,5 @@ typealias FeatureEntryBuilder = @Composable EntryProviderScope<NavKey>.(navigato
  */
 data class EntryBuilderDescriptor(
     val name: String,
-    val builder: FeatureEntryBuilder
+    val builder: FeatureEntryBuilder,
 )

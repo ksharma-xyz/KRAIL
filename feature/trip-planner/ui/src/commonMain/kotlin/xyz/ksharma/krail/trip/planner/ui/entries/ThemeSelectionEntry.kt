@@ -18,10 +18,10 @@ import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.ThemeSelectionEntry(
-    tripPlannerNavigator: TripPlannerNavigator
+    tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<ThemeSelectionRoute>(
-        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane()
+        metadata = androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.detailPane(),
     ) {
         val viewModel: ThemeSelectionViewModel = koinViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -30,7 +30,8 @@ internal fun EntryProviderScope<NavKey>.ThemeSelectionEntry(
             selectedThemeStyle = state.selectedThemeStyle ?: KrailThemeStyle.Train,
             onThemeSelected = { themeId ->
                 val hexColorCode = KrailThemeStyle.entries
-                    .firstOrNull { it.id == themeId }?.hexColorCode
+                    .firstOrNull { it.id == themeId }
+                    ?.hexColorCode
 
                 check(hexColorCode != null) { "hexColorCode for themeId $themeId not found" }
 
@@ -43,8 +44,7 @@ internal fun EntryProviderScope<NavKey>.ThemeSelectionEntry(
             onBackClick = { tripPlannerNavigator.goBack() },
             onThemeModeSelect = { code ->
                 viewModel.onEvent(ThemeSelectionEvent.ThemeModeSelected(code))
-            }
+            },
         )
     }
 }
-

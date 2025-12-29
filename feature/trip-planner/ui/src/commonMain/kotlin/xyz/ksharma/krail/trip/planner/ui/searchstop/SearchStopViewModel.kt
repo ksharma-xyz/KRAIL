@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.*
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ClearRecentSearchClickEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
@@ -69,7 +70,7 @@ class SearchStopViewModel(
                 fetchRecentStopsJob?.cancel()
                 fetchRecentStopsJob =
                     viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(
-                        Dispatchers.IO
+                        Dispatchers.IO,
                     ) {
                         fetchRecentStops()
                     }

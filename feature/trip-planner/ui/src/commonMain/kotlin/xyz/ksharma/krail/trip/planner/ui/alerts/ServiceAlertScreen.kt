@@ -40,11 +40,11 @@ fun ServiceAlertScreen(
 ) {
     // Intercept system back press (gesture navigation or hardware back button)
     val navigationEventState = rememberNavigationEventState(
-        currentInfo = AlertEventInfo
+        currentInfo = AlertEventInfo,
     )
     NavigationBackHandler(
         state = navigationEventState,
-        onBackCompleted = onBackClick
+        onBackCompleted = onBackClick,
     )
 
     Column(

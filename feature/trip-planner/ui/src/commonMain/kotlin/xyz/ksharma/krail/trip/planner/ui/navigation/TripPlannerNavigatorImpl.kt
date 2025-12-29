@@ -23,8 +23,9 @@ import xyz.ksharma.krail.trip.planner.ui.entries.TripPlannerNavigator
  *
  * @param baseNavigator The base navigator interface from core:navigation module
  */
+@Suppress("TooManyFunctions")
 class TripPlannerNavigatorImpl(
-    private val baseNavigator: NavigatorBase
+    private val baseNavigator: NavigatorBase,
 ) : TripPlannerNavigator {
 
     override fun navigateToSearchStop(fieldType: SearchStopFieldType) {
@@ -35,15 +36,15 @@ class TripPlannerNavigatorImpl(
         fromStopId: String,
         fromStopName: String,
         toStopId: String,
-        toStopName: String
+        toStopName: String,
     ) {
         baseNavigator.goTo(
             TimeTableRoute(
                 fromStopId = fromStopId,
                 fromStopName = fromStopName,
                 toStopId = toStopId,
-                toStopName = toStopName
-            )
+                toStopName = toStopName,
+            ),
         )
     }
 

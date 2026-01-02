@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package app.krail.kgtfs.proto;
+
+/**
+ * Container for all bus routes in NSW.
+ */
+message NswBusRouteList {
+  // Transport mode name (e.g., "Buses")
+  string transportMode = 1;
+
+  // Timestamp when data was generated (ISO 8601 string)
+  string generatedAt = 2;
+
+  // List of route groups (grouped by short name)
+  repeated NswBusRouteGroup routes = 3;
+}
+
+/**
+ * Represents a group of route variants sharing the same short name (e.g. "702").
+ */
+message NswBusRouteGroup {
+  string routeShortName = 1; // e.g. "702"
+  repeated NswBusRouteVariant variants = 2;
+}
+
+/**
+ * Represents a specific variant of a route (e.g. "Sydney Buses Network" version of 702).
+ */
+message NswBusRouteVariant {
+  string routeId = 1; // Unique ID (e.g. "2504_702")
+  string routeName = 2; // e.g. "Blacktown to Seven Hills"
+  repeated NswBusTripOption trips = 3;
+}
+
+/**
+ * Represents a specific trip/direction option for a route variant.
+ */
+message NswBusTripOption {
+  string tripId = 1; // Representative trip ID
+  string headsign = 2; // e.g. "Blacktown to Seven Hills"
+  repeated string stopIds = 3; // Ordered list of stop IDs
+}
+

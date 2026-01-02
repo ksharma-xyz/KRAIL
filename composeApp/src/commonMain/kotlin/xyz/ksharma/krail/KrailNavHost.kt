@@ -1,6 +1,12 @@
 package xyz.ksharma.krail
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
@@ -9,23 +15,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
 import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.navigation.SplashRoute
 import xyz.ksharma.krail.core.navigation.rememberNavigationState
 import xyz.ksharma.krail.core.navigation.toEntries
+import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.navigation.di.collectEntryProviders
 import xyz.ksharma.krail.navigation.krailNavSerializationConfig
 import xyz.ksharma.krail.navigation.rememberNavigator
+import xyz.ksharma.krail.navigation.rememberPreviewNavigator
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.LocalThemeContentColor
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toHex
 
@@ -76,17 +89,75 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     // List-Detail scene strategy for adaptive layout with custom directive
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
+    // Calculate entries explicitly to check for emptiness
+    val entries = navigationState.toEntries(entryProvider)
+
     CompositionLocalProvider(
         LocalThemeColor provides mutableStateOf(navigator.themeColor),
         LocalThemeContentColor provides mutableStateOf(themeContentColor),
         LocalTextColor provides KrailTheme.colors.onSurface,
         LocalResultEventBusObj provides resultEventBus,
     ) {
-        NavDisplay(
-            entries = navigationState.toEntries(entryProvider),
-            onBack = { navigator.pop() },
-            sceneStrategy = listDetailStrategy,
-            modifier = modifier.fillMaxSize(),
+        if (entries.isNotEmpty()) {
+            NavDisplay(
+                entries = navigationState.toEntries(entryProvider),
+                onBack = { navigator.pop() },
+                sceneStrategy = listDetailStrategy,
+                modifier = modifier.fillMaxSize(),
+            )
+        } else {
+            NoEntriesUI(navigator)
+        }
+    }
+}
+
+/**
+ * Fallback UI: This handles the crash gracefully.
+ * Since navigator works independently of NavDisplay, clicking the button
+ * will update the state, trigger recomposition, and fix the entries list.
+ */
+@Composable
+private fun NoEntriesUI(navigator: Navigator) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = "Something went wrong",
+                style = KrailTheme.typography.displayMedium,
+                modifier = Modifier.padding(top = 100.dp, start = 24.dp, end = 24.dp),
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = {
+                    // Navigate to a known safe route (e.g., Splash or SavedTrips)
+                    navigator.resetRoot(SplashRoute)
+                },
+                modifier = Modifier.systemBarsPadding().padding(20.dp),
+            ) {
+                Text(text = "Let's KRAIL")
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun NoEntriesUIPreview() {
+    PreviewTheme {
+        val navigationState = rememberNavigationState(
+            startRoute = SplashRoute,
+            topLevelRoutes = setOf(SplashRoute),
+            serializationConfig = krailNavSerializationConfig,
         )
+        // Koin is not available in previews, so we can't use rememberNavigator, which uses
+        // koinInject. Instead, we create a dummy Navigator that doesn't use Koin.
+        NoEntriesUI(navigator = rememberPreviewNavigator(navigationState))
     }
 }

@@ -369,3 +369,8 @@ class Navigator(val state: NavigationState) : NavigatorBase {
         state.goTo(route)
     }
 }
+
+// To be used for Previews
+@Composable
+fun rememberPreviewNavigator(navigationState: NavigationState): Navigator =
+    remember { Navigator(navigationState) }

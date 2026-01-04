@@ -28,13 +28,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * Displays a route search result with all its stops.
+ * Displays a trip search result with all its stops.
  * Shows headsign/direction at top, then ordered list of stops.
- * Each Route result now represents a single direction (e.g., "Blacktown to Parramatta").
+ * Each Trip result represents a single direction (e.g., "Blacktown to Parramatta").
  */
 @Composable
-fun RouteSearchListItem(
-    route: SearchStopState.SearchResult.Route,
+fun TripSearchListItem(
+    trip: SearchStopState.SearchResult.Trip,
     modifier: Modifier = Modifier,
     onStopClick: (StopItem) -> Unit = {},
 ) {
@@ -47,40 +47,27 @@ fun RouteSearchListItem(
             )
             .padding(vertical = 12.dp),
     ) {
-        // Get the headsign from the first variant's first trip
-        val headsign = route.variants.firstOrNull()?.trips?.firstOrNull()?.headsign
-            ?: route.variants.firstOrNull()?.routeName
-            ?: "Route ${route.routeShortName}"
-
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TransportModeBadge(
-                badgeText = route.routeShortName,
+                badgeText = trip.routeShortName,
                 backgroundColor = TransportMode.Bus().colorCode.hexToComposeColor(),
             )
 
-            // Route header with headsign
+            // Trip headsign as title
             Text(
-                text = headsign,
+                text = trip.headsign,
                 style = KrailTheme.typography.titleLarge,
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Get all stops from this direction (should be only one trip per route now)
-        val allStops = route.variants.flatMap { variant ->
-            variant.trips.flatMap { trip ->
-                trip.stops
-            }
-        }.distinctBy { it.stopId } // Remove duplicates if any
-            .sortedBy { it.stopSequence } // Sort by sequence
-
-        // Display each stop
-        allStops.forEachIndexed { index, stop ->
+        // Display stops - already sorted by ViewModel
+        trip.stops.forEachIndexed { index, stop ->
             RouteStopItem(
                 stopName = stop.stopName,
                 stopId = stop.stopId,
@@ -93,7 +80,7 @@ fun RouteSearchListItem(
             )
 
             // Add divider between stops (but not after the last one)
-            if (index < allStops.size - 1) {
+            if (index < trip.stops.size - 1) {
                 Divider(modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
@@ -136,49 +123,40 @@ private fun RouteStopItem(
 
 @Preview
 @Composable
-fun RouteSearchListItemPreview() {
+fun TripSearchListItemPreview() {
     PreviewTheme {
-        RouteSearchListItem(
-            route = SearchStopState.SearchResult.Route(
-                routeShortName = "702",
-                variants = kotlinx.collections.immutable.persistentListOf(
-                    SearchStopState.RouteVariant(
-                        routeId = "2504_702",
-                        routeName = "Blacktown to Seven Hills",
-                        trips = kotlinx.collections.immutable.persistentListOf(
-                            SearchStopState.TripOption(
-                                tripId = "2233187",
-                                headsign = "Blacktown to Seven Hills",
-                                stops = kotlinx.collections.immutable.persistentListOf(
-                                    SearchStopState.TripStop(
-                                        stopId = "214733",
-                                        stopName = "Seven Hills Station",
-                                        stopSequence = 0,
-                                        transportModeType = kotlinx.collections.immutable.persistentListOf(
-                                            xyz.ksharma.krail.trip.planner.ui.state.TransportMode.Bus()
-                                        ),
-                                    ),
-                                    SearchStopState.TripStop(
-                                        stopId = "214794",
-                                        stopName = "Blacktown Station",
-                                        stopSequence = 1,
-                                        transportModeType = kotlinx.collections.immutable.persistentListOf(
-                                            xyz.ksharma.krail.trip.planner.ui.state.TransportMode.Bus()
-                                        ),
-                                    ),
-                                    SearchStopState.TripStop(
-                                        stopId = "214800",
-                                        stopName = "Windsor Road Stop",
-                                        stopSequence = 2,
-                                        transportModeType = kotlinx.collections.immutable.persistentListOf(
-                                            xyz.ksharma.krail.trip.planner.ui.state.TransportMode.Bus()
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
+        val previewStops = kotlinx.collections.immutable.persistentListOf(
+            SearchStopState.TripStop(
+                stopId = "214733",
+                stopName = "Seven Hills Station",
+                stopSequence = 0,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
                 ),
+            ),
+            SearchStopState.TripStop(
+                stopId = "214794",
+                stopName = "Blacktown Station",
+                stopSequence = 1,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
+                ),
+            ),
+            SearchStopState.TripStop(
+                stopId = "214800",
+                stopName = "Windsor Road Stop",
+                stopSequence = 2,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
+                ),
+            ),
+        )
+
+        TripSearchListItem(
+            trip = SearchStopState.SearchResult.Trip(
+                routeShortName = "702",
+                headsign = "Blacktown to Seven Hills",
+                stops = previewStops,
             ),
         )
     }

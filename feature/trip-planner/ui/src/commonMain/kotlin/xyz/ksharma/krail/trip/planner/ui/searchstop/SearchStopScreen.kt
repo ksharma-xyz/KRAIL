@@ -67,7 +67,7 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
-import xyz.ksharma.krail.trip.planner.ui.components.RouteSearchListItem
+import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -282,12 +282,10 @@ fun SearchStopScreen(
                     key = { result ->
                         when (result) {
                             is SearchStopState.SearchResult.Stop -> result.stopId
-                            is SearchStopState.SearchResult.Route -> {
+                            is SearchStopState.SearchResult.Trip -> {
                                 // Use headsign as key since routeShortName is not unique
                                 // (e.g., route "702" has multiple directions with same short name)
-                                val headsign = result.variants.firstOrNull()?.trips?.firstOrNull()?.headsign
-                                    ?: result.routeShortName
-                                "${result.routeShortName}_${headsign.hashCode()}"
+                                "${result.routeShortName}_${result.headsign.hashCode()}"
                             }
                         }
                     },
@@ -311,10 +309,10 @@ fun SearchStopScreen(
                             Divider()
                         }
 
-                        is SearchStopState.SearchResult.Route -> {
-                            // Display route with all its stops
-                            RouteSearchListItem(
-                                route = result,
+                        is SearchStopState.SearchResult.Trip -> {
+                            // Display trip with all its stops
+                            TripSearchListItem(
+                                trip = result,
                                 onStopClick = { stopItem ->
                                     keyboard?.hide()
                                     focusRequester.freeFocus()
@@ -324,7 +322,7 @@ fun SearchStopScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp)
-                                    .padding(bottom = 12.dp), // Add bottom padding for separation between route cards
+                                    .padding(bottom = 12.dp),
                             )
                         }
                     }
@@ -558,32 +556,21 @@ private val previewSearchStopState = SearchStopState(
                 TransportMode.Bus(),
             ),
         ),
-        SearchStopState.SearchResult.Route(
+        SearchStopState.SearchResult.Trip(
             routeShortName = "702",
-            variants = persistentListOf(
-                SearchStopState.RouteVariant(
-                    routeId = "2504_702",
-                    routeName = "Blacktown to Seven Hills",
-                    trips = persistentListOf(
-                        SearchStopState.TripOption(
-                            tripId = "2233187",
-                            headsign = "Blacktown to Seven Hills",
-                            stops = persistentListOf(
-                                SearchStopState.TripStop(
-                                    stopId = "214733",
-                                    stopName = "Seven Hills Station",
-                                    stopSequence = 0,
-                                    transportModeType = persistentListOf(TransportMode.Bus()),
-                                ),
-                                SearchStopState.TripStop(
-                                    stopId = "214794",
-                                    stopName = "Blacktown Station",
-                                    stopSequence = 1,
-                                    transportModeType = persistentListOf(TransportMode.Bus()),
-                                ),
-                            ),
-                        ),
-                    ),
+            headsign = "Blacktown to Seven Hills",
+            stops = persistentListOf(
+                SearchStopState.TripStop(
+                    stopId = "214733",
+                    stopName = "Seven Hills Station",
+                    stopSequence = 0,
+                    transportModeType = persistentListOf(TransportMode.Bus()),
+                ),
+                SearchStopState.TripStop(
+                    stopId = "214794",
+                    stopName = "Blacktown Station",
+                    stopSequence = 1,
+                    transportModeType = persistentListOf(TransportMode.Bus()),
                 ),
             ),
         ),

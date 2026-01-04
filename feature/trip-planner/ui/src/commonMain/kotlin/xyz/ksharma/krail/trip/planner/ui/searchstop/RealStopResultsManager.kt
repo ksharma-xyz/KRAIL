@@ -103,14 +103,14 @@ class RealStopResultsManager(
     }
 
     /**
-     * Builds multiple Route search results, one for each unique headsign/direction.
+     * Builds multiple Trip search results, one for each unique headsign/direction.
      * For route "700", this returns 4 separate results:
      * - "Blacktown to Parramatta"
      * - "Parramatta to Blacktown"
      * - "Mayfield East to Warabrook"
      * - "Warabrook to Mayfield East"
      */
-    private fun buildRouteSearchResults(routeShortName: String): List<SearchStopState.SearchResult.Route> {
+    private fun buildRouteSearchResults(routeShortName: String): List<SearchStopState.SearchResult.Trip> {
         val variants = nswBusRoutesSandook.selectRouteVariantsByShortName(routeShortName)
 
         if (variants.isEmpty()) return emptyList()
@@ -123,7 +123,7 @@ class RealStopResultsManager(
             }
         }.groupBy { it.third } // Group by headsign
 
-        // Create one Route result per unique headsign
+        // Create one Trip result per unique headsign
         return allTripsGroupedByHeadsign.map { (headsign, tripsWithVariants) ->
             // Get the first trip's stops (all trips with same headsign should have same stops)
             val representativeTrip = tripsWithVariants.first().second
@@ -138,25 +138,11 @@ class RealStopResultsManager(
                 )
             }.toImmutableList()
 
-            // Create a single TripOption for this headsign
-            val tripOption = SearchStopState.TripOption(
-                tripId = representativeTrip.tripId,
+            // Return a clean Trip object with only what UI needs
+            SearchStopState.SearchResult.Trip(
+                routeShortName = routeShortName,
                 headsign = headsign,
                 stops = tripStops,
-            )
-
-            // Create a single RouteVariant for this headsign
-            val variant = tripsWithVariants.first().first
-            val routeVariant = SearchStopState.RouteVariant(
-                routeId = variant.routeId,
-                routeName = headsign, // Use headsign as the route name for display
-                trips = persistentListOf(tripOption),
-            )
-
-            // Return a Route result with this single variant
-            SearchStopState.SearchResult.Route(
-                routeShortName = routeShortName,
-                variants = persistentListOf(routeVariant),
             )
         }
     }

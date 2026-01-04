@@ -115,11 +115,13 @@ class NswBusRoutesManager(
                             )
 
                             // Insert ordered stops for this trip
+                            // stopSequence preserves the order from the proto file (index 0, 1, 2, ...)
+                            // This allows the database to efficiently return stops in the correct order
                             trip.stopIds.forEachIndexed { index, stopId ->
                                 nswBusRoutesSandook.insertBusTripStop(
                                     tripId = trip.tripId,
                                     stopId = stopId,
-                                    stopSequence = index,
+                                    stopSequence = index, // Order from proto file
                                 )
                                 totalStops++
                             }

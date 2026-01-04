@@ -298,28 +298,75 @@ fun TripSearchListItemCollapsedPreview() {
             ),
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // Collapsed state
-            TripSearchListItem(
-                trip = SearchStopState.SearchResult.Trip(
-                    routeShortName = "702",
-                    headsign = "Blacktown to Seven Hills",
-                    stops = previewStops,
-                ),
-                itemState = TripSearchListItemState.COLLAPSED,
-                onCardClick = {},
-            )
+        // Collapsed state only
+        TripSearchListItem(
+            trip = SearchStopState.SearchResult.Trip(
+                routeShortName = "702",
+                headsign = "Blacktown to Seven Hills",
+                stops = previewStops,
+            ),
+            itemState = TripSearchListItemState.COLLAPSED,
+            onCardClick = {},
+        )
+    }
+}
 
-            // Expanded state
-            TripSearchListItem(
-                trip = SearchStopState.SearchResult.Trip(
-                    routeShortName = "702",
-                    headsign = "Blacktown to Seven Hills",
-                    stops = previewStops,
+@Preview
+@Composable
+fun TripSearchListItemExpandedPreview() {
+    PreviewTheme {
+        val previewStops = kotlinx.collections.immutable.persistentListOf(
+            SearchStopState.TripStop(
+                stopId = "214733",
+                stopName = "Seven Hills Station",
+                stopSequence = 0,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
                 ),
-                itemState = TripSearchListItemState.EXPANDED,
-                onCardClick = {},
-            )
-        }
+            ),
+            SearchStopState.TripStop(
+                stopId = "214794",
+                stopName = "Blacktown Station",
+                stopSequence = 1,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
+                ),
+            ),
+            SearchStopState.TripStop(
+                stopId = "214800",
+                stopName = "Windsor Road Stop",
+                stopSequence = 2,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
+                ),
+            ),
+            SearchStopState.TripStop(
+                stopId = "214801",
+                stopName = "Parramatta Station",
+                stopSequence = 3,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
+                ),
+            ),
+            SearchStopState.TripStop(
+                stopId = "214802",
+                stopName = "Westmead Hospital",
+                stopSequence = 4,
+                transportModeType = kotlinx.collections.immutable.persistentListOf(
+                    TransportMode.Bus()
+                ),
+            ),
+        )
+
+        // Expanded state only
+        TripSearchListItem(
+            trip = SearchStopState.SearchResult.Trip(
+                routeShortName = "702",
+                headsign = "Blacktown to Seven Hills",
+                stops = previewStops,
+            ),
+            itemState = TripSearchListItemState.EXPANDED,
+            onCardClick = {},
+        )
     }
 }

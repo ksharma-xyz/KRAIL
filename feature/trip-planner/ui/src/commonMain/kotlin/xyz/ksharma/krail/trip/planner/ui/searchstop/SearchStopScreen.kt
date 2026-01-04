@@ -252,7 +252,7 @@ fun SearchStopScreen(
         LazyColumn(
             contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
         ) {
-            item {
+            item("searching_dots") {
                 Column(
                     modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
                     verticalArrangement = Arrangement.Center,
@@ -343,7 +343,7 @@ fun SearchStopScreen(
                     }
                 }
             } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
-                item {
+                item("recent_stops_title") {
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = 20.dp)

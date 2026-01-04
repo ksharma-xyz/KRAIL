@@ -10,13 +10,17 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventDispatcher
+import androidx.navigationevent.NavigationEventDispatcherOwner
 import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.collections.immutable.ImmutableSet
@@ -27,6 +31,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.alerts.MyNavigationEventDispatcherOwner
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
 // Concrete implementation of NavigationEventInfo for alert modal back handling
@@ -89,25 +94,33 @@ fun ServiceAlertScreen(
     }
 }
 
+// TODO -  move to a separate module and split out PreviewThem into separate module as well.
+class PreviewNavigationEventDispatcherOwner : NavigationEventDispatcherOwner {
+    override val navigationEventDispatcher: NavigationEventDispatcher
+        get() = NavigationEventDispatcher(onBackCompletedFallback = {})
+}
+
 @Preview
 @Composable
 private fun PreviewServiceAlertScreen() {
     PreviewTheme {
-        ServiceAlertScreen(
-            serviceAlerts = persistentSetOf(
-                ServiceAlert(
-                    heading = "Service Alert 1",
-                    message = "This is a service alert 1",
+        CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides PreviewNavigationEventDispatcherOwner()) {
+            ServiceAlertScreen(
+                serviceAlerts = persistentSetOf(
+                    ServiceAlert(
+                        heading = "Service Alert 1",
+                        message = "This is a service alert 1",
+                    ),
+                    ServiceAlert(
+                        heading = "Service Alert 2",
+                        message = "This is a service alert 2",
+                    ),
+                    ServiceAlert(
+                        heading = "Service Alert 3",
+                        message = "This is a service alert 3",
+                    ),
                 ),
-                ServiceAlert(
-                    heading = "Service Alert 2",
-                    message = "This is a service alert 2",
-                ),
-                ServiceAlert(
-                    heading = "Service Alert 3",
-                    message = "This is a service alert 3",
-                ),
-            ),
-        )
+            )
+        }
     }
 }

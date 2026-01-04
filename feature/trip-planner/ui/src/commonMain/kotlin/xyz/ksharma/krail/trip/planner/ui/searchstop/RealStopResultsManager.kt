@@ -144,6 +144,9 @@ class RealStopResultsManager(
                 routeShortName = routeShortName,
                 headsign = headsign,
                 stops = tripStops,
+                // default to bus because that's the only option offered in app.
+                transportMode = tripStops.firstOrNull()?.transportModeType?.firstOrNull()
+                    ?: TransportMode.Bus()
             )
         }
     }

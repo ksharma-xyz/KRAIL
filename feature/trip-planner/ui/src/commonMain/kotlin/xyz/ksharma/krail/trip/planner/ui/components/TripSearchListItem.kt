@@ -57,6 +57,7 @@ enum class TripSearchListItemState {
  * Each Trip result represents a single direction (e.g., "Blacktown to Parramatta").
  *
  * @param trip The trip data to display
+ * @param transportMode The transport mode for this trip (Bus, Train, Ferry, etc.)
  * @param itemState External state controlling expansion (for analytics tracking)
  * @param onCardClick Callback when card is clicked to toggle expansion
  * @param onStopClick Callback when a stop is clicked
@@ -65,6 +66,7 @@ enum class TripSearchListItemState {
 @Composable
 fun TripSearchListItem(
     trip: SearchStopState.SearchResult.Trip,
+    transportMode: TransportMode,
     itemState: TripSearchListItemState,
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -82,6 +84,7 @@ fun TripSearchListItem(
         // Header - always visible, clickable to expand/collapse
         TripCardHeader(
             trip = trip,
+            transportMode = transportMode,
             itemState = itemState,
             onClick = onCardClick,
             modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
@@ -93,6 +96,7 @@ fun TripSearchListItem(
                 // Show summary when collapsed
                 CollapsedTripContent(
                     stopCount = trip.stops.size,
+                    transportMode = transportMode,
                     onClick = onCardClick,
                 )
             }
@@ -114,6 +118,7 @@ fun TripSearchListItem(
 @Composable
 private fun TripCardHeader(
     trip: SearchStopState.SearchResult.Trip,
+    transportMode: TransportMode,
     itemState: TripSearchListItemState,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -133,12 +138,12 @@ private fun TripCardHeader(
     ) {
         TransportModeBadge(
             badgeText = trip.routeShortName,
-            backgroundColor = TransportMode.Bus().colorCode.hexToComposeColor(),
+            backgroundColor = transportMode.colorCode.hexToComposeColor(),
             modifier = Modifier.padding(end = 6.dp)
         )
 
         TransportModeIcon(
-            transportMode = TransportMode.Bus(),
+            transportMode = transportMode,
             size = TransportModeIconSize.Small,
         )
 
@@ -174,6 +179,7 @@ private fun TripCardHeader(
 @Composable
 private fun CollapsedTripContent(
     stopCount: Int,
+    transportMode: TransportMode,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -186,8 +192,9 @@ private fun CollapsedTripContent(
             )
             .padding(bottom = 16.dp).padding(horizontal = 16.dp),
     ) {
+
         val buttonContainerColor by remember {
-            mutableStateOf(TransportMode.Bus().colorCode.hexToComposeColor())
+            mutableStateOf(transportMode.colorCode.hexToComposeColor())
         }
 
         Button(
@@ -266,6 +273,8 @@ private fun TripStopItem(
     }
 }
 
+// region Previews
+
 @Preview
 @Composable
 fun TripSearchListItemCollapsedPreview() {
@@ -304,6 +313,7 @@ fun TripSearchListItemCollapsedPreview() {
                 headsign = "Blacktown to Seven Hills",
                 stops = previewStops,
             ),
+            transportMode = TransportMode.Bus(),
             itemState = TripSearchListItemState.COLLAPSED,
             onCardClick = {},
         )
@@ -364,8 +374,11 @@ fun TripSearchListItemExpandedPreview() {
                 headsign = "Blacktown to Seven Hills",
                 stops = previewStops,
             ),
+            transportMode = TransportMode.Bus(),
             itemState = TripSearchListItemState.EXPANDED,
             onCardClick = {},
         )
     }
 }
+
+// endregion

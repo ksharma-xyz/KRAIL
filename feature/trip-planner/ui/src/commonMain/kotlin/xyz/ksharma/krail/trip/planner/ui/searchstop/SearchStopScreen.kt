@@ -320,6 +320,7 @@ fun SearchStopScreen(
                             // Display trip with expandable/collapsible stops list
                             TripSearchListItem(
                                 trip = result,
+                                transportMode = result.transportMode,
                                 itemState = itemState,
                                 onCardClick = {
                                     itemState = when (itemState) {
@@ -588,6 +589,7 @@ private val previewSearchStopState = SearchStopState(
                     transportModeType = persistentListOf(TransportMode.Bus()),
                 ),
             ),
+            transportMode = TransportMode.Bus(),
         ),
     ),
 )

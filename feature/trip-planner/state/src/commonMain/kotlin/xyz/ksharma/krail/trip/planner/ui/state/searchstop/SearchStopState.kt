@@ -54,6 +54,7 @@ data class SearchStopState(
             val routeShortName: String, // The route this trip belongs to (e.g., "702")
             val headsign: String, // The direction/destination (e.g., "Blacktown to Parramatta")
             val stops: ImmutableList<TripStop> = persistentListOf(), // Ordered stops for this trip
+            val transportMode: TransportMode,
         ) : SearchResult()
     }
 

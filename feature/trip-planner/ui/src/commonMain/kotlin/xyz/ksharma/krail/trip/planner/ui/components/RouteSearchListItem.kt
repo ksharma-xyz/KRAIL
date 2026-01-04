@@ -1,10 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,9 +18,12 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -37,8 +42,8 @@ fun RouteSearchListItem(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = KrailTheme.colors.surface.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(12.dp)
+                color = KrailTheme.colors.surface,
+                shape = CardShape,
             )
             .padding(vertical = 12.dp),
     ) {
@@ -47,23 +52,24 @@ fun RouteSearchListItem(
             ?: route.variants.firstOrNull()?.routeName
             ?: "Route ${route.routeShortName}"
 
-        // Route header with headsign
-        Text(
-            text = headsign,
-            style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            color = KrailTheme.colors.onSurface,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TransportModeBadge(
+                badgeText = route.routeShortName,
+                backgroundColor = TransportMode.Bus().colorCode.hexToComposeColor(),
+            )
 
-        // Route number subtitle
-        Text(
-            text = "Route ${route.routeShortName}",
-            style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
-        )
+            // Route header with headsign
+            Text(
+                text = headsign,
+                style = KrailTheme.typography.titleLarge,
+            )
+        }
 
-        Spacer(modifier = Modifier.padding(vertical = 4.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Get all stops from this direction (should be only one trip per route now)
         val allStops = route.variants.flatMap { variant ->
@@ -80,10 +86,7 @@ fun RouteSearchListItem(
                 stopId = stop.stopId,
                 onClick = {
                     onStopClick(
-                        StopItem(
-                            stopId = stop.stopId,
-                            stopName = stop.stopName,
-                        )
+                        StopItem(stopId = stop.stopId, stopName = stop.stopName)
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -91,7 +94,7 @@ fun RouteSearchListItem(
 
             // Add divider between stops (but not after the last one)
             if (index < allStops.size - 1) {
-                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
     }
@@ -111,24 +114,22 @@ private fun RouteStopItem(
         modifier = modifier
             .fillMaxWidth()
             .klickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Stop name on the left
         Text(
             text = stopName,
             style = KrailTheme.typography.bodyLarge,
-            color = KrailTheme.colors.onSurface,
             modifier = Modifier.weight(1f),
         )
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         // Stop ID on the right
         Text(
             text = stopId,
             style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
         )
     }
 }

@@ -11,6 +11,8 @@ import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_NSW_BUS_ROUTES_VERSION
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_BUS_ROUTES_VERSION
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class NswBusRoutesManager(
     private val ioDispatcher: CoroutineDispatcher,
@@ -61,21 +63,39 @@ class NswBusRoutesManager(
     /**
      * Reads and decodes the NSW bus routes from a protobuf file, then inserts into the database.
      */
+    @OptIn(ExperimentalTime::class)
     private suspend fun parseAndInsertBusRoutes(): Boolean = withContext(ioDispatcher) {
         try {
+            val totalStartTime = Clock.System.now().nanosecondsOfSecond
             log("NswBusRoutesManager Starting bus routes insertion...")
 
             // Clear existing data
+            val clearStartTime = Clock.System.now().nanosecondsOfSecond
             nswBusRoutesSandook.clearNswBusRoutesData()
+            val clearTime = Clock.System.now().nanosecondsOfSecond - clearStartTime
+            log("NswBusRoutesManager ⏱️ Clear time: ${clearTime}ms")
 
             // Read and parse proto file
+            val readStartTime = Clock.System.now().nanosecondsOfSecond
             val byteArray = Res.readBytes("files/NSW_BUSES_ROUTES.pb")
+            val readTime = Clock.System.now().nanosecondsOfSecond - readStartTime
+            log("NswBusRoutesManager ⏱️ File read time: ${readTime}ms")
+
+            val decodeStartTime = Clock.System.now().nanosecondsOfSecond
             val decodedRoutes = NswBusRouteList.ADAPTER.decode(byteArray)
+            val decodeTime = Clock.System.now().nanosecondsOfSecond - decodeStartTime
+            log("NswBusRoutesManager ⏱️ Proto decode time: ${decodeTime}ms (${decodedRoutes.routes.size} routes)")
 
             // Insert all data in a transaction
+            val insertStartTime = Clock.System.now().nanosecondsOfSecond
             val result = insertRoutesInTransaction(decodedRoutes)
+            val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
 
+            val totalTime = Clock.System.now().toEpochMilliseconds() - totalStartTime
+            log("NswBusRoutesManager ⏱️ Insert time: ${insertTime}ms")
+            log("NswBusRoutesManager ⏱️ TOTAL time: ${totalTime}ms")
             log("NswBusRoutesManager Insertion complete")
+
             result
         } catch (e: Exception) {
             logError("NswBusRoutesManager Exception: ${e.message}")

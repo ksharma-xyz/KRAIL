@@ -10,6 +10,8 @@ import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager.Companion.MINIMUM_REQUIRE
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_STOPS_VERSION
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class NswStopsManager(
     private val ioDispatcher: CoroutineDispatcher,
@@ -58,15 +60,34 @@ class NswStopsManager(
     /**
      * Reads and decodes the NSW stops from a protobuf file, then inserts the stops into the database.
      */
+    @OptIn(ExperimentalTime::class)
     private suspend fun parseAndInsertStops(): Boolean = withContext(ioDispatcher) {
+        val totalStartTime = Clock.System.now().toEpochMilliseconds()
+
         sandook.clearNswStopsTable()
         sandook.clearNswProductClassTable()
 
+        val readStartTime = Clock.System.now().nanosecondsOfSecond
         val byteArray = Res.readBytes("files/NSW_STOPS.pb")
+        val readTime = Clock.System.now().nanosecondsOfSecond - readStartTime
+        log("NswStopsManager ⏱️ File read time: ${readTime}ms")
+
+        val decodeStartTime = Clock.System.now().nanosecondsOfSecond
         val decodedStops = NswStopList.ADAPTER.decode(byteArray)
+        val decodeTime = Clock.System.now().nanosecondsOfSecond - decodeStartTime
+        log("NswStopsManager ⏱️ Proto decode time: ${decodeTime}ms")
 
         log("Start inserting stops. Currently ${sandook.stopsCount()} stops in the database")
-        insertStopsInTransaction(decodedStops)
+
+        val insertStartTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        val result = insertStopsInTransaction(decodedStops)
+        val insertTime = kotlin.time.Clock.System.now().toEpochMilliseconds() - insertStartTime
+
+        val totalTime = Clock.System.now().nanosecondsOfSecond - totalStartTime
+        log("NswStopsManager ⏱️ Insert time: ${insertTime}ms")
+        log("NswStopsManager ⏱️ TOTAL time: ${totalTime}ms (${decodedStops.nswStops.size} stops)")
+
+        result
     }
 
     private suspend fun insertStopsInTransaction(decoded: NswStopList) = withContext(ioDispatcher) {

@@ -8,12 +8,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventDispatcher
+import androidx.navigationevent.NavigationEventDispatcherOwner
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
@@ -72,21 +79,23 @@ fun ServiceAlertScreen(
 @Composable
 private fun PreviewServiceAlertScreen() {
     PreviewTheme {
-        ServiceAlertScreen(
-            serviceAlerts = persistentSetOf(
-                ServiceAlert(
-                    heading = "Service Alert 1",
-                    message = "This is a service alert 1",
+        CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides PreviewNavigationEventDispatcherOwner()) {
+            ServiceAlertScreen(
+                serviceAlerts = persistentSetOf(
+                    ServiceAlert(
+                        heading = "Service Alert 1",
+                        message = "This is a service alert 1",
+                    ),
+                    ServiceAlert(
+                        heading = "Service Alert 2",
+                        message = "This is a service alert 2",
+                    ),
+                    ServiceAlert(
+                        heading = "Service Alert 3",
+                        message = "This is a service alert 3",
+                    ),
                 ),
-                ServiceAlert(
-                    heading = "Service Alert 2",
-                    message = "This is a service alert 2",
-                ),
-                ServiceAlert(
-                    heading = "Service Alert 3",
-                    message = "This is a service alert 3",
-                ),
-            ),
-        )
+            )
+        }
     }
 }

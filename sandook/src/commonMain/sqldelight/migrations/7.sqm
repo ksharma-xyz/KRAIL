@@ -1,0 +1,8 @@
+-- Create NSW Stops Table --
+CREATE TABLE IF NOT EXISTS NswStops (
+    stopId TEXT PRIMARY KEY,
+    stopName TEXT NOT NULL,
+    stopLat REAL NOT NULL,
+    stopLon REAL NOT NULL,
+    parentStopId TEXT
+);

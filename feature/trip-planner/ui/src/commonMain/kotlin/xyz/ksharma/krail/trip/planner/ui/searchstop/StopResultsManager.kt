@@ -9,9 +9,9 @@ interface StopResultsManager {
 
     val selectedToStop: StopItem?
 
-    suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult>
+    suspend fun fetchStopResults(query: String): List<SearchStopState.SearchResult>
 
-    fun prioritiseStops(stopResults: List<SearchStopState.StopResult>): List<SearchStopState.StopResult>
+    fun prioritiseStops(stopResults: List<SearchStopState.SearchResult.Stop>): List<SearchStopState.SearchResult.Stop>
 
     /**
      * Fetches the local stop name for a given stop ID.

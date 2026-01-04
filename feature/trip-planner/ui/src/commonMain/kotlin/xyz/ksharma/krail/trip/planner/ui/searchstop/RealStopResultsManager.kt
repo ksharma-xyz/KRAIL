@@ -63,21 +63,81 @@ class RealStopResultsManager(
         log("StopResultsManager - clearSelectedStops")
     }
 
-    override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {
+    override suspend fun fetchStopResults(query: String): List<SearchStopState.SearchResult> {
         log("fetchStopResults from LOCAL_STOPS")
-        val resultsDb: List<SelectProductClassesForStop> =
+
+        val results = mutableListOf<SearchStopState.SearchResult>()
+
+        // 1. Search for stops by stop name/ID - these go in as individual Stop results
+        val stopResults: List<SelectProductClassesForStop> =
             sandook.selectStops(stopName = query, excludeProductClassList = listOf())
 
-        val results = resultsDb
-            .map { it.toStopResult() }
+        val stopSearchResults = stopResults
+            .map { it.toStopSearchResult() }
             .let(::prioritiseStops)
             .take(50)
+            .map { SearchStopState.SearchResult.Stop(it.stopName, it.stopId, it.transportModeType) }
+
+        results.addAll(stopSearchResults)
+
+        // 2. Search for routes by exact route short name - this goes in as a Route result
+        val routeShortName = sandook.selectRouteByShortName(query)
+        if (routeShortName != null) {
+            val routeResult = buildRouteSearchResult(routeShortName)
+            if (routeResult != null) {
+                // Add route result at the beginning since it's an exact match
+                results.add(0, routeResult)
+            }
+        }
 
         return results
     }
 
+    /**
+     * Builds a complete Route search result with all variants, trips, and stops
+     */
+    private fun buildRouteSearchResult(routeShortName: String): SearchStopState.SearchResult.Route? {
+        val variants = sandook.selectRouteVariantsByShortName(routeShortName)
+
+        if (variants.isEmpty()) return null
+
+        val routeVariants = variants.map { variant ->
+            val trips = sandook.selectTripsByRouteId(variant.routeId)
+
+            val tripOptions = trips.map { trip ->
+                val stops = sandook.selectStopsByTripId(trip.tripId)
+
+                val tripStops = stops.map { stop ->
+                    SearchStopState.TripStop(
+                        stopId = stop.stopId,
+                        stopName = stop.stopName,
+                        stopSequence = stop.stopSequence.toInt(),
+                        transportModeType = stop.productClasses.toTransportModeList(),
+                    )
+                }.toImmutableList()
+
+                SearchStopState.TripOption(
+                    tripId = trip.tripId,
+                    headsign = trip.headsign,
+                    stops = tripStops,
+                )
+            }.toImmutableList()
+
+            SearchStopState.RouteVariant(
+                routeId = variant.routeId,
+                routeName = variant.routeName,
+                trips = tripOptions,
+            )
+        }.toImmutableList()
+
+        return SearchStopState.SearchResult.Route(
+            routeShortName = routeShortName,
+            variants = routeVariants,
+        )
+    }
+
     // TODO - move to another file and add UT for it. Inject and use.
-    override fun prioritiseStops(stopResults: List<SearchStopState.StopResult>): List<SearchStopState.StopResult> {
+    override fun prioritiseStops(stopResults: List<SearchStopState.SearchResult.Stop>): List<SearchStopState.SearchResult.Stop> {
         val sortedTransportModes = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
         val transportModePriorityMap = sortedTransportModes.mapIndexed { index, transportMode ->
             transportMode.productClass to index
@@ -102,21 +162,11 @@ class RealStopResultsManager(
         val resultsDb = sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())
         return resultsDb
             .firstOrNull { it.stopId == stopId }
-            ?.toStopResult()
+            ?.toStopSearchResult()
             ?.stopName
     }
 
-    private fun filterProductClasses(
-        stopResults: List<SearchStopState.StopResult>,
-        excludedProductClasses: List<Int> = emptyList(),
-    ): List<SearchStopState.StopResult> {
-        return stopResults.filter { stopResult ->
-            val productClasses = stopResult.transportModeType.map { it.productClass }
-            productClasses.any { it !in excludedProductClasses }
-        }
-    }
-
-    private fun SelectProductClassesForStop.toStopResult() = SearchStopState.StopResult(
+    private fun SelectProductClassesForStop.toStopSearchResult() = SearchStopState.SearchResult.Stop(
         stopId = stopId,
         stopName = stopName,
         transportModeType = this.productClasses.toTransportModeList(),

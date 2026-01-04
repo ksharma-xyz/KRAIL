@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS NswStops (
     stopId TEXT PRIMARY KEY,
     stopName TEXT NOT NULL,
     stopLat REAL NOT NULL,
-    stopLon REAL NOT NULL
+    stopLon REAL NOT NULL,
+    parentStopId TEXT
 );
 
 -- Create NSW Stop Product Class Table --
@@ -18,8 +19,8 @@ CREATE TABLE IF NOT EXISTS NswStopProductClass (
 
 -- Insert data into NswStops table (without productClass) --
 insertStop:
-INSERT OR IGNORE INTO NswStops(stopId, stopName, stopLat, stopLon)
-VALUES (?, ?, ?, ?);
+INSERT OR IGNORE INTO NswStops(stopId, stopName, stopLat, stopLon, parentStopId)
+VALUES (?, ?, ?, ?, ?);
 
 -- Select count of items in NswStops
 selectStopsCount:
@@ -42,7 +43,7 @@ DELETE FROM NswStops;
 clearNswStopProductClassTable:
 DELETE FROM NswStopProductClass;
 
--- select stops and theier prodcut classes for a given stopId / name --
+-- select stops and their prodcut classes for a given stopId / name --
 selectProductClassesForStop:
 SELECT s.*,
        COALESCE(GROUP_CONCAT(p.productClass), '') AS productClasses
@@ -50,7 +51,7 @@ FROM NswStops AS s
 LEFT JOIN NswStopProductClass AS p
     ON s.stopId = p.stopId
 WHERE (
-    s.stopId = :stopId  -- Use named parameter :stopId
-    OR s.stopName LIKE '%' || :stopName || '%'  -- Use named parameter :stopName
+    s.stopId = :stopId  -- Exact match for stop ID
+    OR s.stopName LIKE '%' || :stopName || '%' COLLATE NOCASE  -- Case-insensitive partial match for stop name
 )
 GROUP BY s.stopId;

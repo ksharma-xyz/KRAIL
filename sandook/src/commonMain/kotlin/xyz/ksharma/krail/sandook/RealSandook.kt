@@ -16,6 +16,8 @@ internal class RealSandook(
 
     private val nswStopsQueries = sandook.nswStopsQueries
 
+    private val nswBusRoutesQueries = sandook.nswBusRoutesQueries
+
     private val nswParkRideQueries = sandook.nswParkRideQueries
 
     private val recentSearchStopsQueries = sandook.recentSearchStopsQueries
@@ -113,6 +115,7 @@ internal class RealSandook(
             stopName = stopName,
             stopLat = stopLat,
             stopLon = stopLon,
+            parentStopId = null,
         )
     }
 
@@ -151,6 +154,25 @@ internal class RealSandook(
     }
 
     // endregion NswStops
+
+    // region NswBusRoutes
+    override fun selectRouteByShortName(routeShortName: String): String? {
+        return nswBusRoutesQueries.selectRouteByShortName(routeShortName)
+            .executeAsOneOrNull()
+    }
+
+    override fun selectRouteVariantsByShortName(routeShortName: String): List<NswBusRouteVariants> {
+        return nswBusRoutesQueries.selectRouteVariantsByShortName(routeShortName).executeAsList()
+    }
+
+    override fun selectTripsByRouteId(routeId: String): List<NswBusTripOptions> {
+        return nswBusRoutesQueries.selectTripsByRouteId(routeId).executeAsList()
+    }
+
+    override fun selectStopsByTripId(tripId: String): List<SelectStopsByTripId> {
+        return nswBusRoutesQueries.selectStopsByTripId(tripId).executeAsList()
+    }
+    // endregion NswBusRoutes
 
     // region RecentSearchStops
     override fun insertOrReplaceRecentSearchStop(stopId: String) {

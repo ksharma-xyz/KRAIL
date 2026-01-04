@@ -15,6 +15,14 @@ message NswStop {
 
   // The product class is a list of transport modes that the stop is associated with.
   repeated int32 productClass = 5;
+
+  // Indicates if this stop is a parent stop.
+  // Default (true or not present): This is a parent stop
+  // Explicitly false: This is a child stop (e.g., specific platform/stand)
+  // Proto3 default for bool is false, but in our logic:
+  // - Missing field = true (parent stop)
+  // - Explicitly set to false = child stop
+  bool isParent = 6;
 }
 
 message NswStopList {

@@ -453,6 +453,7 @@ class SavedTripsViewModel(
                             latitude = 0.0,
                             longitude = 0.0,
                             stopName = stopResultsManager.fetchStopResults(mapping.stopId)
+                                .filterIsInstance<xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState.SearchResult.Stop>()
                                 .firstOrNull()?.stopName ?: mapping.stopId,
                             timestamp = Instant.DISTANT_PAST.epochSeconds,
                         )

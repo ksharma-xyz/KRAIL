@@ -15,7 +15,7 @@ internal object SandookMigrationAfter7 : SandookMigration {
                     stopName TEXT NOT NULL,
                     stopLat REAL NOT NULL,
                     stopLon REAL NOT NULL,
-                    parentStopId TEXT
+                    isParent INTEGER
                 );
             """.trimIndent(),
             parameters = 0,

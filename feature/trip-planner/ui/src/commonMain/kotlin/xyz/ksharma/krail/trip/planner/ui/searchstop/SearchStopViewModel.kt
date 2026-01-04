@@ -106,8 +106,8 @@ class SearchStopViewModel(
         updateUiState { copy(recentStops = recentStops) }
     }
 
-    private fun SearchStopState.displayData(stopsResult: List<SearchStopState.StopResult>) = copy(
-        stops = stopsResult.toImmutableList(),
+    private fun SearchStopState.displayData(stopsResult: List<SearchStopState.SearchResult>) = copy(
+        searchResults = stopsResult.toImmutableList(),
         isLoading = false,
         isError = false,
     )
@@ -117,7 +117,7 @@ class SearchStopViewModel(
 
     private fun SearchStopState.displayError() = copy(
         isLoading = false,
-        stops = persistentListOf(),
+        searchResults = persistentListOf(),
         isError = true,
     )
 

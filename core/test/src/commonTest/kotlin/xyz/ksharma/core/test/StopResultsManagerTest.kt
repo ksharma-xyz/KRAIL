@@ -32,7 +32,13 @@ class RealStopResultsManagerTest {
             )
 
             // Set Sandook response
-            sandook.insertNswStop(stopId = "200060", stopName = "Stop A", stopLat = 1.0, stopLon = 1.0)
+            sandook.insertNswStop(
+                stopId = "200060",
+                stopName = "Stop A",
+                stopLat = 1.0,
+                stopLon = 1.0,
+                isParent = true,
+            )
 
             // Call the method
             val results = stopResultsManager.fetchStopResults("query")

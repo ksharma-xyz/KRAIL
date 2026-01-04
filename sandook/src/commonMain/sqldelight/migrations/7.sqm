@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS NswStops (
     stopName TEXT NOT NULL,
     stopLat REAL NOT NULL,
     stopLon REAL NOT NULL,
-    parentStopId TEXT
+    isParent INTEGER
 );

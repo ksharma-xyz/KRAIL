@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS NswStops (
     stopName TEXT NOT NULL,
     stopLat REAL NOT NULL,
     stopLon REAL NOT NULL,
-    parentStopId TEXT
+    isParent INTEGER  -- 0 = child stop (specific platform/stand), NULL or 1 = parent stop (default)
 );
 
 -- Create NSW Stop Product Class Table --
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS NswStopProductClass (
 
 -- Insert data into NswStops table (without productClass) --
 insertStop:
-INSERT OR IGNORE INTO NswStops(stopId, stopName, stopLat, stopLon, parentStopId)
+INSERT OR IGNORE INTO NswStops(stopId, stopName, stopLat, stopLon, isParent)
 VALUES (?, ?, ?, ?, ?);
 
 -- Select count of items in NswStops

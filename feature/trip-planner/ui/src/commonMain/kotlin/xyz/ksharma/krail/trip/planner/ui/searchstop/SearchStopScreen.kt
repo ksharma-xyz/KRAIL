@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.mapLatest
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -66,6 +67,7 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
+import xyz.ksharma.krail.trip.planner.ui.components.RouteSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -117,10 +119,10 @@ fun SearchStopScreen(
     var lastQueryTime by remember { mutableLongStateOf(0L) }
     LaunchedEffect(
         key1 = textFieldText,
-        key2 = searchStopState.stops,
+        key2 = searchStopState.searchResults,
         key3 = searchStopState.isLoading,
     ) {
-        if (textFieldText.isNotBlank() && searchStopState.stops.isEmpty()) {
+        if (textFieldText.isNotBlank() && searchStopState.searchResults.isEmpty()) {
             // To ensure a smooth transition from the results state to the "No match found" state,
             // track the time of the last query. If new results come in during the delay period,
             // then lastQueryTime will be different, therefore, it will prevent
@@ -128,7 +130,7 @@ fun SearchStopScreen(
             val currentQueryTime = Clock.System.now().toEpochMilliseconds()
             lastQueryTime = currentQueryTime
             delay(1000)
-            if (lastQueryTime == currentQueryTime && searchStopState.stops.isEmpty()) {
+            if (lastQueryTime == currentQueryTime && searchStopState.searchResults.isEmpty()) {
                 displayNoMatchFound = true
             }
         } else {
@@ -274,27 +276,51 @@ fun SearchStopScreen(
                             .animateItem(),
                     )
                 }
-            } else if (searchStopState.stops.isNotEmpty() && textFieldText.isNotBlank()) {
+            } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
                 items(
-                    items = searchStopState.stops,
-                    key = { it.stopId },
-                ) { stop ->
-                    StopSearchListItem(
-                        stopId = stop.stopId,
-                        stopName = stop.stopName,
-                        transportModeSet = stop.transportModeType.toImmutableSet(),
-                        textColor = KrailTheme.colors.label,
-                        onClick = { stopItem ->
-                            keyboard?.hide()
-                            focusRequester.freeFocus()
-                            onStopSelect(stopItem)
-                            onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    )
+                    items = searchStopState.searchResults,
+                    key = { result ->
+                        when (result) {
+                            is SearchStopState.SearchResult.Stop -> result.stopId
+                            is SearchStopState.SearchResult.Route -> result.routeShortName
+                        }
+                    },
+                ) { result ->
+                    when (result) {
+                        is SearchStopState.SearchResult.Stop -> {
+                            // Display individual stop
+                            StopSearchListItem(
+                                stopId = result.stopId,
+                                stopName = result.stopName,
+                                transportModeSet = result.transportModeType.toImmutableSet(),
+                                textColor = KrailTheme.colors.label,
+                                onClick = { stopItem ->
+                                    keyboard?.hide()
+                                    focusRequester.freeFocus()
+                                    onStopSelect(stopItem)
+                                    onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Divider()
+                        }
 
-                    Divider()
+                        is SearchStopState.SearchResult.Route -> {
+                            // Display route with all its stops
+                            RouteSearchListItem(
+                                route = result,
+                                onStopClick = { stopItem ->
+                                    keyboard?.hide()
+                                    focusRequester.freeFocus()
+                                    onStopSelect(stopItem)
+                                    onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
                 }
             } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
                 item {
@@ -374,6 +400,7 @@ fun SearchStopScreen(
 
 // region Previews
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenLoading() {
     PreviewTheme {
@@ -381,12 +408,13 @@ private fun PreviewSearchStopScreenLoading() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState.copy(isLoading = true),
+                searchStopState = previewSearchStopState.copy(isLoading = true),
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenError() {
     PreviewTheme {
@@ -394,12 +422,13 @@ private fun PreviewSearchStopScreenError() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState.copy(isLoading = false, isError = true),
+                searchStopState = previewSearchStopState.copy(isLoading = false, isError = true),
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenEmpty() {
     PreviewTheme {
@@ -407,16 +436,17 @@ private fun PreviewSearchStopScreenEmpty() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState.copy(
+                searchStopState = previewSearchStopState.copy(
                     isLoading = false,
                     isError = false,
-                    stops = persistentListOf(),
+                    searchResults = persistentListOf(),
                 ),
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenTrain() {
     PreviewTheme {
@@ -424,12 +454,13 @@ private fun PreviewSearchStopScreenTrain() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenCoach() {
     PreviewTheme {
@@ -437,12 +468,13 @@ private fun PreviewSearchStopScreenCoach() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenFerry() {
     PreviewTheme {
@@ -450,12 +482,13 @@ private fun PreviewSearchStopScreenFerry() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenMetro() {
     PreviewTheme {
@@ -463,12 +496,13 @@ private fun PreviewSearchStopScreenMetro() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenLightRail() {
     PreviewTheme {
@@ -476,12 +510,13 @@ private fun PreviewSearchStopScreenLightRail() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenBus() {
     PreviewTheme {
@@ -489,31 +524,60 @@ private fun PreviewSearchStopScreenBus() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
-private val searchStopState = SearchStopState(
+private val previewSearchStopState = SearchStopState(
     isLoading = false,
-    stops = persistentListOf(
-        SearchStopState.StopResult(
+    searchResults = persistentListOf(
+        SearchStopState.SearchResult.Stop(
             stopId = "123",
-            stopName = "Stop Name",
-            transportModeType = persistentListOf(TransportMode.Bus()),
+            stopName = "Central Station",
+            transportModeType = persistentListOf(TransportMode.Train()),
         ),
-        SearchStopState.StopResult(
+        SearchStopState.SearchResult.Stop(
             stopId = "235",
-            stopName = "Stop Name",
+            stopName = "Circular Quay",
             transportModeType = persistentListOf(TransportMode.Ferry()),
         ),
-        SearchStopState.StopResult(
-            stopId = "235",
-            stopName = "Stop Name",
+        SearchStopState.SearchResult.Stop(
+            stopId = "456",
+            stopName = "Town Hall",
             transportModeType = persistentListOf(
                 TransportMode.Train(),
                 TransportMode.Bus(),
+            ),
+        ),
+        SearchStopState.SearchResult.Route(
+            routeShortName = "702",
+            variants = persistentListOf(
+                SearchStopState.RouteVariant(
+                    routeId = "2504_702",
+                    routeName = "Blacktown to Seven Hills",
+                    trips = persistentListOf(
+                        SearchStopState.TripOption(
+                            tripId = "2233187",
+                            headsign = "Blacktown to Seven Hills",
+                            stops = persistentListOf(
+                                SearchStopState.TripStop(
+                                    stopId = "214733",
+                                    stopName = "Seven Hills Station",
+                                    stopSequence = 0,
+                                    transportModeType = persistentListOf(TransportMode.Bus()),
+                                ),
+                                SearchStopState.TripStop(
+                                    stopId = "214794",
+                                    stopName = "Blacktown Station",
+                                    stopSequence = 1,
+                                    transportModeType = persistentListOf(TransportMode.Bus()),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             ),
         ),
     ),

@@ -109,13 +109,16 @@ internal class RealSandook(
         stopName: String,
         stopLat: Double,
         stopLon: Double,
+        isParent: Boolean?,
     ) {
         nswStopsQueries.insertStop(
             stopId = stopId,
             stopName = stopName,
             stopLat = stopLat,
             stopLon = stopLon,
-            parentStopId = null,
+            // Only store when explicitly false (child stop)
+            // NULL and true both mean parent stop (default)
+            isParent = if (isParent == false) 0L else null,
         )
     }
 

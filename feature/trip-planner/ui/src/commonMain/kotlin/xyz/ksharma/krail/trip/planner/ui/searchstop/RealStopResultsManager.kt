@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -82,60 +83,75 @@ class RealStopResultsManager(
 
         results.addAll(stopSearchResults)
 
-        // 2. Search for routes by exact route short name - this goes in as a Route result
+        // 2. Search for routes by exact route short name
+        // Returns multiple Route results, one per unique headsign (direction)
         val routeShortName = nswBusRoutesSandook.selectRouteByShortName(query)
         if (routeShortName != null) {
-            val routeResult = buildRouteSearchResult(routeShortName)
-            if (routeResult != null) {
-                // Add route result at the beginning since it's an exact match
-                results.add(0, routeResult)
-            }
+            val routeResults = buildRouteSearchResults(routeShortName)
+            // Add route results at the beginning since they're exact matches
+            results.addAll(0, routeResults)
         }
 
         return results
     }
 
     /**
-     * Builds a complete Route search result with all variants, trips, and stops
+     * Builds multiple Route search results, one for each unique headsign/direction.
+     * For route "700", this returns 4 separate results:
+     * - "Blacktown to Parramatta"
+     * - "Parramatta to Blacktown"
+     * - "Mayfield East to Warabrook"
+     * - "Warabrook to Mayfield East"
      */
-    private fun buildRouteSearchResult(routeShortName: String): SearchStopState.SearchResult.Route? {
+    private fun buildRouteSearchResults(routeShortName: String): List<SearchStopState.SearchResult.Route> {
         val variants = nswBusRoutesSandook.selectRouteVariantsByShortName(routeShortName)
 
-        if (variants.isEmpty()) return null
+        if (variants.isEmpty()) return emptyList()
 
-        val routeVariants = variants.map { variant ->
+        // Flatten all trips from all variants and group by headsign
+        val allTripsGroupedByHeadsign = variants.flatMap { variant ->
             val trips = nswBusRoutesSandook.selectTripsByRouteId(variant.routeId)
+            trips.map { trip ->
+                Triple(variant, trip, trip.headsign)
+            }
+        }.groupBy { it.third } // Group by headsign
 
-            val tripOptions = trips.map { trip ->
-                val stops = nswBusRoutesSandook.selectStopsByTripId(trip.tripId)
+        // Create one Route result per unique headsign
+        return allTripsGroupedByHeadsign.map { (headsign, tripsWithVariants) ->
+            // Get the first trip's stops (all trips with same headsign should have same stops)
+            val representativeTrip = tripsWithVariants.first().second
+            val stops = nswBusRoutesSandook.selectStopsByTripId(representativeTrip.tripId)
 
-                val tripStops = stops.map { stop ->
-                    SearchStopState.TripStop(
-                        stopId = stop.stopId,
-                        stopName = stop.stopName,
-                        stopSequence = stop.stopSequence.toInt(),
-                        transportModeType = stop.productClasses.toTransportModeList(),
-                    )
-                }.toImmutableList()
-
-                SearchStopState.TripOption(
-                    tripId = trip.tripId,
-                    headsign = trip.headsign,
-                    stops = tripStops,
+            val tripStops = stops.map { stop ->
+                SearchStopState.TripStop(
+                    stopId = stop.stopId,
+                    stopName = stop.stopName,
+                    stopSequence = stop.stopSequence.toInt(),
+                    transportModeType = stop.productClasses.toTransportModeList(),
                 )
             }.toImmutableList()
 
-            SearchStopState.RouteVariant(
-                routeId = variant.routeId,
-                routeName = variant.routeName,
-                trips = tripOptions,
+            // Create a single TripOption for this headsign
+            val tripOption = SearchStopState.TripOption(
+                tripId = representativeTrip.tripId,
+                headsign = headsign,
+                stops = tripStops,
             )
-        }.toImmutableList()
 
-        return SearchStopState.SearchResult.Route(
-            routeShortName = routeShortName,
-            variants = routeVariants,
-        )
+            // Create a single RouteVariant for this headsign
+            val variant = tripsWithVariants.first().first
+            val routeVariant = SearchStopState.RouteVariant(
+                routeId = variant.routeId,
+                routeName = headsign, // Use headsign as the route name for display
+                trips = persistentListOf(tripOption),
+            )
+
+            // Return a Route result with this single variant
+            SearchStopState.SearchResult.Route(
+                routeShortName = routeShortName,
+                variants = persistentListOf(routeVariant),
+            )
+        }
     }
 
     // TODO - move to another file and add UT for it. Inject and use.

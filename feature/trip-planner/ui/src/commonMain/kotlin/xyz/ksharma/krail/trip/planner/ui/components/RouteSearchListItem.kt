@@ -23,8 +23,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * Displays a route search result with all its variants and stops.
- * Shows route number at top, then nested list of all stops from all trips.
+ * Displays a route search result with all its stops.
+ * Shows headsign/direction at top, then ordered list of stops.
+ * Each Route result now represents a single direction (e.g., "Blacktown to Parramatta").
  */
 @Composable
 fun RouteSearchListItem(
@@ -41,26 +42,39 @@ fun RouteSearchListItem(
             )
             .padding(vertical = 12.dp),
     ) {
-        // Route header
+        // Get the headsign from the first variant's first trip
+        val headsign = route.variants.firstOrNull()?.trips?.firstOrNull()?.headsign
+            ?: route.variants.firstOrNull()?.routeName
+            ?: "Route ${route.routeShortName}"
+
+        // Route header with headsign
         Text(
-            text = "Route ${route.routeShortName}",
+            text = headsign,
             style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             color = KrailTheme.colors.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
 
-        // Get all unique stops from all variants and trips
+        // Route number subtitle
+        Text(
+            text = "Route ${route.routeShortName}",
+            style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
+        )
+
+        Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+        // Get all stops from this direction (should be only one trip per route now)
         val allStops = route.variants.flatMap { variant ->
             variant.trips.flatMap { trip ->
-                trip.stops.map { stop ->
-                    Triple(stop, variant.routeName, trip.headsign)
-                }
+                trip.stops
             }
-        }.distinctBy { it.first.stopId } // Remove duplicate stops
-            .sortedBy { it.first.stopSequence } // Sort by sequence
+        }.distinctBy { it.stopId } // Remove duplicates if any
+            .sortedBy { it.stopSequence } // Sort by sequence
 
         // Display each stop
-        allStops.forEachIndexed { index, (stop, _, _) ->
+        allStops.forEachIndexed { index, stop ->
             RouteStopItem(
                 stopName = stop.stopName,
                 stopId = stop.stopId,
@@ -168,4 +182,3 @@ fun RouteSearchListItemPreview() {
         )
     }
 }
-

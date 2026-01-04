@@ -112,13 +112,22 @@ class RealStopResultsManager(
 
         if (variants.isEmpty()) return emptyList()
 
-        // Flatten all trips from all variants and group by headsign
-        val allTripsGroupedByHeadsign = variants.flatMap { variant ->
-            val trips = nswBusRoutesSandook.selectTripsByRouteId(variant.routeId)
-            trips.map { trip ->
-                Triple(variant, trip, trip.headsign)
+        // Batch query: fetch all trips for all variants in one query to avoid N+1 problem
+        val allRouteIds = variants.map { it.routeId }
+        val allTrips = nswBusRoutesSandook.selectTripsByRouteIds(allRouteIds)
+
+        // Create a map of routeId to variant for quick lookup
+        val variantsByRouteId = variants.associateBy { it.routeId }
+
+        // Group trips by headsign
+        val allTripsGroupedByHeadsign = allTrips
+            .mapNotNull { trip ->
+                val variant = variantsByRouteId[trip.routeId]
+                if (variant != null) {
+                    Triple(variant, trip, trip.headsign)
+                } else null
             }
-        }.groupBy { it.third } // Group by headsign
+            .groupBy { it.third } // Group by headsign
 
         // Create one Trip result per unique headsign
         return allTripsGroupedByHeadsign.map { (headsign, tripsWithVariants) ->

@@ -185,15 +185,11 @@ private fun CollapsedTripContent(
             .padding(bottom = 16.dp)
             .padding(horizontal = 16.dp),
     ) {
-        val buttonContainerColor by remember {
-            mutableStateOf(transportMode.colorCode.hexToComposeColor())
-        }
-
         Button(
             colors = ButtonColors(
-                containerColor = buttonContainerColor,
+                containerColor = transportMode.colorCode.hexToComposeColor(),
                 contentColor = Color.White,
-                disabledContainerColor = buttonContainerColor.copy(alpha = DisabledContentAlpha),
+                disabledContainerColor = transportMode.colorCode.hexToComposeColor().copy(alpha = DisabledContentAlpha),
                 disabledContentColor = Color.White.copy(alpha = DisabledContentAlpha),
             ),
             onClick = onClick,
@@ -215,7 +211,7 @@ private fun ExpandedTripContent(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         // Display all stops
-        stops.forEachIndexed { index, stop ->
+        stops.forEach { stop ->
             Divider(modifier = Modifier.padding(horizontal = 16.dp))
             TripStopItem(
                 stopName = stop.stopName,

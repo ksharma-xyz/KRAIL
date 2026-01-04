@@ -25,7 +25,8 @@ class IntroViewModel(
     private val analytics: Analytics,
     private val platformOps: PlatformOps,
     private val preferences: SandookPreferences,
-    private val stopsManager: StopsManager,
+    private val nswStopsManager: StopsManager,
+    private val nswBusRoutesManager: StopsManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<IntroState> = MutableStateFlow(IntroState.default())
@@ -50,7 +51,12 @@ class IntroViewModel(
 
             is IntroUiEvent.Complete -> {
                 viewModelScope.launch {
-                    stopsManager.insertStops()
+                    // Insert NSW stops data
+                    nswStopsManager.insertStops()
+
+                    // Insert NSW bus routes data
+                    nswBusRoutesManager.insertStops()
+
                     preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
                     analytics.track(
                         AnalyticsEvent.IntroLetsKrailClickEvent(
@@ -73,8 +79,4 @@ class IntroViewModel(
             IntroState.IntroPageType.INVITE_FRIENDS -> InteractionPage.INVITE_FRIENDS
             IntroState.IntroPageType.PARK_RIDE -> InteractionPage.PARK_RIDE
         }
-
-    private fun updateUiState(block: IntroState.() -> IntroState) {
-        _uiState.update(block)
-    }
 }

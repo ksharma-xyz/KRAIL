@@ -91,6 +91,12 @@ SELECT tripId, routeId, headsign
 FROM NswBusTripOptions
 WHERE routeId = :routeId;
 
+-- Select all trips for multiple route variants (batch query to avoid N+1 problem) --
+selectTripsByRouteIds:
+SELECT tripId, routeId, headsign
+FROM NswBusTripOptions
+WHERE routeId IN ?;
+
 -- Select all stops for a specific trip with stop details --
 selectStopsByTripId:
 SELECT

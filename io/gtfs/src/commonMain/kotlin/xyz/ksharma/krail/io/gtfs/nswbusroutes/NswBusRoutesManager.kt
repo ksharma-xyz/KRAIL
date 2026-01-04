@@ -65,28 +65,28 @@ class NswBusRoutesManager(
      */
     @OptIn(ExperimentalTime::class)
     private suspend fun parseAndInsertBusRoutes(): Boolean = suspendSafeResult(ioDispatcher) {
-        val totalStartTime = Clock.System.now().nanosecondsOfSecond
+        val totalStartTime = Clock.System.now().toEpochMilliseconds()
         log("NswBusRoutesManager Starting bus routes insertion...")
 
         // Clear existing data
-        val clearStartTime = Clock.System.now().nanosecondsOfSecond
+        val clearStartTime = Clock.System.now().toEpochMilliseconds()
         nswBusRoutesSandook.clearNswBusRoutesData()
-        val clearTime = Clock.System.now().nanosecondsOfSecond - clearStartTime
+        val clearTime = Clock.System.now().toEpochMilliseconds() - clearStartTime
         log("NswBusRoutesManager ⏱️ Clear time: ${clearTime}ms")
 
         // Read and parse proto file
-        val readStartTime = Clock.System.now().nanosecondsOfSecond
+        val readStartTime = Clock.System.now().toEpochMilliseconds()
         val byteArray = Res.readBytes("files/NSW_BUSES_ROUTES.pb")
-        val readTime = Clock.System.now().nanosecondsOfSecond - readStartTime
+        val readTime = Clock.System.now().toEpochMilliseconds() - readStartTime
         log("NswBusRoutesManager ⏱️ File read time: ${readTime}ms")
 
-        val decodeStartTime = Clock.System.now().nanosecondsOfSecond
+        val decodeStartTime = Clock.System.now().toEpochMilliseconds()
         val decodedRoutes = NswBusRouteList.ADAPTER.decode(byteArray)
-        val decodeTime = Clock.System.now().nanosecondsOfSecond - decodeStartTime
+        val decodeTime = Clock.System.now().toEpochMilliseconds() - decodeStartTime
         log("NswBusRoutesManager ⏱️ Proto decode time: ${decodeTime}ms (${decodedRoutes.routes.size} routes)")
 
         // Insert all data in a transaction
-        val insertStartTime = Clock.System.now().nanosecondsOfSecond
+        val insertStartTime = Clock.System.now().toEpochMilliseconds()
         val result = insertRoutesInTransaction(decodedRoutes)
         val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
 

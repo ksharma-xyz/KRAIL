@@ -154,7 +154,6 @@ internal class RealSandook(
 
     // endregion NswStops
 
-
     // region RecentSearchStops
     override fun insertOrReplaceRecentSearchStop(stopId: String) {
         recentSearchStopsQueries.insertOrReplaceRecentSearchStop(stopId)

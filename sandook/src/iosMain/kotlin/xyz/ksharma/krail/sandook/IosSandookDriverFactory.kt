@@ -20,6 +20,7 @@ class IosSandookDriverFactory : SandookDriverFactory {
         )
     }
 
+    @Suppress("MagicNumber")
     private fun getMigrationCallbacks(): Array<AfterVersion> = arrayOf(
         AfterVersion(1) { SandookMigrationAfter1.migrate(it) },
         AfterVersion(2) { SandookMigrationAfter2.migrate(it) },

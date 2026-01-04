@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.sandook
 
 /**
- * Real implementation of NswBusRoutesSandook.
+ * Real implementation of [NswBusRoutesSandook].
  * Delegates to the SQLDelight generated queries.
  */
 class RealNswBusRoutesSandook(

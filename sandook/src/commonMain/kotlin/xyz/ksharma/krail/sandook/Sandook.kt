@@ -72,7 +72,6 @@ interface Sandook {
     ): List<SelectProductClassesForStop>
     // endregion
 
-
     // region RecentSearchStops
     fun insertOrReplaceRecentSearchStop(stopId: String)
 

@@ -59,66 +59,6 @@ selectRouteGroupsCount:
 SELECT COUNT(*) AS totalRouteGroups
 FROM NswBusRouteGroups;
 
--- Select count of route variants --
-selectRouteVariantsCount:
-SELECT COUNT(*) AS totalRouteVariants
-FROM NswBusRouteVariants;
-
--- Select count of trip options --
-selectTripOptionsCount:
-SELECT COUNT(*) AS totalTripOptions
-FROM NswBusTripOptions;
-
--- Select count of trip stops --
-selectTripStopsCount:
-SELECT COUNT(*) AS totalTripStops
-FROM NswBusTripStops;
-
--- Select all variants for a given route short name --
-selectVariantsForRoute:
-SELECT *
-FROM NswBusRouteVariants
-WHERE routeShortName = ?;
-
--- Select all trips for a given route variant --
-selectTripsForVariant:
-SELECT *
-FROM NswBusTripOptions
-WHERE routeId = ?;
-
--- Select ordered stops for a given trip --
-selectStopsForTrip:
-SELECT ts.stopId, ts.stopSequence, s.stopName, s.stopLat, s.stopLon
-FROM NswBusTripStops AS ts
-LEFT JOIN NswStops AS s ON ts.stopId = s.stopId
-WHERE ts.tripId = ?
-ORDER BY ts.stopSequence ASC;
-
--- Select trip with all its stops (aggregated) --
-selectTripWithStops:
-SELECT
-    t.tripId,
-    t.routeId,
-    t.headsign,
-    GROUP_CONCAT(ts.stopId, ',') AS stopIds
-FROM NswBusTripOptions AS t
-LEFT JOIN NswBusTripStops AS ts ON t.tripId = ts.tripId
-WHERE t.tripId = ?
-GROUP BY t.tripId
-ORDER BY ts.stopSequence ASC;
-
--- Select all routes with their variants --
-selectAllRoutesWithVariants:
-SELECT
-    g.routeShortName,
-    v.routeId,
-    v.routeName,
-    COUNT(DISTINCT t.tripId) AS tripCount
-FROM NswBusRouteGroups AS g
-LEFT JOIN NswBusRouteVariants AS v ON g.routeShortName = v.routeShortName
-LEFT JOIN NswBusTripOptions AS t ON v.routeId = t.routeId
-GROUP BY g.routeShortName, v.routeId;
-
 -- Clear tables (in reverse order of dependencies) --
 clearNswBusTripStopsTable:
 DELETE FROM NswBusTripStops;
@@ -164,4 +104,3 @@ LEFT JOIN NswStopProductClass AS p ON s.stopId = p.stopId
 WHERE ts.tripId = :tripId
 GROUP BY ts.stopId, ts.stopSequence
 ORDER BY ts.stopSequence ASC;
-

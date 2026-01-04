@@ -67,9 +67,9 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
-import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
-import xyz.ksharma.krail.trip.planner.ui.components.TripCardState
+import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
+import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -313,18 +313,18 @@ fun SearchStopScreen(
                         is SearchStopState.SearchResult.Trip -> {
                             // State management for trip card expansion
                             val tripKey = "${result.routeShortName}_${result.headsign.hashCode()}"
-                            var cardState by rememberSaveable(tripKey) {
-                                mutableStateOf(TripCardState.COLLAPSED)
+                            var itemState by rememberSaveable(tripKey) {
+                                mutableStateOf(TripSearchListItemState.COLLAPSED)
                             }
 
                             // Display trip with expandable/collapsible stops list
                             TripSearchListItem(
                                 trip = result,
-                                cardState = cardState,
+                                itemState = itemState,
                                 onCardClick = {
-                                    cardState = when (cardState) {
-                                        TripCardState.COLLAPSED -> TripCardState.EXPANDED
-                                        TripCardState.EXPANDED -> TripCardState.COLLAPSED
+                                    itemState = when (itemState) {
+                                        TripSearchListItemState.COLLAPSED -> TripSearchListItemState.EXPANDED
+                                        TripSearchListItemState.EXPANDED -> TripSearchListItemState.COLLAPSED
                                     }
                                     // TODO: Track analytics event for expand/collapse
                                 },

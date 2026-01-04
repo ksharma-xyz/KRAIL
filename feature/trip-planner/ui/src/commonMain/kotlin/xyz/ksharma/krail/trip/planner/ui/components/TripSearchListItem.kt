@@ -1,40 +1,76 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
+import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * Displays a trip search result with all its stops.
- * Shows headsign/direction at top, then ordered list of stops.
+ * State for controlling Trip card expansion
+ */
+enum class TripCardState {
+    COLLAPSED,
+    EXPANDED
+}
+
+/**
+ * Displays a trip search result with expandable/collapsible stops list.
+ * Shows headsign/direction and summary when collapsed.
+ * Shows all stops when expanded.
  * Each Trip result represents a single direction (e.g., "Blacktown to Parramatta").
+ *
+ * @param trip The trip data to display
+ * @param cardState External state controlling expansion (for analytics tracking)
+ * @param onCardClick Callback when card is clicked to toggle expansion
+ * @param onStopClick Callback when a stop is clicked
+ * @param modifier Modifier for the card
  */
 @Composable
 fun TripSearchListItem(
     trip: SearchStopState.SearchResult.Trip,
+    cardState: TripCardState,
+    onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
     onStopClick: (StopItem) -> Unit = {},
 ) {
@@ -45,30 +81,144 @@ fun TripSearchListItem(
                 color = KrailTheme.colors.surface,
                 shape = CardShape,
             )
-            .padding(vertical = 12.dp),
+            .animateContentSize(), // Smooth expand/collapse animation
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            TransportModeBadge(
-                badgeText = trip.routeShortName,
-                backgroundColor = TransportMode.Bus().colorCode.hexToComposeColor(),
-            )
+        // Header - always visible, clickable to expand/collapse
+        TripCardHeader(
+            trip = trip,
+            cardState = cardState,
+            onClick = onCardClick,
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+        )
 
-            // Trip headsign as title
-            Text(
-                text = trip.headsign,
-                style = KrailTheme.typography.titleLarge,
+        // Expandable content - stops list
+        when (cardState) {
+            TripCardState.COLLAPSED -> {
+                // Show summary when collapsed
+                CollapsedTripContent(
+                    stopCount = trip.stops.size,
+                    onClick = onCardClick,
+                )
+            }
+
+            TripCardState.EXPANDED -> {
+                // Show all stops when expanded
+                ExpandedTripContent(
+                    stops = trip.stops,
+                    onStopClick = onStopClick,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Trip card header with route badge, headsign, and expand/collapse icon
+ */
+@Composable
+private fun TripCardHeader(
+    trip: SearchStopState.SearchResult.Trip,
+    cardState: TripCardState,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .klickable(onClick = onClick, indication = null),
+        verticalAlignment = Alignment.Top,
+    ) {
+        TransportModeBadge(
+            badgeText = trip.routeShortName,
+            backgroundColor = TransportMode.Bus().colorCode.hexToComposeColor(),
+            modifier = Modifier.padding(end = 6.dp)
+        )
+
+        TransportModeIcon(
+            transportMode = TransportMode.Bus(),
+            size = TransportModeIconSize.Small,
+        )
+
+        // Trip headsign as title
+        Text(
+            text = trip.headsign,
+            style = KrailTheme.typography.titleLarge,
+            modifier = Modifier.weight(1f).padding(end = 12.dp, start = 8.dp),
+        )
+
+        // Expand/Collapse icon
+        Box(
+            modifier = Modifier.size(32.dp)
+                .clip(CircleShape)
+                .background(color = KrailTheme.colors.onSurface),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (cardState == TripCardState.EXPANDED) {
+                    Icons.Default.KeyboardArrowUp
+                } else {
+                    Icons.Default.KeyboardArrowDown
+                },
+                tint = KrailTheme.colors.surface,
+                contentDescription = if (cardState == TripCardState.EXPANDED) "Collapse" else "Expand",
+                //tint = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
+                modifier = Modifier.size(24.dp),
             )
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(12.dp))
+/**
+ * Collapsed trip content - shows summary
+ */
+@Composable
+private fun CollapsedTripContent(
+    stopCount: Int,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .klickable(
+                onClick = onClick,
+                indication = null,
+            )
+            .padding(bottom = 16.dp).padding(horizontal = 16.dp),
+    ) {
+        val buttonContainerColor by remember {
+            mutableStateOf(TransportMode.Bus().colorCode.hexToComposeColor())
+        }
 
-        // Display stops - already sorted by ViewModel
-        trip.stops.forEachIndexed { index, stop ->
-            RouteStopItem(
+        Button(
+            colors = ButtonColors(
+                containerColor = buttonContainerColor,
+                contentColor = Color.White,
+                disabledContainerColor = buttonContainerColor.copy(alpha = DisabledContentAlpha),
+                disabledContentColor = Color.White.copy(alpha = DisabledContentAlpha),
+            ),
+            onClick = onClick,
+            dimensions = ButtonDefaults.smallButtonSize(),
+        ) {
+            Text(text = "$stopCount stops")
+        }
+    }
+}
+
+/**
+ * Expanded trip content - shows all stops
+ */
+@Composable
+private fun ExpandedTripContent(
+    stops: List<SearchStopState.TripStop>,
+    modifier: Modifier = Modifier,
+    onStopClick: (StopItem) -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Display all stops
+        stops.forEachIndexed { index, stop ->
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            TripStopItem(
                 stopName = stop.stopName,
                 stopId = stop.stopId,
                 onClick = {
@@ -78,20 +228,15 @@ fun TripSearchListItem(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
-
-            // Add divider between stops (but not after the last one)
-            if (index < trip.stops.size - 1) {
-                Divider(modifier = Modifier.padding(horizontal = 8.dp))
-            }
         }
     }
 }
 
 /**
- * Individual stop item within a route result
+ * Individual stop item within a trip result
  */
 @Composable
-private fun RouteStopItem(
+private fun TripStopItem(
     stopName: String,
     stopId: String,
     modifier: Modifier = Modifier,
@@ -102,7 +247,7 @@ private fun RouteStopItem(
             .fillMaxWidth()
             .klickable(onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
         // Stop name on the left
         Text(
@@ -123,7 +268,7 @@ private fun RouteStopItem(
 
 @Preview
 @Composable
-fun TripSearchListItemPreview() {
+fun TripSearchListItemCollapsedPreview() {
     PreviewTheme {
         val previewStops = kotlinx.collections.immutable.persistentListOf(
             SearchStopState.TripStop(
@@ -152,12 +297,28 @@ fun TripSearchListItemPreview() {
             ),
         )
 
-        TripSearchListItem(
-            trip = SearchStopState.SearchResult.Trip(
-                routeShortName = "702",
-                headsign = "Blacktown to Seven Hills",
-                stops = previewStops,
-            ),
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Collapsed state
+            TripSearchListItem(
+                trip = SearchStopState.SearchResult.Trip(
+                    routeShortName = "702",
+                    headsign = "Blacktown to Seven Hills",
+                    stops = previewStops,
+                ),
+                cardState = TripCardState.COLLAPSED,
+                onCardClick = {},
+            )
+
+            // Expanded state
+            TripSearchListItem(
+                trip = SearchStopState.SearchResult.Trip(
+                    routeShortName = "702",
+                    headsign = "Blacktown to Seven Hills",
+                    stops = previewStops,
+                ),
+                cardState = TripCardState.EXPANDED,
+                onCardClick = {},
+            )
+        }
     }
 }

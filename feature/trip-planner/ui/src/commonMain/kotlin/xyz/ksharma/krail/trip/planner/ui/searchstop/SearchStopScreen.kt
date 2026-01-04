@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -67,9 +68,9 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
-import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
-import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
+import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
+import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -278,132 +279,23 @@ fun SearchStopScreen(
                     )
                 }
             } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
-                items(
-                    items = searchStopState.searchResults,
-                    key = { result ->
-                        when (result) {
-                            is SearchStopState.SearchResult.Stop -> result.stopId
-                            is SearchStopState.SearchResult.Trip -> {
-                                // Use headsign as key since routeShortName is not unique
-                                // (e.g., route "702" has multiple directions with same short name)
-                                "${result.routeShortName}_${result.headsign.hashCode()}"
-                            }
-                        }
-                    },
-                ) { result ->
-                    when (result) {
-                        is SearchStopState.SearchResult.Stop -> {
-                            // Display individual stop
-                            StopSearchListItem(
-                                stopId = result.stopId,
-                                stopName = result.stopName,
-                                transportModeSet = result.transportModeType.toImmutableSet(),
-                                textColor = KrailTheme.colors.label,
-                                onClick = { stopItem ->
-                                    keyboard?.hide()
-                                    focusRequester.freeFocus()
-                                    onStopSelect(stopItem)
-                                    onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            Divider()
-                        }
-
-                        is SearchStopState.SearchResult.Trip -> {
-                            // State management for trip card expansion
-                            val tripKey = "${result.routeShortName}_${result.headsign.hashCode()}"
-                            var itemState by rememberSaveable(tripKey) {
-                                mutableStateOf(TripSearchListItemState.COLLAPSED)
-                            }
-
-                            // Display trip with expandable/collapsible stops list
-                            TripSearchListItem(
-                                trip = result,
-                                transportMode = result.transportMode,
-                                itemState = itemState,
-                                onCardClick = {
-                                    itemState = when (itemState) {
-                                        TripSearchListItemState.COLLAPSED -> TripSearchListItemState.EXPANDED
-                                        TripSearchListItemState.EXPANDED -> TripSearchListItemState.COLLAPSED
-                                    }
-                                    // TODO: Track analytics event for expand/collapse
-                                },
-                                onStopClick = { stopItem ->
-                                    keyboard?.hide()
-                                    focusRequester.freeFocus()
-                                    onStopSelect(stopItem)
-                                    onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(bottom = 12.dp),
-                            )
-                        }
-                    }
-                }
+                // Separate composable for search results list
+                searchResultsList(
+                    searchResults = searchStopState.searchResults,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
             } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
-                item("recent_stops_title") {
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .padding(bottom = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Recent",
-                            style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
-                            modifier = Modifier,
-                        )
-
-                        Image(
-                            painter = painterResource(Res.drawable.ic_close),
-                            contentDescription = "Clear recent stops",
-                            colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .klickable(
-                                    onClick = {
-                                        onEvent(
-                                            SearchStopUiEvent.ClearRecentSearchStops(
-                                                recentSearchCount = searchStopState.recentStops.size,
-                                            ),
-                                        )
-                                    },
-                                ),
-                        )
-                    }
-                }
-
-                items(
-                    items = searchStopState.recentStops,
-                    key = { it.stopId },
-                ) { stop ->
-                    StopSearchListItem(
-                        stopId = stop.stopId,
-                        stopName = stop.stopName,
-                        transportModeSet = stop.transportModeType.toImmutableSet(),
-                        textColor = KrailTheme.colors.label,
-                        onClick = { stopItem ->
-                            keyboard?.hide()
-                            focusRequester.freeFocus()
-                            onStopSelect(stopItem)
-                            onEvent(
-                                SearchStopUiEvent.TrackStopSelected(
-                                    stopItem = stopItem,
-                                    isRecentSearch = true,
-                                ),
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    )
-
-                    Divider()
-                }
+                // Separate composable for recent search stops list
+                recentSearchStopsList(
+                    recentStops = searchStopState.recentStops,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
             } else if (displayNoMatchFound && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
                 item(key = "no_match") {
                     ErrorMessage(
@@ -418,6 +310,153 @@ fun SearchStopScreen(
         }
     }
 }
+
+// region Separate Composables
+
+/**
+ * Displays the list of search results (stops and trips)
+ */
+private fun LazyListScope.searchResultsList(
+    searchResults: List<SearchStopState.SearchResult>,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    items(
+        items = searchResults,
+        key = { result ->
+            when (result) {
+                is SearchStopState.SearchResult.Stop -> result.stopId
+                is SearchStopState.SearchResult.Trip -> {
+                    "${result.routeShortName}_${result.headsign.hashCode()}"
+                }
+            }
+        },
+    ) { result ->
+        when (result) {
+            is SearchStopState.SearchResult.Stop -> {
+                StopSearchListItem(
+                    stopId = result.stopId,
+                    stopName = result.stopName,
+                    transportModeSet = result.transportModeType.toImmutableSet(),
+                    textColor = KrailTheme.colors.label,
+                    onClick = { stopItem ->
+                        keyboard?.hide()
+                        focusRequester.freeFocus()
+                        onStopSelect(stopItem)
+                        onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Divider()
+            }
+
+            is SearchStopState.SearchResult.Trip -> {
+                val tripKey = "${result.routeShortName}_${result.headsign.hashCode()}"
+                var itemState by rememberSaveable(tripKey) {
+                    mutableStateOf(TripSearchListItemState.COLLAPSED)
+                }
+
+                TripSearchListItem(
+                    trip = result,
+                    transportMode = result.transportMode,
+                    itemState = itemState,
+                    onCardClick = {
+                        // Toggle between expanded and collapsed states
+                        itemState = if (itemState == TripSearchListItemState.COLLAPSED) {
+                            TripSearchListItemState.EXPANDED
+                        } else {
+                            TripSearchListItemState.COLLAPSED
+                        }
+                    },
+                    onStopClick = { stopItem ->
+                        keyboard?.hide()
+                        focusRequester.freeFocus()
+                        onStopSelect(stopItem)
+                        onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Displays the list of recent search stops
+ */
+private fun LazyListScope.recentSearchStopsList(
+    recentStops: List<SearchStopState.StopResult>,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    item("recent_stops_title") {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Recent",
+                style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
+                modifier = Modifier,
+            )
+
+            Image(
+                painter = painterResource(Res.drawable.ic_close),
+                contentDescription = "Clear recent stops",
+                colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .klickable(
+                        onClick = {
+                            onEvent(
+                                SearchStopUiEvent.ClearRecentSearchStops(
+                                    recentSearchCount = recentStops.size,
+                                ),
+                            )
+                        },
+                    ),
+            )
+        }
+    }
+
+    items(
+        items = recentStops,
+        key = { it.stopId },
+    ) { stop ->
+        StopSearchListItem(
+            stopId = stop.stopId,
+            stopName = stop.stopName,
+            transportModeSet = stop.transportModeType.toImmutableSet(),
+            textColor = KrailTheme.colors.label,
+            onClick = { stopItem ->
+                keyboard?.hide()
+                focusRequester.freeFocus()
+                onStopSelect(stopItem)
+                onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        stopItem = stopItem,
+                        isRecentSearch = true,
+                    ),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Divider()
+    }
+}
+
+// endregion
 
 // region Previews
 

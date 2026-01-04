@@ -67,7 +67,8 @@ class RealStopResultsManager(
     }
 
     // TODO: Separate route search from stop search in UI for better performance
-    // Route search can be slower with large datasets, should have separate search button/tab
+    //  Route search can be slower with large datasets, should have separate search button/tab
+    //  Observe if it is actually an issue then only fix required.
     override suspend fun fetchStopResults(
         query: String,
         searchRoutesEnabled: Boolean, // Default value defined in interface

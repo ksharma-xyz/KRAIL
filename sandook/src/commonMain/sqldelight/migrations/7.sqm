@@ -1,8 +1,33 @@
--- Create NSW Stops Table --
-CREATE TABLE IF NOT EXISTS NswStops (
-    stopId TEXT PRIMARY KEY,
-    stopName TEXT NOT NULL,
-    stopLat REAL NOT NULL,
-    stopLon REAL NOT NULL,
-    isParent INTEGER
+-- Migration 7: Add isParent column to existing NswStops table and create new Bus Routes tables
+
+-- Add isParent column to existing NswStops table --
+ALTER TABLE NswStops ADD COLUMN isParent INTEGER;
+
+-- Create NSW Bus Routes tables for route search functionality (NEW TABLES) --
+
+CREATE TABLE IF NOT EXISTS NswBusRouteGroups (
+    routeShortName TEXT PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS NswBusRouteVariants (
+    routeId TEXT PRIMARY KEY,
+    routeShortName TEXT NOT NULL,
+    routeName TEXT NOT NULL,
+    FOREIGN KEY (routeShortName) REFERENCES NswBusRouteGroups(routeShortName)
+);
+
+CREATE TABLE IF NOT EXISTS NswBusTripOptions (
+    tripId TEXT PRIMARY KEY,
+    routeId TEXT NOT NULL,
+    headsign TEXT NOT NULL,
+    FOREIGN KEY (routeId) REFERENCES NswBusRouteVariants(routeId)
+);
+
+CREATE TABLE IF NOT EXISTS NswBusTripStops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tripId TEXT NOT NULL,
+    stopId TEXT NOT NULL,
+    stopSequence INTEGER NOT NULL,
+    FOREIGN KEY (tripId) REFERENCES NswBusTripOptions(tripId),
+    FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
 );

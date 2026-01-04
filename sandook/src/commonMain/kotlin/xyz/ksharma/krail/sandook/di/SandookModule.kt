@@ -6,8 +6,10 @@ import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 import xyz.ksharma.krail.sandook.KrailSandook
+import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.RealDiscoverCardSeenPreferences
+import xyz.ksharma.krail.sandook.RealNswBusRoutesSandook
 import xyz.ksharma.krail.sandook.RealNswParkRideSandook
 import xyz.ksharma.krail.sandook.RealSandook
 import xyz.ksharma.krail.sandook.RealSandookPreferences
@@ -52,6 +54,12 @@ val sandookModule = module {
         RealNswParkRideSandook(
             parkRideQueries = get(),
             ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
+        )
+    }
+
+    single<NswBusRoutesSandook> {
+        RealNswBusRoutesSandook(
+            factory = get(),
         )
     }
 

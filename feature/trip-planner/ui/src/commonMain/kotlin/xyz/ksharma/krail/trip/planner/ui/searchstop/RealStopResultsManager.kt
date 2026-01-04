@@ -10,6 +10,7 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -19,6 +20,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 class RealStopResultsManager(
     private val sandook: Sandook,
+    private val nswBusRoutesSandook: NswBusRoutesSandook,
     private val flag: Flag,
 ) : StopResultsManager {
 
@@ -81,7 +83,7 @@ class RealStopResultsManager(
         results.addAll(stopSearchResults)
 
         // 2. Search for routes by exact route short name - this goes in as a Route result
-        val routeShortName = sandook.selectRouteByShortName(query)
+        val routeShortName = nswBusRoutesSandook.selectRouteByShortName(query)
         if (routeShortName != null) {
             val routeResult = buildRouteSearchResult(routeShortName)
             if (routeResult != null) {
@@ -97,15 +99,15 @@ class RealStopResultsManager(
      * Builds a complete Route search result with all variants, trips, and stops
      */
     private fun buildRouteSearchResult(routeShortName: String): SearchStopState.SearchResult.Route? {
-        val variants = sandook.selectRouteVariantsByShortName(routeShortName)
+        val variants = nswBusRoutesSandook.selectRouteVariantsByShortName(routeShortName)
 
         if (variants.isEmpty()) return null
 
         val routeVariants = variants.map { variant ->
-            val trips = sandook.selectTripsByRouteId(variant.routeId)
+            val trips = nswBusRoutesSandook.selectTripsByRouteId(variant.routeId)
 
             val tripOptions = trips.map { trip ->
-                val stops = sandook.selectStopsByTripId(trip.tripId)
+                val stops = nswBusRoutesSandook.selectStopsByTripId(trip.tripId)
 
                 val tripStops = stops.map { stop ->
                     SearchStopState.TripStop(

@@ -8,12 +8,14 @@ import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
 class RealAppStart(
     private val coroutineScope: CoroutineScope,
     private val remoteConfig: RemoteConfig,
-    private val stopsManager: StopsManager,
+    private val nswStopsManager: StopsManager,
+    private val nswBusRoutesManager: StopsManager,
 ) : AppStart {
 
     override fun start() {
         coroutineScope.launch {
-            stopsManager.insertStops()
+            nswStopsManager.insertStops()
+            nswBusRoutesManager.insertStops()
             setupRemoteConfig()
         }
     }

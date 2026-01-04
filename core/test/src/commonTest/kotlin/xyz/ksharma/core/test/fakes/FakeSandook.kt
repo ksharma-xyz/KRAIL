@@ -3,15 +3,12 @@ package xyz.ksharma.core.test.fakes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import xyz.ksharma.krail.sandook.NswBusRouteVariants
-import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.NswStops
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
-import xyz.ksharma.krail.sandook.SelectStopsByTripId
 
 class FakeSandook : Sandook {
 
@@ -150,27 +147,6 @@ class FakeSandook : Sandook {
         }
     }
 
-    // region NswBusRoutes - Stub implementations
-    override fun selectRouteByShortName(routeShortName: String): String? {
-        // TODO: Implement when needed for tests
-        return null
-    }
-
-    override fun selectRouteVariantsByShortName(routeShortName: String): List<NswBusRouteVariants> {
-        // TODO: Implement when needed for tests
-        return emptyList()
-    }
-
-    override fun selectTripsByRouteId(routeId: String): List<NswBusTripOptions> {
-        // TODO: Implement when needed for tests
-        return emptyList()
-    }
-
-    override fun selectStopsByTripId(tripId: String): List<SelectStopsByTripId> {
-        // TODO: Implement when needed for tests
-        return emptyList()
-    }
-    // endregion
 
     override fun insertOrReplaceRecentSearchStop(stopId: String) {
         // Remove existing entry if it exists

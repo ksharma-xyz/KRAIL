@@ -72,28 +72,6 @@ interface Sandook {
     ): List<SelectProductClassesForStop>
     // endregion
 
-    // region NswBusRoutes
-    /**
-     * Checks if a route exists by exact routeShortName match.
-     * Returns the routeShortName if found, null otherwise.
-     */
-    fun selectRouteByShortName(routeShortName: String): String?
-
-    /**
-     * Retrieves all variants for a given route short name.
-     */
-    fun selectRouteVariantsByShortName(routeShortName: String): List<NswBusRouteVariants>
-
-    /**
-     * Retrieves all trips for a given route variant.
-     */
-    fun selectTripsByRouteId(routeId: String): List<NswBusTripOptions>
-
-    /**
-     * Retrieves all stops for a given trip with stop details.
-     */
-    fun selectStopsByTripId(tripId: String): List<SelectStopsByTripId>
-    // endregion
 
     // region RecentSearchStops
     fun insertOrReplaceRecentSearchStop(stopId: String)

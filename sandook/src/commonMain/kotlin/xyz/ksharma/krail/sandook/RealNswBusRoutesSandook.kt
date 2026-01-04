@@ -59,6 +59,11 @@ class RealNswBusRoutesSandook(
         nswBusRoutesQueries.clearNswBusRouteVariantsTable()
         nswBusRoutesQueries.clearNswBusRouteGroupsTable()
     }
+
+    override fun insertTransaction(body: () -> Unit) {
+        nswBusRoutesQueries.transaction {
+            body()
+        }
+    }
     // endregion
 }
-

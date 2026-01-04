@@ -72,20 +72,12 @@ class NswStopsManager(
     private suspend fun insertStopsInTransaction(decoded: NswStopList) = withContext(ioDispatcher) {
         sandook.insertTransaction {
             decoded.nswStops.forEach { nswStop ->
-                // Extract isParent from proto
-                // Proto3 default for bool is false, but in our JSON data:
-                // - Missing field in JSON = parent stop (we pass null or true)
-                // - "isParent": false in JSON = child stop (we pass false)
-                // TODO: Once proto is regenerated, use: nswStop.isParent
-                // For now, treat all as parents (null) until proto field is available
-                val isParent: Boolean? = null  // Will become: if (nswStop.isParent) null else false
-
                 sandook.insertNswStop(
                     stopId = nswStop.stopId,
                     stopName = nswStop.stopName,
                     stopLat = nswStop.lat,
                     stopLon = nswStop.lon,
-                    isParent = isParent,
+                    isParent = nswStop.isParent,
                 )
                 nswStop.productClass.forEach { productClass ->
                     sandook.insertNswStopProductClass(

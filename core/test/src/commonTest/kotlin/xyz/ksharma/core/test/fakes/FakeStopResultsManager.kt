@@ -18,22 +18,22 @@ class FakeStopResultsManager : StopResultsManager {
     private val _recentSearchStops = mutableListOf<SearchStopState.StopResult>()
 
     private val testStopResults = listOf(
-        SearchStopState.StopResult(
+        SearchStopState.SearchResult.Stop(
             stopId = "10101",
             stopName = "Central Station",
             transportModeType = persistentListOf(TransportMode.Train(), TransportMode.Bus())
         ),
-        SearchStopState.StopResult(
+        SearchStopState.SearchResult.Stop(
             stopId = "10102",
             stopName = "Town Hall",
             transportModeType = persistentListOf(TransportMode.Train())
         ),
-        SearchStopState.StopResult(
+        SearchStopState.SearchResult.Stop(
             stopId = "10103",
             stopName = "Parramatta Station",
             transportModeType = persistentListOf(TransportMode.Train(), TransportMode.Bus())
         ),
-        SearchStopState.StopResult(
+        SearchStopState.SearchResult.Stop(
             stopId = "10104",
             stopName = "Sydney Airport",
             transportModeType = persistentListOf(TransportMode.Train())
@@ -46,7 +46,10 @@ class FakeStopResultsManager : StopResultsManager {
     override val selectedToStop: StopItem?
         get() = _selectedToStop
 
-    override suspend fun fetchStopResults(query: String): List<SearchStopState.StopResult> {
+    override suspend fun fetchStopResults(
+        query: String,
+        searchRoutesEnabled: Boolean,
+    ): List<SearchStopState.SearchResult> {
         // Throw an exception if shouldThrowError is true
         if (shouldThrowError) {
             throw RuntimeException("Error fetching stop results")
@@ -61,7 +64,7 @@ class FakeStopResultsManager : StopResultsManager {
         }
     }
 
-    override fun prioritiseStops(stopResults: List<SearchStopState.StopResult>): List<SearchStopState.StopResult> {
+    override fun prioritiseStops(stopResults: List<SearchStopState.SearchResult.Stop>): List<SearchStopState.SearchResult.Stop> {
         return stopResults.sortedByDescending { it.transportModeType.size }
     }
 
@@ -123,13 +126,21 @@ class FakeStopResultsManager : StopResultsManager {
 
     // Helper method to convert StopItem to StopResult and add to recent stops
     private fun addRecentSearchStopFromStopItem(stopItem: StopItem) {
-        // Find the corresponding test stop result or create a basic one
-        val stopResult = testStopResults.find { it.stopId == stopItem.stopId }
-            ?: SearchStopState.StopResult(
+        // Find the corresponding test stop result and convert to legacy StopResult format
+        val searchResultStop = testStopResults.find { it.stopId == stopItem.stopId }
+        val stopResult = if (searchResultStop != null) {
+            SearchStopState.StopResult(
+                stopId = searchResultStop.stopId,
+                stopName = searchResultStop.stopName,
+                transportModeType = searchResultStop.transportModeType
+            )
+        } else {
+            SearchStopState.StopResult(
                 stopId = stopItem.stopId,
                 stopName = stopItem.stopName,
                 transportModeType = persistentListOf(TransportMode.Train()) // Default transport mode
             )
+        }
 
         addRecentSearchStop(stopResult)
     }

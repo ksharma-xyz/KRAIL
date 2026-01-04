@@ -9,7 +9,10 @@ interface StopResultsManager {
 
     val selectedToStop: StopItem?
 
-    suspend fun fetchStopResults(query: String): List<SearchStopState.SearchResult>
+    suspend fun fetchStopResults(
+        query: String,
+        searchRoutesEnabled: Boolean = true,
+    ): List<SearchStopState.SearchResult>
 
     fun prioritiseStops(stopResults: List<SearchStopState.SearchResult.Stop>): List<SearchStopState.SearchResult.Stop>
 

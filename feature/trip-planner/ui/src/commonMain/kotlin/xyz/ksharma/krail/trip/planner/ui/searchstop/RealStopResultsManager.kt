@@ -66,7 +66,12 @@ class RealStopResultsManager(
         log("StopResultsManager - clearSelectedStops")
     }
 
-    override suspend fun fetchStopResults(query: String): List<SearchStopState.SearchResult> {
+    // TODO: Separate route search from stop search in UI for better performance
+    // Route search can be slower with large datasets, should have separate search button/tab
+    override suspend fun fetchStopResults(
+        query: String,
+        searchRoutesEnabled: Boolean, // Default value defined in interface
+    ): List<SearchStopState.SearchResult> {
         log("fetchStopResults from LOCAL_STOPS")
 
         val results = mutableListOf<SearchStopState.SearchResult>()
@@ -83,13 +88,15 @@ class RealStopResultsManager(
 
         results.addAll(stopSearchResults)
 
-        // 2. Search for routes by exact route short name
+        // 2. Search for routes by exact route short name (if enabled)
         // Returns multiple Route results, one per unique headsign (direction)
-        val routeShortName = nswBusRoutesSandook.selectRouteByShortName(query)
-        if (routeShortName != null) {
-            val routeResults = buildRouteSearchResults(routeShortName)
-            // Add route results at the beginning since they're exact matches
-            results.addAll(0, routeResults)
+        if (searchRoutesEnabled) {
+            val routeShortName = nswBusRoutesSandook.selectRouteByShortName(query)
+            if (routeShortName != null) {
+                val routeResults = buildRouteSearchResults(routeShortName)
+                // Add route results at the beginning since they're exact matches
+                results.addAll(0, routeResults)
+            }
         }
 
         return results

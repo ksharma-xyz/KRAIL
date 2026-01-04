@@ -61,6 +61,10 @@ interface NswBusRoutesSandook {
      * Clears all NSW Bus Routes data
      */
     fun clearNswBusRoutesData()
+
+    /**
+     * Execute multiple database operations in a single transaction for better performance
+     */
+    fun insertTransaction(body: () -> Unit)
     // endregion
 }
-

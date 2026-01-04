@@ -63,26 +63,22 @@ class NswBusRoutesManager(
      */
     private suspend fun parseAndInsertBusRoutes(): Boolean = withContext(ioDispatcher) {
         try {
-            log("NswBusRoutesManager Starting to read proto file: NSW_BUSES_ROUTES.pb")
+            log("NswBusRoutesManager Starting bus routes insertion...")
 
             // Clear existing data
             nswBusRoutesSandook.clearNswBusRoutesData()
-            log("NswBusRoutesManager Cleared existing bus routes data")
 
             // Read and parse proto file
             val byteArray = Res.readBytes("files/NSW_BUSES_ROUTES.pb")
-            log("NswBusRoutesManager Proto file read successfully, size: ${byteArray.size} bytes")
-
             val decodedRoutes = NswBusRouteList.ADAPTER.decode(byteArray)
-            log("NswBusRoutesManager Proto decoded successfully, routes count: ${decodedRoutes.routes.size}")
 
-            log("Start inserting bus routes. Currently ${nswBusRoutesSandook.busRouteGroupsCount()} routes in DB")
+            // Insert all data in a transaction
             val result = insertRoutesInTransaction(decodedRoutes)
 
-            log("NswBusRoutesManager Insertion completed. Result: $result")
+            log("NswBusRoutesManager Insertion complete")
             result
         } catch (e: Exception) {
-            logError("NswBusRoutesManager Exception during parseAndInsertBusRoutes: ${e.message}")
+            logError("NswBusRoutesManager Exception: ${e.message}")
             e.printStackTrace()
             false
         }
@@ -90,55 +86,52 @@ class NswBusRoutesManager(
 
     private suspend fun insertRoutesInTransaction(decoded: NswBusRouteList) = withContext(ioDispatcher) {
         try {
-            log("NswBusRoutesManager Starting transaction to insert ${decoded.routes.size} route groups")
             var totalStops = 0
             var totalVariants = 0
             var totalTrips = 0
 
-            decoded.routes.forEachIndexed { routeIndex, routeGroup ->
-                // Insert route group (e.g., "702")
-                nswBusRoutesSandook.insertBusRouteGroup(routeGroup.routeShortName)
+            // Wrap all insertions in a single transaction for much better performance
+            nswBusRoutesSandook.insertTransaction {
+                decoded.routes.forEach { routeGroup ->
+                    // Insert route group (e.g., "702")
+                    nswBusRoutesSandook.insertBusRouteGroup(routeGroup.routeShortName)
 
-                routeGroup.variants.forEach { variant ->
-                    totalVariants++
-                    // Insert route variant (e.g., "2504_702", "Blacktown to Seven Hills")
-                    nswBusRoutesSandook.insertBusRouteVariant(
-                        routeId = variant.routeId,
-                        routeShortName = routeGroup.routeShortName,
-                        routeName = variant.routeName,
-                    )
-
-                    variant.trips.forEach { trip ->
-                        totalTrips++
-                        // Insert trip option
-                        nswBusRoutesSandook.insertBusTripOption(
-                            tripId = trip.tripId,
+                    routeGroup.variants.forEach { variant ->
+                        totalVariants++
+                        // Insert route variant (e.g., "2504_702", "Blacktown to Seven Hills")
+                        nswBusRoutesSandook.insertBusRouteVariant(
                             routeId = variant.routeId,
-                            headsign = trip.headsign,
+                            routeShortName = routeGroup.routeShortName,
+                            routeName = variant.routeName,
                         )
 
-                        // Insert ordered stops for this trip
-                        trip.stopIds.forEachIndexed { index, stopId ->
-                            nswBusRoutesSandook.insertBusTripStop(
+                        variant.trips.forEach { trip ->
+                            totalTrips++
+                            // Insert trip option
+                            nswBusRoutesSandook.insertBusTripOption(
                                 tripId = trip.tripId,
-                                stopId = stopId,
-                                stopSequence = index,
+                                routeId = variant.routeId,
+                                headsign = trip.headsign,
                             )
-                            totalStops++
+
+                            // Insert ordered stops for this trip
+                            trip.stopIds.forEachIndexed { index, stopId ->
+                                nswBusRoutesSandook.insertBusTripStop(
+                                    tripId = trip.tripId,
+                                    stopId = stopId,
+                                    stopSequence = index,
+                                )
+                                totalStops++
+                            }
                         }
                     }
                 }
-
-                // Log progress every 50 routes
-                if ((routeIndex + 1) % 50 == 0) {
-                    log("NswBusRoutesManager Progress: ${routeIndex + 1}/${decoded.routes.size} route groups processed")
-                }
             }
 
-            log("NswBusRoutesManager Successfully inserted ${decoded.routes.size} route groups, $totalVariants variants, $totalTrips trips, $totalStops trip stops.")
+            log("NswBusRoutesManager Inserted: ${decoded.routes.size} routes, $totalVariants variants, $totalTrips trips, $totalStops stops")
             true
         } catch (e: Exception) {
-            logError("NswBusRoutesManager Exception during insertRoutesInTransaction: ${e.message}")
+            logError("NswBusRoutesManager Exception during insertion: ${e.message}")
             e.printStackTrace()
             false
         }

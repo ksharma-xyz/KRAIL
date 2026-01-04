@@ -282,7 +282,13 @@ fun SearchStopScreen(
                     key = { result ->
                         when (result) {
                             is SearchStopState.SearchResult.Stop -> result.stopId
-                            is SearchStopState.SearchResult.Route -> result.routeShortName
+                            is SearchStopState.SearchResult.Route -> {
+                                // Use headsign as key since routeShortName is not unique
+                                // (e.g., route "702" has multiple directions with same short name)
+                                val headsign = result.variants.firstOrNull()?.trips?.firstOrNull()?.headsign
+                                    ?: result.routeShortName
+                                "${result.routeShortName}_${headsign.hashCode()}"
+                            }
                         }
                     },
                 ) { result ->
@@ -317,7 +323,8 @@ fun SearchStopScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = 12.dp), // Add bottom padding for separation between route cards
                             )
                         }
                     }

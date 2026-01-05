@@ -12,12 +12,12 @@ class RealStopResultsManagerTest {
     private lateinit var sandook: FakeSandook
     private lateinit var flag: FakeFlag
     private lateinit var stopResultsManager: RealStopResultsManager
-
+/*
     fun setUp() {
         sandook = FakeSandook()
         flag = FakeFlag()
         stopResultsManager = RealStopResultsManager(sandook, flag)
-    }
+    }*/
     /*
 
         @Test

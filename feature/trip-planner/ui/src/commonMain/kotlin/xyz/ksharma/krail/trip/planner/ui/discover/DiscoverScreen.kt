@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -108,8 +107,7 @@ fun DiscoverScreenCompact(
 
     Box(
         modifier = Modifier.fillMaxSize()
-            .background(color = KrailTheme.colors.surface)
-            .systemBarsPadding(),
+            .background(color = KrailTheme.colors.surface),
     ) {
         if (isLargeFontScale()) {
             LazyColumn(
@@ -201,8 +199,7 @@ fun DiscoverScreenTablet(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(KrailTheme.colors.surface)
-            .systemBarsPadding(),
+            .background(KrailTheme.colors.surface),
     ) {
         Column {
             if (isLargeFontScale()) {

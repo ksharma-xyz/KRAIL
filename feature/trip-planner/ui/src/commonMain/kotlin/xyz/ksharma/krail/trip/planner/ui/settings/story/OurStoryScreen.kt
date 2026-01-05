@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,8 +26,7 @@ fun OurStoryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(color = KrailTheme.colors.surface)
-            .statusBarsPadding(),
+            .background(color = KrailTheme.colors.surface),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             TitleBar(

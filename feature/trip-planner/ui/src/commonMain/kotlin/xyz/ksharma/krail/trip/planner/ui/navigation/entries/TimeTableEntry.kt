@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -135,11 +136,13 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             if (showAlertsModal) {
                 ModalBottomSheet(
                     onDismissRequest = { showAlertsModal = false },
-                    containerColor = KrailTheme.colors.surface,
+                    containerColor = KrailTheme.colors.bottomSheetBackground,
+                    contentWindowInsets = {
+                        WindowInsets(0, 0, 0, 0)
+                    },
                 ) {
                     ServiceAlertScreen(
                         serviceAlerts = alertsToDisplay,
-                        onBackClick = { showAlertsModal = false },
                     )
                 }
             }
@@ -148,13 +151,13 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             if (showDateTimeSelectorModal) {
                 ModalBottomSheet(
                     onDismissRequest = { showDateTimeSelectorModal = false },
-                    containerColor = KrailTheme.colors.surface,
+                    containerColor = KrailTheme.colors.bottomSheetBackground,
+                    contentWindowInsets = {
+                        WindowInsets(0, 0, 0, 0)
+                    },
                 ) {
                     DateTimeSelectorScreen(
                         dateTimeSelection = dateTimeSelectionItem,
-                        onBackClick = {
-                            showDateTimeSelectorModal = false
-                        },
                         onDateTimeSelected = { selection ->
                             dateTimeSelectionItem = selection
                             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))

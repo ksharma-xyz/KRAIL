@@ -143,7 +143,6 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 ) {
                     ServiceAlertScreen(
                         serviceAlerts = alertsToDisplay,
-                        onBackClick = { showAlertsModal = false },
                     )
                 }
             }
@@ -159,9 +158,6 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 ) {
                     DateTimeSelectorScreen(
                         dateTimeSelection = dateTimeSelectionItem,
-                        onBackClick = {
-                            showDateTimeSelectorModal = false
-                        },
                         onDateTimeSelected = { selection ->
                             dateTimeSelectionItem = selection
                             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))

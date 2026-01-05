@@ -10,11 +10,13 @@ import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager.Companion.MINIMUM_REQUIRE
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_STOPS_VERSION
+import xyz.ksharma.krail.sandook.SavedTripValidator
 
 class NswStopsManager(
     private val ioDispatcher: CoroutineDispatcher,
     private val sandook: Sandook,
     private val preferences: SandookPreferences,
+    private val savedTripValidator: SavedTripValidator,
 ) : StopsManager {
 
     init {
@@ -41,6 +43,10 @@ class NswStopsManager(
                 value = NSW_STOPS_VERSION,
             )
             log("NswStopsManager NswStops inserted in the database, new version: $NSW_STOPS_VERSION.")
+
+            // Validate saved trips after inserting new stops
+            log("NswStopsManager Validating saved trips against new stops...")
+            savedTripValidator.validateAllSavedTrips()
         } else {
             logError(
                 message = "NswStopsManager Failed to insert NSW Stops into the database.",

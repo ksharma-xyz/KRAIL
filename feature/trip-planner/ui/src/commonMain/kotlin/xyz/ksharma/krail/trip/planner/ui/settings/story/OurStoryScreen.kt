@@ -27,8 +27,7 @@ fun OurStoryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(color = KrailTheme.colors.surface)
-            .statusBarsPadding(),
+            .background(color = KrailTheme.colors.surface),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             TitleBar(

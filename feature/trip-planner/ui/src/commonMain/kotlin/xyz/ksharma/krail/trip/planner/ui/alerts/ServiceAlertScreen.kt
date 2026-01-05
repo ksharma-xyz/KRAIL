@@ -1,20 +1,29 @@
 package xyz.ksharma.krail.trip.planner.ui.alerts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -22,12 +31,22 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.LocalTextColor
+import xyz.ksharma.krail.taj.LocalTextStyle
+import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.SheetTitleBar
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
+import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
+import kotlin.time.Clock
 
 // Concrete implementation of NavigationEventInfo for alert modal back handling
 private data object AlertEventInfo : NavigationEventInfo()
@@ -46,45 +65,42 @@ fun ServiceAlertScreen(
         state = navigationEventState,
         onBackCompleted = onBackClick,
     )
+    var expandedAlertId by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(color = KrailTheme.colors.surface)
-            .statusBarsPadding(),
+    LazyColumn(
+        contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
+        modifier = modifier.background(color = KrailTheme.colors.bottomSheetBackground),
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            TitleBar(
-                onNavActionClick = onBackClick,
-                title = { Text(text = "Service Alerts") },
+        item("title_bar") {
+
+            SheetTitleBar(
+                title = {
+                    Text(text = "Service Alerts")
+                },
             )
         }
 
-        var expandedAlertId by rememberSaveable { mutableStateOf<Int?>(null) }
+        itemsIndexed(
+            items = serviceAlerts.toImmutableList(),
+            key = { _, item -> item.heading.lowercase() },
+        ) { index, alert ->
+            CollapsibleAlert(
+                serviceAlert = alert,
+                index = index + 1,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                collapsed = expandedAlertId != alert.hashCode(),
+                onClick = {
+                    expandedAlertId = if (expandedAlertId == alert.hashCode()) {
+                        null
+                    } else {
+                        alert.hashCode()
+                    }
+                },
+            )
+        }
 
-        LazyColumn(
-            modifier = Modifier,
-            contentPadding = PaddingValues(top = 20.dp, bottom = 104.dp),
-        ) {
-            itemsIndexed(
-                items = serviceAlerts.toImmutableList(),
-                key = { _, alert -> alert.hashCode() },
-            ) { index, alert ->
-
-                CollapsibleAlert(
-                    serviceAlert = alert,
-                    index = index + 1,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    collapsed = expandedAlertId != alert.hashCode(),
-                    onClick = {
-                        expandedAlertId = if (expandedAlertId == alert.hashCode()) {
-                            null
-                        } else {
-                            alert.hashCode()
-                        }
-                    },
-                )
-            }
+        item("bottom_spacing") {
+            Spacer(modifier = Modifier.height(64.dp))
         }
     }
 }

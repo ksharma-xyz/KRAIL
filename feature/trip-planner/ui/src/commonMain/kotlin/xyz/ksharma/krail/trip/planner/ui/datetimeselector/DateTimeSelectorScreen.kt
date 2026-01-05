@@ -1,15 +1,21 @@
 package xyz.ksharma.krail.trip.planner.ui.datetimeselector
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,9 +35,12 @@ import xyz.ksharma.krail.core.datetime.decrementDateByOneDay
 import xyz.ksharma.krail.core.datetime.incrementDateByOneDay
 import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime
 import xyz.ksharma.krail.core.datetime.toReadableDate
+import xyz.ksharma.krail.taj.LocalTextColor
+import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.SheetTitleBar
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -99,114 +108,114 @@ fun DateTimeSelectorScreen(
         // Should be true - when time and date is same even after updates, coz reset click
         // triggered this change.
         reset = now.hour == timePickerState.hour &&
-            now.minute == timePickerState.minute &&
-            selectedDate == now.date &&
-            journeyTimeOption == JourneyTimeOptions.LEAVE
+                now.minute == timePickerState.minute &&
+                selectedDate == now.date &&
+                journeyTimeOption == JourneyTimeOptions.LEAVE
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(color = KrailTheme.colors.surface)
-            .systemBarsPadding(),
+    LazyColumn(
+        contentPadding = PaddingValues(vertical = 16.dp),
+        modifier = Modifier.background(color = KrailTheme.colors.bottomSheetBackground),
     ) {
-        TitleBar(
-            title = { Text(text = "Plan your trip") },
-            onNavActionClick = onBackClick,
-            actions = {
-                TextButton(
-                    onClick = {
-                        val now: LocalDateTime = Clock.System.now()
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
-                        selectedDateStr = now.date.toString()
-                        timePickerState.hour = now.time.hour
-                        timePickerState.minute = now.time.minute
-                        journeyTimeOption = JourneyTimeOptions.LEAVE
-                        reset = true
-                        onResetClick()
-                    },
-                    dimensions = ButtonDefaults.largeButtonSize(),
-                ) {
-                    Text("Reset")
-                }
-            },
-        )
+        item("title_bar") {
+            SheetTitleBar(
+                title = {
+                    Text(text = "Plan your trip")
+                },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            val now: LocalDateTime = Clock.System.now()
+                                .toLocalDateTime(TimeZone.currentSystemDefault())
+                            selectedDateStr = now.date.toString()
+                            timePickerState.hour = now.time.hour
+                            timePickerState.minute = now.time.minute
+                            journeyTimeOption = JourneyTimeOptions.LEAVE
+                            reset = true
+                            onResetClick()
+                        },
+                        dimensions = ButtonDefaults.largeButtonSize(),
+                    ) {
+                        Text("Reset")
+                    }
+                },
+            )
+        }
 
-        LazyColumn(
-            contentPadding = PaddingValues(vertical = 16.dp),
-        ) {
-            item {
-                JourneyTimeOptionsGroup(
-                    selectedOption = journeyTimeOption,
-                    themeColor = themeColor,
-                    onOptionSelected = {
-                        journeyTimeOption = it
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
+        item("time_options_group") {
+            JourneyTimeOptionsGroup(
+                selectedOption = journeyTimeOption,
+                themeColor = themeColor,
+                onOptionSelected = {
+                    journeyTimeOption = it
+                },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            )
+        }
 
-            item {
-                DateSelection(
-                    themeColor = themeColor,
-                    date = toReadableDate(selectedDate),
-                    onNextClicked = {
-                        if (selectedDate < maxDate) {
-                            selectedDateStr = incrementDateByOneDay(selectedDate).toString()
-                        }
-                    },
-                    onPreviousClicked = {
-                        if (selectedDate > today) {
-                            selectedDateStr = decrementDateByOneDay(selectedDate).toString()
-                        }
-                    },
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 12.dp),
-                )
-            }
+        item("date_selection") {
+            DateSelection(
+                themeColor = themeColor,
+                date = toReadableDate(selectedDate),
+                onNextClicked = {
+                    if (selectedDate < maxDate) {
+                        selectedDateStr = incrementDateByOneDay(selectedDate).toString()
+                    }
+                },
+                onPreviousClicked = {
+                    if (selectedDate > today) {
+                        selectedDateStr = decrementDateByOneDay(selectedDate).toString()
+                    }
+                },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 12.dp),
+            )
+        }
 
-            item {
-                TimeSelection(
-                    timePickerState = timePickerState,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                        .align(Alignment.CenterHorizontally),
-                )
-            }
+        item("time_selection") {
+            TimeSelection(
+                timePickerState = timePickerState,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+        }
 
-            item {
-                Button(
-                    onClick = {
-                        onDateTimeSelected(
-                            if (reset) {
-                                null
-                            } else {
-                                DateTimeSelectionItem(
-                                    option = journeyTimeOption,
-                                    hour = timePickerState.hour,
-                                    minute = timePickerState.minute,
-                                    date = selectedDate,
-                                )
-                            },
-                        )
-                    },
-                    dimensions = ButtonDefaults.largeButtonSize(),
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                ) {
-                    Text(
-                        text = if (reset) {
-                            "Leave Now"
+        item("select_button") {
+            Button(
+                onClick = {
+                    onDateTimeSelected(
+                        if (reset) {
+                            null
                         } else {
                             DateTimeSelectionItem(
                                 option = journeyTimeOption,
                                 hour = timePickerState.hour,
                                 minute = timePickerState.minute,
                                 date = selectedDate,
-                            ).toDateTimeText()
+                            )
                         },
                     )
-                }
+                },
+                dimensions = ButtonDefaults.largeButtonSize(),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+            ) {
+                Text(
+                    text = if (reset) {
+                        "Leave Now"
+                    } else {
+                        DateTimeSelectionItem(
+                            option = journeyTimeOption,
+                            hour = timePickerState.hour,
+                            minute = timePickerState.minute,
+                            date = selectedDate,
+                        ).toDateTimeText()
+                    },
+                )
             }
+        }
+
+        item("bottom_spacing") {
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }

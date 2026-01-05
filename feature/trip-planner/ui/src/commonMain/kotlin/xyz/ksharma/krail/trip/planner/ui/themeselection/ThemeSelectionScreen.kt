@@ -42,8 +42,7 @@ fun ThemeSelectionScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(color = KrailTheme.colors.surface)
-            .statusBarsPadding(),
+            .background(color = KrailTheme.colors.surface),
     ) {
         var selectedThemeColorId: Int by rememberSaveable(selectedThemeStyle) {
             mutableStateOf(selectedThemeStyle.id)

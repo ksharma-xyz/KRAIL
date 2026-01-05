@@ -79,9 +79,9 @@ class NswStopsManager(
 
         log("Start inserting stops. Currently ${sandook.stopsCount()} stops in the database")
 
-        val insertStartTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        val insertStartTime = Clock.System.now().toEpochMilliseconds()
         val result = insertStopsInTransaction(decodedStops)
-        val insertTime = kotlin.time.Clock.System.now().toEpochMilliseconds() - insertStartTime
+        val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
 
         val totalTime = Clock.System.now().nanosecondsOfSecond - totalStartTime
         log("NswStopsManager ⏱️ Insert time: ${insertTime}ms")

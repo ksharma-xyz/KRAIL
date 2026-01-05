@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -66,9 +65,6 @@ class RealStopResultsManager(
         log("StopResultsManager - clearSelectedStops")
     }
 
-    // TODO: Separate route search from stop search in UI for better performance
-    //  Route search can be slower with large datasets, should have separate search button/tab
-    //  Observe if it is actually an issue then only fix required.
     override suspend fun fetchStopResults(
         query: String,
         searchRoutesEnabled: Boolean, // Default value defined in interface
@@ -146,13 +142,15 @@ class RealStopResultsManager(
                 stops = tripStops,
                 // default to bus because that's the only option offered in app.
                 transportMode = tripStops.firstOrNull()?.transportModeType?.firstOrNull()
-                    ?: TransportMode.Bus()
+                    ?: TransportMode.Bus(),
             )
         }
     }
 
     // TODO - move to another file and add UT for it. Inject and use.
-    override fun prioritiseStops(stopResults: List<SearchStopState.SearchResult.Stop>): List<SearchStopState.SearchResult.Stop> {
+    override fun prioritiseStops(
+        stopResults: List<SearchStopState.SearchResult.Stop>,
+    ): List<SearchStopState.SearchResult.Stop> {
         val sortedTransportModes = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
         val transportModePriorityMap = sortedTransportModes.mapIndexed { index, transportMode ->
             transportMode.productClass to index

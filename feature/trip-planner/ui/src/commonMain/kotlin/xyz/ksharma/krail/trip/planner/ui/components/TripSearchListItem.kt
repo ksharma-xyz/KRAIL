@@ -43,14 +43,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * State for controlling Trip search list item expansion
- */
-enum class TripSearchListItemState {
-    COLLAPSED,
-    EXPANDED
-}
-
-/**
  * Displays a trip search result with expandable/collapsible stops list.
  * Shows headsign/direction and summary when collapsed.
  * Shows all stops when expanded.
@@ -120,14 +112,14 @@ private fun TripCardHeader(
     trip: SearchStopState.SearchResult.Trip,
     transportMode: TransportMode,
     itemState: TripSearchListItemState,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     // Animate rotation of the arrow icon
     val collapseIconRotationAngle by animateFloatAsState(
         targetValue = if (itemState == TripSearchListItemState.EXPANDED) 180f else 0f,
         animationSpec = tween(durationMillis = 300),
-        label = "collapse_expand_arrow_rotation"
+        label = "collapse_expand_arrow_rotation",
     )
 
     Row(
@@ -139,7 +131,7 @@ private fun TripCardHeader(
         TransportModeBadge(
             badgeText = trip.routeShortName,
             backgroundColor = transportMode.colorCode.hexToComposeColor(),
-            modifier = Modifier.padding(end = 6.dp)
+            modifier = Modifier.padding(end = 6.dp),
         )
 
         TransportModeIcon(
@@ -162,7 +154,7 @@ private fun TripCardHeader(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown, // Always use down arrow, rotation handles the visual change
+                imageVector = Icons.Default.KeyboardArrowDown,
                 tint = KrailTheme.colors.surface,
                 contentDescription = if (itemState == TripSearchListItemState.EXPANDED) "Collapse" else "Expand",
                 modifier = Modifier
@@ -180,8 +172,8 @@ private fun TripCardHeader(
 private fun CollapsedTripContent(
     stopCount: Int,
     transportMode: TransportMode,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
@@ -190,9 +182,9 @@ private fun CollapsedTripContent(
                 onClick = onClick,
                 indication = null,
             )
-            .padding(bottom = 16.dp).padding(horizontal = 16.dp),
+            .padding(bottom = 16.dp)
+            .padding(horizontal = 16.dp),
     ) {
-
         val buttonContainerColor by remember {
             mutableStateOf(transportMode.colorCode.hexToComposeColor())
         }
@@ -218,8 +210,8 @@ private fun CollapsedTripContent(
 @Composable
 private fun ExpandedTripContent(
     stops: List<SearchStopState.TripStop>,
-    modifier: Modifier = Modifier,
     onStopClick: (StopItem) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         // Display all stops
@@ -230,7 +222,7 @@ private fun ExpandedTripContent(
                 stopId = stop.stopId,
                 onClick = {
                     onStopClick(
-                        StopItem(stopId = stop.stopId, stopName = stop.stopName)
+                        StopItem(stopId = stop.stopId, stopName = stop.stopName),
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -273,11 +265,19 @@ private fun TripStopItem(
     }
 }
 
+/**
+ * State for controlling Trip search list item expansion
+ */
+enum class TripSearchListItemState {
+    COLLAPSED,
+    EXPANDED,
+}
+
 // region Previews
 
 @Preview
 @Composable
-fun TripSearchListItemCollapsedPreview() {
+private fun TripSearchListItemCollapsedPreview() {
     PreviewTheme {
         val previewStops = kotlinx.collections.immutable.persistentListOf(
             SearchStopState.TripStop(
@@ -285,7 +285,7 @@ fun TripSearchListItemCollapsedPreview() {
                 stopName = "Seven Hills Station",
                 stopSequence = 0,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
             SearchStopState.TripStop(
@@ -293,7 +293,7 @@ fun TripSearchListItemCollapsedPreview() {
                 stopName = "Blacktown Station",
                 stopSequence = 1,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
             SearchStopState.TripStop(
@@ -301,7 +301,7 @@ fun TripSearchListItemCollapsedPreview() {
                 stopName = "Windsor Road Stop",
                 stopSequence = 2,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
         )
@@ -323,7 +323,7 @@ fun TripSearchListItemCollapsedPreview() {
 
 @Preview
 @Composable
-fun TripSearchListItemExpandedPreview() {
+private fun TripSearchListItemExpandedPreview() {
     PreviewTheme {
         val previewStops = kotlinx.collections.immutable.persistentListOf(
             SearchStopState.TripStop(
@@ -331,7 +331,7 @@ fun TripSearchListItemExpandedPreview() {
                 stopName = "Seven Hills Station",
                 stopSequence = 0,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
             SearchStopState.TripStop(
@@ -339,7 +339,7 @@ fun TripSearchListItemExpandedPreview() {
                 stopName = "Blacktown Station",
                 stopSequence = 1,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
             SearchStopState.TripStop(
@@ -347,7 +347,7 @@ fun TripSearchListItemExpandedPreview() {
                 stopName = "Windsor Road Stop",
                 stopSequence = 2,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
             SearchStopState.TripStop(
@@ -355,7 +355,7 @@ fun TripSearchListItemExpandedPreview() {
                 stopName = "Parramatta Station",
                 stopSequence = 3,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
             SearchStopState.TripStop(
@@ -363,7 +363,7 @@ fun TripSearchListItemExpandedPreview() {
                 stopName = "Westmead Hospital",
                 stopSequence = 4,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus()
+                    TransportMode.Bus(),
                 ),
             ),
         )

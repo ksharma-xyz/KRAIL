@@ -316,6 +316,7 @@ fun SearchStopScreen(
 /**
  * Displays the list of search results (stops and trips)
  */
+@Suppress("LongMethod")
 private fun LazyListScope.searchResultsList(
     searchResults: List<SearchStopState.SearchResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,

@@ -149,7 +149,7 @@ class NswBusRoutesManager(
 
         log(
             "NswBusRoutesManager Inserted: ${decoded.routes.size} routes, " +
-                    "$totalVariants variants, $totalTrips trips, $totalStops stops",
+                "$totalVariants variants, $totalTrips trips, $totalStops stops",
         )
         true
     }.getOrElse { error ->

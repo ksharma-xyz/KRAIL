@@ -52,6 +52,7 @@ import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferTex
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Clock.System
@@ -453,7 +454,7 @@ class SavedTripsViewModel(
                             latitude = 0.0,
                             longitude = 0.0,
                             stopName = stopResultsManager.fetchStopResults(mapping.stopId)
-                                .filterIsInstance<xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState.SearchResult.Stop>()
+                                .filterIsInstance<SearchStopState.SearchResult.Stop>()
                                 .firstOrNull()?.stopName ?: mapping.stopId,
                             timestamp = Instant.DISTANT_PAST.epochSeconds,
                         )

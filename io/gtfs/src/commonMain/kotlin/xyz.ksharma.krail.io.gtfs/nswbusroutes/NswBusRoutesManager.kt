@@ -2,10 +2,10 @@ package xyz.ksharma.krail.io.gtfs.nswbusroutes
 
 import app.krail.kgtfs.proto.NswBusRouteList
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import krail.io.gtfs.generated.resources.Res
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.SandookPreferences
@@ -64,99 +64,98 @@ class NswBusRoutesManager(
      * Reads and decodes the NSW bus routes from a protobuf file, then inserts into the database.
      */
     @OptIn(ExperimentalTime::class)
-    private suspend fun parseAndInsertBusRoutes(): Boolean = withContext(ioDispatcher) {
-        try {
-            val totalStartTime = Clock.System.now().nanosecondsOfSecond
-            log("NswBusRoutesManager Starting bus routes insertion...")
+    private suspend fun parseAndInsertBusRoutes(): Boolean = suspendSafeResult(ioDispatcher) {
+        val totalStartTime = Clock.System.now().nanosecondsOfSecond
+        log("NswBusRoutesManager Starting bus routes insertion...")
 
-            // Clear existing data
-            val clearStartTime = Clock.System.now().nanosecondsOfSecond
-            nswBusRoutesSandook.clearNswBusRoutesData()
-            val clearTime = Clock.System.now().nanosecondsOfSecond - clearStartTime
-            log("NswBusRoutesManager ⏱️ Clear time: ${clearTime}ms")
+        // Clear existing data
+        val clearStartTime = Clock.System.now().nanosecondsOfSecond
+        nswBusRoutesSandook.clearNswBusRoutesData()
+        val clearTime = Clock.System.now().nanosecondsOfSecond - clearStartTime
+        log("NswBusRoutesManager ⏱️ Clear time: ${clearTime}ms")
 
-            // Read and parse proto file
-            val readStartTime = Clock.System.now().nanosecondsOfSecond
-            val byteArray = Res.readBytes("files/NSW_BUSES_ROUTES.pb")
-            val readTime = Clock.System.now().nanosecondsOfSecond - readStartTime
-            log("NswBusRoutesManager ⏱️ File read time: ${readTime}ms")
+        // Read and parse proto file
+        val readStartTime = Clock.System.now().nanosecondsOfSecond
+        val byteArray = Res.readBytes("files/NSW_BUSES_ROUTES.pb")
+        val readTime = Clock.System.now().nanosecondsOfSecond - readStartTime
+        log("NswBusRoutesManager ⏱️ File read time: ${readTime}ms")
 
-            val decodeStartTime = Clock.System.now().nanosecondsOfSecond
-            val decodedRoutes = NswBusRouteList.ADAPTER.decode(byteArray)
-            val decodeTime = Clock.System.now().nanosecondsOfSecond - decodeStartTime
-            log("NswBusRoutesManager ⏱️ Proto decode time: ${decodeTime}ms (${decodedRoutes.routes.size} routes)")
+        val decodeStartTime = Clock.System.now().nanosecondsOfSecond
+        val decodedRoutes = NswBusRouteList.ADAPTER.decode(byteArray)
+        val decodeTime = Clock.System.now().nanosecondsOfSecond - decodeStartTime
+        log("NswBusRoutesManager ⏱️ Proto decode time: ${decodeTime}ms (${decodedRoutes.routes.size} routes)")
 
-            // Insert all data in a transaction
-            val insertStartTime = Clock.System.now().nanosecondsOfSecond
-            val result = insertRoutesInTransaction(decodedRoutes)
-            val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
+        // Insert all data in a transaction
+        val insertStartTime = Clock.System.now().nanosecondsOfSecond
+        val result = insertRoutesInTransaction(decodedRoutes)
+        val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
 
-            val totalTime = Clock.System.now().toEpochMilliseconds() - totalStartTime
-            log("NswBusRoutesManager ⏱️ Insert time: ${insertTime}ms")
-            log("NswBusRoutesManager ⏱️ TOTAL time: ${totalTime}ms")
-            log("NswBusRoutesManager Insertion complete")
+        val totalTime = Clock.System.now().toEpochMilliseconds() - totalStartTime
+        log("NswBusRoutesManager ⏱️ Insert time: ${insertTime}ms")
+        log("NswBusRoutesManager ⏱️ TOTAL time: ${totalTime}ms")
+        log("NswBusRoutesManager Insertion complete")
 
-            result
-        } catch (e: Exception) {
-            logError("NswBusRoutesManager Exception: ${e.message}")
-            e.printStackTrace()
-            false
-        }
+        result
+    }.getOrElse { error ->
+        logError("NswBusRoutesManager Error parsing and inserting bus routes: ${error.message}")
+        error.printStackTrace()
+        false
     }
 
-    private suspend fun insertRoutesInTransaction(decoded: NswBusRouteList) = withContext(ioDispatcher) {
-        try {
-            var totalStops = 0
-            var totalVariants = 0
-            var totalTrips = 0
+    private suspend fun insertRoutesInTransaction(decoded: NswBusRouteList): Boolean = suspendSafeResult(ioDispatcher) {
+        var totalStops = 0
+        var totalVariants = 0
+        var totalTrips = 0
 
-            // Wrap all insertions in a single transaction for much better performance
-            nswBusRoutesSandook.insertTransaction {
-                decoded.routes.forEach { routeGroup ->
-                    // Insert route group (e.g., "702")
-                    nswBusRoutesSandook.insertBusRouteGroup(routeGroup.routeShortName)
+        // Wrap all insertions in a single transaction for much better performance
+        nswBusRoutesSandook.insertTransaction {
+            decoded.routes.forEach { routeGroup ->
+                // Insert route group (e.g., "702")
+                nswBusRoutesSandook.insertBusRouteGroup(routeGroup.routeShortName)
 
-                    routeGroup.variants.forEach { variant ->
-                        totalVariants++
-                        // Insert route variant (e.g., "2504_702", "Blacktown to Seven Hills")
-                        nswBusRoutesSandook.insertBusRouteVariant(
+                routeGroup.variants.forEach { variant ->
+                    totalVariants++
+                    // Insert route variant (e.g., "2504_702", "Blacktown to Seven Hills")
+                    nswBusRoutesSandook.insertBusRouteVariant(
+                        routeId = variant.routeId,
+                        routeShortName = routeGroup.routeShortName,
+                        routeName = variant.routeName,
+                    )
+
+                    variant.trips.forEach { trip ->
+                        totalTrips++
+                        // Insert trip option
+                        nswBusRoutesSandook.insertBusTripOption(
+                            tripId = trip.tripId,
                             routeId = variant.routeId,
-                            routeShortName = routeGroup.routeShortName,
-                            routeName = variant.routeName,
+                            headsign = trip.headsign,
                         )
 
-                        variant.trips.forEach { trip ->
-                            totalTrips++
-                            // Insert trip option
-                            nswBusRoutesSandook.insertBusTripOption(
+                        // Insert ordered stops for this trip
+                        // stopSequence preserves the order from the proto file (index 0, 1, 2, ...)
+                        // This allows the database to efficiently return stops in the correct order
+                        trip.stopIds.forEachIndexed { index, stopId ->
+                            nswBusRoutesSandook.insertBusTripStop(
                                 tripId = trip.tripId,
-                                routeId = variant.routeId,
-                                headsign = trip.headsign,
+                                stopId = stopId,
+                                stopSequence = index, // Order from proto file
                             )
-
-                            // Insert ordered stops for this trip
-                            // stopSequence preserves the order from the proto file (index 0, 1, 2, ...)
-                            // This allows the database to efficiently return stops in the correct order
-                            trip.stopIds.forEachIndexed { index, stopId ->
-                                nswBusRoutesSandook.insertBusTripStop(
-                                    tripId = trip.tripId,
-                                    stopId = stopId,
-                                    stopSequence = index, // Order from proto file
-                                )
-                                totalStops++
-                            }
+                            totalStops++
                         }
                     }
                 }
             }
-
-            log("NswBusRoutesManager Inserted: ${decoded.routes.size} routes, $totalVariants variants, $totalTrips trips, $totalStops stops")
-            true
-        } catch (e: Exception) {
-            logError("NswBusRoutesManager Exception during insertion: ${e.message}")
-            e.printStackTrace()
-            false
         }
+
+        log(
+            "NswBusRoutesManager Inserted: ${decoded.routes.size} routes, " +
+                    "$totalVariants variants, $totalTrips trips, $totalStops stops",
+        )
+        true
+    }.getOrElse { error ->
+        logError("NswBusRoutesManager Exception during insertion: ${error.message}")
+        error.printStackTrace()
+        false
     }
 
     companion object {

@@ -4,6 +4,7 @@ package xyz.ksharma.krail.sandook
  * Interface for NSW Bus Routes database operations.
  * Standalone interface similar to DiscoverCardSeenPreferences.
  */
+@Suppress("ComplexInterface", "TooManyFunctions")
 interface NswBusRoutesSandook {
 
     // region Query Operations

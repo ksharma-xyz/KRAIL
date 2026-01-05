@@ -4,6 +4,7 @@ package xyz.ksharma.krail.sandook
  * Real implementation of [NswBusRoutesSandook].
  * Delegates to the SQLDelight generated queries.
  */
+@Suppress("TooManyFunctions")
 class RealNswBusRoutesSandook(
     private val factory: SandookDriverFactory,
 ) : NswBusRoutesSandook {

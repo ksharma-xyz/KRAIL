@@ -17,11 +17,15 @@ message NswStop {
   repeated int32 productClass = 5;
 
   // Indicates if this stop is a parent stop.
-  // Default (true or not present): This is a parent stop
-  // Explicitly false: This is a child stop (e.g., specific platform/stand)
-  // Proto3 default for bool is false, but in our logic:
-  // - Missing field = true (parent stop)
-  // - Explicitly set to false = child stop
+  //
+  // Proto3 semantics:
+  // - Bool fields default to false in generated code.
+  // - Presence can be used to distinguish "not set" from an explicitly set value.
+  //
+  // Application logic (for this project):
+  // - Field not set (absent)       => treat as parent stop
+  // - Field explicitly set to true => parent stop
+  // - Field explicitly set to false => child stop (e.g., specific platform/stand)
   bool isParent = 6;
 }
 

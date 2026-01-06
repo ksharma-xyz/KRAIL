@@ -1,7 +1,7 @@
 dependencyResolutionManagement {
     repositories {
         google()
-        mavenCentral()
+        maven("https://repo1.maven.org/maven2")
         gradlePluginPortal()
     }
 
@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 pluginManagement {
     repositories {
         google()
-        mavenCentral()
+        maven("https://repo1.maven.org/maven2")
         gradlePluginPortal()
     }
 }

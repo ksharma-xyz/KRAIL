@@ -303,6 +303,7 @@ private fun TripSearchListItemCollapsedPreview() {
         // Collapsed state only
         TripSearchListItem(
             trip = SearchStopState.SearchResult.Trip(
+                tripId = "preview_trip_702_collapsed",
                 routeShortName = "702",
                 headsign = "Blacktown to Seven Hills",
                 stops = previewStops,
@@ -365,6 +366,7 @@ private fun TripSearchListItemExpandedPreview() {
         // Expanded state only
         TripSearchListItem(
             trip = SearchStopState.SearchResult.Trip(
+                tripId = "preview_trip_702_expanded",
                 routeShortName = "702",
                 headsign = "Blacktown to Seven Hills",
                 stops = previewStops,

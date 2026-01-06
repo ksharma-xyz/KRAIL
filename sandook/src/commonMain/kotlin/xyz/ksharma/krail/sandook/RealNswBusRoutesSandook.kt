@@ -26,6 +26,10 @@ class RealNswBusRoutesSandook(
         return nswBusRoutesQueries.selectTripsByRouteId(routeId).executeAsList()
     }
 
+    override fun selectTripsByRouteIds(routeIds: List<String>): List<NswBusTripOptions> {
+        return nswBusRoutesQueries.selectTripsByRouteIds(routeIds).executeAsList()
+    }
+
     override fun selectStopsByTripId(tripId: String): List<SelectStopsByTripId> {
         return nswBusRoutesQueries.selectStopsByTripId(tripId).executeAsList()
     }

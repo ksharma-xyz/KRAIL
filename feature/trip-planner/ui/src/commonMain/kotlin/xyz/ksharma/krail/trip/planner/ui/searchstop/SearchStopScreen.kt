@@ -329,9 +329,7 @@ private fun LazyListScope.searchResultsList(
         key = { result ->
             when (result) {
                 is SearchStopState.SearchResult.Stop -> result.stopId
-                is SearchStopState.SearchResult.Trip -> {
-                    "${result.routeShortName}_${result.headsign.hashCode()}"
-                }
+                is SearchStopState.SearchResult.Trip -> result.tripId
             }
         },
     ) { result ->
@@ -354,8 +352,7 @@ private fun LazyListScope.searchResultsList(
             }
 
             is SearchStopState.SearchResult.Trip -> {
-                val tripKey = "${result.routeShortName}_${result.headsign.hashCode()}"
-                var itemState by rememberSaveable(tripKey) {
+                var itemState by rememberSaveable(result.tripId) {
                     mutableStateOf(TripSearchListItemState.COLLAPSED)
                 }
 
@@ -613,6 +610,7 @@ private val previewSearchStopState = SearchStopState(
             ),
         ),
         SearchStopState.SearchResult.Trip(
+            tripId = "preview_trip_702_1",
             routeShortName = "702",
             headsign = "Blacktown to Seven Hills",
             stops = persistentListOf(

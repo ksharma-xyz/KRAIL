@@ -67,14 +67,14 @@ class NswStopsManager(
         sandook.clearNswStopsTable()
         sandook.clearNswProductClassTable()
 
-        val readStartTime = Clock.System.now().nanosecondsOfSecond
+        val readStartTime = Clock.System.now().toEpochMilliseconds()
         val byteArray = Res.readBytes("files/NSW_STOPS.pb")
-        val readTime = Clock.System.now().nanosecondsOfSecond - readStartTime
+        val readTime = Clock.System.now().toEpochMilliseconds() - readStartTime
         log("NswStopsManager ⏱️ File read time: ${readTime}ms")
 
-        val decodeStartTime = Clock.System.now().nanosecondsOfSecond
+        val decodeStartTime = Clock.System.now().toEpochMilliseconds()
         val decodedStops = NswStopList.ADAPTER.decode(byteArray)
-        val decodeTime = Clock.System.now().nanosecondsOfSecond - decodeStartTime
+        val decodeTime = Clock.System.now().toEpochMilliseconds() - decodeStartTime
         log("NswStopsManager ⏱️ Proto decode time: ${decodeTime}ms")
 
         log("Start inserting stops. Currently ${sandook.stopsCount()} stops in the database")
@@ -83,7 +83,7 @@ class NswStopsManager(
         val result = insertStopsInTransaction(decodedStops)
         val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
 
-        val totalTime = Clock.System.now().nanosecondsOfSecond - totalStartTime
+        val totalTime = Clock.System.now().toEpochMilliseconds() - totalStartTime
         log("NswStopsManager ⏱️ Insert time: ${insertTime}ms")
         log("NswStopsManager ⏱️ TOTAL time: ${totalTime}ms (${decodedStops.nswStops.size} stops)")
 

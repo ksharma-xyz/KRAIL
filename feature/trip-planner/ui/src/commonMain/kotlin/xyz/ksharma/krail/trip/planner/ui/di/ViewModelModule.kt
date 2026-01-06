@@ -8,6 +8,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
+import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
@@ -34,7 +35,8 @@ val viewModelsModule = module {
             analytics = get(),
             platformOps = get(),
             preferences = get(),
-            stopsManager = get(),
+            nswStopsManager = get(named(GtfsQualifiers.NSW_STOPS_MANAGER)),
+            nswBusRoutesManager = get(named(GtfsQualifiers.NSW_BUS_ROUTES_MANAGER)),
         )
     }
 

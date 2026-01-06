@@ -25,6 +25,12 @@ interface NswBusRoutesSandook {
     fun selectTripsByRouteId(routeId: String): List<NswBusTripOptions>
 
     /**
+     * Retrieves all trips for multiple route variants in a single query.
+     * More efficient than calling selectTripsByRouteId multiple times (avoids N+1 query problem).
+     */
+    fun selectTripsByRouteIds(routeIds: List<String>): List<NswBusTripOptions>
+
+    /**
      * Retrieves all stops for a given trip with stop details.
      */
     fun selectStopsByTripId(tripId: String): List<SelectStopsByTripId>

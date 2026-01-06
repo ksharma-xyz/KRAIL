@@ -51,6 +51,7 @@ data class SearchStopState(
          * - Ready for direct UI rendering (no flatMap/distinctBy/sortedBy needed in Composable)
          */
         data class Trip(
+            val tripId: String, // Unique identifier for this trip (used as key in UI)
             val routeShortName: String, // The route this trip belongs to (e.g., "702")
             val headsign: String, // The direction/destination (e.g., "Blacktown to Parramatta")
             val stops: ImmutableList<TripStop> = persistentListOf(), // Ordered stops for this trip

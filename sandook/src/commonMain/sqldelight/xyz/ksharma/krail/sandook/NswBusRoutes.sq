@@ -1,11 +1,11 @@
 -- Create NSW Bus Route Groups Table --
--- Represents a group of route variants sharing the same short name (e.g. "702")
+-- Represents a group of route variants sharing the same short name (e.g. "502")
 CREATE TABLE IF NOT EXISTS NswBusRouteGroups (
     routeShortName TEXT PRIMARY KEY
 );
 
 -- Create NSW Bus Route Variants Table --
--- Represents a specific variant of a route (e.g. "Sydney Buses Network" version of 702)
+-- Represents a specific variant of a route (e.g. "Sydney Buses Network" version of 502)
 CREATE TABLE IF NOT EXISTS NswBusRouteVariants (
     routeId TEXT PRIMARY KEY,
     routeShortName TEXT NOT NULL,
@@ -90,6 +90,12 @@ selectTripsByRouteId:
 SELECT tripId, routeId, headsign
 FROM NswBusTripOptions
 WHERE routeId = :routeId;
+
+-- Select all trips for multiple route variants (batch query to avoid N+1 problem) --
+selectTripsByRouteIds:
+SELECT tripId, routeId, headsign
+FROM NswBusTripOptions
+WHERE routeId IN ?;
 
 -- Select all stops for a specific trip with stop details --
 selectStopsByTripId:

@@ -11,6 +11,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
+import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -100,31 +101,32 @@ class RealStopResultsManager(
     }
 
     /**
-     * Builds multiple Trip search results, one for each unique headsign/direction.
-     * For route "700", this returns 4 separate results:
-     * - "Blacktown to Parramatta"
-     * - "Parramatta to Blacktown"
-     * - "Mayfield East to Warabrook"
-     * - "Warabrook to Mayfield East"
+     * Builds multiple Trip search results from route search.
+     * Each trip in the database becomes one Trip result in the UI.
+     * For route "702", this might return multiple trips with various headsigns/directions.
      */
     private fun buildRouteSearchResults(routeShortName: String): List<SearchStopState.SearchResult.Trip> {
+        // Step 1: Get all route variants for this route (e.g., different networks operating route "702")
         val variants = nswBusRoutesSandook.selectRouteVariantsByShortName(routeShortName)
 
         if (variants.isEmpty()) return emptyList()
 
-        // Flatten all trips from all variants and group by headsign
-        val allTripsGroupedByHeadsign = variants.flatMap { variant ->
-            val trips = nswBusRoutesSandook.selectTripsByRouteId(variant.routeId)
-            trips.map { trip ->
-                Triple(variant, trip, trip.headsign)
-            }
-        }.groupBy { it.third } // Group by headsign
+        // Step 2: Batch query - fetch all trips for all variants in ONE query (avoids N+1 problem)
+        // If there are 5 variants, this is 1 query instead of 5 separate queries!
+        val allRouteIds = variants.map { it.routeId }
+        val allTrips: List<NswBusTripOptions> =
+            nswBusRoutesSandook.selectTripsByRouteIds(allRouteIds)
 
-        // Create one Trip result per unique headsign
-        return allTripsGroupedByHeadsign.map { (headsign, tripsWithVariants) ->
-            // Get the first trip's stops (all trips with same headsign should have same stops)
-            val representativeTrip = tripsWithVariants.first().second
-            val stops = nswBusRoutesSandook.selectStopsByTripId(representativeTrip.tripId)
+        // Step 3: Create a lookup map for fast variant access by routeId
+        val variantsByRouteId = variants.associateBy { it.routeId }
+
+        // Step 4: Transform each trip to a Trip UI object
+        // Each tripId is unique, so each becomes its own result
+        return allTrips.mapNotNull { trip ->
+            variantsByRouteId[trip.routeId] ?: return@mapNotNull null
+
+            // Fetch stops for this trip
+            val stops = nswBusRoutesSandook.selectStopsByTripId(trip.tripId)
 
             val tripStops = stops.map { stop ->
                 SearchStopState.TripStop(
@@ -135,10 +137,11 @@ class RealStopResultsManager(
                 )
             }.toImmutableList()
 
-            // Return a clean Trip object with only what UI needs
+            // Return a Trip object for this specific trip
             SearchStopState.SearchResult.Trip(
+                tripId = trip.tripId,
                 routeShortName = routeShortName,
-                headsign = headsign,
+                headsign = trip.headsign,
                 stops = tripStops,
                 // default to bus because that's the only option offered in app.
                 transportMode = tripStops.firstOrNull()?.transportModeType?.firstOrNull()

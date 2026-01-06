@@ -28,6 +28,13 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
+      # TEMPORARY: Clear Gradle cache to fix 403 errors
+      - name: Clear Gradle cache
+        run: |
+          rm -rf ~/.gradle/caches
+          rm -rf ~/.gradle/wrapper
+          echo "✅ Gradle cache cleared"
+
       - name: Firebase Android (Release) - Google Services.json file
         env:
           DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_RELEASE }}
@@ -76,9 +83,9 @@ jobs:
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :composeApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace --no-configuration-cache
+            ./gradlew :composeApp:assembleDebug test -PversionCode="${VERSION_CODE}" --refresh-dependencies --rerun-tasks --stacktrace --no-configuration-cache
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
-            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${VERSION_CODE}" --no-configuration-cache
+            ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PversionCode="${VERSION_CODE}" --refresh-dependencies --no-configuration-cache
           fi
 
       - name: Upload Debug APK

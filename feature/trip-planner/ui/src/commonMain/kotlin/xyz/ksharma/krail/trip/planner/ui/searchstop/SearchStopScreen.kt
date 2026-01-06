@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.mapLatest
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -67,6 +69,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
+import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
+import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -117,10 +121,10 @@ fun SearchStopScreen(
     var lastQueryTime by remember { mutableLongStateOf(0L) }
     LaunchedEffect(
         key1 = textFieldText,
-        key2 = searchStopState.stops,
+        key2 = searchStopState.searchResults,
         key3 = searchStopState.isLoading,
     ) {
-        if (textFieldText.isNotBlank() && searchStopState.stops.isEmpty()) {
+        if (textFieldText.isNotBlank() && searchStopState.searchResults.isEmpty()) {
             // To ensure a smooth transition from the results state to the "No match found" state,
             // track the time of the last query. If new results come in during the delay period,
             // then lastQueryTime will be different, therefore, it will prevent
@@ -128,7 +132,7 @@ fun SearchStopScreen(
             val currentQueryTime = Clock.System.now().toEpochMilliseconds()
             lastQueryTime = currentQueryTime
             delay(1000)
-            if (lastQueryTime == currentQueryTime && searchStopState.stops.isEmpty()) {
+            if (lastQueryTime == currentQueryTime && searchStopState.searchResults.isEmpty()) {
                 displayNoMatchFound = true
             }
         } else {
@@ -249,7 +253,7 @@ fun SearchStopScreen(
         LazyColumn(
             contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
         ) {
-            item {
+            item("searching_dots") {
                 Column(
                     modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
                     verticalArrangement = Arrangement.Center,
@@ -274,89 +278,24 @@ fun SearchStopScreen(
                             .animateItem(),
                     )
                 }
-            } else if (searchStopState.stops.isNotEmpty() && textFieldText.isNotBlank()) {
-                items(
-                    items = searchStopState.stops,
-                    key = { it.stopId },
-                ) { stop ->
-                    StopSearchListItem(
-                        stopId = stop.stopId,
-                        stopName = stop.stopName,
-                        transportModeSet = stop.transportModeType.toImmutableSet(),
-                        textColor = KrailTheme.colors.label,
-                        onClick = { stopItem ->
-                            keyboard?.hide()
-                            focusRequester.freeFocus()
-                            onStopSelect(stopItem)
-                            onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    )
-
-                    Divider()
-                }
+            } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
+                // Separate composable for search results list
+                searchResultsList(
+                    searchResults = searchStopState.searchResults,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
             } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .padding(bottom = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Recent",
-                            style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
-                            modifier = Modifier,
-                        )
-
-                        Image(
-                            painter = painterResource(Res.drawable.ic_close),
-                            contentDescription = "Clear recent stops",
-                            colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .klickable(
-                                    onClick = {
-                                        onEvent(
-                                            SearchStopUiEvent.ClearRecentSearchStops(
-                                                recentSearchCount = searchStopState.recentStops.size,
-                                            ),
-                                        )
-                                    },
-                                ),
-                        )
-                    }
-                }
-
-                items(
-                    items = searchStopState.recentStops,
-                    key = { it.stopId },
-                ) { stop ->
-                    StopSearchListItem(
-                        stopId = stop.stopId,
-                        stopName = stop.stopName,
-                        transportModeSet = stop.transportModeType.toImmutableSet(),
-                        textColor = KrailTheme.colors.label,
-                        onClick = { stopItem ->
-                            keyboard?.hide()
-                            focusRequester.freeFocus()
-                            onStopSelect(stopItem)
-                            onEvent(
-                                SearchStopUiEvent.TrackStopSelected(
-                                    stopItem = stopItem,
-                                    isRecentSearch = true,
-                                ),
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                    )
-
-                    Divider()
-                }
+                // Separate composable for recent search stops list
+                recentSearchStopsList(
+                    recentStops = searchStopState.recentStops,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
             } else if (displayNoMatchFound && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
                 item(key = "no_match") {
                     ErrorMessage(
@@ -372,8 +311,157 @@ fun SearchStopScreen(
     }
 }
 
+// region Separate Composables
+
+/**
+ * Displays the list of search results (stops and trips)
+ */
+@Suppress("LongMethod")
+private fun LazyListScope.searchResultsList(
+    searchResults: List<SearchStopState.SearchResult>,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    items(
+        items = searchResults,
+        key = { result ->
+            when (result) {
+                is SearchStopState.SearchResult.Stop -> result.stopId
+                is SearchStopState.SearchResult.Trip -> {
+                    "${result.routeShortName}_${result.headsign.hashCode()}"
+                }
+            }
+        },
+    ) { result ->
+        when (result) {
+            is SearchStopState.SearchResult.Stop -> {
+                StopSearchListItem(
+                    stopId = result.stopId,
+                    stopName = result.stopName,
+                    transportModeSet = result.transportModeType.toImmutableSet(),
+                    textColor = KrailTheme.colors.label,
+                    onClick = { stopItem ->
+                        keyboard?.hide()
+                        focusRequester.freeFocus()
+                        onStopSelect(stopItem)
+                        onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Divider()
+            }
+
+            is SearchStopState.SearchResult.Trip -> {
+                val tripKey = "${result.routeShortName}_${result.headsign.hashCode()}"
+                var itemState by rememberSaveable(tripKey) {
+                    mutableStateOf(TripSearchListItemState.COLLAPSED)
+                }
+
+                TripSearchListItem(
+                    trip = result,
+                    transportMode = result.transportMode,
+                    itemState = itemState,
+                    onCardClick = {
+                        // Toggle between expanded and collapsed states
+                        itemState = if (itemState == TripSearchListItemState.COLLAPSED) {
+                            TripSearchListItemState.EXPANDED
+                        } else {
+                            TripSearchListItemState.COLLAPSED
+                        }
+                    },
+                    onStopClick = { stopItem ->
+                        keyboard?.hide()
+                        focusRequester.freeFocus()
+                        onStopSelect(stopItem)
+                        onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Displays the list of recent search stops
+ */
+private fun LazyListScope.recentSearchStopsList(
+    recentStops: List<SearchStopState.StopResult>,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    item("recent_stops_title") {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Recent",
+                style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
+                modifier = Modifier,
+            )
+
+            Image(
+                painter = painterResource(Res.drawable.ic_close),
+                contentDescription = "Clear recent stops",
+                colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .klickable(
+                        onClick = {
+                            onEvent(
+                                SearchStopUiEvent.ClearRecentSearchStops(
+                                    recentSearchCount = recentStops.size,
+                                ),
+                            )
+                        },
+                    ),
+            )
+        }
+    }
+
+    items(
+        items = recentStops,
+        key = { it.stopId },
+    ) { stop ->
+        StopSearchListItem(
+            stopId = stop.stopId,
+            stopName = stop.stopName,
+            transportModeSet = stop.transportModeType.toImmutableSet(),
+            textColor = KrailTheme.colors.label,
+            onClick = { stopItem ->
+                keyboard?.hide()
+                focusRequester.freeFocus()
+                onStopSelect(stopItem)
+                onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        stopItem = stopItem,
+                        isRecentSearch = true,
+                    ),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Divider()
+    }
+}
+
+// endregion
+
 // region Previews
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenLoading() {
     PreviewTheme {
@@ -381,12 +469,13 @@ private fun PreviewSearchStopScreenLoading() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState.copy(isLoading = true),
+                searchStopState = previewSearchStopState.copy(isLoading = true),
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenError() {
     PreviewTheme {
@@ -394,12 +483,13 @@ private fun PreviewSearchStopScreenError() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState.copy(isLoading = false, isError = true),
+                searchStopState = previewSearchStopState.copy(isLoading = false, isError = true),
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenEmpty() {
     PreviewTheme {
@@ -407,16 +497,17 @@ private fun PreviewSearchStopScreenEmpty() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState.copy(
+                searchStopState = previewSearchStopState.copy(
                     isLoading = false,
                     isError = false,
-                    stops = persistentListOf(),
+                    searchResults = persistentListOf(),
                 ),
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenTrain() {
     PreviewTheme {
@@ -424,12 +515,13 @@ private fun PreviewSearchStopScreenTrain() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenCoach() {
     PreviewTheme {
@@ -437,12 +529,13 @@ private fun PreviewSearchStopScreenCoach() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenFerry() {
     PreviewTheme {
@@ -450,12 +543,13 @@ private fun PreviewSearchStopScreenFerry() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenMetro() {
     PreviewTheme {
@@ -463,12 +557,13 @@ private fun PreviewSearchStopScreenMetro() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenLightRail() {
     PreviewTheme {
@@ -476,12 +571,13 @@ private fun PreviewSearchStopScreenLightRail() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
+@Preview
 @Composable
 private fun PreviewSearchStopScreenBus() {
     PreviewTheme {
@@ -489,96 +585,53 @@ private fun PreviewSearchStopScreenBus() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = searchStopState,
+                searchStopState = previewSearchStopState,
             )
         }
     }
 }
 
-private val searchStopState = SearchStopState(
+private val previewSearchStopState = SearchStopState(
     isLoading = false,
-    stops = persistentListOf(
-        SearchStopState.StopResult(
+    searchResults = persistentListOf(
+        SearchStopState.SearchResult.Stop(
             stopId = "123",
-            stopName = "Stop Name",
-            transportModeType = persistentListOf(TransportMode.Bus()),
+            stopName = "Central Station",
+            transportModeType = persistentListOf(TransportMode.Train()),
         ),
-        SearchStopState.StopResult(
+        SearchStopState.SearchResult.Stop(
             stopId = "235",
-            stopName = "Stop Name",
+            stopName = "Circular Quay",
             transportModeType = persistentListOf(TransportMode.Ferry()),
         ),
-        SearchStopState.StopResult(
-            stopId = "235",
-            stopName = "Stop Name",
+        SearchStopState.SearchResult.Stop(
+            stopId = "456",
+            stopName = "Town Hall",
             transportModeType = persistentListOf(
                 TransportMode.Train(),
                 TransportMode.Bus(),
             ),
         ),
+        SearchStopState.SearchResult.Trip(
+            routeShortName = "702",
+            headsign = "Blacktown to Seven Hills",
+            stops = persistentListOf(
+                SearchStopState.TripStop(
+                    stopId = "214733",
+                    stopName = "Seven Hills Station",
+                    stopSequence = 0,
+                    transportModeType = persistentListOf(TransportMode.Bus()),
+                ),
+                SearchStopState.TripStop(
+                    stopId = "214794",
+                    stopName = "Blacktown Station",
+                    stopSequence = 1,
+                    transportModeType = persistentListOf(TransportMode.Bus()),
+                ),
+            ),
+            transportMode = TransportMode.Bus(),
+        ),
     ),
 )
 
 // endregion
-
-@Composable
-fun AnimatedPlaceholderTextField(modifier: Modifier) {
-    val transportModes = listOf(
-        TransportMode.Bus(),
-        TransportMode.Train(),
-        TransportMode.Metro(),
-        TransportMode.Ferry(),
-        TransportMode.LightRail(),
-    )
-
-    var currentModeIndex by remember { mutableStateOf(0) }
-    var currentText by remember { mutableStateOf("Search here") }
-    var isDeleting by remember { mutableStateOf(false) }
-
-    LaunchedEffect(currentText, isDeleting) {
-        val targetText = when {
-            isDeleting -> "Search"
-            else -> when (currentModeIndex) {
-                0 -> "Search bus stop id"
-                1 -> "Search train station"
-                2 -> "Search metro station"
-                3 -> "Search ferry wharf"
-                4 -> "Search light rail stop"
-                else -> "Search here"
-            }
-        }
-
-        if (currentText != targetText) {
-            delay(100) // Typing speed
-            currentText = if (isDeleting) {
-                currentText.dropLast(1)
-            } else {
-                targetText.take(currentText.length + 1)
-            }
-        } else {
-            if (isDeleting) {
-                isDeleting = false
-            } else {
-                delay(1500) // Pause before starting delete animation
-                isDeleting = true
-                currentModeIndex = (currentModeIndex + 1) % transportModes.size
-            }
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .padding(16.dp)
-            .fillMaxWidth(),
-    ) {
-        Text(
-            text = "Mode: ${transportModes[currentModeIndex].name}",
-            color = transportModes[currentModeIndex].colorCode.hexToComposeColor(),
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        TextField(
-            placeholder = currentText,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}

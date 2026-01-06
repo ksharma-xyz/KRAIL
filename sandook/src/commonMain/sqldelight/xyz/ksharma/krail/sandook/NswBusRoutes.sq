@@ -1,0 +1,106 @@
+-- Create NSW Bus Route Groups Table --
+-- Represents a group of route variants sharing the same short name (e.g. "702")
+CREATE TABLE IF NOT EXISTS NswBusRouteGroups (
+    routeShortName TEXT PRIMARY KEY
+);
+
+-- Create NSW Bus Route Variants Table --
+-- Represents a specific variant of a route (e.g. "Sydney Buses Network" version of 702)
+CREATE TABLE IF NOT EXISTS NswBusRouteVariants (
+    routeId TEXT PRIMARY KEY,
+    routeShortName TEXT NOT NULL,
+    routeName TEXT NOT NULL,
+    FOREIGN KEY (routeShortName) REFERENCES NswBusRouteGroups(routeShortName)
+);
+
+-- Create NSW Bus Trip Options Table --
+-- Represents a specific trip/direction option for a route variant
+CREATE TABLE IF NOT EXISTS NswBusTripOptions (
+    tripId TEXT PRIMARY KEY,
+    routeId TEXT NOT NULL,
+    headsign TEXT NOT NULL,
+    FOREIGN KEY (routeId) REFERENCES NswBusRouteVariants(routeId)
+);
+
+-- Create NSW Bus Trip Stops Table --
+-- Stores the ordered list of stop IDs for each trip
+-- Similar to NswStopProductClass pattern
+CREATE TABLE IF NOT EXISTS NswBusTripStops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tripId TEXT NOT NULL,
+    stopId TEXT NOT NULL,
+    stopSequence INTEGER NOT NULL,
+    FOREIGN KEY (tripId) REFERENCES NswBusTripOptions(tripId),
+    FOREIGN KEY (stopId) REFERENCES NswStops(stopId)
+);
+
+-- Insert route group --
+insertRouteGroup:
+INSERT OR IGNORE INTO NswBusRouteGroups(routeShortName)
+VALUES (?);
+
+-- Insert route variant --
+insertRouteVariant:
+INSERT OR IGNORE INTO NswBusRouteVariants(routeId, routeShortName, routeName)
+VALUES (?, ?, ?);
+
+-- Insert trip option --
+insertTripOption:
+INSERT OR IGNORE INTO NswBusTripOptions(tripId, routeId, headsign)
+VALUES (?, ?, ?);
+
+-- Insert trip stop with sequence --
+insertTripStop:
+INSERT INTO NswBusTripStops(tripId, stopId, stopSequence)
+VALUES (?, ?, ?);
+
+-- Select count of route groups --
+selectRouteGroupsCount:
+SELECT COUNT(*) AS totalRouteGroups
+FROM NswBusRouteGroups;
+
+-- Clear tables (in reverse order of dependencies) --
+clearNswBusTripStopsTable:
+DELETE FROM NswBusTripStops;
+
+clearNswBusTripOptionsTable:
+DELETE FROM NswBusTripOptions;
+
+clearNswBusRouteVariantsTable:
+DELETE FROM NswBusRouteVariants;
+
+clearNswBusRouteGroupsTable:
+DELETE FROM NswBusRouteGroups;
+
+-- Search for route by exact route short name --
+-- Returns the route short name if it exists
+selectRouteByShortName:
+SELECT routeShortName
+FROM NswBusRouteGroups
+WHERE routeShortName = :routeShortName;
+
+-- Select all variants for a specific route --
+selectRouteVariantsByShortName:
+SELECT routeId, routeShortName, routeName
+FROM NswBusRouteVariants
+WHERE routeShortName = :routeShortName;
+
+-- Select all trips for a specific route variant --
+selectTripsByRouteId:
+SELECT tripId, routeId, headsign
+FROM NswBusTripOptions
+WHERE routeId = :routeId;
+
+-- Select all stops for a specific trip with stop details --
+selectStopsByTripId:
+SELECT
+    ts.stopId,
+    ts.stopSequence,
+    s.stopName,
+    COALESCE(GROUP_CONCAT(DISTINCT p.productClass), '') AS productClasses
+FROM NswBusTripStops AS ts
+JOIN NswStops AS s ON ts.stopId = s.stopId
+LEFT JOIN NswStopProductClass AS p ON s.stopId = p.stopId
+WHERE ts.tripId = :tripId
+GROUP BY ts.stopId, ts.stopSequence
+ORDER BY ts.stopSequence ASC;

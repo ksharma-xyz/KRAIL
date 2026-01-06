@@ -94,8 +94,16 @@ class FakeSandook : Sandook {
     }
     // endregion
 
-    override fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double) {
-        stops.add(NswStops(stopId, stopName, stopLat, stopLon))
+    override fun insertNswStop(
+        stopId: String,
+        stopName: String,
+        stopLat: Double,
+        stopLon: Double,
+        isParent: Boolean?,
+    ) {
+        // Only store when explicitly false (child stop)
+        // NULL means parent stop (default)
+        stops.add(NswStops(stopId, stopName, stopLat, stopLon, isParent = if (isParent == false) 0L else null))
     }
 
     override fun stopsCount(): Int {
@@ -133,10 +141,12 @@ class FakeSandook : Sandook {
                 stop.stopName,
                 stop.stopLat,
                 stop.stopLon,
+                isParent = stop.isParent,
                 productClasses = stopProductClasses[stop.stopId]?.joinToString(",") ?: ""
             )
         }
     }
+
 
     override fun insertOrReplaceRecentSearchStop(stopId: String) {
         // Remove existing entry if it exists

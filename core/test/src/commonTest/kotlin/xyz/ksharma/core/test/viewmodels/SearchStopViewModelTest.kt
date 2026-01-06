@@ -60,7 +60,8 @@ class SearchStopViewModelTest {
                 awaitItem().run {
                     assertFalse(isLoading)
                     assertFalse(isError)
-                    assertTrue(stops.isEmpty())
+                    assertTrue(searchResults.isEmpty())
+                    assertTrue(recentStops.isEmpty())
                 }
 
                 advanceUntilIdle()
@@ -117,13 +118,13 @@ class SearchStopViewModelTest {
                 awaitItem().run {
                     assertTrue(isLoading)
                     assertFalse(isError)
-                    assertTrue(stops.isEmpty())
+                    assertTrue(searchResults.isEmpty())
                 }
 
                 awaitItem().run {
                     assertFalse(isLoading)
                     assertTrue(isError)
-                    assertTrue(stops.isEmpty())
+                    assertTrue(searchResults.isEmpty())
                 }
 
                 cancelAndIgnoreRemainingEvents()

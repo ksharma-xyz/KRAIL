@@ -39,7 +39,13 @@ interface Sandook {
     // endregion
 
     // region NswStops
-    fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double)
+    fun insertNswStop(
+        stopId: String,
+        stopName: String,
+        stopLat: Double,
+        stopLon: Double,
+        isParent: Boolean?,
+    )
 
     fun stopsCount(): Int
 

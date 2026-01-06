@@ -94,7 +94,7 @@ val viewModelsModule = module {
         )
     }
 
-    single<StopResultsManager> { RealStopResultsManager(get(), get()) }
+    single<StopResultsManager> { RealStopResultsManager(get(), get(), get()) }
 
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
 }

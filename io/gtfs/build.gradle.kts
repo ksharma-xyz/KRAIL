@@ -27,6 +27,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.log)
+                implementation(projects.core.coroutinesExt)
                 implementation(projects.core.di)
                 implementation(projects.sandook)
 

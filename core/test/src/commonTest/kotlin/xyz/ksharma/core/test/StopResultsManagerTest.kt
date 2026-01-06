@@ -12,12 +12,12 @@ class RealStopResultsManagerTest {
     private lateinit var sandook: FakeSandook
     private lateinit var flag: FakeFlag
     private lateinit var stopResultsManager: RealStopResultsManager
-
+/*
     fun setUp() {
         sandook = FakeSandook()
         flag = FakeFlag()
         stopResultsManager = RealStopResultsManager(sandook, flag)
-    }
+    }*/
     /*
 
         @Test
@@ -32,7 +32,13 @@ class RealStopResultsManagerTest {
             )
 
             // Set Sandook response
-            sandook.insertNswStop(stopId = "200060", stopName = "Stop A", stopLat = 1.0, stopLon = 1.0)
+            sandook.insertNswStop(
+                stopId = "200060",
+                stopName = "Stop A",
+                stopLat = 1.0,
+                stopLon = 1.0,
+                isParent = true,
+            )
 
             // Call the method
             val results = stopResultsManager.fetchStopResults("query")

@@ -8,27 +8,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigationevent.NavigationEventDispatcher
-import androidx.navigationevent.NavigationEventDispatcherOwner
-import androidx.navigationevent.NavigationEventInfo
-import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.core.ui.tooling.PreviewScreen
 import xyz.ksharma.krail.taj.components.SheetTitleBar
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
 @Composable
@@ -78,24 +71,22 @@ fun ServiceAlertScreen(
 @Preview
 @Composable
 private fun PreviewServiceAlertScreen() {
-    PreviewTheme {
-        CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides PreviewNavigationEventDispatcherOwner()) {
-            ServiceAlertScreen(
-                serviceAlerts = persistentSetOf(
-                    ServiceAlert(
-                        heading = "Service Alert 1",
-                        message = "This is a service alert 1",
-                    ),
-                    ServiceAlert(
-                        heading = "Service Alert 2",
-                        message = "This is a service alert 2",
-                    ),
-                    ServiceAlert(
-                        heading = "Service Alert 3",
-                        message = "This is a service alert 3",
-                    ),
+    PreviewScreen {
+        ServiceAlertScreen(
+            serviceAlerts = persistentSetOf(
+                ServiceAlert(
+                    heading = "Service Alert 1",
+                    message = "This is a service alert 1",
                 ),
-            )
-        }
+                ServiceAlert(
+                    heading = "Service Alert 2",
+                    message = "This is a service alert 2",
+                ),
+                ServiceAlert(
+                    heading = "Service Alert 3",
+                    message = "This is a service alert 3",
+                ),
+            ),
+        )
     }
 }

@@ -34,6 +34,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.navigation)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.core.uiTooling)
                 implementation(projects.discover.network.api)
                 implementation(projects.discover.state)
                 implementation(projects.discover.ui)

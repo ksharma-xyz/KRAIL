@@ -16,3 +16,6 @@ taj/screenshots/**/*.png filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
 
+# Shell scripts - ensure execute permissions and correct line endings
+*.sh text eol=lf
+iosApp/Scripts/*.sh text eol=lf

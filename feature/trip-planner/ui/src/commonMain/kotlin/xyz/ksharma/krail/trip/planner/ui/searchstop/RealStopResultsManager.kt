@@ -123,9 +123,9 @@ class RealStopResultsManager(
         val allTripsGroupedByHeadsign = allTrips
             .mapNotNull { trip ->
                 val variant = variantsByRouteId[trip.routeId]
-                if (variant != null) {
+                variant?.let {
                     Triple(variant, trip, trip.headsign)
-                } else null
+                }
             }
             .groupBy { it.third } // Group by headsign
 

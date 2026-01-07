@@ -37,16 +37,6 @@ jobs:
           rm -rf ~/.gradle/wrapper
           echo "✅ Gradle cache cleared"
 
-      - name: Debug Maven Central connectivity
-        run: |
-          curl -4 -I https://repo.maven.apache.org/maven2/
-          curl -6 -I https://repo.maven.apache.org/maven2/ || true
-
-      - name: Force IPv4 for Gradle
-        run: |
-          echo "GRADLE_OPTS=-Djava.net.preferIPv4Stack=true" >> $GITHUB_ENV
-          echo "JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true" >> $GITHUB_ENV
-
       - name: Run Detekt
         id: detekt
         env:

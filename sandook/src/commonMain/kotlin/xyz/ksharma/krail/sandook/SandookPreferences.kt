@@ -23,7 +23,7 @@ interface SandookPreferences {
 
     companion object {
         // Increment this when bundling new stops data
-        const val NSW_STOPS_VERSION = 21L
+        const val NSW_STOPS_VERSION = 22L
 
         // Increment this when bundling new bus routes data
         const val NSW_BUS_ROUTES_VERSION = 3L

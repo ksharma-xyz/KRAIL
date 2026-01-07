@@ -3,8 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
@@ -22,6 +20,7 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
@@ -40,7 +39,7 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
  * Handles modal state for alerts and date/time selection.
  * Uses custom savers to preserve state across configuration changes.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Suppress("UNUSED_VARIABLE")
 @Composable
 internal fun EntryProviderScope<NavKey>.TimeTableEntry(
@@ -137,6 +136,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 ModalBottomSheet(
                     onDismissRequest = { showAlertsModal = false },
                     containerColor = KrailTheme.colors.bottomSheetBackground,
+                    modifier = Modifier,
                     contentWindowInsets = {
                         WindowInsets(0, 0, 0, 0)
                     },
@@ -152,6 +152,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 ModalBottomSheet(
                     onDismissRequest = { showDateTimeSelectorModal = false },
                     containerColor = KrailTheme.colors.bottomSheetBackground,
+                    modifier = Modifier,
                     contentWindowInsets = {
                         WindowInsets(0, 0, 0, 0)
                     },

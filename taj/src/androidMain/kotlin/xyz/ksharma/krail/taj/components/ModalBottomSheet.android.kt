@@ -15,9 +15,9 @@ import androidx.compose.material3.ModalBottomSheet as Material3ModalBottomSheet
 @Composable
 actual fun ModalBottomSheet(
     containerColor: Color,
+    onDismissRequest: () -> Unit,
     modifier: Modifier,
     sheetGesturesEnabled: Boolean,
-    onDismissRequest: () -> Unit,
     contentWindowInsets: @Composable () -> WindowInsets,
     content: @Composable () -> Unit,
 ) {
@@ -31,4 +31,3 @@ actual fun ModalBottomSheet(
         content()
     }
 }
-

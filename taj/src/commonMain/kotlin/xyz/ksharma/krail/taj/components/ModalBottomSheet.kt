@@ -24,9 +24,9 @@ import androidx.compose.ui.graphics.Color
 @Composable
 expect fun ModalBottomSheet(
     containerColor: Color,
-    modifier: Modifier,
-    sheetGesturesEnabled: Boolean = true,
     onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetGesturesEnabled: Boolean = true,
     contentWindowInsets: @Composable () -> WindowInsets = { WindowInsets(0, 0, 0, 0) },
     content: @Composable () -> Unit,
 )

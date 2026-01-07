@@ -37,9 +37,9 @@ import androidx.compose.material3.ModalBottomSheet as Material3ModalBottomSheet
 @Composable
 actual fun ModalBottomSheet(
     containerColor: Color,
+    onDismissRequest: () -> Unit,
     modifier: Modifier,
     sheetGesturesEnabled: Boolean,
-    onDismissRequest: () -> Unit,
     contentWindowInsets: @Composable () -> WindowInsets,
     content: @Composable () -> Unit,
 ) {
@@ -65,6 +65,8 @@ actual fun ModalBottomSheet(
     }
 }
 
+const val scrimTransparencyAlpha = 0.6f
+
 /**
  * Simple bottom sheet overlay without animations.
  * Mimics Material3 ModalBottomSheet appearance but without any animations.
@@ -78,18 +80,18 @@ private fun SimpleBottomSheetOverlay(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
     ) {
         // Scrim (background overlay)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(0.6f))
+                .background(Color.Black.copy(scrimTransparencyAlpha))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onDismissRequest
-                )
+                    onClick = onDismissRequest,
+                ),
         )
 
         // Bottom sheet content - positioned at bottom
@@ -99,12 +101,12 @@ private fun SimpleBottomSheetOverlay(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 .background(containerColor)
-                .navigationBarsPadding()
+                .navigationBarsPadding(),
         ) {
             // Drag Handle - always visible, not part of scrollable content
             DragHandle(
                 onClick = onDismissRequest,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.CenterHorizontally),
             )
 
             // Scrollable content area below the drag handle
@@ -128,14 +130,14 @@ private fun DragHandle(
         modifier = modifier
             .padding(vertical = 32.dp)
             .background(color = KrailTheme.colors.surface)
-            .klickable(onClick = onClick)
+            .klickable(onClick = onClick),
     ) {
         Box(
             modifier = Modifier
                 .width(48.dp)
                 .height(6.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(KrailTheme.colors.bottomSheetDragHandle)
+                .background(KrailTheme.colors.bottomSheetDragHandle),
         )
     }
 }

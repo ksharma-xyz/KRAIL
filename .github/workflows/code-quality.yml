@@ -30,13 +30,6 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      # TEMPORARY: Clear Gradle cache to fix 403 errors
-      - name: Clear Gradle cache
-        run: |
-          rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
-          echo "✅ Gradle cache cleared"
-
       - name: Run Detekt
         id: detekt
         env:
@@ -44,7 +37,7 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           CI: true
           GITHUB_ACTIONS: true
-        run: ./gradlew detekt --refresh-dependencies
+        run: ./gradlew detekt
 
       - name: Upload Detekt reports
         if: always() && steps.detekt.conclusion != 'skipped'

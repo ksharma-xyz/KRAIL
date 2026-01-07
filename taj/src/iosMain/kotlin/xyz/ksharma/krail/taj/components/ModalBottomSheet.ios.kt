@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import androidx.compose.material3.ModalBottomSheet as Material3ModalBottomSheet
 
@@ -91,30 +92,23 @@ private fun SimpleBottomSheetOverlay(
                 )
         )
 
-        // Bottom sheet content
-        Box(
+        // Bottom sheet content - positioned at bottom
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(containerColor)
+                .navigationBarsPadding()
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .background(containerColor)
-                    .navigationBarsPadding()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { /* Prevent clicks from dismissing */ }
-                    )
-            ) {
-                // Drag Handle - clickable to dismiss
-                DragHandle(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+            // Drag Handle - always visible, not part of scrollable content
+            DragHandle(
+                onClick = onDismissRequest,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
 
+            // Scrollable content area below the drag handle
+            Box(modifier = Modifier.fillMaxWidth()) {
                 content()
             }
         }
@@ -132,17 +126,14 @@ private fun DragHandle(
 ) {
     Box(
         modifier = modifier
-            .padding(vertical = 22.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
+            .padding(vertical = 32.dp)
+            .background(color = KrailTheme.colors.surface)
+            .klickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
-                .width(32.dp)
-                .height(4.dp)
+                .width(48.dp)
+                .height(6.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(KrailTheme.colors.bottomSheetDragHandle)
         )

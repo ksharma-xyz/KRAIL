@@ -24,6 +24,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
+import xyz.ksharma.krail.trip.planner.ui.components.SimpleBottomSheetOverlay
+import xyz.ksharma.krail.trip.planner.ui.components.isReducedMotionEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
@@ -134,41 +136,82 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
 
             // Service Alerts Modal
             if (showAlertsModal) {
-                ModalBottomSheet(
-                    onDismissRequest = { showAlertsModal = false },
-                    containerColor = KrailTheme.colors.bottomSheetBackground,
-                    contentWindowInsets = {
-                        WindowInsets(0, 0, 0, 0)
-                    },
-                ) {
-                    ServiceAlertScreen(
-                        serviceAlerts = alertsToDisplay,
-                    )
+                val useReducedMotion = isReducedMotionEnabled()
+
+                if (useReducedMotion) {
+                    // Use simple overlay without animations (safe for iOS reduced motion)
+                    SimpleBottomSheetOverlay(
+                        onDismissRequest = { showAlertsModal = false },
+                        containerColor = KrailTheme.colors.bottomSheetBackground,
+                    ) {
+                        ServiceAlertScreen(
+                            serviceAlerts = alertsToDisplay,
+                        )
+                    }
+                } else {
+                    // Use Material3 ModalBottomSheet with animations
+                    ModalBottomSheet(
+                        onDismissRequest = { showAlertsModal = false },
+                        containerColor = KrailTheme.colors.bottomSheetBackground,
+                        contentWindowInsets = {
+                            WindowInsets(0, 0, 0, 0)
+                        },
+                    ) {
+                        ServiceAlertScreen(
+                            serviceAlerts = alertsToDisplay,
+                        )
+                    }
                 }
             }
 
             // Date/Time Selector Modal
             if (showDateTimeSelectorModal) {
-                ModalBottomSheet(
-                    onDismissRequest = { showDateTimeSelectorModal = false },
-                    containerColor = KrailTheme.colors.bottomSheetBackground,
-                    contentWindowInsets = {
-                        WindowInsets(0, 0, 0, 0)
-                    },
-                ) {
-                    DateTimeSelectorScreen(
-                        dateTimeSelection = dateTimeSelectionItem,
-                        onDateTimeSelected = { selection ->
-                            dateTimeSelectionItem = selection
-                            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))
-                            showDateTimeSelectorModal = false
+                val useReducedMotion = isReducedMotionEnabled()
+
+                if (useReducedMotion) {
+                    // Use simple overlay without animations (safe for iOS reduced motion)
+                    SimpleBottomSheetOverlay(
+                        onDismissRequest = { showDateTimeSelectorModal = false },
+                        containerColor = KrailTheme.colors.bottomSheetBackground,
+                    ) {
+                        DateTimeSelectorScreen(
+                            dateTimeSelection = dateTimeSelectionItem,
+                            onDateTimeSelected = { selection ->
+                                dateTimeSelectionItem = selection
+                                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))
+                                showDateTimeSelectorModal = false
+                            },
+                            onResetClick = {
+                                dateTimeSelectionItem = null
+                                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
+                                showDateTimeSelectorModal = false
+                            },
+                        )
+                    }
+                } else {
+                    // Use Material3 ModalBottomSheet with animations
+                    ModalBottomSheet(
+                        sheetGesturesEnabled = false,
+                        onDismissRequest = { showDateTimeSelectorModal = false },
+                        containerColor = KrailTheme.colors.bottomSheetBackground,
+                        contentWindowInsets = {
+                            WindowInsets(0, 0, 0, 0)
                         },
-                        onResetClick = {
-                            dateTimeSelectionItem = null
-                            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
-                            showDateTimeSelectorModal = false
-                        },
-                    )
+                    ) {
+                        DateTimeSelectorScreen(
+                            dateTimeSelection = dateTimeSelectionItem,
+                            onDateTimeSelected = { selection ->
+                                dateTimeSelectionItem = selection
+                                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))
+                                showDateTimeSelectorModal = false
+                            },
+                            onResetClick = {
+                                dateTimeSelectionItem = null
+                                viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
+                                showDateTimeSelectorModal = false
+                            },
+                        )
+                    }
                 }
             }
         }

@@ -42,6 +42,7 @@ appcompat = "1.7.1"
 roborazzi = "1.52.0"
 composablePreviewScanner = "0.8.1"
 robolectric = "4.16"
+wire = "5.4.0"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -119,6 +120,9 @@ molecule-runtime = { module = "app.cash.molecule:molecule-runtime", version.ref 
 # Image Loading
 coil3-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil3" }
 coil3-networkKtor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil3" }
+
+# Protocol Buffers
+wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 
 # Compose
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "ui-tooling" }

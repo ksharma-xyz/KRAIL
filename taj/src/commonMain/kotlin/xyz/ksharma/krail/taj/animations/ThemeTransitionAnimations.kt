@@ -144,6 +144,7 @@ internal fun createLightDarkModeAnimatedColors(
         pastJourney = targetColors.pastJourney,
         futureJourney = targetColors.futureJourney,
         bottomSheetBackground = targetColors.bottomSheetBackground,
+        bottomSheetDragHandle = targetColors.bottomSheetDragHandle,
     )
 }
 

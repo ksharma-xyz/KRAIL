@@ -33,6 +33,8 @@ val md_theme_light_theme_selection_background = Color(0xFFF5F5F5)
 // bottom sheet
 val md_theme_light_modal_sheet_background = Color(0xFFF5F5F5)
 
+val md_theme_light_sheet_drag_handle = Color(0x66000000)
+
 /**
  * KRAIL Dark theme color tokens
  */
@@ -64,6 +66,7 @@ val md_theme_dark_theme_selection_background = Color(0xFF292929)
 
 // bottom sheet
 val md_theme_dark_modal_sheet_background = Color(0xFF292929)
+val md_theme_dark_sheet_drag_handle = Color(0x66FFFFFF)
 
 /**
  * Intermediate colors for smooth theme transitions
@@ -124,6 +127,7 @@ data class KrailColors(
     // theme settings
     val themeSelectionBackground: Color,
     val bottomSheetBackground: Color,
+    val bottomSheetDragHandle: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -150,6 +154,7 @@ internal val KrailLightColors = KrailColors(
     labelPlaceholder = md_theme_light_onSurface_placeholder,
     themeSelectionBackground = md_theme_light_theme_selection_background,
     bottomSheetBackground = md_theme_light_modal_sheet_background,
+    bottomSheetDragHandle = md_theme_light_sheet_drag_handle,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -176,6 +181,7 @@ internal val KrailDarkColors = KrailColors(
     labelPlaceholder = md_theme_dark_onSurface_placeholder,
     themeSelectionBackground = md_theme_dark_theme_selection_background,
     bottomSheetBackground = md_theme_dark_modal_sheet_background,
+    bottomSheetDragHandle = md_theme_dark_sheet_drag_handle,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -203,5 +209,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         labelPlaceholder = Color.Unspecified,
         themeSelectionBackground = Color.Unspecified,
         bottomSheetBackground = Color.Unspecified,
+        bottomSheetDragHandle = Color.Unspecified,
     )
 }

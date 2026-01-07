@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -20,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
-import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import androidx.compose.material3.ModalBottomSheet as Material3ModalBottomSheet
 
 /**
@@ -76,12 +79,16 @@ private fun SimpleBottomSheetOverlay(
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // Manual Scrim
+        // Scrim (background overlay)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(0.6f))
-                .klickable(onClick = onDismissRequest)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismissRequest
+                )
         )
 
         // Bottom sheet content
@@ -102,9 +109,42 @@ private fun SimpleBottomSheetOverlay(
                         onClick = { /* Prevent clicks from dismissing */ }
                     )
             ) {
+                // Drag Handle - clickable to dismiss
+                DragHandle(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+
                 content()
             }
         }
     }
 }
 
+/**
+ * Drag handle component that mimics Material3's bottom sheet drag handle.
+ * Clickable to dismiss the bottom sheet.
+ */
+@Composable
+private fun DragHandle(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .padding(vertical = 22.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .width(32.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(KrailTheme.colors.bottomSheetDragHandle)
+        )
+    }
+}

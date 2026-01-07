@@ -17,7 +17,7 @@ java {
 repositories {
     gradlePluginPortal()
     google()
-    maven("https://repo1.maven.org/maven2")
+    mavenCentral()
 }
 
 tasks.withType<KotlinCompile>().configureEach {

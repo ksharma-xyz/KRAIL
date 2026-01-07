@@ -1,7 +1,13 @@
 dependencyResolutionManagement {
     repositories {
-        google()
-        maven("https://repo1.maven.org/maven2")
+        google {
+            content {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
+        mavenCentral()
         gradlePluginPortal()
     }
 
@@ -9,14 +15,6 @@ dependencyResolutionManagement {
         create("libs") {
             from(files("../libs.versions.toml"))
         }
-    }
-}
-
-pluginManagement {
-    repositories {
-        google()
-        maven("https://repo1.maven.org/maven2")
-        gradlePluginPortal()
     }
 }
 

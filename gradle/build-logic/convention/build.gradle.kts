@@ -14,12 +14,6 @@ java {
     targetCompatibility = JavaVersion.values()[javaVersion - 1]
 }
 
-repositories {
-    gradlePluginPortal()
-    google()
-    maven("https://repo1.maven.org/maven2")
-}
-
 tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)

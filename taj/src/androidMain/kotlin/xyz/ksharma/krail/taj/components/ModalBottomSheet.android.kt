@@ -14,10 +14,10 @@ import androidx.compose.material3.ModalBottomSheet as Material3ModalBottomSheet
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 actual fun ModalBottomSheet(
-    onDismissRequest: () -> Unit,
+    containerColor: Color,
     modifier: Modifier,
     sheetGesturesEnabled: Boolean,
-    containerColor: Color,
+    onDismissRequest: () -> Unit,
     contentWindowInsets: @Composable () -> WindowInsets,
     content: @Composable () -> Unit,
 ) {

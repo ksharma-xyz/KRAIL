@@ -8,11 +8,12 @@ platform :ios do
     setup_ci if ENV['CI']
 
     # Configure App Store Connect API (recommended approach)
-    if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+    if ENV["APPSTORE_KEY_ID"] && ENV["APPSTORE_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_PATH"]
       app_store_connect_api_key(
-        key_id: ENV["APPSTORE_KEY_ID"] || ENV["ASC_KEY_ID"],
-        issuer_id: ENV["APPSTORE_ISSUER_ID"] || ENV["ASC_ISSUER_ID"],
-        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["ASC_KEY_PATH"],
+        key_id: ENV["APPSTORE_KEY_ID"],
+        issuer_id: ENV["APPSTORE_ISSUER_ID"],
+        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+        in_house: false
       )
     end
 
@@ -44,11 +45,12 @@ platform :ios do
   desc "Upload to TestFlight"
   lane :upload_testflight do
     # Configure API key if not already set
-    if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+    if ENV["APPSTORE_KEY_ID"] && ENV["APPSTORE_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_PATH"]
       app_store_connect_api_key(
-        key_id: ENV["APPSTORE_KEY_ID"] || ENV["ASC_KEY_ID"],
-        issuer_id: ENV["APPSTORE_ISSUER_ID"] || ENV["ASC_ISSUER_ID"],
-        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["ASC_KEY_PATH"],
+        key_id: ENV["APPSTORE_KEY_ID"],
+        issuer_id: ENV["APPSTORE_ISSUER_ID"],
+        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+        in_house: false
       )
     end
 

@@ -1,5 +1,6 @@
 source "https://rubygems.org"
 
-gem "fastlane"
+gem "fastlane", ">= 2.200"
 gem "ostruct"
+gem "abbrev"
 

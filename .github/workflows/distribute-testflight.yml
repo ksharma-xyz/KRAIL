@@ -35,8 +35,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          rm -f Gemfile.lock
           gem install bundler
-          bundle update
           bundle install
 
       - run: brew install swiftlint
@@ -76,6 +76,9 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           APP_BUNDLE_ID: xyz.ksharma.krail
           PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
         run: |
           cd iosApp
           bundle exec fastlane build_release
@@ -83,6 +86,8 @@ jobs:
       - name: Upload to TestFlight
         env:
           APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
         run: |
           cd iosApp
           bundle exec fastlane upload_testflight

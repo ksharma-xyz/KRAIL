@@ -7,8 +7,22 @@ platform :ios do
   lane :build_release do
     setup_ci if ENV['CI']
 
-    # Ensure we have the latest version of Xcode command line tools
-    xcversion(version: "~> 16.0")
+    # Configure App Store Connect API (recommended approach)
+    if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+      app_store_connect_api_key(
+        key_id: ENV["APPSTORE_KEY_ID"] || ENV["ASC_KEY_ID"],
+        issuer_id: ENV["APPSTORE_ISSUER_ID"] || ENV["ASC_ISSUER_ID"],
+        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["ASC_KEY_PATH"],
+      )
+    end
+
+    # Increment build number automatically
+    if ENV['CI']
+      increment_build_number(
+        build_number: latest_testflight_build_number + 1,
+        xcodeproj: "iosApp.xcodeproj"
+      )
+    end
 
     # Build the app
     build_app(
@@ -29,9 +43,17 @@ platform :ios do
 
   desc "Upload to TestFlight"
   lane :upload_testflight do
+    # Configure API key if not already set
+    if ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+      app_store_connect_api_key(
+        key_id: ENV["APPSTORE_KEY_ID"] || ENV["ASC_KEY_ID"],
+        issuer_id: ENV["APPSTORE_ISSUER_ID"] || ENV["ASC_ISSUER_ID"],
+        key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"] || ENV["ASC_KEY_PATH"],
+      )
+    end
+
     # Upload to TestFlight
     upload_to_testflight(
-      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
       skip_waiting_for_build_processing: true,
       skip_submission: true,
       distribute_external: false,

@@ -51,7 +51,7 @@ jobs:
           p12-password: ${{ secrets.IOS_DIST_SIGNING_KEY_PASSWORD }}
 
       - name: Download Provisioning Profiles
-        uses: Apple-Actions/download-provisioning-profiles@v3
+        uses: Apple-Actions/download-provisioning-profiles@v5
         with:
           bundle-id: xyz.ksharma.krail
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}

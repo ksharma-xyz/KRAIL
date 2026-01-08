@@ -5,6 +5,11 @@ default_platform(:ios)
 platform :ios do
   desc "Build iOS App for Release"
   lane :build_release do
+    # Defensive logging - show where we are FIRST
+    UI.message("📁 Working directory")
+    sh("pwd")
+    sh("ls -la ..")
+
     setup_ci if ENV['CI']
 
     # Use default Xcode on CI (already points to latest stable)
@@ -28,34 +33,34 @@ platform :ios do
 
     # Log app version and build number (CRITICAL for TestFlight)
     UI.message("📦 App Version Info")
-    sh("xcodebuild -showBuildSettings -project iosApp.xcodeproj -scheme iosApp | grep -E 'MARKETING_VERSION|CURRENT_PROJECT_VERSION'")
+    sh("xcodebuild -showBuildSettings -project ../iosApp.xcodeproj -scheme iosApp | grep -E 'MARKETING_VERSION|CURRENT_PROJECT_VERSION'")
 
     # Increment build number automatically
     if ENV['CI']
       increment_build_number(
-        xcodeproj: "iosApp.xcodeproj"
+        xcodeproj: "../iosApp.xcodeproj"
       )
       # Log version after increment
       UI.message("📦 App Version Info (after increment)")
-      sh("xcodebuild -showBuildSettings -project iosApp.xcodeproj -scheme iosApp | grep -E 'MARKETING_VERSION|CURRENT_PROJECT_VERSION'")
+      sh("xcodebuild -showBuildSettings -project ../iosApp.xcodeproj -scheme iosApp | grep -E 'MARKETING_VERSION|CURRENT_PROJECT_VERSION'")
     end
 
     # Log code signing resolution (what Xcode actually sees)
     UI.message("🔐 Code Signing Resolution")
-    sh("xcodebuild -project iosApp.xcodeproj -scheme iosApp -showBuildSettings | grep -E 'CODE_SIGN|PROVISIONING|DEVELOPMENT_TEAM'")
+    sh("xcodebuild -project ../iosApp.xcodeproj -scheme iosApp -showBuildSettings | grep -E 'CODE_SIGN|PROVISIONING|DEVELOPMENT_TEAM'")
 
     # Build the app
     build_app(
       scheme: "iosApp",
-      project: "iosApp.xcodeproj",
+      project: "../iosApp.xcodeproj",
       configuration: "Release",
       export_method: "app-store",
-      output_directory: "./build",
+      output_directory: "../build",
       output_name: "iosApp.ipa",
       clean: true,
       skip_build_archive: false,
       disable_package_automatic_updates: true,
-      buildlog_path: "./build/logs",
+      buildlog_path: "../build/logs",
       suppress_xcode_output: false,
       codesigning_identity: "Apple Distribution",
       export_options: {
@@ -65,7 +70,7 @@ platform :ios do
 
     # Log IPA checksum for verification
     UI.message("📄 IPA checksum")
-    sh("shasum -a 256 ./build/iosApp.ipa")
+    sh("shasum -a 256 ../build/iosApp.ipa")
   end
 
   desc "Upload to TestFlight"

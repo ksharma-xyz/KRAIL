@@ -36,6 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           gem install bundler
+          bundle update
           bundle install
 
       - run: brew install swiftlint
@@ -49,6 +50,12 @@ jobs:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
         run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
 
+      - name: Create App Store Connect API Key
+        run: |
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          echo "APP_STORE_CONNECT_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" >> $GITHUB_ENV
+
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v6
         with:
@@ -59,15 +66,10 @@ jobs:
         uses: Apple-Actions/download-provisioning-profiles@v5
         with:
           bundle-id: xyz.ksharma.krail
+          profile-type: IOS_APP_STORE
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
-
-      - name: Create App Store Connect API Key
-        run: |
-          mkdir -p ~/private_keys
-          echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
-          echo "APP_STORE_CONNECT_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" >> $GITHUB_ENV
 
       - name: Build iOS App for Release
         env:

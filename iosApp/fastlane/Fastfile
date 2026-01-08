@@ -18,12 +18,13 @@ platform :ios do
     end
 
     # Increment build number automatically
-    if ENV['CI']
-      increment_build_number(
-        build_number: latest_testflight_build_number + 1,
-        xcodeproj: "iosApp.xcodeproj"
-      )
-    end
+    # Temporarily disabled - enable after first successful TestFlight upload
+    # if ENV['CI']
+    #   increment_build_number(
+    #     build_number: latest_testflight_build_number + 1,
+    #     xcodeproj: "iosApp.xcodeproj"
+    #   )
+    # end
 
     # Build the app
     build_app(

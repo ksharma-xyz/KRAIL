@@ -1,0 +1,89 @@
+name: Distribute TestFlight
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        required: true
+        type: string
+      notify-testers:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  distribute:
+    runs-on: macos-15
+    environment: Firebase
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup environment variables
+        run: |
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - run: brew install swiftlint
+
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-disabled: true
+
+      - name: Firebase iOS - GoogleService-Info.plist file
+        env:
+          DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
+        run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Import Code-Signing Certificates
+        uses: Apple-Actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DIST_SIGNING_KEY_BASE64 }}
+          p12-password: ${{ secrets.IOS_DIST_SIGNING_KEY_PASSWORD }}
+
+      - name: Download Provisioning Profiles
+        uses: Apple-Actions/download-provisioning-profiles@v3
+        with:
+          bundle-id: xyz.ksharma.krail
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+
+      - name: Create App Store Connect API Key
+        run: |
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+          echo "APP_STORE_CONNECT_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" >> $GITHUB_ENV
+
+      - name: Build iOS App for Release
+        env:
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          APP_BUNDLE_ID: xyz.ksharma.krail
+          PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+        run: |
+          cd iosApp
+          bundle exec fastlane build_release
+
+      - name: Upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+        run: |
+          cd iosApp
+          bundle exec fastlane upload_testflight
+
+      - name: Upload IPA as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: iosApp/build/*.ipa
+          retention-days: 30
+

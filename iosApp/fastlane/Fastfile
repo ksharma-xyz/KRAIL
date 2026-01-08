@@ -1,0 +1,48 @@
+# Fastfile for KRAIL iOS App
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build iOS App for Release"
+  lane :build_release do
+    setup_ci if ENV['CI']
+
+    # Ensure we have the latest version of Xcode command line tools
+    xcversion(version: "~> 16.0")
+
+    # Build the app
+    build_app(
+      scheme: "iosApp",
+      project: "iosApp.xcodeproj",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "iosApp.ipa",
+      clean: true,
+      export_options: {
+        provisioningProfiles: {
+          ENV["APP_BUNDLE_ID"] => ENV["PROVISIONING_PROFILE_NAME"]
+        }
+      }
+    )
+  end
+
+  desc "Upload to TestFlight"
+  lane :upload_testflight do
+    # Upload to TestFlight
+    upload_to_testflight(
+      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+  end
+
+  desc "Build and Upload to TestFlight"
+  lane :release do
+    build_release
+    upload_testflight
+  end
+end
+

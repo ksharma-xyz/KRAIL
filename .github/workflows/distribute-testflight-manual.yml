@@ -1,0 +1,19 @@
+name: Manual Build & Distribute TestFlight
+
+on:
+  workflow_dispatch: # Manual trigger for building and distributing iOS release
+    inputs:
+      notify-testers:
+        description: 'Notify external testers'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  distribute-testflight:
+    uses: ./.github/workflows/distribute-testflight.yml
+    with:
+      artifact-name: iosApp-release-ipa-${{ github.run_id }}
+      notify-testers: ${{ github.event.inputs.notify-testers }}
+    secrets: inherit
+

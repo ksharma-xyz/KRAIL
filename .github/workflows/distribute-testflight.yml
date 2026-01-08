@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 60
     environment: Firebase
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Setup environment variables
         run: |
@@ -32,15 +32,11 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: false
+          ruby-version: '3.3.6'
+          bundler-cache: true
 
-      - name: Install dependencies
-        run: |
-          rm -f Gemfile.lock
-          gem install bundler -v '2.7.2'
-          bundle _2.7.2_ install
-
-      - run: brew install swiftlint
+      - name: Install SwiftLint
+        run: brew install swiftlint || true
 
       - uses: gradle/actions/setup-gradle@v5
         with:
@@ -74,6 +70,10 @@ jobs:
 
       - name: Verify Code Signing Setup
         run: |
+          echo "=== Checking Xcode ==="
+          xcode-select -p
+          xcodebuild -version
+          ls -la /Applications/ | grep Xcode || true
           echo "=== Checking Keychains ==="
           security list-keychains
           echo "=== Checking Provisioning Profiles ==="
@@ -86,7 +86,6 @@ jobs:
         env:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           APP_BUNDLE_ID: xyz.ksharma.krail
-          PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_PATH: ${{ env.APP_STORE_CONNECT_API_KEY_PATH }}
@@ -94,7 +93,26 @@ jobs:
           FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 6
         run: |
           cd iosApp
-          bundle _2.7.2_ exec fastlane build_release
+          bundle exec fastlane build_release || {
+            echo "=== BUILD FAILED - Showing full xcodebuild log ==="
+            if [ -f "build/logs/Krail App-iosApp.log" ]; then
+              tail -500 "build/logs/Krail App-iosApp.log"
+            elif [ -f ~/Library/Logs/gym/*.log ]; then
+              tail -500 ~/Library/Logs/gym/*.log
+            fi
+            exit 1
+          }
+
+      - name: Upload Xcode build logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcode-build-logs-${{ github.run_id }}
+          path: |
+            iosApp/build/logs
+            ~/Library/Logs/gym
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload to TestFlight
         continue-on-error: false
@@ -109,7 +127,7 @@ jobs:
             echo "Error: IPA file not found!"
             exit 1
           fi
-          bundle _2.7.2_ exec fastlane upload_testflight
+          bundle exec fastlane upload_testflight
 
       - name: Upload IPA as artifact
         if: success()

@@ -37,10 +37,13 @@ platform :ios do
       clean: true,
       skip_build_archive: false,
       disable_package_automatic_updates: true,
+      buildlog_path: "./build/logs",
+      suppress_xcode_output: false,
       export_options: {
         provisioningProfiles: {
-          ENV["APP_BUNDLE_ID"] => ENV["PROVISIONING_PROFILE_NAME"]
-        }
+          "xyz.ksharma.krail" => ENV["PROVISIONING_PROFILE_NAME"]
+        },
+        signingStyle: "manual"
       }
     )
   end

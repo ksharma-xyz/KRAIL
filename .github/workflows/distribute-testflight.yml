@@ -72,6 +72,15 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
+      - name: Verify Code Signing Setup
+        run: |
+          echo "=== Checking Keychains ==="
+          security list-keychains
+          echo "=== Checking Provisioning Profiles ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No profiles found"
+          echo "=== Checking Identities ==="
+          security find-identity -v -p codesigning
+
       - name: Build iOS App for Release
         continue-on-error: false
         env:

@@ -2,8 +2,8 @@
 
 default_platform(:ios)
 
-# Project path constant (relative to iosApp/ directory)
-PROJECT_PATH = "iosApp.xcodeproj"
+# Project path constant (absolute path)
+PROJECT_PATH = File.expand_path("../iosApp.xcodeproj")
 
 platform :ios do
   desc "Build iOS App for Release"

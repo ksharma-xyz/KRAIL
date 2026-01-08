@@ -37,8 +37,8 @@ jobs:
       - name: Install dependencies
         run: |
           rm -f Gemfile.lock
-          gem install bundler -v '~> 2.5'
-          bundle install
+          gem install bundler -v '2.7.2'
+          bundle _2.7.2_ install
 
       - run: brew install swiftlint
 
@@ -83,7 +83,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
         run: |
           cd iosApp
-          bundle exec fastlane build_release
+          bundle _2.7.2_ exec fastlane build_release
 
       - name: Upload to TestFlight
         continue-on-error: false
@@ -98,7 +98,7 @@ jobs:
             echo "Error: IPA file not found!"
             exit 1
           fi
-          bundle exec fastlane upload_testflight
+          bundle _2.7.2_ exec fastlane upload_testflight
 
       - name: Upload IPA as artifact
         if: success()

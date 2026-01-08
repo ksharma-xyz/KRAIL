@@ -35,6 +35,8 @@ platform :ios do
       output_directory: "./build",
       output_name: "iosApp.ipa",
       clean: true,
+      skip_build_archive: false,
+      disable_package_automatic_updates: true,
       export_options: {
         provisioningProfiles: {
           ENV["APP_BUNDLE_ID"] => ENV["PROVISIONING_PROFILE_NAME"]

@@ -59,3 +59,12 @@ google-services.json
 
 ## User settings
 xcuserdata/
+
+# Ruby / Fastlane
+Gemfile.lock
+vendor/
+.bundle/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+

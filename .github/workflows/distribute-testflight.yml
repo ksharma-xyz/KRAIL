@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           rm -f Gemfile.lock
-          gem install bundler
+          gem install bundler -v '~> 2.5'
           bundle install
 
       - run: brew install swiftlint

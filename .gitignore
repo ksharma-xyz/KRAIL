@@ -61,7 +61,6 @@ google-services.json
 xcuserdata/
 
 # Ruby / Fastlane
-Gemfile.lock
 vendor/
 .bundle/
 fastlane/report.xml

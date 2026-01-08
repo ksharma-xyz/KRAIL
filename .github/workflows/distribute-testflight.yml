@@ -14,6 +14,7 @@ on:
 jobs:
   distribute:
     runs-on: macos-15
+    timeout-minutes: 60
     environment: Firebase
     steps:
       - uses: actions/checkout@v6
@@ -72,6 +73,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
       - name: Build iOS App for Release
+        continue-on-error: false
         env:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           APP_BUNDLE_ID: xyz.ksharma.krail
@@ -84,18 +86,26 @@ jobs:
           bundle exec fastlane build_release
 
       - name: Upload to TestFlight
+        continue-on-error: false
         env:
           APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
         run: |
           cd iosApp
+          # Verify IPA exists before upload
+          if [ ! -f build/*.ipa ]; then
+            echo "Error: IPA file not found!"
+            exit 1
+          fi
           bundle exec fastlane upload_testflight
 
       - name: Upload IPA as artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact-name }}
           path: iosApp/build/*.ipa
           retention-days: 30
+          if-no-files-found: error
 

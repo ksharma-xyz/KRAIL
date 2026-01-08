@@ -31,7 +31,12 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install dependencies
+        run: |
+          gem install bundler
+          bundle install
 
       - run: brew install swiftlint
 
@@ -45,13 +50,13 @@ jobs:
         run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
 
       - name: Import Code-Signing Certificates
-        uses: Apple-Actions/import-codesign-certs@v3
+        uses: Apple-Actions/import-codesign-certs@v6
         with:
-          p12-file-base64: ${{ secrets.IOS_DIST_SIGNING_KEY_BASE64 }}
+          p12-file-base64: ${{ secrets.IOS_DIST_SIGNING_KEY }}
           p12-password: ${{ secrets.IOS_DIST_SIGNING_KEY_PASSWORD }}
 
       - name: Download Provisioning Profiles
-        uses: Apple-Actions/download-provisioning-profiles@v3
+        uses: Apple-Actions/download-provisioning-profiles@v5
         with:
           bundle-id: xyz.ksharma.krail
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}

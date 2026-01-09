@@ -44,6 +44,7 @@ composablePreviewScanner = "0.8.1"
 robolectric = "4.16"
 maplibre = "0.12.1"
 spmForKmp = "1.4.3"
+maplibreNativeDistributionSpm = "6.19.1"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }

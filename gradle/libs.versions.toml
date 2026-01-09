@@ -43,6 +43,7 @@ roborazzi = "1.52.0"
 composablePreviewScanner = "0.8.1"
 robolectric = "4.16"
 maplibre = "0.12.1"
+spmForKmp = "1.4.3"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -157,6 +158,7 @@ firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version 
 wire = { id = "com.squareup.wire", version = "5.4.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+spmForKmp = { id = "io.github.frankois944.spmForKmp", version.ref = "spmForKmp" }
 
 #Convention Plugins
 krail-android-application = { id = "krail.android.application", version = "unspecified" }
@@ -164,3 +166,4 @@ krail-compose-multiplatform = { id = "krail.compose.multiplatform", version = "u
 krail-android-library = { id = "krail.android.library", version = "unspecified" }
 krail-kotlin-android = { id = "krail.kotlin.android", version = "unspecified" }
 krail-kotlin-multiplatform = { id = "krail.kotlin.multiplatform", version = "unspecified" }
+krail-maplibre = { id = "krail.maplibre", version = "unspecified" }

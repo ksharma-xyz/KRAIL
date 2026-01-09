@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.krail.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.krail.maplibre)
+//    alias(libs.plugins.spmForKmp)
 }
 
 kotlin {
@@ -12,8 +14,28 @@ kotlin {
 
     androidTarget()
 
-    iosArm64()
+    iosArm64().binaries.framework {
+        baseName = "TripPlannerUI"
+        isStatic = true
+    }
+
     iosSimulatorArm64()
+
+   /* iosArm64().compilations.getByName("main") {
+        cinterops.create("spmMaplibre")
+    }*/
+
+    /*swiftPackageConfig {
+        create("spmMaplibre") {
+            dependency {
+                remotePackageVersion(
+                    url = uri("https://github.com/maplibre/maplibre-gl-native-distribution.git"),
+                    products = { add("MapLibre") },
+                    version = "6.19.1"
+                )
+            }
+        }
+    }*/
 
     java {
         toolchain {

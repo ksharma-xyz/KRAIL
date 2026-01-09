@@ -72,6 +72,8 @@ kotlin {
 
                 implementation(libs.molecule.runtime)
                 implementation(libs.material.adaptive)
+
+                implementation(libs.maplibre.compose)
             }
         }
         commonTest {

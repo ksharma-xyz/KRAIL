@@ -15,13 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -36,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -60,9 +56,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Divider
-import xyz.ksharma.krail.taj.components.NavActionButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -72,12 +66,10 @@ import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
-import xyz.ksharma.krail.trip.planner.ui.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionRadioGroup
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -222,49 +214,23 @@ fun SearchStopScreen(
             }
         }
 
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(vertical = 12.dp)
-                .padding(horizontal = 16.dp),
-        ) {
-            TextField(
-                placeholder = placeholderText,
-                modifier = Modifier
-                    .focusRequester(focusRequester),
-                maxLength = 30,
-                filter = { input ->
-                    input.filter { it.isLetterOrDigit() || it.isWhitespace() }
-                },
-                leadingIcon = {
-                    NavActionButton(
-                        icon = Icons.AutoMirrored.Filled.ArrowBack,
-                        iconContentDescription = "Back",
-                        onClick = {
-                            keyboard?.hide()
-                            focusRequester.freeFocus()
-                            backClicked = true
-                        },
-                    )
-                },
-            ) { value ->
-                // log(("value: $value")
+        SearchTopBar(
+            placeholderText = placeholderText,
+            focusRequester = focusRequester,
+            keyboard = keyboard,
+            selectionType = StopSelectionType.LIST,
+            onTypeSelected = {
+                // TODO: wire selection state when you support MAP mode
+            },
+            onBackClick = {
+                backClicked = true
+            },
+            onTextChanged = { value ->
                 log("value: $value")
                 if (value.isNotBlank()) runPlaceholderAnimation = false
-                textFieldText = value.toString()
-            }
-
-            StopSelectionRadioGroup(
-                selectionType = StopSelectionType.LIST,
-                onTypeSelected = {
-
-                },
-            )
-        }
-
+                textFieldText = value
+            },
+        )
 
         LazyColumn(
             contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),

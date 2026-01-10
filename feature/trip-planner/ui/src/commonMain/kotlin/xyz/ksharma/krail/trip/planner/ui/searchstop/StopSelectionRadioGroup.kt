@@ -13,12 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.DividerType
 import xyz.ksharma.krail.taj.components.Text
@@ -27,7 +24,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.modifier.gradientBorder
 
 @Composable
 fun StopSelectionRadioGroup(
@@ -55,16 +51,25 @@ fun StopSelectionRadioGroup(
             style = KrailTheme.typography.bodyLarge,
             color = if (selectionType == StopSelectionType.LIST) {
                 getForegroundColor(listBackgroundColor)
-            } else getForegroundColor(themeColor()),
+            } else {
+                getForegroundColor(themeColor())
+            },
             modifier = Modifier
                 .background(
                     color = listBackgroundColor,
                     shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
                 )
+                .then(
+                    if (selectionType != StopSelectionType.LIST) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = mapBackgroundColor,
+                            shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                        )
+                    } else Modifier
+                )
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .klickable(onClick = {
-                    onTypeSelected(StopSelectionType.LIST)
-                })
+                .klickable { onTypeSelected(StopSelectionType.LIST) },
         )
 
         Divider(
@@ -75,19 +80,27 @@ fun StopSelectionRadioGroup(
         Text(
             text = "Map",
             style = KrailTheme.typography.bodyLarge,
-            color = if (selectionType == StopSelectionType.MAP) getForegroundColor(
-                mapBackgroundColor
-            )
-            else getForegroundColor(themeColor()),
+            color = if (selectionType == StopSelectionType.MAP) {
+                getForegroundColor(mapBackgroundColor)
+            } else {
+                getForegroundColor(themeColor())
+            },
             modifier = Modifier
                 .background(
                     color = mapBackgroundColor,
                     shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
                 )
+                .then(
+                    if (selectionType != StopSelectionType.MAP) {
+                        Modifier.border(
+                            width = 1.dp,
+                            color = listBackgroundColor,
+                            shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                        )
+                    } else Modifier
+                )
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .klickable(onClick = {
-                    onTypeSelected(StopSelectionType.MAP)
-                })
+                .klickable { onTypeSelected(StopSelectionType.MAP) },
         )
     }
 }
@@ -105,7 +118,7 @@ private fun StopSelectionRadioGroupPreview() {
     PreviewTheme {
         StopSelectionRadioGroup(
             selectionType = StopSelectionType.LIST,
-            onTypeSelected = { _ -> }
+            onTypeSelected = { _ -> },
         )
     }
 }

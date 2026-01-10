@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -8,10 +11,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -51,13 +56,6 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.maplibre.compose.camera.CameraPosition
-import org.maplibre.compose.camera.rememberCameraState
-import org.maplibre.compose.map.MapOptions
-import org.maplibre.compose.map.MaplibreMap
-import org.maplibre.compose.map.OrnamentOptions
-import org.maplibre.compose.style.BaseStyle
-import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -69,9 +67,11 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
+import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -250,91 +250,64 @@ fun SearchStopScreen(
             textFieldText = value.toString()
         }
 
-        val camera = rememberCameraState(
-            firstPosition = CameraPosition(
-                target = Position(latitude = -33.8727, longitude = 151.2057),
-                zoom = 13.0,
-            )
-        )
-        MaplibreMap(
-            cameraState = camera,
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
-            options = MapOptions(
-                ornamentOptions =
-                    OrnamentOptions(
-                        padding = PaddingValues(0.dp),
-                        isLogoEnabled = false,
-                        logoAlignment = Alignment.BottomStart,
-                        isAttributionEnabled = true,
-                        attributionAlignment = Alignment.BottomEnd,
-                        isCompassEnabled = true,
-                        compassAlignment = Alignment.TopEnd,
-                        isScaleBarEnabled = false,
-                        scaleBarAlignment = Alignment.TopStart,
-                    )
-            )
-        )
-
-        /*
-                LazyColumn(
-                    contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+        LazyColumn(
+            contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+        ) {
+            item("searching_dots") {
+                Column(
+                    modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    item("searching_dots") {
-                        Column(
-                            modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            AnimatedVisibility(
-                                visible = searchStopState.isLoading,
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                            ) {
-                                AnimatedDots(modifier = Modifier.fillMaxWidth())
-                            }
-                        }
-                    }
-
-                    if (searchStopState.isError && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
-                        item(key = "Error") {
-                            ErrorMessage(
-                                title = "Eh! That's not looking right.",
-                                message = "Let's try searching again.",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                            )
-                        }
-                    } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
-                        // Separate composable for search results list
-                        searchResultsList(
-                            searchResults = searchStopState.searchResults,
-                            keyboard = keyboard,
-                            focusRequester = focusRequester,
-                            onStopSelect = onStopSelect,
-                            onEvent = onEvent,
-                        )
-                    } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
-                        // Separate composable for recent search stops list
-                        recentSearchStopsList(
-                            recentStops = searchStopState.recentStops,
-                            keyboard = keyboard,
-                            focusRequester = focusRequester,
-                            onStopSelect = onStopSelect,
-                            onEvent = onEvent,
-                        )
-                    } else if (displayNoMatchFound && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
-                        item(key = "no_match") {
-                            ErrorMessage(
-                                title = "No match found!",
-                                message = "Try something else. \uD83D\uDD0D✨",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                            )
-                        }
+                    AnimatedVisibility(
+                        visible = searchStopState.isLoading,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        AnimatedDots(modifier = Modifier.fillMaxWidth())
                     }
                 }
-        */
+            }
+
+            if (searchStopState.isError && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
+                item(key = "Error") {
+                    ErrorMessage(
+                        title = "Eh! That's not looking right.",
+                        message = "Let's try searching again.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
+                    )
+                }
+            } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
+                // Separate composable for search results list
+                searchResultsList(
+                    searchResults = searchStopState.searchResults,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
+            } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
+                // Separate composable for recent search stops list
+                recentSearchStopsList(
+                    recentStops = searchStopState.recentStops,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
+            } else if (displayNoMatchFound && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
+                item(key = "no_match") {
+                    ErrorMessage(
+                        title = "No match found!",
+                        message = "Try something else. \uD83D\uDD0D✨",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
+                    )
+                }
+            }
+        }
     }
 }
 

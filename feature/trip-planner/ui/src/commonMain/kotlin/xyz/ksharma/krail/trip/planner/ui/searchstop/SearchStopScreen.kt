@@ -72,10 +72,12 @@ import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
+import xyz.ksharma.krail.trip.planner.ui.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionRadioGroup
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -220,35 +222,49 @@ fun SearchStopScreen(
             }
         }
 
-        TextField(
-            placeholder = placeholderText,
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .padding(vertical = 12.dp)
-                .focusRequester(focusRequester)
                 .padding(horizontal = 16.dp),
-            maxLength = 30,
-            filter = { input ->
-                input.filter { it.isLetterOrDigit() || it.isWhitespace() }
-            },
-            leadingIcon = {
-                NavActionButton(
-                    icon = Icons.AutoMirrored.Filled.ArrowBack,
-                    iconContentDescription = "Back",
-                    onClick = {
-                        keyboard?.hide()
-                        focusRequester.freeFocus()
-                        backClicked = true
-                    },
-                )
-            },
-        ) { value ->
-            // log(("value: $value")
-            log("value: $value")
-            if (value.isNotBlank()) runPlaceholderAnimation = false
-            textFieldText = value.toString()
+        ) {
+            TextField(
+                placeholder = placeholderText,
+                modifier = Modifier
+                    .focusRequester(focusRequester),
+                maxLength = 30,
+                filter = { input ->
+                    input.filter { it.isLetterOrDigit() || it.isWhitespace() }
+                },
+                leadingIcon = {
+                    NavActionButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        iconContentDescription = "Back",
+                        onClick = {
+                            keyboard?.hide()
+                            focusRequester.freeFocus()
+                            backClicked = true
+                        },
+                    )
+                },
+            ) { value ->
+                // log(("value: $value")
+                log("value: $value")
+                if (value.isNotBlank()) runPlaceholderAnimation = false
+                textFieldText = value.toString()
+            }
+
+            StopSelectionRadioGroup(
+                selectionType = StopSelectionType.LIST,
+                onTypeSelected = {
+
+                },
+            )
         }
+
 
         LazyColumn(
             contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),

@@ -8,6 +8,7 @@ data class SearchStopState(
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
     val isError: Boolean = false,
+    val displayMapSelection: Boolean = false,
     val isLoading: Boolean = false,
 ) {
     /**

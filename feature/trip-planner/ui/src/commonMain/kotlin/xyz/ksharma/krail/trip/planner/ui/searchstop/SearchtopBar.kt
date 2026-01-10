@@ -2,27 +2,25 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.NavActionButton
@@ -39,8 +37,9 @@ fun SearchTopBar(
     onTextChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var textFieldHasFocus by rememberSaveable { mutableStateOf(false) }
-    val showRadioGroup = !textFieldHasFocus
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val showRadioGroup = !imeVisible
 
     Row(
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
@@ -48,6 +47,7 @@ fun SearchTopBar(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
+            .windowInsetsPadding(WindowInsets.ime)
             .padding(vertical = 12.dp)
             .padding(horizontal = 16.dp)
             .animateContentSize(),
@@ -56,8 +56,7 @@ fun SearchTopBar(
             placeholder = placeholderText,
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(focusRequester)
-                .onFocusChanged { state -> textFieldHasFocus = state.isFocused },
+                .focusRequester(focusRequester),
             maxLength = 30,
             filter = { input -> input.filter { it.isLetterOrDigit() || it.isWhitespace() } },
             leadingIcon = {

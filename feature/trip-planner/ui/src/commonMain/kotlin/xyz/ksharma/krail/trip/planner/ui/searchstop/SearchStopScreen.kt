@@ -156,6 +156,10 @@ fun SearchStopScreen(
         var placeholderText by rememberSaveable { mutableStateOf("Search here") }
         var isDeleting by rememberSaveable { mutableStateOf(false) }
 
+        var selectedType by rememberSaveable {
+            mutableStateOf(StopSelectionType.LIST)
+        }
+
         val transportModes = remember {
             TransportMode.values().sortedBy { it.priority }
         }
@@ -218,9 +222,9 @@ fun SearchStopScreen(
             placeholderText = placeholderText,
             focusRequester = focusRequester,
             keyboard = keyboard,
-            selectionType = StopSelectionType.LIST,
-            onTypeSelected = {
-                // TODO: wire selection state when you support MAP mode
+            selectionType = selectedType,
+            onTypeSelected = { type ->
+                selectedType = type
             },
             onBackClick = {
                 backClicked = true

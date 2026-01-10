@@ -52,6 +52,13 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.maplibre.compose.camera.CameraPosition
+import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.map.MapOptions
+import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.map.OrnamentOptions
+import org.maplibre.compose.style.BaseStyle
+import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -181,6 +188,13 @@ fun SearchStopScreen(
             )
         }
 
+        val camera = rememberCameraState(
+            firstPosition = CameraPosition(
+                target = Position(latitude = -33.8727, longitude = 151.2057),
+                zoom = 13.0,
+            ),
+        )
+
         LaunchedEffect(placeholderText, isDeleting, runPlaceholderAnimation) {
             if (!runPlaceholderAnimation) {
                 // Reset to initial state if animation is stopped
@@ -236,61 +250,83 @@ fun SearchStopScreen(
             },
         )
 
-        LazyColumn(
-            contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
-        ) {
-            item("searching_dots") {
-                Column(
-                    modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    AnimatedVisibility(
-                        visible = searchStopState.isLoading,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
+        if (selectedType == StopSelectionType.MAP) {
+            MaplibreMap(
+                cameraState = camera,
+                baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
+                options = MapOptions(
+                    ornamentOptions =
+                        OrnamentOptions(
+                            padding = PaddingValues(0.dp),
+                            isLogoEnabled = false,
+                            logoAlignment = Alignment.BottomStart,
+                            isAttributionEnabled = true,
+                            attributionAlignment = Alignment.BottomEnd,
+                            isCompassEnabled = true,
+                            compassAlignment = Alignment.TopEnd,
+                            isScaleBarEnabled = false,
+                            scaleBarAlignment = Alignment.TopStart,
+                        ),
+                ),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+            ) {
+                item("searching_dots") {
+                    Column(
+                        modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        AnimatedDots(modifier = Modifier.fillMaxWidth())
+                        AnimatedVisibility(
+                            visible = searchStopState.isLoading,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                        ) {
+                            AnimatedDots(modifier = Modifier.fillMaxWidth())
+                        }
                     }
                 }
-            }
 
-            if (searchStopState.isError && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
-                item(key = "Error") {
-                    ErrorMessage(
-                        title = "Eh! That's not looking right.",
-                        message = "Let's try searching again.",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
+                if (searchStopState.isError && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
+                    item(key = "Error") {
+                        ErrorMessage(
+                            title = "Eh! That's not looking right.",
+                            message = "Let's try searching again.",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
+                } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
+                    // Separate composable for search results list
+                    searchResultsList(
+                        searchResults = searchStopState.searchResults,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        onStopSelect = onStopSelect,
+                        onEvent = onEvent,
                     )
-                }
-            } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
-                // Separate composable for search results list
-                searchResultsList(
-                    searchResults = searchStopState.searchResults,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    onStopSelect = onStopSelect,
-                    onEvent = onEvent,
-                )
-            } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
-                // Separate composable for recent search stops list
-                recentSearchStopsList(
-                    recentStops = searchStopState.recentStops,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    onStopSelect = onStopSelect,
-                    onEvent = onEvent,
-                )
-            } else if (displayNoMatchFound && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
-                item(key = "no_match") {
-                    ErrorMessage(
-                        title = "No match found!",
-                        message = "Try something else. \uD83D\uDD0D✨",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
+                } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
+                    // Separate composable for recent search stops list
+                    recentSearchStopsList(
+                        recentStops = searchStopState.recentStops,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        onStopSelect = onStopSelect,
+                        onEvent = onEvent,
                     )
+                } else if (displayNoMatchFound && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
+                    item(key = "no_match") {
+                        ErrorMessage(
+                            title = "No match found!",
+                            message = "Try something else. \uD83D\uDD0D✨",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
                 }
             }
         }

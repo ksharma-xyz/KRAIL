@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.krail.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.krail.maplibre)
 }
 
 kotlin {
@@ -12,8 +13,15 @@ kotlin {
 
     androidTarget()
 
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "TripPlannerUI"
+            isStatic = true
+        }
+    }
 
     java {
         toolchain {
@@ -72,6 +80,8 @@ kotlin {
 
                 implementation(libs.molecule.runtime)
                 implementation(libs.material.adaptive)
+
+                implementation(libs.maplibre.compose)
             }
         }
         commonTest {

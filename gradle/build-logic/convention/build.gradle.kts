@@ -31,6 +31,8 @@ dependencies {
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.composeCompiler.gradlePlugin)
     compileOnly(libs.detekt.gradle.plugin)
+
+    implementation("io.github.frankois944.spmForKmp:io.github.frankois944.spmForKmp.gradle.plugin:${libs.versions.spmForKmp.get()}")
 }
 
 gradlePlugin {
@@ -74,6 +76,11 @@ gradlePlugin {
         register("kotlinMultiplatform") {
             id = "krail.kotlin.multiplatform"
             implementationClass = "xyz.ksharma.krail.gradle.KotlinMultiplatformConventionPlugin"
+        }
+
+        register("mapLibre") {
+            id = "krail.maplibre"
+            implementationClass = "xyz.ksharma.krail.gradle.MapLibreConventionPlugin"
         }
     }
 }

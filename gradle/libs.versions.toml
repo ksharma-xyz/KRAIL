@@ -42,6 +42,9 @@ appcompat = "1.7.1"
 roborazzi = "1.52.0"
 composablePreviewScanner = "0.8.1"
 robolectric = "4.16"
+maplibre = "0.12.1"
+spmForKmp = "1.4.3"
+maplibreNativeDistributionSpm = "6.19.1"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -137,6 +140,9 @@ detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", 
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 detekt-compose = { group = "io.nlopez.compose.rules", name = "detekt", version.ref = "detektCompose" }
 
+## Maps
+maplibre-compose = { module = "org.maplibre.compose:maplibre-compose", version.ref = "maplibre" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -153,6 +159,7 @@ firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version 
 wire = { id = "com.squareup.wire", version = "5.4.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+spmForKmp = { id = "io.github.frankois944.spmForKmp", version.ref = "spmForKmp" }
 
 #Convention Plugins
 krail-android-application = { id = "krail.android.application", version = "unspecified" }
@@ -160,3 +167,4 @@ krail-compose-multiplatform = { id = "krail.compose.multiplatform", version = "u
 krail-android-library = { id = "krail.android.library", version = "unspecified" }
 krail-kotlin-android = { id = "krail.kotlin.android", version = "unspecified" }
 krail-kotlin-multiplatform = { id = "krail.kotlin.multiplatform", version = "unspecified" }
+krail-maplibre = { id = "krail.maplibre", version = "unspecified" }

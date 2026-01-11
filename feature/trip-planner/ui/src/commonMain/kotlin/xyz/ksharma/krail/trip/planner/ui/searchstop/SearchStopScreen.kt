@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,6 +44,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -59,11 +61,12 @@ import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.maplibre.compose.camera.CameraPosition
+import org.maplibre.compose.camera.CameraState
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.Feature.get
+import org.maplibre.compose.expressions.dsl.asString
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.eq
-import org.maplibre.compose.expressions.dsl.asString
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.layers.CircleLayer
@@ -96,8 +99,11 @@ import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -117,6 +123,12 @@ fun SearchStopScreen(
     val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }
+    // derive selection and screen from state
+    val selectionType = searchStopState.selectionType
+    val screen = searchStopState.screen
+    // derive selection and screen from state
+    val listState = (screen as? SearchScreen.List)?.listState
+    val isLoading = (listState as? ListState.Results)?.isLoading ?: false
 
     LaunchedEffect(backClicked) {
         if (backClicked) {
@@ -133,36 +145,191 @@ fun SearchStopScreen(
         snapshotFlow { textFieldText.trim() }
             .distinctUntilChanged()
             .debounce(250)
-            .filter { it.isNotBlank() }
+            // allow blank queries to flow so ViewModel can switch back to Recents
             .mapLatest { text ->
-                // log(("Query - $text")
                 onEvent(SearchStopUiEvent.SearchTextChanged(text))
-            }.collectLatest {}
+            }
+            .collectLatest {}
     }
 
-    var displayNoMatchFound by remember { mutableStateOf(false) }
-    var lastQueryTime by remember { mutableLongStateOf(0L) }
-    LaunchedEffect(
-        key1 = textFieldText,
-        key2 = searchStopState.searchResults,
-        key3 = searchStopState.isLoading,
+    val camera = rememberCameraState(
+        firstPosition = CameraPosition(
+            target = Position(latitude = -33.8727, longitude = 151.2057),
+            zoom = 13.0,
+        ),
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        backgroundColorOf(themeColor.hexToComposeColor()),
+                        KrailTheme.colors.surface,
+                    ),
+                )
+            )
+            .imePadding(),
     ) {
-        if (textFieldText.isNotBlank() && searchStopState.searchResults.isEmpty()) {
-            // To ensure a smooth transition from the results state to the "No match found" state,
-            // track the time of the last query. If new results come in during the delay period,
-            // then lastQueryTime will be different, therefore, it will prevent
-            // "No match found" message from being displayed.
-            val currentQueryTime = Clock.System.now().toEpochMilliseconds()
-            lastQueryTime = currentQueryTime
-            delay(1000)
-            if (lastQueryTime == currentQueryTime && searchStopState.searchResults.isEmpty()) {
-                displayNoMatchFound = true
+        var runPlaceholderAnimation by rememberSaveable { mutableStateOf(true) }
+        var placeholderText by rememberSaveable { mutableStateOf("Search here") }
+        var isDeleting by rememberSaveable { mutableStateOf(false) }
+        var currentModePriority by rememberSaveable {
+            mutableStateOf(
+                TransportMode.Train().priority,
+            )
+        } // Start with Train's priority
+
+        val transportModes = remember {
+            TransportMode.values().sortedBy { it.priority }
+        }
+
+        // Map priorities to corresponding placeholder texts
+        val priorityToTextMapping = remember {
+            transportModes.associateBy(
+                keySelector = { it.priority },
+                valueTransform = { mode ->
+                    when (mode) {
+                        is TransportMode.Bus -> "Search bus stop id"
+                        is TransportMode.Train -> "Search train station"
+                        is TransportMode.Metro -> "Search metro station"
+                        is TransportMode.Ferry -> "Search ferry wharf"
+                        is TransportMode.LightRail -> "Search light rail stop"
+                        else -> "Search here"
+                    }
+                },
+            )
+        }
+
+        LaunchedEffect(placeholderText, isDeleting, runPlaceholderAnimation) {
+            if (!runPlaceholderAnimation) {
+                // Reset to initial state if animation is stopped
+                currentModePriority = TransportMode.Train().priority
+                placeholderText = "Search here"
+                isDeleting = false
+                return@LaunchedEffect
             }
-        } else {
-            displayNoMatchFound = false
+
+            val targetText = when {
+                isDeleting -> "Search " // Clear text all at once during deletion
+                else -> priorityToTextMapping[currentModePriority] ?: "Search here"
+            }
+
+            if (placeholderText != targetText) {
+                delay(100) // Typing speed
+                placeholderText = if (isDeleting) {
+                    "Search " // Clear text immediately
+                } else {
+                    targetText.take(placeholderText.length + 1) // Add characters one by one
+                }
+            } else {
+                if (isDeleting) {
+                    isDeleting = false
+                } else {
+                    delay(500) // Pause before starting delete animation
+                    isDeleting = true
+
+                    // Move to the next transport mode based on priority
+                    val currentIndex =
+                        transportModes.indexOfFirst { it.priority == currentModePriority }
+                    val nextIndex = (currentIndex + 1) % transportModes.size
+                    currentModePriority = transportModes[nextIndex].priority
+                }
+            }
+        }
+
+        SearchTopBar(
+            placeholderText = placeholderText,
+            focusRequester = focusRequester,
+            keyboard = keyboard,
+            // pass selection toggle from state (map if needed to composable enum)
+            selectionType = selectionType, // or map to UI enum if different type
+            onTypeSelected = { type ->
+                // user tapped list/map -> forward to viewmodel
+                onEvent(SearchStopUiEvent.StopSelectionTypeClicked(type))
+            },
+            onBackClick = {
+                backClicked = true
+            },
+            onTextChanged = { value ->
+                log("value: $value")
+                if (value.isNotBlank()) runPlaceholderAnimation = false
+                textFieldText = value
+            },
+        )
+
+        when (screen) {
+            is SearchScreen.Map -> {
+                SearchStopMap(
+                    modifier = Modifier.weight(1f),
+                    cameraState = camera
+                )
+            }
+
+            is SearchScreen.List -> {
+                when (val ls = screen.listState) {
+                    ListState.Recent -> {
+                        LazyColumn(contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp)) {
+
+                            item {
+                                SearchListHeader()
+                            }
+
+                            recentSearchStopsList(
+                                recentStops = searchStopState.recentStops,
+                                keyboard = keyboard,
+                                focusRequester = focusRequester,
+                                onStopSelect = onStopSelect,
+                                onEvent = onEvent,
+                            )
+                        }
+                    }
+
+                    is ListState.Results -> {
+                        LazyColumn(contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp)) {
+                            // Replace manual Column + AnimatedVisibility in Results
+                            item("searching_dots") {
+                                SearchingDotsHeader(isLoading = ls.isLoading)
+                            }
+
+                            searchResultsList(
+                                searchResults = ls.results,
+                                keyboard = keyboard,
+                                focusRequester = focusRequester,
+                                onStopSelect = onStopSelect,
+                                onEvent = onEvent,
+                            )
+                        }
+                    }
+
+                    ListState.NoMatch -> {
+                        ErrorMessage(
+                            title = "No match found!",
+                            message = "Try something else. \uD83D\uDD0D✨",
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                        )
+                    }
+
+                    ListState.Error -> {
+                        ErrorMessage(
+                            title = "Something went wrong!",
+                            message = "Let's try searching again.",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
         }
     }
+}
 
+@Composable
+fun SearchStopMap(
+    cameraState: CameraState,
+    modifier: Modifier = Modifier,
+) {
     // Dummy in-memory geojson-like data (hardcoded for now; you can extend it).
     // Contract:
     // - one LineString feature with type="route"
@@ -235,254 +402,128 @@ fun SearchStopScreen(
 
     var selectedStop by remember { mutableStateOf<SelectedStopUi?>(null) }
 
-    // var selectedType by rememberSaveable { mutableStateOf(StopSelectionType.LIST) }
-
-    var selectedType by rememberSaveable {
-        mutableStateOf(StopSelectionType.LIST)
-    }
-
-    val transportModes = remember {
-        TransportMode.values().sortedBy { it.priority }
-    }
-
-    // Map priorities to corresponding placeholder texts
-    val priorityToTextMapping = remember {
-        transportModes.associateBy(
-            keySelector = { it.priority },
-            valueTransform = { mode ->
-                when (mode) {
-                    is TransportMode.Bus -> "Search bus stop id"
-                    is TransportMode.Train -> "Search train station"
-                    is TransportMode.Metro -> "Search metro station"
-                    is TransportMode.Ferry -> "Search ferry wharf"
-                    is TransportMode.LightRail -> "Search light rail stop"
-                    else -> "Search here"
-                }
-            },
-        )
-    }
-
-    val camera = rememberCameraState(
-        firstPosition = CameraPosition(
-            target = Position(latitude = -33.8727, longitude = 151.2057),
-            zoom = 13.0,
-        ),
-    )
-
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    backgroundColorOf(themeColor.hexToComposeColor()),
-                                    KrailTheme.colors.surface,
-                                ),
-                        )
-                )
-                .imePadding(),
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(),
     ) {
-        var runPlaceholderAnimation by rememberSaveable { mutableStateOf(true) }
-        var currentModePriority by rememberSaveable {
-            mutableStateOf(
-                TransportMode.Train().priority,
-            )
-        } // Start with Train's priority
-        var placeholderText by rememberSaveable { mutableStateOf("Search here") }
-        var isDeleting by rememberSaveable { mutableStateOf(false) }
-
-        SearchTopBar(
-            placeholderText = placeholderText,
-            focusRequester = focusRequester,
-            keyboard = keyboard,
-            selectionType = selectedType,
-            onTypeSelected = { type ->
-                selectedType = type
-            },
-            onBackClick = {
-                backClicked = true
-            },
-            onTextChanged = { value ->
-                log("value: $value")
-                if (value.isNotBlank()) runPlaceholderAnimation = false
-                textFieldText = value
-            },
-        )
-
-        // kotlin
-        if (selectedType == StopSelectionType.MAP) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-            ) {
-                MaplibreMap(
-                    cameraState = camera,
-                    baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
-                    options =
-                        MapOptions(
-                            ornamentOptions =
-                                OrnamentOptions(
-                                    padding = PaddingValues(0.dp),
-                                    isLogoEnabled = false,
-                                    logoAlignment = Alignment.BottomStart,
-                                    isAttributionEnabled = true,
-                                    attributionAlignment = Alignment.BottomEnd,
-                                    isCompassEnabled = true,
-                                    compassAlignment = Alignment.TopEnd,
-                                    isScaleBarEnabled = false,
-                                    scaleBarAlignment = Alignment.TopStart,
-                                ),
+        MaplibreMap(
+            modifier = modifier.fillMaxSize(),
+            cameraState = cameraState,
+            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
+            options =
+                MapOptions(
+                    ornamentOptions =
+                        OrnamentOptions(
+                            padding = PaddingValues(0.dp),
+                            isLogoEnabled = false,
+                            logoAlignment = Alignment.BottomStart,
+                            isAttributionEnabled = true,
+                            attributionAlignment = Alignment.BottomEnd,
+                            isCompassEnabled = true,
+                            compassAlignment = Alignment.TopEnd,
+                            isScaleBarEnabled = false,
+                            scaleBarAlignment = Alignment.TopStart,
                         ),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    val transitSource =
-                        rememberGeoJsonSource(
-                            data = GeoJsonData.Features(featureCollection),
-                        )
+                ),
+        ) {
+            val transitSource =
+                rememberGeoJsonSource(
+                    data = GeoJsonData.Features(featureCollection),
+                )
 
-                    LineLayer(
-                        id = "route",
-                        source = transitSource,
-                        filter = get("type").asString() eq const("route"),
-                        color = const(routeColor),
-                        width = const(10.dp),
-                        cap = const(LineCap.Round),
-                        join = const(LineJoin.Round),
-                    )
+            LineLayer(
+                id = "route",
+                source = transitSource,
+                filter = get("type").asString() eq const("route"),
+                color = const(routeColor),
+                width = const(10.dp),
+                cap = const(LineCap.Round),
+                join = const(LineJoin.Round),
+            )
 
-                    CircleLayer(
-                        id = "stops-visible",
-                        source = transitSource,
-                        filter = get("type").asString() eq const("stop"),
-                        radius = const(6.dp),
-                        color = const(Color.White),
-                        strokeColor = const(routeColor),
-                        strokeWidth = const(2.dp),
-                    )
+            CircleLayer(
+                id = "stops-visible",
+                source = transitSource,
+                filter = get("type").asString() eq const("stop"),
+                radius = const(6.dp),
+                color = const(Color.White),
+                strokeColor = const(routeColor),
+                strokeWidth = const(2.dp),
+            )
 
-                    CircleLayer(
-                        id = "stops-hit",
-                        source = transitSource,
-                        filter = get("type").asString() eq const("stop"),
-                        radius = const(18.dp),
-                        color = const(Color.White.copy(alpha = 0.01f)),
-                        strokeColor = const(Color.Transparent),
-                        strokeWidth = const(0.dp),
-                        onClick = { features ->
-                            val feature = features.firstOrNull()
-                            log("Click dot")
-                            selectedStop =
-                                feature?.let {
-                                    SelectedStopUi(
-                                        id = it.getStringProperty("stopId"),
-                                        name = it.getStringProperty("stopName"),
-                                        lineId = it.getStringProperty("lineId"),
-                                    )
-                                }
-                            log("selectedStop : $selectedStop")
-                            ClickResult.Consume
-                        },
-                    )
-                }
-
-                if (selectedStop != null) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .systemBarsPadding()
-                                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                                .background(KrailTheme.colors.surface)
-                                .padding(vertical = 24.dp, horizontal = 16.dp)
-                                .align(Alignment.BottomCenter),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = selectedStop?.name ?: "Selected stop",
-                                    style = KrailTheme.typography.titleMedium,
-                                )
-                                Text(
-                                    text = listOfNotNull(
-                                        selectedStop?.id,
-                                        selectedStop?.lineId
-                                    ).joinToString(" • "),
-                                    style = KrailTheme.typography.bodySmall,
-                                    color = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
-                                )
-                            }
-
-                            Image(
-                                painter = painterResource(Res.drawable.ic_close),
-                                contentDescription = "Close",
-                                modifier =
-                                    Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .klickable { selectedStop = null }
-                                        .padding(4.dp),
-                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+            CircleLayer(
+                id = "stops-hit",
+                source = transitSource,
+                filter = get("type").asString() eq const("stop"),
+                radius = const(18.dp),
+                color = const(Color.White.copy(alpha = 0.01f)),
+                strokeColor = const(Color.Transparent),
+                strokeWidth = const(0.dp),
+                onClick = { features ->
+                    val feature = features.firstOrNull()
+                    log("Click dot")
+                    selectedStop =
+                        feature?.let {
+                            SelectedStopUi(
+                                id = it.getStringProperty("stopId"),
+                                name = it.getStringProperty("stopName"),
+                                lineId = it.getStringProperty("lineId"),
                             )
                         }
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
-            ) {
-                item("searching_dots") {
-                    Column(
-                        modifier = Modifier.height(KrailTheme.typography.bodyLarge.fontSize.value.dp + 12.dp),
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        AnimatedVisibility(
-                            visible = searchStopState.isLoading,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
-                        ) {
-                            AnimatedDots(modifier = Modifier.fillMaxWidth())
-                        }
-                    }
-                }
+                    log("selectedStop : $selectedStop")
+                    ClickResult.Consume
+                },
+            )
+        }
 
-                if (searchStopState.isError && textFieldText.isNotBlank() && searchStopState.isLoading.not()) {
-                    item(key = "Error") {
-                        ErrorMessage(
-                            title = "Eh! That's not looking right.",
-                            message = "Let's try searching again.",
-                            modifier = Modifier.fillMaxWidth(),
+        if (selectedStop != null) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .systemBarsPadding()
+                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                        .background(KrailTheme.colors.surface)
+                        .padding(vertical = 24.dp, horizontal = 16.dp)
+                        .align(Alignment.BottomCenter),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = selectedStop?.name ?: "Selected stop",
+                            style = KrailTheme.typography.titleMedium,
+                        )
+                        Text(
+                            text = listOfNotNull(
+                                selectedStop?.id,
+                                selectedStop?.lineId
+                            ).joinToString(" • "),
+                            style = KrailTheme.typography.bodySmall,
+                            color = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
                         )
                     }
-                } else if (searchStopState.searchResults.isNotEmpty() && textFieldText.isNotBlank()) {
-                    searchResultsList(
-                        searchResults = searchStopState.searchResults,
-                        keyboard = keyboard,
-                        focusRequester = focusRequester,
-                        onStopSelect = onStopSelect,
-                        onEvent = onEvent,
-                    )
-                } else if (textFieldText.isBlank() && searchStopState.recentStops.isNotEmpty()) {
-                    recentSearchStopsList(
-                        recentStops = searchStopState.recentStops,
-                        keyboard = keyboard,
-                        focusRequester = focusRequester,
-                        onStopSelect = onStopSelect,
-                        onEvent = onEvent,
+
+                    Image(
+                        painter = painterResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        modifier =
+                            Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .klickable { selectedStop = null }
+                                .padding(4.dp),
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
                     )
                 }
             }
         }
     }
 }
+
 
 // region Separate Composables
 
@@ -625,24 +666,207 @@ private fun LazyListScope.recentSearchStopsList(
 
 // region Previews
 
-@Preview
+@Preview(name = "SearchStop - List Loading")
 @Composable
-private fun PreviewSearchStopScreenLoading() {
+private fun PreviewSearchStopScreen_ListLoading() {
     PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                selectionType = StopSelectionType.LIST,
+                screen = SearchScreen.List(
+                    ListState.Results(
+                        results = persistentListOf(),
+                        isLoading = true
+                    )
+                ),
+                searchQuery = "Search Query",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(),
+            )
             SearchStopScreen(
                 searchQuery = "Search Query",
-                searchStopState = previewSearchStopState.copy(isLoading = true),
+                searchStopState = state,
+                onEvent = {}
             )
         }
     }
 }
 
-private val previewSearchStopState =
-    SearchStopState(
-        isLoading = false,
-        searchResults = persistentListOf(),
-    )
+@Preview(name = "SearchStop - List Results")
+@Composable
+private fun PreviewSearchStopScreen_ListResults() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val stopResult = SearchStopState.SearchResult.Stop(
+                stopName = "Central",
+                stopId = "stop_1",
+                transportModeType = persistentListOf(TransportMode.Train()),
+            )
+            val trip = SearchStopState.SearchResult.Trip(
+                tripId = "trip_1",
+                routeShortName = "T1",
+                headsign = "To Town Hall",
+                stops = persistentListOf(
+                    SearchStopState.TripStop(
+                        stopId = "stop_1",
+                        stopName = "Central",
+                        stopSequence = 1,
+                        transportModeType = persistentListOf(TransportMode.Train()),
+                    ),
+                    SearchStopState.TripStop(
+                        stopId = "stop_2",
+                        stopName = "Town Hall",
+                        stopSequence = 2,
+                        transportModeType = persistentListOf(TransportMode.Train()),
+                    ),
+                ),
+                transportMode = TransportMode.Train(),
+            )
+
+            val state = SearchStopState(
+                selectionType = StopSelectionType.LIST,
+                screen = SearchScreen.List(
+                    ListState.Results(
+                        results = persistentListOf(
+                            stopResult,
+                            trip
+                        ), isLoading = false
+                    )
+                ),
+                searchQuery = "Central",
+                searchResults = persistentListOf(stopResult, trip),
+                recentStops = persistentListOf(
+                    SearchStopState.StopResult(
+                        "Central",
+                        "stop_1",
+                        persistentListOf(TransportMode.Train())
+                    )
+                ),
+            )
+
+            SearchStopScreen(
+                searchQuery = "Central",
+                searchStopState = state,
+                onEvent = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "SearchStop - Recent")
+@Composable
+private fun PreviewSearchStopScreen_Recent() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val recent = listOf(
+                SearchStopState.StopResult(
+                    "Central",
+                    "stop_1",
+                    persistentListOf(TransportMode.Train())
+                ),
+                SearchStopState.StopResult(
+                    "Town Hall",
+                    "stop_2",
+                    persistentListOf(TransportMode.Train())
+                ),
+                SearchStopState.StopResult(
+                    "Wynyard",
+                    "stop_3",
+                    persistentListOf(TransportMode.Train())
+                ),
+            )
+            val state = SearchStopState(
+                selectionType = StopSelectionType.LIST,
+                screen = SearchScreen.List(ListState.Recent),
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = recent.toImmutableList(),
+            )
+            SearchStopScreen(
+                searchQuery = "",
+                searchStopState = state,
+                onEvent = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "SearchStop - No Match")
+@Composable
+private fun PreviewSearchStopScreen_NoMatch() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Metro().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                selectionType = StopSelectionType.LIST,
+                screen = SearchScreen.List(ListState.NoMatch),
+                searchQuery = "UnknownStop",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(),
+            )
+            SearchStopScreen(
+                searchQuery = "UnknownStop",
+                searchStopState = state,
+                onEvent = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "SearchStop - Error")
+@Composable
+private fun PreviewSearchStopScreen_Error() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                selectionType = StopSelectionType.LIST,
+                screen = SearchScreen.List(ListState.Error),
+                searchQuery = "Query",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(),
+            )
+            SearchStopScreen(
+                searchQuery = "Query",
+                searchStopState = state,
+                onEvent = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "SearchStop - Map Selected")
+@Composable
+private fun PreviewSearchStopScreen_Map() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.LightRail().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                selectionType = StopSelectionType.MAP,
+                screen = SearchScreen.Map,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(),
+            )
+            // Provide a camera for the map preview
+            val camera = rememberCameraState(
+                firstPosition = CameraPosition(
+                    target = Position(latitude = -33.8727, longitude = 151.2057),
+                    zoom = 13.0,
+                )
+            )
+            Column {
+                SearchStopScreen(
+                    searchQuery = "",
+                    searchStopState = state,
+                    onEvent = {}
+                )
+            }
+        }
+    }
+}
 
 // endregion

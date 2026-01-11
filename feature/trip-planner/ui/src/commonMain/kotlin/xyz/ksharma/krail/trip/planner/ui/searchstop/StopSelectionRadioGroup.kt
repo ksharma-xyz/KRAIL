@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 
 @Composable
 fun StopSelectionRadioGroup(
@@ -95,11 +96,6 @@ fun StopSelectionRadioGroup(
                 .klickable { onTypeSelected(StopSelectionType.MAP) },
         )
     }
-}
-
-enum class StopSelectionType {
-    LIST,
-    MAP
 }
 
 // region Previews

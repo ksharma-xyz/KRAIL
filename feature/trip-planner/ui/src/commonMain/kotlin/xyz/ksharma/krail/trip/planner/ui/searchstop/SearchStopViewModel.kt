@@ -23,8 +23,11 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 
 class SearchStopViewModel(
     private val analytics: Analytics,
@@ -75,27 +78,69 @@ class SearchStopViewModel(
                         fetchRecentStops()
                     }
             }
+
+            is SearchStopUiEvent.StopSelectionTypeClicked -> {
+                val newType = event.stopSelectionType
+                // update selection toggle
+                updateUiState { copy(selectionType = newType) }
+
+                // Decide screen to show:
+                if (newType == StopSelectionType.MAP) {
+                    // show map immediately; preserve query but do not run search
+                    updateUiState { copy(screen = SearchScreen.Map) }
+                } else {
+                    // LIST selected: if query is blank show recent, else show results (trigger a search)
+                    val currentQuery = _uiState.value.searchQuery
+                    if (currentQuery.isBlank()) {
+                        updateUiState { copy(screen = SearchScreen.List(ListState.Recent)) }
+                        // ensure recentStops are loaded (trigger fetch if needed)
+                        fetchRecentStopsJob?.cancel()
+                        fetchRecentStopsJob = viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(Dispatchers.IO) {
+                            fetchRecentStops()
+                        }
+                    } else {
+                        // trigger the search flow: reuse onSearchTextChanged to ensure same behaviour
+                        onSearchTextChanged(currentQuery)
+                    }
+                }
+            }
         }
     }
 
     private fun onSearchTextChanged(query: String) {
-        // log(("onSearchTextChanged: $query")
+        // update query in state first
+        updateUiState { copy(searchQuery = query) }
+
+        // If map is selected -> do not run search
+        val current = _uiState.value
+        if (current.selectionType == StopSelectionType.MAP) return
+
+        // Blank query -> show recent stops and cancel any ongoing search
+        if (query.isBlank()) {
+            searchJob?.cancel()
+            updateUiState { copy(screen = SearchScreen.List(ListState.Recent)) }
+
+            // ensure recentStops are loaded
+            fetchRecentStopsJob?.cancel()
+            fetchRecentStopsJob = viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(Dispatchers.IO) {
+                fetchRecentStops()
+            }
+            return
+        }
+
+        // Non-empty query -> set loading and start search
         updateUiState { displayLoading() }
+
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(100)
+            delay(100) // debounce / small throttle on VM side
             runCatching {
                 val stopResults = stopResultsManager.fetchStopResults(query)
                 updateUiState { displayData(stopResults) }
-                analytics.track(
-                    AnalyticsEvent.SearchStopQuery(query = query, resultsCount = stopResults.size),
-                )
+                analytics.track(AnalyticsEvent.SearchStopQuery(query = query, resultsCount = stopResults.size))
             }.getOrElse {
-                delay(1000) // buffer for API response before displaying error.
                 updateUiState { displayError() }
-                analytics.track(
-                    AnalyticsEvent.SearchStopQuery(query = query, isError = true),
-                )
+                analytics.track(AnalyticsEvent.SearchStopQuery(query = query, isError = true))
             }
         }
     }
@@ -108,17 +153,34 @@ class SearchStopViewModel(
 
     private fun SearchStopState.displayData(stopsResult: List<SearchStopState.SearchResult>) = copy(
         searchResults = stopsResult.toImmutableList(),
-        isLoading = false,
-        isError = false,
+        screen = if (stopsResult.isEmpty()) {
+            SearchScreen.List(ListState.NoMatch)
+        } else {
+            SearchScreen.List(
+                ListState.Results(
+                    results = stopsResult.toImmutableList(),
+                    isLoading = false,
+                    isError = false,
+                ),
+            )
+        },
     )
 
     private fun SearchStopState.displayLoading() =
-        copy(isLoading = true, isError = false)
+        copy(
+            // keep existing results (if any) but mark loading
+            screen = SearchScreen.List(
+                ListState.Results(
+                    results = searchResults,
+                    isLoading = true,
+                    isError = false,
+                ),
+            ),
+        )
 
     private fun SearchStopState.displayError() = copy(
-        isLoading = false,
         searchResults = persistentListOf(),
-        isError = true,
+        screen = SearchScreen.List(ListState.Error),
     )
 
     private fun updateUiState(block: SearchStopState.() -> SearchStopState) {

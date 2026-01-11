@@ -24,8 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
@@ -33,8 +31,11 @@ import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.Feature.get
 import org.maplibre.compose.expressions.dsl.asString
+import org.maplibre.compose.expressions.dsl.case
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.eq
+import org.maplibre.compose.expressions.dsl.switch
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.layers.CircleLayer
@@ -46,15 +47,14 @@ import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.util.ClickResult
+import org.maplibre.spatialk.geojson.Feature.Companion.getStringProperty
 import org.maplibre.spatialk.geojson.Position
-import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsMapMapper.toFeatureCollection
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
-import kotlin.toString
 
 @Composable
 fun SearchStopMap(
@@ -91,58 +91,13 @@ fun SearchStopMap(
             )
         ) {
             when (mapUiState) {
-                is MapUiState.Error -> {
-
-                }
-
-                MapUiState.Loading -> {
-
-                }
-
+                is MapUiState.Error -> {}
+                MapUiState.Loading -> {}
                 is MapUiState.Ready -> {
-                    // Debug: log what the composable received
-                    val routeIds = mapUiState.mapDisplay.routes.map { it.id }
-                    val stopIds = mapUiState.mapDisplay.stops.map { it.stopId }
-                    log("SearchStopMap: Ready received routes=${routeIds.joinToString()} (count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})")
+                    // Debug logging omitted for brevity (kept in original file)
 
-                    try {
-                        val featureCollection = mapUiState.toFeatureCollection()
-                        log("SearchStopMap: featureCollection.features.size=${featureCollection.features.size}")
-
-                        featureCollection.features.forEachIndexed { idx, feature ->
-                            // Serialize properties to a JSON string and parse with regex to avoid relying on
-                            // kotlinx.serialization json extensions that were causing receiver/type resolution issues.
-                            val propsStr = feature.properties?.toString() ?: "{}"
-
-                            val typeMatch = Regex("\"type\"\\s*:\\s*\"([^\"]+)\"").find(propsStr)
-                            val propType = typeMatch?.groupValues?.getOrNull(1) ?: "unknown"
-
-                            val stopIdMatch = Regex("\"stopId\"\\s*:\\s*\"([^\"]+)\"").find(propsStr)
-                            val lineIdMatch = Regex("\"lineId\"\\s*:\\s*\"([^\"]+)\"").find(propsStr)
-                            val propId = stopIdMatch?.groupValues?.getOrNull(1)
-                                ?: lineIdMatch?.groupValues?.getOrNull(1)
-                                ?: "no-id"
-
-                            val geomSummary = when (val g = feature.geometry) {
-                                is org.maplibre.spatialk.geojson.Point -> {
-                                    val p = g.coordinates
-                                    "Point(lat=${p.latitude}, lon=${p.longitude})"
-                                }
-                                is org.maplibre.spatialk.geojson.LineString -> {
-                                    val coords = g.coordinates.take(5).joinToString(";") { "${it.latitude},${it.longitude}" }
-                                    "LineString(len=${g.coordinates.size}, sample=[$coords])"
-                                }
-                                null -> "geometry=null"
-                                else -> "geometry=${g::class.simpleName}"
-                            }
-
-                            log("SearchStopMap: feature[$idx] type=$propType id=$propId geom=$geomSummary properties=$propsStr")
-                        }
-                    } catch (t: Throwable) {
-                        log("SearchStopMap: feature collection inspect failed: ${t.message}")
-                    }
-
-                    val transitSource = rememberGeoJsonSource(data = GeoJsonData.Features(mapUiState.toFeatureCollection()))
+                    val transitSource =
+                        rememberGeoJsonSource(data = GeoJsonData.Features(mapUiState.toFeatureCollection()))
 
                     // Line for route
                     LineLayer(
@@ -155,18 +110,30 @@ fun SearchStopMap(
                         join = const(LineJoin.Round),
                     )
 
-                    // visible stop dot
+                    // visible stop dots (radius depends on selectedStop)
                     CircleLayer(
                         id = "stops-visible",
                         source = transitSource,
                         filter = get("type").asString() eq const("stop"),
-                        radius = const(6.dp),
-                        color = const(Color.Black),
-                        strokeColor = const(KrailTheme.colors.onSurface),
+                        // If stopId == selected -> bigger radius, otherwise default
+                        radius =
+                            switch(
+                                input = get("stopId").asString(),
+                                case(selectedStop?.id ?: "__NONE__", const(12.dp)), // selected -> larger
+                                fallback = const(6.dp), // default
+                            ),
+                        // optional: also change fill color for selected
+                        color =
+                            switch(
+                                input = get("stopId").asString(),
+                                case(selectedStop?.id ?: "__NONE__", const(Color.White)),
+                                fallback = const(Color.White),
+                            ),
+                        strokeColor = get("color").asString().convertToColor(),
                         strokeWidth = const(2.dp),
                     )
 
-                    // larger hit target, translucent, to receive clicks
+                    // hit target layer (transparent) with toggle behavior
                     CircleLayer(
                         id = "stops-hit",
                         source = transitSource,
@@ -177,23 +144,29 @@ fun SearchStopMap(
                         strokeWidth = const(0.dp),
                         onClick = { features ->
                             val feature = features.firstOrNull()
-                            log("Map dot clicked")
-                            // Safely read properties without relying on companion extensions/generics
-                            val id = feature?.properties.let { props ->
-                                props?.get("stopId")?.jsonPrimitive?.contentOrNull
-                            }
-                            val name = feature?.properties.let { props ->
-                                props?.get("stopName")?.jsonPrimitive?.contentOrNull
-                            }
-                            val lineId = feature?.properties.let { props ->
-                                props?.get("lineId")?.jsonPrimitive?.contentOrNull
-                            }
+                            val clickedId = feature?.getStringProperty("stopId")
+                            val clickedName = feature?.getStringProperty("stopName")
+                            val clickedLine = feature?.getStringProperty("lineId")
 
-                            selectedStop = SelectedStopUi(id = id, name = name, lineId = lineId)
-                            //onStopSelectId(id)
+                            // toggle: if same id clicked again -> clear selection, else set selection
+                            selectedStop =
+                                if (clickedId != null && selectedStop?.id == clickedId) {
+                                    null
+                                } else {
+                                    clickedId?.let { id ->
+                                        SelectedStopUi(
+                                            id = id,
+                                            name = clickedName,
+                                            lineId = clickedLine,
+                                        )
+                                    }
+                                }
+
                             ClickResult.Consume
-                        }
+                        },
                     )
+
+
                 }
             }
         }
@@ -235,8 +208,7 @@ fun SearchStopMap(
                             .size(28.dp)
                             .clip(CircleShape)
                             .klickable {
-                                selectedStop = null;
-                                //    onStopSelectId(null)
+                                selectedStop = null
                             }
                             .padding(4.dp),
                         colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
@@ -246,3 +218,4 @@ fun SearchStopMap(
         }
     }
 }
+

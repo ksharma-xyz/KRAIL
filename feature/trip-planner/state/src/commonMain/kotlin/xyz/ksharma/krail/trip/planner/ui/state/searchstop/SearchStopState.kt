@@ -11,7 +11,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
  * - List: render a list UI whose inner state is expressed by ListState
  */
 sealed interface SearchScreen {
-    data object Map : SearchScreen
+    data class Map(val mapUiState: MapUiState = MapUiState.Ready()) : SearchScreen
     data class List(val listState: ListState) : SearchScreen
 }
 
@@ -54,12 +54,7 @@ data class SearchStopState(
     val searchQuery: String = "",
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
-)
-{
-    // UI-friendly helpers if needed:
-    val isMapSelected: Boolean get() = selectionType == StopSelectionType.MAP
-    val isListSelected: Boolean get() = selectionType == StopSelectionType.LIST
-
+) {
     /**
      * Internal sealed classes describing results / recent items.
      * Keep shape compatible with your existing code (StopResult / Trip / Stop).

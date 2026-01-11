@@ -1,33 +1,24 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -38,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -52,37 +42,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.maplibre.compose.camera.CameraPosition
-import org.maplibre.compose.camera.CameraState
 import org.maplibre.compose.camera.rememberCameraState
-import org.maplibre.compose.expressions.dsl.Feature.get
-import org.maplibre.compose.expressions.dsl.asString
-import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.eq
-import org.maplibre.compose.expressions.value.LineCap
-import org.maplibre.compose.expressions.value.LineJoin
-import org.maplibre.compose.layers.CircleLayer
-import org.maplibre.compose.layers.LineLayer
-import org.maplibre.compose.map.MapOptions
-import org.maplibre.compose.map.MaplibreMap
-import org.maplibre.compose.map.OrnamentOptions
-import org.maplibre.compose.sources.GeoJsonData
-import org.maplibre.compose.sources.rememberGeoJsonSource
-import org.maplibre.compose.style.BaseStyle
-import org.maplibre.compose.util.ClickResult
-import org.maplibre.spatialk.geojson.Feature
-import org.maplibre.spatialk.geojson.Feature.Companion.getStringProperty
-import org.maplibre.spatialk.geojson.FeatureCollection
-import org.maplibre.spatialk.geojson.LineString
-import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
@@ -97,7 +63,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
-import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
@@ -105,7 +70,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class)
@@ -151,13 +115,6 @@ fun SearchStopScreen(
             }
             .collectLatest {}
     }
-
-    val camera = rememberCameraState(
-        firstPosition = CameraPosition(
-            target = Position(latitude = -33.8727, longitude = 151.2057),
-            zoom = 13.0,
-        ),
-    )
 
     Column(
         modifier = modifier
@@ -263,7 +220,7 @@ fun SearchStopScreen(
             is SearchScreen.Map -> {
                 SearchStopMap(
                     modifier = Modifier.weight(1f),
-                    cameraState = camera
+                    mapUiState = screen.mapUiState,
                 )
             }
 
@@ -324,206 +281,6 @@ fun SearchStopScreen(
         }
     }
 }
-
-@Composable
-fun SearchStopMap(
-    cameraState: CameraState,
-    modifier: Modifier = Modifier,
-) {
-    // Dummy in-memory geojson-like data (hardcoded for now; you can extend it).
-    // Contract:
-    // - one LineString feature with type="route"
-    // - N Point features with type="stop" (rendered as white dots)
-    // - onClick reads properties and shows a small overlay UI
-
-    val routeColor = Color(0xFF0055FF)
-
-    val routeFeature = Feature(
-        geometry = LineString(
-            listOf(
-                Position(151.200, -33.875),
-                Position(151.206, -33.873),
-                Position(151.212, -33.870),
-                Position(151.218, -33.867),
-            ),
-        ),
-        properties =
-            buildJsonObject {
-                put("type", JsonPrimitive("route"))
-                put("lineId", JsonPrimitive("T1"))
-                put("color", JsonPrimitive("#0055FF"))
-            },
-    )
-
-    val stopFeatures: List<Feature<*, *>> =
-        listOf(
-            Feature(
-                geometry = Point(Position(151.206, -33.873)),
-                properties =
-                    buildJsonObject {
-                        put("type", JsonPrimitive("stop"))
-                        put("stopId", JsonPrimitive("stop_1"))
-                        put("stopName", JsonPrimitive("Central"))
-                        put("lineId", JsonPrimitive("T1"))
-                    },
-            ),
-            Feature(
-                geometry = Point(Position(151.212, -33.870)),
-                properties =
-                    buildJsonObject {
-                        put("type", JsonPrimitive("stop"))
-                        put("stopId", JsonPrimitive("stop_2"))
-                        put("stopName", JsonPrimitive("Town Hall"))
-                        put("lineId", JsonPrimitive("T1"))
-                    },
-            ),
-            Feature(
-                geometry = Point(Position(151.218, -33.867)),
-                properties =
-                    buildJsonObject {
-                        put("type", JsonPrimitive("stop"))
-                        put("stopId", JsonPrimitive("stop_3"))
-                        put("stopName", JsonPrimitive("Wynyard"))
-                        put("lineId", JsonPrimitive("T1"))
-                    },
-            ),
-        )
-
-    val featureCollection: FeatureCollection<*, *> =
-        FeatureCollection(
-            features = (listOf(routeFeature) + stopFeatures) as List<Feature<*, *>>,
-        )
-
-    data class SelectedStopUi(
-        val id: String?,
-        val name: String?,
-        val lineId: String?,
-    )
-
-    var selectedStop by remember { mutableStateOf<SelectedStopUi?>(null) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth(),
-    ) {
-        MaplibreMap(
-            modifier = modifier.fillMaxSize(),
-            cameraState = cameraState,
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
-            options =
-                MapOptions(
-                    ornamentOptions =
-                        OrnamentOptions(
-                            padding = PaddingValues(0.dp),
-                            isLogoEnabled = false,
-                            logoAlignment = Alignment.BottomStart,
-                            isAttributionEnabled = true,
-                            attributionAlignment = Alignment.BottomEnd,
-                            isCompassEnabled = true,
-                            compassAlignment = Alignment.TopEnd,
-                            isScaleBarEnabled = false,
-                            scaleBarAlignment = Alignment.TopStart,
-                        ),
-                ),
-        ) {
-            val transitSource =
-                rememberGeoJsonSource(
-                    data = GeoJsonData.Features(featureCollection),
-                )
-
-            LineLayer(
-                id = "route",
-                source = transitSource,
-                filter = get("type").asString() eq const("route"),
-                color = const(routeColor),
-                width = const(10.dp),
-                cap = const(LineCap.Round),
-                join = const(LineJoin.Round),
-            )
-
-            CircleLayer(
-                id = "stops-visible",
-                source = transitSource,
-                filter = get("type").asString() eq const("stop"),
-                radius = const(6.dp),
-                color = const(Color.White),
-                strokeColor = const(routeColor),
-                strokeWidth = const(2.dp),
-            )
-
-            CircleLayer(
-                id = "stops-hit",
-                source = transitSource,
-                filter = get("type").asString() eq const("stop"),
-                radius = const(18.dp),
-                color = const(Color.White.copy(alpha = 0.01f)),
-                strokeColor = const(Color.Transparent),
-                strokeWidth = const(0.dp),
-                onClick = { features ->
-                    val feature = features.firstOrNull()
-                    log("Click dot")
-                    selectedStop =
-                        feature?.let {
-                            SelectedStopUi(
-                                id = it.getStringProperty("stopId"),
-                                name = it.getStringProperty("stopName"),
-                                lineId = it.getStringProperty("lineId"),
-                            )
-                        }
-                    log("selectedStop : $selectedStop")
-                    ClickResult.Consume
-                },
-            )
-        }
-
-        if (selectedStop != null) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .systemBarsPadding()
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                        .background(KrailTheme.colors.surface)
-                        .padding(vertical = 24.dp, horizontal = 16.dp)
-                        .align(Alignment.BottomCenter),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = selectedStop?.name ?: "Selected stop",
-                            style = KrailTheme.typography.titleMedium,
-                        )
-                        Text(
-                            text = listOfNotNull(
-                                selectedStop?.id,
-                                selectedStop?.lineId
-                            ).joinToString(" • "),
-                            style = KrailTheme.typography.bodySmall,
-                            color = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
-                        )
-                    }
-
-                    Image(
-                        painter = painterResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
-                        modifier =
-                            Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .klickable { selectedStop = null }
-                                .padding(4.dp),
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                    )
-                }
-            }
-        }
-    }
-}
-
 
 // region Separate Composables
 
@@ -846,7 +603,7 @@ private fun PreviewSearchStopScreen_Map() {
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
                 selectionType = StopSelectionType.MAP,
-                screen = SearchScreen.Map,
+                screen = SearchScreen.Map(),
                 searchQuery = "",
                 searchResults = persistentListOf(),
                 recentStops = persistentListOf(),

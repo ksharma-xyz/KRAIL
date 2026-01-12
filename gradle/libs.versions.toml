@@ -156,7 +156,7 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight" }
 firebase-crashlyticsPlugin = { id = "com.google.firebase.crashlytics", version = "3.0.6" }
 firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version = "2.0.2" }
-wire = { id = "com.squareup.wire", version = "5.4.0" }
+wire = { id = "com.squareup.wire", version = "5.5.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 spmForKmp = { id = "io.github.frankois944.spmForKmp", version.ref = "spmForKmp" }

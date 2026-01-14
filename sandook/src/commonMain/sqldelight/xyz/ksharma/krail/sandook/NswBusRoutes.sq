@@ -77,19 +77,19 @@ DELETE FROM NswBusRouteGroups;
 selectRouteByShortName:
 SELECT routeShortName
 FROM NswBusRouteGroups
-WHERE routeShortName = :routeShortName;
+WHERE routeShortName = :routeShortName COLLATE NOCASE;
 
 -- Select all variants for a specific route --
 selectRouteVariantsByShortName:
 SELECT routeId, routeShortName, routeName
 FROM NswBusRouteVariants
-WHERE routeShortName = :routeShortName;
+WHERE routeShortName = :routeShortName COLLATE NOCASE;
 
 -- Select all trips for a specific route variant --
 selectTripsByRouteId:
 SELECT tripId, routeId, headsign
 FROM NswBusTripOptions
-WHERE routeId = :routeId;
+WHERE routeId = :routeId COLLATE NOCASE;
 
 -- Select all trips for multiple route variants (batch query to avoid N+1 problem) --
 selectTripsByRouteIds:

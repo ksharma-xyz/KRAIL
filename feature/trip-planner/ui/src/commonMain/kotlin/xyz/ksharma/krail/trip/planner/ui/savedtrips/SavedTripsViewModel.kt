@@ -290,7 +290,7 @@ class SavedTripsViewModel(
     private fun observeSavedTrips() {
         log("onStart - observeSavedTrips called")
         observeSavedTripsJob?.cancel()
-        observeSavedTripsJob = viewModelScope.launch(ioDispatcher) {
+        observeSavedTripsJob = viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
             updateUiState { copy(isSavedTripsLoading = true) }
             sandook.observeAllTrips()
                 .distinctUntilChanged()

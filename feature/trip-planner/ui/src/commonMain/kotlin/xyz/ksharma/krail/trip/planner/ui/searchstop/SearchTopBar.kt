@@ -1,0 +1,174 @@
+package xyz.ksharma.krail.trip.planner.ui.searchstop
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.NavActionButton
+import xyz.ksharma.krail.taj.components.TextField
+import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
+
+@Composable
+fun SearchTopBar(
+    placeholderText: String,
+    focusRequester: FocusRequester,
+    keyboard: SoftwareKeyboardController?,
+    onTypeSelected: (StopSelectionType) -> Unit,
+    onBackClick: () -> Unit,
+    onTextChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    selectionType: StopSelectionType = StopSelectionType.LIST,
+) {
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val showRadioGroup = !imeVisible
+
+    Row(
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .windowInsetsPadding(WindowInsets.ime)
+            .padding(vertical = 12.dp)
+            .padding(horizontal = 16.dp)
+            .animateContentSize(),
+    ) {
+        TextField(
+            placeholder = placeholderText,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+            maxLength = 30,
+            filter = { input -> input.filter { it.isLetterOrDigit() || it.isWhitespace() } },
+            leadingIcon = {
+                NavActionButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    iconContentDescription = "Back",
+                    onClick = {
+                        keyboard?.hide()
+                        focusRequester.freeFocus()
+                        onBackClick()
+                    },
+                )
+            },
+        ) { value ->
+            onTextChanged(value.toString())
+        }
+
+        // Reserve the TextField height for the radio group so hiding it doesn't change layout height.
+        Box(modifier = Modifier.height(48.dp)) {
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showRadioGroup,
+                enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
+                exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
+            ) {
+                StopSelectionRadioGroup(
+                    selectionType = selectionType,
+                    onTypeSelected = onTypeSelected,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+            }
+        }
+    }
+}
+
+// region Previews
+
+@Preview(name = "SearchTopBar - List Selected")
+@Composable
+private fun PreviewSearchTopBar_List() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val focusRequester = remember { FocusRequester() }
+            // Do not add external horizontal padding here
+            SearchTopBar(
+                placeholderText = "Station",
+                focusRequester = focusRequester,
+                keyboard = null,
+                selectionType = StopSelectionType.LIST,
+                onTypeSelected = {},
+                onBackClick = {},
+                onTextChanged = {},
+                modifier = Modifier.height(72.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "SearchTopBar - Map Selected")
+@Composable
+private fun PreviewSearchTopBar_Map() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Metro().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val focusRequester = remember { FocusRequester() }
+            SearchTopBar(
+                placeholderText = "Station",
+                focusRequester = focusRequester,
+                keyboard = null,
+                selectionType = StopSelectionType.MAP,
+                onTypeSelected = {},
+                onBackClick = {},
+                onTextChanged = {},
+                modifier = Modifier.height(72.dp)
+            )
+        }
+    }
+}
+
+@Preview(name = "SearchTopBar - Compact (simulate IME)")
+@Composable
+private fun PreviewSearchTopBar_Compact() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val focusRequester = remember { FocusRequester() }
+            // Use a fixed width container to simulate a compact layout instead of adding horizontal padding
+            Box(modifier = Modifier.width(360.dp).height(72.dp)) {
+                SearchTopBar(
+                    placeholderText = "Station",
+                    focusRequester = focusRequester,
+                    keyboard = null,
+                    selectionType = StopSelectionType.LIST,
+                    onTypeSelected = {},
+                    onBackClick = {},
+                    onTextChanged = {},
+                    modifier = Modifier.fillMaxSize() // let the bar use its internal padding
+                )
+            }
+        }
+    }
+}
+
+// endregion

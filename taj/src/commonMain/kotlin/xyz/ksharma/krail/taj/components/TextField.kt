@@ -96,7 +96,6 @@ fun TextField(
             state = textFieldState,
             enabled = enabled,
             modifier = modifier
-                .fillMaxWidth()
                 .height(TextFieldHeight),
             // This will change the colors of the innerTextField() composable.
             textStyle = textStyle

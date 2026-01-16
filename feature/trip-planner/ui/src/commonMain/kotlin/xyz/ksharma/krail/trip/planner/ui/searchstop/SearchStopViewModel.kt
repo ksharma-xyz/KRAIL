@@ -23,8 +23,16 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.RouteFeature
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopFeature
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 
 class SearchStopViewModel(
     private val analytics: Analytics,
@@ -75,27 +83,78 @@ class SearchStopViewModel(
                         fetchRecentStops()
                     }
             }
+
+            is SearchStopUiEvent.StopSelectionTypeClicked -> {
+                onStopSelectionTypeClicked(event.stopSelectionType)
+            }
         }
     }
 
     private fun onSearchTextChanged(query: String) {
-        // log(("onSearchTextChanged: $query")
+        // update query in state first
+        updateUiState { copy(searchQuery = query) }
+
+        // If map is selected -> do not run search
+        val current = _uiState.value
+        if (current.selectionType == StopSelectionType.MAP) return
+
+        // Blank query -> show recent stops and cancel any ongoing search
+        if (query.isBlank()) {
+            searchJob?.cancel()
+            updateUiState { copy(screen = SearchScreen.List(ListState.Recent)) }
+
+            // ensure recentStops are loaded
+            fetchRecentStopsJob?.cancel()
+            fetchRecentStopsJob =
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(Dispatchers.IO) {
+                    fetchRecentStops()
+                }
+            return
+        }
+
+        // Non-empty query -> set loading and start search
         updateUiState { displayLoading() }
+
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(100)
+            delay(100) // debounce / small throttle on VM side
             runCatching {
                 val stopResults = stopResultsManager.fetchStopResults(query)
                 updateUiState { displayData(stopResults) }
                 analytics.track(
-                    AnalyticsEvent.SearchStopQuery(query = query, resultsCount = stopResults.size),
+                    AnalyticsEvent.SearchStopQuery(
+                        query = query,
+                        resultsCount = stopResults.size
+                    )
                 )
             }.getOrElse {
-                delay(1000) // buffer for API response before displaying error.
                 updateUiState { displayError() }
-                analytics.track(
-                    AnalyticsEvent.SearchStopQuery(query = query, isError = true),
-                )
+                analytics.track(AnalyticsEvent.SearchStopQuery(query = query, isError = true))
+            }
+        }
+    }
+
+    private fun onStopSelectionTypeClicked(stopSelectionType: StopSelectionType) {
+        // update selection toggle
+        updateUiState { copy(selectionType = stopSelectionType) }
+
+        // Decide screen to show:
+        if (stopSelectionType == StopSelectionType.MAP) {
+            loadStaticMapData()
+        } else {
+            // LIST selected: if query is blank show recent, else show results (trigger a search)
+            val currentQuery = _uiState.value.searchQuery
+            if (currentQuery.isBlank()) {
+                updateUiState { copy(screen = SearchScreen.List(ListState.Recent)) }
+                // ensure recentStops are loaded (trigger fetch if needed)
+                fetchRecentStopsJob?.cancel()
+                fetchRecentStopsJob =
+                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(Dispatchers.IO) {
+                        fetchRecentStops()
+                    }
+            } else {
+                // trigger the search flow: reuse onSearchTextChanged to ensure same behaviour
+                onSearchTextChanged(currentQuery)
             }
         }
     }
@@ -108,18 +167,91 @@ class SearchStopViewModel(
 
     private fun SearchStopState.displayData(stopsResult: List<SearchStopState.SearchResult>) = copy(
         searchResults = stopsResult.toImmutableList(),
-        isLoading = false,
-        isError = false,
+        screen = if (stopsResult.isEmpty()) {
+            SearchScreen.List(ListState.NoMatch)
+        } else {
+            SearchScreen.List(
+                ListState.Results(
+                    results = stopsResult.toImmutableList(),
+                    isLoading = false,
+                    isError = false,
+                ),
+            )
+        },
     )
 
     private fun SearchStopState.displayLoading() =
-        copy(isLoading = true, isError = false)
+        copy(
+            // keep existing results (if any) but mark loading
+            screen = SearchScreen.List(
+                ListState.Results(
+                    results = searchResults,
+                    isLoading = true,
+                    isError = false,
+                ),
+            ),
+        )
 
     private fun SearchStopState.displayError() = copy(
-        isLoading = false,
         searchResults = persistentListOf(),
-        isError = true,
+        screen = SearchScreen.List(ListState.Error),
     )
+
+    // region Maps related methods
+
+    private fun loadStaticMapData() {
+        // Build platform-agnostic route & stop data here (all static data comes from VM)
+        val route = RouteFeature(
+            id = "T1",
+            colorHex = "#0055FF",
+            points = listOf(
+                LatLng(-33.875, 151.200),
+                LatLng(-33.873, 151.206),
+                LatLng(-33.870, 151.212),
+                LatLng(-33.867, 151.218),
+            )
+        )
+
+        val stops = listOf(
+            StopFeature(
+                stopId = "stop_1",
+                stopName = "Central",
+                lineId = "T1",
+                position = LatLng(-33.873, 151.206)
+            ),
+            StopFeature(
+                stopId = "stop_2",
+                stopName = "Town Hall",
+                lineId = "T1",
+                position = LatLng(-33.870, 151.212)
+            ),
+            StopFeature(
+                stopId = "stop_3",
+                stopName = "Wynyard",
+                lineId = "T1",
+                position = LatLng(-33.867, 151.218)
+            )
+        )
+
+        // Create MapDisplay and MapUiState.Ready with the new payload
+        val ready = MapUiState.Ready(
+            mapDisplay = MapDisplay(
+                routes = listOf(route),
+                stops = stops,
+                selectedStop = null
+            )
+        )
+
+        _uiState.update { current ->
+            val newScreen = when (val s = current.screen) {
+                is SearchScreen.Map -> s.copy(mapUiState = ready)
+                else -> SearchScreen.Map(mapUiState = ready)
+            }
+            current.copy(screen = newScreen, selectionType = StopSelectionType.MAP)
+        }
+    }
+
+    // endregion
 
     private fun updateUiState(block: SearchStopState.() -> SearchStopState) {
         _uiState.update(block)

@@ -37,7 +37,6 @@ sealed class MapUiState {
     data class Error(val message: String?) : MapUiState()
 }
 
-
 data class MapDisplay(
     val routes: List<RouteFeature> = emptyList(),
     val stops: List<StopFeature> = emptyList(),

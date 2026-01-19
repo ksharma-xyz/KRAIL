@@ -26,7 +26,7 @@ interface SandookPreferences {
         const val NSW_STOPS_VERSION = 26L
 
         // Increment this when bundling new bus routes data
-        const val NSW_BUS_ROUTES_VERSION = 4L
+        const val NSW_BUS_ROUTES_VERSION = 5L
 
         const val KEY_NSW_STOPS_VERSION = "KEY_NSW_STOPS_VERSION"
         const val KEY_HAS_SEEN_INTRO = "KEY_HAS_SEEN_INTRO"

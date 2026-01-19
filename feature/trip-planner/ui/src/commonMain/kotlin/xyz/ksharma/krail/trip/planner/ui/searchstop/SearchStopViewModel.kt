@@ -134,8 +134,8 @@ class SearchStopViewModel(
                 analytics.track(
                     AnalyticsEvent.SearchStopQuery(
                         query = query,
-                        resultsCount = stopResults.size
-                    )
+                        resultsCount = stopResults.size,
+                    ),
                 )
             }.getOrElse {
                 updateUiState { displayError() }
@@ -213,6 +213,7 @@ class SearchStopViewModel(
 
     // region Maps related methods
 
+    @Suppress("MagicNumber")
     private fun loadStaticMapData() {
         // Build platform-agnostic route & stop data here (all static data comes from VM)
         val route = RouteFeature(
@@ -223,7 +224,7 @@ class SearchStopViewModel(
                 LatLng(-33.873, 151.206),
                 LatLng(-33.870, 151.212),
                 LatLng(-33.867, 151.218),
-            )
+            ),
         )
 
         val stops = listOf(
@@ -231,20 +232,20 @@ class SearchStopViewModel(
                 stopId = "stop_1",
                 stopName = "Central",
                 lineId = "T1",
-                position = LatLng(-33.873, 151.206)
+                position = LatLng(-33.873, 151.206),
             ),
             StopFeature(
                 stopId = "stop_2",
                 stopName = "Town Hall",
                 lineId = "T1",
-                position = LatLng(-33.870, 151.212)
+                position = LatLng(-33.870, 151.212),
             ),
             StopFeature(
                 stopId = "stop_3",
                 stopName = "Wynyard",
                 lineId = "T1",
-                position = LatLng(-33.867, 151.218)
-            )
+                position = LatLng(-33.867, 151.218),
+            ),
         )
 
         // Create MapDisplay and MapUiState.Ready with the new payload
@@ -252,8 +253,8 @@ class SearchStopViewModel(
             mapDisplay = MapDisplay(
                 routes = listOf(route),
                 stops = stops,
-                selectedStop = null
-            )
+                selectedStop = null,
+            ),
         )
 
         _uiState.update { current ->

@@ -87,8 +87,8 @@ fun SearchStopMap(
                     compassAlignment = Alignment.TopEnd,
                     isScaleBarEnabled = false,
                     scaleBarAlignment = Alignment.TopStart,
-                )
-            )
+                ),
+            ),
         ) {
             when (mapUiState) {
                 is MapUiState.Error -> {}
@@ -117,18 +117,18 @@ fun SearchStopMap(
                         filter = get("type").asString() eq const("stop"),
                         // If stopId == selected -> bigger radius, otherwise default
                         radius =
-                            switch(
-                                input = get("stopId").asString(),
-                                case(selectedStop?.id ?: "__NONE__", const(12.dp)), // selected -> larger
-                                fallback = const(6.dp), // default
-                            ),
+                        switch(
+                            input = get("stopId").asString(),
+                            case(selectedStop?.id ?: "__NONE__", const(12.dp)), // selected -> larger
+                            fallback = const(6.dp), // default
+                        ),
                         // optional: also change fill color for selected
                         color =
-                            switch(
-                                input = get("stopId").asString(),
-                                case(selectedStop?.id ?: "__NONE__", const(Color.White)),
-                                fallback = const(Color.White),
-                            ),
+                        switch(
+                            input = get("stopId").asString(),
+                            case(selectedStop?.id ?: "__NONE__", const(Color.White)),
+                            fallback = const(Color.White),
+                        ),
                         strokeColor = get("color").asString().convertToColor(),
                         strokeWidth = const(2.dp),
                     )
@@ -165,8 +165,6 @@ fun SearchStopMap(
                             ClickResult.Consume
                         },
                     )
-
-
                 }
             }
         }
@@ -194,7 +192,7 @@ fun SearchStopMap(
                         Text(
                             text = listOfNotNull(
                                 selectedStop?.id,
-                                selectedStop?.lineId
+                                selectedStop?.lineId,
                             ).joinToString(" • "),
                             style = KrailTheme.typography.bodySmall,
                             color = KrailTheme.colors.onSurface.copy(alpha = 0.7f),
@@ -218,4 +216,3 @@ fun SearchStopMap(
         }
     }
 }
-

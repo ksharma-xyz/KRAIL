@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,15 +29,15 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 @Composable
 fun SearchListHeader(
-    height: Dp = 32.dp,
     modifier: Modifier = Modifier,
+    height: Dp = 32.dp,
     visibleControl: Boolean = false,
     minVisibleMillis: Long = 600L,
-    content: @Composable () -> Unit = {}
+    content: @Composable () -> Unit = {},
 ) {
     // internalVisible enforces "min visible time" behaviour
     val internalVisibleState = remember { mutableStateOf(false) }
-    val lastShownAt = remember { mutableStateOf(0L) }
+    val lastShownAt = remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(visibleControl) {
         val now = Clock.System.now().toEpochMilliseconds()
@@ -58,13 +59,13 @@ fun SearchListHeader(
 
     Box(
         modifier = modifier.height(height),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         // center the provided content both vertically and horizontally
         AnimatedVisibility(
             visible = internalVisibleState.value,
             enter = fadeIn(),
-            exit = fadeOut()
+            exit = fadeOut(),
         ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 content()
@@ -81,8 +82,8 @@ fun SearchListHeader(
 @Composable
 fun SearchingDotsHeader(
     isLoading: Boolean,
-    height: Dp = 32.dp,
     modifier: Modifier = Modifier,
+    height: Dp = 32.dp,
     minVisibleMillis: Long = 600L,
 ) {
     SearchListHeader(

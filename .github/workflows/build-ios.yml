@@ -15,10 +15,13 @@ jobs:
           echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
           echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
 
-      - name: set up JDK
+      # -----------------------------
+      # Java / Ruby / Gradle
+      # -----------------------------
+      - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: 21
 
       - uses: ruby/setup-ruby@v1
@@ -31,21 +34,50 @@ jobs:
         with:
           cache-disabled: true
 
-      - name: Firebase iOS - GoogleService-Info.plist file
+      # -----------------------------
+      # Ensure correct Xcode
+      # -----------------------------
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version
+
+      # -----------------------------
+      # Firebase config
+      # -----------------------------
+      - name: Firebase iOS - GoogleService-Info.plist
         env:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
-        run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+        run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
 
+      # -----------------------------
+      # 🔴 CRITICAL FIX: build SPM
+      # -----------------------------
+      - name: Build Swift Package (spmForKmp / MapLibre)
+        working-directory: feature/trip-planner/ui
+        run: |
+          xcodebuild -resolvePackageDependencies
+
+          xcodebuild \
+            -scheme spmMaplibre \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -configuration Release \
+            build
+
+      # -----------------------------
+      # iOS app build (no signing)
+      # -----------------------------
       - name: Build iOS App - Debug (Without Code Signing)
         env:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
         run: |
-          xcodebuild -project iosApp/iosApp.xcodeproj \
-                     -scheme iosApp \
-                     -configuration Debug \
-                     OBJROOT=$GITHUB_WORKSPACE/build/ios \
-                     SYMROOT=$GITHUB_WORKSPACE/build/ios \
-                     CODE_SIGN_IDENTITY="" \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGNING_ALLOWED=NO \
-                     -destination 'generic/platform=iOS Simulator'
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Debug \
+            OBJROOT=$GITHUB_WORKSPACE/build/ios \
+            SYMROOT=$GITHUB_WORKSPACE/build/ios \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -destination 'generic/platform=iOS Simulator'

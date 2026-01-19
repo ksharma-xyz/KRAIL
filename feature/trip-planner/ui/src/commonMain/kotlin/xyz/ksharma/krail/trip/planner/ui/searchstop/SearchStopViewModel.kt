@@ -23,8 +23,6 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
-import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
-import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
@@ -40,7 +38,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 class SearchStopViewModel(
     private val analytics: Analytics,
     private val stopResultsManager: StopResultsManager,
-    private val flag: Flag,
+    val flag: Flag,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -50,10 +48,13 @@ class SearchStopViewModel(
             checkMapsAvailability()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
-    private val isMapsAvailable: Boolean by lazy {
-        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
-            .asBoolean(fallback = false)
-    }
+    private val isMapsAvailable: Boolean = false
+    /*
+        by lazy {
+            flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
+                .asBoolean(fallback = false)
+        }
+     */
 
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null

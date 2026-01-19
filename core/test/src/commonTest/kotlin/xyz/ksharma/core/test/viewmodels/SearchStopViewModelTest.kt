@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
+import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
@@ -18,8 +19,11 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -36,6 +40,7 @@ class SearchStopViewModelTest {
     private val tripPlanningService = FakeTripPlanningService()
     private lateinit var viewModel: SearchStopViewModel
     private val fakeStopResultsManager = FakeStopResultsManager()
+    private val fakeFlag = FakeFlag()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -45,6 +50,7 @@ class SearchStopViewModelTest {
         viewModel = SearchStopViewModel(
             analytics = fakeAnalytics,
             stopResultsManager = fakeStopResultsManager,
+            flag = fakeFlag,
         )
     }
 
@@ -57,12 +63,12 @@ class SearchStopViewModelTest {
     fun `GIVEN SearchStopViewModel WHEN uiState is collected THEN analytics event is tracked`() =
         runTest {
             viewModel.uiState.test {
-                awaitItem().run {
-                    assertFalse(isLoading)
-                    assertFalse(isError)
-                    assertTrue(searchResults.isEmpty())
-                    assertTrue(recentStops.isEmpty())
-                }
+                val state = awaitItem()
+                assertTrue(state.searchResults.isEmpty())
+                assertTrue(state.recentStops.isEmpty())
+                // Initial screen should be List with Recent state
+                assertIs<SearchScreen.List>(state.screen)
+                assertEquals(StopSelectionType.LIST, state.selectionType)
 
                 advanceUntilIdle()
                 assertScreenViewEventTracked(
@@ -115,17 +121,22 @@ class SearchStopViewModelTest {
                 skipItems(1) // initial state
 
                 viewModel.onEvent(SearchStopUiEvent.SearchTextChanged(query))
-                awaitItem().run {
-                    assertTrue(isLoading)
-                    assertFalse(isError)
-                    assertTrue(searchResults.isEmpty())
-                }
 
-                awaitItem().run {
-                    assertFalse(isLoading)
-                    assertTrue(isError)
-                    assertTrue(searchResults.isEmpty())
-                }
+                // Loading state - should be SearchScreen.List with Results containing isLoading=true
+                val loadingState = awaitItem()
+                val loadingScreen = loadingState.screen
+                assertIs<SearchScreen.List>(loadingScreen)
+                val loadingListState = loadingScreen.listState
+                assertIs<ListState.Results>(loadingListState)
+                assertTrue(loadingListState.isLoading)
+                assertFalse(loadingListState.isError)
+
+                // Error state - should be SearchScreen.List with Error state
+                val errorState = awaitItem()
+                val errorScreen = errorState.screen
+                assertIs<SearchScreen.List>(errorScreen)
+                assertIs<ListState.Error>(errorScreen.listState)
+                assertTrue(errorState.searchResults.isEmpty())
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -251,8 +262,6 @@ class SearchStopViewModelTest {
                 // THEN - Verify recent stops are cleared
                 awaitItem().run {
                     assertTrue(recentStops.isEmpty())
-                    assertFalse(isLoading)
-                    assertFalse(isError)
                 }
 
                 cancelAndIgnoreRemainingEvents()
@@ -273,7 +282,8 @@ class SearchStopViewModelTest {
             // WHEN - Create a fresh ViewModel
             val vm = SearchStopViewModel(
                 analytics = fakeAnalytics,
-                stopResultsManager = fakeStopResultsManager
+                stopResultsManager = fakeStopResultsManager,
+                flag = fakeFlag,
             )
 
             // THEN - Initial state should not include recents (screen triggers refresh)

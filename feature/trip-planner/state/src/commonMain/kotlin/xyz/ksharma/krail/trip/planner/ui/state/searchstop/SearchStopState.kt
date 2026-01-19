@@ -50,6 +50,7 @@ enum class StopSelectionType { LIST, MAP }
  */
 data class SearchStopState(
     val selectionType: StopSelectionType = StopSelectionType.LIST,
+    val isMapsAvailable: Boolean = false,
     val screen: SearchScreen = SearchScreen.List(ListState.Recent),
     val searchQuery: String = "",
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),

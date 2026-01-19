@@ -196,6 +196,7 @@ fun SearchStopScreen(
             keyboard = keyboard,
             // pass selection toggle from state (map if needed to composable enum)
             selectionType = searchStopState.selectionType, // or map to UI enum if different type
+            isMapAvailable = searchStopState.isMapsAvailable,
             onTypeSelected = { type ->
                 // user tapped list/map -> forward to viewmodel
                 onEvent(SearchStopUiEvent.StopSelectionTypeClicked(type))

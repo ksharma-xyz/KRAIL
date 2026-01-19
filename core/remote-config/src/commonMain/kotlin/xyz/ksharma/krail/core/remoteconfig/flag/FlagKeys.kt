@@ -27,4 +27,6 @@ enum class FlagKeys(val key: String) {
     LATEST_APP_VERSION_IOS("latest_app_version_ios"),
 
     INFO_TILES("info_tiles_json"),
+
+    SEARCH_STOP_MAPS_AVAILABLE("maps_stop_search"),
 }

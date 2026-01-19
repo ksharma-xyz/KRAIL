@@ -129,6 +129,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.INFO_TILES.key,
                 second = "[]",
             ),
+            Pair(
+                first = FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key,
+                second = false,
+            ),
         )
     }
 }

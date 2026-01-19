@@ -22,6 +22,9 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ClearRecentSearchCl
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
@@ -37,13 +40,20 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 class SearchStopViewModel(
     private val analytics: Analytics,
     private val stopResultsManager: StopResultsManager,
+    private val flag: Flag,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
     val uiState: StateFlow<SearchStopState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
+            checkMapsAvailability()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
+
+    private val isMapsAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
+            .asBoolean(fallback = false)
+    }
 
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
@@ -139,7 +149,7 @@ class SearchStopViewModel(
         updateUiState { copy(selectionType = stopSelectionType) }
 
         // Decide screen to show:
-        if (stopSelectionType == StopSelectionType.MAP) {
+        if (stopSelectionType == StopSelectionType.MAP && isMapsAvailable) {
             loadStaticMapData()
         } else {
             // LIST selected: if query is blank show recent, else show results (trigger a search)
@@ -163,6 +173,10 @@ class SearchStopViewModel(
         val recentStops = stopResultsManager.recentSearchStops().toImmutableList()
         log("fetchRecentStops: ${recentStops.map { it.stopName }}")
         updateUiState { copy(recentStops = recentStops) }
+    }
+
+    private fun checkMapsAvailability() {
+        updateUiState { copy(isMapsAvailable = this@SearchStopViewModel.isMapsAvailable) }
     }
 
     private fun SearchStopState.displayData(stopsResult: List<SearchStopState.SearchResult>) = copy(

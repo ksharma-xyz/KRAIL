@@ -46,6 +46,7 @@ fun SearchTopBar(
     onBackClick: () -> Unit,
     onTextChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
+    isMapAvailable: Boolean = false,
     selectionType: StopSelectionType = StopSelectionType.LIST,
 ) {
     val density = LocalDensity.current
@@ -85,18 +86,20 @@ fun SearchTopBar(
             onTextChanged(value.toString())
         }
 
-        // Reserve the TextField height for the radio group so hiding it doesn't change layout height.
-        Box(modifier = Modifier.height(48.dp)) {
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showRadioGroup,
-                enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-                exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
-            ) {
-                StopSelectionRadioGroup(
-                    selectionType = selectionType,
-                    onTypeSelected = onTypeSelected,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
+        if (isMapAvailable) {
+            // Reserve the TextField height for the radio group so hiding it doesn't change layout height.
+            Box(modifier = Modifier.height(48.dp)) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = showRadioGroup,
+                    enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
+                    exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
+                ) {
+                    StopSelectionRadioGroup(
+                        selectionType = selectionType,
+                        onTypeSelected = onTypeSelected,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
             }
         }
     }
@@ -138,6 +141,7 @@ private fun PreviewSearchTopBar_Map() {
                 focusRequester = focusRequester,
                 keyboard = null,
                 selectionType = StopSelectionType.MAP,
+                isMapAvailable = true,
                 onTypeSelected = {},
                 onBackClick = {},
                 onTextChanged = {},

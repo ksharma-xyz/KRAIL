@@ -6,13 +6,13 @@ object MapUiMapper {
     fun map(
         domainRoutes: List<DomainRoute>,
         domainStops: List<DomainStop>,
-        selectedStopId: String?
+        selectedStopId: String?,
     ): MapUiState.Ready {
         val routeFeatures = domainRoutes.map { r ->
             RouteFeature(
                 id = r.id,
                 colorHex = r.colorHex,
-                points = r.path.map { LatLng(it.lat, it.lng) }
+                points = r.path.map { LatLng(it.lat, it.lng) },
             )
         }
 
@@ -21,7 +21,7 @@ object MapUiMapper {
                 stopId = s.id,
                 stopName = s.name,
                 lineId = s.lineId,
-                position = LatLng(s.lat, s.lng)
+                position = LatLng(s.lat, s.lng),
             )
         }
 

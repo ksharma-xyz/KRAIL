@@ -47,9 +47,6 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.maplibre.compose.camera.CameraPosition
-import org.maplibre.compose.camera.rememberCameraState
-import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -119,7 +116,7 @@ fun SearchStopScreen(
                         backgroundColorOf(themeColor.hexToComposeColor()),
                         KrailTheme.colors.surface,
                     ),
-                )
+                ),
             )
             .imePadding(),
     ) {
@@ -197,14 +194,14 @@ fun SearchStopScreen(
             // pass selection toggle from state (map if needed to composable enum)
             selectionType = searchStopState.selectionType, // or map to UI enum if different type
             isMapAvailable = searchStopState.isMapsAvailable,
-            onTypeSelected = { type ->
+            onTypeSelect = { type ->
                 // user tapped list/map -> forward to viewmodel
                 onEvent(SearchStopUiEvent.StopSelectionTypeClicked(type))
             },
             onBackClick = {
                 backClicked = true
             },
-            onTextChanged = { value ->
+            onTextChange = { value ->
                 log("value: $value")
                 if (value.isNotBlank()) runPlaceholderAnimation = false
                 textFieldText = value
@@ -223,7 +220,6 @@ fun SearchStopScreen(
                 when (val ls = screen.listState) {
                     ListState.Recent -> {
                         LazyColumn(contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp)) {
-
                             item {
                                 SearchListHeader()
                             }
@@ -335,10 +331,10 @@ private fun LazyListScope.searchResultsList(
                         onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
                     },
                     modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 12.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp),
                 )
             }
         }
@@ -355,10 +351,10 @@ private fun LazyListScope.recentSearchStopsList(
     item("recent_stops_title") {
         Row(
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 20.dp),
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -372,16 +368,16 @@ private fun LazyListScope.recentSearchStopsList(
                 contentDescription = "Clear recent stops",
                 colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
                 modifier =
-                    Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .klickable {
-                            onEvent(
-                                SearchStopUiEvent.ClearRecentSearchStops(
-                                    recentSearchCount = recentStops.size,
-                                ),
-                            )
-                        },
+                Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .klickable {
+                        onEvent(
+                            SearchStopUiEvent.ClearRecentSearchStops(
+                                recentSearchCount = recentStops.size,
+                            ),
+                        )
+                    },
             )
         }
     }
@@ -425,8 +421,8 @@ private fun PreviewSearchStopScreen_ListLoading() {
                 screen = SearchScreen.List(
                     ListState.Results(
                         results = persistentListOf(),
-                        isLoading = true
-                    )
+                        isLoading = true,
+                    ),
                 ),
                 searchQuery = "Search Query",
                 searchResults = persistentListOf(),
@@ -435,7 +431,7 @@ private fun PreviewSearchStopScreen_ListLoading() {
             SearchStopScreen(
                 searchQuery = "Search Query",
                 searchStopState = state,
-                onEvent = {}
+                onEvent = {},
             )
         }
     }
@@ -479,9 +475,10 @@ private fun PreviewSearchStopScreen_ListResults() {
                     ListState.Results(
                         results = persistentListOf(
                             stopResult,
-                            trip
-                        ), isLoading = false
-                    )
+                            trip,
+                        ),
+                        isLoading = false,
+                    ),
                 ),
                 searchQuery = "Central",
                 searchResults = persistentListOf(stopResult, trip),
@@ -489,15 +486,15 @@ private fun PreviewSearchStopScreen_ListResults() {
                     SearchStopState.StopResult(
                         "Central",
                         "stop_1",
-                        persistentListOf(TransportMode.Train())
-                    )
+                        persistentListOf(TransportMode.Train()),
+                    ),
                 ),
             )
 
             SearchStopScreen(
                 searchQuery = "Central",
                 searchStopState = state,
-                onEvent = {}
+                onEvent = {},
             )
         }
     }
@@ -513,17 +510,17 @@ private fun PreviewSearchStopScreen_Recent() {
                 SearchStopState.StopResult(
                     "Central",
                     "stop_1",
-                    persistentListOf(TransportMode.Train())
+                    persistentListOf(TransportMode.Train()),
                 ),
                 SearchStopState.StopResult(
                     "Town Hall",
                     "stop_2",
-                    persistentListOf(TransportMode.Train())
+                    persistentListOf(TransportMode.Train()),
                 ),
                 SearchStopState.StopResult(
                     "Wynyard",
                     "stop_3",
-                    persistentListOf(TransportMode.Train())
+                    persistentListOf(TransportMode.Train()),
                 ),
             )
             val state = SearchStopState(
@@ -536,7 +533,7 @@ private fun PreviewSearchStopScreen_Recent() {
             SearchStopScreen(
                 searchQuery = "",
                 searchStopState = state,
-                onEvent = {}
+                onEvent = {},
             )
         }
     }
@@ -558,7 +555,7 @@ private fun PreviewSearchStopScreen_NoMatch() {
             SearchStopScreen(
                 searchQuery = "UnknownStop",
                 searchStopState = state,
-                onEvent = {}
+                onEvent = {},
             )
         }
     }
@@ -580,7 +577,7 @@ private fun PreviewSearchStopScreen_Error() {
             SearchStopScreen(
                 searchQuery = "Query",
                 searchStopState = state,
-                onEvent = {}
+                onEvent = {},
             )
         }
     }
@@ -599,18 +596,11 @@ private fun PreviewSearchStopScreen_Map() {
                 searchResults = persistentListOf(),
                 recentStops = persistentListOf(),
             )
-            // Provide a camera for the map preview
-            val camera = rememberCameraState(
-                firstPosition = CameraPosition(
-                    target = Position(latitude = -33.8727, longitude = 151.2057),
-                    zoom = 13.0,
-                )
-            )
             Column {
                 SearchStopScreen(
                     searchQuery = "",
                     searchStopState = state,
-                    onEvent = {}
+                    onEvent = {},
                 )
             }
         }

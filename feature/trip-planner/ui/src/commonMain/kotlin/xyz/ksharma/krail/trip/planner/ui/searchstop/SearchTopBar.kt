@@ -6,11 +6,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -42,9 +42,9 @@ fun SearchTopBar(
     placeholderText: String,
     focusRequester: FocusRequester,
     keyboard: SoftwareKeyboardController?,
-    onTypeSelected: (StopSelectionType) -> Unit,
+    onTypeSelect: (StopSelectionType) -> Unit,
     onBackClick: () -> Unit,
-    onTextChanged: (String) -> Unit,
+    onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     isMapAvailable: Boolean = false,
     selectionType: StopSelectionType = StopSelectionType.LIST,
@@ -83,7 +83,7 @@ fun SearchTopBar(
                 )
             },
         ) { value ->
-            onTextChanged(value.toString())
+            onTextChange(value.toString())
         }
 
         if (isMapAvailable) {
@@ -96,8 +96,8 @@ fun SearchTopBar(
                 ) {
                     StopSelectionRadioGroup(
                         selectionType = selectionType,
-                        onTypeSelected = onTypeSelected,
-                        modifier = Modifier.padding(start = 16.dp)
+                        onTypeSelect = onTypeSelect,
+                        modifier = Modifier.padding(start = 16.dp),
                     )
                 }
             }
@@ -120,10 +120,10 @@ private fun PreviewSearchTopBar_List() {
                 focusRequester = focusRequester,
                 keyboard = null,
                 selectionType = StopSelectionType.LIST,
-                onTypeSelected = {},
+                onTypeSelect = {},
                 onBackClick = {},
-                onTextChanged = {},
-                modifier = Modifier.height(72.dp)
+                onTextChange = {},
+                modifier = Modifier.height(72.dp),
             )
         }
     }
@@ -142,10 +142,10 @@ private fun PreviewSearchTopBar_Map() {
                 keyboard = null,
                 selectionType = StopSelectionType.MAP,
                 isMapAvailable = true,
-                onTypeSelected = {},
+                onTypeSelect = {},
                 onBackClick = {},
-                onTextChanged = {},
-                modifier = Modifier.height(72.dp)
+                onTextChange = {},
+                modifier = Modifier.height(72.dp),
             )
         }
     }
@@ -165,10 +165,10 @@ private fun PreviewSearchTopBar_Compact() {
                     focusRequester = focusRequester,
                     keyboard = null,
                     selectionType = StopSelectionType.LIST,
-                    onTypeSelected = {},
+                    onTypeSelect = {},
                     onBackClick = {},
-                    onTextChanged = {},
-                    modifier = Modifier.fillMaxSize() // let the bar use its internal padding
+                    onTextChange = {},
+                    modifier = Modifier.fillMaxSize(), // let the bar use its internal padding
                 )
             }
         }

@@ -25,7 +25,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 @Composable
 fun StopSelectionRadioGroup(
     selectionType: StopSelectionType,
-    onTypeSelected: (StopSelectionType) -> Unit,
+    onTypeSelect: (StopSelectionType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -37,15 +37,20 @@ fun StopSelectionRadioGroup(
     ) {
         val listBackgroundColor = if (selectionType == StopSelectionType.LIST) {
             KrailTheme.colors.surface
-        } else Color.Transparent
+        } else {
+            Color.Transparent
+        }
         val mapBackgroundColor = if (selectionType == StopSelectionType.MAP) {
             KrailTheme.colors.surface
-        } else Color.Transparent
+        } else {
+            Color.Transparent
+        }
 
         Text(
             text = "List",
-            style = if (selectionType == StopSelectionType.LIST) { KrailTheme.typography.titleMedium}
-            else KrailTheme.typography.bodyMedium,
+            style = if (selectionType == StopSelectionType.LIST) { KrailTheme.typography.titleMedium } else {
+                KrailTheme.typography.bodyMedium
+            },
             color = if (selectionType == StopSelectionType.LIST) {
                 getForegroundColor(listBackgroundColor)
             } else {
@@ -63,16 +68,19 @@ fun StopSelectionRadioGroup(
                             color = mapBackgroundColor,
                             shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
                         )
-                    } else Modifier
+                    } else {
+                        Modifier
+                    },
                 )
                 .padding(horizontal = 12.dp, vertical = 12.dp)
-                .klickable { onTypeSelected(StopSelectionType.LIST) },
+                .klickable { onTypeSelect(StopSelectionType.LIST) },
         )
 
         Text(
             text = "Map",
-            style = if (selectionType == StopSelectionType.MAP) { KrailTheme.typography.titleMedium}
-            else KrailTheme.typography.bodyMedium,
+            style = if (selectionType == StopSelectionType.MAP) { KrailTheme.typography.titleMedium } else {
+                KrailTheme.typography.bodyMedium
+            },
             color = if (selectionType == StopSelectionType.MAP) {
                 getForegroundColor(mapBackgroundColor)
             } else {
@@ -90,10 +98,12 @@ fun StopSelectionRadioGroup(
                             color = listBackgroundColor,
                             shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
                         )
-                    } else Modifier
+                    } else {
+                        Modifier
+                    },
                 )
                 .padding(horizontal = 12.dp, vertical = 12.dp)
-                .klickable { onTypeSelected(StopSelectionType.MAP) },
+                .klickable { onTypeSelect(StopSelectionType.MAP) },
         )
     }
 }
@@ -106,7 +116,7 @@ private fun StopSelectionRadioGroupPreview() {
     PreviewTheme {
         StopSelectionRadioGroup(
             selectionType = StopSelectionType.LIST,
-            onTypeSelected = { _ -> },
+            onTypeSelect = { _ -> },
         )
     }
 }

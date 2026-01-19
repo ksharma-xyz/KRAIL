@@ -16,6 +16,7 @@ complexity:
     excludes: ['**/test/**', '**/*Test.kt', '**/*Spec.kt']
     ignoreAnnotation: true
     ignoreStringsRegex: '$^'
+    ignoreAnnotated: ['Preview', 'PreviewParameter', 'PreviewParameterProvider', 'Test', 'Composable']
   ComplexInterface:
     active: true
     includeStaticDeclarations: false

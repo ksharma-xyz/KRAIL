@@ -17,7 +17,10 @@ object StopResultsMapMapper {
         // Debug: log incoming route / stop payload summary
         val routeIds = this.mapDisplay.routes.map { it.id }
         val stopIds = this.mapDisplay.stops.map { it.stopId }
-        log("StopResultsMapMapper.toFeatureCollection: routes=${routeIds.joinToString()} (count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})")
+        log(
+            "StopResultsMapMapper.toFeatureCollection: routes=${routeIds.joinToString()} " +
+                "(count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})",
+        )
 
         val routeFeatures = this.mapDisplay.routes.map(::toRouteFeature)
         val stopFeatures = this.mapDisplay.stops.map(::toStopFeature)
@@ -32,7 +35,7 @@ object StopResultsMapMapper {
                 geometry = Point(Position(longitude = 151.2057, latitude = -33.8727)),
                 properties = buildJsonObject {
                     put("type", JsonPrimitive("empty"))
-                }
+                },
             )
             return FeatureCollection(features = listOf(emptyFeature))
         }
@@ -49,7 +52,7 @@ object StopResultsMapMapper {
                 put("type", JsonPrimitive("route"))
                 put("lineId", JsonPrimitive(route.id))
                 put("color", JsonPrimitive(route.colorHex))
-            }
+            },
         )
     }
 
@@ -62,7 +65,7 @@ object StopResultsMapMapper {
                 put("stopId", JsonPrimitive(stop.stopId))
                 put("stopName", JsonPrimitive(stop.stopName))
                 put("lineId", JsonPrimitive(stop.lineId ?: ""))
-            }
+            },
         )
     }
 }

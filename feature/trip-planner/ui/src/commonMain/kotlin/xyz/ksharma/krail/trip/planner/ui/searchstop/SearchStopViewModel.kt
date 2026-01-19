@@ -50,10 +50,13 @@ class SearchStopViewModel(
             checkMapsAvailability()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
-    private val isMapsAvailable: Boolean by lazy {
+    private val isMapsAvailable: Boolean = false
+/*
+    by lazy {
         flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
             .asBoolean(fallback = false)
     }
+*/
 
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null

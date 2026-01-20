@@ -36,6 +36,7 @@ import kotlinx.collections.immutable.ImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
@@ -362,10 +363,11 @@ private fun SavedTripsTitle(
 
 // region Previews
 
+@Preview
 @Composable
 private fun SavedTripsScreenPreview() {
     PreviewTheme {
-        SavedTripsScreen(savedTripsState = SavedTripsState())
+        SavedTripsScreen(savedTripsState = SavedTripsState(isDiscoverAvailable = true))
     }
 }
 

@@ -3,7 +3,6 @@ package xyz.ksharma.krail.taj.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import app.krail.taj.resources.Res
 import app.krail.taj.resources.antonio_regular
 import app.krail.taj.resources.antonio_semibold
@@ -17,7 +16,6 @@ fun antonioFontFamily() = FontFamily(
 
 @Composable
 fun antonioTypography(): KrailTypography {
-
     return with(KrailTheme.typography) {
         copy(
             body = body.copy(fontFamily = antonioFontFamily(), fontWeight = FontWeight.Normal),
@@ -28,7 +26,7 @@ fun antonioTypography(): KrailTypography {
             ),
             bodyMedium = bodyMedium.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             bodySmall = bodySmall.copy(
                 fontFamily = antonioFontFamily(),
@@ -40,23 +38,23 @@ fun antonioTypography(): KrailTypography {
             ),
             displayMedium = displayMedium.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             displaySmall = displaySmall.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             headlineLarge = headlineLarge.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             headlineMedium = headlineMedium.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             headlineSmall = headlineSmall.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             labelLarge = labelLarge.copy(
                 fontFamily = antonioFontFamily(),
@@ -72,11 +70,11 @@ fun antonioTypography(): KrailTypography {
             ),
             titleLarge = titleLarge.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             titleMedium = titleMedium.copy(
                 fontFamily = antonioFontFamily(),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             titleSmall = titleSmall.copy(
                 fontFamily = antonioFontFamily(),

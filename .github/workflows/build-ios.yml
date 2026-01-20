@@ -8,20 +8,17 @@ jobs:
     runs-on: macos-15
     environment: Firebase
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup environment variables
         run: |
           echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
           echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
 
-      # -----------------------------------------------------------
-      # 1. Tooling Setup (Java, Ruby, Gradle)
-      # -----------------------------------------------------------
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: set up JDK
+        uses: actions/setup-java@v5
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: 21
 
       - uses: ruby/setup-ruby@v1
@@ -32,30 +29,26 @@ jobs:
         run: brew install swiftlint
 
       # Caching enabled to reduce that 17m build time
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: false
 
-      # -----------------------------------------------------------
-      # 2. Xcode Selection
-      # -----------------------------------------------------------
-      - name: Select Xcode
+      - name: List available Xcode versions
+        run: ls /Applications | grep Xcode
+
+      - name: Show current version of Xcode
+        run: xcodebuild -version
+
+      - name: Set up Xcode version
         run: |
-          # Xcode 16.x is standard on macos-15 runners
-          sudo xcode-select -s /Applications/Xcode_16.app
+          sudo xcode-select -s /Applications/Xcode_26.1.app/Contents/Developer
           xcodebuild -version
 
-      # -----------------------------------------------------------
-      # 3. Firebase Configuration
-      # -----------------------------------------------------------
       - name: Firebase iOS - GoogleService-Info.plist
         env:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
         run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
 
-      # -----------------------------------------------------------
-      # 4. CRITICAL FIX: Build SPM via Gradle
-      # -----------------------------------------------------------
       - name: Pre-build SPM for MapLibre (Gradle)
         run: |
           # We call the specific SPM compile task for the Simulator architecture.
@@ -64,9 +57,6 @@ jobs:
           # Firebase SPM packages in iosApp will be resolved automatically during xcodebuild
           ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosSimulatorArm64 --no-daemon --stacktrace
 
-      # -----------------------------------------------------------
-      # 5. Final iOS App Build
-      # -----------------------------------------------------------
       - name: Build iOS App - Debug (No Signing)
         env:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}

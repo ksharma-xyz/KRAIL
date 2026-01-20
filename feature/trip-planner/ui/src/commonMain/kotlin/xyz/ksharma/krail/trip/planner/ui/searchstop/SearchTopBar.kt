@@ -70,7 +70,9 @@ fun SearchTopBar(
                 .weight(1f)
                 .focusRequester(focusRequester),
             maxLength = 30,
-            filter = { input -> input.filter { it.isLetterOrDigit() || it.isWhitespace() } },
+            filter = { input ->
+                input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' }
+            },
             leadingIcon = {
                 NavActionButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,

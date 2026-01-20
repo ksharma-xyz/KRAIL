@@ -31,6 +31,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+    fontFamily: FontFamily? = null,
     inlineContent: Map<String, InlineTextContent> = emptyMap(),
 ) {
     Text(
@@ -42,6 +43,7 @@ fun Text(
         maxLines = maxLines,
         overflow = overflow,
         onTextLayout = onTextLayout,
+        fontFamily = fontFamily,
         inlineContent = inlineContent,
     )
 }
@@ -69,7 +71,7 @@ fun Text(
         style = textStyle.copy(
             color = textColor.copy(alpha = contentAlpha),
             textAlign = textAlign,
-            fontFamily = fontFamily,
+            fontFamily = fontFamily ?: textStyle.fontFamily,
         ),
         maxLines = maxLines,
         overflow = overflow,

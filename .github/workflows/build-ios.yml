@@ -5,56 +5,72 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-latest
     environment: Firebase
-    steps:
-      - uses: actions/checkout@v6
 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      # -----------------------------------------------------------
+      # Debug: Xcode Version Listing
+      # -----------------------------------------------------------
+      - name: List available Xcode versions
+        run: |
+          echo "Listing all installed Xcode versions in /Applications:"
+          ls /Applications | grep Xcode
+          
+          echo "Current default xcodebuild version:"
+          xcodebuild -version
+
+      # Automatically selects the latest stable Xcode version
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      - name: Verify Selection
+        run: |
+          echo "✅ Xcode selection complete"
+          xcodebuild -version
+
+      # -----------------------------------------------------------
+      # Environment & Tooling Setup
+      # -----------------------------------------------------------
       - name: Setup environment variables
         run: |
           echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
           echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
 
-      - name: set up JDK
+      - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: 21
 
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
 
       - name: Install SwiftLint
         run: brew install swiftlint
 
-      # Caching enabled to reduce that 17m build time
-      - uses: gradle/actions/setup-gradle@v5
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: false
-
-      - name: List available Xcode versions
-        run: ls /Applications | grep Xcode
-
-      - name: Show current version of Xcode
-        run: xcodebuild -version
-
-      - name: Set up Xcode version
-        run: |
-          sudo xcode-select -s /Applications/Xcode_26.1.app/Contents/Developer
-          xcodebuild -version
 
       - name: Firebase iOS - GoogleService-Info.plist
         env:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
         run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
 
+      # -----------------------------------------------------------
+      # Build SPM & Final iOS App
+      # -----------------------------------------------------------
       - name: Pre-build SPM for MapLibre (Gradle)
         run: |
-          # We call the specific SPM compile task for the Simulator architecture.
-          # This compiles the Swift Package and creates the build directory needed by the Copy task.
-          # Note: MapLibre is NOT in iosApp.xcodeproj - it's managed by spmForKmp Gradle plugin
-          # Firebase SPM packages in iosApp will be resolved automatically during xcodebuild
           ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosSimulatorArm64 --no-daemon --stacktrace
 
       - name: Build iOS App - Debug (No Signing)
@@ -64,9 +80,10 @@ jobs:
           xcodebuild -project iosApp/iosApp.xcodeproj \
                      -scheme iosApp \
                      -configuration Debug \
+                     -destination 'platform=iOS Simulator,name=iPhone 17' \
                      OBJROOT=$GITHUB_WORKSPACE/build/ios \
                      SYMROOT=$GITHUB_WORKSPACE/build/ios \
                      CODE_SIGN_IDENTITY="" \
                      CODE_SIGNING_REQUIRED=NO \
                      CODE_SIGNING_ALLOWED=NO \
-                     -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest'
+                     -parallelizeTargets

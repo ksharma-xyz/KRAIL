@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
-import krail.feature.trip_planner.ui.generated.resources.ic_sydney
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
@@ -49,6 +48,7 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
@@ -87,12 +87,7 @@ fun SavedTripsScreen(
                             showBadge = savedTripsState.displayDiscoverBadge,
                             onClick = onDiscoverButtonClick,
                         ) {
-                            Image(
-                                painter = painterResource(Res.drawable.ic_sydney),
-                                contentDescription = "Discover Sydney",
-                                colorFilter = ColorFilter.tint(LocalContentColor.current),
-                                modifier = Modifier.size(32.dp),
-                            )
+                            CityCodeText("SYD")
                         }
                     }
 

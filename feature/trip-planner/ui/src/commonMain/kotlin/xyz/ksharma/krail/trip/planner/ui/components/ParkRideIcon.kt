@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
@@ -23,17 +26,25 @@ import xyz.ksharma.krail.taj.themeColor
 internal fun ParkRideIcon(
     modifier: Modifier = Modifier,
 ) {
-    ParkRideIconContainer(
-        backgroundColor = themeColor(),
-        modifier = modifier,
+    val density = LocalDensity.current
+    CompositionLocalProvider(
+        LocalDensity provides Density(
+            density = density.density,
+            fontScale = 1f,
+        ),
     ) {
-        Text(
-            text = "P",
-            style = KrailTheme.typography.displayLarge,
-            color = Color.White,
-            modifier = Modifier
-                .align(Alignment.Center),
-        )
+        ParkRideIconContainer(
+            backgroundColor = themeColor(),
+            modifier = modifier,
+        ) {
+            Text(
+                text = "P",
+                style = KrailTheme.typography.displayLarge,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.Center),
+            )
+        }
     }
 }
 

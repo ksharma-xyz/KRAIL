@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.15.0</string>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>6</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
@@ -48,5 +48,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>KRAIL uses your location to show you the nearest public transport stops, stations, and your current position on the map..</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Krail App uses your location to provide real-time transport information and nearby stop information. While we currently only use location while the app is open, this allows for future features like arrival alerts while you are on the go.</string>
 </dict>
 </plist>

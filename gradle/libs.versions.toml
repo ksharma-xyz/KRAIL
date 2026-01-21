@@ -43,7 +43,7 @@ roborazzi = "1.52.0"
 composablePreviewScanner = "0.8.1"
 robolectric = "4.16"
 maplibre = "0.12.1"
-spmForKmp = "1.4.3"
+spmForKmp = "1.4.6"
 maplibreNativeDistributionSpm = "6.19.1"
 
 [libraries]

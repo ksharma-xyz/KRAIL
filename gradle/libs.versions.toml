@@ -115,6 +115,11 @@ firebase-gitLiveCrashlytics = { module = "dev.gitlive:firebase-crashlytics", ver
 firebase-gitLiveAnalytics = { module = "dev.gitlive:firebase-analytics", version.ref = "firebaseGitLive" }
 firebase-gitLivePerformance = { module = "dev.gitlive:firebase-perf", version.ref = "firebaseGitLive" }
 firebase-gitLiveRemoteConfig = { module = "dev.gitlive:firebase-config", version.ref = "firebaseGitLive" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-performance = { module = "com.google.firebase:firebase-perf" }
+firebase-config = { module = "com.google.firebase:firebase-config" }
+
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 androidx-ui-geometry-android = { group = "androidx.compose.ui", name = "ui-geometry-android", version.ref = "uiGeometryAndroid" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
@@ -158,7 +163,7 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-mu
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqlDelight" }
 firebase-crashlyticsPlugin = { id = "com.google.firebase.crashlytics", version = "3.0.6" }
-firebase-performancePlugin = { id ="com.google.firebase.firebase-perf", version = "2.0.2" }
+firebase-performancePlugin = { id = "com.google.firebase.firebase-perf", version = "2.0.2" }
 wire = { id = "com.squareup.wire", version = "5.5.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

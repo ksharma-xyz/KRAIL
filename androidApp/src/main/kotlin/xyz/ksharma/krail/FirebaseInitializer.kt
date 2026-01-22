@@ -1,9 +1,9 @@
-package xyz.ksharma.krail.firebase
+package xyz.ksharma.krail
 
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.initialize
-import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.log.logError
+import android.content.Context
+import android.util.Log
+import com.google.firebase.Firebase
+import com.google.firebase.initialize
 
 private var isInitialized = false
 
@@ -15,7 +15,7 @@ private var isInitialized = false
  * @param context Android Application context, or null for iOS
  * @return true if initialization succeeded, false otherwise
  */
-fun initializeFirebase(context: Any?): Boolean {
+fun initializeFirebase(context: Context?): Boolean {
     if (isInitialized) {
         return true
     }
@@ -24,7 +24,7 @@ fun initializeFirebase(context: Any?): Boolean {
         if (context != null) {
             Firebase.initialize(context = context)
             isInitialized = true
-            log("Firebase initialized successfully")
+            Log.d("FirebaseInit","Firebase initialized successfully")
             true
         } else {
             // iOS - Firebase initialized in AppDelegate
@@ -32,8 +32,7 @@ fun initializeFirebase(context: Any?): Boolean {
             true
         }
     } catch (e: Exception) {
-        logError("Failed to initialize Firebase: ${e.message}", e)
+        Log.e("FirebaseInit","Failed to initialize Firebase: ${e.message}", e)
         false
     }
 }
-

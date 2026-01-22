@@ -19,6 +19,11 @@ kotlin {
         withHostTest {
             isIncludeAndroidResources = true
         }
+
+        // MANDATORY for AGP 9 to include assets
+        androidResources {
+            enable = true
+        }
     }
 
     iosArm64()

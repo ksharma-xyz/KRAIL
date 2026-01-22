@@ -16,6 +16,11 @@ kotlin {
         namespace = "xyz.ksharma.krail.park.ride.ui"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        // MANDATORY for AGP 9 to include assets
+        androidResources {
+            enable = true
+        }
     }
 
     iosArm64()

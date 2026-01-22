@@ -18,6 +18,11 @@ kotlin {
         namespace = "xyz.ksharma.krail.io.gtfs"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        // MANDATORY for AGP 9 to include .pb files and other assets
+        androidResources {
+            enable = true
+        }
     }
     iosArm64()
     iosSimulatorArm64()

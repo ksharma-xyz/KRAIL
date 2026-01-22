@@ -106,7 +106,9 @@ dependencies {
     implementation(libs.di.koinAndroid)
 
     // Firebase
-    implementation(libs.firebase.gitLiveCrashlytics)
-    implementation(libs.firebase.gitLiveAnalytics)
-    implementation(libs.firebase.gitLivePerformance)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.performance)
+    implementation(libs.firebase.config)
 }

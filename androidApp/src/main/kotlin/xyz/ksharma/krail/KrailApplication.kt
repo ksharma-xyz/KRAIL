@@ -4,7 +4,6 @@ import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import xyz.ksharma.krail.di.initKoin
-import xyz.ksharma.krail.firebase.initializeFirebase
 
 class KrailApplication : Application() {
 

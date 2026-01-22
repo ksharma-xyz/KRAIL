@@ -10,19 +10,20 @@ group = "xyz.ksharma.krail.gradle"
 val javaVersion = libs.versions.java.get().toInt()
 
 java {
-    sourceCompatibility = JavaVersion.values()[javaVersion - 1]
-    targetCompatibility = JavaVersion.values()[javaVersion - 1]
+    // Force Java 21 for the build-logic itself
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
         freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
 
 kotlin {
-    jvmToolchain(javaVersion)
+    jvmToolchain(21)
 }
 
 dependencies {

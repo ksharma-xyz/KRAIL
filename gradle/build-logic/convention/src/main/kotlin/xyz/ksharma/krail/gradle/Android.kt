@@ -1,48 +1,31 @@
 package xyz.ksharma.krail.gradle
 
+import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
-import com.android.build.gradle.BaseExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
 fun Project.configureAndroid() {
-    extensions.configure<BaseExtension> {
-        compileSdkVersion(AndroidVersion.COMPILE_SDK)
+    // In AGP 9.0, we use CommonExtension::class.java to ensure
+    // we are targeting the new interface-driven DSL.
+    extensions.configure(CommonExtension::class.java) {
+        compileSdk = AndroidVersion.COMPILE_SDK
 
-        defaultConfig {
-            minSdk = AndroidVersion.MIN_SDK
-            targetSdk = AndroidVersion.TARGET_SDK
-        }
+    }
 
-        configureJava()
-
-        if (this is CommonExtension<*, *, *, *, *, *>) {
-            buildFeatures {
-                compose = true
-                buildConfig = true
-            }
-            packaging {
-                jniLibs {
-                    keepDebugSymbols += "**/*.so"
-                }
-                resources {
-                    excludes += "/META-INF/{AL2.0,LGPL2.1}"
-                }
-            }
-        }
-
-        compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+    // targetSdk is handled separately because it's not in the base CommonExtension
+    extensions.findByName("android")?.let { ext ->
+        when (ext) {
+            is ApplicationExtension -> ext.defaultConfig.targetSdk = AndroidVersion.TARGET_SDK
+            is LibraryExtension -> ext.testOptions.targetSdk = AndroidVersion.TARGET_SDK
         }
     }
 }
 
-
 object AndroidVersion {
-    // https://developer.android.com/build/releases/gradle-plugin#api-level-support
     const val COMPILE_SDK = 36
-    const val MIN_SDK = 28 // Android 9.0 (Pie)
+    const val MIN_SDK = 28
     const val TARGET_SDK = 36
 }

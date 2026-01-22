@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldDecorator
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -112,35 +113,40 @@ fun TextField(
             readOnly = readOnly,
             interactionSource = interactionSource,
             cursorBrush = SolidColor(KrailTheme.colors.onSurface),
-            decorator = { innerTextField ->
-                Row(
-                    modifier = Modifier
-                        .background(
-                            shape = RoundedCornerShape(TextFieldHeight.div(2)),
-                            color = KrailTheme.colors.surface,
-                        )
-                        .padding(vertical = 4.dp)
-                        .padding(end = 16.dp, start = if (leadingIcon != null) 0.dp else 16.dp),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    leadingIcon?.let { icon ->
-                        icon.invoke()
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-                    if (textFieldState.text.isEmpty() && isFocused) {
-                        /* Using a Box ensures that cursor and placeholder are displayed on top of
-                     each other, so the cursor is always displayed at the start if the TextField.
-                         */
-                        Box {
-                            innerTextField() // To display cursor
-                            TextFieldPlaceholder(placeholder = placeholder)
+            // Workaround: Using an anonymous object instead of a lambda
+            // https://youtrack.jetbrains.com/projects/CMP/issues/CMP-9456/Reference-to-lambda-in-lambda-in-function-TextField-can-not-be-evaluated
+            decorator = object : TextFieldDecorator {
+                @Composable
+                override fun Decoration(innerTextField: @Composable () -> Unit) {
+                    Row(
+                        modifier = Modifier
+                            .background(
+                                shape = RoundedCornerShape(TextFieldHeight.div(2)),
+                                color = KrailTheme.colors.surface,
+                            )
+                            .padding(vertical = 4.dp)
+                            .padding(
+                                end = 16.dp,
+                                start = if (leadingIcon != null) 0.dp else 16.dp
+                            ),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        leadingIcon?.let { icon ->
+                            icon.invoke()
+                            Spacer(modifier = Modifier.width(4.dp))
                         }
-                    } else if (textFieldState.text.isEmpty()) {
-                        TextFieldPlaceholder(placeholder = placeholder)
-                    } else {
-                        innerTextField()
-                        // add trailing icon here if required / e.g. Clear / Scan QR code
+
+                        if (textFieldState.text.isEmpty() && isFocused) {
+                            Box {
+                                innerTextField() // Displays cursor
+                                TextFieldPlaceholder(placeholder = placeholder)
+                            }
+                        } else if (textFieldState.text.isEmpty()) {
+                            TextFieldPlaceholder(placeholder = placeholder)
+                        } else {
+                            innerTextField()
+                        }
                     }
                 }
             },

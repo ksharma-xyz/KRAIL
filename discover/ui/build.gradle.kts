@@ -16,7 +16,7 @@ kotlin {
         minSdk = AndroidVersion.MIN_SDK
 
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
 
@@ -25,7 +25,7 @@ kotlin {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.majorVersion))
+            languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_21.majorVersion))
         }
     }
 

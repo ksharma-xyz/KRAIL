@@ -19,7 +19,7 @@ kotlin {
         minSdk = AndroidVersion.MIN_SDK
 
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
             freeCompilerArgs.add("-Xannotation-default-target=param-property")
         }
     }
@@ -44,11 +44,10 @@ kotlin {
 
                 implementation(libs.ktor.client.okhttp)
 
-                implementation(project.dependencies.platform(libs.firebase.bom))
-                implementation("com.google.firebase:firebase-analytics")
-                implementation("com.google.firebase:firebase-crashlytics")
-                implementation("com.google.firebase:firebase-perf")
-                implementation("com.google.firebase:firebase-config")
+//                implementation(project.dependencies.platform(libs.firebase.bom))
+                implementation(libs.firebase.gitLiveCrashlytics)
+                implementation(libs.firebase.gitLiveAnalytics)
+                implementation(libs.firebase.gitLivePerformance)
             }
         }
 

@@ -9,7 +9,7 @@ import org.gradle.kotlin.dsl.configure
 internal fun Project.configureJava() {
     extensions.configure<JavaPluginExtension> {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.majorVersion))
+            languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_21.majorVersion))
         }
     }
 }

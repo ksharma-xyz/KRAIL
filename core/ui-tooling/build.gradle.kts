@@ -1,20 +1,19 @@
+import xyz.ksharma.krail.gradle.AndroidVersion
+
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.krail.android.library)
-}
-
-android {
-    namespace = "xyz.ksharma.krail.core.ui.tooling"
+    alias(libs.plugins.krail.android.kmp.library)
 }
 
 kotlin {
     applyDefaultHierarchyTemplate()
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
+
+    androidLibrary {
+        namespace = "xyz.ksharma.krail.core.ui.tooling"
+        compileSdk = AndroidVersion.COMPILE_SDK
+        minSdk = AndroidVersion.MIN_SDK
     }
 
     iosArm64()
@@ -22,7 +21,7 @@ kotlin {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_17.majorVersion))
+            languageVersion.set(JavaLanguageVersion.of(JavaVersion.VERSION_21.majorVersion))
         }
     }
 

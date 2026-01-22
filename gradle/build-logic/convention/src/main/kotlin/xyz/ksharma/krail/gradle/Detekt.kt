@@ -32,9 +32,9 @@ fun Project.configureDetekt() {
     tasks.withType(Detekt::class.java).configureEach {
         reports.html.required.set(true)
         reports.md.required.set(true)
-        jvmTarget = JvmTarget.JVM_17.target
+        jvmTarget = JvmTarget.JVM_21.target
     }
     tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
-        jvmTarget = JvmTarget.JVM_17.target
+        jvmTarget = JvmTarget.JVM_21.target
     }
 }

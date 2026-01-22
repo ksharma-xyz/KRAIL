@@ -1,7 +1,6 @@
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlyticsPlugin)
@@ -15,7 +14,7 @@ android {
     defaultConfig {
         applicationId = "xyz.ksharma.krail"
         minSdk = 28
-        targetSdk = 35
+        targetSdk = 36
         versionCode = findProperty("versionCode")?.toString()?.toInt() ?: 115
         versionName = "1.10.0"
 
@@ -89,7 +88,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 
@@ -105,4 +104,9 @@ dependencies {
 
     // Koin for Android
     implementation(libs.di.koinAndroid)
+
+    // Firebase
+    implementation(libs.firebase.gitLiveCrashlytics)
+    implementation(libs.firebase.gitLiveAnalytics)
+    implementation(libs.firebase.gitLivePerformance)
 }

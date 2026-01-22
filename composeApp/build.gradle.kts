@@ -43,11 +43,6 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(libs.ktor.client.okhttp)
-
-//                implementation(project.dependencies.platform(libs.firebase.bom))
-                implementation(libs.firebase.gitLiveCrashlytics)
-                implementation(libs.firebase.gitLiveAnalytics)
-                implementation(libs.firebase.gitLivePerformance)
             }
         }
 
@@ -94,9 +89,6 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
 
             api(libs.di.koinComposeViewmodel)
-            implementation(libs.firebase.gitLiveCrashlytics)
-            implementation(libs.firebase.gitLiveAnalytics)
-            implementation(libs.firebase.gitLivePerformance)
 
             implementation(libs.coil3.compose)
             implementation(libs.coil3.networkKtor)

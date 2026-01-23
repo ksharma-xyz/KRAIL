@@ -25,6 +25,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -118,6 +119,7 @@ fun TextField(
             decorator = object : TextFieldDecorator {
                 @Composable
                 override fun Decoration(innerTextField: @Composable () -> Unit) {
+                    val innerTextFieldContent = remember { movableContentOf { innerTextField() } }
                     Row(
                         modifier = Modifier
                             .background(
@@ -127,7 +129,7 @@ fun TextField(
                             .padding(vertical = 4.dp)
                             .padding(
                                 end = 16.dp,
-                                start = if (leadingIcon != null) 0.dp else 16.dp
+                                start = if (leadingIcon != null) 0.dp else 16.dp,
                             ),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
@@ -139,13 +141,13 @@ fun TextField(
 
                         if (textFieldState.text.isEmpty() && isFocused) {
                             Box {
-                                innerTextField() // Displays cursor
+                                innerTextFieldContent() // Displays cursor
                                 TextFieldPlaceholder(placeholder = placeholder)
                             }
                         } else if (textFieldState.text.isEmpty()) {
                             TextFieldPlaceholder(placeholder = placeholder)
                         } else {
-                            innerTextField()
+                            innerTextFieldContent()
                         }
                     }
                 }

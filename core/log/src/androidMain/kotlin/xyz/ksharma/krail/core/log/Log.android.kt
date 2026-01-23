@@ -7,14 +7,14 @@ private const val MAX_TAG_LENGTH: Int = 23
 actual fun log(message: String) {
     // TODO -  fix it
 //    if (BuildConfig.DEBUG) {
-        Logger.d(messageString = message, tag = getTag())
- //   }
+    Logger.d(messageString = message, tag = getTag())
+    //   }
 }
 
 actual fun logError(message: String, throwable: Throwable?) {
-   // if (BuildConfig.DEBUG) {
-        Logger.e(messageString = message, throwable = throwable, tag = getTag())
-    //}
+    // if (BuildConfig.DEBUG) {
+    Logger.e(messageString = message, throwable = throwable, tag = getTag())
+    // }
 }
 
 private fun getTag(): String {

@@ -30,7 +30,7 @@ kotlin {
     sourceSets {
         androidMain {
             dependencies {
-                // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio
+                // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-androidx.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio
                 implementation(libs.androidx.ui.tooling)
             }
         }

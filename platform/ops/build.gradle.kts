@@ -32,7 +32,7 @@ kotlin {
                 implementation(projects.core.di)
 
                 implementation(libs.compose.runtime)
-                implementation(compose.components.resources)
+                implementation(libs.compose.components.resources)
 
                 api(libs.di.koinComposeViewmodel)
             }

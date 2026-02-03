@@ -42,7 +42,7 @@ kotlin {
         androidMain {
             dependencies {
                 // Compose dependencies
-                implementation(compose.ui)
+                implementation(libs.compose.ui)
                 implementation(libs.compose.foundation)
 
                 // Required for @Preview support

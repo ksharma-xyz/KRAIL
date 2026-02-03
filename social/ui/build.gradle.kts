@@ -43,10 +43,10 @@ kotlin {
                 implementation(projects.taj)
 
                 implementation(libs.compose.runtime)
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.ui.tooling.preview)
                 implementation(libs.compose.foundation)
-                implementation(compose.ui)
+                implementation(libs.compose.ui)
             }
         }
     }

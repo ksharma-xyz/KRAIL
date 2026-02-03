@@ -47,7 +47,7 @@ kotlin {
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.compose.runtime)
-                implementation(compose.components.resources)
+                implementation(libs.compose.components.resources)
 
                 api(libs.di.koinComposeViewmodel)
             }

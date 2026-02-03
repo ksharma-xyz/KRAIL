@@ -32,7 +32,7 @@ kotlin {
 
                 implementation(libs.compose.foundation)
                 implementation(libs.compose.runtime)
-                implementation(compose.ui)
+                implementation(libs.compose.ui)
 
                 implementation(libs.jetbrains.navigation3.ui)
             }

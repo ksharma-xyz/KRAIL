@@ -30,7 +30,7 @@ kotlin {
                 implementation(projects.core.log)
 
                 implementation(libs.compose.runtime)
-                implementation(compose.ui)
+                implementation(libs.compose.ui)
 
                 // Navigation 3
                 implementation(libs.jetbrains.navigation3.ui)

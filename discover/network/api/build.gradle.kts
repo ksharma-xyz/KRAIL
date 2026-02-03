@@ -41,7 +41,7 @@ kotlin {
                 implementation(projects.social.network.api)
                 implementation(projects.social.state)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.serialization.json)
             }

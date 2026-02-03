@@ -45,8 +45,8 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(compose.components.uiToolingPreview)
-                implementation(compose.runtime)
-                implementation(compose.foundation)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.foundation)
                 implementation(compose.material)
                 implementation(compose.ui)
                 api(libs.di.koinComposeViewmodel)

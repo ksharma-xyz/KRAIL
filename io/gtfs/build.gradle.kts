@@ -46,7 +46,7 @@ kotlin {
                 implementation(libs.ktor.client.logging)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.kotlinx.datetime)
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(compose.components.resources)
 
                 api(libs.di.koinComposeViewmodel)

@@ -41,7 +41,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 api(libs.di.koinComposeViewmodel)
             }
         }

@@ -42,10 +42,10 @@ kotlin {
                 implementation(projects.social.state)
                 implementation(projects.taj)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
-                implementation(compose.foundation)
+                implementation(libs.compose.foundation)
                 implementation(compose.ui)
             }
         }

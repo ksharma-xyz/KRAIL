@@ -25,7 +25,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.analytics)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }

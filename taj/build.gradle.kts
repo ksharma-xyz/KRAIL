@@ -41,9 +41,9 @@ kotlin {
                 implementation(compose.animation)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
-                implementation(compose.foundation)
+                implementation(libs.compose.foundation)
                 api(compose.material3)
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(compose.ui)
 
                 implementation(libs.material.icons.core)

@@ -29,7 +29,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.log)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(compose.ui)
 
                 // Navigation 3

@@ -23,7 +23,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlinx.datetime)
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(projects.core.log)
             }
         }

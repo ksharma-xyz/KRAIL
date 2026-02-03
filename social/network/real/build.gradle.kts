@@ -37,7 +37,7 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
 
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)

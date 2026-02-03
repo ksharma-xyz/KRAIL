@@ -33,7 +33,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(projects.social.state)
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.datetime)
             }
         }

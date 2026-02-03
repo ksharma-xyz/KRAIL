@@ -30,7 +30,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
 
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)

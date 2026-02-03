@@ -50,7 +50,7 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
                 implementation(compose.animation)
-                implementation(compose.foundation)
+                implementation(libs.compose.foundation)
                 implementation(compose.ui)
 
                 api(libs.di.koinComposeViewmodel)

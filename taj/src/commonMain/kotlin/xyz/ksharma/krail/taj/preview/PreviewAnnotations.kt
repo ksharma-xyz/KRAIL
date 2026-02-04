@@ -21,7 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
     showBackground = true,
 )
 @Preview(
-    name = "3. 2x",
+    name = "3. 2x Font Scale",
     group = "Screen",
     fontScale = 2.0f,
     showBackground = true,
@@ -34,29 +34,29 @@ import androidx.compose.ui.tooling.preview.Preview
     showBackground = true,
     device = Devices.TABLET,
 )
-annotation class ScreenPreview
+annotation class PreviewScreen
 
 /**
  * Comprehensive preview with all combinations
  */
 @Preview(
-    name = "Light Mode",
+    name = "1. Light Mode",
     group = "Screen",
     showBackground = true,
     device = Devices.PHONE,
 )
 @Preview(
-    name = "Dark Mode",
+    name = "2. Dark Mode",
     group = "Screen",
     uiMode = AndroidUiModes.UI_MODE_NIGHT_YES,
     device = Devices.PHONE,
     showBackground = true,
 )
 @Preview(
-    name = "2x",
+    name = "3. 2x Font Scale",
     group = "Screen",
     fontScale = 2.0f,
     showBackground = true,
     device = Devices.PHONE,
 )
-annotation class ComponentPreview
+annotation class PreviewComponent

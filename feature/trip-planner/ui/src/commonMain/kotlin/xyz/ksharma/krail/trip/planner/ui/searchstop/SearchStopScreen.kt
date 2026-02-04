@@ -54,6 +54,7 @@ import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.ScreenPreview
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -409,8 +410,7 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 // region Previews
-
-@Preview(name = "SearchStop - List Loading")
+@ScreenPreview
 @Composable
 private fun PreviewSearchStopScreen_ListLoading() {
     PreviewTheme {
@@ -437,7 +437,7 @@ private fun PreviewSearchStopScreen_ListLoading() {
     }
 }
 
-@Preview(name = "SearchStop - List Results")
+@ScreenPreview
 @Composable
 private fun PreviewSearchStopScreen_ListResults() {
     PreviewTheme {
@@ -500,7 +500,7 @@ private fun PreviewSearchStopScreen_ListResults() {
     }
 }
 
-@Preview(name = "SearchStop - Recent")
+@ScreenPreview
 @Composable
 private fun PreviewSearchStopScreen_Recent() {
     PreviewTheme {
@@ -539,7 +539,7 @@ private fun PreviewSearchStopScreen_Recent() {
     }
 }
 
-@Preview(name = "SearchStop - No Match")
+@ScreenPreview
 @Composable
 private fun PreviewSearchStopScreen_NoMatch() {
     PreviewTheme {
@@ -561,7 +561,7 @@ private fun PreviewSearchStopScreen_NoMatch() {
     }
 }
 
-@Preview(name = "SearchStop - Error")
+@ScreenPreview
 @Composable
 private fun PreviewSearchStopScreen_Error() {
     PreviewTheme {
@@ -583,7 +583,7 @@ private fun PreviewSearchStopScreen_Error() {
     }
 }
 
-@Preview(name = "SearchStop - Map Selected")
+@ScreenPreview
 @Composable
 private fun PreviewSearchStopScreen_Map() {
     PreviewTheme {

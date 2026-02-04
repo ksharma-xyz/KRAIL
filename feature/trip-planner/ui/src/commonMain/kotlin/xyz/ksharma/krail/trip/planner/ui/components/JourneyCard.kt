@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,7 +46,6 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.ButtonDefaults

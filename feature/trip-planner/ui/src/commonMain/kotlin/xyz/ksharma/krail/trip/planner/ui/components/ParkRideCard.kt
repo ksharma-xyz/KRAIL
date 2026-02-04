@@ -17,9 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableSet
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable

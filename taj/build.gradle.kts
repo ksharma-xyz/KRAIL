@@ -38,15 +38,15 @@ kotlin {
     sourceSets {
         commonMain  {
             dependencies {
-                implementation(compose.animation)
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
-                implementation(compose.foundation)
-                api(compose.material3)
-                implementation(compose.runtime)
-                implementation(compose.ui)
+                implementation(libs.compose.animation)
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.foundation)
+                api(libs.compose.material3)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.ui)
 
                 implementation(libs.material.icons.core)
+                implementation(libs.compose.ui.tooling.preview)
 
                 // Lightweight annotation only - no Roborazzi/Robolectric bloat!
                 implementation(projects.core.snapshotTestingAnnotations)
@@ -68,7 +68,7 @@ kotlin {
         }
 
         androidMain.dependencies {
-            // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio#focus=Comments-27-11400795.0-0Add commentMore actions
+            // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-androidx.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio#focus=Comments-27-11400795.0-0Add commentMore actions
             implementation(libs.androidx.ui.tooling)
         }
 

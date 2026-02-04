@@ -34,7 +34,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)

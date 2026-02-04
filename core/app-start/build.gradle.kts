@@ -36,7 +36,7 @@ kotlin {
                 implementation(projects.io.gtfs)
                 implementation(projects.sandook)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.serialization.json)
             }

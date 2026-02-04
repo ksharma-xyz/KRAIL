@@ -35,15 +35,15 @@ kotlin {
                 api(projects.core.snapshotTestingAnnotations)
 
                 // Required for annotation to be visible
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
             }
         }
 
         androidMain {
             dependencies {
                 // Compose dependencies
-                implementation(compose.ui)
-                implementation(compose.foundation)
+                implementation(libs.compose.ui)
+                implementation(libs.compose.foundation)
 
                 // Required for @Preview support
                 api(libs.androidx.ui.tooling)

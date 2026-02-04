@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
 import app.krail.taj.resources.ic_ios_share
@@ -31,8 +33,6 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.core.log.log

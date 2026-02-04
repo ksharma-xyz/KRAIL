@@ -44,7 +44,7 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.androidx.ui.geometry.android)
-                // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-org.jetbrains.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio
+                // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-androidx.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio
                 implementation(libs.androidx.ui.tooling)
             }
         }
@@ -79,12 +79,12 @@ kotlin {
                 implementation(projects.social.ui)
                 implementation(projects.taj)
 
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
-                implementation(compose.animation)
-                implementation(compose.foundation)
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.ui.tooling.preview)
+                implementation(libs.compose.animation)
+                implementation(libs.compose.foundation)
                 implementation(libs.material.icons.core)
-                implementation(compose.ui)
+                implementation(libs.compose.ui)
 
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.collections.immutable)

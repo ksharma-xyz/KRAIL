@@ -25,11 +25,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType

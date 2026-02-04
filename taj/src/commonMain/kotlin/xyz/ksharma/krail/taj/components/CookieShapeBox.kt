@@ -13,8 +13,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.BUMPS
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.SIZE
 import xyz.ksharma.krail.taj.magicBorderColors

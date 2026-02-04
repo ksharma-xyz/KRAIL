@@ -13,7 +13,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor

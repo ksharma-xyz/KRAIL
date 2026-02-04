@@ -30,9 +30,9 @@ kotlin {
             dependencies {
                 implementation(projects.taj)
 
-                implementation(compose.foundation)
-                implementation(compose.runtime)
-                implementation(compose.ui)
+                implementation(libs.compose.foundation)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.ui)
 
                 implementation(libs.jetbrains.navigation3.ui)
             }

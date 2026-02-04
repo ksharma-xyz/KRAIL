@@ -34,7 +34,7 @@ kotlin {
                 implementation(projects.sandook)
                 implementation(projects.social.network.api)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.collections.immutable)
                 implementation(libs.kotlinx.serialization.json)
             }

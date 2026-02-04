@@ -29,8 +29,8 @@ kotlin {
             dependencies {
                 implementation(projects.core.log)
 
-                implementation(compose.runtime)
-                implementation(compose.ui)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.ui)
 
                 // Navigation 3
                 implementation(libs.jetbrains.navigation3.ui)

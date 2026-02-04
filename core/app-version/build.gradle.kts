@@ -44,11 +44,11 @@ kotlin {
 
                 implementation(libs.kotlinx.serialization.json)
 
-                implementation(compose.components.uiToolingPreview)
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
-                implementation(compose.ui)
+                implementation(libs.compose.ui.tooling.preview)
+                implementation(libs.compose.runtime)
+                implementation(libs.compose.foundation)
+                implementation(libs.compose.material)
+                implementation(libs.compose.ui)
                 api(libs.di.koinComposeViewmodel)
             }
         }

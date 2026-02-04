@@ -38,7 +38,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(libs.kotlinx.serialization.json)
 
-                implementation(compose.runtime)
+                implementation(libs.compose.runtime)
             }
         }
 

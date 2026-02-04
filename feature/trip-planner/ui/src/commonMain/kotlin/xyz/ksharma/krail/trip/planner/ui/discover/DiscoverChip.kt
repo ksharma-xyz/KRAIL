@@ -127,7 +127,7 @@ fun DiscoverChip(
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Selected Light Mode")
 @Composable
 private fun DiscoverChipPreview_BarbiePink_Selected() {
-    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink, darkTheme = false) {
+    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink) {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
@@ -140,7 +140,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected() {
 @Preview
 @Composable
 private fun DiscoverChipPreview_BarbiePink_Unselected() {
-    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink, darkTheme = false) {
+    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink) {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
@@ -153,7 +153,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
 @Preview
 @Composable
 private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
-    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink, darkTheme = true) {
+    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink) {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
@@ -166,7 +166,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
 @Preview
 @Composable
 private fun DiscoverChipPreview_BarbiePink_Unselected_DarkMode() {
-    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink, darkTheme = true) {
+    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink) {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,

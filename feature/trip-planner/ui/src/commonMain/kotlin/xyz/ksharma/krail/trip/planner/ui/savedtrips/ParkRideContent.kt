@@ -135,7 +135,7 @@ fun ParkRideLoadedContentPreview_Full() {
 @Preview
 @Composable
 fun ParkRideLoadedContentPreview_Barbie() {
-    PreviewTheme(KrailThemeStyle.BarbiePink, darkTheme = true) {
+    PreviewTheme(KrailThemeStyle.BarbiePink) {
         ParkRideLoadedContent(
             parkRideFacilityDetail = parkRideFacilityDetailPreview.copy(
                 spotsAvailable = 130,

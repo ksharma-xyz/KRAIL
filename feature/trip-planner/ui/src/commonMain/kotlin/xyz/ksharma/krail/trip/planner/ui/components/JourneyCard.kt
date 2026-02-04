@@ -35,7 +35,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +52,7 @@ import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SeparatorIcon
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -669,7 +669,7 @@ private val PREVIEW_STOPS = persistentListOf(
     ),
 )
 
-@Preview(name = "Default - Inline modes + platform", group = "Collapsed")
+@PreviewComponent
 @Composable
 private fun Preview_Default_InlineModesAndPlatform() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
@@ -695,60 +695,7 @@ private fun Preview_Default_InlineModesAndPlatform() {
     }
 }
 
-@Preview(name = "Default - Inline modes + platform (Dark)", group = "Collapsed")
-@Composable
-private fun Preview_Default_InlineModesAndPlatform_Dark() {
-    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE, darkTheme = true) {
-        JourneyCard(
-            timeToDeparture = "in 7 mins",
-            originTime = "8:25am",
-            destinationTime = "8:55am",
-            totalTravelTime = "30 mins",
-            platformNumber = "1",
-            platformText = "Platform 1",
-
-            transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "700"),
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
-                TransportModeLine(transportMode = TransportMode.Ferry(), lineName = "F2"),
-            ),
-            legList = persistentListOf(),
-            cardState = JourneyCardState.DEFAULT,
-            totalWalkTime = "10 mins",
-            totalUniqueServiceAlerts = 0,
-            onClick = {},
-            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
-        )
-    }
-}
-
-@Preview(name = "Large font - Modes on next line", group = "Collapsed")
-@Composable
-private fun Preview_LargeFont_ModesNextLine() {
-    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE, fontScale = 2f) {
-        JourneyCard(
-            timeToDeparture = "in 12 mins",
-            originTime = "9:00am",
-            destinationTime = "9:45am",
-            totalTravelTime = "45 mins",
-            platformNumber = "A",
-            platformText = "Stand A",
-            transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "610X"),
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T9"),
-                TransportModeLine(transportMode = TransportMode.LightRail(), lineName = "L1"),
-            ),
-            legList = persistentListOf(),
-            cardState = JourneyCardState.DEFAULT,
-            totalWalkTime = null,
-            totalUniqueServiceAlerts = 0,
-            onClick = {},
-            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("1 min early"),
-        )
-    }
-}
-
-@Preview(name = "Many modes - Wrapping", group = "Collapsed")
+@PreviewComponent
 @Composable
 private fun Preview_ManyModes_Wrap() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
@@ -779,7 +726,7 @@ private fun Preview_ManyModes_Wrap() {
     }
 }
 
-@Preview(name = "Expanded - Journey card", group = "Expanded")
+@PreviewComponent
 @Composable
 private fun Preview_JourneyCard_Expanded() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
@@ -791,60 +738,6 @@ private fun Preview_JourneyCard_Expanded() {
             platformNumber = "3",
             platformText = "Platform 3",
 
-            transportModeLineList = persistentListOf(
-                TransportModeLine(
-                    transportMode = TransportMode.Train(),
-                    lineName = "T1",
-                ),
-                TransportModeLine(
-                    transportMode = TransportMode.Bus(),
-                    lineName = "700",
-                ),
-            ),
-            legList = persistentListOf(
-                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
-                    stops = PREVIEW_STOPS,
-                    displayText = "towards Abc via Rainy Rd",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Train(),
-                        lineName = "T1",
-                    ),
-                    totalDuration = "20 mins",
-                    tripId = "T1",
-                ),
-                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
-                    duration = "15 mins",
-                ),
-                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
-                    stops = PREVIEW_STOPS.take(2).toImmutableList(),
-                    displayText = "towards Xyz via Awesome Rd",
-                    totalDuration = "10 mins",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Bus(),
-                        lineName = "700",
-                    ),
-                    tripId = "700",
-                ),
-            ),
-            cardState = JourneyCardState.EXPANDED,
-            totalWalkTime = null,
-            totalUniqueServiceAlerts = 1,
-            onClick = {},
-        )
-    }
-}
-
-@Preview(name = "Expanded - Journey card (Dark)", group = "Expanded")
-@Composable
-private fun Preview_JourneyCard_Expanded_Dark() {
-    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE, darkTheme = true) {
-        JourneyCard(
-            timeToDeparture = "in 5 mins",
-            originTime = "8:25am",
-            destinationTime = "8:40am",
-            totalTravelTime = "15 mins",
-            platformNumber = "3",
-            platformText = "Platform 3",
             transportModeLineList = persistentListOf(
                 TransportModeLine(
                     transportMode = TransportMode.Train(),

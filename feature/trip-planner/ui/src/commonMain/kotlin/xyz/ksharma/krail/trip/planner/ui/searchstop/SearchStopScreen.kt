@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -54,6 +53,7 @@ import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -409,8 +409,7 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 // region Previews
-
-@Preview(name = "SearchStop - List Loading")
+@PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_ListLoading() {
     PreviewTheme {
@@ -437,7 +436,7 @@ private fun PreviewSearchStopScreen_ListLoading() {
     }
 }
 
-@Preview(name = "SearchStop - List Results")
+@PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_ListResults() {
     PreviewTheme {
@@ -500,7 +499,7 @@ private fun PreviewSearchStopScreen_ListResults() {
     }
 }
 
-@Preview(name = "SearchStop - Recent")
+@PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Recent() {
     PreviewTheme {
@@ -539,7 +538,7 @@ private fun PreviewSearchStopScreen_Recent() {
     }
 }
 
-@Preview(name = "SearchStop - No Match")
+@PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_NoMatch() {
     PreviewTheme {
@@ -561,7 +560,7 @@ private fun PreviewSearchStopScreen_NoMatch() {
     }
 }
 
-@Preview(name = "SearchStop - Error")
+@PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Error() {
     PreviewTheme {
@@ -583,7 +582,7 @@ private fun PreviewSearchStopScreen_Error() {
     }
 }
 
-@Preview(name = "SearchStop - Map Selected")
+@PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Map() {
     PreviewTheme {

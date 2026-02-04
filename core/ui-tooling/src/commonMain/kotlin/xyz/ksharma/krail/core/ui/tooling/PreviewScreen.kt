@@ -12,18 +12,14 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 fun PreviewScreen(
     modifier: Modifier = Modifier,
     themeStyle: KrailThemeStyle = KrailThemeStyle.Train,
-    darkTheme: Boolean? = null,
     // temporary measure until font scale support is added to compose multiplatform
-    fontScale: Float = 1.0f,
     backgroundColor: Color? = null,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides PreviewNavigationEventDispatcherOwner()) {
         PreviewTheme(
             themeStyle = themeStyle,
-            darkTheme = darkTheme,
             modifier = modifier,
-            fontScale = fontScale,
             backgroundColor = backgroundColor,
         ) {
             content()

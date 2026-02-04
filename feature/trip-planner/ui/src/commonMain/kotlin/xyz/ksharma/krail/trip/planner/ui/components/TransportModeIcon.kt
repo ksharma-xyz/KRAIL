@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
@@ -84,7 +85,6 @@ enum class TransportModeIconSize(val dpSize: Dp) {
 // region Previews
 
 private const val previewGroupName = "Transport Mode Icons"
-private const val previewWithBackground = "Transport Mode Icons With Background"
 
 @Preview(group = previewGroupName)
 @Composable
@@ -97,11 +97,10 @@ private fun TrainPreview() {
     }
 }
 
-@Preview(group = previewGroupName)
+@PreviewComponent
 @Composable
 private fun TrainPreviewLarge() {
     PreviewTheme(
-        fontScale = 2.0f,
         backgroundColor = Color.Transparent,
     ) {
         TransportModeIcon(
@@ -111,7 +110,7 @@ private fun TrainPreviewLarge() {
     }
 }
 
-@Preview(group = previewGroupName)
+@PreviewComponent
 @Composable
 private fun BusPreview() {
     PreviewTheme {
@@ -155,7 +154,7 @@ private fun FerryPreview() {
     }
 }
 
-@Preview(group = previewWithBackground)
+@PreviewComponent
 @Composable
 private fun TrainWithBackgroundPreview() {
     PreviewTheme {
@@ -166,7 +165,7 @@ private fun TrainWithBackgroundPreview() {
     }
 }
 
-@Preview(group = previewWithBackground)
+@PreviewComponent
 @Composable
 private fun BusWithBackgroundPreview() {
     PreviewTheme {
@@ -177,7 +176,7 @@ private fun BusWithBackgroundPreview() {
     }
 }
 
-@Preview(group = previewWithBackground)
+@PreviewComponent
 @Composable
 private fun MetroWithBackgroundPreview() {
     PreviewTheme {
@@ -188,7 +187,7 @@ private fun MetroWithBackgroundPreview() {
     }
 }
 
-@Preview(group = previewWithBackground)
+@PreviewComponent
 @Composable
 private fun LightRailWithBackgroundPreview() {
     PreviewTheme {
@@ -199,7 +198,7 @@ private fun LightRailWithBackgroundPreview() {
     }
 }
 
-@Preview(group = previewWithBackground)
+@PreviewComponent
 @Composable
 private fun FerryWithBackgroundPreview() {
     PreviewTheme {

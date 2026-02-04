@@ -37,12 +37,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.intl.LocaleList
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.TextFieldPlaceholderDefaults.MAX_LINES
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -237,7 +237,7 @@ private fun TextFieldPlaceholder(
 
 // region Previews
 
-@Preview(name = "Text Field Enabled - Light")
+@PreviewComponent
 @Composable
 private fun TextFieldEnabledPreviewLight() {
     PreviewTextFieldContent {
@@ -247,17 +247,7 @@ private fun TextFieldEnabledPreviewLight() {
     }
 }
 
-@Preview(name = "Text Field Enabled - Dark")
-@Composable
-private fun TextFieldEnabledPreviewDark() {
-    PreviewTextFieldContent {
-        TextField(placeholder = "Station", initialText = "Central")
-        Spacer(Modifier.height(8.dp))
-        TextField(placeholder = "Search here")
-    }
-}
-
-@Preview(name = "Text Field Disabled - Light")
+@PreviewComponent
 @Composable
 private fun TextFieldDisabledPreviewLight() {
     PreviewTextFieldContent {
@@ -267,19 +257,9 @@ private fun TextFieldDisabledPreviewLight() {
     }
 }
 
-@Preview(name = "Text Field Disabled - Dark")
-@Composable
-private fun TextFieldDisabledPreviewDark() {
-    PreviewTextFieldContent {
-        TextField(enabled = false, initialText = "Disabled TextField")
-        Spacer(Modifier.height(8.dp))
-        TextField(enabled = false, placeholder = "Disabled Placeholder")
-    }
-}
-
 @Composable
 private fun PreviewTextFieldContent(content: @Composable () -> Unit) {
-    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip) {
         Column(
             modifier = Modifier
                 .padding(16.dp)

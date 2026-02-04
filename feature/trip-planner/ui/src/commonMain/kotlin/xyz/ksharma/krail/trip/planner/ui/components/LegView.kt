@@ -33,7 +33,6 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -45,6 +44,7 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
@@ -342,7 +342,7 @@ private fun StopsRow(
 
 // region Previews
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewLegView() {
     PreviewTheme {
@@ -374,7 +374,7 @@ private fun PreviewLegView() {
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewLegViewTwoStops() {
     PreviewTheme {
@@ -401,7 +401,7 @@ private fun PreviewLegViewTwoStops() {
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewLegViewMetro() {
     PreviewTheme {
@@ -428,7 +428,7 @@ private fun PreviewLegViewMetro() {
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewLegViewFerry() {
     PreviewTheme {
@@ -455,7 +455,7 @@ private fun PreviewLegViewFerry() {
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewLegViewLightRail() {
     PreviewTheme {
@@ -482,7 +482,7 @@ private fun PreviewLegViewLightRail() {
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewStopsRow() {
     PreviewTheme {
@@ -497,22 +497,7 @@ private fun PreviewStopsRow() {
     }
 }
 
-@Preview
-@Composable
-private fun PreviewStopsRow_LargeFont() {
-    PreviewTheme(fontScale = 2.0f) {
-        StopsRow(
-            stops = "3 stops",
-            line = TransportModeLine(
-                transportMode = TransportMode.Bus(),
-                lineName = "700",
-            ),
-            onClick = {},
-        )
-    }
-}
-
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewProminentStopInfo() {
     PreviewTheme {
@@ -526,7 +511,7 @@ private fun PreviewProminentStopInfo() {
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewRouteSummary() {
     PreviewTheme {

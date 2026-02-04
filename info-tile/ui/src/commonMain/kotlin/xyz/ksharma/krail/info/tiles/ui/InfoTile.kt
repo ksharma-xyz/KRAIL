@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
@@ -38,6 +37,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -149,14 +149,14 @@ fun InfoTile(
 
 // region Previews
 
-@Preview(name = "InfoTile Light")
+@PreviewComponent
 @Composable
 private fun InfoTileLightPreview() {
     // TODO: the text color in preview is not visible properly as background colors are calculates as
     //  alpha and are not concrete colors in DS: Taj
     //  Should be rendered fine though.
     //  In future, colors should be calculated and set in tokens rather than being calculated on fly.
-    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip, darkTheme = false) {
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip) {
         InfoTile(
             infoTileData = InfoTileData(
                 title = "Service update",
@@ -175,24 +175,7 @@ private fun InfoTileLightPreview() {
     }
 }
 
-@Preview(name = "InfoTile Dark")
-@Composable
-private fun InfoTileDarkPreview() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Train, darkTheme = true) {
-        InfoTile(
-            infoTileData = InfoTileData(
-                key = "unique_tile_01",
-                title = "Network issue resolved",
-                description = "All lines are now operating on their regular schedules.",
-                type = InfoTileData.InfoTileType.INFO,
-            ),
-            onCtaClick = {},
-            onDismissClick = {},
-        )
-    }
-}
-
-@Preview(name = "InfoTile Expanded No Dismiss")
+@PreviewComponent
 @Composable
 private fun InfoTileExpandedNoDismissPreview() {
     PreviewTheme {
@@ -213,4 +196,5 @@ private fun InfoTileExpandedNoDismissPreview() {
         )
     }
 }
+
 // endregion

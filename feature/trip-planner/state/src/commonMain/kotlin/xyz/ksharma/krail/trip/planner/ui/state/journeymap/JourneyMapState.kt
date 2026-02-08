@@ -1,12 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.state.journeymap
 
+import xyz.ksharma.krail.core.maps.state.BoundingBox
+import xyz.ksharma.krail.core.maps.state.CameraFocus
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 
 /**
  * Platform-agnostic types for journey map UI state.
  * No MapLibre types here - just pure Kotlin.
- * Reuses existing models from searchstop and TransportMode.
+ * Reuses existing models from core:maps and TransportMode.
  */
 
 /**
@@ -84,18 +86,3 @@ data class JourneyMapDisplay(
     val selectedLeg: JourneyLegFeature? = null,
 )
 
-/**
- * Camera focus configuration for auto-focusing on the journey.
- */
-data class CameraFocus(
-    val bounds: BoundingBox,
-    val padding: Int = 50,
-)
-
-/**
- * Bounding box for map camera positioning.
- */
-data class BoundingBox(
-    val southwest: LatLng,
-    val northeast: LatLng,
-)

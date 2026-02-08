@@ -13,13 +13,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 apply("io.gitlab.arturbosch.detekt")
             }
 
-            androidAppExtension().apply {
-                defaultConfig {
-                    versionCode = findProperty("versionCode")?.toString()?.toInt() ?: 115
-                    versionName = "1.16.0"
-                }
-            }
-
             configureAndroid()
             configureDetekt()
         }

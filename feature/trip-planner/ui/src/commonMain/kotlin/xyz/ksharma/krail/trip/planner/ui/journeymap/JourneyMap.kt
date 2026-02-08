@@ -9,7 +9,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_loc
+import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.Feature.get
@@ -19,10 +24,16 @@ import org.maplibre.compose.expressions.dsl.asString
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.eq
+import org.maplibre.compose.expressions.dsl.feature
+import org.maplibre.compose.expressions.dsl.format
+import org.maplibre.compose.expressions.dsl.image
+import org.maplibre.compose.expressions.dsl.offset
+import org.maplibre.compose.expressions.dsl.span
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
@@ -31,11 +42,11 @@ import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
-import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
+import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
@@ -141,7 +152,7 @@ private fun JourneyMapContent(
             LineLayer(
                 id = "journey-walking-lines",
                 source = journeySource,
-                filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_LEG)) and
+                filter = JourneyMapFilters.isJourneyLeg() and
                         (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(true)),
                 color = const(Color(0xFF757575)), // Gray
                 width = const(4.dp),
@@ -154,7 +165,7 @@ private fun JourneyMapContent(
             LineLayer(
                 id = "journey-transit-lines",
                 source = journeySource,
-                filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_LEG)) and
+                filter = JourneyMapFilters.isJourneyLeg() and
                         (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(false)),
                 color = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
                 width = const(6.dp),
@@ -168,48 +179,54 @@ private fun JourneyMapContent(
             CircleLayer(
                 id = "journey-stops-regular",
                 source = journeySource,
-                filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
-                        (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("REGULAR")),
+                filter = JourneyMapFilters.isStopType(StopType.REGULAR),
                 color = const(Color.White),
                 radius = const(6.dp),
                 strokeColor = const(Color.Black),
                 strokeWidth = const(2.dp),
             )
 
-            // Interchange stops - medium yellow circles
-            CircleLayer(
-                id = "journey-stops-interchange",
+            // === TEXT LABELS ===
+
+            // Prepare location icon for stop labels
+            val locationIcon = painterResource(Res.drawable.ic_loc)
+
+            // Get origin stop name for display
+            val originStopName = remember(mapState.mapDisplay.stops) {
+                mapState.mapDisplay.stops
+                    .firstOrNull { it.stopType == StopType.ORIGIN }
+                    ?.stopName
+                    ?: "Start"
+            }
+
+            // Origin stop - Show origin name with icon
+            SymbolLayer(
+                id = "journey-origin-label",
                 source = journeySource,
-                filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
-                        (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("INTERCHANGE")),
-                color = const(Color.White), // Yellow
-                radius = const(8.dp),
-                strokeColor = const(Color.Black),
-                strokeWidth = const(3.dp),
+                minZoom = 0f,
+                maxZoom = 24f,
+                filter = JourneyMapFilters.isStopType(StopType.ORIGIN),
+                iconImage = image(locationIcon, size = DpSize(24.dp, 24.dp)),
+                textField = format(span(originStopName)), // Dynamic origin name
+                textSize = const(1f.em),
+                textColor = const(Color.Black),
+                textFont = const(listOf("Noto Sans Regular")),
+                textOffset = offset(0f.em, 2f.em), // Position above icon
             )
 
-            // Origin stop - large green circle
-            CircleLayer(
-                id = "journey-stops-origin",
+            // Destination and Interchange stops - Show stop name with icon
+            SymbolLayer(
+                id = "journey-stops-labels",
                 source = journeySource,
-                filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
-                        (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("ORIGIN")),
-                color = const(Color.White), // Green
-                radius = const(8.dp),
-                strokeColor = const(Color.Black),
-                strokeWidth = const(3.dp),
-            )
-
-            // Destination stop - large red circle
-            CircleLayer(
-                id = "journey-stops-destination",
-                source = journeySource,
-                filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
-                        (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("DESTINATION")),
-                color = const(Color.White), // Red
-                radius = const(8.dp),
-                strokeColor = const(Color.Black),
-                strokeWidth = const(3.dp),
+                minZoom = 0f,
+                maxZoom = 24f,
+                filter = JourneyMapFilters.isStopType(StopType.DESTINATION, StopType.INTERCHANGE),
+                iconImage = image(locationIcon, size = DpSize(24.dp, 24.dp)),
+                textField = format(span(feature[GeoJsonPropertyKeys.STOP_NAME].asString())),
+                textSize = const(1.0f.em),
+                textColor = const(Color.Black),
+                textFont = const(listOf("Noto Sans Regular")),
+                textOffset = offset(0f.em, 2f.em), // Position above icon
             )
         }
     }

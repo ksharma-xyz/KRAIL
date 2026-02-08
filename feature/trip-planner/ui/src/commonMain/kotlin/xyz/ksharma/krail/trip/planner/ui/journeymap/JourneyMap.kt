@@ -171,7 +171,7 @@ private fun JourneyMapContent(
                 filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
                         (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("REGULAR")),
                 color = const(Color.White),
-                radius = const(8.dp),
+                radius = const(6.dp),
                 strokeColor = const(Color.Black),
                 strokeWidth = const(2.dp),
             )
@@ -182,9 +182,9 @@ private fun JourneyMapContent(
                 source = journeySource,
                 filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
                         (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("INTERCHANGE")),
-                color = const(Color(0xFFFFC107)), // Yellow
-                radius = const(10.dp),
-                strokeColor = const(Color.White),
+                color = const(Color.White), // Yellow
+                radius = const(8.dp),
+                strokeColor = const(Color.Black),
                 strokeWidth = const(3.dp),
             )
 
@@ -194,9 +194,9 @@ private fun JourneyMapContent(
                 source = journeySource,
                 filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
                         (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("ORIGIN")),
-                color = const(Color(0xFF4CAF50)), // Green
-                radius = const(12.dp),
-                strokeColor = const(Color.White),
+                color = const(Color.White), // Green
+                radius = const(8.dp),
+                strokeColor = const(Color.Black),
                 strokeWidth = const(3.dp),
             )
 
@@ -206,9 +206,9 @@ private fun JourneyMapContent(
                 source = journeySource,
                 filter = (get(GeoJsonPropertyKeys.TYPE).asString() eq const(GeoJsonFeatureTypes.JOURNEY_STOP)) and
                         (get(GeoJsonPropertyKeys.STOP_TYPE).asString() eq const("DESTINATION")),
-                color = const(Color(0xFFF44336)), // Red
-                radius = const(12.dp),
-                strokeColor = const(Color.White),
+                color = const(Color.White), // Red
+                radius = const(8.dp),
+                strokeColor = const(Color.Black),
                 strokeWidth = const(3.dp),
             )
         }

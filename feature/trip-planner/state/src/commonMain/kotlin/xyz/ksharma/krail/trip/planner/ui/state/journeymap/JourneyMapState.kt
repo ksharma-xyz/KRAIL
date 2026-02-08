@@ -17,6 +17,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 data class JourneyLegFeature(
     val legId: String,
     val transportMode: TransportMode?,
+    val lineName: String?, // e.g., "T1", "F1", "333" (bus number)
+    val lineColor: String, // Hex color code for this specific line
     val routeSegment: RouteSegment,
 )
 

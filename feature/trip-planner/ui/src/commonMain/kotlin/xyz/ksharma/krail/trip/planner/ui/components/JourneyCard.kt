@@ -47,6 +47,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.AlertButton
+import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SeparatorIcon
@@ -88,6 +89,7 @@ fun JourneyCard(
     modifier: Modifier = Modifier,
     onAlertClick: () -> Unit = {},
     onLegClick: (Boolean) -> Unit = {},
+    onMapClick: () -> Unit = {},
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     // Derive transport modes for styling and colors
@@ -145,6 +147,7 @@ fun JourneyCard(
                     totalUniqueServiceAlerts = totalUniqueServiceAlerts,
                     onAlertClick = onAlertClick,
                     onLegClick = onLegClick,
+                    onMapClick = onMapClick,
                     modifier = Modifier.clickable(
                         role = Role.Button,
                         onClick = onClick,
@@ -276,6 +279,7 @@ fun ExpandedJourneyCardContent(
     totalUniqueServiceAlerts: Int,
     onAlertClick: () -> Unit,
     onLegClick: (Boolean) -> Unit,
+    onMapClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -290,18 +294,31 @@ fun ExpandedJourneyCardContent(
             },
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (totalUniqueServiceAlerts > 0) {
-                AlertButton(
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (totalUniqueServiceAlerts > 0) {
+                    AlertButton(
+                        dimensions = ButtonDefaults.smallButtonSize(),
+                        onClick = onAlertClick,
+                    ) {
+                        Text(
+                            text = if (totalUniqueServiceAlerts > 1) {
+                                "$totalUniqueServiceAlerts Alerts"
+                            } else {
+                                "$totalUniqueServiceAlerts Alert"
+                            },
+                        )
+                    }
+                }
+
+                // Map button using Taj design system
+                Button(
+                    onClick = onMapClick,
                     dimensions = ButtonDefaults.smallButtonSize(),
-                    onClick = onAlertClick,
                 ) {
-                    Text(
-                        text = if (totalUniqueServiceAlerts > 1) {
-                            "$totalUniqueServiceAlerts Alerts"
-                        } else {
-                            "$totalUniqueServiceAlerts Alert"
-                        },
-                    )
+                    Text(text = "Map")
                 }
             }
 

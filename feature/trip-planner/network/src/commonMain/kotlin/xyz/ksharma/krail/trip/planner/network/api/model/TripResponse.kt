@@ -96,6 +96,13 @@ data class TripResponse(
          * not enough to constitute a standalone walking leg.
          */
         @SerialName("interchange") val interchange: Interchange? = null,
+
+        /**
+         * Array of coordinate pairs [latitude, longitude] representing the route path.
+         * Available for both transit and walking legs.
+         * Each element is a 2-element array: [latitude, longitude]
+         */
+        @SerialName("coords") val coords: List<List<Double>>? = null,
     )
 
     @Serializable

@@ -9,6 +9,7 @@ import xyz.ksharma.krail.core.navigation.SplashRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.JourneyMapRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
@@ -33,6 +34,7 @@ val krailNavSerializationConfig = SavedStateConfiguration {
             subclass(SavedTripsRoute::class, SavedTripsRoute.serializer())
             subclass(SearchStopRoute::class, SearchStopRoute.serializer())
             subclass(TimeTableRoute::class, TimeTableRoute.serializer())
+            subclass(JourneyMapRoute::class, JourneyMapRoute.serializer())
             subclass(ThemeSelectionRoute::class, ThemeSelectionRoute.serializer())
             subclass(ServiceAlertRoute::class, ServiceAlertRoute.serializer())
             subclass(SettingsRoute::class, SettingsRoute.serializer())

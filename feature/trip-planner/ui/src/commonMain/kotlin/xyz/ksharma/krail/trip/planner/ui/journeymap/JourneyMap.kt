@@ -38,6 +38,7 @@ import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
+import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 
 /**
  * Main composable for displaying a journey on a map.
@@ -82,22 +83,28 @@ private fun JourneyMapContent(
     onStopClick: (JourneyStopFeature) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Calculate camera position from bounds
-    val cameraPosition = remember(mapState.cameraFocus) {
-        mapState.cameraFocus?.let { focus ->
+    // Calculate camera position - start at the origin (journey beginning)
+    val cameraPosition = remember(mapState.cameraFocus, mapState.mapDisplay.stops) {
+        // Find the origin stop (where the journey starts)
+        val originStop = mapState.mapDisplay.stops.firstOrNull { it.stopType == StopType.ORIGIN }
+
+        val target = originStop?.position?.let { origin ->
+            Position(longitude = origin.longitude, latitude = origin.latitude)
+        } ?: mapState.cameraFocus?.let { focus ->
+            // Fallback to center if no origin found
             val center = MapCameraUtils.calculateCenter(focus.bounds)
-            val zoom = MapCameraUtils.calculateZoomLevel(focus.bounds)
-            CameraPosition(
-                target = Position(longitude = center.longitude, latitude = center.latitude),
-                zoom = zoom,
-            )
-        } ?: CameraPosition(
-            target = Position(
-                latitude = MapConfig.DefaultPosition.LATITUDE,
-                longitude = MapConfig.DefaultPosition.LONGITUDE
-            ),
-            zoom = MapConfig.DefaultPosition.ZOOM,
+            Position(longitude = center.longitude, latitude = center.latitude)
+        } ?: Position(
+            latitude = MapConfig.DefaultPosition.LATITUDE,
+            longitude = MapConfig.DefaultPosition.LONGITUDE
         )
+
+        // Calculate zoom level from bounds to fit the entire journey
+        val zoom = mapState.cameraFocus?.let { focus ->
+            MapCameraUtils.calculateZoomLevel(focus.bounds)
+        } ?: MapConfig.DefaultPosition.ZOOM
+
+        CameraPosition(target = target, zoom = zoom)
     }
 
     val cameraState = rememberCameraState(firstPosition = cameraPosition)

@@ -1,13 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.journeymap.business
 
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.FeatureCollection
 import org.maplibre.spatialk.geojson.LineString
 import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
+import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
+import xyz.ksharma.krail.core.maps.state.geoJsonProperties
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyLegFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
@@ -15,6 +16,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.journeymap.RouteSegment
 
 /**
  * Mapper to convert JourneyMapUiState to MapLibre GeoJSON FeatureCollection.
+ * Uses reusable GeoJSON infrastructure from core:maps.
  */
 object JourneyMapFeatureMapper {
 
@@ -41,8 +43,8 @@ object JourneyMapFeatureMapper {
             // can determine concrete types and not throw on empty collections.
             val emptyFeature = Feature(
                 geometry = Point(Position(longitude = 151.2057, latitude = -33.8727)),
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("empty"))
+                properties = geoJsonProperties {
+                    property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.EMPTY)
                 },
             )
             return FeatureCollection(features = listOf(emptyFeature))
@@ -56,58 +58,67 @@ object JourneyMapFeatureMapper {
      */
     private fun JourneyLegFeature.toGeoJsonFeature(): Feature<*, *>? {
         return when (val segment = routeSegment) {
-            is RouteSegment.PathSegment -> {
-                if (segment.points.isEmpty()) return null
+            is RouteSegment.PathSegment -> createPathSegmentFeature(segment)
+            is RouteSegment.StopConnectorSegment -> createStopConnectorFeature(segment)
+        }
+    }
 
-                // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
-                val positions = segment.points.map { latLng ->
-                    Position(longitude = latLng.longitude, latitude = latLng.latitude)
-                }
+    /**
+     * Create GeoJSON feature for walking/path segments.
+     */
+    private fun JourneyLegFeature.createPathSegmentFeature(
+        segment: RouteSegment.PathSegment
+    ): Feature<*, *>? {
+        if (segment.points.isEmpty()) return null
 
-                Feature(
-                    geometry = LineString(positions),
-                    properties = buildJsonObject {
-                        put("type", JsonPrimitive("journey_leg"))
-                        put("legId", JsonPrimitive(legId))
-                        // Walking paths - use gray color
-                        put("color", JsonPrimitive("#757575"))
-                        put("isWalking", JsonPrimitive(true))
-                        put("lineName", JsonPrimitive("Walking"))
-                    },
-                )
-            }
+        // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
+        val positions = segment.points.map { latLng ->
+            Position(longitude = latLng.longitude, latitude = latLng.latitude)
+        }
 
-            is RouteSegment.StopConnectorSegment -> {
-                val validStops = segment.stops.filter { it.position != null }
-                if (validStops.size < 2) return null
+        return Feature(
+            geometry = LineString(positions),
+            properties = geoJsonProperties {
+                property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_LEG)
+                property(GeoJsonPropertyKeys.LEG_ID, legId)
+                property(GeoJsonPropertyKeys.COLOR, "#757575") // Gray for walking
+                property(GeoJsonPropertyKeys.IS_WALKING, true)
+                property(GeoJsonPropertyKeys.LINE_NAME, "Walking")
+            },
+        )
+    }
 
-                // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
-                val positions = validStops.mapNotNull { stop ->
-                    stop.position?.let { pos ->
-                        Position(
-                            longitude = pos.longitude,
-                            latitude = pos.latitude,
-                        )
-                    }
-                }
+    /**
+     * Create GeoJSON feature for transit stop connector segments.
+     */
+    private fun JourneyLegFeature.createStopConnectorFeature(
+        segment: RouteSegment.StopConnectorSegment
+    ): Feature<*, *>? {
+        val validStops = segment.stops.filter { it.position != null }
+        if (validStops.size < 2) return null
 
-                Feature(
-                    geometry = LineString(positions),
-                    properties = buildJsonObject {
-                        put("type", JsonPrimitive("journey_leg"))
-                        put("legId", JsonPrimitive(legId))
-                        // Use color from TransportMode if available, otherwise default
-                        val color = transportMode?.colorCode ?: "#666666"
-                        put("color", JsonPrimitive(color))
-                        put("isWalking", JsonPrimitive(false))
-                        transportMode?.let { mode ->
-                            put("modeType", JsonPrimitive(mode.productClass))
-                            put("lineName", JsonPrimitive(mode.name))
-                        }
-                    },
-                )
+        // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
+        val positions = validStops.mapNotNull { stop ->
+            stop.position?.let { pos ->
+                Position(longitude = pos.longitude, latitude = pos.latitude)
             }
         }
+
+        return Feature(
+            geometry = LineString(positions),
+            properties = geoJsonProperties {
+                property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_LEG)
+                property(GeoJsonPropertyKeys.LEG_ID, legId)
+                // Use color from TransportMode if available, otherwise default
+                val color = transportMode?.colorCode ?: "#666666"
+                property(GeoJsonPropertyKeys.COLOR, color)
+                property(GeoJsonPropertyKeys.IS_WALKING, false)
+                transportMode?.let { mode ->
+                    property(GeoJsonPropertyKeys.MODE_TYPE, mode.productClass)
+                    property(GeoJsonPropertyKeys.LINE_NAME, mode.name)
+                }
+            },
+        )
     }
 
     /**
@@ -118,19 +129,14 @@ object JourneyMapFeatureMapper {
 
         // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
         return Feature(
-            geometry = Point(
-                Position(
-                    longitude = pos.longitude,
-                    latitude = pos.latitude,
-                ),
-            ),
-            properties = buildJsonObject {
-                put("type", JsonPrimitive("journey_stop"))
-                put("stopId", JsonPrimitive(stopId))
-                put("stopName", JsonPrimitive(stopName))
-                put("stopType", JsonPrimitive(stopType.name))
-                time?.let { put("time", JsonPrimitive(it)) }
-                platform?.let { put("platform", JsonPrimitive(it)) }
+            geometry = Point(Position(longitude = pos.longitude, latitude = pos.latitude)),
+            properties = geoJsonProperties {
+                property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_STOP)
+                property(GeoJsonPropertyKeys.STOP_ID, stopId)
+                property(GeoJsonPropertyKeys.STOP_NAME, stopName)
+                property(GeoJsonPropertyKeys.STOP_TYPE, stopType.name)
+                propertyIfNotNull(GeoJsonPropertyKeys.TIME, time)
+                propertyIfNotNull(GeoJsonPropertyKeys.PLATFORM, platform)
             },
         )
     }

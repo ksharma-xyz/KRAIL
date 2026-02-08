@@ -1,16 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.journeymap.business
 
+import xyz.ksharma.krail.core.maps.state.BoundingBox
+import xyz.ksharma.krail.core.maps.state.CameraFocus
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.journeymap.BoundingBox
-import xyz.ksharma.krail.trip.planner.ui.state.journeymap.CameraFocus
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyLegFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.RouteSegment
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 
 /**
  * Mapper to convert TripResponse.Journey to JourneyMapUiState.
@@ -157,17 +158,7 @@ object JourneyMapMapper {
             }
         }
 
-        if (allCoordinates.isEmpty()) return null
-
-        val minLat = allCoordinates.minOf { it.latitude }
-        val maxLat = allCoordinates.maxOf { it.latitude }
-        val minLng = allCoordinates.minOf { it.longitude }
-        val maxLng = allCoordinates.maxOf { it.longitude }
-
-        return BoundingBox(
-            southwest = LatLng(minLat, minLng),
-            northeast = LatLng(maxLat, maxLng),
-        )
+        return MapCameraUtils.calculateBounds(allCoordinates)
     }
 
     /**

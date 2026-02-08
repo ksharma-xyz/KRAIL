@@ -6,6 +6,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyLegFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
@@ -17,6 +18,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
  * Mapper to convert TripResponse.Journey to JourneyMapUiState.
  */
 object JourneyMapMapper {
+
+    // Walking path color - matches KrailTheme.colors.walkingPath
+    private const val WALKING_PATH_COLOR = "#757575"
 
     /**
      * Converts a TripResponse.Journey to a JourneyMapUiState.Ready.
@@ -48,36 +52,73 @@ object JourneyMapMapper {
      * Converts a TripResponse.Leg to a JourneyLegFeature.
      */
     private fun TripResponse.Leg.toJourneyLegFeature(index: Int): JourneyLegFeature? {
-        return when {
-            // Walking leg with interchange coordinates
-            interchange?.coords != null -> {
-                val interchangeData = interchange!!
-                val coordsList = interchangeData.coords ?: return null
+        // Get transport mode and line info
+        val transportMode = transportation?.toTransportMode()
+        val lineName = transportation?.disassembledName
 
-                val coords = coordsList.mapNotNull { coord ->
+        // Calculate line color using TransportModeLine logic
+        val lineColor = when {
+            transportMode == null -> WALKING_PATH_COLOR // Walking - gray
+            lineName != null -> {
+                // Try to get specific line color (e.g., T1, F1, L1)
+                TransportModeLine.TransportLine.entries
+                    .firstOrNull { it.key == lineName }
+                    ?.hexColor
+                    ?: transportMode.colorCode // Fallback to mode color (e.g., all buses same color)
+            }
+            else -> transportMode.colorCode // Use mode color
+        }
+
+        return when {
+            // Prioritize leg.coords if available (for both walking and transit)
+            !coords.isNullOrEmpty() -> {
+                val coordinates = coords!!.mapNotNull { coord ->
                     if (coord.size >= 2) {
                         LatLng(latitude = coord[0], longitude = coord[1])
                     } else {
                         null
                     }
                 }
-                if (coords.isEmpty()) return null
+                if (coordinates.isEmpty()) return null
 
                 JourneyLegFeature(
                     legId = "leg_$index",
-                    transportMode = null, // Walking doesn't have a specific TransportMode in the sealed class
-                    routeSegment = RouteSegment.PathSegment(points = coords),
+                    transportMode = transportMode,
+                    lineName = lineName,
+                    lineColor = lineColor,
+                    routeSegment = RouteSegment.PathSegment(points = coordinates),
                 )
             }
-            // Transit leg - connect stops
+            // Fallback to interchange.coords for walking legs
+            interchange?.coords != null -> {
+                val interchangeData = interchange!!
+                val coordsList = interchangeData.coords ?: return null
+
+                val coordinates = coordsList.mapNotNull { coord ->
+                    if (coord.size >= 2) {
+                        LatLng(latitude = coord[0], longitude = coord[1])
+                    } else null
+                }
+                if (coordinates.isEmpty()) return null
+
+                JourneyLegFeature(
+                    legId = "leg_$index",
+                    transportMode = null, // Walking
+                    lineName = null,
+                    lineColor = WALKING_PATH_COLOR, // Gray for walking
+                    routeSegment = RouteSegment.PathSegment(points = coordinates),
+                )
+            }
+            // Last resort: straight lines between stops
             transportation != null -> {
-                val transportData = transportation!!
                 val stops = stopSequence?.mapNotNull { it.toJourneyStopFeature() } ?: emptyList()
                 if (stops.isEmpty()) return null
 
                 JourneyLegFeature(
                     legId = "leg_$index",
-                    transportMode = transportData.toTransportMode(),
+                    transportMode = transportMode,
+                    lineName = lineName,
+                    lineColor = lineColor,
                     routeSegment = RouteSegment.StopConnectorSegment(stops = stops),
                 )
             }

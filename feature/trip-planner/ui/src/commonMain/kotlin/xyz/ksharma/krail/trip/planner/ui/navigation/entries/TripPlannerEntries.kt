@@ -19,6 +19,7 @@ fun EntryProviderScope<NavKey>.TripPlannerEntries(
     SavedTripsEntry(tripPlannerNavigator)
     SearchStopEntry(tripPlannerNavigator)
     TimeTableEntry(tripPlannerNavigator)
+    JourneyMapEntry(tripPlannerNavigator)
     ThemeSelectionEntry(tripPlannerNavigator)
     SettingsEntry(tripPlannerNavigator)
     OurStoryEntry(tripPlannerNavigator)

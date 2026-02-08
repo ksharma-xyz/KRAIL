@@ -23,7 +23,17 @@ import kotlin.time.toDuration
 
 @Suppress("ComplexCondition")
 internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.JourneyCardInfo>? =
-    journeys?.mapNotNull { journey ->
+    buildJourneyListWithRawData().first
+
+/**
+ * Build journey list along with raw journey data map for map visualization.
+ * Returns Pair<JourneyList, RawDataMap>
+ */
+@Suppress("ComplexCondition")
+internal fun TripResponse.buildJourneyListWithRawData(): Pair<ImmutableList<TimeTableState.JourneyCardInfo>?, Map<String, TripResponse.Journey>> {
+    val rawDataMap = mutableMapOf<String, TripResponse.Journey>()
+
+    val journeyList = journeys?.mapNotNull { journey ->
         val firstPublicTransportLeg = journey.getFirstPublicTransportLeg()
         val lastPublicTransportLeg = journey.getLastPublicTransportLeg()
         val originTimeUTC = firstPublicTransportLeg?.getDepartureTime()
@@ -72,12 +82,16 @@ internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.Journ
                 departureDeviation = firstPublicTransportLeg.getDepartureDeviation(),
             ).also {
                 log("\tJourneyId: ${it.journeyId}")
+                // Store raw journey data for map visualization
+                rawDataMap[it.journeyId] = journey
             }
         } else {
             null
         }
     }?.toImmutableList()
 
+    return Pair(journeyList, rawDataMap)
+}
 private fun TripResponse.Journey.getFirstPublicTransportLeg() = legs?.firstOrNull { leg ->
     !leg.isWalkingLeg()
 }

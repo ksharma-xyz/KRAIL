@@ -49,9 +49,11 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
         metadata = ListDetailSceneStrategy.detailPane(),
     ) { key ->
         LaunchedEffect(key) {
-            log("TimeTableRoute key: from-${key.fromStopId}, to: ${key.toStopId}")
+            log("🗺️ TimeTableEntry - key changed: from-${key.fromStopId}, to: ${key.toStopId}")
         }
         val viewModel: TimeTableViewModel = koinViewModel()
+        log("🗺️ TimeTableEntry - ViewModel instance: ${viewModel.hashCode()}")
+
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val expandedJourneyId by viewModel.expandedJourneyId.collectAsStateWithLifecycle()
 
@@ -89,6 +91,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
 
         // Initialize trip when route changes
         LaunchedEffect(key.fromStopId, key.toStopId) {
+            log("🗺️ TimeTableEntry - LaunchedEffect triggered, initializing trip")
             viewModel.initializeTrip(
                 fromStopId = key.fromStopId,
                 fromStopName = key.fromStopName,
@@ -128,6 +131,9 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 },
                 onModeClick = { isVisible ->
                     viewModel.onEvent(TimeTableUiEvent.ModeClicked(isVisible))
+                },
+                onMapClick = { journeyId ->
+                    tripPlannerNavigator.navigateToJourneyMap(journeyId)
                 },
             )
 

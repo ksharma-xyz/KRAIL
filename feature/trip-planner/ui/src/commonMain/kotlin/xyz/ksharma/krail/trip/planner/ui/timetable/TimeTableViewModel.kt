@@ -48,6 +48,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyList
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyListWithRawData
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -145,6 +146,12 @@ class TimeTableViewModel(
     }
 
     /**
+     * Track if we've already initialized this trip to prevent repeated initialization
+     * when navigating back from child screens (like JourneyMapScreen).
+     */
+    private var lastInitializedTrip: Pair<String, String>? = null
+
+    /**
      * Cache of trips. Key is [TimeTableState.JourneyCardInfo.journeyId] and value is
      * [TimeTableState.JourneyCardInfo].
      *
@@ -154,8 +161,23 @@ class TimeTableViewModel(
     val journeys: MutableMap<String, TimeTableState.JourneyCardInfo> = mutableMapOf()
 
     /**
+     * Cache of raw journey data from API for map visualization.
+     * Key is journeyId, value is TripResponse.Journey.
+     */
+    private val rawJourneyData: MutableMap<String, TripResponse.Journey> = mutableMapOf()
+
+    /**
+     * Get raw journey data by ID for map visualization.
+     */
+    fun getRawJourneyById(journeyId: String): TripResponse.Journey? = rawJourneyData[journeyId]
+
+    /**
      * Initialize trip from entry.
      * Handles trip loading and ensures ViewModel state stays in sync.
+     *
+     * IMPORTANT: This method tracks the last initialized route to prevent
+     * reinitialization when navigating back from child screens (like JourneyMapScreen).
+     * This preserves state when user goes: TimeTable → Map → Back.
      */
     fun initializeTrip(
         fromStopId: String,
@@ -163,6 +185,23 @@ class TimeTableViewModel(
         toStopId: String,
         toStopName: String,
     ) {
+        val currentRoute = Pair(fromStopId, toStopId)
+
+        log("🗺️ initializeTrip: from=$fromStopId ($fromStopName) → to=$toStopId ($toStopName)")
+        log("🗺️ lastInitializedTrip: ${lastInitializedTrip?.let { "${it.first} → ${it.second}" } ?: "null"}")
+        log("🗺️ currentRoute: ${currentRoute.first} → ${currentRoute.second}")
+
+        // Check if this is the EXACT SAME route we just initialized
+        if (lastInitializedTrip == currentRoute) {
+            log("🗺️ initializeTrip: SKIPPING - Same route already initialized, preserving state!")
+            // Don't reinitialize - this is likely navigation back from map
+            // State is already correct, no need to call onLoadTimeTable
+            return
+        }
+
+        // Different route - update tracking and proceed with initialization
+        lastInitializedTrip = currentRoute
+
         val trip = Trip(
             fromStopId = fromStopId,
             fromStopName = fromStopName,
@@ -170,7 +209,11 @@ class TimeTableViewModel(
             toStopName = toStopName,
         )
 
-        // Always call LoadTimeTable - it will handle logic:
+        log("🗺️ Previous trip: ${tripInfo?.let { "${it.fromStopId} → ${it.toStopId}" } ?: "null"}")
+        log("🗺️ New trip: ${trip.fromStopId} → ${trip.toStopId}")
+        log("🗺️ Trip changed: ${trip != tripInfo}")
+
+        // Call LoadTimeTable - it will handle logic:
         // - If trip changed: Clear date/time, clear cache, fetch from API
         // - If same trip (rotation/nav back): Preserve state, skip API call
         onLoadTimeTable(trip)
@@ -307,7 +350,11 @@ class TimeTableViewModel(
     @OptIn(ExperimentalTime::class)
     @VisibleForTesting
     suspend fun updateTripsCache(response: TripResponse) = withContext(ioDispatcher) {
-        val newJourneyList = response.buildJourneyList()
+        val (newJourneyList, newRawDataMap) = response.buildJourneyListWithRawData()
+
+        // Update raw journey data map
+        rawJourneyData.putAll(newRawDataMap)
+
         val startedJourneyList = journeys.values
             .filter {
                 // Find list of journeys that have started.
@@ -436,20 +483,26 @@ class TimeTableViewModel(
     }
 
     private fun onLoadTimeTable(trip: Trip) {
-        log("onLoadTimeTable -- fromStopId: ${trip.fromStopId}, toStopId: ${trip.toStopId}")
+        log("🗺️ onLoadTimeTable -- fromStopId: ${trip.fromStopId}, toStopId: ${trip.toStopId}")
 
         // Check if this is the same trip or a different one
         val currentTripId = trip.tripId
         val isSameTrip = previousTripId == currentTripId
+
+        log("🗺️ onLoadTimeTable -- previousTripId: $previousTripId")
+        log("🗺️ onLoadTimeTable -- currentTripId: $currentTripId")
+        log("🗺️ onLoadTimeTable -- isSameTrip: $isSameTrip")
+        log("🗺️ onLoadTimeTable -- Current journey count: ${journeys.size}")
 
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
 
         if (!isSameTrip) {
             // Different trip - clear state and fetch new data
-            log("onLoadTimeTable -- Different trip, triggering API call")
+            log("🗺️ onLoadTimeTable -- Different trip, clearing cache and fetching")
             dateTimeSelectionItem = null
             journeys.clear()
+            rawJourneyData.clear() // Also clear raw journey data
 
             updateUiState {
                 copy(
@@ -463,7 +516,7 @@ class TimeTableViewModel(
             rateLimiter.triggerEvent()
         } else {
             // Same trip - preserve state, no API call
-            log("onLoadTimeTable -- Same trip, using cached data")
+            log("🗺️ onLoadTimeTable -- Same trip, preserving state with ${journeys.size} journeys")
             updateUiState {
                 copy(
                     trip = trip,

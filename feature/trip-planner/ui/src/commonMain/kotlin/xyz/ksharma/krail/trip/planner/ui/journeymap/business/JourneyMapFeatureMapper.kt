@@ -76,14 +76,19 @@ object JourneyMapFeatureMapper {
             Position(longitude = latLng.longitude, latitude = latLng.latitude)
         }
 
+        val isWalking = transportMode == null
+
         return Feature(
             geometry = LineString(positions),
             properties = geoJsonProperties {
                 property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_LEG)
                 property(GeoJsonPropertyKeys.LEG_ID, legId)
-                property(GeoJsonPropertyKeys.COLOR, "#757575") // Gray for walking
-                property(GeoJsonPropertyKeys.IS_WALKING, true)
-                property(GeoJsonPropertyKeys.LINE_NAME, "Walking")
+                property(GeoJsonPropertyKeys.COLOR, lineColor) // Use actual line color from leg
+                property(GeoJsonPropertyKeys.IS_WALKING, isWalking)
+                propertyIfNotNull(GeoJsonPropertyKeys.LINE_NAME, lineName ?: if (isWalking) "Walking" else null)
+                transportMode?.let { mode ->
+                    property(GeoJsonPropertyKeys.MODE_TYPE, mode.productClass)
+                }
             },
         )
     }
@@ -109,13 +114,11 @@ object JourneyMapFeatureMapper {
             properties = geoJsonProperties {
                 property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_LEG)
                 property(GeoJsonPropertyKeys.LEG_ID, legId)
-                // Use color from TransportMode if available, otherwise default
-                val color = transportMode?.colorCode ?: "#666666"
-                property(GeoJsonPropertyKeys.COLOR, color)
+                property(GeoJsonPropertyKeys.COLOR, lineColor) // Use actual line color from leg
                 property(GeoJsonPropertyKeys.IS_WALKING, false)
+                propertyIfNotNull(GeoJsonPropertyKeys.LINE_NAME, lineName)
                 transportMode?.let { mode ->
                     property(GeoJsonPropertyKeys.MODE_TYPE, mode.productClass)
-                    property(GeoJsonPropertyKeys.LINE_NAME, mode.name)
                 }
             },
         )

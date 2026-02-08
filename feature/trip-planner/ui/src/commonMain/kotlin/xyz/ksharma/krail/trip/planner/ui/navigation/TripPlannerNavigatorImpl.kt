@@ -37,6 +37,10 @@ internal class TripPlannerNavigatorImpl(
         )
     }
 
+    override fun navigateToJourneyMap(journeyId: String) {
+        baseNavigator.goTo(JourneyMapRoute(journeyId))
+    }
+
     override fun navigateToSettings() {
         baseNavigator.goTo(SettingsRoute)
     }

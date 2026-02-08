@@ -40,6 +40,14 @@ data class TimeTableRoute(
 ) : TripPlannerRoute
 
 /**
+ * Detail route: Journey Map visualization
+ */
+@Serializable
+data class JourneyMapRoute(
+    val journeyId: String,
+) : TripPlannerRoute
+
+/**
  * Regular routes (not part of list-detail)
  */
 @Serializable

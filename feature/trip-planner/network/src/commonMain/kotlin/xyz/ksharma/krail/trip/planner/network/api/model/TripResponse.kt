@@ -156,6 +156,46 @@ data class TripResponse(
          * Contains additional information about this stop, such as wheelchair accessibility information.
          */
         @SerialName("properties") val properties: DestinationProperties? = null,
+
+        /**
+         * Coordinates of the stop/platform location.
+         * Array format: [latitude, longitude]
+         * Example: [-33.774221, 150.935976]
+         */
+        @SerialName("coord") val coord: List<Double>? = null,
+
+        /**
+         * Parent location information (usually the station when this is a platform)
+         */
+        @SerialName("parent") val parent: ParentLocation? = null,
+
+        /**
+         * Indicates if the id is a global stop ID
+         */
+        @SerialName("isGlobalId") val isGlobalId: Boolean? = null,
+
+        /**
+         * Level/floor of the platform
+         * 0 = ground level, negative = underground, positive = elevated
+         * Example: -2 for Town Hall underground platform
+         */
+        @SerialName("niveau") val niveau: Int? = null,
+
+        /**
+         * List of transport mode IDs available at this stop
+         * Values: 1=Train, 2=Metro, 4=Light Rail, 5=Bus, 7=Coach, 9=Ferry, 11=School Bus
+         */
+        @SerialName("modes") val modes: List<Int>? = null,
+
+        /**
+         * Planned departure time from the base timetable (non-real-time)
+         */
+        @SerialName("departureTimeBaseTimetable") val departureTimeBaseTimetable: String? = null,
+
+        /**
+         * Planned arrival time from the base timetable (non-real-time)
+         */
+        @SerialName("arrivalTimeBaseTimetable") val arrivalTimeBaseTimetable: String? = null,
     )
 
     @Serializable
@@ -177,6 +217,119 @@ data class TripResponse(
          * No official documentation on this.
          */
         @SerialName("platform") val platform: String? = null,
+
+        /**
+         * Platform name (e.g., "Platform 1", "Stand A")
+         */
+        @SerialName("platformName") val platformName: String? = null,
+
+        /**
+         * Planned platform name from timetable
+         */
+        @SerialName("plannedPlatformName") val plannedPlatformName: String? = null,
+
+        /**
+         * Stopping point planned designation
+         */
+        @SerialName("stoppingPointPlanned") val stoppingPointPlanned: String? = null,
+
+        /**
+         * Platform area number
+         */
+        @SerialName("area") val area: String? = null,
+
+        /**
+         * Number of cars in the train
+         */
+        @SerialName("NumberOfCars") val numberOfCars: String? = null,
+    )
+
+    /**
+     * Parent location information for a stop.
+     * Usually represents the station when the stop is a specific platform.
+     */
+    @Serializable
+    data class ParentLocation(
+        /**
+         * ID of the parent location
+         */
+        @SerialName("id") val id: String? = null,
+
+        /**
+         * Full name of the parent location
+         */
+        @SerialName("name") val name: String? = null,
+
+        /**
+         * Short name without suburb
+         */
+        @SerialName("disassembledName") val disassembledName: String? = null,
+
+        /**
+         * Type of location: "stop", "platform", "locality", etc.
+         */
+        @SerialName("type") val type: String? = null,
+
+        /**
+         * Coordinates of the parent location
+         * Array format: [latitude, longitude]
+         */
+        @SerialName("coord") val coord: List<Double>? = null,
+
+        /**
+         * Grandparent location (usually locality/suburb)
+         */
+        @SerialName("parent") val parent: GrandParentLocation? = null,
+
+        /**
+         * Additional properties of the parent location
+         */
+        @SerialName("properties") val properties: ParentProperties? = null,
+
+        /**
+         * Level/floor of the parent location
+         */
+        @SerialName("niveau") val niveau: Int? = null,
+
+        /**
+         * Indicates if this is a global ID
+         */
+        @SerialName("isGlobalId") val isGlobalId: Boolean? = null,
+    )
+
+    /**
+     * Grandparent location (typically the suburb/locality)
+     */
+    @Serializable
+    data class GrandParentLocation(
+        /**
+         * ID of the locality
+         * Format: "placeID:95308035:1"
+         */
+        @SerialName("id") val id: String? = null,
+
+        /**
+         * Name of the locality/suburb
+         * Example: "Seven Hills", "Sydney"
+         */
+        @SerialName("name") val name: String? = null,
+
+        /**
+         * Type is typically "locality"
+         */
+        @SerialName("type") val type: String? = null,
+    )
+
+    /**
+     * Additional properties for parent locations
+     */
+    @Serializable
+    data class ParentProperties(
+        /**
+         * The legacy stop ID
+         * Example: "10101234"
+         */
+        @SerialName("stopId") val stopId: String? = null,
     )
 
     @Serializable

@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.state.journeymap
 
-import xyz.ksharma.krail.core.maps.state.BoundingBox
 import xyz.ksharma.krail.core.maps.state.CameraFocus
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -87,4 +86,3 @@ data class JourneyMapDisplay(
     val stops: List<JourneyStopFeature> = emptyList(),
     val selectedLeg: JourneyLegFeature? = null,
 )
-

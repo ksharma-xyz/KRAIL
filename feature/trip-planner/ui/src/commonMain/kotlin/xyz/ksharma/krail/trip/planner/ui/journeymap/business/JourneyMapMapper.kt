@@ -19,8 +19,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
  */
 object JourneyMapMapper {
 
-    // Walking path color - matches KrailTheme.colors.walkingPath
     private const val WALKING_PATH_COLOR = "#757575"
+    private const val LEG_ID_PREFIX = "leg_"
 
     /**
      * Converts a TripResponse.Journey to a JourneyMapUiState.Ready.
@@ -52,78 +52,87 @@ object JourneyMapMapper {
      * Converts a TripResponse.Leg to a JourneyLegFeature.
      */
     private fun TripResponse.Leg.toJourneyLegFeature(index: Int): JourneyLegFeature? {
-        // Get transport mode and line info
         val transportMode = transportation?.toTransportMode()
         val lineName = transportation?.disassembledName
+        val lineColor = calculateLineColor(transportMode, lineName)
 
-        // Calculate line color using TransportModeLine logic
-        val lineColor = when {
-            transportMode == null -> WALKING_PATH_COLOR // Walking - gray
-            lineName != null -> {
-                // Try to get specific line color (e.g., T1, F1, L1)
+        return createLegFromCoordinates(index, transportMode, lineName, lineColor)
+            ?: createLegFromInterchange(index, lineColor)
+            ?: createLegFromStops(index, transportMode, lineName, lineColor)
+    }
+
+    private fun calculateLineColor(transportMode: TransportMode?, lineName: String?): String {
+        return when {
+            transportMode == null -> WALKING_PATH_COLOR
+            lineName != null ->
                 TransportModeLine.TransportLine.entries
                     .firstOrNull { it.key == lineName }
                     ?.hexColor
-                    ?: transportMode.colorCode // Fallback to mode color (e.g., all buses same color)
-            }
-            else -> transportMode.colorCode // Use mode color
+                    ?: transportMode.colorCode
+            else -> transportMode.colorCode
         }
+    }
 
-        return when {
-            // Prioritize leg.coords if available (for both walking and transit)
-            !coords.isNullOrEmpty() -> {
-                val coordinates = coords!!.mapNotNull { coord ->
-                    if (coord.size >= 2) {
-                        LatLng(latitude = coord[0], longitude = coord[1])
-                    } else {
-                        null
-                    }
-                }
-                if (coordinates.isEmpty()) return null
+    private fun TripResponse.Leg.createLegFromCoordinates(
+        index: Int,
+        transportMode: TransportMode?,
+        lineName: String?,
+        lineColor: String,
+    ): JourneyLegFeature? {
+        if (coords.isNullOrEmpty()) return null
 
-                JourneyLegFeature(
-                    legId = "leg_$index",
-                    transportMode = transportMode,
-                    lineName = lineName,
-                    lineColor = lineColor,
-                    routeSegment = RouteSegment.PathSegment(points = coordinates),
-                )
-            }
-            // Fallback to interchange.coords for walking legs
-            interchange?.coords != null -> {
-                val interchangeData = interchange!!
-                val coordsList = interchangeData.coords ?: return null
-
-                val coordinates = coordsList.mapNotNull { coord ->
-                    if (coord.size >= 2) {
-                        LatLng(latitude = coord[0], longitude = coord[1])
-                    } else null
-                }
-                if (coordinates.isEmpty()) return null
-
-                JourneyLegFeature(
-                    legId = "leg_$index",
-                    transportMode = null, // Walking
-                    lineName = null,
-                    lineColor = WALKING_PATH_COLOR, // Gray for walking
-                    routeSegment = RouteSegment.PathSegment(points = coordinates),
-                )
-            }
-            // Last resort: straight lines between stops
-            transportation != null -> {
-                val stops = stopSequence?.mapNotNull { it.toJourneyStopFeature() } ?: emptyList()
-                if (stops.isEmpty()) return null
-
-                JourneyLegFeature(
-                    legId = "leg_$index",
-                    transportMode = transportMode,
-                    lineName = lineName,
-                    lineColor = lineColor,
-                    routeSegment = RouteSegment.StopConnectorSegment(stops = stops),
-                )
-            }
-            else -> null
+        val coordinates = coords!!.mapNotNull { coord ->
+            if (coord.size >= 2) LatLng(latitude = coord[0], longitude = coord[1]) else null
         }
+        if (coordinates.isEmpty()) return null
+
+        return JourneyLegFeature(
+            legId = LEG_ID_PREFIX + index,
+            transportMode = transportMode,
+            lineName = lineName,
+            lineColor = lineColor,
+            routeSegment = RouteSegment.PathSegment(points = coordinates),
+        )
+    }
+
+    private fun TripResponse.Leg.createLegFromInterchange(
+        index: Int,
+        lineColor: String,
+    ): JourneyLegFeature? {
+        val coordsList = interchange?.coords ?: return null
+
+        val coordinates = coordsList.mapNotNull { coord ->
+            if (coord.size >= 2) LatLng(latitude = coord[0], longitude = coord[1]) else null
+        }
+        if (coordinates.isEmpty()) return null
+
+        return JourneyLegFeature(
+            legId = LEG_ID_PREFIX + index,
+            transportMode = null,
+            lineName = null,
+            lineColor = lineColor,
+            routeSegment = RouteSegment.PathSegment(points = coordinates),
+        )
+    }
+
+    private fun TripResponse.Leg.createLegFromStops(
+        index: Int,
+        transportMode: TransportMode?,
+        lineName: String?,
+        lineColor: String,
+    ): JourneyLegFeature? {
+        if (transportation == null) return null
+
+        val stops = stopSequence?.mapNotNull { it.toJourneyStopFeature() } ?: emptyList()
+        if (stops.isEmpty()) return null
+
+        return JourneyLegFeature(
+            legId = LEG_ID_PREFIX + index,
+            transportMode = transportMode,
+            lineName = lineName,
+            lineColor = lineColor,
+            routeSegment = RouteSegment.StopConnectorSegment(stops = stops),
+        )
     }
 
     /**

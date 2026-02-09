@@ -45,11 +45,15 @@ import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
-import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
+
+private const val LABEL_MIN_ZOOM = 0f
+private const val LABEL_MAX_ZOOM = 24f
+private val LOCATION_ICON_SIZE = DpSize(24.dp, 24.dp)
 
 /**
  * Main composable for displaying a journey on a map.
@@ -59,7 +63,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 fun JourneyMap(
     journeyMapState: JourneyMapUiState,
     modifier: Modifier = Modifier,
-    onStopClick: (JourneyStopFeature) -> Unit = {},
 ) {
     when (journeyMapState) {
         JourneyMapUiState.Loading -> {
@@ -71,14 +74,13 @@ fun JourneyMap(
         is JourneyMapUiState.Ready -> {
             JourneyMapContent(
                 mapState = journeyMapState,
-                onStopClick = onStopClick,
                 modifier = modifier,
             )
         }
 
         is JourneyMapUiState.Error -> {
             Box(modifier = modifier.fillMaxSize()) {
-                // TODO: Add error UI component
+                // Show loading indicator as fallback - error UI component needed
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
@@ -91,7 +93,6 @@ fun JourneyMap(
 @Composable
 private fun JourneyMapContent(
     mapState: JourneyMapUiState.Ready,
-    onStopClick: (JourneyStopFeature) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Calculate camera position - start at the origin (journey beginning)
@@ -107,7 +108,7 @@ private fun JourneyMapContent(
             Position(longitude = center.longitude, latitude = center.latitude)
         } ?: Position(
             latitude = MapConfig.DefaultPosition.LATITUDE,
-            longitude = MapConfig.DefaultPosition.LONGITUDE
+            longitude = MapConfig.DefaultPosition.LONGITUDE,
         )
 
         // Calculate zoom level from bounds to fit the entire journey
@@ -143,7 +144,7 @@ private fun JourneyMapContent(
             }
 
             val journeySource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(featureCollection)
+                data = GeoJsonData.Features(featureCollection),
             )
 
             // === LINE LAYERS ===
@@ -153,8 +154,8 @@ private fun JourneyMapContent(
                 id = "journey-walking-lines",
                 source = journeySource,
                 filter = JourneyMapFilters.isJourneyLeg() and
-                        (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(true)),
-                color = const(Color(0xFF757575)), // Gray
+                    (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(true)),
+                color = const(KrailTheme.colors.walkingPath),
                 width = const(4.dp),
                 dasharray = const(listOf(2f, 2f)), // Dashed pattern
                 cap = const(LineCap.Round),
@@ -166,7 +167,7 @@ private fun JourneyMapContent(
                 id = "journey-transit-lines",
                 source = journeySource,
                 filter = JourneyMapFilters.isJourneyLeg() and
-                        (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(false)),
+                    (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(false)),
                 color = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
                 width = const(6.dp),
                 cap = const(LineCap.Round),
@@ -175,7 +176,8 @@ private fun JourneyMapContent(
 
             // === CIRCLE LAYERS FOR STOPS ===
 
-            // Regular stops - small white circles
+            // Regular stops only - small white circles
+            // Note: Origin, Destination, and Interchange stops use SymbolLayer with icons instead
             CircleLayer(
                 id = "journey-stops-regular",
                 source = journeySource,
@@ -203,30 +205,30 @@ private fun JourneyMapContent(
             SymbolLayer(
                 id = "journey-origin-label",
                 source = journeySource,
-                minZoom = 0f,
-                maxZoom = 24f,
+                minZoom = LABEL_MIN_ZOOM,
+                maxZoom = LABEL_MAX_ZOOM,
                 filter = JourneyMapFilters.isStopType(StopType.ORIGIN),
-                iconImage = image(locationIcon, size = DpSize(24.dp, 24.dp)),
-                textField = format(span(originStopName)), // Dynamic origin name
+                iconImage = image(locationIcon, size = LOCATION_ICON_SIZE),
+                textField = format(span(originStopName)),
+                textFont = const(listOf("Noto Sans Regular")),
                 textSize = const(1f.em),
                 textColor = const(Color.Black),
-                textFont = const(listOf("Noto Sans Regular")),
-                textOffset = offset(0f.em, 2f.em), // Position above icon
+                textOffset = offset(0f.em, 2f.em),
             )
 
             // Destination and Interchange stops - Show stop name with icon
             SymbolLayer(
                 id = "journey-stops-labels",
                 source = journeySource,
-                minZoom = 0f,
-                maxZoom = 24f,
+                minZoom = LABEL_MIN_ZOOM,
+                maxZoom = LABEL_MAX_ZOOM,
                 filter = JourneyMapFilters.isStopType(StopType.DESTINATION, StopType.INTERCHANGE),
-                iconImage = image(locationIcon, size = DpSize(24.dp, 24.dp)),
+                iconImage = image(locationIcon, size = LOCATION_ICON_SIZE),
                 textField = format(span(feature[GeoJsonPropertyKeys.STOP_NAME].asString())),
+                textFont = const(listOf("Noto Sans Regular")),
                 textSize = const(1.0f.em),
                 textColor = const(Color.Black),
-                textFont = const(listOf("Noto Sans Regular")),
-                textOffset = offset(0f.em, 2f.em), // Position above icon
+                textOffset = offset(0f.em, 2f.em),
             )
         }
     }

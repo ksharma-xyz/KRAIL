@@ -47,7 +47,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptio
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
-import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyList
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyListWithRawData
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -145,11 +144,7 @@ class TimeTableViewModel(
         (festivalManager.festivalOnDate() ?: NoFestival()).greetingAndEmoji
     }
 
-    /**
-     * Track if we've already initialized this trip to prevent repeated initialization
-     * when navigating back from child screens (like JourneyMapScreen).
-     */
-    private var lastInitializedTrip: Pair<String, String>? = null
+    private var lastInitializedRouteFromTo: Pair<String, String>? = null
 
     /**
      * Cache of trips. Key is [TimeTableState.JourneyCardInfo.journeyId] and value is
@@ -160,16 +155,12 @@ class TimeTableViewModel(
     @VisibleForTesting
     val journeys: MutableMap<String, TimeTableState.JourneyCardInfo> = mutableMapOf()
 
-    /**
-     * Cache of raw journey data from API for map visualization.
-     * Key is journeyId, value is TripResponse.Journey.
-     */
-    private val rawJourneyData: MutableMap<String, TripResponse.Journey> = mutableMapOf()
+    private val rawJourneyDataByJourneyId: MutableMap<String, TripResponse.Journey> = mutableMapOf()
 
     /**
      * Get raw journey data by ID for map visualization.
      */
-    fun getRawJourneyById(journeyId: String): TripResponse.Journey? = rawJourneyData[journeyId]
+    fun getRawJourneyById(journeyId: String): TripResponse.Journey? = rawJourneyDataByJourneyId[journeyId]
 
     /**
      * Initialize trip from entry.
@@ -186,13 +177,8 @@ class TimeTableViewModel(
         toStopName: String,
     ) {
         val currentRoute = Pair(fromStopId, toStopId)
-
-        log("🗺️ initializeTrip: from=$fromStopId ($fromStopName) → to=$toStopId ($toStopName)")
-        log("🗺️ lastInitializedTrip: ${lastInitializedTrip?.let { "${it.first} → ${it.second}" } ?: "null"}")
-        log("🗺️ currentRoute: ${currentRoute.first} → ${currentRoute.second}")
-
         // Check if this is the EXACT SAME route we just initialized
-        if (lastInitializedTrip == currentRoute) {
+        if (lastInitializedRouteFromTo == currentRoute) {
             log("🗺️ initializeTrip: SKIPPING - Same route already initialized, preserving state!")
             // Don't reinitialize - this is likely navigation back from map
             // State is already correct, no need to call onLoadTimeTable
@@ -200,7 +186,7 @@ class TimeTableViewModel(
         }
 
         // Different route - update tracking and proceed with initialization
-        lastInitializedTrip = currentRoute
+        lastInitializedRouteFromTo = currentRoute
 
         val trip = Trip(
             fromStopId = fromStopId,
@@ -353,7 +339,7 @@ class TimeTableViewModel(
         val (newJourneyList, newRawDataMap) = response.buildJourneyListWithRawData()
 
         // Update raw journey data map
-        rawJourneyData.putAll(newRawDataMap)
+        rawJourneyDataByJourneyId.putAll(newRawDataMap)
 
         val startedJourneyList = journeys.values
             .filter {
@@ -502,7 +488,7 @@ class TimeTableViewModel(
             log("🗺️ onLoadTimeTable -- Different trip, clearing cache and fetching")
             dateTimeSelectionItem = null
             journeys.clear()
-            rawJourneyData.clear() // Also clear raw journey data
+            rawJourneyDataByJourneyId.clear()
 
             updateUiState {
                 copy(

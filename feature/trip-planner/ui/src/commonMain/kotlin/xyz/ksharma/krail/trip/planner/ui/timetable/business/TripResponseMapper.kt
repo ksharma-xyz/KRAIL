@@ -30,7 +30,8 @@ internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.Journ
  * Returns Pair<JourneyList, RawDataMap>
  */
 @Suppress("ComplexCondition")
-internal fun TripResponse.buildJourneyListWithRawData(): Pair<ImmutableList<TimeTableState.JourneyCardInfo>?, Map<String, TripResponse.Journey>> {
+internal fun TripResponse.buildJourneyListWithRawData():
+    Pair<ImmutableList<TimeTableState.JourneyCardInfo>?, Map<String, TripResponse.Journey>> {
     val rawDataMap = mutableMapOf<String, TripResponse.Journey>()
 
     val journeyList = journeys?.mapNotNull { journey ->

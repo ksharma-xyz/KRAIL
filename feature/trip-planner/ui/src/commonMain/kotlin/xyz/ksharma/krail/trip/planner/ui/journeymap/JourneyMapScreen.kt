@@ -28,7 +28,7 @@ fun JourneyMapScreen(
         when (journeyMapState) {
             JourneyMapUiState.Loading -> {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
 

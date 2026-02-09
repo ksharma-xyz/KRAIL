@@ -67,7 +67,7 @@ object JourneyMapFeatureMapper {
      * Create GeoJSON feature for walking/path segments.
      */
     private fun JourneyLegFeature.createPathSegmentFeature(
-        segment: RouteSegment.PathSegment
+        segment: RouteSegment.PathSegment,
     ): Feature<*, *>? {
         if (segment.points.isEmpty()) return null
 
@@ -97,7 +97,7 @@ object JourneyMapFeatureMapper {
      * Create GeoJSON feature for transit stop connector segments.
      */
     private fun JourneyLegFeature.createStopConnectorFeature(
-        segment: RouteSegment.StopConnectorSegment
+        segment: RouteSegment.StopConnectorSegment,
     ): Feature<*, *>? {
         val validStops = segment.stops.filter { it.position != null }
         if (validStops.size < 2) return null

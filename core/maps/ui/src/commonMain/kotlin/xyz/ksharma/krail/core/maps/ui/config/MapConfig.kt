@@ -54,11 +54,23 @@ object MapConfig {
      * Zoom level thresholds for different area sizes.
      */
     object ZoomLevels {
-        const val LARGE_AREA = 9.0       // >100km
-        const val MEDIUM_AREA = 10.0     // ~50-100km
-        const val CITY_AREA = 12.0       // ~10-50km
-        const val SUBURB_AREA = 13.0     // ~5-10km
-        const val NEIGHBORHOOD = 14.0    // ~2-5km
-        const val SMALL_AREA = 15.0      // <2km
+        const val LARGE_AREA = 9.0 // >100km
+        const val MEDIUM_AREA = 10.0 // ~50-100km
+        const val CITY_AREA = 12.0 // ~10-50km
+        const val SUBURB_AREA = 13.0 // ~5-10km
+        const val NEIGHBORHOOD = 14.0 // ~2-5km
+        const val SMALL_AREA = 15.0 // <2km
+    }
+
+    /**
+     * Degree thresholds for calculating zoom levels from bounding box size.
+     * These values represent the maximum difference in degrees (lat/lng) for each zoom level.
+     */
+    object BoundsThresholds {
+        const val LARGE_AREA_DEGREES = 1.0 // >100km
+        const val MEDIUM_AREA_DEGREES = 0.5 // ~50-100km
+        const val CITY_AREA_DEGREES = 0.1 // ~10-50km
+        const val SUBURB_AREA_DEGREES = 0.05 // ~5-10km
+        const val NEIGHBORHOOD_DEGREES = 0.02 // ~2-5km
     }
 }

@@ -30,11 +30,11 @@ object MapCameraUtils {
         val maxDiff = max(latDiff, lngDiff)
 
         return when {
-            maxDiff > 1.0 -> MapConfig.ZoomLevels.LARGE_AREA
-            maxDiff > 0.5 -> MapConfig.ZoomLevels.MEDIUM_AREA
-            maxDiff > 0.1 -> MapConfig.ZoomLevels.CITY_AREA
-            maxDiff > 0.05 -> MapConfig.ZoomLevels.SUBURB_AREA
-            maxDiff > 0.02 -> MapConfig.ZoomLevels.NEIGHBORHOOD
+            maxDiff > MapConfig.BoundsThresholds.LARGE_AREA_DEGREES -> MapConfig.ZoomLevels.LARGE_AREA
+            maxDiff > MapConfig.BoundsThresholds.MEDIUM_AREA_DEGREES -> MapConfig.ZoomLevels.MEDIUM_AREA
+            maxDiff > MapConfig.BoundsThresholds.CITY_AREA_DEGREES -> MapConfig.ZoomLevels.CITY_AREA
+            maxDiff > MapConfig.BoundsThresholds.SUBURB_AREA_DEGREES -> MapConfig.ZoomLevels.SUBURB_AREA
+            maxDiff > MapConfig.BoundsThresholds.NEIGHBORHOOD_DEGREES -> MapConfig.ZoomLevels.NEIGHBORHOOD
             else -> MapConfig.ZoomLevels.SMALL_AREA
         }
     }

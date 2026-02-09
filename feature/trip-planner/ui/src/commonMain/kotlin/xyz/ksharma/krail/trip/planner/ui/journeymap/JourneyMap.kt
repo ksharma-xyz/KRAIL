@@ -174,6 +174,7 @@ private fun JourneyMapContent(
                 join = const(LineJoin.Round),
             )
 
+
             // === CIRCLE LAYERS FOR STOPS ===
 
             // Regular stops only - small white circles
@@ -201,7 +202,7 @@ private fun JourneyMapContent(
                     ?: "Start"
             }
 
-            // Origin stop - Show origin name with icon
+            // Origin stop - Show stop name with icon
             SymbolLayer(
                 id = "journey-origin-label",
                 source = journeySource,
@@ -213,7 +214,21 @@ private fun JourneyMapContent(
                 textFont = const(listOf("Noto Sans Regular")),
                 textSize = const(1f.em),
                 textColor = const(Color.Black),
-                textOffset = offset(0f.em, 2f.em),
+                textOffset = offset(0f.em, 2f.em), // Below icon
+            )
+
+            // Origin stop - Show line number (T1, etc.) above the stop name
+            SymbolLayer(
+                id = "journey-origin-line-label",
+                source = journeySource,
+                minZoom = LABEL_MIN_ZOOM,
+                maxZoom = LABEL_MAX_ZOOM,
+                filter = JourneyMapFilters.isStopType(StopType.ORIGIN),
+                textField = format(span(get(GeoJsonPropertyKeys.LINE_NAME).asString())),
+                textFont = const(listOf("Noto Sans Regular")),
+                textSize = const(1f.em),
+                textColor = const(Color.Black),
+                textOffset = offset(0f.em, (-2f).em), // Above icon (no icon on this layer)
             )
 
             // Destination and Interchange stops - Show stop name with icon
@@ -228,7 +243,21 @@ private fun JourneyMapContent(
                 textFont = const(listOf("Noto Sans Regular")),
                 textSize = const(1.0f.em),
                 textColor = const(Color.Black),
-                textOffset = offset(0f.em, 2f.em),
+                textOffset = offset(0f.em, 2f.em), // Below icon
+            )
+
+            // Destination and Interchange stops - Show line number above the stop name
+            SymbolLayer(
+                id = "journey-stops-line-labels",
+                source = journeySource,
+                minZoom = LABEL_MIN_ZOOM,
+                maxZoom = LABEL_MAX_ZOOM,
+                filter = JourneyMapFilters.isStopType(StopType.DESTINATION, StopType.INTERCHANGE),
+                textField = format(span(get(GeoJsonPropertyKeys.LINE_NAME).asString())),
+                textFont = const(listOf("Noto Sans Regular")),
+                textSize = const(1.0f.em),
+                textColor = const(Color.Black),
+                textOffset = offset(0f.em, (-2f).em), // Above icon (no icon on this layer)
             )
         }
     }

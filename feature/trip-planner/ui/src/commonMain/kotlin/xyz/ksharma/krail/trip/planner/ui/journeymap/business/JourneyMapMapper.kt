@@ -169,10 +169,15 @@ object JourneyMapMapper {
         val allStops = mutableListOf<JourneyStopFeature>()
 
         legs.forEachIndexed { legIndex, leg ->
-            // Add origin of first leg
+            val lineName = leg.transportation?.disassembledName
+
+            // Add origin of first leg with line name
             if (legIndex == 0) {
                 leg.origin?.toJourneyStopFeature()?.let { stop ->
-                    allStops.add(stop.copy(stopType = StopType.ORIGIN))
+                    allStops.add(stop.copy(
+                        stopType = StopType.ORIGIN,
+                        lineName = lineName
+                    ))
                 }
             }
 
@@ -187,9 +192,15 @@ object JourneyMapMapper {
                     allStops.add(stop.copy(stopType = StopType.DESTINATION))
                 }
             } else {
-                // Mark as interchange for middle legs
+                // Mark as interchange for middle legs - add line name for next leg
+                val nextLeg = legs.getOrNull(legIndex + 1)
+                val nextLineName = nextLeg?.transportation?.disassembledName
+
                 leg.destination?.toJourneyStopFeature()?.let { stop ->
-                    allStops.add(stop.copy(stopType = StopType.INTERCHANGE))
+                    allStops.add(stop.copy(
+                        stopType = StopType.INTERCHANGE,
+                        lineName = nextLineName
+                    ))
                 }
             }
         }

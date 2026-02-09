@@ -90,5 +90,6 @@ object GeoJsonFeatureTypes {
     const val STOP = "stop"
     const val JOURNEY_LEG = "journey_leg"
     const val JOURNEY_STOP = "journey_stop"
+    const val ROUTE_LABEL = "route_label"
     const val EMPTY = "empty"
 }

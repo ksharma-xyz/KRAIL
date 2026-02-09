@@ -40,6 +40,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.platform.ops)
                 implementation(projects.taj)
 
                 implementation(libs.kotlinx.serialization.json)

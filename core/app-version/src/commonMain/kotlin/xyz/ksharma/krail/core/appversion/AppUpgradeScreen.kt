@@ -55,6 +55,7 @@ import xyz.ksharma.krail.taj.themeColor
 @Composable
 fun AppUpgradeScreen(
     modifier: Modifier = Modifier,
+    onUpdateClick: () -> Unit = {},
 ) {
     val infiniteTransition = rememberInfiniteTransition()
 
@@ -218,7 +219,7 @@ fun AppUpgradeScreen(
         }
 
         AnimatedUpdateButton(
-            onClick = {},
+            onClick = onUpdateClick,
             modifier = Modifier
                 .navigationBarsPadding()
                 .align(Alignment.BottomCenter)

@@ -170,14 +170,19 @@ object JourneyMapMapper {
 
         legs.forEachIndexed { legIndex, leg ->
             val lineName = leg.transportation?.disassembledName
+            val transportMode = leg.transportation?.toTransportMode()
+            val lineColor = calculateLineColor(transportMode, lineName)
 
-            // Add origin of first leg with line name
+            // Add origin of first leg with line name and color
             if (legIndex == 0) {
                 leg.origin?.toJourneyStopFeature()?.let { stop ->
-                    allStops.add(stop.copy(
-                        stopType = StopType.ORIGIN,
-                        lineName = lineName
-                    ))
+                    allStops.add(
+                        stop.copy(
+                            stopType = StopType.ORIGIN,
+                            lineName = lineName,
+                            lineColor = lineColor,
+                        ),
+                    )
                 }
             }
 
@@ -192,15 +197,20 @@ object JourneyMapMapper {
                     allStops.add(stop.copy(stopType = StopType.DESTINATION))
                 }
             } else {
-                // Mark as interchange for middle legs - add line name for next leg
+                // Mark as interchange for middle legs - add line name and color for next leg
                 val nextLeg = legs.getOrNull(legIndex + 1)
                 val nextLineName = nextLeg?.transportation?.disassembledName
+                val nextTransportMode = nextLeg?.transportation?.toTransportMode()
+                val nextLineColor = calculateLineColor(nextTransportMode, nextLineName)
 
                 leg.destination?.toJourneyStopFeature()?.let { stop ->
-                    allStops.add(stop.copy(
-                        stopType = StopType.INTERCHANGE,
-                        lineName = nextLineName
-                    ))
+                    allStops.add(
+                        stop.copy(
+                            stopType = StopType.INTERCHANGE,
+                            lineName = nextLineName,
+                            lineColor = nextLineColor,
+                        ),
+                    )
                 }
             }
         }

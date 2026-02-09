@@ -141,6 +141,7 @@ object JourneyMapFeatureMapper {
                 propertyIfNotNull(GeoJsonPropertyKeys.TIME, time)
                 propertyIfNotNull(GeoJsonPropertyKeys.PLATFORM, platform)
                 propertyIfNotNull(GeoJsonPropertyKeys.LINE_NAME, lineName)
+                propertyIfNotNull(GeoJsonPropertyKeys.COLOR, lineColor)
             },
         )
     }

@@ -9,6 +9,7 @@ import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
+import xyz.ksharma.krail.core.appversion.AppUpgradeViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
@@ -34,7 +35,7 @@ val appNavigationModule = module {
         EntryBuilderDescriptor(
             name = EntryBuilderQualifiers.Names.SPLASH,
             builder = { navigator ->
-                splashEntry(navigator as Navigator)
+                SplashEntry(navigator as Navigator)
             },
         )
     }
@@ -44,7 +45,7 @@ val appNavigationModule = module {
         EntryBuilderDescriptor(
             name = EntryBuilderQualifiers.Names.APP_UPGRADE,
             builder = { _ ->
-                appUpgradeEntry()
+                AppUpgradeEntry()
             },
         )
     }
@@ -55,7 +56,7 @@ val appNavigationModule = module {
  * Takes Navigator as parameter to handle navigation and theme updates.
  */
 @Composable
-private fun EntryProviderScope<NavKey>.splashEntry(
+private fun EntryProviderScope<NavKey>.SplashEntry(
     navigator: Navigator,
 ) {
     entry<SplashRoute> { key ->
@@ -91,8 +92,12 @@ private fun EntryProviderScope<NavKey>.splashEntry(
  * App upgrade screen navigation entry.
  */
 @Composable
-private fun EntryProviderScope<NavKey>.appUpgradeEntry() {
-    entry<AppUpgradeRoute> { key ->
-        AppUpgradeScreen()
+private fun EntryProviderScope<NavKey>.AppUpgradeEntry() {
+    entry<AppUpgradeRoute> { _ ->
+        val viewModel: AppUpgradeViewModel = koinViewModel()
+
+        AppUpgradeScreen(
+            onUpdateClick = { viewModel.onUpdateClick() },
+        )
     }
 }

@@ -91,6 +91,7 @@ fun TimeTableScreen(
     dateTimeSelectorClicked: () -> Unit = {},
     onModeSelectionChanged: (Set<Int>) -> Unit = {},
     onModeClick: (Boolean) -> Unit = {},
+    onMapClick: (String) -> Unit = {},
 ) {
     val themeColorHex by LocalThemeColor.current
     val themeColor = themeColorHex.hexToComposeColor()
@@ -354,6 +355,9 @@ fun TimeTableScreen(
                             onAlertClick(journey.journeyId)
                         },
                         onLegClick = onJourneyLegClick,
+                        onMapClick = {
+                            onMapClick(journey.journeyId)
+                        },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             .animateItem(),
                         departureDeviation = journey.departureDeviation,
@@ -395,6 +399,7 @@ private fun JourneyCardItem(
     modifier: Modifier = Modifier,
     transportModeLineList: ImmutableList<TransportModeLine>? = null,
     onLegClick: (Boolean) -> Unit,
+    onMapClick: () -> Unit = {},
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
@@ -413,6 +418,7 @@ private fun JourneyCardItem(
             onAlertClick = onAlertClick,
             totalUniqueServiceAlerts = totalUniqueServiceAlerts,
             onLegClick = onLegClick,
+            onMapClick = onMapClick,
             modifier = modifier,
             departureDeviation = departureDeviation,
         )

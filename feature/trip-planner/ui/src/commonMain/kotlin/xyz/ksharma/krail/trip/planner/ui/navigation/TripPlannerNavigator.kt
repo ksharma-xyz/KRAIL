@@ -13,6 +13,7 @@ interface TripPlannerNavigator {
 
     fun navigateToSearchStop(fieldType: SearchStopFieldType)
     fun navigateToTimeTable(fromStopId: String, fromStopName: String, toStopId: String, toStopName: String)
+    fun navigateToJourneyMap(journeyId: String)
     fun navigateToSettings()
     fun navigateToDiscover()
     fun navigateToThemeSelection()

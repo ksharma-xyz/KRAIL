@@ -247,6 +247,7 @@ fun SearchStopScreen(
                                 focusRequester = focusRequester,
                                 onStopSelect = onStopSelect,
                                 onEvent = onEvent,
+                                searchQuery = searchStopState.searchQuery,
                             )
                         }
                     }
@@ -273,11 +274,12 @@ fun SearchStopScreen(
     }
 }
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList")
 private fun LazyListScope.searchResultsList(
     searchResults: List<SearchStopState.SearchResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
+    searchQuery: String,
     onStopSelect: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
@@ -301,7 +303,12 @@ private fun LazyListScope.searchResultsList(
                         keyboard?.hide()
                         focusRequester.freeFocus()
                         onStopSelect(stopItem)
-                        onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
+                        onEvent(
+                            SearchStopUiEvent.TrackStopSelected(
+                                stopItem = stopItem,
+                                searchQuery = searchQuery,
+                            ),
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )

@@ -46,12 +46,14 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class StopSelectedEvent(
         val stopId: String,
         val isRecentSearch: Boolean = false,
+        val searchQuery: String? = null,
     ) : AnalyticsEvent(
         name = "stop_selected",
-        properties = mapOf(
-            "stopId" to stopId,
-            "isRecentSearch" to isRecentSearch,
-        ),
+        properties = buildMap {
+            put("stopId", stopId)
+            put("isRecentSearch", isRecentSearch)
+            searchQuery?.let { put("searchQuery", it) }
+        },
     )
 
     data class SearchStopQuery(

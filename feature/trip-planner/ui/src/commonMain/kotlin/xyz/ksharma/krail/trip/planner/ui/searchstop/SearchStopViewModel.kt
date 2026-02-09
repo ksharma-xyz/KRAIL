@@ -68,6 +68,7 @@ class SearchStopViewModel(
                     StopSelectedEvent(
                         stopId = event.stopItem.stopId,
                         isRecentSearch = event.isRecentSearch,
+                        searchQuery = event.searchQuery,
                     ),
                 )
             }

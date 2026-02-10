@@ -54,6 +54,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 private const val LABEL_MIN_ZOOM = 0f
 private const val LABEL_MAX_ZOOM = 24f
 private val LOCATION_ICON_SIZE = DpSize(24.dp, 24.dp)
+private val TEXT_HALO_WIDTH = 3.dp
+private const val TEXT_OFFSET_BELOW_ICON = 2f // Position text below icon
+private const val TEXT_OFFSET_ABOVE_ICON = -2f // Position text above icon
 
 /**
  * Main composable for displaying a journey on a map.
@@ -201,7 +204,7 @@ private fun JourneyMapContent(
                     ?: "Start"
             }
 
-            // Origin stop - Show origin name with icon
+            // Origin stop - Show stop name with icon
             SymbolLayer(
                 id = "journey-origin-label",
                 source = journeySource,
@@ -213,7 +216,23 @@ private fun JourneyMapContent(
                 textFont = const(listOf("Noto Sans Regular")),
                 textSize = const(1f.em),
                 textColor = const(Color.Black),
-                textOffset = offset(0f.em, 2f.em),
+                textOffset = offset(0f.em, TEXT_OFFSET_BELOW_ICON.em), // Below icon
+            )
+
+            // Origin stop - Show line number (T1, etc.) above the stop name
+            SymbolLayer(
+                id = "journey-origin-line-label",
+                source = journeySource,
+                minZoom = LABEL_MIN_ZOOM,
+                maxZoom = LABEL_MAX_ZOOM,
+                filter = JourneyMapFilters.isStopType(StopType.ORIGIN),
+                textField = format(span(get(GeoJsonPropertyKeys.LINE_NAME).asString())),
+                textFont = const(listOf("Noto Sans Regular")),
+                textSize = const(1.2f.em),
+                textColor = const(Color.White),
+                textHaloColor = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
+                textHaloWidth = const(TEXT_HALO_WIDTH), // Thick background
+                textOffset = offset(0f.em, TEXT_OFFSET_ABOVE_ICON.em), // Above icon (no icon on this layer)
             )
 
             // Destination and Interchange stops - Show stop name with icon
@@ -228,7 +247,23 @@ private fun JourneyMapContent(
                 textFont = const(listOf("Noto Sans Regular")),
                 textSize = const(1.0f.em),
                 textColor = const(Color.Black),
-                textOffset = offset(0f.em, 2f.em),
+                textOffset = offset(0f.em, TEXT_OFFSET_BELOW_ICON.em), // Below icon
+            )
+
+            // Destination and Interchange stops - Show line number above the stop name
+            SymbolLayer(
+                id = "journey-stops-line-labels",
+                source = journeySource,
+                minZoom = LABEL_MIN_ZOOM,
+                maxZoom = LABEL_MAX_ZOOM,
+                filter = JourneyMapFilters.isStopType(StopType.DESTINATION, StopType.INTERCHANGE),
+                textField = format(span(get(GeoJsonPropertyKeys.LINE_NAME).asString())),
+                textFont = const(listOf("Noto Sans Regular")),
+                textSize = const(1.2f.em),
+                textColor = const(Color.White),
+                textHaloColor = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
+                textHaloWidth = const(TEXT_HALO_WIDTH), // Thick background
+                textOffset = offset(0f.em, TEXT_OFFSET_ABOVE_ICON.em), // Above icon (no icon on this layer)
             )
         }
     }

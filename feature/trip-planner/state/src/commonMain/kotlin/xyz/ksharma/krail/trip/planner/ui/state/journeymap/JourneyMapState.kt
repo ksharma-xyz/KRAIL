@@ -52,6 +52,8 @@ data class JourneyStopFeature(
     val stopType: StopType,
     val time: String?,
     val platform: String?,
+    val lineName: String? = null, // Line departing from this stop (e.g., "T1", "333")
+    val lineColor: String? = null, // Color of the line departing from this stop
 )
 
 /**

@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.journeymap
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,18 +40,12 @@ fun JourneyMapScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                // Title bar overlay at top
                 TitleBar(
                     title = {
-                        Text(
-                            text = "Journey Map",
-                            style = KrailTheme.typography.headlineMedium,
-                        )
+                        Text("Journey Map")
                     },
                     onNavActionClick = onBackClick,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .systemBarsPadding(),
+                    modifier = Modifier.background(color = KrailTheme.colors.surface),
                 )
             }
 

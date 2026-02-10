@@ -11,16 +11,6 @@ object MapTileProvider {
     const val OPEN_FREE_MAP_LIBERTY = "https://tiles.openfreemap.org/styles/liberty"
 
     /**
-     * OpenFreeMap Positron style - light theme.
-     */
-    const val OPEN_FREE_MAP_POSITRON = "https://tiles.openfreemap.org/styles/positron"
-
-    /**
-     * OpenFreeMap Dark Matter style - dark theme.
-     */
-    const val OPEN_FREE_MAP_DARK = "https://tiles.openfreemap.org/styles/dark-matter"
-
-    /**
      * Default map style to use across the app.
      */
     const val DEFAULT = OPEN_FREE_MAP_LIBERTY
@@ -45,9 +35,9 @@ object MapConfig {
     object Ornaments {
         const val DEFAULT_PADDING_DP = 16
         const val LOGO_ENABLED = false
-        const val ATTRIBUTION_ENABLED = true
+        const val ATTRIBUTION_ENABLED = false
         const val COMPASS_ENABLED = true
-        const val SCALE_BAR_ENABLED = false
+        const val SCALE_BAR_ENABLED = true
     }
 
     /**

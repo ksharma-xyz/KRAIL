@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -124,25 +123,41 @@ fun JourneyCard(
                 onClick = onClick,
             )
 
-            when (cardState) {
-                JourneyCardState.DEFAULT -> DefaultJourneyCardContent(
-                    originTime = originTime,
+            // Always visible content
+            Column(
+                modifier = Modifier
+                    .semantics(mergeDescendants = true) { }
+                    .clickable(
+                        role = Role.Button,
+                        onClick = onClick,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ),
+            ) {
+                // Origin time
+                Text(
+                    text = originTime,
+                    style = KrailTheme.typography.titleMedium,
+                    color = KrailTheme.colors.onSurface,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+
+                // Destination time + travel time + walk time + deviation
+                ResponsiveJourneyInfoRow(
                     destinationTime = destinationTime,
                     totalTravelTime = totalTravelTime,
                     totalWalkTime = totalWalkTime,
                     departureDeviation = departureDeviation,
-                    modifier = Modifier
-                        .semantics(mergeDescendants = true) { }
-                        .clickable(
-                            role = Role.Button,
-                            onClick = onClick,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ),
                 )
+            }
+
+            // Expandable content - only leg details
+            when (cardState) {
+                JourneyCardState.DEFAULT -> {
+                    // No additional content in default state
+                }
 
                 JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
-                    totalTravelTime = totalTravelTime,
                     legList = legList,
                     totalUniqueServiceAlerts = totalUniqueServiceAlerts,
                     onAlertClick = onAlertClick,
@@ -252,8 +267,8 @@ private fun DepartureDeviationIndicator(
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.padding(start = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(
             modifier = Modifier
@@ -274,7 +289,6 @@ private fun DepartureDeviationIndicator(
 
 @Composable
 fun ExpandedJourneyCardContent(
-    totalTravelTime: String,
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
     totalUniqueServiceAlerts: Int,
     onAlertClick: () -> Unit,
@@ -283,51 +297,40 @@ fun ExpandedJourneyCardContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        FlowRow(
+        // Buttons row - Alert always at start, Maps always next to it
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            horizontalArrangement = if (totalUniqueServiceAlerts > 0) {
-                Arrangement.SpaceBetween
-            } else {
-                Arrangement.End
-            },
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (totalUniqueServiceAlerts > 0) {
-                    AlertButton(
-                        dimensions = ButtonDefaults.smallButtonSize(),
-                        onClick = onAlertClick,
-                    ) {
-                        Text(
-                            text = if (totalUniqueServiceAlerts > 1) {
-                                "$totalUniqueServiceAlerts Alerts"
-                            } else {
-                                "$totalUniqueServiceAlerts Alert"
-                            },
-                        )
-                    }
-                }
-
-                // Map button using Taj design system
-                Button(
-                    onClick = onMapClick,
+            if (totalUniqueServiceAlerts > 0) {
+                AlertButton(
                     dimensions = ButtonDefaults.smallButtonSize(),
+                    onClick = onAlertClick,
                 ) {
-                    Text(text = "Map")
+                    Text(
+                        text = if (totalUniqueServiceAlerts > 1) {
+                            "$totalUniqueServiceAlerts Alerts"
+                        } else {
+                            "$totalUniqueServiceAlerts Alert"
+                        },
+                    )
                 }
             }
 
-            TextWithIcon(
-                painter = painterResource(Res.drawable.ic_clock),
-                text = totalTravelTime,
-                textStyle = KrailTheme.typography.bodyLarge,
-                modifier = Modifier.align(Alignment.CenterVertically),
-            )
+            // Map button
+            Button(
+                onClick = onMapClick,
+                dimensions = ButtonDefaults.smallButtonSize(),
+                colors = ButtonDefaults.buttonColors(
+                    customContainerColor = KrailTheme.colors.onSurface,
+                    customContentColor = KrailTheme.colors.surface,
+                ),
+            ) {
+                Text(text = "Maps")
+            }
         }
 
         Spacer(
@@ -412,186 +415,51 @@ fun getPaddingValue(lastLeg: TimeTableState.JourneyCardInfo.Leg): Dp {
 }
 
 @Composable
-fun DefaultJourneyCardContent(
-    originTime: String,
-    destinationTime: String,
-    totalTravelTime: String,
-    totalWalkTime: String?,
-    modifier: Modifier = Modifier,
-    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
-) {
-    Column(modifier = modifier) {
-        // Origin time + deviation
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 4.dp),
-        ) {
-            Text(
-                text = originTime,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.onSurface,
-            )
-        }
-
-        // Responsive destination + group row
-        ResponsiveJourneyInfoRow(
-            destinationTime = destinationTime,
-            totalTravelTime = totalTravelTime,
-            totalWalkTime = totalWalkTime,
-            departureDeviation = departureDeviation,
-        )
-    }
-}
-
-@Composable
 private fun ResponsiveJourneyInfoRow(
     destinationTime: String,
     totalTravelTime: String,
     totalWalkTime: String?,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation?,
 ) {
-    // Custom layout to implement the rules:
-    // 1) destination always at start of its row.
-    // 2) deviation always at end of its row.
-    // 3) clock and walk stay adjacent as a unit.
-    // 4) Layout modes:
-    //    a) One row if all fit: dest | clock+walk ... deviation
-    //    b) Two rows default: Row1 dest; Row2 clock+walk | ... deviation
-    //    c) Fallback: if Row2 doesn't fit clock+walk+deviation, move clock to Row1 (dest+clock);
-    //                 Row2 has walk at start and deviation at end.
-    SubcomposeLayout { constraints ->
-        // Measure destination
-        val destMeas = subcompose("dest") {
+    // Always show destination + time info, use FlowRow for better wrapping in large font scenarios
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        // Group: destination time + travel time + walk time (stay together)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(end = 16.dp),
+        ) {
             Text(
                 text = destinationTime,
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(end = 10.dp),
             )
-        }
-        val destPl = destMeas.map { it.measure(constraints) }
-        val destW = destPl.sumOf { it.width }
-        val destH = destPl.maxOfOrNull { it.height } ?: 0
 
-        // Measure clock (always present)
-        val clockMeas = subcompose("clock") {
             TextWithIcon(
                 painter = painterResource(Res.drawable.ic_clock),
                 text = totalTravelTime,
-                modifier = Modifier.padding(end = 10.dp),
+                textStyle = KrailTheme.typography.bodyLarge,
             )
-        }
-        val clockPl = clockMeas.map { it.measure(constraints) }
-        val clockW = clockPl.maxOfOrNull { it.width } ?: 0
-        val clockH = clockPl.maxOfOrNull { it.height } ?: 0
 
-        // Measure walk (optional)
-        val walkMeas = subcompose("walk") {
             if (totalWalkTime != null) {
                 TextWithIcon(
                     painter = painterResource(Res.drawable.ic_walk),
                     text = totalWalkTime,
-                    modifier = Modifier.padding(end = 10.dp),
+                    textStyle = KrailTheme.typography.bodyLarge,
                 )
-            } else {
-                Spacer(Modifier.size(0.dp))
             }
         }
-        val walkPl = walkMeas.map { it.measure(constraints) }
-        val walkW = walkPl.maxOfOrNull { it.width } ?: 0
-        val walkH = walkPl.maxOfOrNull { it.height } ?: 0
 
-        // Measure deviation (optional)
-        val devMeas = subcompose("dev") {
-            if (departureDeviation != null) {
-                DepartureDeviationIndicator(deviation = departureDeviation)
-            } else {
-                Spacer(Modifier.size(0.dp))
-            }
-        }
-        val devPl = devMeas.map { it.measure(constraints) }
-        val devW = devPl.maxOfOrNull { it.width } ?: 0
-        val devH = devPl.maxOfOrNull { it.height } ?: 0
-
-        val maxW = constraints.maxWidth
-
-        // Try 1: All in one row (dest + clock + walk) with deviation right-aligned
-        val spaceBetween = maxW - destW - devW
-        val oneRowFits = (clockW + walkW) <= spaceBetween
-
-        // Try 2: Two rows default (Row1: dest) (Row2: clock + walk start, deviation end)
-        val secondRowSpace = maxW - devW
-        val twoRowDefaultFits = (clockW + walkW) <= secondRowSpace
-
-        // Try 3: Split clock up (Row1: dest + clock) (Row2: walk start, deviation end)
-        val firstRowSplitFits = (destW + clockW) <= maxW
-        val secondRowSplitFits = walkW <= secondRowSpace
-        val splitClockUp =
-            !oneRowFits && !twoRowDefaultFits && firstRowSplitFits && secondRowSplitFits
-
-        val layoutHeight = when {
-            oneRowFits -> maxOf(destH, clockH, walkH, devH)
-            splitClockUp -> destH + maxOf(walkH, devH)
-            else -> destH + maxOf(clockH, walkH, devH)
-        }
-
-        layout(width = maxW, height = layoutHeight) {
-            if (oneRowFits) {
-                // Row 1 only: dest at start, deviation at end, clock+walk in between
-                var x = 0
-                destPl.forEach { p ->
-                    p.placeRelative(x, 0)
-                    x += p.width
-                }
-                val devX = maxW - devW
-                // Place clock, then walk, without crossing into deviation
-                var midX = x
-                clockPl.forEach { p ->
-                    p.placeRelative(midX, 0)
-                    midX += p.width
-                }
-                walkPl.forEach { p ->
-                    p.placeRelative(midX, 0)
-                    midX += p.width
-                }
-                devPl.forEach { p -> p.placeRelative(devX, 0) }
-            } else if (splitClockUp) {
-                // Row 1: dest + clock
-                var x = 0
-                destPl.forEach { p ->
-                    p.placeRelative(x, 0)
-                    x += p.width
-                }
-                clockPl.forEach { p ->
-                    p.placeRelative(x, 0)
-                }
-                // Row 2: walk start, deviation end
-                val y2 = destH
-                var x2 = 0
-                walkPl.forEach { p ->
-                    p.placeRelative(x2, y2)
-                    x2 += p.width
-                }
-                val devX = maxW - devW
-                devPl.forEach { p -> p.placeRelative(devX, y2) }
-            } else {
-                // Default two rows
-                // Row 1: destination only
-                destPl.forEach { p -> p.placeRelative(0, 0) }
-                // Row 2: clock + walk at start, deviation at end
-                val y2 = destH
-                var x2 = 0
-                clockPl.forEach { p ->
-                    p.placeRelative(x2, y2)
-                    x2 += p.width
-                }
-                walkPl.forEach { p ->
-                    p.placeRelative(x2, y2)
-                    x2 += p.width
-                }
-                val devX = maxW - devW
-                devPl.forEach { p -> p.placeRelative(devX, y2) }
-            }
+        // Deviation indicator at end with proper spacing
+        if (departureDeviation != null) {
+            DepartureDeviationIndicator(
+                deviation = departureDeviation,
+                modifier = Modifier.padding(start = 8.dp),
+            )
         }
     }
 }
@@ -739,6 +607,7 @@ private fun Preview_ManyModes_Wrap() {
             totalWalkTime = null,
             totalUniqueServiceAlerts = 0,
             onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("4 mins late"),
         )
     }
 }
@@ -794,6 +663,233 @@ private fun Preview_JourneyCard_Expanded() {
             totalWalkTime = null,
             totalUniqueServiceAlerts = 1,
             onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_JourneyCard_Expanded_NoAlerts() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 5 mins",
+            originTime = "8:25am",
+            destinationTime = "8:40am",
+            totalTravelTime = "15 mins",
+            platformNumber = "3",
+            platformText = "Platform 3",
+
+            transportModeLineList = persistentListOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Abc via Rainy Rd",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train(),
+                        lineName = "T1",
+                    ),
+                    totalDuration = "20 mins",
+                    tripId = "T1",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+                    duration = "15 mins",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS.take(2).toImmutableList(),
+                    displayText = "towards Xyz via Awesome Rd",
+                    totalDuration = "10 mins",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus(),
+                        lineName = "700",
+                    ),
+                    tripId = "700",
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("2 mins early"),
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_Default_WithWalkTime() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 12 mins",
+            originTime = "9:15am",
+            destinationTime = "9:45am",
+            totalTravelTime = "30 mins",
+            platformNumber = "2",
+            platformText = "Platform 2",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T2"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = "5 mins",
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_Default_WithDeviation_Early() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 2 mins",
+            originTime = "6:30am",
+            destinationTime = "7:00am",
+            totalTravelTime = "30 mins",
+            platformNumber = "1",
+            platformText = "Platform 1",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T4"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("1 min early"),
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_Expanded_WithWalkAndDeviation() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 8 mins",
+            originTime = "10:20am",
+            destinationTime = "11:05am",
+            totalTravelTime = "45 mins",
+            platformNumber = "5",
+            platformText = "Platform 5",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "M92"),
+                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T3"),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Central",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus(),
+                        lineName = "M92",
+                    ),
+                    totalDuration = "15 mins",
+                    tripId = "M92",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+                    duration = "8 mins",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards North Shore",
+                    totalDuration = "22 mins",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train(),
+                        lineName = "T3",
+                    ),
+                    tripId = "T3",
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = "8 mins",
+            totalUniqueServiceAlerts = 2,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("3 mins late"),
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_Expanded_MultipleAlerts() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 15 mins",
+            originTime = "2:30pm",
+            destinationTime = "3:15pm",
+            totalTravelTime = "45 mins",
+            platformNumber = null,
+            platformText = null,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Ferry(), lineName = "F1"),
+                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "380"),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS.take(2).toImmutableList(),
+                    displayText = "to Circular Quay",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Ferry(),
+                        lineName = "F1",
+                    ),
+                    totalDuration = "25 mins",
+                    tripId = "F1",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+                    duration = "5 mins",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "to Bondi Junction",
+                    totalDuration = "15 mins",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus(),
+                        lineName = "380",
+                    ),
+                    tripId = "380",
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = "5 mins",
+            totalUniqueServiceAlerts = 3,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("5 mins late"),
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_Default_PastJourney() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "5 mins ago",
+            originTime = "8:00am",
+            destinationTime = "8:25am",
+            totalTravelTime = "25 mins",
+            platformNumber = "4",
+            platformText = "Platform 4",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
         )
     }
 }

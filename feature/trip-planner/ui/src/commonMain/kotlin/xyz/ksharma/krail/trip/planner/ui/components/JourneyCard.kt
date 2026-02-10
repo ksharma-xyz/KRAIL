@@ -313,12 +313,12 @@ fun ExpandedJourneyCardContent(
                     }
                 }
 
-                // Map button using Taj design system
+                // Map button
                 Button(
                     onClick = onMapClick,
                     dimensions = ButtonDefaults.smallButtonSize(),
                 ) {
-                    Text(text = "Map")
+                    Text(text = "Maps")
                 }
             }
 
@@ -326,7 +326,7 @@ fun ExpandedJourneyCardContent(
                 painter = painterResource(Res.drawable.ic_clock),
                 text = totalTravelTime,
                 textStyle = KrailTheme.typography.bodyLarge,
-                modifier = Modifier.align(Alignment.CenterVertically),
+                modifier = Modifier.align(Alignment.CenterVertically).padding(start = 8.dp),
             )
         }
 
@@ -793,6 +793,61 @@ private fun Preview_JourneyCard_Expanded() {
             cardState = JourneyCardState.EXPANDED,
             totalWalkTime = null,
             totalUniqueServiceAlerts = 1,
+            onClick = {},
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_JourneyCard_Expanded_NoAlerts() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 5 mins",
+            originTime = "8:25am",
+            destinationTime = "8:40am",
+            totalTravelTime = "15 mins",
+            platformNumber = "3",
+            platformText = "Platform 3",
+
+            transportModeLineList = persistentListOf(
+                TransportModeLine(
+                    transportMode = TransportMode.Train(),
+                    lineName = "T1",
+                ),
+                TransportModeLine(
+                    transportMode = TransportMode.Bus(),
+                    lineName = "700",
+                ),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Abc via Rainy Rd",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train(),
+                        lineName = "T1",
+                    ),
+                    totalDuration = "20 mins",
+                    tripId = "T1",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+                    duration = "15 mins",
+                ),
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS.take(2).toImmutableList(),
+                    displayText = "towards Xyz via Awesome Rd",
+                    totalDuration = "10 mins",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus(),
+                        lineName = "700",
+                    ),
+                    tripId = "700",
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
             onClick = {},
         )
     }

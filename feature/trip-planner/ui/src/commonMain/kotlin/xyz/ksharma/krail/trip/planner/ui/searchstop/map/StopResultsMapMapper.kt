@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.searchstop
+package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -19,7 +19,7 @@ object StopResultsMapMapper {
         val stopIds = this.mapDisplay.stops.map { it.stopId }
         log(
             "StopResultsMapMapper.toFeatureCollection: routes=${routeIds.joinToString()} " +
-                "(count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})",
+                    "(count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})",
         )
 
         val routeFeatures = this.mapDisplay.routes.map(::toRouteFeature)
@@ -45,7 +45,12 @@ object StopResultsMapMapper {
 
     private fun toRouteFeature(route: RouteFeature): Feature<*, *> {
         // Position expects (longitude, latitude)
-        val positions = route.points.map { Position(longitude = it.longitude, latitude = it.latitude) }
+        val positions = route.points.map {
+            Position(
+                longitude = it.longitude,
+                latitude = it.latitude
+            )
+        }
         return Feature(
             geometry = LineString(positions),
             properties = buildJsonObject {
@@ -59,7 +64,12 @@ object StopResultsMapMapper {
     private fun toStopFeature(stop: StopFeature): Feature<*, *> {
         // Position expects (longitude, latitude)
         return Feature(
-            geometry = Point(Position(longitude = stop.position.longitude, latitude = stop.position.latitude)),
+            geometry = Point(
+                Position(
+                    longitude = stop.position.longitude,
+                    latitude = stop.position.latitude
+                )
+            ),
             properties = buildJsonObject {
                 put("type", JsonPrimitive("stop"))
                 put("stopId", JsonPrimitive(stop.stopId))

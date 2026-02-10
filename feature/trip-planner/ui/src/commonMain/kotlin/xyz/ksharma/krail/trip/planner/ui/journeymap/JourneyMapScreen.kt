@@ -1,20 +1,15 @@
 package xyz.ksharma.krail.trip.planner.ui.journeymap
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.taj.components.NavActionButton
-import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -45,18 +40,13 @@ fun JourneyMapScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                RoundIconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier
-                        .statusBarsPadding()
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                ) {
-                    NavActionButton(
-                        icon = Icons.AutoMirrored.Filled.ArrowBack,
-                        iconContentDescription = "Back",
-                        onClick = onBackClick,
-                    )
-                }
+                TitleBar(
+                    title = {
+                        Text("Journey Map")
+                    },
+                    onNavActionClick = onBackClick,
+                    modifier = Modifier.background(color = KrailTheme.colors.surface),
+                )
             }
 
             is JourneyMapUiState.Error -> {

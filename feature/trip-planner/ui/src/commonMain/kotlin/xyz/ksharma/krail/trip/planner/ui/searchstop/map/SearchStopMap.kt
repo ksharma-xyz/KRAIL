@@ -1,28 +1,29 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_filter
+import org.jetbrains.compose.resources.painterResource
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import org.maplibre.compose.camera.CameraPosition
@@ -33,13 +34,12 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopsConfig
@@ -60,21 +60,11 @@ fun SearchStopMap(
             }
 
             is MapUiState.Ready -> {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Empty state message at top
-                    if (mapUiState.mapDisplay.nearbyStops.isEmpty() &&
-                        !mapUiState.isLoadingNearbyStops
-                    ) {
-                        EmptyStopsMessage(modifier = Modifier.fillMaxWidth())
-                    }
-
-                    // Map content
-                    MapContent(
-                        mapState = mapUiState,
-                        onEvent = onEvent,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                MapContent(
+                    mapState = mapUiState,
+                    onEvent = onEvent,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
 
             is MapUiState.Error -> {
@@ -87,20 +77,6 @@ fun SearchStopMap(
     }
 }
 
-@Composable
-private fun EmptyStopsMessage(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .background(KrailTheme.colors.errorContainer)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
-    ) {
-        Text(
-            text = "No stops found in this area",
-            style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.onErrorContainer,
-        )
-    }
-}
 
 @Composable
 private fun ErrorMessage(
@@ -126,6 +102,8 @@ private fun MapContent(
             "isLoading=${mapState.isLoadingNearbyStops}, " +
             "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
+
+    var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     // Start at default Sydney coordinates
     val cameraState = rememberCameraState(
@@ -161,15 +139,17 @@ private fun MapContent(
         MaplibreMap(
             modifier = Modifier.fillMaxSize(),
             cameraState = cameraState,
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
+            baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
             options = MapOptions(
                 ornamentOptions = OrnamentOptions(
                     padding = PaddingValues(0.dp),
                     isLogoEnabled = false,
                     isAttributionEnabled = true,
                     attributionAlignment = Alignment.BottomEnd,
-                    isCompassEnabled = true,
+                    isCompassEnabled = mapState.mapDisplay.showCompass,
                     compassAlignment = Alignment.TopEnd,
+                    isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
+                    scaleBarAlignment = Alignment.TopStart,
                 ),
             ),
         ) {
@@ -188,85 +168,73 @@ private fun MapContent(
             }
         }
 
-        // Transport mode filter chips (top of map)
-        TransportModeFilterRow(
-            selectedModes = mapState.mapDisplay.selectedTransportModes,
-            onModeToggle = { mode ->
-                onEvent(SearchStopUiEvent.TransportModeFilterToggled(mode))
-            },
+        // Bottom left buttons (Options and Refresh)
+        Row(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp),
-        )
+                .align(Alignment.BottomStart)
+                .navigationBarsPadding()
+                .padding(start = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // Options button
+            Button(
+                onClick = { showOptionsBottomSheet = true },
+                dimensions = ButtonDefaults.mediumButtonSize(),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.ic_filter),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(ButtonDefaults.buttonColors().contentColor),
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(text = "Options")
+                }
+            }
 
-        // "Show stops here" button (bottom center)
-        ShowStopsButton(
-            isLoading = mapState.isLoadingNearbyStops,
-            onClick = { onEvent(SearchStopUiEvent.ShowStopsHere) },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp),
-        )
-    }
-}
+            // Refresh button
+            Button(
+                onClick = { onEvent(SearchStopUiEvent.ShowStopsHere) },
+                enabled = !mapState.isLoadingNearbyStops,
+                dimensions = ButtonDefaults.mediumButtonSize(),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (mapState.isLoadingNearbyStops) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = ButtonDefaults.buttonColors().contentColor,
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_filter),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(ButtonDefaults.buttonColors().contentColor),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    Text(text = "Refresh")
+                }
+            }
+        }
 
-@Composable
-private fun TransportModeFilterRow(
-    selectedModes: Set<Int>,
-    onModeToggle: (TransportMode) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val allModes = remember {
-        TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
-    }
-
-    LazyRow(
-        modifier = modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(allModes) { mode ->
-            TransportModeChip(
-                transportMode = mode,
-                selected = selectedModes.contains(mode.productClass),
-                onClick = { onModeToggle(mode) },
+        // Options Bottom Sheet
+        if (showOptionsBottomSheet) {
+            MapOptionsBottomSheet(
+                searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
+                selectedTransportModes = mapState.mapDisplay.selectedTransportModes,
+                showDistanceScale = mapState.mapDisplay.showDistanceScale,
+                showCompass = mapState.mapDisplay.showCompass,
+                onDismiss = { showOptionsBottomSheet = false },
+                onEvent = onEvent,
             )
         }
     }
 }
 
-@Preview
-@Composable
-private fun PreviewTransportModeFilterRow() {
-    PreviewTheme {
-        TransportModeFilterRow(
-            selectedModes = emptySet(),
-            onModeToggle = {},
-        )
-    }
-}
-
-@Composable
-private fun ShowStopsButton(
-    isLoading: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = onClick,
-        enabled = !isLoading,
-        modifier = modifier,
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = Color.White,
-                strokeWidth = 2.dp,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Loading...", color = Color.White)
-        } else {
-            Text("Show stops here", color = Color.White)
-        }
-    }
-}

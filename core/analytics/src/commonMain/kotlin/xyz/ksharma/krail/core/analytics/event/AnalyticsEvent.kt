@@ -81,7 +81,6 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "recentSearchCount" to recentSearchCount,
         ),
     )
-
     // endregion
 
     // region Theme

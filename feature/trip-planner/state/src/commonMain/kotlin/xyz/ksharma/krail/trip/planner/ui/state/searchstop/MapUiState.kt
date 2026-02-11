@@ -59,4 +59,7 @@ data class MapDisplay(
         NearbyStopsConfig.DEFAULT_CENTER_LAT,
         NearbyStopsConfig.DEFAULT_CENTER_LON,
     ),
+    val searchRadiusKm: Double = NearbyStopsConfig.DEFAULT_RADIUS_KM,
+    val showDistanceScale: Boolean = false,
+    val showCompass: Boolean = true,
 )

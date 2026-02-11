@@ -132,6 +132,25 @@ class SearchStopViewModel(
                 log("[NEARBY_STOPS] NearbyStopClicked: ${event.stop.stopName}")
                 onNearbyStopClicked(event.stop)
             }
+
+            SearchStopUiEvent.MapOptionsClicked -> {
+                // No-op: Bottom sheet visibility is handled in UI layer
+            }
+
+            is SearchStopUiEvent.SearchRadiusChanged -> {
+                log("[NEARBY_STOPS] SearchRadiusChanged: ${event.radiusKm}km")
+                onSearchRadiusChanged(event.radiusKm)
+            }
+
+            is SearchStopUiEvent.ShowDistanceScaleToggled -> {
+                log("[NEARBY_STOPS] ShowDistanceScaleToggled: ${event.enabled}")
+                onShowDistanceScaleToggled(event.enabled)
+            }
+
+            is SearchStopUiEvent.ShowCompassToggled -> {
+                log("[NEARBY_STOPS] ShowCompassToggled: ${event.enabled}")
+                onShowCompassToggled(event.enabled)
+            }
         }
     }
 
@@ -348,7 +367,7 @@ class SearchStopViewModel(
                 val stops = nearbyStopsRepository.getStopsNearby(
                     centerLat = center.latitude,
                     centerLon = center.longitude,
-                    radiusKm = NearbyStopsConfig.DEFAULT_RADIUS_KM,
+                    radiusKm = radiusKm,
                     productClasses = selectedModes,
                     maxResults = NearbyStopsConfig.MAX_NEARBY_RESULTS,
                 )
@@ -447,6 +466,34 @@ class SearchStopViewModel(
     private fun onNearbyStopClicked(stop: NearbyStopFeature) {
         println("stop: $stop")
         // : Show bottom sheet with stop details
+    }
+
+    private fun onSearchRadiusChanged(radiusKm: Double) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(searchRadiusKm = radiusKm))
+            }
+        }
+
+        // Invalidate cache and reload with new radius
+        lastQueryCenter = null
+        loadNearbyStops()
+    }
+
+    private fun onShowDistanceScaleToggled(enabled: Boolean) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(showDistanceScale = enabled))
+            }
+        }
+    }
+
+    private fun onShowCompassToggled(enabled: Boolean) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(showCompass = enabled))
+            }
+        }
     }
 
     // Helper to update map state safely

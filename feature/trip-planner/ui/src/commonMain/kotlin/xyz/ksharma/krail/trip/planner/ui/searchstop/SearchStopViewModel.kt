@@ -356,10 +356,11 @@ class SearchStopViewModel(
 
             runCatching {
                 val selectedModes = mapState.mapDisplay.selectedTransportModes
+                val radiusKm = mapState.mapDisplay.searchRadiusKm
                 log(
                     "[NEARBY_STOPS] Query params: centerLat=${center.latitude}," +
                         " centerLon=${center.longitude}, " +
-                        "radiusKm=${NearbyStopsConfig.DEFAULT_RADIUS_KM}, " +
+                        "radiusKm=$radiusKm, " +
                         "productClasses=$selectedModes, " +
                         "maxResults=${NearbyStopsConfig.MAX_NEARBY_RESULTS}",
                 )

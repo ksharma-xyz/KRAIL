@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,6 +34,8 @@ import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.preview.PreviewComponent
+import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
@@ -76,23 +79,28 @@ fun MapOptionsBottomSheet(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Options",
+                    text = "Map Options",
                     style = KrailTheme.typography.headlineMedium,
                     color = KrailTheme.colors.onSurface,
+                    modifier = Modifier.alignByBaseline(),
                 )
 
                 TextButton(
-                    dimensions = ButtonDefaults.mediumButtonSize(),
+                    dimensions = ButtonDefaults.largeButtonSize(),
+                    modifier = Modifier.alignByBaseline(),
                     onClick = {
                         // Apply all pending changes
                         if (pendingRadiusKm != searchRadiusKm) {
                             onEvent(SearchStopUiEvent.SearchRadiusChanged(pendingRadiusKm))
                         }
                         if (pendingShowDistanceScale != showDistanceScale) {
-                            onEvent(SearchStopUiEvent.ShowDistanceScaleToggled(pendingShowDistanceScale))
+                            onEvent(
+                                SearchStopUiEvent.ShowDistanceScaleToggled(
+                                    pendingShowDistanceScale
+                                )
+                            )
                         }
                         if (pendingShowCompass != showCompass) {
                             onEvent(SearchStopUiEvent.ShowCompassToggled(pendingShowCompass))
@@ -113,7 +121,7 @@ fun MapOptionsBottomSheet(
                     }
                 ) {
                     Text(
-                        text = "Done",
+                        text = "Save",
                         color = LocalThemeColor.current.value.hexToComposeColor(),
                     )
                 }
@@ -299,7 +307,7 @@ private fun MapControlToggle(
     }
 }
 
-@Preview
+@PreviewComponent
 @Composable
 private fun PreviewMapOptionsBottomSheet() {
     PreviewTheme {
@@ -313,4 +321,3 @@ private fun PreviewMapOptionsBottomSheet() {
         )
     }
 }
-

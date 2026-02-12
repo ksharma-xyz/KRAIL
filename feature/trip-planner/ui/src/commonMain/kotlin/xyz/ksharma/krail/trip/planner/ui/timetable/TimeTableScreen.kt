@@ -73,6 +73,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
+import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
@@ -244,7 +245,7 @@ fun TimeTableScreen(
                             .animateItem(),
                     ) {
                         items(
-                            items = TransportMode.values().toList(),
+                            items = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY),
                             key = { item -> item.productClass },
                         ) {
                             TransportModeChip(

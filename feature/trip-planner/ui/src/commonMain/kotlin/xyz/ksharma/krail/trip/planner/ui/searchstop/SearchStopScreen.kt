@@ -62,6 +62,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -131,7 +132,7 @@ fun SearchStopScreen(
         } // Start with Train's priority
 
         val transportModes = remember {
-            TransportMode.values().sortedBy { it.priority }
+            TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
         }
 
         // Map priorities to corresponding placeholder texts

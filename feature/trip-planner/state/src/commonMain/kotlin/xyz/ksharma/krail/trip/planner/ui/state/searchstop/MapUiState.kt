@@ -35,6 +35,7 @@ data class NearbyStopFeature(
     val position: LatLng,
     val distanceKm: Double,
     val transportModes: List<TransportMode>,
+    val hasParkAndRide: Boolean = false,
 )
 
 /** UI state for the map screen */

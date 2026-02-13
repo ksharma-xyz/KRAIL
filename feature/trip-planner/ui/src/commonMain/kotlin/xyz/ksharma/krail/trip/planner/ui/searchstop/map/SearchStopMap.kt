@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -37,11 +38,11 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
-import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopsConfig
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
@@ -50,6 +51,7 @@ fun SearchStopMap(
     mapUiState: MapUiState,
     modifier: Modifier = Modifier,
     onEvent: (SearchStopUiEvent) -> Unit = {},
+    onStopSelect: (xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -63,6 +65,7 @@ fun SearchStopMap(
                 MapContent(
                     mapState = mapUiState,
                     onEvent = onEvent,
+                    onStopSelect = onStopSelect,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -95,6 +98,7 @@ private fun ErrorMessage(
 private fun MapContent(
     mapState: MapUiState.Ready,
     onEvent: (SearchStopUiEvent) -> Unit,
+    onStopSelect: (xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     log(
@@ -104,6 +108,7 @@ private fun MapContent(
     )
 
     var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var selectedStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
 
     // Start at default Sydney coordinates
     val cameraState = rememberCameraState(
@@ -160,6 +165,7 @@ private fun MapContent(
                     stops = mapState.mapDisplay.nearbyStops,
                     onStopClick = { stop ->
                         log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
+                        selectedStop = stop
                         onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
                     },
                 )
@@ -233,6 +239,33 @@ private fun MapContent(
                 showCompass = mapState.mapDisplay.showCompass,
                 onDismiss = { showOptionsBottomSheet = false },
                 onEvent = onEvent,
+            )
+        }
+
+        // Stop Details Bottom Sheet
+        selectedStop?.let { stop ->
+            StopDetailsBottomSheet(
+                stop = stop,
+                onDismiss = { selectedStop = null },
+                onSelectStop = {
+                    // Convert NearbyStopFeature to StopItem and call onStopSelect
+                    val stopItem = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                        stopId = stop.stopId,
+                        stopName = stop.stopName,
+                    )
+                    onStopSelect(stopItem)
+
+                    // Track the selection
+                    onEvent(
+                        SearchStopUiEvent.TrackStopSelected(
+                            stopItem = stopItem,
+                            isRecentSearch = false,
+                            searchQuery = null,
+                        )
+                    )
+
+                    selectedStop = null
+                },
             )
         }
     }

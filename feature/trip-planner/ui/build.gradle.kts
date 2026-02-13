@@ -69,6 +69,7 @@ kotlin {
                 implementation(projects.discover.state)
                 implementation(projects.discover.ui)
                 implementation(projects.feature.parkRide.network)
+                implementation(projects.feature.parkRide.ui)
                 implementation(projects.feature.tripPlanner.network)
                 implementation(projects.feature.tripPlanner.state)
                 implementation(projects.io.gtfs)

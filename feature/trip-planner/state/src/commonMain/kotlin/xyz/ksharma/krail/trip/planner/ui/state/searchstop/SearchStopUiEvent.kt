@@ -20,7 +20,10 @@ sealed interface SearchStopUiEvent {
 
     // Map-related events
     data class MapCenterChanged(val center: LatLng) : SearchStopUiEvent
+
     data object ShowStopsHere : SearchStopUiEvent
+
     data class TransportModeFilterToggled(val mode: TransportMode) : SearchStopUiEvent
+
     data class NearbyStopClicked(val stop: NearbyStopFeature) : SearchStopUiEvent
 }

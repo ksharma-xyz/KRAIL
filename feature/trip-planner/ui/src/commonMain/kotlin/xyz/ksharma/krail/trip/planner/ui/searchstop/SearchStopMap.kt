@@ -27,10 +27,10 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
-import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.Feature
 import org.maplibre.compose.expressions.dsl.asString
+import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
@@ -135,7 +135,11 @@ private fun MapContent(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    log("[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, isLoading=${mapState.isLoadingNearbyStops}, selectedModes=${mapState.mapDisplay.selectedTransportModes}")
+    log(
+        "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
+            "isLoading=${mapState.isLoadingNearbyStops}, " +
+            "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
+    )
 
     // Start at default Sydney coordinates
     val cameraState = rememberCameraState(
@@ -150,11 +154,15 @@ private fun MapContent(
 
     // Track camera moves to update map center
     @OptIn(FlowPreview::class)
+    @Suppress("MagicNumber")
     LaunchedEffect(cameraState.position) {
         snapshotFlow { cameraState.position.target }
             .debounce(500) // Only update after user stops moving
             .collect { target ->
-                log("[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, lon=${target.longitude}")
+                log(
+                    "[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, " +
+                        "lon=${target.longitude}",
+                )
                 onEvent(
                     SearchStopUiEvent.MapCenterChanged(
                         LatLng(target.latitude, target.longitude),
@@ -270,6 +278,7 @@ private fun ShowStopsButton(
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
 private fun NearbyStopsLayer(
     stops: List<NearbyStopFeature>,
@@ -277,11 +286,17 @@ private fun NearbyStopsLayer(
 ) {
     log("[NEARBY_STOPS_UI] NearbyStopsLayer rendering ${stops.size} stops")
     stops.take(3).forEach { stop ->
-        log("[NEARBY_STOPS_UI] Stop: ${stop.stopName} at (${stop.position.latitude}, ${stop.position.longitude}), modes=${stop.transportModes.map { it.name }}")
+        log(
+            "[NEARBY_STOPS_UI] Stop: ${stop.stopName} at (${stop.position.latitude}, " +
+                "${stop.position.longitude}), modes=${stop.transportModes.map { it.name }}",
+        )
     }
 
     val featureCollection = stops.toFeatureCollection()
-    log("[NEARBY_STOPS_UI] FeatureCollection created with ${featureCollection.features.size} features")
+    log(
+        "[NEARBY_STOPS_UI] FeatureCollection created with " +
+            "${featureCollection.features.size} features",
+    )
 
     val geoJsonSource = rememberGeoJsonSource(
         data = GeoJsonData.Features(featureCollection),
@@ -336,7 +351,10 @@ private fun List<NearbyStopFeature>.toFeatureCollection(): FeatureCollection<*, 
 
     val features = map { stop ->
         val color = stop.transportModes.firstOrNull()?.colorCode ?: "#000000"
-        log("[NEARBY_STOPS_UI] Creating feature for ${stop.stopName}: color=$color, pos=(${stop.position.latitude}, ${stop.position.longitude})")
+        log(
+            "[NEARBY_STOPS_UI] Creating feature for ${stop.stopName}: color=$color, " +
+                "pos=(${stop.position.latitude}, ${stop.position.longitude})",
+        )
         org.maplibre.spatialk.geojson.Feature(
             geometry = Point(
                 coordinates = Position(

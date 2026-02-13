@@ -7,6 +7,7 @@ import kotlin.math.roundToInt
  * < 100m: show in meters (e.g., "50m")
  * >= 100m: show in km (e.g., "0.3km")
  */
+@Suppress("MagicNumber")
 fun Double.formatDistance(): String = when {
     this < 0.1 -> "${(this * 1000).roundToInt()}m"
     else -> {
@@ -14,4 +15,3 @@ fun Double.formatDistance(): String = when {
         "${km}km"
     }
 }
-

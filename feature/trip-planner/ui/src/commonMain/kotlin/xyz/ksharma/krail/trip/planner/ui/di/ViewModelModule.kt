@@ -31,6 +31,16 @@ val viewModelsModule = module {
     viewModelOf(::OurStoryViewModel)
 
     viewModel {
+        SearchStopViewModel(
+            analytics = get(),
+            stopResultsManager = get(),
+            nearbyStopsRepository = get(),
+            flag = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
+    viewModel {
         IntroViewModel(
             analytics = get(),
             platformOps = get(),

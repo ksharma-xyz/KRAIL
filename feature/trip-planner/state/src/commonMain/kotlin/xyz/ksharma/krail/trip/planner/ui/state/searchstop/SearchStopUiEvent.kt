@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
+import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 sealed interface SearchStopUiEvent {
@@ -16,4 +17,10 @@ sealed interface SearchStopUiEvent {
 
     data class StopSelectionTypeClicked(val stopSelectionType: StopSelectionType) :
         SearchStopUiEvent
+
+    // Map-related events
+    data class MapCenterChanged(val center: LatLng) : SearchStopUiEvent
+    data object ShowStopsHere : SearchStopUiEvent
+    data class TransportModeFilterToggled(val mode: TransportMode) : SearchStopUiEvent
+    data class NearbyStopClicked(val stop: NearbyStopFeature) : SearchStopUiEvent
 }

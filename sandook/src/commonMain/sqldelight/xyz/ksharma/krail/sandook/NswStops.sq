@@ -27,6 +27,10 @@ selectStopsCount:
 SELECT COUNT(*) AS totalStops
 FROM NswStops;
 
+-- Select all stops (for debugging)
+selectAllStops:
+SELECT * FROM NswStops LIMIT 10;
+
 -- Insert each productClass value for a given stop into NswStopProductClass --
 insertStopProductClass:
 INSERT INTO NswStopProductClass(stopId, productClass)
@@ -55,3 +59,48 @@ WHERE (
     OR s.stopName LIKE '%' || :stopName || '%' COLLATE NOCASE  -- Case-insensitive partial match for stop name
 )
 GROUP BY s.stopId;
+
+-- Index for spatial queries (CRITICAL FOR PERFORMANCE)
+CREATE INDEX IF NOT EXISTS idx_stop_coordinates ON NswStops(stopLat, stopLon);
+
+-- Select nearby stops with simplified distance calculation
+-- SQLite doesn't have trigonometric functions, so we use Euclidean approximation
+-- For small distances (<100km), this is accurate enough for NSW
+--
+-- Distance formula breakdown:
+-- - Latitude: 1 degree ≈ 111km everywhere
+-- - Longitude: 1 degree ≈ 92km at Sydney's latitude (33.8°S, cos(33.8°) ≈ 0.83)
+-- - We work with squared distances to avoid sqrt() which SQLite doesn't have
+-- - Scaling: 111^2 = 12321 for latitude
+-- - For longitude at Sydney: (111 * 0.83)^2 ≈ 8500
+--
+-- distanceSquared ≈ (ΔLat² * 12321) + (ΔLon² * 8500)
+-- Then compare with radiusKm²
+--
+-- Max 50 results to prevent UI complexity
+selectStopsNearby:
+SELECT
+    s.stopId,
+    s.stopName,
+    s.stopLat,
+    s.stopLon,
+    s.isParent,
+    COALESCE(GROUP_CONCAT(DISTINCT p.productClass), '') AS productClasses,
+    (
+        ((s.stopLat - :centerLat) * (s.stopLat - :centerLat) * 12321.0) +
+        ((s.stopLon - :centerLon) * (s.stopLon - :centerLon) * 8500.0)
+    ) AS distanceSquared
+FROM NswStops AS s
+LEFT JOIN NswStopProductClass AS p ON s.stopId = p.stopId
+WHERE
+    -- Use indexed bounding box for fast pre-filtering
+    s.stopLat BETWEEN :minLat AND :maxLat
+    AND s.stopLon BETWEEN :minLon AND :maxLon
+    -- Filter by transport modes early to reduce rows
+    AND (:filterByModes = 0 OR p.productClass IN :productClasses)
+GROUP BY s.stopId
+-- Filter by squared radius (avoiding sqrt)
+HAVING distanceSquared <= (:radiusKm * :radiusKm)
+ORDER BY distanceSquared ASC
+LIMIT :maxResults;
+

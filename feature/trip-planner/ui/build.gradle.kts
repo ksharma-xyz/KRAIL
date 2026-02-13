@@ -59,6 +59,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
+                implementation(projects.core.maps.data)
                 implementation(projects.core.maps.state)
                 implementation(projects.core.maps.ui)
                 implementation(projects.core.navigation)

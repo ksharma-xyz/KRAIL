@@ -213,6 +213,7 @@ fun SearchStopScreen(
                 SearchStopMap(
                     modifier = Modifier.weight(1f),
                     mapUiState = screen.mapUiState,
+                    onEvent = onEvent,
                 )
             }
 

@@ -4,8 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,23 +21,34 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ClearRecentSearchCl
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.maps.data.model.NearbyStop
+import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.sandook.utils.GeoUtils
+import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopsConfig
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.RouteFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@Suppress("TooManyFunctions")
 class SearchStopViewModel(
     private val analytics: Analytics,
     private val stopResultsManager: StopResultsManager,
+    private val nearbyStopsRepository: NearbyStopsRepository,
     val flag: Flag,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -48,7 +58,7 @@ class SearchStopViewModel(
             checkMapsAvailability()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
-    private val isMapsAvailable: Boolean = false
+    private val isMapsAvailable: Boolean = true
     /*
         by lazy {
             flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
@@ -58,6 +68,9 @@ class SearchStopViewModel(
 
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
+    private var nearbyStopsJob: Job? = null
+    private var lastQueryCenter: LatLng? = null
+    private var lastQueryTime: Long = 0
 
     fun onEvent(event: SearchStopUiEvent) {
         when (event) {
@@ -90,7 +103,7 @@ class SearchStopViewModel(
                 fetchRecentStopsJob?.cancel()
                 fetchRecentStopsJob =
                     viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(
-                        Dispatchers.IO,
+                        ioDispatcher,
                     ) {
                         fetchRecentStops()
                     }
@@ -98,6 +111,45 @@ class SearchStopViewModel(
 
             is SearchStopUiEvent.StopSelectionTypeClicked -> {
                 onStopSelectionTypeClicked(event.stopSelectionType)
+            }
+
+            is SearchStopUiEvent.ShowStopsHere -> {
+                log("[NEARBY_STOPS] ShowStopsHere event received")
+                loadNearbyStops()
+            }
+
+            is SearchStopUiEvent.MapCenterChanged -> {
+                log("[NEARBY_STOPS] MapCenterChanged: lat=${event.center.latitude}, lon=${event.center.longitude}")
+                onMapCenterChanged(event.center)
+            }
+
+            is SearchStopUiEvent.TransportModeFilterToggled -> {
+                log("[NEARBY_STOPS] TransportModeFilterToggled: mode=${event.mode.name}")
+                onModeToggled(event.mode)
+            }
+
+            is SearchStopUiEvent.NearbyStopClicked -> {
+                log("[NEARBY_STOPS] NearbyStopClicked: ${event.stop.stopName}")
+                onNearbyStopClicked(event.stop)
+            }
+
+            SearchStopUiEvent.MapOptionsClicked -> {
+                // No-op: Bottom sheet visibility is handled in UI layer
+            }
+
+            is SearchStopUiEvent.SearchRadiusChanged -> {
+                log("[NEARBY_STOPS] SearchRadiusChanged: ${event.radiusKm}km")
+                onSearchRadiusChanged(event.radiusKm)
+            }
+
+            is SearchStopUiEvent.ShowDistanceScaleToggled -> {
+                log("[NEARBY_STOPS] ShowDistanceScaleToggled: ${event.enabled}")
+                onShowDistanceScaleToggled(event.enabled)
+            }
+
+            is SearchStopUiEvent.ShowCompassToggled -> {
+                log("[NEARBY_STOPS] ShowCompassToggled: ${event.enabled}")
+                onShowCompassToggled(event.enabled)
             }
         }
     }
@@ -118,7 +170,7 @@ class SearchStopViewModel(
             // ensure recentStops are loaded
             fetchRecentStopsJob?.cancel()
             fetchRecentStopsJob =
-                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(Dispatchers.IO) {
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     fetchRecentStops()
                 }
             return
@@ -161,7 +213,7 @@ class SearchStopViewModel(
                 // ensure recentStops are loaded (trigger fetch if needed)
                 fetchRecentStopsJob?.cancel()
                 fetchRecentStopsJob =
-                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(Dispatchers.IO) {
+                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                         fetchRecentStops()
                     }
             } else {
@@ -267,6 +319,206 @@ class SearchStopViewModel(
             current.copy(screen = newScreen, selectionType = StopSelectionType.MAP)
         }
     }
+
+    @OptIn(ExperimentalTime::class)
+    @Suppress("MagicNumber", "LongMethod", "ReturnCount")
+    private fun loadNearbyStops() {
+        log("[NEARBY_STOPS] loadNearbyStops() called")
+        val currentState = _uiState.value
+        val screen = currentState.screen as? SearchScreen.Map ?: run {
+            log("[NEARBY_STOPS] ERROR: screen is not Map, it's ${currentState.screen}")
+            return
+        }
+        val mapState = screen.mapUiState as? MapUiState.Ready ?: run {
+            log("[NEARBY_STOPS] ERROR: mapUiState is not Ready, it's ${screen.mapUiState}")
+            return
+        }
+
+        val center = mapState.mapDisplay.mapCenter
+        log("[NEARBY_STOPS] Map center: lat=${center.latitude}, lon=${center.longitude}")
+
+        // Check cache validity
+        if (shouldUseCachedResults(center)) {
+            log("[NEARBY_STOPS] Using cached nearby stops")
+            return
+        }
+
+        // Cancel any ongoing query
+        nearbyStopsJob?.cancel()
+
+        // Show loading
+        updateUiState { withMapState { copy(isLoadingNearbyStops = true) } }
+        log("[NEARBY_STOPS] Loading state set to true")
+
+        nearbyStopsJob = viewModelScope.launch(ioDispatcher) {
+            delay(NearbyStopsConfig.QUERY_DEBOUNCE_MS) // Debounce
+            log("[NEARBY_STOPS] Debounce complete, starting query...")
+
+            runCatching {
+                val selectedModes = mapState.mapDisplay.selectedTransportModes
+                val radiusKm = mapState.mapDisplay.searchRadiusKm
+                log(
+                    "[NEARBY_STOPS] Query params: centerLat=${center.latitude}," +
+                        " centerLon=${center.longitude}, " +
+                        "radiusKm=$radiusKm, " +
+                        "productClasses=$selectedModes, " +
+                        "maxResults=${NearbyStopsConfig.MAX_NEARBY_RESULTS}",
+                )
+
+                val stops = nearbyStopsRepository.getStopsNearby(
+                    centerLat = center.latitude,
+                    centerLon = center.longitude,
+                    radiusKm = radiusKm,
+                    productClasses = selectedModes,
+                    maxResults = NearbyStopsConfig.MAX_NEARBY_RESULTS,
+                )
+
+                log("[NEARBY_STOPS] Query returned ${stops.size} stops")
+                stops.take(5).forEach { stop ->
+                    log(
+                        "[NEARBY_STOPS] Stop: ${stop.stopName} (${stop.stopId}) - " +
+                            "${stop.distanceKm}km - modes=${stop.transportModes.map { it.name }}",
+                    )
+                }
+
+                updateUiState {
+                    withMapState {
+                        copy(
+                            mapDisplay = mapDisplay.copy(
+                                nearbyStops = stops.map { it.toFeature() },
+                            ),
+                            isLoadingNearbyStops = false,
+                        )
+                    }
+                }
+
+                log("[NEARBY_STOPS] State updated with ${stops.size} stops, loading=false")
+
+                // Update cache state
+                lastQueryCenter = center
+                lastQueryTime = Clock.System.now().toEpochMilliseconds()
+            }.getOrElse { error ->
+                log("[NEARBY_STOPS] ERROR: Query failed - ${error.message}")
+                error.printStackTrace()
+                updateUiState { withMapState { copy(isLoadingNearbyStops = false) } }
+                // analytics.track(AnalyticsEvent.NearbyStopsError(error.message ?: "Unknown"))
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Suppress("ReturnCount")
+    private fun shouldUseCachedResults(newCenter: LatLng): Boolean {
+        val lastCenter = lastQueryCenter ?: return false
+
+        // Check if cache expired
+        val cacheAge = Clock.System.now().toEpochMilliseconds() - lastQueryTime
+        if (cacheAge > NearbyStopsConfig.CACHE_EXPIRY_MS) return false
+
+        // Check if center moved significantly
+        val distance = GeoUtils.haversineDistance(
+            lastCenter.latitude,
+            lastCenter.longitude,
+            newCenter.latitude,
+            newCenter.longitude,
+        ) ?: return false // If distance calculation fails, don't use cache
+
+        return distance < NearbyStopsConfig.MIN_DISTANCE_FOR_RELOAD_KM
+    }
+
+    private fun onMapCenterChanged(center: LatLng) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(mapCenter = center))
+            }
+        }
+    }
+
+    private fun onModeToggled(mode: TransportMode) {
+        updateUiState {
+            withMapState {
+                val currentModes = mapDisplay.selectedTransportModes.toMutableSet()
+                if (currentModes.contains(mode.productClass)) {
+                    currentModes.remove(mode.productClass)
+                } else {
+                    currentModes.add(mode.productClass)
+                }
+                copy(
+                    mapDisplay = mapDisplay.copy(
+                        selectedTransportModes = currentModes,
+                    ),
+                )
+            }
+        }
+
+        // Invalidate cache and reload
+        lastQueryCenter = null
+        loadNearbyStops()
+
+        // Track analytics
+       /* val currentState = _uiState.value
+        val screen = currentState.screen as? SearchScreen.Map
+        val mapState = screen?.mapUiState as? MapUiState.Ready
+        val selectedModes = mapState?.mapDisplay?.selectedTransportModes ?: emptySet()
+        val modeNames = selectedModes.mapNotNull { TransportMode.toTransportModeType(it)?.name }
+        val resultCount = mapState?.mapDisplay?.nearbyStops?.size ?: 0*/
+    }
+
+    private fun onNearbyStopClicked(stop: NearbyStopFeature) {
+        println("stop: $stop")
+        // : Show bottom sheet with stop details
+    }
+
+    private fun onSearchRadiusChanged(radiusKm: Double) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(searchRadiusKm = radiusKm))
+            }
+        }
+
+        // Invalidate cache and reload with new radius
+        lastQueryCenter = null
+        loadNearbyStops()
+    }
+
+    private fun onShowDistanceScaleToggled(enabled: Boolean) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(showDistanceScale = enabled))
+            }
+        }
+    }
+
+    private fun onShowCompassToggled(enabled: Boolean) {
+        updateUiState {
+            withMapState {
+                copy(mapDisplay = mapDisplay.copy(showCompass = enabled))
+            }
+        }
+    }
+
+    // Helper to update map state safely
+    private fun SearchStopState.withMapState(
+        block: MapUiState.Ready.() -> MapUiState.Ready,
+    ): SearchStopState {
+        val currentScreen = screen as? SearchScreen.Map ?: return this
+        val currentMapState = currentScreen.mapUiState as? MapUiState.Ready ?: return this
+
+        return copy(
+            screen = currentScreen.copy(
+                mapUiState = currentMapState.block(),
+            ),
+        )
+    }
+
+    // Mapper
+    private fun NearbyStop.toFeature() = NearbyStopFeature(
+        stopId = stopId,
+        stopName = stopName,
+        position = LatLng(latitude, longitude),
+        distanceKm = distanceKm,
+        transportModes = transportModes,
+    )
 
     // endregion
 

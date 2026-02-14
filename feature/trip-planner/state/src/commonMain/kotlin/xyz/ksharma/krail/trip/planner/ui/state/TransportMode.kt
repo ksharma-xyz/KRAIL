@@ -27,7 +27,7 @@ sealed class TransportMode {
         override val name: String = "Train",
         override val colorCode: String = "#F6891F",
         override val productClass: Int = 1,
-        override val priority: Int = 1111,
+        override val priority: Int = 1,
     ) : TransportMode()
 
     @Serializable
@@ -35,7 +35,7 @@ sealed class TransportMode {
         override val name: String = "Metro",
         override val colorCode: String = "#009B77",
         override val productClass: Int = 2,
-        override val priority: Int = 2222,
+        override val priority: Int = 3,
     ) : TransportMode()
 
     @Serializable
@@ -43,7 +43,7 @@ sealed class TransportMode {
         override val name: String = "Ferry",
         override val colorCode: String = "#5AB031",
         override val productClass: Int = 9,
-        override val priority: Int = 3333,
+        override val priority: Int = 5,
     ) : TransportMode()
 
     @Serializable
@@ -51,7 +51,7 @@ sealed class TransportMode {
         override val name: String = "Bus",
         override val colorCode: String = "#00B5EF",
         override val productClass: Int = 5,
-        override val priority: Int = 5555,
+        override val priority: Int = 2,
     ) : TransportMode()
 
     @Serializable
@@ -59,7 +59,7 @@ sealed class TransportMode {
         override val name: String = "Light Rail",
         override val colorCode: String = "#E4022D",
         override val productClass: Int = 4,
-        override val priority: Int = 4444,
+        override val priority: Int = 4,
     ) : TransportMode()
 
     @Serializable
@@ -67,7 +67,7 @@ sealed class TransportMode {
         override val name: String = "Coach",
         override val colorCode: String = "#742282",
         override val productClass: Int = 7,
-        override val priority: Int = 6666,
+        override val priority: Int = 6,
     ) : TransportMode()
 
     /*@Serializable

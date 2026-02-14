@@ -27,8 +27,7 @@ object MapStateHelper {
         if (mapState == null) {
             log(
                 "[NEARBY_STOPS] ERROR: Cannot get Ready map state. " +
-                    "Screen: ${state.screen::class.simpleName}, " +
-                    "MapUiState: ${(state.screen as? SearchScreen.Map)?.mapUiState?.let { it::class.simpleName } ?: "N/A"}"
+                    "Screen: ${state.screen::class.simpleName}, ",
             )
         }
 

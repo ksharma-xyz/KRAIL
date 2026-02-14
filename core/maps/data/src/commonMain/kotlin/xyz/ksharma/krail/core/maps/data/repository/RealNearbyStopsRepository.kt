@@ -135,7 +135,6 @@ internal class RealNearbyStopsRepository(
                     stopName = row.stopName,
                     latitude = row.stopLat,
                     longitude = row.stopLon,
-                    distanceKm = distanceKm,
                     transportModes = modes,
                 )
             }.onFailure { error ->

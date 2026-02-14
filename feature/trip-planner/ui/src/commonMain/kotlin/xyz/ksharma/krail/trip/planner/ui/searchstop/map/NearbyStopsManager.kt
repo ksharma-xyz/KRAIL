@@ -204,7 +204,7 @@ internal class RealNearbyStopsManager(
         stops.take(5).forEach { stop ->
             log(
                 "[NEARBY_STOPS] Stop: ${stop.stopName} (${stop.stopId}) - " +
-                    "${stop.distanceKm}km - modes=${stop.transportModes.map { it.name }}",
+                    "modes=${stop.transportModes.map { it.name }}",
             )
         }
     }

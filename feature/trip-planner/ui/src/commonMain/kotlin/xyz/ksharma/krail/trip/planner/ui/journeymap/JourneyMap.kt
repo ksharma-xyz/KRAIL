@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +43,8 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.ClickResult
+import org.maplibre.spatialk.geojson.Feature.Companion.getStringProperty
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
@@ -49,6 +54,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
+import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 
 private const val LABEL_MIN_ZOOM = 0f
@@ -61,6 +67,9 @@ private const val TEXT_OFFSET_ABOVE_ICON = -2f // Position text above icon
 /**
  * Main composable for displaying a journey on a map.
  * Shows routes as lines (dashed for walking, solid for transit) and stops as circles.
+ *
+ * Note: In normal flow, journeyMapState is always Ready since data is pre-loaded from TimeTable.
+ * Loading/Error states exist as defensive fallbacks only.
  */
 @Composable
 fun JourneyMap(
@@ -68,24 +77,19 @@ fun JourneyMap(
     modifier: Modifier = Modifier,
 ) {
     when (journeyMapState) {
+        // Defensive fallback - data transformation is instant, users never see this
         JourneyMapUiState.Loading -> {
             Box(modifier = modifier.fillMaxSize()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
 
+        // Expected state - journey data is already loaded
         is JourneyMapUiState.Ready -> {
             JourneyMapContent(
                 mapState = journeyMapState,
                 modifier = modifier,
             )
-        }
-
-        is JourneyMapUiState.Error -> {
-            Box(modifier = modifier.fillMaxSize()) {
-                // Show loading indicator as fallback - error UI component needed
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
         }
     }
 }
@@ -98,6 +102,9 @@ private fun JourneyMapContent(
     mapState: JourneyMapUiState.Ready,
     modifier: Modifier = Modifier,
 ) {
+    // Track selected stop for details bottom sheet
+    var selectedStop by remember { mutableStateOf<JourneyStopFeature?>(null) }
+
     // Calculate camera position - start at the origin (journey beginning)
     val cameraPosition = remember(mapState.cameraFocus, mapState.mapDisplay.stops) {
         // Find the origin stop (where the journey starts)
@@ -179,7 +186,7 @@ private fun JourneyMapContent(
 
             // === CIRCLE LAYERS FOR STOPS ===
 
-            // Regular stops only - small white circles
+            // Regular stops only - small white circles with click handler
             // Note: Origin, Destination, and Interchange stops use SymbolLayer with icons instead
             CircleLayer(
                 id = "journey-stops-regular",
@@ -189,6 +196,14 @@ private fun JourneyMapContent(
                 radius = const(6.dp),
                 strokeColor = const(Color.Black),
                 strokeWidth = const(2.dp),
+                onClick = { features ->
+                    val feature = features.firstOrNull()
+                    val stopId = feature?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)
+                    mapState.mapDisplay.stops.find { it.stopId == stopId }?.let { stop ->
+                        selectedStop = stop
+                    }
+                    ClickResult.Consume
+                },
             )
 
             // === TEXT LABELS ===
@@ -217,6 +232,14 @@ private fun JourneyMapContent(
                 textSize = const(1f.em),
                 textColor = const(Color.Black),
                 textOffset = offset(0f.em, TEXT_OFFSET_BELOW_ICON.em), // Below icon
+                onClick = { features ->
+                    val feature = features.firstOrNull()
+                    val stopId = feature?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)
+                    mapState.mapDisplay.stops.find { it.stopId == stopId }?.let { stop ->
+                        selectedStop = stop
+                    }
+                    ClickResult.Consume
+                },
             )
 
             // Origin stop - Show line number (T1, etc.) above the stop name
@@ -248,6 +271,14 @@ private fun JourneyMapContent(
                 textSize = const(1.0f.em),
                 textColor = const(Color.Black),
                 textOffset = offset(0f.em, TEXT_OFFSET_BELOW_ICON.em), // Below icon
+                onClick = { features ->
+                    val feature = features.firstOrNull()
+                    val stopId = feature?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)
+                    mapState.mapDisplay.stops.find { it.stopId == stopId }?.let { stop ->
+                        selectedStop = stop
+                    }
+                    ClickResult.Consume
+                },
             )
 
             // Destination and Interchange stops - Show line number above the stop name
@@ -264,6 +295,14 @@ private fun JourneyMapContent(
                 textHaloColor = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
                 textHaloWidth = const(TEXT_HALO_WIDTH), // Thick background
                 textOffset = offset(0f.em, TEXT_OFFSET_ABOVE_ICON.em), // Above icon (no icon on this layer)
+            )
+        }
+
+        // Stop Details Bottom Sheet
+        selectedStop?.let { stop ->
+            JourneyStopDetailsBottomSheet(
+                stop = stop,
+                onDismiss = { selectedStop = null },
             )
         }
     }

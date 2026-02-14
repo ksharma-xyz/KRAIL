@@ -258,7 +258,6 @@ private fun PreviewSearchStopMapReady() {
                         longitude = 151.2093,
                     ),
                     transportModes = persistentListOf(TransportMode.Train()),
-                    distanceKm = 0.0,
                 ),
                 NearbyStopFeature(
                     stopId = "stop_2",
@@ -268,7 +267,6 @@ private fun PreviewSearchStopMapReady() {
                         longitude = 151.2069,
                     ),
                     transportModes = persistentListOf(TransportMode.Metro()),
-                    distanceKm = 0.0,
                 ),
             ),
             selectedTransportModes = persistentSetOf(

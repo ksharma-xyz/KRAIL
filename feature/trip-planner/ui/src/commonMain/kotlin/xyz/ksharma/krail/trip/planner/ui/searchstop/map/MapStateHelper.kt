@@ -157,7 +157,6 @@ object MapStateHelper {
         stopId = stopId,
         stopName = stopName,
         position = LatLng(latitude, longitude),
-        distanceKm = distanceKm,
         transportModes = transportModes.toImmutableList(),
     )
 }

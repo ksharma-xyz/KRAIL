@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
 import androidx.compose.foundation.layout.Arrangement
@@ -201,7 +203,7 @@ private fun PreviewStopDetailsBottomSheet() {
             stopName = "Central Station",
             position = xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng(
                 -33.8830,
-                151.2070
+                151.2070,
             ),
             distanceKm = 0.5,
             transportModes = listOf(
@@ -228,7 +230,7 @@ private fun PreviewStopDetailsBottomSheetSingleMode() {
             stopName = "Edgecliff Station, Stand B",
             position = xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng(
                 -33.8818,
-                151.2372
+                151.2372,
             ),
             distanceKm = 1.2,
             transportModes = listOf(TransportMode.Bus()),
@@ -250,7 +252,7 @@ private fun PreviewStopDetailsBottomSheetFerry() {
             stopName = "Circular Quay Ferry Wharf",
             position = xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng(
                 -33.8612,
-                151.2107
+                151.2107,
             ),
             distanceKm = 0.05,
             transportModes = listOf(TransportMode.Ferry()),
@@ -262,4 +264,3 @@ private fun PreviewStopDetailsBottomSheetFerry() {
         )
     }
 }
-

@@ -20,15 +20,10 @@ object MapStateHelper {
      */
     fun getReadyMapState(state: SearchStopState): MapUiState.Ready? {
         val screen = state.screen as? SearchScreen.Map
-
-        if (screen == null) {
-            log("[NEARBY_STOPS] ERROR: screen is not Map, it's ${state.screen}")
-            return null
-        }
-
         val mapState = screen.mapUiState as? MapUiState.Ready
-        if (mapState == null) {
-            log("[NEARBY_STOPS] ERROR: mapUiState is not Ready, it's ${screen.mapUiState}")
+
+        if (screen == null || mapState == null) {
+            log("[NEARBY_STOPS] ERROR: screen:${state.screen}, mapUiState:${screen?.mapUiState}")
             return null
         }
 
@@ -162,4 +157,3 @@ object MapStateHelper {
         transportModes = transportModes,
     )
 }
-

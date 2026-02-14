@@ -24,6 +24,7 @@ interface NearbyStopsManager {
      * Load nearby stops for the given map state and center.
      * Handles caching, debouncing, and error handling.
      */
+    @Suppress("LongParameterList")
     fun loadNearbyStops(
         mapState: MapUiState.Ready,
         center: LatLng,
@@ -48,6 +49,7 @@ interface NearbyStopsManager {
  * Real implementation of [NearbyStopsManager].
  */
 @OptIn(ExperimentalTime::class)
+@Suppress("TooManyFunctions")
 internal class RealNearbyStopsManager(
     private val repository: NearbyStopsRepository,
     private val ioDispatcher: CoroutineDispatcher,
@@ -64,8 +66,10 @@ internal class RealNearbyStopsManager(
         onStopsLoaded: (List<NearbyStop>) -> Unit,
         onError: (Throwable) -> Unit,
     ) {
-        log("[NEARBY_STOPS] loadNearbyStops() called for center: lat=${center.latitude}, " +
-                "lon=${center.longitude}")
+        log(
+            "[NEARBY_STOPS] loadNearbyStops() called for center: lat=${center.latitude}, " +
+                "lon=${center.longitude}",
+        )
 
         if (shouldUseCachedResults(center)) {
             log("[NEARBY_STOPS] Using cached nearby stops")
@@ -86,6 +90,7 @@ internal class RealNearbyStopsManager(
         nearbyStopsJob = null
     }
 
+    @Suppress("LongParameterList")
     private fun startQuery(
         mapState: MapUiState.Ready,
         center: LatLng,
@@ -184,11 +189,11 @@ internal class RealNearbyStopsManager(
         )
     }
 
+    @Suppress("MagicNumber")
     private fun logQueryResults(stops: List<NearbyStop>) {
         log("[NEARBY_STOPS] Query returned ${stops.size} stops")
 
-        val previewStopCount = 5
-        stops.take(previewStopCount).forEach { stop ->
+        stops.take(5).forEach { stop ->
             log(
                 "[NEARBY_STOPS] Stop: ${stop.stopName} (${stop.stopId}) - " +
                     "${stop.distanceKm}km - modes=${stop.transportModes.map { it.name }}",
@@ -196,4 +201,3 @@ internal class RealNearbyStopsManager(
         }
     }
 }
-

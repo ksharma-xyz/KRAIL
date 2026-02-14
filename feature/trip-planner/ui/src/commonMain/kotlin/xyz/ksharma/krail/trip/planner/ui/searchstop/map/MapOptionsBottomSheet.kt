@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,13 +19,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
@@ -35,7 +36,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
-import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
@@ -48,7 +48,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 @Composable
 fun MapOptionsBottomSheet(
     searchRadiusKm: Double,
-    selectedTransportModes: Set<Int>,
+    selectedTransportModes: ImmutableSet<Int>,
     showDistanceScale: Boolean,
     showCompass: Boolean,
     onDismiss: () -> Unit,
@@ -56,8 +56,10 @@ fun MapOptionsBottomSheet(
     modifier: Modifier = Modifier,
 ) {
     // Local state to track pending changes
-    var pendingRadiusKm by remember { mutableStateOf(searchRadiusKm) }
-    var pendingTransportModes by remember { mutableStateOf(selectedTransportModes) }
+    var pendingRadiusKm by remember { mutableDoubleStateOf(searchRadiusKm) }
+    var pendingTransportModes by remember {
+        mutableStateOf(selectedTransportModes.toMutableSet())
+    }
     var pendingShowDistanceScale by remember { mutableStateOf(showDistanceScale) }
     var pendingShowCompass by remember { mutableStateOf(showCompass) }
 
@@ -98,8 +100,8 @@ fun MapOptionsBottomSheet(
                         if (pendingShowDistanceScale != showDistanceScale) {
                             onEvent(
                                 SearchStopUiEvent.ShowDistanceScaleToggled(
-                                    pendingShowDistanceScale
-                                )
+                                    pendingShowDistanceScale,
+                                ),
                             )
                         }
                         if (pendingShowCompass != showCompass) {
@@ -118,7 +120,7 @@ fun MapOptionsBottomSheet(
                             }
                         }
                         onDismiss()
-                    }
+                    },
                 ) {
                     Text(
                         text = "Save",
@@ -143,7 +145,7 @@ fun MapOptionsBottomSheet(
 
             SearchRadiusChips(
                 selectedRadiusKm = pendingRadiusKm,
-                onRadiusSelected = { radius ->
+                onRadiusSelect = { radius ->
                     pendingRadiusKm = radius
                 },
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -212,7 +214,7 @@ fun MapOptionsBottomSheet(
 @Composable
 private fun SearchRadiusChips(
     selectedRadiusKm: Double,
-    onRadiusSelected: (Double) -> Unit,
+    onRadiusSelect: (Double) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val radiusOptions = remember { listOf(1.0, 3.0, 5.0) }
@@ -225,7 +227,7 @@ private fun SearchRadiusChips(
         radiusOptions.forEach { radius ->
             FilterChip(
                 selected = selectedRadiusKm == radius,
-                onClick = { onRadiusSelected(radius) },
+                onClick = { onRadiusSelect(radius) },
                 label = {
                     Text(
                         text = "${radius.toInt()}km",
@@ -313,7 +315,7 @@ private fun PreviewMapOptionsBottomSheet() {
     PreviewTheme {
         MapOptionsBottomSheet(
             searchRadiusKm = NearbyStopsConfig.DEFAULT_RADIUS_KM,
-            selectedTransportModes = setOf(1, 5),
+            selectedTransportModes = persistentSetOf(1, 5),
             showDistanceScale = false,
             showCompass = true,
             onDismiss = {},

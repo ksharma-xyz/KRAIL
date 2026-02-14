@@ -203,6 +203,7 @@ style:
     ignorePropertyDeclaration: true
     ignoreAnnotation: true
     ignoreEnums: true
+    ignoreAnnotated: ['Preview', 'PreviewComponent', 'PreviewScreenSizes', 'Composable', 'PreviewScreen']
     ignoreNumbers:
       - '-1'
       - '0'

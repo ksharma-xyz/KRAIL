@@ -65,6 +65,7 @@ class SearchStopViewModel(
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
 
+    @Suppress("LongMethod")
     fun onEvent(event: SearchStopUiEvent) {
         when (event) {
             is SearchStopUiEvent.SearchTextChanged -> onSearchTextChanged(event.query)

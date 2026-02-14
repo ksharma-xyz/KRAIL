@@ -29,7 +29,10 @@ fun NearbyStopsLayer(
 ) {
     log("[NEARBY_STOPS_UI] NearbyStopsLayer rendering ${stops.size} stops")
     stops.take(3).forEach { stop ->
-        log("[NEARBY_STOPS_UI] Stop: ${stop.stopName} at (${stop.position.latitude}, ${stop.position.longitude}), modes=${stop.transportModes.map { it.name }}")
+        log(
+            "[NEARBY_STOPS_UI] Stop: ${stop.stopName} at (${stop.position.latitude}, " +
+                "${stop.position.longitude}), modes=${stop.transportModes.map { it.name }}",
+        )
     }
 
     val featureCollection = stops.toFeatureCollection()
@@ -88,7 +91,10 @@ private fun List<NearbyStopFeature>.toFeatureCollection(): FeatureCollection<*, 
 
     val features = map { stop ->
         val color = stop.transportModes.firstOrNull()?.colorCode ?: "#000000"
-        log("[NEARBY_STOPS_UI] Creating feature for ${stop.stopName}: color=$color, pos=(${stop.position.latitude}, ${stop.position.longitude})")
+        log(
+            "[NEARBY_STOPS_UI] Creating feature for ${stop.stopName}: color=$color, " +
+                "pos=(${stop.position.latitude}, ${stop.position.longitude})",
+        )
         GeoJsonFeature(
             geometry = Point(
                 coordinates = Position(

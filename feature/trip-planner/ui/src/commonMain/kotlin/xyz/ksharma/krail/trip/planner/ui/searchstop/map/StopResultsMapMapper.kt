@@ -19,7 +19,7 @@ object StopResultsMapMapper {
         val stopIds = this.mapDisplay.stops.map { it.stopId }
         log(
             "StopResultsMapMapper.toFeatureCollection: routes=${routeIds.joinToString()} " +
-                    "(count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})",
+                "(count=${routeIds.size}), stops=${stopIds.joinToString()} (count=${stopIds.size})",
         )
 
         val routeFeatures = this.mapDisplay.routes.map(::toRouteFeature)
@@ -48,7 +48,7 @@ object StopResultsMapMapper {
         val positions = route.points.map {
             Position(
                 longitude = it.longitude,
-                latitude = it.latitude
+                latitude = it.latitude,
             )
         }
         return Feature(
@@ -67,8 +67,8 @@ object StopResultsMapMapper {
             geometry = Point(
                 Position(
                     longitude = stop.position.longitude,
-                    latitude = stop.position.latitude
-                )
+                    latitude = stop.position.latitude,
+                ),
             ),
             properties = buildJsonObject {
                 put("type", JsonPrimitive("stop"))

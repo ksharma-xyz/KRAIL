@@ -22,11 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_filter
 import org.jetbrains.compose.resources.painterResource
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.debounce
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MapOptions
@@ -79,7 +79,6 @@ fun SearchStopMap(
         }
     }
 }
-
 
 @Composable
 private fun ErrorMessage(
@@ -261,7 +260,7 @@ private fun MapContent(
                             stopItem = stopItem,
                             isRecentSearch = false,
                             searchQuery = null,
-                        )
+                        ),
                     )
 
                     selectedStop = null
@@ -270,4 +269,3 @@ private fun MapContent(
         }
     }
 }
-

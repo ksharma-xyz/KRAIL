@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
 import xyz.ksharma.core.test.fakes.FakeFlag
+import xyz.ksharma.core.test.fakes.FakeNearbyStopsRepository
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
@@ -41,6 +42,7 @@ class SearchStopViewModelTest {
     private lateinit var viewModel: SearchStopViewModel
     private val fakeStopResultsManager = FakeStopResultsManager()
     private val fakeFlag = FakeFlag()
+    private val fakeNearbyStopsRepository = FakeNearbyStopsRepository()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -51,6 +53,8 @@ class SearchStopViewModelTest {
             analytics = fakeAnalytics,
             stopResultsManager = fakeStopResultsManager,
             flag = fakeFlag,
+            nearbyStopsRepository = fakeNearbyStopsRepository,
+            ioDispatcher = testDispatcher,
         )
     }
 
@@ -63,12 +67,18 @@ class SearchStopViewModelTest {
     fun `GIVEN SearchStopViewModel WHEN uiState is collected THEN analytics event is tracked`() =
         runTest {
             viewModel.uiState.test {
+                // First item is the initial state
                 val state = awaitItem()
                 assertTrue(state.searchResults.isEmpty())
                 assertTrue(state.recentStops.isEmpty())
                 // Initial screen should be List with Recent state
                 assertIs<SearchScreen.List>(state.screen)
                 assertEquals(StopSelectionType.LIST, state.selectionType)
+
+                // Second item is the state after checkMapsAvailability() is called
+                val stateWithMapsAvailability = awaitItem()
+                assertTrue(stateWithMapsAvailability.searchResults.isEmpty())
+                assertTrue(stateWithMapsAvailability.recentStops.isEmpty())
 
                 advanceUntilIdle()
                 assertScreenViewEventTracked(
@@ -284,6 +294,8 @@ class SearchStopViewModelTest {
                 analytics = fakeAnalytics,
                 stopResultsManager = fakeStopResultsManager,
                 flag = fakeFlag,
+                nearbyStopsRepository = fakeNearbyStopsRepository,
+                ioDispatcher = testDispatcher,
             )
 
             // THEN - Initial state should not include recents (screen triggers refresh)

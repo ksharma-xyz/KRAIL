@@ -50,6 +50,7 @@ kotlin {
                 implementation(projects.core.dateTime)
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
+                implementation(projects.core.maps.data)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.discover.network.api)
                 implementation(projects.discover.network.real)

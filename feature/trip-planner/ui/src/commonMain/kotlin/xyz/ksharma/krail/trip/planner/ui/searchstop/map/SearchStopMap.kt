@@ -1,14 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,13 +17,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_filter
-import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MapOptions
@@ -36,11 +31,13 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
-import xyz.ksharma.krail.taj.components.Button
-import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopsConfig
@@ -93,6 +90,7 @@ private fun ErrorMessage(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MapContent(
     mapState: MapUiState.Ready,
@@ -109,163 +107,187 @@ private fun MapContent(
     var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
     var selectedStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
 
-    // Start at default Sydney coordinates
-    val cameraState = rememberCameraState(
-        firstPosition = CameraPosition(
-            target = Position(
-                latitude = NearbyStopsConfig.DEFAULT_CENTER_LAT,
-                longitude = NearbyStopsConfig.DEFAULT_CENTER_LON,
-            ),
-            zoom = NearbyStopsConfig.DEFAULT_ZOOM,
-        ),
-    )
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        // Calculate max width for buttons (70% of screen width, reserve 30%)
+        val maxButtonsWidth = maxWidth * 0.7f
 
-    // Track camera moves to update map center
-    @OptIn(FlowPreview::class)
-    @Suppress("MagicNumber")
-    LaunchedEffect(cameraState) {
-        snapshotFlow { cameraState.position.target }
-            .debounce(500) // Only update after user stops moving
-            .collect { target ->
-                log(
-                    "[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, " +
-                        "lon=${target.longitude}",
-                )
-                onEvent(
-                    SearchStopUiEvent.MapCenterChanged(
-                        LatLng(target.latitude, target.longitude),
-                    ),
-                )
-            }
-    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        MaplibreMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraState = cameraState,
-            baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
-            options = MapOptions(
-                ornamentOptions = OrnamentOptions(
-                    padding = PaddingValues(0.dp),
-                    isLogoEnabled = false,
-                    isAttributionEnabled = true,
-                    attributionAlignment = Alignment.BottomEnd,
-                    isCompassEnabled = mapState.mapDisplay.showCompass,
-                    compassAlignment = Alignment.TopEnd,
-                    isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
-                    scaleBarAlignment = Alignment.TopStart,
+        // Start at default Sydney coordinates
+        val cameraState = rememberCameraState(
+            firstPosition = CameraPosition(
+                target = Position(
+                    latitude = NearbyStopsConfig.DEFAULT_CENTER_LAT,
+                    longitude = NearbyStopsConfig.DEFAULT_CENTER_LON,
                 ),
+                zoom = NearbyStopsConfig.DEFAULT_ZOOM,
             ),
-        ) {
-            // Render nearby stops
-            if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
-                log("[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} stops on map")
-                NearbyStopsLayer(
-                    stops = mapState.mapDisplay.nearbyStops,
-                    onStopClick = { stop ->
-                        log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
-                        selectedStop = stop
-                        onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
-                    },
-                )
-            } else {
-                log("[NEARBY_STOPS_UI] No stops to render")
-            }
-        }
+        )
 
-        // Bottom left buttons (Options and Refresh)
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .navigationBarsPadding()
-                .padding(start = 16.dp, bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            // Options button
-            Button(
-                onClick = { showOptionsBottomSheet = true },
-                dimensions = ButtonDefaults.mediumButtonSize(),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_filter),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(ButtonDefaults.buttonColors().contentColor),
-                        modifier = Modifier.size(18.dp),
+        // Track camera moves to update map center
+        @OptIn(FlowPreview::class)
+        @Suppress("MagicNumber")
+        LaunchedEffect(cameraState) {
+            snapshotFlow { cameraState.position.target }
+                .debounce(500) // Only update after user stops moving
+                .collect { target ->
+                    log(
+                        "[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, " +
+                            "lon=${target.longitude}",
                     )
-                    Text(text = "Options")
-                }
-            }
-
-            // Refresh button
-            Button(
-                onClick = { onEvent(SearchStopUiEvent.ShowStopsHere) },
-                enabled = !mapState.isLoadingNearbyStops,
-                dimensions = ButtonDefaults.mediumButtonSize(),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (mapState.isLoadingNearbyStops) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = ButtonDefaults.buttonColors().contentColor,
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(Res.drawable.ic_filter),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(ButtonDefaults.buttonColors().contentColor),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    Text(text = "Refresh")
-                }
-            }
-        }
-
-        // Options Bottom Sheet
-        if (showOptionsBottomSheet) {
-            MapOptionsBottomSheet(
-                searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
-                selectedTransportModes = mapState.mapDisplay.selectedTransportModes,
-                showDistanceScale = mapState.mapDisplay.showDistanceScale,
-                showCompass = mapState.mapDisplay.showCompass,
-                onDismiss = { showOptionsBottomSheet = false },
-                onEvent = onEvent,
-            )
-        }
-
-        // Stop Details Bottom Sheet
-        selectedStop?.let { stop ->
-            StopDetailsBottomSheet(
-                stop = stop,
-                onDismiss = { selectedStop = null },
-                onSelectStop = {
-                    // Convert NearbyStopFeature to StopItem and call onStopSelect
-                    val stopItem = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
-                        stopId = stop.stopId,
-                        stopName = stop.stopName,
-                    )
-                    onStopSelect(stopItem)
-
-                    // Track the selection
                     onEvent(
-                        SearchStopUiEvent.TrackStopSelected(
-                            stopItem = stopItem,
-                            isRecentSearch = false,
-                            searchQuery = null,
+                        SearchStopUiEvent.MapCenterChanged(
+                            LatLng(target.latitude, target.longitude),
                         ),
                     )
+                }
+        }
 
-                    selectedStop = null
-                },
+        Box(modifier = Modifier.fillMaxSize()) {
+            MaplibreMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraState = cameraState,
+                baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
+                options = MapOptions(
+                    ornamentOptions = OrnamentOptions(
+                        padding = PaddingValues(0.dp),
+                        isLogoEnabled = false,
+                        isAttributionEnabled = true,
+                        attributionAlignment = Alignment.BottomEnd,
+                        isCompassEnabled = mapState.mapDisplay.showCompass,
+                        compassAlignment = Alignment.TopEnd,
+                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
+                        scaleBarAlignment = Alignment.TopStart,
+                    ),
+                ),
+            ) {
+                // Render nearby stops
+                if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
+                    log("[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} stops on map")
+                    NearbyStopsLayer(
+                        stops = mapState.mapDisplay.nearbyStops,
+                        onStopClick = { stop ->
+                            log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
+                            selectedStop = stop
+                            onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                        },
+                    )
+                } else {
+                    log("[NEARBY_STOPS_UI] No stops to render")
+                }
+            }
+
+            // Bottom left action buttons
+            MapActionButtons(
+                maxWidth = maxButtonsWidth,
+                isRefreshing = mapState.isLoadingNearbyStops,
+                onOptionsClick = { showOptionsBottomSheet = true },
+                onRefreshClick = { onEvent(SearchStopUiEvent.ShowStopsHere) },
+                modifier = Modifier.align(Alignment.BottomStart),
             )
+
+            // Options Bottom Sheet
+            if (showOptionsBottomSheet) {
+                MapOptionsBottomSheet(
+                    searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
+                    selectedTransportModes = mapState.mapDisplay.selectedTransportModes,
+                    showDistanceScale = mapState.mapDisplay.showDistanceScale,
+                    showCompass = mapState.mapDisplay.showCompass,
+                    onDismiss = { showOptionsBottomSheet = false },
+                    onEvent = onEvent,
+                )
+            }
+
+            // Stop Details Bottom Sheet
+            selectedStop?.let { stop ->
+                StopDetailsBottomSheet(
+                    stop = stop,
+                    onDismiss = { selectedStop = null },
+                    onSelectStop = {
+                        // Convert NearbyStopFeature to StopItem and call onStopSelect
+                        val stopItem =
+                            xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
+                                stopId = stop.stopId,
+                                stopName = stop.stopName,
+                            )
+                        onStopSelect(stopItem)
+
+                        // Track the selection
+                        onEvent(
+                            SearchStopUiEvent.TrackStopSelected(
+                                stopItem = stopItem,
+                                isRecentSearch = false,
+                                searchQuery = null,
+                            ),
+                        )
+
+                        selectedStop = null
+                    },
+                )
+            }
         }
     }
 }
+
+// region Previews
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopMapLoading() {
+    PreviewTheme {
+        SearchStopMap(
+            mapUiState = MapUiState.Loading,
+        )
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopMapReady() {
+    PreviewTheme {
+        val mapDisplay = MapDisplay(
+            nearbyStops = persistentListOf(
+                NearbyStopFeature(
+                    stopId = "stop_1",
+                    stopName = "Central Station",
+                    position = LatLng(
+                        latitude = -33.8688,
+                        longitude = 151.2093,
+                    ),
+                    transportModes = persistentListOf(TransportMode.Train()),
+                    distanceKm = 0.0,
+                ),
+                NearbyStopFeature(
+                    stopId = "stop_2",
+                    stopName = "Town Hall",
+                    position = LatLng(
+                        latitude = -33.8734,
+                        longitude = 151.2069,
+                    ),
+                    transportModes = persistentListOf(TransportMode.Metro()),
+                    distanceKm = 0.0,
+                ),
+            ),
+            selectedTransportModes = persistentSetOf(
+                TransportMode.Train().productClass,
+                TransportMode.Metro().productClass,
+            ),
+            showCompass = true,
+            showDistanceScale = true,
+        )
+
+        SearchStopMap(
+            mapUiState = MapUiState.Ready(mapDisplay = mapDisplay),
+        )
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopMapError() {
+    PreviewTheme {
+        SearchStopMap(
+            mapUiState = MapUiState.Error(message = "Failed to load map data. Please try again."),
+        )
+    }
+}
+
+// endregion

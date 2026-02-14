@@ -104,11 +104,6 @@ class SearchStopViewModel(
                 onStopSelectionTypeClicked(event.stopSelectionType)
             }
 
-            is SearchStopUiEvent.ShowStopsHere -> {
-                log("[NEARBY_STOPS] ShowStopsHere event received")
-                loadNearbyStops()
-            }
-
             is SearchStopUiEvent.MapCenterChanged -> {
                 log("[NEARBY_STOPS] MapCenterChanged: lat=${event.center.latitude}, lon=${event.center.longitude}")
                 onMapCenterChanged(event.center)
@@ -195,16 +190,12 @@ class SearchStopViewModel(
 
         // Decide screen to show:
         if (stopSelectionType == StopSelectionType.MAP && isMapsAvailable) {
-            // Initialize map with empty state - real data will be loaded by loadNearbyStops()
+            log("[NEARBY_STOPS] Switching to MAP mode - initializing state")
+
+            // Initialize map with empty state
+            // Camera movement in UI will trigger loadNearbyStops() via MapCenterChanged event
             updateUiState {
                 copy(screen = SearchScreen.Map(mapUiState = MapUiState.Ready()))
-            }
-
-            // Automatically load nearby stops with a slight delay
-            viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(dispatcher = ioDispatcher) {
-                delay(200) // Give map time to initialize
-                log("[NEARBY_STOPS] Auto-loading nearby stops on map open")
-                loadNearbyStops()
             }
         } else {
             // LIST selected: if query is blank show recent, else show results (trigger a search)
@@ -268,22 +259,30 @@ class SearchStopViewModel(
 
     // region Maps related methods
 
-
     private fun loadNearbyStops() {
         log("[NEARBY_STOPS] loadNearbyStops() called")
 
         val currentState = _uiState.value
-        val mapState = MapStateHelper.getReadyMapState(currentState) ?: return
+        val mapState = MapStateHelper.getReadyMapState(currentState)
+
+        if (mapState == null) {
+            log("[NEARBY_STOPS] ERROR: Cannot load - map state is not Ready")
+            return
+        }
+
         val center = mapState.mapDisplay.mapCenter
+        log("[NEARBY_STOPS] Loading stops for center: lat=${center.latitude}, lon=${center.longitude}")
 
         nearbyStopsManager.loadNearbyStops(
             mapState = mapState,
             center = center,
             scope = viewModelScope,
             onLoadingStateChanged = { isLoading ->
+                log("[NEARBY_STOPS] Loading state changed: $isLoading")
                 updateUiState { MapStateHelper.setLoadingState(this, isLoading) }
             },
             onStopsLoaded = { stops ->
+                log("[NEARBY_STOPS] Loaded ${stops.size} stops, updating state")
                 updateUiState {
                     MapStateHelper.updateNearbyStops(this, stops, isLoading = false)
                 }
@@ -297,7 +296,14 @@ class SearchStopViewModel(
     }
 
     private fun onMapCenterChanged(center: LatLng) {
+        log("[NEARBY_STOPS] Map center changed to: lat=${center.latitude}, lon=${center.longitude}")
+
+        // Update the center in state
         updateUiState { MapStateHelper.updateMapCenter(this, center) }
+
+        // Load nearby stops for the new center
+        // This is the primary trigger for loading stops
+        loadNearbyStops()
     }
 
     private fun onModeToggled(mode: TransportMode) {

@@ -1,11 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -90,7 +89,6 @@ private fun ErrorMessage(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MapContent(
     mapState: MapUiState.Ready,
@@ -107,10 +105,7 @@ private fun MapContent(
     var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
     var selectedStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        // Calculate max width for buttons (70% of screen width, reserve 30%)
-        val maxButtonsWidth = maxWidth * 0.7f
-
+    Box(modifier = modifier.fillMaxSize()) {
         // Start at default Sydney coordinates
         val cameraState = rememberCameraState(
             firstPosition = CameraPosition(
@@ -122,7 +117,20 @@ private fun MapContent(
             ),
         )
 
-        // Track camera moves to update map center
+        // Trigger initial load with default camera position
+        LaunchedEffect(Unit) {
+            log("[NEARBY_STOPS_UI] Map initialized at default position")
+            onEvent(
+                SearchStopUiEvent.MapCenterChanged(
+                    LatLng(
+                        NearbyStopsConfig.DEFAULT_CENTER_LAT,
+                        NearbyStopsConfig.DEFAULT_CENTER_LON,
+                    ),
+                ),
+            )
+        }
+
+        // Track camera moves to update map center and reload stops
         @OptIn(FlowPreview::class)
         @Suppress("MagicNumber")
         LaunchedEffect(cameraState) {
@@ -175,12 +183,9 @@ private fun MapContent(
                 }
             }
 
-            // Bottom left action buttons
+            // Bottom left options button
             MapActionButtons(
-                maxWidth = maxButtonsWidth,
-                isRefreshing = mapState.isLoadingNearbyStops,
                 onOptionsClick = { showOptionsBottomSheet = true },
-                onRefreshClick = { onEvent(SearchStopUiEvent.ShowStopsHere) },
                 modifier = Modifier.align(Alignment.BottomStart),
             )
 

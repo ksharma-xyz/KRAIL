@@ -8,9 +8,11 @@ import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 import xyz.ksharma.krail.sandook.KrailSandook
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.NswStopsSandook
 import xyz.ksharma.krail.sandook.RealDiscoverCardSeenPreferences
 import xyz.ksharma.krail.sandook.RealNswBusRoutesSandook
 import xyz.ksharma.krail.sandook.RealNswParkRideSandook
+import xyz.ksharma.krail.sandook.RealNswStopsSandook
 import xyz.ksharma.krail.sandook.RealSandook
 import xyz.ksharma.krail.sandook.RealSandookPreferences
 import xyz.ksharma.krail.sandook.Sandook
@@ -59,6 +61,12 @@ val sandookModule = module {
 
     single<NswBusRoutesSandook> {
         RealNswBusRoutesSandook(
+            factory = get(),
+        )
+    }
+
+    single<NswStopsSandook> {
+        RealNswStopsSandook(
             factory = get(),
         )
     }

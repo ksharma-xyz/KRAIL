@@ -19,12 +19,16 @@ object MapStateHelper {
 
     /**
      * Get the Ready map state from the current state, or null if not available.
+     * Logs an error if the state is not in the expected format.
      */
     fun getReadyMapState(state: SearchStopState): MapUiState.Ready? {
         val mapState = (state.screen as? SearchScreen.Map)?.mapUiState as? MapUiState.Ready
+
         if (mapState == null) {
-            log("[NEARBY_STOPS] ERROR: mapUiState is not Ready, it's ${state.screen}, $mapState")
-            return null
+            log(
+                "[NEARBY_STOPS] ERROR: Cannot get Ready map state. " +
+                    "Screen: ${state.screen::class.simpleName}, ",
+            )
         }
 
         return mapState
@@ -154,6 +158,6 @@ object MapStateHelper {
         stopName = stopName,
         position = LatLng(latitude, longitude),
         distanceKm = distanceKm,
-        transportModes = transportModes,
+        transportModes = transportModes.toImmutableList(),
     )
 }

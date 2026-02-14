@@ -38,6 +38,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             coreNetworkModule,
             viewModelsModule,
             sandookModule,
+            mapsDataModule,
             themeManagerModule,
             splashModule,
             appInfoModule,

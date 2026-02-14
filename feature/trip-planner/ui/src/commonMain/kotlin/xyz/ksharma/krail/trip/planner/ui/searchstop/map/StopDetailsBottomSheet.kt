@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.park.ride.ui.components.ParkAndRideIcon
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -206,7 +207,7 @@ private fun PreviewStopDetailsBottomSheet() {
                 151.2070,
             ),
             distanceKm = 0.5,
-            transportModes = listOf(
+            transportModes = persistentListOf(
                 TransportMode.Train(),
                 TransportMode.Bus(),
                 TransportMode.LightRail(),
@@ -233,7 +234,7 @@ private fun PreviewStopDetailsBottomSheetSingleMode() {
                 151.2372,
             ),
             distanceKm = 1.2,
-            transportModes = listOf(TransportMode.Bus()),
+            transportModes = persistentListOf(TransportMode.Bus()),
         )
         StopDetailsBottomSheet(
             stop = stop,
@@ -255,7 +256,7 @@ private fun PreviewStopDetailsBottomSheetFerry() {
                 151.2107,
             ),
             distanceKm = 0.05,
-            transportModes = listOf(TransportMode.Ferry()),
+            transportModes = persistentListOf(TransportMode.Ferry()),
         )
         StopDetailsBottomSheet(
             stop = stop,

@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 
 @Composable
 fun IntroContentSelectTransportMode(
@@ -23,7 +24,7 @@ fun IntroContentSelectTransportMode(
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier,
 ) {
-    val allModes = TransportMode.values().sortedBy { it.priority }
+    val allModes = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
     val selectedProductClasses = remember { mutableStateSetOf<String>() }
 
     LaunchedEffect(Unit) {

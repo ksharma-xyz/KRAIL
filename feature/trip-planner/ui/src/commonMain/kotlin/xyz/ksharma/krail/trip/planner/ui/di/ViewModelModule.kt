@@ -19,13 +19,14 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.createNearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
 val viewModelsModule = module {
-    viewModelOf(::SearchStopViewModel)
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
     viewModelOf(::OurStoryViewModel)
@@ -98,5 +99,22 @@ val viewModelsModule = module {
 
     single<StopResultsManager> { RealStopResultsManager(get(), get(), get()) }
 
+    single<NearbyStopsManager> {
+        createNearbyStopsManager(
+            repository = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
+
+    viewModel {
+        SearchStopViewModel(
+            analytics = get(),
+            stopResultsManager = get(),
+            nearbyStopsManager = get(),
+            flag = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
 }

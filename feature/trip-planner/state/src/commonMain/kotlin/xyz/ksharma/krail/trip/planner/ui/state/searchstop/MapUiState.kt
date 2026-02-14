@@ -1,5 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableSet
+import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+
 /**
  * Small, platform\-agnostic types for map UI state.
  * No Maplibre types here just pure kotlin
@@ -26,19 +32,39 @@ data class SelectedStopUi(
     val lineId: String?,
 )
 
+/** Nearby stop feature for map rendering */
+data class NearbyStopFeature(
+    val stopId: String,
+    val stopName: String,
+    val position: LatLng,
+    val distanceKm: Double,
+    val transportModes: List<TransportMode>,
+    val hasParkAndRide: Boolean = false,
+)
+
 /** UI state for the map screen */
 
 sealed class MapUiState {
     object Loading : MapUiState()
     data class Ready(
         val mapDisplay: MapDisplay = MapDisplay(),
+        val isLoadingNearbyStops: Boolean = false,
     ) : MapUiState()
 
     data class Error(val message: String?) : MapUiState()
 }
 
 data class MapDisplay(
-    val routes: List<RouteFeature> = emptyList(),
-    val stops: List<StopFeature> = emptyList(),
+    val routes: ImmutableList<RouteFeature> = persistentListOf(),
+    val stops: ImmutableList<StopFeature> = persistentListOf(),
     val selectedStop: SelectedStopUi? = null,
+    val nearbyStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
+    val selectedTransportModes: ImmutableSet<Int> = TransportMode.allProductClasses().toImmutableSet(),
+    val mapCenter: LatLng = LatLng(
+        NearbyStopsConfig.DEFAULT_CENTER_LAT,
+        NearbyStopsConfig.DEFAULT_CENTER_LON,
+    ),
+    val searchRadiusKm: Double = NearbyStopsConfig.DEFAULT_RADIUS_KM,
+    val showDistanceScale: Boolean = false,
+    val showCompass: Boolean = true,
 )

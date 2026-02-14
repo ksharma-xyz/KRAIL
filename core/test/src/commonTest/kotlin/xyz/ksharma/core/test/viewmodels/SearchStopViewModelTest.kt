@@ -11,7 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
 import xyz.ksharma.core.test.fakes.FakeFlag
-import xyz.ksharma.core.test.fakes.FakeNearbyStopsRepository
+import xyz.ksharma.core.test.fakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
@@ -42,7 +42,7 @@ class SearchStopViewModelTest {
     private lateinit var viewModel: SearchStopViewModel
     private val fakeStopResultsManager = FakeStopResultsManager()
     private val fakeFlag = FakeFlag()
-    private val fakeNearbyStopsRepository = FakeNearbyStopsRepository()
+    private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -53,7 +53,7 @@ class SearchStopViewModelTest {
             analytics = fakeAnalytics,
             stopResultsManager = fakeStopResultsManager,
             flag = fakeFlag,
-            nearbyStopsRepository = fakeNearbyStopsRepository,
+            nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
         )
     }
@@ -294,7 +294,7 @@ class SearchStopViewModelTest {
                 analytics = fakeAnalytics,
                 stopResultsManager = fakeStopResultsManager,
                 flag = fakeFlag,
-                nearbyStopsRepository = fakeNearbyStopsRepository,
+                nearbyStopsManager = fakeNearbyStopsManager,
                 ioDispatcher = testDispatcher,
             )
 

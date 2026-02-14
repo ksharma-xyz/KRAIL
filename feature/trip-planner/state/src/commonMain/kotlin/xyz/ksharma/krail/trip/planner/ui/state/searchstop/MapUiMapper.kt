@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
+import kotlinx.collections.immutable.toImmutableList
+
 // Example mapper from domain models to MapUiState.Ready.
 // Replace DomainRoute/DomainStop with your actual domain models.
 object MapUiMapper {
@@ -29,7 +31,13 @@ object MapUiMapper {
             SelectedStopUi(it.stopId, it.stopName, it.lineId)
         }
 
-        return MapUiState.Ready(mapDisplay = MapDisplay(routeFeatures, stopFeatures, selected))
+        return MapUiState.Ready(
+            mapDisplay = MapDisplay(
+                routes = routeFeatures.toImmutableList(),
+                stops = stopFeatures.toImmutableList(),
+                selectedStop = selected,
+            ),
+        )
     }
 }
 

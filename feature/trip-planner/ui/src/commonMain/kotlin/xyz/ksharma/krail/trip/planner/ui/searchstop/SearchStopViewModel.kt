@@ -299,8 +299,8 @@ class SearchStopViewModel(
         // Create MapDisplay and MapUiState.Ready with the new payload
         val ready = MapUiState.Ready(
             mapDisplay = MapDisplay(
-                routes = listOf(route),
-                stops = stops,
+                routes = listOf(route).toImmutableList(),
+                stops = stops.toImmutableList(),
                 selectedStop = null,
             ),
         )
@@ -362,8 +362,8 @@ class SearchStopViewModel(
     }
 
     private fun onNearbyStopClicked(stop: NearbyStopFeature) {
-        println("stop: $stop")
         // : Show bottom sheet with stop details
+        log("stop: $stop")
     }
 
     private fun onSearchRadiusChanged(radiusKm: Double) {

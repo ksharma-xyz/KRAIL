@@ -1,5 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
@@ -51,11 +55,11 @@ sealed class MapUiState {
 }
 
 data class MapDisplay(
-    val routes: List<RouteFeature> = emptyList(),
-    val stops: List<StopFeature> = emptyList(),
+    val routes: ImmutableList<RouteFeature> = persistentListOf(),
+    val stops: ImmutableList<StopFeature> = persistentListOf(),
     val selectedStop: SelectedStopUi? = null,
-    val nearbyStops: List<NearbyStopFeature> = emptyList(),
-    val selectedTransportModes: Set<Int> = emptySet(),
+    val nearbyStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
+    val selectedTransportModes: ImmutableSet<Int> = TransportMode.allProductClasses().toImmutableSet(),
     val mapCenter: LatLng = LatLng(
         NearbyStopsConfig.DEFAULT_CENTER_LAT,
         NearbyStopsConfig.DEFAULT_CENTER_LON,

@@ -72,7 +72,7 @@ fun StopDetailsBottomSheet(
 
             // Stop ID below name
             Text(
-                text = "Stop Id - " + stop.stopId,
+                text = "Stop ID - " + stop.stopId,
                 style = KrailTheme.typography.bodyMedium,
                 color = KrailTheme.colors.softLabel,
                 modifier = Modifier.padding(horizontal = 16.dp),

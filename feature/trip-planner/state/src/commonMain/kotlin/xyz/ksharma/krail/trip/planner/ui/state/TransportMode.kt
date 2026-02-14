@@ -92,6 +92,12 @@ sealed class TransportMode {
 
         fun values(): Set<TransportMode> = productClassMap.values.toSet()
 
+        /**
+         * Returns a set of all product class IDs.
+         * Useful for initializing filters to "all modes selected".
+         */
+        fun allProductClasses(): Set<Int> = productClassMap.keys
+
         fun sortedValues(sortOrder: TransportModeSortOrder = TransportModeSortOrder.NAME): List<TransportMode> =
             when (sortOrder) {
                 TransportModeSortOrder.NAME -> values().sortedBy { it.name }

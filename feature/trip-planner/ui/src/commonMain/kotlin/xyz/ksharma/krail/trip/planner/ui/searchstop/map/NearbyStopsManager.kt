@@ -46,6 +46,14 @@ interface NearbyStopsManager {
 }
 
 /**
+ * Factory function to create a [NearbyStopsManager] instance.
+ */
+fun createNearbyStopsManager(
+    repository: NearbyStopsRepository,
+    ioDispatcher: CoroutineDispatcher,
+): NearbyStopsManager = RealNearbyStopsManager(repository, ioDispatcher)
+
+/**
  * Real implementation of [NearbyStopsManager].
  */
 @OptIn(ExperimentalTime::class)

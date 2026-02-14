@@ -27,7 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
-import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentSet
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
@@ -315,7 +315,7 @@ private fun PreviewMapOptionsBottomSheet() {
     PreviewTheme {
         MapOptionsBottomSheet(
             searchRadiusKm = NearbyStopsConfig.DEFAULT_RADIUS_KM,
-            selectedTransportModes = persistentSetOf(1, 5),
+            selectedTransportModes = TransportMode.allProductClasses().toPersistentSet(),
             showDistanceScale = false,
             showCompass = true,
             onDismiss = {},

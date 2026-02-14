@@ -123,7 +123,7 @@ private fun MapContent(
     // Track camera moves to update map center
     @OptIn(FlowPreview::class)
     @Suppress("MagicNumber")
-    LaunchedEffect(cameraState.position) {
+    LaunchedEffect(cameraState) {
         snapshotFlow { cameraState.position.target }
             .debounce(500) // Only update after user stops moving
             .collect { target ->

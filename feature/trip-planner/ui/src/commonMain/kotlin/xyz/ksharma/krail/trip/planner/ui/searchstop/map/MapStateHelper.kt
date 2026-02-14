@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
@@ -19,11 +21,9 @@ object MapStateHelper {
      * Get the Ready map state from the current state, or null if not available.
      */
     fun getReadyMapState(state: SearchStopState): MapUiState.Ready? {
-        val screen = state.screen as? SearchScreen.Map
-        val mapState = screen.mapUiState as? MapUiState.Ready
-
-        if (screen == null || mapState == null) {
-            log("[NEARBY_STOPS] ERROR: screen:${state.screen}, mapUiState:${screen?.mapUiState}")
+        val mapState = (state.screen as? SearchScreen.Map)?.mapUiState as? MapUiState.Ready
+        if (mapState == null) {
+            log("[NEARBY_STOPS] ERROR: mapUiState is not Ready, it's ${state.screen}, $mapState")
             return null
         }
 
@@ -53,7 +53,7 @@ object MapStateHelper {
         return state.withMapState {
             copy(
                 mapDisplay = mapDisplay.copy(
-                    nearbyStops = stops.map { it.toFeature() },
+                    nearbyStops = stops.map { it.toFeature() }.toImmutableList(),
                 ),
                 isLoadingNearbyStops = isLoading,
             )
@@ -88,7 +88,7 @@ object MapStateHelper {
             }
             copy(
                 mapDisplay = mapDisplay.copy(
-                    selectedTransportModes = currentModes,
+                    selectedTransportModes = currentModes.toImmutableSet(),
                 ),
             )
         }

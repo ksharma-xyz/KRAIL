@@ -40,6 +40,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
+                implementation(projects.core.maps.state)
                 implementation(libs.kotlinx.serialization.json)
                 
                 implementation(libs.compose.runtime)

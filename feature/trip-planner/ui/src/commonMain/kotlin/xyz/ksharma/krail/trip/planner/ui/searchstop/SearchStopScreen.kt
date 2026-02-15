@@ -38,7 +38,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -62,7 +61,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -122,75 +120,8 @@ fun SearchStopScreen(
             )
             .imePadding(),
     ) {
-        var runPlaceholderAnimation by rememberSaveable { mutableStateOf(true) }
-        var placeholderText by rememberSaveable { mutableStateOf("Search here") }
-        var isDeleting by rememberSaveable { mutableStateOf(false) }
-        var currentModePriority by rememberSaveable {
-            mutableStateOf(
-                TransportMode.Train().priority,
-            )
-        } // Start with Train's priority
-
-        val transportModes = remember {
-            TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
-        }
-
-        // Map priorities to corresponding placeholder texts
-        val priorityToTextMapping = remember {
-            transportModes.associateBy(
-                keySelector = { it.priority },
-                valueTransform = { mode ->
-                    when (mode) {
-                        is TransportMode.Bus -> "Search bus stop id"
-                        is TransportMode.Train -> "Search train station"
-                        is TransportMode.Metro -> "Search metro station"
-                        is TransportMode.Ferry -> "Search ferry wharf"
-                        is TransportMode.LightRail -> "Search light rail stop"
-                        else -> "Search here"
-                    }
-                },
-            )
-        }
-
-        LaunchedEffect(placeholderText, isDeleting, runPlaceholderAnimation) {
-            if (!runPlaceholderAnimation) {
-                // Reset to initial state if animation is stopped
-                currentModePriority = TransportMode.Train().priority
-                placeholderText = "Search here"
-                isDeleting = false
-                return@LaunchedEffect
-            }
-
-            val targetText = when {
-                isDeleting -> "Search " // Clear text all at once during deletion
-                else -> priorityToTextMapping[currentModePriority] ?: "Search here"
-            }
-
-            if (placeholderText != targetText) {
-                delay(100) // Typing speed
-                placeholderText = if (isDeleting) {
-                    "Search " // Clear text immediately
-                } else {
-                    targetText.take(placeholderText.length + 1) // Add characters one by one
-                }
-            } else {
-                if (isDeleting) {
-                    isDeleting = false
-                } else {
-                    delay(500) // Pause before starting delete animation
-                    isDeleting = true
-
-                    // Move to the next transport mode based on priority
-                    val currentIndex =
-                        transportModes.indexOfFirst { it.priority == currentModePriority }
-                    val nextIndex = (currentIndex + 1) % transportModes.size
-                    currentModePriority = transportModes[nextIndex].priority
-                }
-            }
-        }
-
         SearchTopBar(
-            placeholderText = placeholderText,
+            placeholderText = "Search here",
             focusRequester = focusRequester,
             keyboard = keyboard,
             // pass selection toggle from state (map if needed to composable enum)
@@ -205,7 +136,6 @@ fun SearchStopScreen(
             },
             onTextChange = { value ->
                 log("value: $value")
-                if (value.isNotBlank()) runPlaceholderAnimation = false
                 textFieldText = value
             },
         )

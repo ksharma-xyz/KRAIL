@@ -30,7 +30,7 @@ fun StopSelectionRadioGroup(
 ) {
     Row(
         modifier = modifier
-            .height(56.dp)
+            .height(48.dp)
             .clip(RoundedCornerShape(24.dp)),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -48,8 +48,8 @@ fun StopSelectionRadioGroup(
 
         Text(
             text = "List",
-            style = if (selectionType == StopSelectionType.LIST) { KrailTheme.typography.titleMedium } else {
-                KrailTheme.typography.bodyMedium
+            style = if (selectionType == StopSelectionType.LIST) { KrailTheme.typography.bodyMedium } else {
+                KrailTheme.typography.bodySmall
             },
             color = if (selectionType == StopSelectionType.LIST) {
                 getForegroundColor(listBackgroundColor)
@@ -72,14 +72,14 @@ fun StopSelectionRadioGroup(
                         Modifier
                     },
                 )
-                .padding(horizontal = 12.dp, vertical = 12.dp)
-                .klickable { onTypeSelect(StopSelectionType.LIST) },
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .klickable(indication = null) { onTypeSelect(StopSelectionType.LIST) },
         )
 
         Text(
             text = "Map",
-            style = if (selectionType == StopSelectionType.MAP) { KrailTheme.typography.titleMedium } else {
-                KrailTheme.typography.bodyMedium
+            style = if (selectionType == StopSelectionType.MAP) { KrailTheme.typography.bodyMedium } else {
+                KrailTheme.typography.bodySmall
             },
             color = if (selectionType == StopSelectionType.MAP) {
                 getForegroundColor(mapBackgroundColor)
@@ -102,8 +102,8 @@ fun StopSelectionRadioGroup(
                         Modifier
                     },
                 )
-                .padding(horizontal = 12.dp, vertical = 12.dp)
-                .klickable { onTypeSelect(StopSelectionType.MAP) },
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .klickable(indication = null) { onTypeSelect(StopSelectionType.MAP) },
         )
     }
 }

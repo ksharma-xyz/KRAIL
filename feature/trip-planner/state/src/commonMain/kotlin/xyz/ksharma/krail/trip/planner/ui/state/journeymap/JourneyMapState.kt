@@ -50,10 +50,11 @@ data class JourneyStopFeature(
     val stopName: String,
     val position: LatLng?,
     val stopType: StopType,
-    val time: String?,
     val platform: String?,
     val lineName: String? = null, // Line departing from this stop (e.g., "T1", "333")
     val lineColor: String? = null, // Color of the line departing from this stop
+    val arrivalTime: String? = null, // Arrival time at this stop (UTC format)
+    val departureTime: String? = null, // Departure time from this stop (UTC format)
 )
 
 /**
@@ -76,8 +77,6 @@ sealed class JourneyMapUiState {
         val mapDisplay: JourneyMapDisplay,
         val cameraFocus: CameraFocus? = null,
     ) : JourneyMapUiState()
-
-    data class Error(val message: String) : JourneyMapUiState()
 }
 
 /**

@@ -33,6 +33,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(projects.taj)
                 implementation(projects.core.maps.state)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.maplibre.compose)

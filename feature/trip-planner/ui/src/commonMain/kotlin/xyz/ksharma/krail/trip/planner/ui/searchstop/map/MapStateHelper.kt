@@ -4,8 +4,8 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
@@ -157,7 +157,6 @@ object MapStateHelper {
         stopId = stopId,
         stopName = stopName,
         position = LatLng(latitude, longitude),
-        distanceKm = distanceKm,
         transportModes = transportModes.toImmutableList(),
     )
 }

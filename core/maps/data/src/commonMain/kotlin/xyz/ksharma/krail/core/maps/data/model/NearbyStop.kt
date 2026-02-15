@@ -10,6 +10,5 @@ data class NearbyStop(
     val stopName: String,
     val latitude: Double,
     val longitude: Double,
-    val distanceKm: Double,
     val transportModes: List<TransportMode>,
 )

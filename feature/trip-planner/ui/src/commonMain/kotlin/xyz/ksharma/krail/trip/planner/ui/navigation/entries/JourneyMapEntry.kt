@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
@@ -16,6 +15,7 @@ import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMapScreen
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapMapper.toJourneyMapState
 import xyz.ksharma.krail.trip.planner.ui.navigation.JourneyMapRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
@@ -24,27 +24,17 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
  *
  * Shows a journey route on a map with better gesture support than bottom sheet.
  *
- * Important: Uses the parent TimeTableViewModel by explicitly finding it in the backstack
- * to access journey data without creating a new instance that would reset TimeTable state.
+ * Important: Uses the parent TimeTableViewModel to access journey data.
+ * The journey is already loaded in memory from TimeTable screen, so no API call is needed.
+ * Map state transformation is performed on background thread to avoid blocking UI.
  */
 @Composable
 internal fun EntryProviderScope<NavKey>.JourneyMapEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<JourneyMapRoute> { key ->
-        LaunchedEffect(key) {
-            log("🗺️ JourneyMapEntry - Entering with journeyId: ${key.journeyId}")
-        }
-
-        // IMPORTANT: Get the TimeTableViewModel from the parent entry's scope
-        // This prevents creating a new instance which would reset TimeTable state
-        // when navigating back
-        val viewModel: TimeTableViewModel = koinViewModel(
-            // Use the default scope - shared across trip planner feature
-            // This ensures we get the SAME instance as TimeTableEntry
-        )
-
-        log("🗺️ JourneyMapEntry - ViewModel instance: ${viewModel.hashCode()}")
+        // Get the TimeTableViewModel - it already has the journey data loaded
+        val viewModel: TimeTableViewModel = koinViewModel()
 
         // Convert to map state in background thread to avoid blocking UI
         val journeyMapState by produceState<JourneyMapUiState>(
@@ -55,8 +45,16 @@ internal fun EntryProviderScope<NavKey>.JourneyMapEntry(
             value = withContext(Dispatchers.Default) {
                 val rawJourney = viewModel.getRawJourneyById(key.journeyId)
                 log("🗺️ JourneyMapEntry - Raw journey found: ${rawJourney != null}")
-                rawJourney?.toJourneyMapState()
-                    ?: JourneyMapUiState.Error("Journey not found")
+
+                // Transform to map state - run on background thread
+                rawJourney?.toJourneyMapState() ?: run {
+                    // Fallback: This should never happen as journey was just displayed
+                    log("🗺️ JourneyMapEntry - WARNING: Journey not found, using empty state")
+                    JourneyMapUiState.Ready(
+                        mapDisplay = JourneyMapDisplay(),
+                        cameraFocus = null,
+                    )
+                }
             }
         }
 

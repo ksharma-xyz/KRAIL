@@ -129,7 +129,7 @@ fun MapOptionsBottomSheet(
                 }
             }
 
-            Divider()
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -153,7 +153,7 @@ fun MapOptionsBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Divider()
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -182,11 +182,20 @@ fun MapOptionsBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Divider()
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Map Controls Section
+            Text(
+                text = "Map Controls",
+                style = KrailTheme.typography.titleMedium,
+                color = KrailTheme.colors.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             MapControlToggle(
                 label = "Show distance scale",
                 checked = pendingShowDistanceScale,
@@ -195,7 +204,7 @@ fun MapOptionsBottomSheet(
                 },
             )
 
-            Divider()
+            Spacer(modifier = Modifier.height(8.dp))
 
             MapControlToggle(
                 label = "Show compass",
@@ -286,7 +295,7 @@ private fun MapControlToggle(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

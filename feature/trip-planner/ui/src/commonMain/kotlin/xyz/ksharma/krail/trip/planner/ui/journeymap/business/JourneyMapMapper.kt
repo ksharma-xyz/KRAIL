@@ -154,9 +154,9 @@ object JourneyMapMapper {
             stopName = disassembledName ?: name ?: "Unknown Stop",
             position = coordinates,
             stopType = StopType.REGULAR, // Will be updated later for origin/destination
-            time = departureTimeEstimated ?: departureTimePlanned
-                ?: arrivalTimeEstimated ?: arrivalTimePlanned,
             platform = properties?.platform ?: properties?.platformName,
+            arrivalTime = arrivalTimeEstimated ?: arrivalTimePlanned,
+            departureTime = departureTimeEstimated ?: departureTimePlanned,
         )
     }
 

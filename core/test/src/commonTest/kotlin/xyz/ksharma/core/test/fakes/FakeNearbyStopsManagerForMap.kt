@@ -3,7 +3,7 @@ package xyz.ksharma.core.test.fakes
 import kotlinx.coroutines.CoroutineScope
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 
 /**

@@ -103,7 +103,8 @@ private fun JourneyMapContent(
     modifier: Modifier = Modifier,
 ) {
     // Track selected stop for details bottom sheet
-    var selectedStop by remember { mutableStateOf<JourneyStopFeature?>(null) }
+    // Keyed to mapState so it resets when viewing a different journey
+    var selectedStop by remember(mapState) { mutableStateOf<JourneyStopFeature?>(null) }
 
     // Calculate camera position - start at the origin (journey beginning)
     val cameraPosition = remember(mapState.cameraFocus, mapState.mapDisplay.stops) {

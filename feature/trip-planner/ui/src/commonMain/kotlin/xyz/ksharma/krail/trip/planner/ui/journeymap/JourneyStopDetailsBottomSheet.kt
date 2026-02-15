@@ -5,14 +5,15 @@ package xyz.ksharma.krail.trip.planner.ui.journeymap
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableList
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopInfoRow
+import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyStopUiMapper.getTimeInfo
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
@@ -28,143 +29,33 @@ fun JourneyStopDetailsBottomSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Extract time info outside composable - this is pure computation
+    val timeInfo = remember(stop.arrivalTime, stop.departureTime) {
+        stop.getTimeInfo()
+    }
+
     SharedStopDetailsBottomSheet(
         stopId = stop.stopId,
         stopName = stop.stopName,
-        transportModes = emptyList<TransportMode>().toImmutableList(), // No transport modes needed
+        transportModes = emptyList<TransportMode>().toImmutableList(),
         onDismiss = onDismiss,
         modifier = modifier,
         additionalInfo = {
-            // Show arrival and departure times
-            val hasArrival = stop.arrivalTime != null
-            val hasDeparture = stop.departureTime != null
-            val areSame = stop.arrivalTime == stop.departureTime
-
-            when {
-                // If arrival and departure are the same, show just one "Time" row
-                hasArrival && hasDeparture && areSame -> {
-                    stop.arrivalTime?.let { time ->
-                        val formattedTime = try {
-                            time.utcToLocalDateTimeAEST().toHHMM()
-                        } catch (_: Exception) {
-                            time
-                        }
-                        StopInfoRow(
-                            label = "Time",
-                            value = formattedTime,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-                // Show both if they're different
-                else -> {
-                    // Arrival Time
-                    if (hasArrival) {
-                        stop.arrivalTime?.let { time ->
-                            val formattedTime = try {
-                                time.utcToLocalDateTimeAEST().toHHMM()
-                            } catch (_: Exception) {
-                                time
-                            }
-                            StopInfoRow(
-                                label = "Arrival",
-                                value = formattedTime,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-
-                    // Departure Time
-                    if (hasDeparture) {
-                        stop.departureTime?.let { time ->
-                            val formattedTime = try {
-                                time.utcToLocalDateTimeAEST().toHHMM()
-                            } catch (_: Exception) {
-                                time
-                            }
-                            StopInfoRow(
-                                label = "Departure",
-                                value = formattedTime,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-                }
+            // Display time info rows
+            timeInfo.forEach { info ->
+                StopInfoRow(
+                    label = info.label,
+                    value = info.value,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (timeInfo.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         },
     )
 }
-
-/* TODO - use in future
-/**
- * Infer transport mode from line name.
- * Examples: "T1" -> Train, "333" -> Bus, "Metro" -> Metro
- */
-private fun inferTransportModeFromLineName(lineName: String): TransportMode? {
-    return when {
-        lineName.startsWith("T", ignoreCase = true) -> TransportMode.Train()
-        lineName.contains("Metro", ignoreCase = true) -> TransportMode.Metro()
-        lineName.contains("L", ignoreCase = true) && lineName.length <= 3 -> TransportMode.LightRail()
-        lineName.contains("F", ignoreCase = true) -> TransportMode.Ferry()
-        lineName.toIntOrNull() != null -> TransportMode.Bus() // Bus routes are numbers
-        else -> null
-    }
-}
-
-/**
- * Get the appropriate label for line/route based on transport mode.
- * - Train, Metro, Light Rail, Ferry: "Line"
- * - Bus, Coach: "Route"
- */
-private fun getLineLabel(transportMode: TransportMode?): String {
-    return when (transportMode) {
-        is TransportMode.Bus, is TransportMode.Coach -> "Route"
-        is TransportMode.Train, is TransportMode.Metro,
-        is TransportMode.LightRail, is TransportMode.Ferry,
-        -> "Line"
-        null -> "Line" // Default to "Line" if unknown
-    }
-}
-
-*/
-
-/**
- * Extract platform label and value from platform text.
- * The label is extracted from the text itself, not inferred from transport mode.
- * Examples:
- * - "Platform 23" -> ("Platform", "23")
- * - "Stand B" -> ("Stand", "B")
- * - "Wharf 2" -> ("Wharf", "2")
- * - "Wharf 2, Side A" -> ("Wharf", "2, Side A")
- * - "23" -> ("Platform", "23") - fallback assumes Platform for bare numbers
- *
- * Similar to getPlatformText() in TripResponseMapper but extracts label and value.
- */
-/*
-private fun extractPlatformLabelAndValue(platformText: String): Pair<String, String> {
-    // Match patterns like "Platform 23", "Stand B", "Wharf 2"
-    // This regex will match the type word and everything after it
-    val regex = Regex("^(Platform|Stand|Wharf)\\s+(.+)$", RegexOption.IGNORE_CASE)
-    val match = regex.find(platformText)
-
-    return if (match != null) {
-        val label = match.groupValues[1].replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase() else it.toString()
-        }
-        val value = match.groupValues[2]
-        label to value
-    } else {
-        // If it's just a number (e.g., "23", "1"), assume it's a platform number
-        if (platformText.matches(Regex("^[0-9]+$"))) {
-            "Platform" to platformText
-        } else {
-            // For anything else (including "A", "B" alone), assume platform
-            "Platform" to platformText
-        }
-    }
-}*/
 
 // region Previews
 
@@ -197,7 +88,7 @@ private fun PreviewJourneyStopDetailsInterchange() {
         val stop = JourneyStopFeature(
             stopId = "10101250",
             stopName = "Town Hall Station",
-            position = xyz.ksharma.krail.core.maps.state.LatLng(-33.8734, 151.2069),
+            position = LatLng(-33.8734, 151.2069),
             stopType = StopType.INTERCHANGE,
             platform = "Platform 1",
             lineName = "Metro",

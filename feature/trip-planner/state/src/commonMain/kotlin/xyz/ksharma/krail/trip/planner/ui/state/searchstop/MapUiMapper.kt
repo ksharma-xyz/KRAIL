@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
 import kotlinx.collections.immutable.toImmutableList
+import xyz.ksharma.krail.core.maps.state.LatLng
 
 // Example mapper from domain models to MapUiState.Ready.
 // Replace DomainRoute/DomainStop with your actual domain models.

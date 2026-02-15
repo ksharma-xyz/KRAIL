@@ -94,7 +94,7 @@ private fun PreviewStopDetailsBottomSheet() {
         val stop = NearbyStopFeature(
             stopId = "200060",
             stopName = "Central Station",
-            position = xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng(
+            position = xyz.ksharma.krail.core.maps.state.LatLng(
                 -33.8830,
                 151.2070,
             ),
@@ -120,7 +120,7 @@ private fun PreviewStopDetailsBottomSheetSingleMode() {
         val stop = NearbyStopFeature(
             stopId = "10101250",
             stopName = "Edgecliff Station, Stand B",
-            position = xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng(
+            position = xyz.ksharma.krail.core.maps.state.LatLng(
                 -33.8818,
                 151.2372,
             ),
@@ -141,7 +141,7 @@ private fun PreviewStopDetailsBottomSheetFerry() {
         val stop = NearbyStopFeature(
             stopId = "10101111",
             stopName = "Circular Quay Ferry Wharf",
-            position = xyz.ksharma.krail.trip.planner.ui.state.searchstop.LatLng(
+            position = xyz.ksharma.krail.core.maps.state.LatLng(
                 -33.8612,
                 151.2107,
             ),

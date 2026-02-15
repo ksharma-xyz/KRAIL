@@ -4,13 +4,13 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableSet
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
  * Small, platform\-agnostic types for map UI state.
  * No Maplibre types here just pure kotlin
  */
-data class LatLng(val latitude: Double, val longitude: Double)
 
 data class RouteFeature(
     val id: String,

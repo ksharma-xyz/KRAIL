@@ -1,10 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -13,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -26,14 +23,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.NavActionButton
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapToggleButton
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 
@@ -49,10 +47,6 @@ fun SearchTopBar(
     isMapAvailable: Boolean = false,
     selectionType: StopSelectionType = StopSelectionType.LIST,
 ) {
-    val density = LocalDensity.current
-    val imeVisible = WindowInsets.ime.getBottom(density) > 0
-    val showRadioGroup = !imeVisible
-
     Row(
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -90,18 +84,20 @@ fun SearchTopBar(
 
         if (isMapAvailable) {
             // Reserve the TextField height for the radio group so hiding it doesn't change layout height.
-            Box(modifier = Modifier.height(48.dp)) {
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = showRadioGroup,
-                    enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-                    exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
-                ) {
-                    StopSelectionRadioGroup(
-                        selectionType = selectionType,
-                        onTypeSelect = onTypeSelect,
-                        modifier = Modifier.padding(start = 16.dp),
-                    )
-                }
+            MapToggleButton(
+                selected = selectionType == StopSelectionType.MAP,
+                onClick = {
+                    if (selectionType == StopSelectionType.LIST) {
+                        onTypeSelect(StopSelectionType.MAP)
+                    } else {
+                        onTypeSelect(StopSelectionType.LIST)
+                    }
+                },
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .requiredHeight(48.dp),
+            ) {
+                Text("Map")
             }
         }
     }

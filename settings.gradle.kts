@@ -33,6 +33,7 @@ rootProject.name = "Krail"
 include(":androidApp")
 include(":composeApp")
 include(":taj") // Design System
+include(":core:adaptive-ui")
 include(":core:analytics")
 include(":core:app-info")
 include(":core:app-start")

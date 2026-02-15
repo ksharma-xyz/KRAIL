@@ -26,7 +26,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<SearchStopRoute>(
-        metadata = ListDetailSceneStrategy.detailPane(),
+        metadata = ListDetailSceneStrategy.listPane(),
     ) { key ->
         // ViewModel is scoped to this NavEntry and will be recreated each time
         // This ensures recent stops are refreshed when the screen is opened

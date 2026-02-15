@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.mapLatest
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -67,9 +69,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import kotlin.time.ExperimentalTime
 
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Composable
 fun SearchStopScreen(
     searchStopState: SearchStopState,
@@ -79,6 +80,7 @@ fun SearchStopScreen(
     onStopSelect: (StopItem) -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
 ) {
+    val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val themeColor by LocalThemeColor.current
     var textFieldText: String by remember { mutableStateOf(searchQuery) }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -107,6 +109,57 @@ fun SearchStopScreen(
             .collectLatest {}
     }
 
+    if (adaptiveLayoutInfo.shouldShowDualPane) {
+        // Tablet/Foldable layout: List on left, Map on right
+        SearchStopScreenDualPane(
+            modifier = modifier,
+            searchStopState = searchStopState,
+            themeColor = themeColor,
+            focusRequester = focusRequester,
+            keyboard = keyboard,
+            onBackClick = { backClicked = true },
+            onTextChange = { value: String ->
+                log("value: $value")
+                textFieldText = value
+            },
+            onStopSelect = onStopSelect,
+            onEvent = onEvent,
+        )
+    } else {
+        // Phone layout: Single pane with toggle between List and Map
+        SearchStopScreenSinglePane(
+            modifier = modifier,
+            searchStopState = searchStopState,
+            themeColor = themeColor,
+            focusRequester = focusRequester,
+            keyboard = keyboard,
+            onBackClick = { backClicked = true },
+            onTextChange = { value: String ->
+                log("value: $value")
+                textFieldText = value
+            },
+            onStopSelect = onStopSelect,
+            onEvent = onEvent,
+        )
+    }
+}
+
+/**
+ * Single-pane layout for phones.
+ * Shows either list OR map based on selection with a toggle button.
+ */
+@Composable
+private fun SearchStopScreenSinglePane(
+    searchStopState: SearchStopState,
+    themeColor: String,
+    focusRequester: FocusRequester,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    onBackClick: () -> Unit,
+    onTextChange: (String) -> Unit,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -124,20 +177,13 @@ fun SearchStopScreen(
             placeholderText = "Search here",
             focusRequester = focusRequester,
             keyboard = keyboard,
-            // pass selection toggle from state (map if needed to composable enum)
-            selectionType = searchStopState.selectionType, // or map to UI enum if different type
+            selectionType = searchStopState.selectionType,
             isMapAvailable = searchStopState.isMapsAvailable,
             onTypeSelect = { type ->
-                // user tapped list/map -> forward to viewmodel
                 onEvent(SearchStopUiEvent.StopSelectionTypeClicked(type))
             },
-            onBackClick = {
-                backClicked = true
-            },
-            onTextChange = { value ->
-                log("value: $value")
-                textFieldText = value
-            },
+            onBackClick = onBackClick,
+            onTextChange = onTextChange,
         )
 
         when (val screen = searchStopState.screen) {
@@ -151,59 +197,186 @@ fun SearchStopScreen(
             }
 
             is SearchScreen.List -> {
-                when (val ls = screen.listState) {
-                    ListState.Recent -> {
-                        LazyColumn(contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp)) {
-                            item {
-                                SearchListHeader()
-                            }
+                SearchStopListContent(
+                    listState = screen.listState,
+                    searchStopState = searchStopState,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
+            }
+        }
+    }
+}
 
-                            recentSearchStopsList(
-                                recentStops = searchStopState.recentStops,
-                                keyboard = keyboard,
-                                focusRequester = focusRequester,
-                                onStopSelect = onStopSelect,
-                                onEvent = onEvent,
-                            )
-                        }
-                    }
+/**
+ * Dual-pane layout for tablets and foldables.
+ * Shows list on the left and map on the right simultaneously.
+ * No map toggle button needed.
+ */
+@Composable
+private fun SearchStopScreenDualPane(
+    searchStopState: SearchStopState,
+    themeColor: String,
+    focusRequester: FocusRequester,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    onBackClick: () -> Unit,
+    onTextChange: (String) -> Unit,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Initialize map when entering dual-pane mode
+    // Only if we're currently showing list and map is available (determined by ViewModel)
+    LaunchedEffect(Unit) {
+        if (searchStopState.screen is SearchScreen.List) {
+            // Request map initialization - ViewModel will check isMapsAvailable flag
+            onEvent(SearchStopUiEvent.StopSelectionTypeClicked(StopSelectionType.MAP))
+        }
+    }
 
-                    is ListState.Results -> {
-                        LazyColumn(contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp)) {
-                            // Replace manual Column + AnimatedVisibility in Results
-                            item("searching_dots") {
-                                SearchingDotsHeader(isLoading = ls.isLoading)
-                            }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        backgroundColorOf(themeColor.hexToComposeColor()),
+                        KrailTheme.colors.surface,
+                    ),
+                ),
+            )
+            .imePadding(),
+    ) {
+        // Split view: List on left, Map on right
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+        ) {
+            // Left pane: List with search bar
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            ) {
+                // Search top bar only spans the list width
+                SearchTopBar(
+                    placeholderText = "Search here",
+                    focusRequester = focusRequester,
+                    keyboard = keyboard,
+                    selectionType = StopSelectionType.LIST,
+                    isMapAvailable = false, // Hide map toggle in dual-pane mode
+                    onTypeSelect = { },
+                    onBackClick = onBackClick,
+                    onTextChange = onTextChange,
+                )
 
-                            searchResultsList(
-                                searchResults = ls.results,
-                                keyboard = keyboard,
-                                focusRequester = focusRequester,
-                                onStopSelect = onStopSelect,
-                                onEvent = onEvent,
-                                searchQuery = searchStopState.searchQuery,
-                            )
-                        }
-                    }
+                val listState = when (val screen = searchStopState.screen) {
+                    is SearchScreen.List -> screen.listState
+                    is SearchScreen.Map -> ListState.Recent
+                }
 
-                    ListState.NoMatch -> {
-                        ErrorMessage(
-                            title = "No match found!",
-                            message = "Try something else. \uD83D\uDD0D✨",
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                        )
-                    }
+                SearchStopListContent(
+                    listState = listState,
+                    searchStopState = searchStopState,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
+            }
 
-                    ListState.Error -> {
-                        ErrorMessage(
-                            title = "Something went wrong!",
-                            message = "Let's try searching again.",
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
+            // Right pane: Map (edge-to-edge)
+            // Show map only when ViewModel has provided a Map screen state
+            when (val screen = searchStopState.screen) {
+                is SearchScreen.Map -> {
+                    SearchStopMap(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        mapUiState = screen.mapUiState,
+                        onEvent = onEvent,
+                        onStopSelect = onStopSelect,
+                    )
+                }
+                is SearchScreen.List -> {
+                    // No map shown if ViewModel hasn't initialized it
+                    // This handles the case where maps are disabled via feature flag
                 }
             }
+        }
+    }
+}
+
+/**
+ * Shared list content component used by both single-pane and dual-pane layouts.
+ */
+@Composable
+private fun SearchStopListContent(
+    listState: ListState,
+    searchStopState: SearchStopState,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (listState) {
+        ListState.Recent -> {
+            LazyColumn(
+                modifier = modifier,
+                contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+            ) {
+                item {
+                    SearchListHeader()
+                }
+
+                recentSearchStopsList(
+                    recentStops = searchStopState.recentStops,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                )
+            }
+        }
+
+        is ListState.Results -> {
+            LazyColumn(
+                modifier = modifier,
+                contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+            ) {
+                item("searching_dots") {
+                    SearchingDotsHeader(isLoading = listState.isLoading)
+                }
+
+                searchResultsList(
+                    searchResults = listState.results,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                    searchQuery = searchStopState.searchQuery,
+                )
+            }
+        }
+
+        ListState.NoMatch -> {
+            ErrorMessage(
+                title = "No match found!",
+                message = "Try something else. \uD83D\uDD0D✨",
+                modifier = modifier.fillMaxWidth(),
+            )
+        }
+
+        ListState.Error -> {
+            ErrorMessage(
+                title = "Something went wrong!",
+                message = "Let's try searching again.",
+                modifier = modifier.fillMaxWidth(),
+            )
         }
     }
 }

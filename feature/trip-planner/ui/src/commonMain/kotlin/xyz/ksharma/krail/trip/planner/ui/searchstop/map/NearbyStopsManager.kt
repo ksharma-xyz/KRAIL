@@ -9,9 +9,9 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.sandook.utils.GeoUtils
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopsConfig
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

@@ -5,32 +5,16 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.core.maps.state.RouteFeature
+import xyz.ksharma.krail.core.maps.state.SelectedStopUi
+import xyz.ksharma.krail.core.maps.state.StopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
- * Small, platform\-agnostic types for map UI state.
- * No Maplibre types here just pure kotlin
+ * Map UI state for Search Stop screen.
+ * Uses core map models (RouteFeature, StopFeature, etc.) from core:maps:state.
  */
-
-data class RouteFeature(
-    val id: String,
-    val colorHex: String,
-    val points: List<LatLng>,
-)
-
-data class StopFeature(
-    val stopId: String,
-    val stopName: String,
-    val lineId: String?,
-    val position: LatLng,
-)
-
-/** Simple UI payload for the currently selected stop */
-data class SelectedStopUi(
-    val id: String,
-    val name: String,
-    val lineId: String?,
-)
 
 /** Nearby stop feature for map rendering */
 data class NearbyStopFeature(

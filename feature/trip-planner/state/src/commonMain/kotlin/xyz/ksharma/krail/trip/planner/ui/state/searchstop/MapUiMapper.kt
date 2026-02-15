@@ -2,6 +2,9 @@ package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.RouteFeature
+import xyz.ksharma.krail.core.maps.state.SelectedStopUi
+import xyz.ksharma.krail.core.maps.state.StopFeature
 
 // Example mapper from domain models to MapUiState.Ready.
 // Replace DomainRoute/DomainStop with your actual domain models.
@@ -45,4 +48,5 @@ object MapUiMapper {
 // Placeholder domain types for the example mapper (remove if you have real ones).
 data class DomainRoute(val id: String, val colorHex: String, val path: List<Point>)
 data class DomainStop(val id: String, val name: String, val lineId: String?, val lat: Double, val lng: Double)
+
 data class Point(val lat: Double, val lng: Double)

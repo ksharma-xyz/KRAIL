@@ -27,9 +27,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.window.core.layout.WindowWidthSizeClass
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import xyz.ksharma.krail.core.adaptiveui.AdaptiveBreakpoints
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
@@ -59,8 +59,9 @@ fun DiscoverScreen(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
-    val windowWidthSizeClass = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
-    if (windowWidthSizeClass == WindowWidthSizeClass.COMPACT) {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val isCompactWidth = windowSizeClass.minWidthDp < AdaptiveBreakpoints.COMPACT_WIDTH
+    if (isCompactWidth) {
         DiscoverScreenCompact(
             modifier = modifier,
             state = state,

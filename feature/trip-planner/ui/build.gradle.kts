@@ -51,6 +51,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.adaptiveUi)
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)
                 implementation(projects.core.analytics)

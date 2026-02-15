@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,6 +43,7 @@ fun MapToggleButton(
     verticalPadding: Dp = 4.dp,
     content: @Composable () -> Unit,
 ) {
+    val content = remember { movableContentOf { content() } }
     val animatedBackgroundColor by animateColorAsState(
         targetValue = if (selected) KrailTheme.colors.surface else Color.Transparent,
         animationSpec = tween(durationMillis = 600, easing = LinearEasing),
@@ -87,7 +90,7 @@ fun MapToggleButton(
         // Get max width from both measurements
         val maxContentWidth = maxOf(
             boldPlaceables.maxOfOrNull { it.width } ?: 0,
-            semiBoldPlaceables.maxOfOrNull { it.width } ?: 0
+            semiBoldPlaceables.maxOfOrNull { it.width } ?: 0,
         )
 
         // Add padding and border compensation to get total width
@@ -111,7 +114,7 @@ fun MapToggleButton(
                                 color = animatedBorderColor,
                                 width = 2.dp,
                             )
-                        }
+                        },
                     )
                     .padding(vertical = verticalPadding, horizontal = horizontalPadding)
                     .klickable(
@@ -139,7 +142,7 @@ fun MapToggleButton(
 
 @PreviewComponent
 @Composable
-fun PreviewMapToggleButtonSelected() {
+private fun PreviewMapToggleButtonSelected() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         MapToggleButton(
             selected = true,
@@ -151,7 +154,7 @@ fun PreviewMapToggleButtonSelected() {
 
 @PreviewComponent
 @Composable
-fun PreviewMapToggleButtonUnselected() {
+private fun PreviewMapToggleButtonUnselected() {
     PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
         MapToggleButton(
             selected = false,

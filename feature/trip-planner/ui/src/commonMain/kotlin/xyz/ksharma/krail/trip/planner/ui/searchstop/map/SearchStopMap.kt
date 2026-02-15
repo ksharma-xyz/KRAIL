@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +29,7 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
@@ -39,7 +39,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopsConfig
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
 @Composable
@@ -169,7 +168,10 @@ private fun MapContent(
             ) {
                 // Render nearby stops
                 if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
-                    log("[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} stops on map")
+                    log(
+                        "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
+                            "stops on map",
+                    )
                     NearbyStopsLayer(
                         stops = mapState.mapDisplay.nearbyStops,
                         onStopClick = { stop ->

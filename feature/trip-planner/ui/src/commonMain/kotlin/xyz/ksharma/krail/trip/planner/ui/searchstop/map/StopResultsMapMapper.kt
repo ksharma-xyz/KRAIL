@@ -8,9 +8,9 @@ import org.maplibre.spatialk.geojson.LineString
 import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.maps.state.RouteFeature
+import xyz.ksharma.krail.core.maps.state.StopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.RouteFeature
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopFeature
 
 object StopResultsMapMapper {
     fun MapUiState.Ready.toFeatureCollection(): FeatureCollection<*, *> {

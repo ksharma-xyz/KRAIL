@@ -196,13 +196,25 @@ private fun SearchStopScreenSinglePane(
 
         val mapState = searchStopState.mapUiState
         if (showMap && mapState != null) {
+            // In single pane, when displaying map, keyboard is not required.
+            LaunchedEffect(Unit) {
+                keyboard?.hide()
+                focusRequester.freeFocus()
+            }
+
             SearchStopMap(
                 modifier = Modifier.weight(1f),
                 mapUiState = mapState,
+                keyboard = keyboard,
+                focusRequester = focusRequester,
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
             )
         } else {
+            LaunchedEffect(Unit) {
+                keyboard?.show()
+                focusRequester.requestFocus()
+            }
             SearchStopListContent(
                 listState = searchStopState.listState,
                 searchStopState = searchStopState,
@@ -294,6 +306,8 @@ private fun SearchStopScreenDualPane(
                         .weight(1f)
                         .fillMaxHeight(),
                     mapUiState = mapState,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                 )

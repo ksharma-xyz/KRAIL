@@ -6,17 +6,7 @@ import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
- * High level screen mode:
- * - Map: render the map UI
- * - List: render a list UI whose inner state is expressed by ListState
- */
-sealed interface SearchScreen {
-    data class Map(val mapUiState: MapUiState = MapUiState.Ready()) : SearchScreen
-    data class List(val listState: ListState) : SearchScreen
-}
-
-/**
- * Inner list states for the List screen:
+ * List states for the Search Stop screen:
  * - Recent: show recent stops (query is blank)
  * - Results: search has results (may also be loading)
  * - NoMatch: search completed with no results (after delay)
@@ -35,23 +25,21 @@ sealed interface ListState {
 }
 
 /**
- * Selection toggle exposed to UI (Radio/segmented control)
- */
-enum class StopSelectionType { LIST, MAP }
-
-/**
  * Root UI state for the Search Stop screen.
- * - selectionType: what the user has chosen (LIST/MAP)
- * - screen: derived/explicit screen to render
- * - searchQuery: current text in the text field
- * - recentStops / searchResults: backing data
+ * List and map states are independent - both can be active simultaneously (dual-pane mode)
+ * or individually (single-pane mode).
  *
- * ViewModel updates these fields; composables read them and render.
+ * - listState: current state of the list view
+ * - mapUiState: current state of the map view (null if not initialized or maps disabled)
+ * - isMapsAvailable: whether maps feature is enabled
+ * - searchQuery: current text in the search field
+ * - searchResults: backing data for search results
+ * - recentStops: backing data for recent stops
  */
 data class SearchStopState(
-    val selectionType: StopSelectionType = StopSelectionType.LIST,
+    val listState: ListState = ListState.Recent,
+    val mapUiState: MapUiState? = null,
     val isMapsAvailable: Boolean = false,
-    val screen: SearchScreen = SearchScreen.List(ListState.Recent),
     val searchQuery: String = "",
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),

@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.mapLatest
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
+import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
@@ -64,10 +64,9 @@ import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -80,7 +79,6 @@ fun SearchStopScreen(
     onStopSelect: (StopItem) -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
 ) {
-    val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val themeColor by LocalThemeColor.current
     var textFieldText: String by remember { mutableStateOf(searchQuery) }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -109,44 +107,47 @@ fun SearchStopScreen(
             .collectLatest {}
     }
 
-    if (adaptiveLayoutInfo.shouldShowDualPane) {
-        // Tablet/Foldable layout: List on left, Map on right
-        SearchStopScreenDualPane(
-            modifier = modifier,
-            searchStopState = searchStopState,
-            themeColor = themeColor,
-            focusRequester = focusRequester,
-            keyboard = keyboard,
-            onBackClick = { backClicked = true },
-            onTextChange = { value: String ->
-                log("value: $value")
-                textFieldText = value
-            },
-            onStopSelect = onStopSelect,
-            onEvent = onEvent,
-        )
-    } else {
-        // Phone layout: Single pane with toggle between List and Map
-        SearchStopScreenSinglePane(
-            modifier = modifier,
-            searchStopState = searchStopState,
-            themeColor = themeColor,
-            focusRequester = focusRequester,
-            keyboard = keyboard,
-            onBackClick = { backClicked = true },
-            onTextChange = { value: String ->
-                log("value: $value")
-                textFieldText = value
-            },
-            onStopSelect = onStopSelect,
-            onEvent = onEvent,
-        )
-    }
+    AdaptiveScreenContent(
+        singlePaneContent = {
+            // Phone layout: Single pane with toggle between List and Map
+            SearchStopScreenSinglePane(
+                modifier = modifier,
+                searchStopState = searchStopState,
+                themeColor = themeColor,
+                focusRequester = focusRequester,
+                keyboard = keyboard,
+                onBackClick = { backClicked = true },
+                onTextChange = { value: String ->
+                    log("value: $value")
+                    textFieldText = value
+                },
+                onStopSelect = onStopSelect,
+                onEvent = onEvent,
+            )
+        },
+        dualPaneContent = {
+            // Tablet/Foldable layout: List on left, Map on right
+            SearchStopScreenDualPane(
+                modifier = modifier,
+                searchStopState = searchStopState,
+                themeColor = themeColor,
+                focusRequester = focusRequester,
+                keyboard = keyboard,
+                onBackClick = { backClicked = true },
+                onTextChange = { value: String ->
+                    log("value: $value")
+                    textFieldText = value
+                },
+                onStopSelect = onStopSelect,
+                onEvent = onEvent,
+            )
+        },
+    )
 }
 
 /**
  * Single-pane layout for phones.
- * Shows either list OR map based on selection with a toggle button.
+ * Shows either list OR map based on local UI state with a toggle button.
  */
 @Composable
 private fun SearchStopScreenSinglePane(
@@ -160,6 +161,9 @@ private fun SearchStopScreenSinglePane(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Local UI state controls whether user is viewing list or map
+    var showMap by rememberSaveable { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -177,35 +181,36 @@ private fun SearchStopScreenSinglePane(
             placeholderText = "Search here",
             focusRequester = focusRequester,
             keyboard = keyboard,
-            selectionType = searchStopState.selectionType,
+            isMapSelected = showMap,
             isMapAvailable = searchStopState.isMapsAvailable,
-            onTypeSelect = { type ->
-                onEvent(SearchStopUiEvent.StopSelectionTypeClicked(type))
+            onMapToggle = { shouldShowMap ->
+                showMap = shouldShowMap
+                // Initialize map if user toggles to map view and it's not initialized
+                if (shouldShowMap && searchStopState.mapUiState == null) {
+                    onEvent(SearchStopUiEvent.InitializeMap)
+                }
             },
             onBackClick = onBackClick,
             onTextChange = onTextChange,
         )
 
-        when (val screen = searchStopState.screen) {
-            is SearchScreen.Map -> {
-                SearchStopMap(
-                    modifier = Modifier.weight(1f),
-                    mapUiState = screen.mapUiState,
-                    onEvent = onEvent,
-                    onStopSelect = onStopSelect,
-                )
-            }
-
-            is SearchScreen.List -> {
-                SearchStopListContent(
-                    listState = screen.listState,
-                    searchStopState = searchStopState,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    onStopSelect = onStopSelect,
-                    onEvent = onEvent,
-                )
-            }
+        val mapState = searchStopState.mapUiState
+        if (showMap && mapState != null) {
+            SearchStopMap(
+                modifier = Modifier.weight(1f),
+                mapUiState = mapState,
+                onEvent = onEvent,
+                onStopSelect = onStopSelect,
+            )
+        } else {
+            SearchStopListContent(
+                listState = searchStopState.listState,
+                searchStopState = searchStopState,
+                keyboard = keyboard,
+                focusRequester = focusRequester,
+                onStopSelect = onStopSelect,
+                onEvent = onEvent,
+            )
         }
     }
 }
@@ -227,12 +232,10 @@ private fun SearchStopScreenDualPane(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Initialize map when entering dual-pane mode
-    // Only if we're currently showing list and map is available (determined by ViewModel)
+    // Initialize map when entering dual-pane mode if maps are available
     LaunchedEffect(Unit) {
-        if (searchStopState.screen is SearchScreen.List) {
-            // Request map initialization - ViewModel will check isMapsAvailable flag
-            onEvent(SearchStopUiEvent.StopSelectionTypeClicked(StopSelectionType.MAP))
+        if (searchStopState.mapUiState == null && searchStopState.isMapsAvailable) {
+            onEvent(SearchStopUiEvent.InitializeMap)
         }
     }
 
@@ -266,20 +269,15 @@ private fun SearchStopScreenDualPane(
                     placeholderText = "Search here",
                     focusRequester = focusRequester,
                     keyboard = keyboard,
-                    selectionType = StopSelectionType.LIST,
+                    isMapSelected = false,
                     isMapAvailable = false, // Hide map toggle in dual-pane mode
-                    onTypeSelect = { },
+                    onMapToggle = { },
                     onBackClick = onBackClick,
                     onTextChange = onTextChange,
                 )
 
-                val listState = when (val screen = searchStopState.screen) {
-                    is SearchScreen.List -> screen.listState
-                    is SearchScreen.Map -> ListState.Recent
-                }
-
                 SearchStopListContent(
-                    listState = listState,
+                    listState = searchStopState.listState,
                     searchStopState = searchStopState,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
@@ -289,22 +287,16 @@ private fun SearchStopScreenDualPane(
             }
 
             // Right pane: Map (edge-to-edge)
-            // Show map only when ViewModel has provided a Map screen state
-            when (val screen = searchStopState.screen) {
-                is SearchScreen.Map -> {
-                    SearchStopMap(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        mapUiState = screen.mapUiState,
-                        onEvent = onEvent,
-                        onStopSelect = onStopSelect,
-                    )
-                }
-                is SearchScreen.List -> {
-                    // No map shown if ViewModel hasn't initialized it
-                    // This handles the case where maps are disabled via feature flag
-                }
+            // Show map if available and initialized
+            searchStopState.mapUiState?.let { mapState ->
+                SearchStopMap(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    mapUiState = mapState,
+                    onEvent = onEvent,
+                    onStopSelect = onStopSelect,
+                )
             }
         }
     }
@@ -523,6 +515,7 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 // region Previews
+
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_ListLoading() {
@@ -530,16 +523,15 @@ private fun PreviewSearchStopScreen_ListLoading() {
         val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
-                selectionType = StopSelectionType.LIST,
-                screen = SearchScreen.List(
-                    ListState.Results(
-                        results = persistentListOf(),
-                        isLoading = true,
-                    ),
+                listState = ListState.Results(
+                    results = persistentListOf(),
+                    isLoading = true,
                 ),
                 searchQuery = "Search Query",
                 searchResults = persistentListOf(),
                 recentStops = persistentListOf(),
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
             )
             SearchStopScreen(
                 searchQuery = "Search Query",
@@ -552,7 +544,7 @@ private fun PreviewSearchStopScreen_ListLoading() {
 
 @PreviewScreen
 @Composable
-private fun PreviewSearchStopScreen_ListResults() {
+private fun PreviewSearchStopScreen_ListResults_Maps() {
     PreviewTheme {
         val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
@@ -583,15 +575,12 @@ private fun PreviewSearchStopScreen_ListResults() {
             )
 
             val state = SearchStopState(
-                selectionType = StopSelectionType.LIST,
-                screen = SearchScreen.List(
-                    ListState.Results(
-                        results = persistentListOf(
-                            stopResult,
-                            trip,
-                        ),
-                        isLoading = false,
+                listState = ListState.Results(
+                    results = persistentListOf(
+                        stopResult,
+                        trip,
                     ),
+                    isLoading = false,
                 ),
                 searchQuery = "Central",
                 searchResults = persistentListOf(stopResult, trip),
@@ -602,6 +591,69 @@ private fun PreviewSearchStopScreen_ListResults() {
                         persistentListOf(TransportMode.Train()),
                     ),
                 ),
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            )
+
+            SearchStopScreen(
+                searchQuery = "Central",
+                searchStopState = state,
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_ListResults_NoMaps() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val stopResult = SearchStopState.SearchResult.Stop(
+                stopName = "Central",
+                stopId = "stop_1",
+                transportModeType = persistentListOf(TransportMode.Train()),
+            )
+            val trip = SearchStopState.SearchResult.Trip(
+                tripId = "trip_1",
+                routeShortName = "T1",
+                headsign = "To Town Hall",
+                stops = persistentListOf(
+                    SearchStopState.TripStop(
+                        stopId = "stop_1",
+                        stopName = "Central",
+                        stopSequence = 1,
+                        transportModeType = persistentListOf(TransportMode.Train()),
+                    ),
+                    SearchStopState.TripStop(
+                        stopId = "stop_2",
+                        stopName = "Town Hall",
+                        stopSequence = 2,
+                        transportModeType = persistentListOf(TransportMode.Train()),
+                    ),
+                ),
+                transportMode = TransportMode.Train(),
+            )
+
+            val state = SearchStopState(
+                listState = ListState.Results(
+                    results = persistentListOf(
+                        stopResult,
+                        trip,
+                    ),
+                    isLoading = false,
+                ),
+                searchQuery = "Central",
+                searchResults = persistentListOf(stopResult, trip),
+                recentStops = persistentListOf(
+                    SearchStopState.StopResult(
+                        "Central",
+                        "stop_1",
+                        persistentListOf(TransportMode.Train()),
+                    ),
+                ),
+                isMapsAvailable = false,
             )
 
             SearchStopScreen(
@@ -637,11 +689,12 @@ private fun PreviewSearchStopScreen_Recent() {
                 ),
             )
             val state = SearchStopState(
-                selectionType = StopSelectionType.LIST,
-                screen = SearchScreen.List(ListState.Recent),
+                listState = ListState.Recent,
                 searchQuery = "",
                 searchResults = persistentListOf(),
                 recentStops = recent.toImmutableList(),
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
             )
             SearchStopScreen(
                 searchQuery = "",
@@ -659,8 +712,7 @@ private fun PreviewSearchStopScreen_NoMatch() {
         val themeColor = remember { mutableStateOf(TransportMode.Metro().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
-                selectionType = StopSelectionType.LIST,
-                screen = SearchScreen.List(ListState.NoMatch),
+                listState = ListState.NoMatch,
                 searchQuery = "UnknownStop",
                 searchResults = persistentListOf(),
                 recentStops = persistentListOf(),
@@ -681,8 +733,7 @@ private fun PreviewSearchStopScreen_Error() {
         val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
-                selectionType = StopSelectionType.LIST,
-                screen = SearchScreen.List(ListState.Error),
+                listState = ListState.Error,
                 searchQuery = "Query",
                 searchResults = persistentListOf(),
                 recentStops = persistentListOf(),
@@ -703,8 +754,7 @@ private fun PreviewSearchStopScreen_Map() {
         val themeColor = remember { mutableStateOf(TransportMode.LightRail().colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
-                selectionType = StopSelectionType.MAP,
-                screen = SearchScreen.Map(),
+                mapUiState = MapUiState.Ready(),
                 searchQuery = "",
                 searchResults = persistentListOf(),
                 recentStops = persistentListOf(),

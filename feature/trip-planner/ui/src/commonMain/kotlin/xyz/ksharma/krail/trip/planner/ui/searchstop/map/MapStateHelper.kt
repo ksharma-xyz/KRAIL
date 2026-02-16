@@ -8,7 +8,6 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 /**
@@ -22,12 +21,12 @@ object MapStateHelper {
      * Logs an error if the state is not in the expected format.
      */
     fun getReadyMapState(state: SearchStopState): MapUiState.Ready? {
-        val mapState = (state.screen as? SearchScreen.Map)?.mapUiState as? MapUiState.Ready
+        val mapState = state.mapUiState as? MapUiState.Ready
 
         if (mapState == null) {
             log(
                 "[NEARBY_STOPS] ERROR: Cannot get Ready map state. " +
-                    "Screen: ${state.screen::class.simpleName}, ",
+                    "MapUiState: ${state.mapUiState?.let { it::class.simpleName } ?: "null"}",
             )
         }
 
@@ -140,13 +139,10 @@ object MapStateHelper {
     private fun SearchStopState.withMapState(
         block: MapUiState.Ready.() -> MapUiState.Ready,
     ): SearchStopState {
-        val currentScreen = screen as? SearchScreen.Map ?: return this
-        val currentMapState = currentScreen.mapUiState as? MapUiState.Ready ?: return this
+        val currentMapState = mapUiState as? MapUiState.Ready ?: return this
 
         return copy(
-            screen = currentScreen.copy(
-                mapUiState = currentMapState.block(),
-            ),
+            mapUiState = currentMapState.block(),
         )
     }
 

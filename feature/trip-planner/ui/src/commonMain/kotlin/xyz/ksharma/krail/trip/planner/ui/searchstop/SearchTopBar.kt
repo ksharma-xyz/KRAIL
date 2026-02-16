@@ -33,19 +33,18 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapToggleButton
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 
 @Composable
 fun SearchTopBar(
     placeholderText: String,
     focusRequester: FocusRequester,
     keyboard: SoftwareKeyboardController?,
-    onTypeSelect: (StopSelectionType) -> Unit,
+    onMapToggle: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     isMapAvailable: Boolean = false,
-    selectionType: StopSelectionType = StopSelectionType.LIST,
+    isMapSelected: Boolean = false,
 ) {
     Row(
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
@@ -85,13 +84,9 @@ fun SearchTopBar(
         if (isMapAvailable) {
             // Reserve the TextField height for the radio group so hiding it doesn't change layout height.
             MapToggleButton(
-                selected = selectionType == StopSelectionType.MAP,
+                selected = isMapSelected,
                 onClick = {
-                    if (selectionType == StopSelectionType.LIST) {
-                        onTypeSelect(StopSelectionType.MAP)
-                    } else {
-                        onTypeSelect(StopSelectionType.LIST)
-                    }
+                    onMapToggle(!isMapSelected)
                 },
                 modifier = Modifier
                     .padding(start = 12.dp)
@@ -117,8 +112,9 @@ private fun PreviewSearchTopBar_List() {
                 placeholderText = "Station",
                 focusRequester = focusRequester,
                 keyboard = null,
-                selectionType = StopSelectionType.LIST,
-                onTypeSelect = {},
+                isMapSelected = false,
+                isMapAvailable = true,
+                onMapToggle = {},
                 onBackClick = {},
                 onTextChange = {},
                 modifier = Modifier.height(72.dp),
@@ -138,9 +134,9 @@ private fun PreviewSearchTopBar_Map() {
                 placeholderText = "Station",
                 focusRequester = focusRequester,
                 keyboard = null,
-                selectionType = StopSelectionType.MAP,
+                isMapSelected = true,
                 isMapAvailable = true,
-                onTypeSelect = {},
+                onMapToggle = {},
                 onBackClick = {},
                 onTextChange = {},
                 modifier = Modifier.height(72.dp),
@@ -162,8 +158,9 @@ private fun PreviewSearchTopBar_Compact() {
                     placeholderText = "Station",
                     focusRequester = focusRequester,
                     keyboard = null,
-                    selectionType = StopSelectionType.LIST,
-                    onTypeSelect = {},
+                    isMapSelected = false,
+                    isMapAvailable = true,
+                    onMapToggle = {},
                     onBackClick = {},
                     onTextChange = {},
                     modifier = Modifier.fillMaxSize(), // let the bar use its internal padding

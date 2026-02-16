@@ -30,10 +30,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 
 @Suppress("TooManyFunctions")
 class SearchStopViewModel(
@@ -100,8 +98,13 @@ class SearchStopViewModel(
                     }
             }
 
-            is SearchStopUiEvent.StopSelectionTypeClicked -> {
-                onStopSelectionTypeClicked(event.stopSelectionType)
+            SearchStopUiEvent.InitializeMap -> {
+                if (isMapsAvailable && _uiState.value.mapUiState == null) {
+                    log("[NEARBY_STOPS] Initializing map state")
+                    updateUiState {
+                        copy(mapUiState = MapUiState.Ready())
+                    }
+                }
             }
 
             is SearchStopUiEvent.MapCenterChanged -> {
@@ -144,14 +147,10 @@ class SearchStopViewModel(
         // update query in state first
         updateUiState { copy(searchQuery = query) }
 
-        // If map is selected -> do not run search
-        val current = _uiState.value
-        if (current.selectionType == StopSelectionType.MAP) return
-
         // Blank query -> show recent stops and cancel any ongoing search
         if (query.isBlank()) {
             searchJob?.cancel()
-            updateUiState { copy(screen = SearchScreen.List(ListState.Recent)) }
+            updateUiState { copy(listState = ListState.Recent) }
 
             // ensure recentStops are loaded
             fetchRecentStopsJob?.cancel()
@@ -184,37 +183,6 @@ class SearchStopViewModel(
         }
     }
 
-    private fun onStopSelectionTypeClicked(stopSelectionType: StopSelectionType) {
-        // update selection toggle
-        updateUiState { copy(selectionType = stopSelectionType) }
-
-        // Decide screen to show:
-        if (stopSelectionType == StopSelectionType.MAP && isMapsAvailable) {
-            log("[NEARBY_STOPS] Switching to MAP mode - initializing state")
-
-            // Initialize map with empty state
-            // Camera movement in UI will trigger loadNearbyStops() via MapCenterChanged event
-            updateUiState {
-                copy(screen = SearchScreen.Map(mapUiState = MapUiState.Ready()))
-            }
-        } else {
-            // LIST selected: if query is blank show recent, else show results (trigger a search)
-            val currentQuery = _uiState.value.searchQuery
-            if (currentQuery.isBlank()) {
-                updateUiState { copy(screen = SearchScreen.List(ListState.Recent)) }
-                // ensure recentStops are loaded (trigger fetch if needed)
-                fetchRecentStopsJob?.cancel()
-                fetchRecentStopsJob =
-                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
-                        fetchRecentStops()
-                    }
-            } else {
-                // trigger the search flow: reuse onSearchTextChanged to ensure same behaviour
-                onSearchTextChanged(currentQuery)
-            }
-        }
-    }
-
     private suspend fun fetchRecentStops() {
         val recentStops = stopResultsManager.recentSearchStops().toImmutableList()
         log("fetchRecentStops: ${recentStops.map { it.stopName }}")
@@ -227,15 +195,13 @@ class SearchStopViewModel(
 
     private fun SearchStopState.displayData(stopsResult: List<SearchStopState.SearchResult>) = copy(
         searchResults = stopsResult.toImmutableList(),
-        screen = if (stopsResult.isEmpty()) {
-            SearchScreen.List(ListState.NoMatch)
+        listState = if (stopsResult.isEmpty()) {
+            ListState.NoMatch
         } else {
-            SearchScreen.List(
-                ListState.Results(
-                    results = stopsResult.toImmutableList(),
-                    isLoading = false,
-                    isError = false,
-                ),
+            ListState.Results(
+                results = stopsResult.toImmutableList(),
+                isLoading = false,
+                isError = false,
             )
         },
     )
@@ -243,18 +209,16 @@ class SearchStopViewModel(
     private fun SearchStopState.displayLoading() =
         copy(
             // keep existing results (if any) but mark loading
-            screen = SearchScreen.List(
-                ListState.Results(
-                    results = searchResults,
-                    isLoading = true,
-                    isError = false,
-                ),
+            listState = ListState.Results(
+                results = searchResults,
+                isLoading = true,
+                isError = false,
             ),
         )
 
     private fun SearchStopState.displayError() = copy(
         searchResults = persistentListOf(),
-        screen = SearchScreen.List(ListState.Error),
+        listState = ListState.Error,
     )
 
     // region Maps related methods

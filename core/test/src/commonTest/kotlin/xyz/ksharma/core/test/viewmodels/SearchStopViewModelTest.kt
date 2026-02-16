@@ -21,10 +21,8 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.StopSelectionType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -71,9 +69,8 @@ class SearchStopViewModelTest {
                 val state = awaitItem()
                 assertTrue(state.searchResults.isEmpty())
                 assertTrue(state.recentStops.isEmpty())
-                // Initial screen should be List with Recent state
-                assertIs<SearchScreen.List>(state.screen)
-                assertEquals(StopSelectionType.LIST, state.selectionType)
+                // Initial listState should be Recent
+                assertIs<ListState.Recent>(state.listState)
 
                 // Second item is the state after checkMapsAvailability() is called
                 val stateWithMapsAvailability = awaitItem()
@@ -132,20 +129,16 @@ class SearchStopViewModelTest {
 
                 viewModel.onEvent(SearchStopUiEvent.SearchTextChanged(query))
 
-                // Loading state - should be SearchScreen.List with Results containing isLoading=true
+                // Loading state - should be Results with isLoading=true
                 val loadingState = awaitItem()
-                val loadingScreen = loadingState.screen
-                assertIs<SearchScreen.List>(loadingScreen)
-                val loadingListState = loadingScreen.listState
+                val loadingListState = loadingState.listState
                 assertIs<ListState.Results>(loadingListState)
                 assertTrue(loadingListState.isLoading)
                 assertFalse(loadingListState.isError)
 
-                // Error state - should be SearchScreen.List with Error state
+                // Error state - should be Error listState
                 val errorState = awaitItem()
-                val errorScreen = errorState.screen
-                assertIs<SearchScreen.List>(errorScreen)
-                assertIs<ListState.Error>(errorScreen.listState)
+                assertIs<ListState.Error>(errorState.listState)
                 assertTrue(errorState.searchResults.isEmpty())
 
                 cancelAndIgnoreRemainingEvents()

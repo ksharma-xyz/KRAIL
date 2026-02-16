@@ -16,8 +16,11 @@ sealed interface SearchStopUiEvent {
 
     data object RefreshRecentStopsList : SearchStopUiEvent
 
-    data class StopSelectionTypeClicked(val stopSelectionType: StopSelectionType) :
-        SearchStopUiEvent
+    /**
+     * Request map initialization. Only triggers if maps are available.
+     * Used when entering dual-pane mode or user toggles to map in single-pane mode.
+     */
+    data object InitializeMap : SearchStopUiEvent
 
     // Map-related events
     data class MapCenterChanged(val center: LatLng) : SearchStopUiEvent

@@ -15,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -40,13 +42,16 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 @Composable
 fun SearchStopMap(
     mapUiState: MapUiState,
     modifier: Modifier = Modifier,
+    keyboard: SoftwareKeyboardController? = null,
+    focusRequester: FocusRequester? = null,
     onEvent: (SearchStopUiEvent) -> Unit = {},
-    onStopSelect: (xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem) -> Unit = {},
+    onStopSelect: (StopItem) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -59,6 +64,8 @@ fun SearchStopMap(
             is MapUiState.Ready -> {
                 MapContent(
                     mapState = mapUiState,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                     modifier = Modifier.fillMaxSize(),
@@ -92,8 +99,10 @@ private fun ErrorMessage(
 private fun MapContent(
     mapState: MapUiState.Ready,
     onEvent: (SearchStopUiEvent) -> Unit,
-    onStopSelect: (xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem) -> Unit,
+    onStopSelect: (StopItem) -> Unit,
     modifier: Modifier = Modifier,
+    keyboard: SoftwareKeyboardController? = null,
+    focusRequester: FocusRequester? = null,
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -209,12 +218,15 @@ private fun MapContent(
                     stop = stop,
                     onDismiss = { selectedStop = null },
                     onSelectStop = {
+                        // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
+                        keyboard?.hide()
+                        focusRequester?.freeFocus()
+
                         // Convert NearbyStopFeature to StopItem and call onStopSelect
-                        val stopItem =
-                            xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
-                                stopId = stop.stopId,
-                                stopName = stop.stopName,
-                            )
+                        val stopItem = StopItem(
+                            stopId = stop.stopId,
+                            stopName = stop.stopName,
+                        )
                         onStopSelect(stopItem)
 
                         // Track the selection

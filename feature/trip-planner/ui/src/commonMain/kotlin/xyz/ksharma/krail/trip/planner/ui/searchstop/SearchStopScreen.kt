@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
@@ -43,8 +44,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.log.log
@@ -68,6 +67,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import app.krail.taj.resources.Res as TajRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Composable
@@ -484,7 +484,7 @@ private fun LazyListScope.recentSearchStopsList(
             )
 
             Image(
-                painter = painterResource(Res.drawable.ic_close),
+                painter = painterResource(TajRes.drawable.ic_close),
                 contentDescription = "Clear recent stops",
                 colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
                 modifier =

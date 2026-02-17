@@ -45,6 +45,7 @@ maplibre = "0.12.1"
 spmForKmp = "1.4.8"
 maplibreNativeDistributionSpm = "6.19.1"
 material3 = "1.9.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -64,6 +65,7 @@ kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collec
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "android-lifecycle" }
+playServicesLocation = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 
 # Material
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }

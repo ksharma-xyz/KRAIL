@@ -35,9 +35,15 @@ kotlin {
             dependencies {
                 implementation(projects.taj)
                 implementation(projects.core.maps.state)
+                // Only state modules needed — no full permission/location implementation.
+                // UserLocationManager lives in :core:maps:data; Compose integration is in
+                // the feature layer (rememberUserLocationManager).
+                implementation(projects.core.permission.state)
+                implementation(projects.core.location.state)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.maplibre.compose)
                 implementation(libs.compose.runtime)
+                implementation(libs.compose.components.resources)
             }
         }
     }

@@ -31,6 +31,8 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.maps.state)
+                implementation(projects.core.permission.data)
+                implementation(projects.core.location.data)
 
                 // Sandook for database access
                 implementation(projects.sandook)

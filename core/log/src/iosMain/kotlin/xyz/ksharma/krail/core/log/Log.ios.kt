@@ -3,7 +3,6 @@ package xyz.ksharma.krail.core.log
 import co.touchlab.kermit.Logger
 import platform.Foundation.NSLog
 import kotlin.experimental.ExperimentalNativeApi
-
 @OptIn(ExperimentalNativeApi::class)
 actual fun log(message: String) {
     if (Platform.isDebugBinary) {

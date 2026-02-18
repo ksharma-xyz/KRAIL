@@ -556,7 +556,7 @@ Compose:
   CompositionLocalAllowlist:
     active: true
     # -- You can optionally define a list of CompositionLocals that are allowed here
-    allowedCompositionLocals: LocalTextColor,LocalContentAlpha, LocalTextStyle,LocalContentColor,LocalOnContentColor,LocalKrailTypography,LocalKrailColors,LocalThemeController,LocalResultEventBus
+    allowedCompositionLocals: LocalTextColor,LocalContentAlpha, LocalTextStyle,LocalContentColor,LocalOnContentColor,LocalKrailTypography,LocalKrailColors,LocalThemeController,LocalResultEventBus,LocalSystemDarkThemeOverride
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

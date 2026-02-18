@@ -2,6 +2,7 @@ package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
@@ -23,17 +24,13 @@ data class ThemeController(
     val currentMode: ThemeMode,
     val setThemeMode: (ThemeMode) -> Unit,
 ) {
-    fun toggleDarkMode(systemInDarkTheme: Boolean) {
-        val isDarkMode = when (currentMode) {
-            ThemeMode.DARK -> true
-            ThemeMode.LIGHT -> false
-            ThemeMode.SYSTEM -> systemInDarkTheme
-        }
-        setThemeMode(if (isDarkMode) ThemeMode.LIGHT else ThemeMode.DARK)
-    }
-
     @Composable
-    fun isAppDarkMode(systemInDarkTheme: Boolean = isSystemInDarkTheme()): Boolean {
+    fun isAppDarkMode(): Boolean {
+        // On iOS, isSystemInDarkTheme() gets stuck returning true after background→foreground
+        // transitions. LocalSystemDarkThemeOverride provides a reliable override when set by
+        // the platform (e.g. iOS MainViewController via UIApplicationDidBecomeActiveNotification).
+        val systemInDarkTheme = LocalSystemDarkThemeOverride.current ?: isSystemInDarkTheme()
+
         return when (currentMode) {
             ThemeMode.DARK -> true
             ThemeMode.LIGHT -> false
@@ -42,13 +39,22 @@ data class ThemeController(
     }
 }
 
+/**
+ * Platform-specific override for the system dark mode value. On most platforms this is `null`
+ * (falls back to [isSystemInDarkTheme]). iOS provides a reliable value here to work around
+ * a Compose Multiplatform bug where [isSystemInDarkTheme] returns a stale result after the
+ * app returns from the background.
+ */
+val LocalSystemDarkThemeOverride = compositionLocalOf<Boolean?> { null }
+
 @Composable
 fun isAppInDarkMode(): Boolean {
     val themeController = LocalThemeController.current
+    val systemInDarkTheme = LocalSystemDarkThemeOverride.current ?: isSystemInDarkTheme()
     return when (themeController.currentMode) {
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.SYSTEM -> systemInDarkTheme
     }
 }
 

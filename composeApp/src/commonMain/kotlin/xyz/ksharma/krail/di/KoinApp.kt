@@ -14,10 +14,13 @@ import xyz.ksharma.krail.core.appversion.di.appVersionModule
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.core.di.coroutineDispatchersModule
 import xyz.ksharma.krail.core.festival.di.festivalModule
+import xyz.ksharma.krail.core.location.data.di.locationModuleCommon
 import xyz.ksharma.krail.core.maps.data.di.mapsDataModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
+import xyz.ksharma.krail.core.permission.data.di.permissionModuleCommon
 import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
+import xyz.ksharma.krail.feature.location.LocationViewModel
 import xyz.ksharma.krail.info.tile.network.real.di.infoTileModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule
 import xyz.ksharma.krail.navigation.di.appNavigationModule
@@ -36,7 +39,10 @@ fun initKoin(config: KoinAppDeclaration? = null) {
         modules(
             coroutineDispatchersModule,
             coreNetworkModule,
+            permissionModuleCommon,
+            locationModuleCommon,
             viewModelsModule,
+            locationFeatureModule,
             sandookModule,
             mapsDataModule,
             themeManagerModule,
@@ -74,3 +80,8 @@ val splashModule = module {
         )
     }
 }
+
+val locationFeatureModule = module {
+    viewModel { LocationViewModel() }
+}
+

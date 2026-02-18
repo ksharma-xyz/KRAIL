@@ -104,12 +104,19 @@ class SearchStopViewModel(
                     updateUiState {
                         copy(mapUiState = MapUiState.Ready())
                     }
+                    // Note: Auto-fetch of user location happens in UI layer
+                    // via LaunchedEffect observing permission status
                 }
             }
 
             is SearchStopUiEvent.MapCenterChanged -> {
                 log("[NEARBY_STOPS] MapCenterChanged: lat=${event.center.latitude}, lon=${event.center.longitude}")
                 onMapCenterChanged(event.center)
+            }
+
+            is SearchStopUiEvent.UserLocationUpdated -> {
+                log("[NEARBY_STOPS] UserLocationUpdated: ${event.location?.let { "lat=${it.latitude}, lon=${it.longitude}" } ?: "null"}")
+                onUserLocationUpdated(event.location)
             }
 
             is SearchStopUiEvent.TransportModeFilterToggled -> {
@@ -192,6 +199,9 @@ class SearchStopViewModel(
     private fun checkMapsAvailability() {
         updateUiState { copy(isMapsAvailable = this@SearchStopViewModel.isMapsAvailable) }
     }
+
+
+    // endregion
 
     private fun SearchStopState.displayData(stopsResult: List<SearchStopState.SearchResult>) = copy(
         searchResults = stopsResult.toImmutableList(),
@@ -287,8 +297,12 @@ class SearchStopViewModel(
     }
 
     private fun onNearbyStopClicked(stop: NearbyStopFeature) {
-        // : Show bottom sheet with stop details
+        // TODO: Show bottom sheet with stop details
         log("stop: $stop")
+    }
+
+    private fun onUserLocationUpdated(location: LatLng?) {
+        updateUiState { MapStateHelper.updateUserLocation(this, location) }
     }
 
     private fun onSearchRadiusChanged(radiusKm: Double) {

@@ -46,6 +46,18 @@ object MapStateHelper {
     }
 
     /**
+     * Update user location in the state.
+     */
+    fun updateUserLocation(
+        state: SearchStopState,
+        location: LatLng?,
+    ): SearchStopState {
+        return state.withMapState {
+            copy(mapDisplay = mapDisplay.copy(userLocation = location))
+        }
+    }
+
+    /**
      * Update nearby stops in the state.
      */
     fun updateNearbyStops(

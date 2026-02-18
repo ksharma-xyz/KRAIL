@@ -15,6 +15,7 @@ import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.SplashRoute
+import xyz.ksharma.krail.feature.location.navigation.LocationEntry
 import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.splash.SplashScreen
 import xyz.ksharma.krail.splash.SplashUiEvent
@@ -46,6 +47,16 @@ val appNavigationModule = module {
             name = EntryBuilderQualifiers.Names.APP_UPGRADE,
             builder = { _ ->
                 AppUpgradeEntry()
+            },
+        )
+    }
+
+    // Provide Location entry builder
+    factory<EntryBuilderDescriptor>(qualifier = EntryBuilderQualifiers.LOCATION) {
+        EntryBuilderDescriptor(
+            name = EntryBuilderQualifiers.Names.LOCATION,
+            builder = { _ ->
+                LocationEntry()
             },
         )
     }

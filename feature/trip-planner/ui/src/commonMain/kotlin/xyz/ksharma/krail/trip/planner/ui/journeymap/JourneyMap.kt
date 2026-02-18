@@ -15,8 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_loc
+import app.krail.taj.resources.ic_location
 import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
@@ -56,6 +55,7 @@ import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
+import app.krail.taj.resources.Res as TajRes
 
 private const val LABEL_MIN_ZOOM = 0f
 private const val LABEL_MAX_ZOOM = 24f
@@ -210,7 +210,7 @@ private fun JourneyMapContent(
             // === TEXT LABELS ===
 
             // Prepare location icon for stop labels
-            val locationIcon = painterResource(Res.drawable.ic_loc)
+            val locationIcon = painterResource(TajRes.drawable.ic_location)
 
             // Get origin stop name for display
             val originStopName = remember(mapState.mapDisplay.stops) {

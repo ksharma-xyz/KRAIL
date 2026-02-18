@@ -16,6 +16,7 @@ object EntryBuilderQualifiers {
         const val SPLASH = "splash"
         const val APP_UPGRADE = "appUpgrade"
         const val TRIP_PLANNER = "tripPlanner"
+        const val LOCATION = "location"
 
         // Add more names here as needed for other features
         // const val DISCOVER = "discover"
@@ -29,6 +30,7 @@ object EntryBuilderQualifiers {
     val SPLASH = named(Names.SPLASH)
     val APP_UPGRADE = named(Names.APP_UPGRADE)
     val TRIP_PLANNER = named(Names.TRIP_PLANNER)
+    val LOCATION = named(Names.LOCATION)
 
     // Add more qualifiers here as needed for other features
     // val DISCOVER = named(Names.DISCOVER)

@@ -6,6 +6,10 @@
     <!-- Required for Firebase -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
+    <!-- Location permissions for foreground location tracking -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:name=".KrailApplication"
         android:allowBackup="true"

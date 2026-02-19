@@ -3,7 +3,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 /**
  * iOS-specific location module.
- * 
+ *
  * Note: LocationTracker is created via Compose rememberLocationTracker()
  * for proper CLLocationManager integration.
  */

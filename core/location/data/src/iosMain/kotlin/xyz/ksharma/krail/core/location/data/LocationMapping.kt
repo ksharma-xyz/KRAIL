@@ -2,7 +2,12 @@ package xyz.ksharma.krail.core.location.data
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
-import platform.CoreLocation.*
+import platform.CoreLocation.CLLocation
+import platform.CoreLocation.CLLocationAccuracy
+import platform.CoreLocation.kCLLocationAccuracyBest
+import platform.CoreLocation.kCLLocationAccuracyHundredMeters
+import platform.CoreLocation.kCLLocationAccuracyKilometer
+import platform.CoreLocation.kCLLocationAccuracyThreeKilometers
 import platform.Foundation.timeIntervalSince1970
 import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationPriority
@@ -22,7 +27,7 @@ internal fun CLLocation.toCommonLocation(): Location {
         speedAccuracy = if (speedAccuracy >= 0) speedAccuracy else null,
         bearing = if (course >= 0) course else null,
         bearingAccuracy = if (courseAccuracy >= 0) courseAccuracy else null,
-        timestamp = (timestamp.timeIntervalSince1970 * 1000).toLong()
+        timestamp = (timestamp.timeIntervalSince1970 * 1000).toLong(),
     )
 }
 
@@ -37,4 +42,3 @@ internal fun LocationPriority.toiOSAccuracy(): CLLocationAccuracy {
         LocationPriority.PASSIVE -> kCLLocationAccuracyThreeKilometers
     }
 }
-

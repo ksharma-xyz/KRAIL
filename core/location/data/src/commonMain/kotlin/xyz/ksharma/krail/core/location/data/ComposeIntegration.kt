@@ -16,4 +16,3 @@ import androidx.compose.runtime.Composable
  */
 @Composable
 expect fun rememberLocationTracker(): LocationTracker
-

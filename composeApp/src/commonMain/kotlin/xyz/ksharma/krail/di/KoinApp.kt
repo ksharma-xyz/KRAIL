@@ -20,7 +20,6 @@ import xyz.ksharma.krail.core.network.coreNetworkModule
 import xyz.ksharma.krail.core.permission.data.di.permissionModuleCommon
 import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
-import xyz.ksharma.krail.feature.location.LocationViewModel
 import xyz.ksharma.krail.info.tile.network.real.di.infoTileModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule
 import xyz.ksharma.krail.navigation.di.appNavigationModule
@@ -84,4 +83,3 @@ val splashModule = module {
 val locationFeatureModule = module {
     viewModel { LocationViewModel() }
 }
-

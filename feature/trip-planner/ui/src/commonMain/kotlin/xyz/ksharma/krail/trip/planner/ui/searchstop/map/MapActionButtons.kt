@@ -28,6 +28,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
  *
  * @param onOptionsClick Callback for options button click
  * @param onLocationButtonClick Callback when location button is tapped — caller handles the rest
+ * @param isLocationActive Whether location tracking is active. Controls button color.
  * @param modifier Modifier to be applied to the component
  */
 @Composable
@@ -35,6 +36,7 @@ internal fun MapActionButtons(
     onOptionsClick: () -> Unit,
     onLocationButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isLocationActive: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -62,7 +64,7 @@ internal fun MapActionButtons(
             }
         }
 
-        UserLocationButton(onClick = onLocationButtonClick)
+        UserLocationButton(onClick = onLocationButtonClick, isActive = isLocationActive)
     }
 }
 
@@ -70,11 +72,24 @@ internal fun MapActionButtons(
 
 @PreviewComponent
 @Composable
-private fun MapActionButtonsPreview() {
+private fun MapActionButtonsActivePreview() {
     PreviewTheme {
         MapActionButtons(
             onOptionsClick = {},
             onLocationButtonClick = {},
+            isLocationActive = true,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun MapActionButtonsInactivePreview() {
+    PreviewTheme {
+        MapActionButtons(
+            onOptionsClick = {},
+            onLocationButtonClick = {},
+            isLocationActive = false,
         )
     }
 }

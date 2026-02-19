@@ -5,8 +5,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
-import platform.CoreLocation.*
+import platform.CoreLocation.CLLocation
+import platform.CoreLocation.CLLocationManager
+import platform.CoreLocation.CLLocationManagerDelegateProtocol
 import platform.CoreLocation.kCLErrorLocationUnknown
+import platform.CoreLocation.kCLLocationAccuracyBest
 import platform.Foundation.NSError
 import platform.darwin.NSObject
 import xyz.ksharma.krail.core.location.Location
@@ -36,7 +39,7 @@ internal class IosLocationTrackerImpl : LocationTracker {
                 val delegate = object : NSObject(), CLLocationManagerDelegateProtocol {
                     override fun locationManager(
                         manager: CLLocationManager,
-                        didUpdateLocations: List<*>
+                        didUpdateLocations: List<*>,
                     ) {
                         if (isCompleted) return
                         val location = didUpdateLocations.lastOrNull() as? CLLocation
@@ -50,7 +53,7 @@ internal class IosLocationTrackerImpl : LocationTracker {
 
                     override fun locationManager(
                         manager: CLLocationManager,
-                        didFailWithError: NSError
+                        didFailWithError: NSError,
                     ) {
                         if (isCompleted) return
                         // kCLErrorLocationUnknown (code 0) is transient: CoreLocation cannot get
@@ -62,7 +65,7 @@ internal class IosLocationTrackerImpl : LocationTracker {
                         manager.stopUpdatingLocation()
                         manager.delegate = null
                         continuation.resumeWithException(
-                            LocationError.Unknown(Exception(didFailWithError.localizedDescription))
+                            LocationError.Unknown(Exception(didFailWithError.localizedDescription)),
                         )
                     }
                 }
@@ -91,7 +94,7 @@ internal class IosLocationTrackerImpl : LocationTracker {
             },
             onError = { error ->
                 close(LocationError.Unknown(Exception(error.localizedDescription)))
-            }
+            },
         )
 
         trackingDelegate = delegate
@@ -134,12 +137,12 @@ internal class IosLocationTrackerImpl : LocationTracker {
  */
 private class LocationTrackingDelegate(
     private val onLocationUpdate: (CLLocation) -> Unit,
-    private val onError: (NSError) -> Unit
+    private val onError: (NSError) -> Unit,
 ) : NSObject(), CLLocationManagerDelegateProtocol {
 
     override fun locationManager(
         manager: CLLocationManager,
-        didUpdateLocations: List<*>
+        didUpdateLocations: List<*>,
     ) {
         val location = didUpdateLocations.lastOrNull() as? CLLocation
         if (location != null) {
@@ -149,7 +152,7 @@ private class LocationTrackingDelegate(
 
     override fun locationManager(
         manager: CLLocationManager,
-        didFailWithError: NSError
+        didFailWithError: NSError,
     ) {
         // kCLErrorLocationUnknown (code 0) is transient — CoreLocation cannot get a location
         // right now but will keep trying. Ignore it so the flow stays alive.

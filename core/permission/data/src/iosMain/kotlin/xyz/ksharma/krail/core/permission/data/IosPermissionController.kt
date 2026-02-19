@@ -1,9 +1,10 @@
 package xyz.ksharma.krail.core.permission.data
 
 import kotlinx.coroutines.suspendCancellableCoroutine
-import platform.CoreLocation.*
+import platform.CoreLocation.CLAuthorizationStatus
+import platform.CoreLocation.CLLocationManager
+import platform.CoreLocation.CLLocationManagerDelegateProtocol
 import platform.Foundation.NSURL
-import platform.Foundation.performBlock
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.darwin.NSObject
@@ -42,7 +43,7 @@ internal class IosPermissionController : PermissionController {
     }
 
     override suspend fun requestPermission(type: LocationPermissionType): PermissionResult {
-        val permissionStatus = cachedStatus.toPermissionStatus(type)
+        val permissionStatus = cachedStatus.toPermissionStatus()
 
         // Check if already granted
         if (permissionStatus is PermissionStatus.Granted) {
@@ -62,8 +63,8 @@ internal class IosPermissionController : PermissionController {
         // delegate once the result is known so status changes keep being cached.
         return suspendCancellableCoroutine { continuation ->
             val delegate = LocationAuthorizationDelegate { newStatus ->
-                cachedStatus = newStatus  // keep cache current during the request
-                val newPermissionStatus = newStatus.toPermissionStatus(type)
+                cachedStatus = newStatus // keep cache current during the request
+                val newPermissionStatus = newStatus.toPermissionStatus()
 
                 when (newPermissionStatus) {
                     is PermissionStatus.Granted ->
@@ -92,7 +93,8 @@ internal class IosPermissionController : PermissionController {
             // Request appropriate authorization
             when (type) {
                 LocationPermissionType.LOCATION_WHEN_IN_USE,
-                LocationPermissionType.COARSE_LOCATION ->
+                LocationPermissionType.COARSE_LOCATION,
+                ->
                     locationManager.requestWhenInUseAuthorization()
             }
         }
@@ -100,7 +102,7 @@ internal class IosPermissionController : PermissionController {
 
     override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus {
         // Reads from cache — no authorizationStatus call on the main thread
-        return cachedStatus.toPermissionStatus(type)
+        return cachedStatus.toPermissionStatus()
     }
 
     override fun wasPermissionRequested(type: LocationPermissionType): Boolean {
@@ -110,7 +112,7 @@ internal class IosPermissionController : PermissionController {
     override fun openAppSettings() {
         val settingsUrl = UIApplicationOpenSettingsURLString
         UIApplication.sharedApplication.openURL(
-            NSURL.URLWithString(settingsUrl)!!
+            NSURL.URLWithString(settingsUrl)!!,
         )
     }
 }
@@ -123,7 +125,7 @@ internal class IosPermissionController : PermissionController {
  * pattern and does not trigger the "UI unresponsiveness" diagnostic.
  */
 private class LocationAuthorizationDelegate(
-    private val onAuthorizationChange: (CLAuthorizationStatus) -> Unit
+    private val onAuthorizationChange: (CLAuthorizationStatus) -> Unit,
 ) : NSObject(), CLLocationManagerDelegateProtocol {
 
     override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {

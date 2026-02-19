@@ -14,4 +14,3 @@ actual fun rememberLocationTracker(): LocationTracker {
         IosLocationTrackerImpl()
     }
 }
-

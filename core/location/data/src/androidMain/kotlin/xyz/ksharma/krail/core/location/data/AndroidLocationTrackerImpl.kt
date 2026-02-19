@@ -3,7 +3,6 @@ package xyz.ksharma.krail.core.location.data
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
-import android.location.LocationManager as SystemLocationManager
 import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -13,18 +12,19 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.Dispatchers
 import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationConfig
 import xyz.ksharma.krail.core.location.LocationError
 import xyz.ksharma.krail.core.location.LocationPriority
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import android.location.LocationManager as SystemLocationManager
 
 /**
  * Android implementation of [LocationTracker] using FusedLocationProviderClient.
@@ -32,7 +32,7 @@ import kotlin.coroutines.resumeWithException
  * Uses Google Play Services Location API for accurate and battery-efficient location tracking.
  */
 internal class AndroidLocationTrackerImpl(
-    private val context: Context
+    private val context: Context,
 ) : LocationTracker {
 
     private val fusedLocationClient: FusedLocationProviderClient =
@@ -97,7 +97,8 @@ internal class AndroidLocationTrackerImpl(
                     continuation.resume(lastLocation.toCommonLocation())
                 } else {
                     // Request current location if last location not available
-                    val locationRequest = createLocationRequest(LocationConfig(priority = LocationPriority.HIGH_ACCURACY))
+                    val locationRequest =
+                        createLocationRequest(LocationConfig(priority = LocationPriority.HIGH_ACCURACY))
                     val callback = object : LocationCallback() {
                         override fun onLocationResult(result: LocationResult) {
                             if (!isCompleted) {
@@ -109,7 +110,7 @@ internal class AndroidLocationTrackerImpl(
                                 } ?: run {
                                     fusedLocationClient.removeLocationUpdates(this)
                                     continuation.resumeWithException(
-                                        LocationError.Unknown(IllegalStateException("Location is null"))
+                                        LocationError.Unknown(IllegalStateException("Location is null")),
                                     )
                                 }
                             }
@@ -119,7 +120,7 @@ internal class AndroidLocationTrackerImpl(
                     fusedLocationClient.requestLocationUpdates(
                         locationRequest,
                         callback,
-                        Looper.getMainLooper()
+                        Looper.getMainLooper(),
                     ).addOnFailureListener { exception ->
                         if (!isCompleted) {
                             handler.removeCallbacks(timeoutRunnable)
@@ -173,11 +174,14 @@ internal class AndroidLocationTrackerImpl(
 
         locationCallback = callback
 
-        println("[USER_LOCATION] Android: FusedLocation requestLocationUpdates (interval=${locationRequest.intervalMillis}ms)")
+        println(
+            "[USER_LOCATION] Android: FusedLocation requestLocationUpdates " +
+                "(interval=${locationRequest.intervalMillis}ms)",
+        )
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             callback,
-            Looper.getMainLooper()
+            Looper.getMainLooper(),
         ).addOnFailureListener { exception ->
             close(exception.toLocationError())
         }
@@ -201,7 +205,7 @@ internal class AndroidLocationTrackerImpl(
             ?: return false
 
         return locationManager.isProviderEnabled(SystemLocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(SystemLocationManager.NETWORK_PROVIDER)
+            locationManager.isProviderEnabled(SystemLocationManager.NETWORK_PROVIDER)
     }
 
     /**

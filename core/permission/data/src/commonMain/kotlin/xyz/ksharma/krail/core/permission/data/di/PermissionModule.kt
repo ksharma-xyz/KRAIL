@@ -17,4 +17,3 @@ val permissionModuleCommon = module {
  * Each platform provides its own implementation.
  */
 expect val permissionModule: Module
-

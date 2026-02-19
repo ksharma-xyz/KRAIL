@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -29,21 +28,19 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
  * - Dismissible with close button
  * - Animated enter/exit
  *
- * @param permissionStatus Current permission status
  * @param onGoToSettings Callback to open app settings
- * @param backgroundColor Background color (typically from search bar)
  * @param modifier Modifier for the banner
+ * @param backgroundColor Background color (typically from search bar)
  */
 @Composable
 fun LocationPermissionBanner(
-    permissionStatus: PermissionStatus,
-    backgroundColor: Color = KrailTheme.colors.surface,
     onGoToSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    backgroundColor: Color = KrailTheme.colors.surface,
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
-            .background(color = backgroundColor)
+            .background(color = backgroundColor),
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -63,8 +60,8 @@ fun LocationPermissionBanner(
 
         TextButton(
             onClick = onGoToSettings,
-            modifier = Modifier.padding(top = 12.dp, )
-                .padding(start = 16.dp, end = 16.dp)
+            modifier = Modifier.padding(top = 12.dp)
+                .padding(start = 16.dp, end = 16.dp),
         ) {
             Text(
                 text = "Go to Settings",
@@ -83,9 +80,8 @@ fun LocationPermissionBanner(
 private fun LocationPermissionBannerPreview() {
     PreviewTheme {
         LocationPermissionBanner(
-            permissionStatus = PermissionStatus.Denied.Permanent,
             onGoToSettings = {},
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         )
     }
 }

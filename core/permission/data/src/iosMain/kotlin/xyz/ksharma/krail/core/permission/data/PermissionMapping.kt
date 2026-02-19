@@ -1,13 +1,17 @@
 package xyz.ksharma.krail.core.permission.data
 
-import platform.CoreLocation.*
-import xyz.ksharma.krail.core.permission.LocationPermissionType
+import platform.CoreLocation.CLAuthorizationStatus
+import platform.CoreLocation.kCLAuthorizationStatusAuthorizedAlways
+import platform.CoreLocation.kCLAuthorizationStatusAuthorizedWhenInUse
+import platform.CoreLocation.kCLAuthorizationStatusDenied
+import platform.CoreLocation.kCLAuthorizationStatusNotDetermined
+import platform.CoreLocation.kCLAuthorizationStatusRestricted
 import xyz.ksharma.krail.core.permission.PermissionStatus
 
 /**
  * Map iOS CLAuthorizationStatus to [xyz.ksharma.krail.core.permission.PermissionStatus].
  */
-internal fun CLAuthorizationStatus.toPermissionStatus(requestedType: LocationPermissionType): PermissionStatus {
+internal fun CLAuthorizationStatus.toPermissionStatus(): PermissionStatus {
     return when (this) {
         kCLAuthorizationStatusAuthorizedAlways -> PermissionStatus.Granted
 
@@ -19,9 +23,9 @@ internal fun CLAuthorizationStatus.toPermissionStatus(requestedType: LocationPer
         kCLAuthorizationStatusNotDetermined -> PermissionStatus.NotDetermined
 
         kCLAuthorizationStatusDenied,
-        kCLAuthorizationStatusRestricted -> PermissionStatus.Denied.Permanent
+        kCLAuthorizationStatusRestricted,
+        -> PermissionStatus.Denied.Permanent
 
         else -> PermissionStatus.NotDetermined
     }
 }
-

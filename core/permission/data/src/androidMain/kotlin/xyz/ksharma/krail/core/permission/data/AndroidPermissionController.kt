@@ -27,7 +27,7 @@ import kotlin.coroutines.resume
 internal class AndroidPermissionController(
     private val context: Context,
     private val launcher: ActivityResultLauncher<Array<String>>,
-    private val setLauncherCallback: ((Map<String, Boolean>) -> Unit) -> Unit
+    private val setLauncherCallback: ((Map<String, Boolean>) -> Unit) -> Unit,
 ) : PermissionController {
 
     private val stateTracker = PermissionStateTracker()
@@ -69,8 +69,8 @@ internal class AndroidPermissionController(
         if (activity != null) {
             val anyPermanentlyDenied = permissions.any { permission ->
                 !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) &&
-                ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED &&
-                stateTracker.wasRequested(type)
+                    ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED &&
+                    stateTracker.wasRequested(type)
             }
 
             if (anyPermanentlyDenied) {
@@ -100,7 +100,7 @@ internal class AndroidPermissionController(
                         val isPermanent = if (activity != null) {
                             permissions.any { permission ->
                                 !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) &&
-                                results[permission] == false
+                                    results[permission] == false
                             }
                         } else {
                             false
@@ -154,4 +154,3 @@ internal class AndroidPermissionController(
         context.startActivity(intent)
     }
 }
-

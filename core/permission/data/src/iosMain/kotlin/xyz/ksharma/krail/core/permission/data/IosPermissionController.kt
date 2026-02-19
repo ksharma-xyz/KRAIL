@@ -49,9 +49,8 @@ internal class IosPermissionController : PermissionController {
             val delegate = LocationAuthorizationDelegate { newStatus ->
                 cachedStatus = newStatus // keep cache current during the request
                 val result = when (newStatus.toPermissionStatus()) {
-                    is PermissionStatus.Granted -> PermissionResult.Granted
-                    is PermissionStatus.Denied.Permanent -> PermissionResult.Denied(isPermanent = true)
-                    else -> PermissionResult.Denied(isPermanent = false)
+                    PermissionStatus.Granted -> PermissionResult.Granted
+                    else -> PermissionResult.Denied
                 }
                 continuation.resume(result)
                 // Restore persistent delegate so future status changes keep being cached
@@ -98,7 +97,7 @@ internal class IosPermissionController : PermissionController {
                 stateTracker.markAsRequested(permission)
                 PermissionResult.Granted
             }
-            is PermissionStatus.Denied.Permanent -> PermissionResult.Denied(isPermanent = true)
+            is PermissionStatus.Denied -> PermissionResult.Denied
             else -> null
         }
 }

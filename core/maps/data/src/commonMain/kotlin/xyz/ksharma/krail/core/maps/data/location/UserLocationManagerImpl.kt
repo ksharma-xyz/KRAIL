@@ -23,25 +23,19 @@ internal class UserLocationManagerImpl(
     override suspend fun getCurrentLocation(): Result<Location> {
         return when (permissionController.checkPermissionStatus(AppPermission.Location.WhenInUse)) {
             is PermissionStatus.Granted -> getLocation()
-            is PermissionStatus.NotDetermined,
-            is PermissionStatus.Denied.Temporary,
-            -> requestPermissionAndGetLocation()
-
-            is PermissionStatus.Denied.Permanent -> Result.failure(LocationError.PermissionDenied())
+            is PermissionStatus.NotDetermined -> requestPermissionAndGetLocation()
+            is PermissionStatus.Denied -> Result.failure(LocationError.PermissionDenied())
         }
     }
 
     override fun locationUpdates(config: LocationConfig): Flow<Location> = flow {
         when (permissionController.checkPermissionStatus(AppPermission.Location.WhenInUse)) {
             is PermissionStatus.Granted -> Unit
-            is PermissionStatus.NotDetermined,
-            is PermissionStatus.Denied.Temporary,
-            -> {
+            is PermissionStatus.NotDetermined -> {
                 val result = permissionController.requestPermission(AppPermission.Location.WhenInUse)
                 if (result !is PermissionResult.Granted) throw LocationError.PermissionDenied()
             }
-
-            is PermissionStatus.Denied.Permanent -> throw LocationError.PermissionDenied()
+            is PermissionStatus.Denied -> throw LocationError.PermissionDenied()
         }
         emitAll(locationTracker.startTracking(config))
     }

@@ -23,6 +23,15 @@ import kotlin.time.Duration.Companion.milliseconds
  * - Starts on ON_START (re-checks permission on every screen return, e.g. after visiting Settings).
  * - Stops on ON_STOP (screen goes to background or user navigates away).
  * - Auto-centers the camera on the first location fix; subsequent fixes only update the dot.
+ *
+ * Permission behaviour:
+ * - If permission is already [PermissionStatus.Granted]: starts tracking immediately.
+ * - If permission is [PermissionStatus.Denied]: calls [onPermissionDeny], no request.
+ * - If permission is not yet determined / temporarily denied AND [allowPermissionRequest] is false:
+ *   does nothing — waits for the user to tap the location button.
+ * - If permission is not yet determined / temporarily denied AND [allowPermissionRequest] is true:
+ *   calls [userLocationManager.locationUpdates] which triggers the system permission dialog.
+ *   This should only be true after an explicit user action (location button tap).
  */
 @Composable
 internal fun TrackUserLocation(
@@ -30,21 +39,35 @@ internal fun TrackUserLocation(
     cameraState: CameraState,
     onLocationUpdate: (LatLng) -> Unit,
     onPermissionDeny: (PermissionStatus) -> Unit,
+    allowPermissionRequest: Boolean,
 ) {
     val scope = rememberCoroutineScope()
 
-    LifecycleStartEffect(Unit) {
+    LifecycleStartEffect(allowPermissionRequest) {
         var hasAutoCentered = false
 
         val trackingJob = scope.launch {
-            log("[USER_LOCATION] Starting location tracking")
+            val status = userLocationManager.checkPermissionStatus()
+            when {
+                status is PermissionStatus.Denied -> {
+                    log("[USER_LOCATION] Permission denied, showing banner")
+                    onPermissionDeny(status)
+                    return@launch
+                }
+                !allowPermissionRequest && status !is PermissionStatus.Granted -> {
+                    log("[USER_LOCATION] Permission not granted; awaiting explicit user action")
+                    return@launch
+                }
+            }
+
+            log("[USER_LOCATION] Starting location tracking (status=$status, allowRequest=$allowPermissionRequest)")
             userLocationManager.locationUpdates(
                 config = LocationConfig(updateIntervalMs = UserLocationConfig.UPDATE_INTERVAL_MS),
             )
                 .catch { error ->
                     log("[USER_LOCATION] Location updates stopped: ${error.message}")
-                    val status = userLocationManager.checkPermissionStatus()
-                    if (status is PermissionStatus.Denied) onPermissionDeny(status)
+                    val currentStatus = userLocationManager.checkPermissionStatus()
+                    if (currentStatus is PermissionStatus.Denied) onPermissionDeny(currentStatus)
                 }
                 .collect { location ->
                     log("[USER_LOCATION] Location update: loc=$location")

@@ -8,7 +8,6 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -62,14 +61,7 @@ internal class AndroidPermissionController(
                 when {
                     allGranted -> continuation.resume(PermissionResult.Granted)
                     results.isEmpty() -> continuation.resume(PermissionResult.Cancelled)
-                    else -> {
-                        val activity = boundActivity
-                        val isPermanent = activity != null && permissions.any { perm ->
-                            !ActivityCompat.shouldShowRequestPermissionRationale(activity, perm) &&
-                                results[perm] == false
-                        }
-                        continuation.resume(PermissionResult.Denied(isPermanent = isPermanent))
-                    }
+                    else -> continuation.resume(PermissionResult.Denied)
                 }
             }
 
@@ -83,13 +75,12 @@ internal class AndroidPermissionController(
         val allGranted = permission.toAndroidPermissions().all { perm ->
             ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
         }
-        // Ask-once policy: if we already asked and user denied, treat as Permanent so the
-        // caller directs the user to Settings — matching iOS behaviour.
-        // Note: this does not persist across app restarts; a future improvement
-        // would store it in DataStore so the policy survives restarts.
+        // Ask-once policy: asked and denied → Denied. Matches iOS which also allows only one
+        // in-app request. The OS handles the "can ask again" state; we don't need to track it.
+        // In-memory tracking (resets on restart) is intentional — no DataStore needed.
         return when {
             allGranted -> PermissionStatus.Granted
-            stateTracker.wasRequested(permission) -> PermissionStatus.Denied.Permanent
+            stateTracker.wasRequested(permission) -> PermissionStatus.Denied
             else -> PermissionStatus.NotDetermined
         }
     }
@@ -121,12 +112,7 @@ internal class AndroidPermissionController(
             stateTracker.markAsRequested(permission)
             return PermissionResult.Granted
         }
-        val activity = boundActivity
-        val anyPermanentlyDenied = activity != null && permissions.any { perm ->
-            !ActivityCompat.shouldShowRequestPermissionRationale(activity, perm) &&
-                ContextCompat.checkSelfPermission(context, perm) != PackageManager.PERMISSION_GRANTED &&
-                stateTracker.wasRequested(permission)
-        }
-        return if (anyPermanentlyDenied) PermissionResult.Denied(isPermanent = true) else null
+        // Ask-once policy: already denied → skip dialog, direct user to Settings.
+        return if (stateTracker.wasRequested(permission)) PermissionResult.Denied else null
     }
 }

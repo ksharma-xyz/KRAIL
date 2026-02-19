@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import platform.CoreLocation.*
+import platform.CoreLocation.kCLErrorLocationUnknown
 import platform.Foundation.NSError
 import platform.darwin.NSObject
 import xyz.ksharma.krail.core.location.Location
@@ -29,9 +30,7 @@ internal class IosLocationTrackerImpl : LocationTracker {
 
         return withTimeout(timeoutMs) {
             suspendCancellableCoroutine { continuation ->
-                // Guard against CLLocationManager firing both didUpdateLocations and
-                // didFailWithError for the same request, which would resume the
-                // continuation twice and crash with "Already resumed".
+                // Guard against CLLocationManager resuming the same request twice.
                 var isCompleted = false
 
                 val delegate = object : NSObject(), CLLocationManagerDelegateProtocol {
@@ -54,6 +53,11 @@ internal class IosLocationTrackerImpl : LocationTracker {
                         didFailWithError: NSError
                     ) {
                         if (isCompleted) return
+                        // kCLErrorLocationUnknown (code 0) is transient: CoreLocation cannot get
+                        // a location right now but will keep trying. Ignore it and wait for
+                        // didUpdateLocations. Treating it as fatal causes an "Already resumed"
+                        // crash when didUpdateLocations fires shortly after.
+                        if (didFailWithError.code == kCLErrorLocationUnknown) return
                         isCompleted = true
                         manager.stopUpdatingLocation()
                         manager.delegate = null
@@ -144,4 +148,3 @@ private class LocationTrackingDelegate(
         onError(didFailWithError)
     }
 }
-

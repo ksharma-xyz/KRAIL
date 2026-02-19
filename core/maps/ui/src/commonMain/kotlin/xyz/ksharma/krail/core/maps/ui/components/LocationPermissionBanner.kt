@@ -51,7 +51,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 fun LocationPermissionBanner(
     permissionStatus: PermissionStatus,
     onGoToSettings: () -> Unit,
-    onDismiss: () -> Unit,
     backgroundColor: Color = KrailTheme.colors.surface,
     modifier: Modifier = Modifier,
 ) {
@@ -84,7 +83,6 @@ fun LocationPermissionBanner(
                     Text(
                         text = "Location Permission Required",
                         style = KrailTheme.typography.bodyMedium,
-                        color = KrailTheme.colors.onSurface
                     )
                     Text(
                         text = "Enable location in Settings to see your position on the map.",
@@ -102,20 +100,8 @@ fun LocationPermissionBanner(
                 ) {
                     TextButton(onClick = onGoToSettings) {
                         Text(
-                            text = "Settings",
+                            text = "Go to Settings",
                             style = KrailTheme.typography.labelLarge,
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_close),
-                            contentDescription = "Dismiss",
-                            tint = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -123,4 +109,3 @@ fun LocationPermissionBanner(
         }
     }
 }
-

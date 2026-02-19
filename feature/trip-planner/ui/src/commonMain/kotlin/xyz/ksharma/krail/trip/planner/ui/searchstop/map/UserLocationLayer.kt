@@ -1,7 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.animation.core.*
-import androidx.compose.runtime.*
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.maplibre.compose.expressions.dsl.const
@@ -54,7 +60,7 @@ fun UserLocationLayer(
             animation = tween(durationMillis = 2000, easing = EaseOut),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "outer-radius"
+        label = "outer-radius",
     )
 
     // Outer circle opacity: 0.3 → 0.0 (fades out as it expands)
@@ -63,9 +69,9 @@ fun UserLocationLayer(
         targetValue = 0.1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 2000, easing = EaseOut),
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Restart,
         ),
-        label = "outer-opacity"
+        label = "outer-opacity",
     )
 
     // Create GeoJSON feature for user location
@@ -73,12 +79,12 @@ fun UserLocationLayer(
         geometry = Point(
             coordinates = Position(
                 latitude = userLocation.latitude,
-                longitude = userLocation.longitude
-            )
+                longitude = userLocation.longitude,
+            ),
         ),
         properties = geoJsonProperties {
             property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.USER_LOCATION)
-        }
+        },
     )
 
     val featureCollection = FeatureCollection(features = listOf(feature))

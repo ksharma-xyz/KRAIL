@@ -5,7 +5,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.CameraState
 import org.maplibre.spatialk.geojson.Position
@@ -16,6 +15,7 @@ import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.permission.PermissionStatus
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Lifecycle-aware side-effect that tracks the user's location while the screen is visible.
@@ -29,7 +29,7 @@ internal fun TrackUserLocation(
     userLocationManager: UserLocationManager,
     cameraState: CameraState,
     onLocationUpdate: (LatLng) -> Unit,
-    onPermissionDenied: (PermissionStatus) -> Unit,
+    onPermissionDeny: (PermissionStatus) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
 
@@ -44,10 +44,10 @@ internal fun TrackUserLocation(
                 .catch { error ->
                     log("[USER_LOCATION] Location updates stopped: ${error.message}")
                     val status = userLocationManager.checkPermissionStatus()
-                    if (status is PermissionStatus.Denied) onPermissionDenied(status)
+                    if (status is PermissionStatus.Denied) onPermissionDeny(status)
                 }
                 .collect { location ->
-                    log("[USER_LOCATION] Location update: loc=${location}")
+                    log("[USER_LOCATION] Location update: loc=$location")
                     onLocationUpdate(LatLng(location.latitude, location.longitude))
                     if (!hasAutoCentered) {
                         hasAutoCentered = true

@@ -53,49 +53,16 @@ internal class AndroidPermissionController(
 
     override suspend fun requestPermission(type: LocationPermissionType): PermissionResult {
         val permissions = type.toAndroidPermissions()
-
-        // Check if already granted
-        val allGranted = permissions.all { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        }
-
-        if (allGranted) {
-            stateTracker.markAsRequested(type)
-            return PermissionResult.Granted
-        }
-
-        // Check if permanently denied
-        val activity = boundActivity
-        if (activity != null) {
-            val anyPermanentlyDenied = permissions.any { permission ->
-                !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) &&
-                    ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED &&
-                    stateTracker.wasRequested(type)
-            }
-
-            if (anyPermanentlyDenied) {
-                return PermissionResult.Denied(isPermanent = true)
-            }
-        }
-
-        // Mark as requested before launching
+        resolveExistingStatus(type, permissions)?.let { return it }
         stateTracker.markAsRequested(type)
-
-        // Request permission
         return suspendCancellableCoroutine { continuation ->
             val callback: (Map<String, Boolean>) -> Unit = { results ->
                 val allGranted = results.values.all { it }
 
                 when {
-                    allGranted -> {
-                        continuation.resume(PermissionResult.Granted)
-                    }
-                    results.isEmpty() -> {
-                        // User dismissed dialog without choosing
-                        continuation.resume(PermissionResult.Cancelled)
-                    }
+                    allGranted -> continuation.resume(PermissionResult.Granted)
+                    results.isEmpty() -> continuation.resume(PermissionResult.Cancelled)
                     else -> {
-                        // Check if permanently denied
                         val activity = boundActivity
                         val isPermanent = if (activity != null) {
                             permissions.any { permission ->
@@ -105,46 +72,34 @@ internal class AndroidPermissionController(
                         } else {
                             false
                         }
-
                         continuation.resume(PermissionResult.Denied(isPermanent = isPermanent))
                     }
                 }
             }
 
-            // Set the callback for the launcher
             setLauncherCallback(callback)
-
-            continuation.invokeOnCancellation {
-                // Callback will be cleared when result arrives
-            }
-
+            continuation.invokeOnCancellation { }
             launcher.launch(permissions.toTypedArray())
         }
     }
 
     override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus {
-        val permissions = type.toAndroidPermissions()
-
-        val allGranted = permissions.all { permission ->
+        val allGranted = type.toAndroidPermissions().all { permission ->
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }
-
-        if (allGranted) return PermissionStatus.Granted
-
-        // TODO: Persist the request count across sessions (e.g. DataStore) so the ask-once
-        //       policy survives app restarts. Currently resets to NotDetermined on restart.
         // Ask-once policy: if we already asked and user denied, treat as Permanent so the
         // caller directs the user to Settings — matching iOS behaviour.
-        if (stateTracker.wasRequested(type)) {
-            return PermissionStatus.Denied.Permanent
+        // Note: this count does not persist across app restarts; a future improvement
+        // would store it in DataStore so the policy survives restarts.
+        return when {
+            allGranted -> PermissionStatus.Granted
+            stateTracker.wasRequested(type) -> PermissionStatus.Denied.Permanent
+            else -> PermissionStatus.NotDetermined
         }
-
-        return PermissionStatus.NotDetermined
     }
 
-    override fun wasPermissionRequested(type: LocationPermissionType): Boolean {
-        return stateTracker.wasRequested(type)
-    }
+    override fun wasPermissionRequested(type: LocationPermissionType): Boolean =
+        stateTracker.wasRequested(type)
 
     override fun openAppSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -152,5 +107,30 @@ internal class AndroidPermissionController(
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
+    }
+
+    /**
+     * Checks the current system permission state before launching the OS dialog.
+     * Returns a [PermissionResult] if the request can be short-circuited, or null
+     * if the OS dialog should be shown.
+     */
+    private fun resolveExistingStatus(
+        type: LocationPermissionType,
+        permissions: List<String>,
+    ): PermissionResult? {
+        val allGranted = permissions.all { permission ->
+            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+        }
+        if (allGranted) {
+            stateTracker.markAsRequested(type)
+            return PermissionResult.Granted
+        }
+        val activity = boundActivity
+        val anyPermanentlyDenied = activity != null && permissions.any { permission ->
+            !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) &&
+                ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED &&
+                stateTracker.wasRequested(type)
+        }
+        return if (anyPermanentlyDenied) PermissionResult.Denied(isPermanent = true) else null
     }
 }

@@ -155,6 +155,12 @@ internal class AndroidLocationTrackerImpl(
             throw LocationError.LocationDisabled
         }
 
+        // Seed with last known location so the map shows instantly without waiting
+        // for the first update interval to fire (same technique Google Maps uses).
+        fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
+            lastLocation?.let { trySend(it.toCommonLocation()) }
+        }
+
         val locationRequest = createLocationRequest(config)
 
         val callback = object : LocationCallback() {

@@ -101,6 +101,10 @@ internal class IosLocationTrackerImpl : LocationTracker {
         locationManager.desiredAccuracy = config.priority.toiOSAccuracy()
         locationManager.distanceFilter = config.minDistanceMeters.toDouble()
 
+        // Seed with cached location so the map shows instantly without waiting
+        // for the first delegate callback (same technique Google Maps uses).
+        locationManager.location?.let { cached -> trySend(cached.toCommonLocation()) }
+
         // Start updating location
         println("[USER_LOCATION] iOS: CLLocationManager startUpdatingLocation")
         locationManager.startUpdatingLocation()

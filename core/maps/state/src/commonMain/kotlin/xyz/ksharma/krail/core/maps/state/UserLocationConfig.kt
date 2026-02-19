@@ -5,7 +5,7 @@ package xyz.ksharma.krail.core.maps.state
  */
 object UserLocationConfig {
     /** How often to request GPS updates from the device. */
-    const val UPDATE_INTERVAL_MS = 2_000L
+    const val UPDATE_INTERVAL_MS = 5_000L
 
     /** Zoom level used when auto-centering on the user's first location fix. */
     const val AUTO_CENTER_ZOOM = 15.0

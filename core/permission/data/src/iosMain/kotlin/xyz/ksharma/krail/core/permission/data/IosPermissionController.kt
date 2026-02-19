@@ -8,7 +8,7 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.darwin.NSObject
-import xyz.ksharma.krail.core.permission.LocationPermissionType
+import xyz.ksharma.krail.core.permission.AppPermission
 import xyz.ksharma.krail.core.permission.PermissionResult
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import kotlin.coroutines.resume
@@ -42,9 +42,9 @@ internal class IosPermissionController : PermissionController {
         locationManager.delegate = persistentDelegate
     }
 
-    override suspend fun requestPermission(type: LocationPermissionType): PermissionResult {
-        resolveExistingStatus(type)?.let { return it }
-        stateTracker.markAsRequested(type)
+    override suspend fun requestPermission(permission: AppPermission): PermissionResult {
+        resolveExistingStatus(permission)?.let { return it }
+        stateTracker.markAsRequested(permission)
         return suspendCancellableCoroutine { continuation ->
             val delegate = LocationAuthorizationDelegate { newStatus ->
                 cachedStatus = newStatus // keep cache current during the request
@@ -67,19 +67,19 @@ internal class IosPermissionController : PermissionController {
                 authorizationDelegate = null
             }
 
-            when (type) {
-                LocationPermissionType.LOCATION_WHEN_IN_USE,
-                LocationPermissionType.COARSE_LOCATION,
-                -> locationManager.requestWhenInUseAuthorization()
+            when (permission) {
+                is AppPermission.Location -> locationManager.requestWhenInUseAuthorization()
             }
         }
     }
 
-    override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus =
-        cachedStatus.toPermissionStatus()
+    override suspend fun checkPermissionStatus(permission: AppPermission): PermissionStatus =
+        when (permission) {
+            is AppPermission.Location -> cachedStatus.toPermissionStatus()
+        }
 
-    override fun wasPermissionRequested(type: LocationPermissionType): Boolean =
-        stateTracker.wasRequested(type)
+    override fun wasPermissionRequested(permission: AppPermission): Boolean =
+        stateTracker.wasRequested(permission)
 
     override fun openAppSettings() {
         UIApplication.sharedApplication.openURL(
@@ -92,10 +92,10 @@ internal class IosPermissionController : PermissionController {
      * Returns a [PermissionResult] if the request can be short-circuited, or null
      * if the OS dialog should be shown.
      */
-    private fun resolveExistingStatus(type: LocationPermissionType): PermissionResult? =
+    private fun resolveExistingStatus(permission: AppPermission): PermissionResult? =
         when (cachedStatus.toPermissionStatus()) {
             is PermissionStatus.Granted -> {
-                stateTracker.markAsRequested(type)
+                stateTracker.markAsRequested(permission)
                 PermissionResult.Granted
             }
             is PermissionStatus.Denied.Permanent -> PermissionResult.Denied(isPermanent = true)

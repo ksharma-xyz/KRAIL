@@ -167,6 +167,7 @@ internal class AndroidLocationTrackerImpl(
 
         locationCallback = callback
 
+        println("[USER_LOCATION] Android: FusedLocation requestLocationUpdates (interval=${locationRequest.intervalMillis}ms)")
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             callback,
@@ -176,6 +177,7 @@ internal class AndroidLocationTrackerImpl(
         }
 
         awaitClose {
+            println("[USER_LOCATION] Android: FusedLocation removeLocationUpdates (flow cancelled)")
             fusedLocationClient.removeLocationUpdates(callback)
             locationCallback = null
         }
@@ -203,8 +205,6 @@ internal class AndroidLocationTrackerImpl(
         return LocationRequest.Builder(config.updateIntervalMs)
             .setPriority(config.priority.toAndroidPriority())
             .setMinUpdateDistanceMeters(config.minDistanceMeters)
-            .setWaitForAccurateLocation(true)
             .build()
     }
 }
-

@@ -17,6 +17,7 @@ object NearbyStopsConfig {
 
     // Performance tuning
     const val QUERY_DEBOUNCE_MS = 300L
+    const val CAMERA_PAN_DEBOUNCE_MS = 500L
     const val CACHE_EXPIRY_MS = 60_000L // 1 minute
     const val MIN_DISTANCE_FOR_RELOAD_KM = 0.2 // 200m
 }

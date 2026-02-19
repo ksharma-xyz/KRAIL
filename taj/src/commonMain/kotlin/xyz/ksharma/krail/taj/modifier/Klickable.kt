@@ -4,11 +4,15 @@ import androidx.compose.foundation.Indication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import kotlin.time.TimeSource
 import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeColor
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Adds a click listener to the Modifier with a custom ripple effect.
@@ -50,5 +54,34 @@ fun Modifier.scalingKlickable(
         enabled = enabled,
         indication = ScalingIndication,
         onClick = onClick,
+    )
+}
+
+/**
+ * A [klickable] that ignores rapid repeated taps within [debounceMs] milliseconds.
+ * Useful for buttons that trigger async work (network, GPS) to prevent duplicate requests.
+ */
+@Composable
+fun Modifier.debouncedKlickable(
+    debounceMs: Duration = 500.milliseconds,
+    role: Role = Role.Button,
+    enabled: Boolean = true,
+    indication: Indication? = krailRipple(color = themeColor()),
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    onClick: () -> Unit,
+): Modifier {
+    val lastClickMark = remember { mutableStateOf<TimeSource.Monotonic.ValueTimeMark?>(null) }
+    return this.klickable(
+        role = role,
+        enabled = enabled,
+        indication = indication,
+        interactionSource = interactionSource,
+        onClick = {
+            val mark = lastClickMark.value
+            if (mark == null || mark.elapsedNow() >= debounceMs) {
+                lastClickMark.value = TimeSource.Monotonic.markNow()
+                onClick()
+            }
+        },
     )
 }

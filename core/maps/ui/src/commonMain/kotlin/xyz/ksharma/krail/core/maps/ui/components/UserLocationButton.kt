@@ -14,7 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.modifier.klickable
+import kotlin.time.Duration.Companion.seconds
+import xyz.ksharma.krail.taj.modifier.debouncedKlickable
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
@@ -48,7 +49,7 @@ fun UserLocationButton(
         modifier = modifier
             .size(48.dp)
             .clip(CircleShape)
-            .klickable(onClick = onClick),
+            .debouncedKlickable(debounceMs = 1.seconds, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         // Outer circle

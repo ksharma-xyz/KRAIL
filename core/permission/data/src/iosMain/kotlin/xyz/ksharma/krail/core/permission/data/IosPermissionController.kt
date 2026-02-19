@@ -2,7 +2,6 @@ package xyz.ksharma.krail.core.permission.data
 
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreLocation.*
-import platform.Foundation.NSRunLoop
 import platform.Foundation.NSURL
 import platform.Foundation.performBlock
 import platform.UIKit.UIApplication
@@ -17,6 +16,10 @@ import kotlin.coroutines.resume
  * iOS implementation of [PermissionController].
  *
  * Uses CLLocationManager to handle location permissions on iOS.
+ *
+ * Authorization status is cached and kept up to date via [locationManagerDidChangeAuthorization],
+ * so [checkPermissionStatus] never reads [CLLocationManager.authorizationStatus] on the main
+ * thread during a button tap — eliminating the iOS 17 "UI unresponsiveness" diagnostic.
  */
 internal class IosPermissionController : PermissionController {
 
@@ -24,9 +27,22 @@ internal class IosPermissionController : PermissionController {
     private val locationManager = CLLocationManager()
     private var authorizationDelegate: LocationAuthorizationDelegate? = null
 
+    // Cached status — read once at init, then kept current by the persistent delegate.
+    // Avoids calling locationManager.authorizationStatus on the main thread repeatedly.
+    private var cachedStatus: CLAuthorizationStatus = locationManager.authorizationStatus
+
+    private val persistentDelegate = object : NSObject(), CLLocationManagerDelegateProtocol {
+        override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
+            cachedStatus = manager.authorizationStatus
+        }
+    }
+
+    init {
+        locationManager.delegate = persistentDelegate
+    }
+
     override suspend fun requestPermission(type: LocationPermissionType): PermissionResult {
-        val currentStatus = locationManager.authorizationStatus
-        val permissionStatus = currentStatus.toPermissionStatus(type)
+        val permissionStatus = cachedStatus.toPermissionStatus(type)
 
         // Check if already granted
         if (permissionStatus is PermissionStatus.Granted) {
@@ -42,49 +58,49 @@ internal class IosPermissionController : PermissionController {
         // Mark as requested
         stateTracker.markAsRequested(type)
 
-        // Request authorization
+        // Request authorization — swap to an authorization delegate, restore persistent
+        // delegate once the result is known so status changes keep being cached.
         return suspendCancellableCoroutine { continuation ->
             val delegate = LocationAuthorizationDelegate { newStatus ->
+                cachedStatus = newStatus  // keep cache current during the request
                 val newPermissionStatus = newStatus.toPermissionStatus(type)
 
                 when (newPermissionStatus) {
-                    is PermissionStatus.Granted -> {
+                    is PermissionStatus.Granted ->
                         continuation.resume(PermissionResult.Granted)
-                    }
-                    is PermissionStatus.Denied.Permanent -> {
+                    is PermissionStatus.Denied.Permanent ->
                         continuation.resume(PermissionResult.Denied(isPermanent = true))
-                    }
-                    is PermissionStatus.Denied.Temporary -> {
+                    is PermissionStatus.Denied.Temporary ->
                         continuation.resume(PermissionResult.Denied(isPermanent = false))
-                    }
-                    is PermissionStatus.NotDetermined -> {
-                        // Shouldn't happen, but treat as temporary denial
+                    is PermissionStatus.NotDetermined ->
                         continuation.resume(PermissionResult.Denied(isPermanent = false))
-                    }
                 }
+
+                // Restore persistent delegate so future status changes keep being cached
+                locationManager.delegate = persistentDelegate
+                authorizationDelegate = null
             }
 
             authorizationDelegate = delegate
             locationManager.delegate = delegate
 
             continuation.invokeOnCancellation {
+                locationManager.delegate = persistentDelegate
                 authorizationDelegate = null
-                locationManager.delegate = null
             }
 
             // Request appropriate authorization
             when (type) {
                 LocationPermissionType.LOCATION_WHEN_IN_USE,
-                LocationPermissionType.COARSE_LOCATION -> {
+                LocationPermissionType.COARSE_LOCATION ->
                     locationManager.requestWhenInUseAuthorization()
-                }
             }
         }
     }
 
     override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus {
-        val currentStatus = locationManager.authorizationStatus
-        return currentStatus.toPermissionStatus(type)
+        // Reads from cache — no authorizationStatus call on the main thread
+        return cachedStatus.toPermissionStatus(type)
     }
 
     override fun wasPermissionRequested(type: LocationPermissionType): Boolean {
@@ -101,16 +117,16 @@ internal class IosPermissionController : PermissionController {
 
 /**
  * Delegate for receiving authorization status changes from CLLocationManager.
+ *
+ * [locationManagerDidChangeAuthorization] is already dispatched on the main thread by iOS,
+ * so reading [CLLocationManager.authorizationStatus] here is the correct Apple-recommended
+ * pattern and does not trigger the "UI unresponsiveness" diagnostic.
  */
 private class LocationAuthorizationDelegate(
     private val onAuthorizationChange: (CLAuthorizationStatus) -> Unit
 ) : NSObject(), CLLocationManagerDelegateProtocol {
 
     override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
-        // Execute callback on main thread
-        NSRunLoop.mainRunLoop.performBlock {
-            onAuthorizationChange(manager.authorizationStatus)
-        }
+        onAuthorizationChange(manager.authorizationStatus)
     }
 }
-

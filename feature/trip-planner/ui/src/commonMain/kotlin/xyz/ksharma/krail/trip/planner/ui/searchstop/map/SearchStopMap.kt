@@ -25,6 +25,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import xyz.ksharma.krail.coroutines.ext.coroutineExceptionHandler
 import kotlin.time.Duration.Companion.milliseconds
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
@@ -285,10 +286,9 @@ private fun MapContent(
             MapActionButtons(
                 onOptionsClick = { showOptionsBottomSheet = true },
                 onLocationButtonClick = {
-                    scope.launch {
+                    scope.launch(coroutineExceptionHandler(message = "SearchStopMap:LocationButton")) {
                         userLocationManager.getCurrentLocation()
                             .onSuccess { location ->
-                                ensureActive()
                                 val userLatLng = LatLng(location.latitude, location.longitude)
                                 onEvent(SearchStopUiEvent.UserLocationUpdated(userLatLng))
                                 mapLocationController.moveCameraToUserLocation(
@@ -315,7 +315,6 @@ private fun MapContent(
                 LocationPermissionBanner(
                     permissionStatus = permissionStatus,
                     onGoToSettings = { userLocationManager.openAppSettings() },
-                    onDismiss = { showPermissionBanner = false },
                     backgroundColor = KrailTheme.colors.surface,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )

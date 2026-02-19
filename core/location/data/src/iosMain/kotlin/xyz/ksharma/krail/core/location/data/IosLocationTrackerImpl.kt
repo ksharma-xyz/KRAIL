@@ -102,9 +102,11 @@ internal class IosLocationTrackerImpl : LocationTracker {
         locationManager.distanceFilter = config.minDistanceMeters.toDouble()
 
         // Start updating location
+        println("[USER_LOCATION] iOS: CLLocationManager startUpdatingLocation")
         locationManager.startUpdatingLocation()
 
         awaitClose {
+            println("[USER_LOCATION] iOS: CLLocationManager stopUpdatingLocation (flow cancelled)")
             locationManager.stopUpdatingLocation()
             locationManager.delegate = null
             trackingDelegate = null
@@ -145,6 +147,9 @@ private class LocationTrackingDelegate(
         manager: CLLocationManager,
         didFailWithError: NSError
     ) {
+        // kCLErrorLocationUnknown (code 0) is transient — CoreLocation cannot get a location
+        // right now but will keep trying. Ignore it so the flow stays alive.
+        if (didFailWithError.code == kCLErrorLocationUnknown) return
         onError(didFailWithError)
     }
 }

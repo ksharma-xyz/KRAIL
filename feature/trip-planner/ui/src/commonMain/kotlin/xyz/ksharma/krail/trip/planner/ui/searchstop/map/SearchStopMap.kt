@@ -22,11 +22,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import xyz.ksharma.krail.coroutines.ext.coroutineExceptionHandler
-import kotlin.time.Duration.Companion.milliseconds
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MapOptions
@@ -40,12 +37,11 @@ import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.data.location.createUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
-import xyz.ksharma.krail.core.maps.ui.utils.MapLocationController
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.permission.data.rememberPermissionController
-
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -56,6 +52,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Creates a [UserLocationManager] in the Compose composition.
@@ -135,8 +132,8 @@ private fun MapContent(
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
-            "isLoading=${mapState.isLoadingNearbyStops}, " +
-            "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
+                "isLoading=${mapState.isLoadingNearbyStops}, " +
+                "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
 
     var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -146,7 +143,6 @@ private fun MapContent(
     var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
     var showPermissionBanner by remember { mutableStateOf(false) }
     val userLocationManager = rememberUserLocationManager()
-    val mapLocationController = remember { MapLocationController() }
     val scope = rememberCoroutineScope()
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -174,62 +170,28 @@ private fun MapContent(
             )
         }
 
-        // Auto-fetch user location on map init if permission granted
-        LaunchedEffect(Unit) {
-            ensureActive() // Check if coroutine is still active
-
-            // Check permission status first
-            val permStatus = userLocationManager.checkPermissionStatus()
-            log("[NEARBY_STOPS_UI] Auto-fetch location - permission status: $permStatus")
-
-            if (permStatus is PermissionStatus.Granted) {
-                // Permission already granted, fetch location
-                log("[NEARBY_STOPS_UI] Permission granted, fetching location...")
-                userLocationManager.getCurrentLocation().onSuccess { location ->
-                    ensureActive() // Check again before updating
-
-                    val userLatLng = LatLng(location.latitude, location.longitude)
-                    log("[NEARBY_STOPS_UI] Auto-fetched user location: lat=${location.latitude}, lon=${location.longitude}")
-
-                    // Update ViewModel state with user location
-                    onEvent(SearchStopUiEvent.UserLocationUpdated(userLatLng))
-                }.onFailure { error ->
-                    log("[NEARBY_STOPS_UI] Failed to get user location: ${error.message}")
-                }
-            } else {
-                log("[NEARBY_STOPS_UI] Permission not granted, skipping auto-fetch")
-            }
-        }
-
-        // Move camera to user location when available (state-driven, no logic in UI)
-        LaunchedEffect(mapState.mapDisplay.userLocation) {
-            val userLoc = mapState.mapDisplay.userLocation
-            if (userLoc != null) {
-                ensureActive() // Check if coroutine is still active
-
-                log("[NEARBY_STOPS_UI] User location available, moving camera")
-                // Note: cameraState.animateTo uses LatLng internally, no conversion needed
-                val targetPosition = CameraPosition(
-                    target = Position(
-                        latitude = userLoc.latitude,
-                        longitude = userLoc.longitude
-                    ),
-                    zoom = 15.0
-                )
-                cameraState.animateTo(targetPosition, duration = 1500.milliseconds)
-            }
-        }
+        TrackUserLocation(
+            userLocationManager = userLocationManager,
+            cameraState = cameraState,
+            onLocationUpdate = { latLng ->
+                showPermissionBanner = false
+                onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
+            },
+            onPermissionDenied = { status ->
+                permissionStatus = status
+                showPermissionBanner = true
+            },
+        )
 
         // Track camera moves to update map center and reload stops
         @OptIn(FlowPreview::class)
-        @Suppress("MagicNumber")
         LaunchedEffect(cameraState) {
             snapshotFlow { cameraState.position.target }
-                .debounce(500) // Only update after user stops moving
+                .debounce(NearbyStopsConfig.CAMERA_PAN_DEBOUNCE_MS)
                 .collect { target ->
                     log(
                         "[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, " +
-                            "lon=${target.longitude}",
+                                "lon=${target.longitude}",
                     )
                     onEvent(
                         SearchStopUiEvent.MapCenterChanged(
@@ -261,7 +223,7 @@ private fun MapContent(
                 if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
                     log(
                         "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
-                            "stops on map",
+                                "stops on map",
                     )
                     NearbyStopsLayer(
                         stops = mapState.mapDisplay.nearbyStops,
@@ -286,25 +248,25 @@ private fun MapContent(
             MapActionButtons(
                 onOptionsClick = { showOptionsBottomSheet = true },
                 onLocationButtonClick = {
-                    scope.launch(coroutineExceptionHandler(message = "SearchStopMap:LocationButton")) {
-                        userLocationManager.getCurrentLocation()
-                            .onSuccess { location ->
-                                val userLatLng = LatLng(location.latitude, location.longitude)
-                                onEvent(SearchStopUiEvent.UserLocationUpdated(userLatLng))
-                                mapLocationController.moveCameraToUserLocation(
-                                    location = location,
-                                    cameraState = cameraState,
-                                    zoom = 16.0,
-                                    animationDuration = 1000L,
-                                )
+                    scope.launch {
+                        val userLoc = mapState.mapDisplay.userLocation
+                        if (userLoc != null) {
+                            // Tracking is running — re-center camera on latest known position
+                            cameraState.animateTo(
+                                CameraPosition(
+                                    target = userLoc.toPosition(),
+                                    zoom = UserLocationConfig.RECENTER_ZOOM,
+                                ),
+                                duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
+                            )
+                        } else {
+                            // No location yet — show banner if permission was denied
+                            val status = userLocationManager.checkPermissionStatus()
+                            if (status is PermissionStatus.Denied) {
+                                permissionStatus = status
+                                showPermissionBanner = true
                             }
-                            .onFailure {
-                                val status = userLocationManager.checkPermissionStatus()
-                                if (status is PermissionStatus.Denied) {
-                                    permissionStatus = status
-                                    showPermissionBanner = true
-                                }
-                            }
+                        }
                     }
                 },
                 modifier = Modifier.align(Alignment.BottomStart),
@@ -315,7 +277,6 @@ private fun MapContent(
                 LocationPermissionBanner(
                     permissionStatus = permissionStatus,
                     onGoToSettings = { userLocationManager.openAppSettings() },
-                    backgroundColor = KrailTheme.colors.surface,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
@@ -365,6 +326,8 @@ private fun MapContent(
         }
     }
 }
+
+private fun LatLng.toPosition(): Position = Position(latitude = latitude, longitude = longitude)
 
 // region Previews
 

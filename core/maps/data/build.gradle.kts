@@ -28,6 +28,7 @@ kotlin {
         commonMain {
             dependencies {
                 // Core modules
+                implementation(projects.core.coroutinesExt)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.maps.state)

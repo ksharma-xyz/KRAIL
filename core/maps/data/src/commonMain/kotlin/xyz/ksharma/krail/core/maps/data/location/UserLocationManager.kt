@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationConfig
 import xyz.ksharma.krail.core.location.data.LocationTracker
-import xyz.ksharma.krail.core.permission.data.PermissionController
 import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.krail.core.permission.data.PermissionController
 
 /**
  * Manages user location access with permission handling.

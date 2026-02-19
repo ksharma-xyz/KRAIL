@@ -3,7 +3,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 /**
  * iOS-specific permission module.
- * 
+ *
  * Note: PermissionController is created via Compose rememberPermissionController()
  * for proper lifecycle management.
  */

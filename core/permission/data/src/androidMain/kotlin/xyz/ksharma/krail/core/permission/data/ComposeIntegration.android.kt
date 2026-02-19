@@ -30,7 +30,7 @@ actual fun rememberPermissionController(): PermissionController {
 
     // rememberLauncherForActivityResult returns the same stable wrapper across recompositions.
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
         permissionCallback?.invoke(permissions)
         permissionCallback = null
@@ -54,4 +54,3 @@ actual fun rememberPermissionController(): PermissionController {
 
     return controller
 }
-

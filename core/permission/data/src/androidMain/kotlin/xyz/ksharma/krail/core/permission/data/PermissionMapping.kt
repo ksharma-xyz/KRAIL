@@ -16,7 +16,7 @@ internal fun LocationPermissionType.toAndroidPermissions(): List<String> {
                 // Android 12+ requires requesting both FINE and COARSE together
                 listOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
                 )
             } else {
                 listOf(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -27,4 +27,3 @@ internal fun LocationPermissionType.toAndroidPermissions(): List<String> {
         }
     }
 }
-

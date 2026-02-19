@@ -8,11 +8,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import kotlin.time.TimeSource
 import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeColor
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 /**
  * Adds a click listener to the Modifier with a custom ripple effect.

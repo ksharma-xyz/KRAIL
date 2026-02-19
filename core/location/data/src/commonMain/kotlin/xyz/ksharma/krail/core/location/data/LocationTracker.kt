@@ -62,4 +62,3 @@ interface LocationTracker {
      */
     suspend fun isLocationEnabled(): Boolean
 }
-

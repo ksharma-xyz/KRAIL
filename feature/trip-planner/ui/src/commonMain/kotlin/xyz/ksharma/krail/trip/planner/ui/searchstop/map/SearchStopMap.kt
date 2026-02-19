@@ -247,6 +247,7 @@ private fun MapContent(
             // All location business logic lives here, not inside MapActionButtons.
             MapActionButtons(
                 onOptionsClick = { showOptionsBottomSheet = true },
+                isLocationActive = mapState.mapDisplay.userLocation != null,
                 onLocationButtonClick = {
                     scope.launch {
                         val userLoc = mapState.mapDisplay.userLocation
@@ -275,9 +276,8 @@ private fun MapContent(
             // Permission banner (shown when permission is denied)
             if (showPermissionBanner) {
                 LocationPermissionBanner(
-                    permissionStatus = permissionStatus,
                     onGoToSettings = { userLocationManager.openAppSettings() },
-                    modifier = Modifier.align(Alignment.TopCenter)
+                    modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
 

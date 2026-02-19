@@ -14,4 +14,3 @@ actual fun rememberPermissionController(): PermissionController {
         IosPermissionController()
     }
 }
-

@@ -11,9 +11,6 @@ import androidx.compose.ui.platform.LocalContext
  *
  * The tracker is retained across rotations via [remember] without an activity key.
  * [DisposableEffect] rebinds it to the new activity after a configuration change.
- *
- * TODO: Migrate to Koin DI once ActivityResultRegistry-based location API is available,
- *       removing the need for a Composable factory altogether.
  */
 @Composable
 actual fun rememberLocationTracker(): LocationTracker {
@@ -32,4 +29,3 @@ actual fun rememberLocationTracker(): LocationTracker {
 
     return tracker
 }
-

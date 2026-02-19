@@ -49,4 +49,3 @@ interface PermissionController {
      */
     fun openAppSettings()
 }
-

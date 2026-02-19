@@ -1,11 +1,11 @@
 package xyz.ksharma.krail.core.location.data
 
 import android.os.Build
-import android.location.Location as AndroidLocation
 import com.google.android.gms.location.Priority
 import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationError
 import xyz.ksharma.krail.core.location.LocationPriority
+import android.location.Location as AndroidLocation
 
 /**
  * Convert Android Location to common Location model.
@@ -33,7 +33,7 @@ internal fun AndroidLocation.toCommonLocation(): Location {
         } else {
             null
         },
-        timestamp = time
+        timestamp = time,
     )
 }
 
@@ -57,9 +57,8 @@ internal fun Exception.toLocationError(): LocationError {
         message?.contains("permission", ignoreCase = true) == true ->
             LocationError.PermissionDenied
         message?.contains("disabled", ignoreCase = true) == true ||
-        message?.contains("location", ignoreCase = true) == true ->
+            message?.contains("location", ignoreCase = true) == true ->
             LocationError.LocationDisabled
         else -> LocationError.Unknown(this)
     }
 }
-

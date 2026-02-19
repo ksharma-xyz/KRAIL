@@ -13,7 +13,11 @@ data class Location(
     val timestamp: Long,
 ) {
     init {
-        require(latitude in -90.0..90.0) { "Latitude must be between -90.0 and 90.0" }
-        require(longitude in -180.0..180.0) { "Longitude must be between -180.0 and 180.0" }
+        require(latitude in EarthConstants.MIN_LATITUDE..EarthConstants.MAX_LATITUDE) {
+            "Latitude must be between ${EarthConstants.MIN_LATITUDE} and ${EarthConstants.MAX_LATITUDE}"
+        }
+        require(longitude in EarthConstants.MIN_LONGITUDE..EarthConstants.MAX_LONGITUDE) {
+            "Longitude must be between ${EarthConstants.MIN_LONGITUDE} and ${EarthConstants.MAX_LONGITUDE}"
+        }
     }
 }

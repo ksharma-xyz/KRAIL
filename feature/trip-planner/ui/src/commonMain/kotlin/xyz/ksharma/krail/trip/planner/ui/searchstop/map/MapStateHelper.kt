@@ -39,10 +39,8 @@ object MapStateHelper {
     fun updateMapCenter(
         state: SearchStopState,
         center: LatLng,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(mapDisplay = mapDisplay.copy(mapCenter = center))
-        }
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(mapCenter = center))
     }
 
     /**
@@ -51,10 +49,8 @@ object MapStateHelper {
     fun updateUserLocation(
         state: SearchStopState,
         location: LatLng?,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(mapDisplay = mapDisplay.copy(userLocation = location))
-        }
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(userLocation = location))
     }
 
     /**
@@ -64,15 +60,13 @@ object MapStateHelper {
         state: SearchStopState,
         stops: List<NearbyStop>,
         isLoading: Boolean = false,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(
-                mapDisplay = mapDisplay.copy(
-                    nearbyStops = stops.map { it.toFeature() }.toImmutableList(),
-                ),
-                isLoadingNearbyStops = isLoading,
-            )
-        }
+    ): SearchStopState = state.withMapState {
+        copy(
+            mapDisplay = mapDisplay.copy(
+                nearbyStops = stops.map { it.toFeature() }.toImmutableList(),
+            ),
+            isLoadingNearbyStops = isLoading,
+        )
     }
 
     /**
@@ -81,10 +75,8 @@ object MapStateHelper {
     fun setLoadingState(
         state: SearchStopState,
         isLoading: Boolean,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(isLoadingNearbyStops = isLoading)
-        }
+    ): SearchStopState = state.withMapState {
+        copy(isLoadingNearbyStops = isLoading)
     }
 
     /**
@@ -93,20 +85,18 @@ object MapStateHelper {
     fun toggleTransportMode(
         state: SearchStopState,
         mode: TransportMode,
-    ): SearchStopState {
-        return state.withMapState {
-            val currentModes = mapDisplay.selectedTransportModes.toMutableSet()
-            if (currentModes.contains(mode.productClass)) {
-                currentModes.remove(mode.productClass)
-            } else {
-                currentModes.add(mode.productClass)
-            }
-            copy(
-                mapDisplay = mapDisplay.copy(
-                    selectedTransportModes = currentModes.toImmutableSet(),
-                ),
-            )
+    ): SearchStopState = state.withMapState {
+        val currentModes = mapDisplay.selectedTransportModes.toMutableSet()
+        if (currentModes.contains(mode.productClass)) {
+            currentModes.remove(mode.productClass)
+        } else {
+            currentModes.add(mode.productClass)
         }
+        copy(
+            mapDisplay = mapDisplay.copy(
+                selectedTransportModes = currentModes.toImmutableSet(),
+            ),
+        )
     }
 
     /**
@@ -115,10 +105,8 @@ object MapStateHelper {
     fun updateSearchRadius(
         state: SearchStopState,
         radiusKm: Double,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(mapDisplay = mapDisplay.copy(searchRadiusKm = radiusKm))
-        }
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(searchRadiusKm = radiusKm))
     }
 
     /**
@@ -127,10 +115,8 @@ object MapStateHelper {
     fun toggleDistanceScale(
         state: SearchStopState,
         enabled: Boolean,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(mapDisplay = mapDisplay.copy(showDistanceScale = enabled))
-        }
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(showDistanceScale = enabled))
     }
 
     /**
@@ -139,32 +125,27 @@ object MapStateHelper {
     fun toggleCompass(
         state: SearchStopState,
         enabled: Boolean,
-    ): SearchStopState {
-        return state.withMapState {
-            copy(mapDisplay = mapDisplay.copy(showCompass = enabled))
-        }
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(showCompass = enabled))
     }
-
-    /**
-     * Helper extension to safely update map state.
-     */
-    private fun SearchStopState.withMapState(
-        block: MapUiState.Ready.() -> MapUiState.Ready,
-    ): SearchStopState {
-        val currentMapState = mapUiState as? MapUiState.Ready ?: return this
-
-        return copy(
-            mapUiState = currentMapState.block(),
-        )
-    }
-
-    /**
-     * Map NearbyStop domain model to UI feature.
-     */
-    private fun NearbyStop.toFeature() = NearbyStopFeature(
-        stopId = stopId,
-        stopName = stopName,
-        position = LatLng(latitude, longitude),
-        transportModes = transportModes.toImmutableList(),
-    )
 }
+
+/**
+ * Helper extension to safely update map state.
+ */
+private fun SearchStopState.withMapState(
+    block: MapUiState.Ready.() -> MapUiState.Ready,
+): SearchStopState {
+    val currentMapState = mapUiState as? MapUiState.Ready ?: return this
+    return copy(mapUiState = currentMapState.block())
+}
+
+/**
+ * Map NearbyStop domain model to UI feature.
+ */
+private fun NearbyStop.toFeature() = NearbyStopFeature(
+    stopId = stopId,
+    stopName = stopName,
+    position = LatLng(latitude, longitude),
+    transportModes = transportModes.toImmutableList(),
+)

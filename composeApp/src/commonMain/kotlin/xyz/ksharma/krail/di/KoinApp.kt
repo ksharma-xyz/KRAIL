@@ -41,7 +41,6 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             permissionModuleCommon,
             locationModuleCommon,
             viewModelsModule,
-            locationFeatureModule,
             sandookModule,
             mapsDataModule,
             themeManagerModule,
@@ -78,8 +77,4 @@ val splashModule = module {
             appVersionManager = get(),
         )
     }
-}
-
-val locationFeatureModule = module {
-    viewModel { LocationViewModel() }
 }

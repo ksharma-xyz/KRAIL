@@ -132,8 +132,8 @@ private fun MapContent(
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
-                "isLoading=${mapState.isLoadingNearbyStops}, " +
-                "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
+            "isLoading=${mapState.isLoadingNearbyStops}, " +
+            "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
 
     var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
@@ -177,7 +177,7 @@ private fun MapContent(
                 showPermissionBanner = false
                 onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
             },
-            onPermissionDenied = { status ->
+            onPermissionDeny = { status ->
                 permissionStatus = status
                 showPermissionBanner = true
             },
@@ -191,7 +191,7 @@ private fun MapContent(
                 .collect { target ->
                     log(
                         "[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, " +
-                                "lon=${target.longitude}",
+                            "lon=${target.longitude}",
                     )
                     onEvent(
                         SearchStopUiEvent.MapCenterChanged(
@@ -223,7 +223,7 @@ private fun MapContent(
                 if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
                     log(
                         "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
-                                "stops on map",
+                            "stops on map",
                     )
                     NearbyStopsLayer(
                         stops = mapState.mapDisplay.nearbyStops,
@@ -239,7 +239,7 @@ private fun MapContent(
 
                 // Render user location as red circle (always on top)
                 UserLocationLayer(
-                    userLocation = mapState.mapDisplay.userLocation
+                    userLocation = mapState.mapDisplay.userLocation,
                 )
             }
 

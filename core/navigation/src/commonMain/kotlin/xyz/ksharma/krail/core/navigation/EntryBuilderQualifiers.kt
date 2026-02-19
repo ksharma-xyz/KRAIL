@@ -30,7 +30,6 @@ object EntryBuilderQualifiers {
     val SPLASH = named(Names.SPLASH)
     val APP_UPGRADE = named(Names.APP_UPGRADE)
     val TRIP_PLANNER = named(Names.TRIP_PLANNER)
-    val LOCATION = named(Names.LOCATION)
 
     // Add more qualifiers here as needed for other features
     // val DISCOVER = named(Names.DISCOVER)

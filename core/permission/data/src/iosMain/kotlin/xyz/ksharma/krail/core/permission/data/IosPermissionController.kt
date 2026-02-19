@@ -43,40 +43,17 @@ internal class IosPermissionController : PermissionController {
     }
 
     override suspend fun requestPermission(type: LocationPermissionType): PermissionResult {
-        val permissionStatus = cachedStatus.toPermissionStatus()
-
-        // Check if already granted
-        if (permissionStatus is PermissionStatus.Granted) {
-            stateTracker.markAsRequested(type)
-            return PermissionResult.Granted
-        }
-
-        // Check if permanently denied
-        if (permissionStatus is PermissionStatus.Denied.Permanent) {
-            return PermissionResult.Denied(isPermanent = true)
-        }
-
-        // Mark as requested
+        resolveExistingStatus(type)?.let { return it }
         stateTracker.markAsRequested(type)
-
-        // Request authorization — swap to an authorization delegate, restore persistent
-        // delegate once the result is known so status changes keep being cached.
         return suspendCancellableCoroutine { continuation ->
             val delegate = LocationAuthorizationDelegate { newStatus ->
                 cachedStatus = newStatus // keep cache current during the request
-                val newPermissionStatus = newStatus.toPermissionStatus()
-
-                when (newPermissionStatus) {
-                    is PermissionStatus.Granted ->
-                        continuation.resume(PermissionResult.Granted)
-                    is PermissionStatus.Denied.Permanent ->
-                        continuation.resume(PermissionResult.Denied(isPermanent = true))
-                    is PermissionStatus.Denied.Temporary ->
-                        continuation.resume(PermissionResult.Denied(isPermanent = false))
-                    is PermissionStatus.NotDetermined ->
-                        continuation.resume(PermissionResult.Denied(isPermanent = false))
+                val result = when (newStatus.toPermissionStatus()) {
+                    is PermissionStatus.Granted -> PermissionResult.Granted
+                    is PermissionStatus.Denied.Permanent -> PermissionResult.Denied(isPermanent = true)
+                    else -> PermissionResult.Denied(isPermanent = false)
                 }
-
+                continuation.resume(result)
                 // Restore persistent delegate so future status changes keep being cached
                 locationManager.delegate = persistentDelegate
                 authorizationDelegate = null
@@ -90,31 +67,40 @@ internal class IosPermissionController : PermissionController {
                 authorizationDelegate = null
             }
 
-            // Request appropriate authorization
             when (type) {
                 LocationPermissionType.LOCATION_WHEN_IN_USE,
                 LocationPermissionType.COARSE_LOCATION,
-                ->
-                    locationManager.requestWhenInUseAuthorization()
+                -> locationManager.requestWhenInUseAuthorization()
             }
         }
     }
 
-    override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus {
-        // Reads from cache — no authorizationStatus call on the main thread
-        return cachedStatus.toPermissionStatus()
-    }
+    override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus =
+        cachedStatus.toPermissionStatus()
 
-    override fun wasPermissionRequested(type: LocationPermissionType): Boolean {
-        return stateTracker.wasRequested(type)
-    }
+    override fun wasPermissionRequested(type: LocationPermissionType): Boolean =
+        stateTracker.wasRequested(type)
 
     override fun openAppSettings() {
-        val settingsUrl = UIApplicationOpenSettingsURLString
         UIApplication.sharedApplication.openURL(
-            NSURL.URLWithString(settingsUrl)!!,
+            NSURL.URLWithString(UIApplicationOpenSettingsURLString)!!,
         )
     }
+
+    /**
+     * Checks the cached permission state before launching the OS dialog.
+     * Returns a [PermissionResult] if the request can be short-circuited, or null
+     * if the OS dialog should be shown.
+     */
+    private fun resolveExistingStatus(type: LocationPermissionType): PermissionResult? =
+        when (cachedStatus.toPermissionStatus()) {
+            is PermissionStatus.Granted -> {
+                stateTracker.markAsRequested(type)
+                PermissionResult.Granted
+            }
+            is PermissionStatus.Denied.Permanent -> PermissionResult.Denied(isPermanent = true)
+            else -> null
+        }
 }
 
 /**

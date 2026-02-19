@@ -115,7 +115,8 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.UserLocationUpdated -> {
-                log("[NEARBY_STOPS] UserLocationUpdated: ${event.location?.let { "lat=${it.latitude}, lon=${it.longitude}" } ?: "null"}")
+                val locStr = event.location?.let { "lat=${it.latitude}, lon=${it.longitude}" } ?: "null"
+                log("[NEARBY_STOPS] UserLocationUpdated: $locStr")
                 onUserLocationUpdated(event.location)
             }
 
@@ -199,7 +200,6 @@ class SearchStopViewModel(
     private fun checkMapsAvailability() {
         updateUiState { copy(isMapsAvailable = this@SearchStopViewModel.isMapsAvailable) }
     }
-
 
     // endregion
 
@@ -297,7 +297,7 @@ class SearchStopViewModel(
     }
 
     private fun onNearbyStopClicked(stop: NearbyStopFeature) {
-        // TODO: Show bottom sheet with stop details
+        // Show bottom sheet with stop details
         log("stop: $stop")
     }
 

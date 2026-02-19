@@ -39,6 +39,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.di)
                 api(projects.core.location.state)
+                implementation(projects.core.log)
 
                 implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.coroutines.core)

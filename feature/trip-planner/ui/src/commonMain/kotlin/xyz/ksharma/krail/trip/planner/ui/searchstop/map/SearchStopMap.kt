@@ -31,17 +31,14 @@ import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
-import xyz.ksharma.krail.core.location.data.rememberLocationTracker
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
-import xyz.ksharma.krail.core.maps.data.location.createUserLocationManager
+import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.core.permission.PermissionStatus
-import xyz.ksharma.krail.core.permission.data.rememberPermissionController
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -53,22 +50,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.time.Duration.Companion.milliseconds
-
-/**
- * Creates a [UserLocationManager] in the Compose composition.
- *
- * Lives here (feature layer) because PermissionController and LocationTracker both
- * require a Compose/Activity context to be constructed, so the glue cannot live in
- * the pure-UI :core:maps:ui module.
- */
-@Composable
-fun rememberUserLocationManager(): UserLocationManager {
-    val permissionController = rememberPermissionController()
-    val locationTracker = rememberLocationTracker()
-    return remember(permissionController, locationTracker) {
-        createUserLocationManager(permissionController, locationTracker)
-    }
-}
 
 @Composable
 fun SearchStopMap(

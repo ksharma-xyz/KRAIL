@@ -55,6 +55,6 @@ internal fun LocationPriority.toAndroidPriority(): Int {
  * Uses type-based matching rather than message string inspection.
  */
 internal fun Exception.toLocationError(): LocationError = when (this) {
-    is SecurityException -> LocationError.PermissionDenied
+    is SecurityException -> LocationError.PermissionDenied()
     else -> LocationError.Unknown(this)
 }

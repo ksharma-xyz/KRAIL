@@ -2,7 +2,9 @@ package xyz.ksharma.krail.trip.planner.ui.journeymap
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,31 +26,29 @@ fun JourneyMapScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
+        TitleBar(
+            title = { Text("Journey Map") },
+            onNavActionClick = onBackClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = KrailTheme.colors.surface),
+        )
+
         // Journey data is already in memory - should always be Ready state
         when (journeyMapState) {
             is JourneyMapUiState.Ready -> {
-                // Map takes full screen
                 JourneyMap(
                     journeyMapState = journeyMapState,
-                    modifier = Modifier.fillMaxSize(),
-                )
-
-                TitleBar(
-                    title = {
-                        Text("Journey Map")
-                    },
-                    onNavActionClick = onBackClick,
-                    modifier = Modifier.background(color = KrailTheme.colors.surface),
+                    modifier = Modifier.weight(1f),
                 )
             }
 
-            // Defensive fallbacks - should never happen in normal flow
+            // Defensive fallback - should never happen in normal flow
             JourneyMapUiState.Loading -> {
-                // Loading state is instant (data transform only)
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                )
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
             }
         }
     }

@@ -3,11 +3,14 @@ package xyz.ksharma.krail.trip.planner.ui.journeymap
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +19,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import app.krail.taj.resources.ic_location
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
@@ -45,16 +49,25 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Feature.Companion.getStringProperty
 import org.maplibre.spatialk.geojson.Position
+import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.UserLocationConfig
+import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
+import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
+import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.UserLocationLayer
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
+import kotlin.time.Duration.Companion.milliseconds
 import app.krail.taj.resources.Res as TajRes
 
 private const val LABEL_MIN_ZOOM = 0f
@@ -106,6 +119,13 @@ private fun JourneyMapContent(
     // Keyed to mapState so it resets when viewing a different journey
     var selectedStop by remember(mapState) { mutableStateOf<JourneyStopFeature?>(null) }
 
+    // User location state
+    var userLocation by remember { mutableStateOf<LatLng?>(null) }
+    var showPermissionBanner by remember { mutableStateOf(false) }
+    var allowPermissionRequest by remember { mutableStateOf(false) }
+    val userLocationManager = rememberUserLocationManager()
+    val scope = rememberCoroutineScope()
+
     // Calculate camera position - start at the origin (journey beginning)
     val cameraPosition = remember(mapState.cameraFocus, mapState.mapDisplay.stops) {
         // Find the origin stop (where the journey starts)
@@ -131,6 +151,19 @@ private fun JourneyMapContent(
     }
 
     val cameraState = rememberCameraState(firstPosition = cameraPosition)
+
+    TrackUserLocation(
+        userLocationManager = userLocationManager,
+        cameraState = cameraState,
+        allowPermissionRequest = allowPermissionRequest,
+        onLocationUpdate = { latLng ->
+            showPermissionBanner = false
+            userLocation = latLng
+        },
+        onPermissionDeny = {
+            showPermissionBanner = true
+        },
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         MaplibreMap(
@@ -298,6 +331,49 @@ private fun JourneyMapContent(
                 textHaloColor = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
                 textHaloWidth = const(TEXT_HALO_WIDTH), // Thick background
                 textOffset = offset(0f.em, TEXT_OFFSET_ABOVE_ICON.em), // Above icon (no icon on this layer)
+            )
+
+            // User location pulsing dot (always on top of journey layers)
+            UserLocationLayer(userLocation = userLocation)
+        }
+
+        // User location button (bottom-end corner)
+        UserLocationButton(
+            onClick = {
+                scope.launch {
+                    val userLoc = userLocation
+                    if (userLoc != null) {
+                        // Re-center camera on latest known position
+                        cameraState.animateTo(
+                            CameraPosition(
+                                target = Position(latitude = userLoc.latitude, longitude = userLoc.longitude),
+                                zoom = UserLocationConfig.RECENTER_ZOOM,
+                            ),
+                            duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
+                        )
+                    } else {
+                        val status = userLocationManager.checkPermissionStatus()
+                        if (status is PermissionStatus.Denied) {
+                            showPermissionBanner = true
+                        } else {
+                            // Trigger system permission dialog via TrackUserLocation
+                            allowPermissionRequest = true
+                        }
+                    }
+                }
+            },
+            isActive = userLocation != null,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .padding(16.dp),
+        )
+
+        // Permission denied banner (top of the map area, directly below TitleBar)
+        if (showPermissionBanner) {
+            LocationPermissionBanner(
+                onGoToSettings = { userLocationManager.openAppSettings() },
+                modifier = Modifier.align(Alignment.TopCenter),
             )
         }
 

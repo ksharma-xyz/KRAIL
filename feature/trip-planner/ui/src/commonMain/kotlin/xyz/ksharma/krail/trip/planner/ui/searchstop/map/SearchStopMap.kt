@@ -37,6 +37,8 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.taj.components.Text
@@ -194,8 +196,8 @@ private fun MapContent(
                 options = MapOptions(
                     ornamentOptions = OrnamentOptions(
                         padding = PaddingValues(0.dp),
-                        isLogoEnabled = false,
-                        isAttributionEnabled = true,
+                        isLogoEnabled = LOGO_ENABLED,
+                        isAttributionEnabled = ATTRIBUTION_ENABLED,
                         attributionAlignment = Alignment.BottomEnd,
                         isCompassEnabled = mapState.mapDisplay.showCompass,
                         compassAlignment = Alignment.TopEnd,

@@ -24,7 +24,7 @@ internal fun CLAuthorizationStatus.toPermissionStatus(): PermissionStatus {
 
         kCLAuthorizationStatusDenied,
         kCLAuthorizationStatusRestricted,
-        -> PermissionStatus.Denied.Permanent
+        -> PermissionStatus.Denied
 
         else -> PermissionStatus.NotDetermined
     }

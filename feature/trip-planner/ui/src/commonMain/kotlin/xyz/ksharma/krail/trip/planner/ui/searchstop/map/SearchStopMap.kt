@@ -123,6 +123,9 @@ private fun MapContent(
     // User location state
     var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
     var showPermissionBanner by remember { mutableStateOf(false) }
+    // False until the user explicitly taps the location button.
+    // When true, TrackUserLocation is allowed to trigger the system permission dialog.
+    var allowPermissionRequest by remember { mutableStateOf(false) }
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
 
@@ -154,6 +157,7 @@ private fun MapContent(
         TrackUserLocation(
             userLocationManager = userLocationManager,
             cameraState = cameraState,
+            allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
                 showPermissionBanner = false
                 onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
@@ -242,11 +246,16 @@ private fun MapContent(
                                 duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
                             )
                         } else {
-                            // No location yet — show banner if permission was denied
                             val status = userLocationManager.checkPermissionStatus()
                             if (status is PermissionStatus.Denied) {
+                                // Cannot request — direct user to Settings instead
                                 permissionStatus = status
                                 showPermissionBanner = true
+                            } else {
+                                // Flip the flag: TrackUserLocation's LifecycleStartEffect
+                                // relaunches immediately (key changed) and calls locationUpdates(),
+                                // which triggers the system permission dialog if not yet determined.
+                                allowPermissionRequest = true
                             }
                         }
                     }

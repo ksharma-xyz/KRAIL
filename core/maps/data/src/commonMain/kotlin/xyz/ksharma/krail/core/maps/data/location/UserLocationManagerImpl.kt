@@ -27,7 +27,7 @@ internal class UserLocationManagerImpl(
             is PermissionStatus.Denied.Temporary,
             -> requestPermissionAndGetLocation()
 
-            is PermissionStatus.Denied.Permanent -> Result.failure(LocationError.PermissionDenied)
+            is PermissionStatus.Denied.Permanent -> Result.failure(LocationError.PermissionDenied())
         }
     }
 
@@ -38,10 +38,10 @@ internal class UserLocationManagerImpl(
             is PermissionStatus.Denied.Temporary,
             -> {
                 val result = permissionController.requestPermission(AppPermission.Location.WhenInUse)
-                if (result !is PermissionResult.Granted) throw LocationError.PermissionDenied
+                if (result !is PermissionResult.Granted) throw LocationError.PermissionDenied()
             }
 
-            is PermissionStatus.Denied.Permanent -> throw LocationError.PermissionDenied
+            is PermissionStatus.Denied.Permanent -> throw LocationError.PermissionDenied()
         }
         emitAll(locationTracker.startTracking(config))
     }
@@ -55,7 +55,7 @@ internal class UserLocationManagerImpl(
         when (permissionController.requestPermission(AppPermission.Location.WhenInUse)) {
             is PermissionResult.Granted -> getLocation()
             is PermissionResult.Denied, is PermissionResult.Cancelled ->
-                Result.failure(LocationError.PermissionDenied)
+                Result.failure(LocationError.PermissionDenied())
         }
 
     private suspend fun getLocation(): Result<Location> = suspendSafeResult(Dispatchers.IO) {

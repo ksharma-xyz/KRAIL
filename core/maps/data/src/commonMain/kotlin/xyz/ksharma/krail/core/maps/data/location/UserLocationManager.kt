@@ -3,14 +3,11 @@ package xyz.ksharma.krail.core.maps.data.location
 import kotlinx.coroutines.flow.Flow
 import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationConfig
-import xyz.ksharma.krail.core.location.data.LocationTracker
 import xyz.ksharma.krail.core.permission.PermissionStatus
-import xyz.ksharma.krail.core.permission.data.PermissionController
 
 /**
  * Manages user location access with permission handling.
  *
- * Combines [PermissionController] + [LocationTracker] for map use cases.
  * Handles the complete flow: check permission → request if needed → get location.
  */
 interface UserLocationManager {
@@ -53,12 +50,3 @@ interface UserLocationManager {
      */
     fun openAppSettings()
 }
-
-/**
- * Factory for [UserLocationManager].
- * Called from a Composable context (rememberUserLocationManager in the feature layer).
- */
-fun createUserLocationManager(
-    permissionController: PermissionController,
-    locationTracker: LocationTracker,
-): UserLocationManager = UserLocationManagerImpl(permissionController, locationTracker)

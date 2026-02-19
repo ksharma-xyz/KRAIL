@@ -37,7 +37,6 @@ fun collectEntryProviders(
     val splashEntryBuilder: EntryBuilderDescriptor = koinInject(EntryBuilderQualifiers.SPLASH)
     val appUpgradeEntryBuilder: EntryBuilderDescriptor = koinInject(EntryBuilderQualifiers.APP_UPGRADE)
     val tripPlannerEntryBuilder: EntryBuilderDescriptor = koinInject(EntryBuilderQualifiers.TRIP_PLANNER)
-    val locationEntryBuilder: EntryBuilderDescriptor = koinInject(EntryBuilderQualifiers.LOCATION)
 
     return entryProvider {
         // Invoke all entry builders with Navigator
@@ -45,6 +44,5 @@ fun collectEntryProviders(
         splashEntryBuilder.builder(this, navigator)
         appUpgradeEntryBuilder.builder(this, navigator)
         tripPlannerEntryBuilder.builder(this, navigator)
-        locationEntryBuilder.builder(this, navigator)
     }
 }

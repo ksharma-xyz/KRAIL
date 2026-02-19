@@ -61,7 +61,7 @@ internal class AndroidLocationTrackerImpl(
     @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(timeoutMs: Long): Location {
         if (!isLocationEnabled()) {
-            throw LocationError.LocationDisabled
+            throw LocationError.Unknown(Exception("Location services are disabled"))
         }
 
         return suspendCancellableCoroutine { continuation ->
@@ -71,7 +71,7 @@ internal class AndroidLocationTrackerImpl(
             val timeoutRunnable = Runnable {
                 if (!isCompleted) {
                     isCompleted = true
-                    continuation.resumeWithException(LocationError.Timeout)
+                    continuation.resumeWithException(LocationError.Unknown(Exception("Location request timed out")))
                 }
             }
             val handler = Handler(Looper.getMainLooper())
@@ -142,7 +142,7 @@ internal class AndroidLocationTrackerImpl(
     @SuppressLint("MissingPermission")
     override fun startTracking(config: LocationConfig): Flow<Location> = callbackFlow {
         if (!isLocationEnabled()) {
-            throw LocationError.LocationDisabled
+            throw LocationError.Unknown(Exception("Location services are disabled"))
         }
 
         // Seed with last known location so the map shows instantly without waiting

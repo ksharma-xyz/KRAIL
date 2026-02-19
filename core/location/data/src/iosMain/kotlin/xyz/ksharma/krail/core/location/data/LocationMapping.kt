@@ -34,7 +34,7 @@ internal fun CLLocation.toCommonLocation(): Location {
 /**
  * Convert LocationPriority to iOS CLLocationAccuracy.
  */
-internal fun LocationPriority.toiOSAccuracy(): CLLocationAccuracy {
+internal fun LocationPriority.toIosAccuracy(): CLLocationAccuracy {
     return when (this) {
         LocationPriority.HIGH_ACCURACY -> kCLLocationAccuracyBest
         LocationPriority.BALANCED_POWER -> kCLLocationAccuracyHundredMeters

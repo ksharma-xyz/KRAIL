@@ -22,6 +22,7 @@ import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationConfig
 import xyz.ksharma.krail.core.location.LocationError
 import xyz.ksharma.krail.core.location.LocationPriority
+import xyz.ksharma.krail.core.log.log
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import android.location.LocationManager as SystemLocationManager
@@ -40,7 +41,6 @@ internal class AndroidLocationTrackerImpl(
 
     private var locationCallback: LocationCallback? = null
     private var boundActivity: ComponentActivity? = null
-    private var isPaused = false
 
     /**
      * Bind this tracker to a ComponentActivity for lifecycle management.
@@ -50,18 +50,7 @@ internal class AndroidLocationTrackerImpl(
 
         boundActivity = activity
 
-        // Observe lifecycle to pause/resume tracking
         activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onPause(owner: LifecycleOwner) {
-                isPaused = true
-                // Note: We don't stop tracking on pause, just track the state
-                // Real tracking stop happens when Flow is cancelled
-            }
-
-            override fun onResume(owner: LifecycleOwner) {
-                isPaused = false
-            }
-
             override fun onDestroy(owner: LifecycleOwner) {
                 stopTracking()
                 boundActivity = null
@@ -174,7 +163,7 @@ internal class AndroidLocationTrackerImpl(
 
         locationCallback = callback
 
-        println(
+        log(
             "[USER_LOCATION] Android: FusedLocation requestLocationUpdates " +
                 "(interval=${locationRequest.intervalMillis}ms)",
         )
@@ -187,7 +176,7 @@ internal class AndroidLocationTrackerImpl(
         }
 
         awaitClose {
-            println("[USER_LOCATION] Android: FusedLocation removeLocationUpdates (flow cancelled)")
+            log("[USER_LOCATION] Android: FusedLocation removeLocationUpdates (flow cancelled)")
             fusedLocationClient.removeLocationUpdates(callback)
             locationCallback = null
         }

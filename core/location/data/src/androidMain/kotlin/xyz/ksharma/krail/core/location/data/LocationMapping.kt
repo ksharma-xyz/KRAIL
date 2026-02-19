@@ -50,15 +50,11 @@ internal fun LocationPriority.toAndroidPriority(): Int {
 }
 
 /**
- * Convert exceptions to LocationError.
+ * Convert exceptions to [LocationError].
+ *
+ * Uses type-based matching rather than message string inspection.
  */
-internal fun Exception.toLocationError(): LocationError {
-    return when {
-        message?.contains("permission", ignoreCase = true) == true ->
-            LocationError.PermissionDenied
-        message?.contains("disabled", ignoreCase = true) == true ||
-            message?.contains("location", ignoreCase = true) == true ->
-            LocationError.LocationDisabled
-        else -> LocationError.Unknown(this)
-    }
+internal fun Exception.toLocationError(): LocationError = when (this) {
+    is SecurityException -> LocationError.PermissionDenied
+    else -> LocationError.Unknown(this)
 }

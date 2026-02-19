@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.core.location.data
 
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -15,6 +16,7 @@ import platform.darwin.NSObject
 import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationConfig
 import xyz.ksharma.krail.core.location.LocationError
+import xyz.ksharma.krail.core.log.log
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -31,55 +33,59 @@ internal class IosLocationTrackerImpl : LocationTracker {
             throw LocationError.LocationDisabled
         }
 
-        return withTimeout(timeoutMs) {
-            suspendCancellableCoroutine { continuation ->
-                // Guard against CLLocationManager resuming the same request twice.
-                var isCompleted = false
+        return try {
+            withTimeout(timeoutMs) {
+                suspendCancellableCoroutine { continuation ->
+                    // Guard against CLLocationManager resuming the same request twice.
+                    var isCompleted = false
 
-                val delegate = object : NSObject(), CLLocationManagerDelegateProtocol {
-                    override fun locationManager(
-                        manager: CLLocationManager,
-                        didUpdateLocations: List<*>,
-                    ) {
-                        if (isCompleted) return
-                        val location = didUpdateLocations.lastOrNull() as? CLLocation
-                        if (location != null) {
+                    val delegate = object : NSObject(), CLLocationManagerDelegateProtocol {
+                        override fun locationManager(
+                            manager: CLLocationManager,
+                            didUpdateLocations: List<*>,
+                        ) {
+                            if (isCompleted) return
+                            val location = didUpdateLocations.lastOrNull() as? CLLocation
+                            if (location != null) {
+                                isCompleted = true
+                                manager.stopUpdatingLocation()
+                                manager.delegate = null
+                                continuation.resume(location.toCommonLocation())
+                            }
+                        }
+
+                        override fun locationManager(
+                            manager: CLLocationManager,
+                            didFailWithError: NSError,
+                        ) {
+                            if (isCompleted) return
+                            // kCLErrorLocationUnknown (code 0) is transient: CoreLocation cannot get
+                            // a location right now but will keep trying. Ignore it and wait for
+                            // didUpdateLocations. Treating it as fatal causes an "Already resumed"
+                            // crash when didUpdateLocations fires shortly after.
+                            if (didFailWithError.code == kCLErrorLocationUnknown) return
                             isCompleted = true
                             manager.stopUpdatingLocation()
                             manager.delegate = null
-                            continuation.resume(location.toCommonLocation())
+                            continuation.resumeWithException(
+                                LocationError.Unknown(Exception(didFailWithError.localizedDescription)),
+                            )
                         }
                     }
 
-                    override fun locationManager(
-                        manager: CLLocationManager,
-                        didFailWithError: NSError,
-                    ) {
-                        if (isCompleted) return
-                        // kCLErrorLocationUnknown (code 0) is transient: CoreLocation cannot get
-                        // a location right now but will keep trying. Ignore it and wait for
-                        // didUpdateLocations. Treating it as fatal causes an "Already resumed"
-                        // crash when didUpdateLocations fires shortly after.
-                        if (didFailWithError.code == kCLErrorLocationUnknown) return
+                    locationManager.delegate = delegate
+                    locationManager.desiredAccuracy = kCLLocationAccuracyBest
+                    locationManager.startUpdatingLocation()
+
+                    continuation.invokeOnCancellation {
                         isCompleted = true
-                        manager.stopUpdatingLocation()
-                        manager.delegate = null
-                        continuation.resumeWithException(
-                            LocationError.Unknown(Exception(didFailWithError.localizedDescription)),
-                        )
+                        locationManager.stopUpdatingLocation()
+                        locationManager.delegate = null
                     }
                 }
-
-                locationManager.delegate = delegate
-                locationManager.desiredAccuracy = kCLLocationAccuracyBest
-                locationManager.startUpdatingLocation()
-
-                continuation.invokeOnCancellation {
-                    isCompleted = true
-                    locationManager.stopUpdatingLocation()
-                    locationManager.delegate = null
-                }
             }
+        } catch (_: TimeoutCancellationException) {
+            throw LocationError.Timeout
         }
     }
 
@@ -101,7 +107,7 @@ internal class IosLocationTrackerImpl : LocationTracker {
 
         // Configure location manager
         locationManager.delegate = delegate
-        locationManager.desiredAccuracy = config.priority.toiOSAccuracy()
+        locationManager.desiredAccuracy = config.priority.toIosAccuracy()
         locationManager.distanceFilter = config.minDistanceMeters.toDouble()
 
         // Seed with cached location so the map shows instantly without waiting
@@ -109,11 +115,11 @@ internal class IosLocationTrackerImpl : LocationTracker {
         locationManager.location?.let { cached -> trySend(cached.toCommonLocation()) }
 
         // Start updating location
-        println("[USER_LOCATION] iOS: CLLocationManager startUpdatingLocation")
+        log("[USER_LOCATION] iOS: CLLocationManager startUpdatingLocation")
         locationManager.startUpdatingLocation()
 
         awaitClose {
-            println("[USER_LOCATION] iOS: CLLocationManager stopUpdatingLocation (flow cancelled)")
+            log("[USER_LOCATION] iOS: CLLocationManager stopUpdatingLocation (flow cancelled)")
             locationManager.stopUpdatingLocation()
             locationManager.delegate = null
             trackingDelegate = null

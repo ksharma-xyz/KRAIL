@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.suspendCancellableCoroutine
-import xyz.ksharma.krail.core.permission.LocationPermissionType
+import xyz.ksharma.krail.core.permission.AppPermission
 import xyz.ksharma.krail.core.permission.PermissionResult
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import kotlin.coroutines.resume
@@ -51,10 +51,10 @@ internal class AndroidPermissionController(
         })
     }
 
-    override suspend fun requestPermission(type: LocationPermissionType): PermissionResult {
-        val permissions = type.toAndroidPermissions()
-        resolveExistingStatus(type, permissions)?.let { return it }
-        stateTracker.markAsRequested(type)
+    override suspend fun requestPermission(permission: AppPermission): PermissionResult {
+        val permissions = permission.toAndroidPermissions()
+        resolveExistingStatus(permission, permissions)?.let { return it }
+        stateTracker.markAsRequested(permission)
         return suspendCancellableCoroutine { continuation ->
             val callback: (Map<String, Boolean>) -> Unit = { results ->
                 val allGranted = results.values.all { it }
@@ -64,13 +64,9 @@ internal class AndroidPermissionController(
                     results.isEmpty() -> continuation.resume(PermissionResult.Cancelled)
                     else -> {
                         val activity = boundActivity
-                        val isPermanent = if (activity != null) {
-                            permissions.any { permission ->
-                                !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) &&
-                                    results[permission] == false
-                            }
-                        } else {
-                            false
+                        val isPermanent = activity != null && permissions.any { perm ->
+                            !ActivityCompat.shouldShowRequestPermissionRationale(activity, perm) &&
+                                results[perm] == false
                         }
                         continuation.resume(PermissionResult.Denied(isPermanent = isPermanent))
                     }
@@ -83,23 +79,23 @@ internal class AndroidPermissionController(
         }
     }
 
-    override suspend fun checkPermissionStatus(type: LocationPermissionType): PermissionStatus {
-        val allGranted = type.toAndroidPermissions().all { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    override suspend fun checkPermissionStatus(permission: AppPermission): PermissionStatus {
+        val allGranted = permission.toAndroidPermissions().all { perm ->
+            ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
         }
         // Ask-once policy: if we already asked and user denied, treat as Permanent so the
         // caller directs the user to Settings — matching iOS behaviour.
-        // Note: this count does not persist across app restarts; a future improvement
+        // Note: this does not persist across app restarts; a future improvement
         // would store it in DataStore so the policy survives restarts.
         return when {
             allGranted -> PermissionStatus.Granted
-            stateTracker.wasRequested(type) -> PermissionStatus.Denied.Permanent
+            stateTracker.wasRequested(permission) -> PermissionStatus.Denied.Permanent
             else -> PermissionStatus.NotDetermined
         }
     }
 
-    override fun wasPermissionRequested(type: LocationPermissionType): Boolean =
-        stateTracker.wasRequested(type)
+    override fun wasPermissionRequested(permission: AppPermission): Boolean =
+        stateTracker.wasRequested(permission)
 
     override fun openAppSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -115,21 +111,21 @@ internal class AndroidPermissionController(
      * if the OS dialog should be shown.
      */
     private fun resolveExistingStatus(
-        type: LocationPermissionType,
+        permission: AppPermission,
         permissions: List<String>,
     ): PermissionResult? {
-        val allGranted = permissions.all { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+        val allGranted = permissions.all { perm ->
+            ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
         }
         if (allGranted) {
-            stateTracker.markAsRequested(type)
+            stateTracker.markAsRequested(permission)
             return PermissionResult.Granted
         }
         val activity = boundActivity
-        val anyPermanentlyDenied = activity != null && permissions.any { permission ->
-            !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission) &&
-                ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED &&
-                stateTracker.wasRequested(type)
+        val anyPermanentlyDenied = activity != null && permissions.any { perm ->
+            !ActivityCompat.shouldShowRequestPermissionRationale(activity, perm) &&
+                ContextCompat.checkSelfPermission(context, perm) != PackageManager.PERMISSION_GRANTED &&
+                stateTracker.wasRequested(permission)
         }
         return if (anyPermanentlyDenied) PermissionResult.Denied(isPermanent = true) else null
     }

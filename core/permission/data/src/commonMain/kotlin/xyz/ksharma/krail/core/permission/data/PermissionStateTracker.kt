@@ -1,33 +1,25 @@
 package xyz.ksharma.krail.core.permission.data
 
-import xyz.ksharma.krail.core.permission.LocationPermissionType
+import xyz.ksharma.krail.core.permission.AppPermission
 
 /**
  * In-memory tracker for permission request history.
  *
- * This tracks which permissions have been requested during the current app session.
- * The tracking is reset when the app restarts.
+ * Tracks which [AppPermission]s have been requested during the current session.
+ * Resets on app restart.
  */
 internal class PermissionStateTracker {
-    private val requestedPermissions = mutableSetOf<LocationPermissionType>()
+    private val requestedPermissions = mutableSetOf<AppPermission>()
 
-    /**
-     * Mark a permission as having been requested.
-     */
-    fun markAsRequested(type: LocationPermissionType) {
-        requestedPermissions.add(type)
+    /** Mark [permission] as having been requested. */
+    fun markAsRequested(permission: AppPermission) {
+        requestedPermissions.add(permission)
     }
 
-    /**
-     * Check if a permission was requested in this session.
-     */
-    fun wasRequested(type: LocationPermissionType): Boolean {
-        return type in requestedPermissions
-    }
+    /** Returns true if [permission] was requested in this session. */
+    fun wasRequested(permission: AppPermission): Boolean = permission in requestedPermissions
 
-    /**
-     * Clear all tracking data.
-     */
+    /** Clear all tracking data. */
     fun clear() {
         requestedPermissions.clear()
     }

@@ -37,7 +37,7 @@ object MapConfig {
         const val LOGO_ENABLED = false
         const val ATTRIBUTION_ENABLED = false
         const val COMPASS_ENABLED = true
-        const val SCALE_BAR_ENABLED = true
+        const val SCALE_BAR_ENABLED = false
     }
 
     /**

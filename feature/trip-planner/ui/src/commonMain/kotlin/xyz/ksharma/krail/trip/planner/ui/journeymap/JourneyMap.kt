@@ -124,6 +124,7 @@ private fun JourneyMapContent(
         userLocationManager = userLocationManager,
         cameraState = cameraState,
         allowPermissionRequest = allowPermissionRequest,
+        autoCenter = false,
         onLocationUpdate = { latLng ->
             showPermissionBanner = false
             userLocation = latLng

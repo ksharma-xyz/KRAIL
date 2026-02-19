@@ -1,81 +1,50 @@
 package xyz.ksharma.krail.trip.planner.ui.journeymap
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import app.krail.taj.resources.ic_location
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
-import org.maplibre.compose.expressions.dsl.Feature.get
-import org.maplibre.compose.expressions.dsl.and
-import org.maplibre.compose.expressions.dsl.asBoolean
-import org.maplibre.compose.expressions.dsl.asString
-import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.convertToColor
-import org.maplibre.compose.expressions.dsl.eq
-import org.maplibre.compose.expressions.dsl.feature
-import org.maplibre.compose.expressions.dsl.format
-import org.maplibre.compose.expressions.dsl.image
-import org.maplibre.compose.expressions.dsl.offset
-import org.maplibre.compose.expressions.dsl.span
-import org.maplibre.compose.expressions.value.LineCap
-import org.maplibre.compose.expressions.value.LineJoin
-import org.maplibre.compose.layers.CircleLayer
-import org.maplibre.compose.layers.LineLayer
-import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
-import org.maplibre.compose.sources.GeoJsonData
-import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
-import org.maplibre.compose.util.ClickResult
-import org.maplibre.spatialk.geojson.Feature.Companion.getStringProperty
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
-import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
+import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.core.permission.PermissionStatus
-import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
-import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
-import xyz.ksharma.krail.trip.planner.ui.searchstop.map.UserLocationLayer
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 import kotlin.time.Duration.Companion.milliseconds
-import app.krail.taj.resources.Res as TajRes
-
-private const val LABEL_MIN_ZOOM = 0f
-private const val LABEL_MAX_ZOOM = 24f
-private val LOCATION_ICON_SIZE = DpSize(24.dp, 24.dp)
-private val TEXT_HALO_WIDTH = 3.dp
-private const val TEXT_OFFSET_BELOW_ICON = 2f // Position text below icon
-private const val TEXT_OFFSET_ABOVE_ICON = -2f // Position text above icon
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 /**
  * Main composable for displaying a journey on a map.
@@ -126,28 +95,27 @@ private fun JourneyMapContent(
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
 
-    // Calculate camera position - start at the origin (journey beginning)
+    // Data freshness badge — survives rotation via rememberSaveable
+    // baseMinutes captures the saved value at composition time so the tick
+    // always adds fresh elapsed time on top of any previously accumulated minutes.
+    var elapsedMinutes by rememberSaveable { mutableLongStateOf(0L) }
+    val baseMinutes = remember { elapsedMinutes }
+    val loadedAt = remember { TimeSource.Monotonic.markNow() }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(30.seconds)
+            elapsedMinutes = baseMinutes + loadedAt.elapsedNow().inWholeMinutes
+        }
+    }
+    val isStale = elapsedMinutes >= 2
+    val badgeText: String? = when {
+        elapsedMinutes < 1 -> null
+        elapsedMinutes < 5 -> "Updated $elapsedMinutes mins ago"
+        else -> "Map showing scheduled times only."
+    }
+
     val cameraPosition = remember(mapState.cameraFocus, mapState.mapDisplay.stops) {
-        // Find the origin stop (where the journey starts)
-        val originStop = mapState.mapDisplay.stops.firstOrNull { it.stopType == StopType.ORIGIN }
-
-        val target = originStop?.position?.let { origin ->
-            Position(longitude = origin.longitude, latitude = origin.latitude)
-        } ?: mapState.cameraFocus?.let { focus ->
-            // Fallback to center if no origin found
-            val center = MapCameraUtils.calculateCenter(focus.bounds)
-            Position(longitude = center.longitude, latitude = center.latitude)
-        } ?: Position(
-            latitude = MapConfig.DefaultPosition.LATITUDE,
-            longitude = MapConfig.DefaultPosition.LONGITUDE,
-        )
-
-        // Calculate zoom level from bounds to fit the entire journey
-        val zoom = mapState.cameraFocus?.let { focus ->
-            MapCameraUtils.calculateZoomLevel(focus.bounds)
-        } ?: MapConfig.DefaultPosition.ZOOM
-
-        CameraPosition(target = target, zoom = zoom)
+        calculateInitialCameraPosition(mapState)
     }
 
     val cameraState = rememberCameraState(firstPosition = cameraPosition)
@@ -182,159 +150,11 @@ private fun JourneyMapContent(
                 ),
             ),
         ) {
-            // Convert state to GeoJSON FeatureCollection
-            val featureCollection = remember(mapState) {
-                mapState.toFeatureCollection()
-            }
-
-            val journeySource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(featureCollection),
+            JourneyMapLayers(
+                mapState = mapState,
+                userLocation = userLocation,
+                onStopSelect = { selectedStop = it },
             )
-
-            // === LINE LAYERS ===
-
-            // Walking paths - dashed gray lines
-            LineLayer(
-                id = "journey-walking-lines",
-                source = journeySource,
-                filter = JourneyMapFilters.isJourneyLeg() and
-                    (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(true)),
-                color = const(KrailTheme.colors.walkingPath),
-                width = const(4.dp),
-                dasharray = const(listOf(2f, 2f)), // Dashed pattern
-                cap = const(LineCap.Round),
-                join = const(LineJoin.Round),
-            )
-
-            // Transit routes - solid colored lines
-            LineLayer(
-                id = "journey-transit-lines",
-                source = journeySource,
-                filter = JourneyMapFilters.isJourneyLeg() and
-                    (get(GeoJsonPropertyKeys.IS_WALKING).asBoolean() eq const(false)),
-                color = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
-                width = const(6.dp),
-                cap = const(LineCap.Round),
-                join = const(LineJoin.Round),
-            )
-
-            // === CIRCLE LAYERS FOR STOPS ===
-
-            // Regular stops only - small white circles with click handler
-            // Note: Origin, Destination, and Interchange stops use SymbolLayer with icons instead
-            CircleLayer(
-                id = "journey-stops-regular",
-                source = journeySource,
-                filter = JourneyMapFilters.isStopType(StopType.REGULAR),
-                color = const(Color.White),
-                radius = const(6.dp),
-                strokeColor = const(Color.Black),
-                strokeWidth = const(2.dp),
-                onClick = { features ->
-                    val feature = features.firstOrNull()
-                    val stopId = feature?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)
-                    mapState.mapDisplay.stops.find { it.stopId == stopId }?.let { stop ->
-                        selectedStop = stop
-                    }
-                    ClickResult.Consume
-                },
-            )
-
-            // === TEXT LABELS ===
-
-            // Prepare location icon for stop labels
-            val locationIcon = painterResource(TajRes.drawable.ic_location)
-
-            // Get origin stop name for display
-            val originStopName = remember(mapState.mapDisplay.stops) {
-                mapState.mapDisplay.stops
-                    .firstOrNull { it.stopType == StopType.ORIGIN }
-                    ?.stopName
-                    ?: "Start"
-            }
-
-            // Origin stop - Show stop name with icon
-            SymbolLayer(
-                id = "journey-origin-label",
-                source = journeySource,
-                minZoom = LABEL_MIN_ZOOM,
-                maxZoom = LABEL_MAX_ZOOM,
-                filter = JourneyMapFilters.isStopType(StopType.ORIGIN),
-                iconImage = image(locationIcon, size = LOCATION_ICON_SIZE),
-                iconColor = const(Color.Black),
-                textField = format(span(originStopName)),
-                textFont = const(listOf("Noto Sans Regular")),
-                textSize = const(1f.em),
-                textColor = const(Color.Black),
-                textOffset = offset(0f.em, TEXT_OFFSET_BELOW_ICON.em), // Below icon
-                onClick = { features ->
-                    val feature = features.firstOrNull()
-                    val stopId = feature?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)
-                    mapState.mapDisplay.stops.find { it.stopId == stopId }?.let { stop ->
-                        selectedStop = stop
-                    }
-                    ClickResult.Consume
-                },
-            )
-
-            // Origin stop - Show line number (T1, etc.) above the stop name
-            SymbolLayer(
-                id = "journey-origin-line-label",
-                source = journeySource,
-                minZoom = LABEL_MIN_ZOOM,
-                maxZoom = LABEL_MAX_ZOOM,
-                filter = JourneyMapFilters.isStopType(StopType.ORIGIN),
-                textField = format(span(get(GeoJsonPropertyKeys.LINE_NAME).asString())),
-                textFont = const(listOf("Noto Sans Regular")),
-                textSize = const(1.2f.em),
-                textColor = const(Color.White),
-                textHaloColor = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
-                textHaloWidth = const(TEXT_HALO_WIDTH), // Thick background
-                textOffset = offset(0f.em, TEXT_OFFSET_ABOVE_ICON.em), // Above icon (no icon on this layer)
-            )
-
-            // Destination and Interchange stops - Show stop name with icon
-            SymbolLayer(
-                id = "journey-stops-labels",
-                source = journeySource,
-                minZoom = LABEL_MIN_ZOOM,
-                maxZoom = LABEL_MAX_ZOOM,
-                filter = JourneyMapFilters.isStopType(StopType.DESTINATION, StopType.INTERCHANGE),
-                iconImage = image(locationIcon, size = LOCATION_ICON_SIZE),
-                iconColor = const(Color.Black),
-                textField = format(span(feature[GeoJsonPropertyKeys.STOP_NAME].asString())),
-                textFont = const(listOf("Noto Sans Regular")),
-                textSize = const(1.0f.em),
-                textColor = const(Color.Black),
-                textOffset = offset(0f.em, TEXT_OFFSET_BELOW_ICON.em), // Below icon
-                onClick = { features ->
-                    val feature = features.firstOrNull()
-                    val stopId = feature?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)
-                    mapState.mapDisplay.stops.find { it.stopId == stopId }?.let { stop ->
-                        selectedStop = stop
-                    }
-                    ClickResult.Consume
-                },
-            )
-
-            // Destination and Interchange stops - Show line number above the stop name
-            SymbolLayer(
-                id = "journey-stops-line-labels",
-                source = journeySource,
-                minZoom = LABEL_MIN_ZOOM,
-                maxZoom = LABEL_MAX_ZOOM,
-                filter = JourneyMapFilters.isStopType(StopType.DESTINATION, StopType.INTERCHANGE),
-                textField = format(span(get(GeoJsonPropertyKeys.LINE_NAME).asString())),
-                textFont = const(listOf("Noto Sans Regular")),
-                textSize = const(1.2f.em),
-                textColor = const(Color.White),
-                textHaloColor = get(GeoJsonPropertyKeys.COLOR).asString().convertToColor(),
-                textHaloWidth = const(TEXT_HALO_WIDTH), // Thick background
-                textOffset = offset(0f.em, TEXT_OFFSET_ABOVE_ICON.em), // Above icon (no icon on this layer)
-            )
-
-            // User location pulsing dot (always on top of journey layers)
-            UserLocationLayer(userLocation = userLocation)
         }
 
         // User location button (bottom-end corner)
@@ -369,12 +189,26 @@ private fun JourneyMapContent(
                 .padding(16.dp),
         )
 
-        // Permission denied banner (top of the map area, directly below TitleBar)
-        if (showPermissionBanner) {
-            LocationPermissionBanner(
-                onGoToSettings = { userLocationManager.openAppSettings() },
+        // Top overlays — permission banner (if shown) then freshness badge directly below it
+        if (showPermissionBanner || badgeText != null) {
+            Column(
                 modifier = Modifier.align(Alignment.TopCenter),
-            )
+            ) {
+                if (showPermissionBanner) {
+                    LocationPermissionBanner(
+                        onGoToSettings = { userLocationManager.openAppSettings() },
+                    )
+                }
+                badgeText?.let { text ->
+                    MapTimetableDataBadge(
+                        text = text,
+                        isStale = isStale,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+            }
         }
 
         // Stop Details Bottom Sheet
@@ -385,4 +219,24 @@ private fun JourneyMapContent(
             )
         }
     }
+}
+
+private fun calculateInitialCameraPosition(mapState: JourneyMapUiState.Ready): CameraPosition {
+    val originStop = mapState.mapDisplay.stops.firstOrNull { it.stopType == StopType.ORIGIN }
+
+    val target = originStop?.position?.let { origin ->
+        Position(longitude = origin.longitude, latitude = origin.latitude)
+    } ?: mapState.cameraFocus?.let { focus ->
+        val center = MapCameraUtils.calculateCenter(focus.bounds)
+        Position(longitude = center.longitude, latitude = center.latitude)
+    } ?: Position(
+        latitude = MapConfig.DefaultPosition.LATITUDE,
+        longitude = MapConfig.DefaultPosition.LONGITUDE,
+    )
+
+    val zoom = mapState.cameraFocus?.let { focus ->
+        MapCameraUtils.calculateZoomLevel(focus.bounds)
+    } ?: MapConfig.DefaultPosition.ZOOM
+
+    return CameraPosition(target = target, zoom = zoom)
 }

@@ -5,17 +5,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import org.maplibre.compose.camera.CameraPosition
-import org.maplibre.compose.camera.CameraState
-import org.maplibre.spatialk.geojson.Position
-import xyz.ksharma.krail.core.location.Location
 import xyz.ksharma.krail.core.location.LocationConfig
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
+import xyz.ksharma.krail.core.maps.ui.utils.CameraFollowState
 import xyz.ksharma.krail.core.permission.PermissionStatus
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Lifecycle-aware side-effect that tracks the user's location while the screen is visible.
@@ -33,7 +29,9 @@ import kotlin.time.Duration.Companion.milliseconds
  *   This should only be true after an explicit user action (location button tap).
  *
  * @param userLocationManager Provides location updates and permission check/request APIs.
- * @param cameraState MapLibre camera used to animate to the user's position when [autoCenter] is true.
+ * @param cameraFollowState Follow-mode camera state. Used to auto-center on first fix when
+ *   [autoCenter] is true, and to track the user on every update when
+ *   [CameraFollowState.isFollowing] is true.
  * @param onLocationUpdate Called on every location fix with the latest [LatLng]. Use this to update
  *   the user-location dot on the map or any other UI that depends on the current position.
  * @param onPermissionDeny Called when location permission is permanently denied so the screen can
@@ -48,7 +46,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 internal fun TrackUserLocation(
     userLocationManager: UserLocationManager,
-    cameraState: CameraState,
+    cameraFollowState: CameraFollowState,
     onLocationUpdate: (LatLng) -> Unit,
     onPermissionDeny: (PermissionStatus) -> Unit,
     allowPermissionRequest: Boolean,
@@ -85,18 +83,22 @@ internal fun TrackUserLocation(
                 }
                 .collect { location ->
                     log("[USER_LOCATION] Location update: loc=$location")
-                    onLocationUpdate(LatLng(location.latitude, location.longitude))
-                    // Only pan once: avoids fighting the user's manual camera gestures after
-                    // the first fix. If autoCenter is false (e.g. journey map where the camera
-                    // is already positioned at the journey origin), skip entirely.
+                    val latLng = LatLng(location.latitude, location.longitude)
+                    onLocationUpdate(latLng)
+
                     if (autoCenter && !hasAutoCentered) {
+                        // Auto-center once on first fix; does not start follow mode.
                         hasAutoCentered = true
-                        cameraState.animateTo(
-                            CameraPosition(
-                                target = location.toPosition(),
-                                zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
-                            ),
-                            duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
+                        cameraFollowState.animateTo(
+                            latLng = latLng,
+                            zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
+                            durationMs = UserLocationConfig.AUTO_CENTER_ANIMATION_MS,
+                        )
+                    } else if (cameraFollowState.isFollowing) {
+                        // Follow mode: animate to new position, preserve user's current zoom.
+                        cameraFollowState.animateTo(
+                            latLng = latLng,
+                            durationMs = UserLocationConfig.FOLLOW_ANIMATION_MS,
                         )
                     }
                 }
@@ -108,5 +110,3 @@ internal fun TrackUserLocation(
         }
     }
 }
-
-private fun Location.toPosition(): Position = Position(latitude = latitude, longitude = longitude)

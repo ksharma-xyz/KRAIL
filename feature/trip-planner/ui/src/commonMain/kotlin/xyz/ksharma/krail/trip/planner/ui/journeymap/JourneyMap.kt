@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
@@ -33,6 +32,7 @@ import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
+import xyz.ksharma.krail.core.maps.ui.utils.rememberCameraFollowState
 import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig

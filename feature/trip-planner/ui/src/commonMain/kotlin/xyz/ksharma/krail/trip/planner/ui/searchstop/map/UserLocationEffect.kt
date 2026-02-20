@@ -87,8 +87,10 @@ internal fun TrackUserLocation(
                     onLocationUpdate(latLng)
 
                     if (autoCenter && !hasAutoCentered) {
-                        // Auto-center once on first fix; does not start follow mode.
+                        // Auto-center on first fix and enter follow mode so the camera
+                        // continues tracking the user on every subsequent GPS update.
                         hasAutoCentered = true
+                        cameraFollowState.startFollowing()
                         cameraFollowState.animateTo(
                             latLng = latLng,
                             zoom = UserLocationConfig.AUTO_CENTER_ZOOM,

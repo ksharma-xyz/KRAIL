@@ -47,6 +47,7 @@ import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
+import xyz.ksharma.krail.core.maps.ui.utils.dotLocation
 import xyz.ksharma.krail.core.maps.ui.utils.rememberCameraFollowState
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -247,9 +248,11 @@ private fun MapContent(
                     log("[NEARBY_STOPS_UI] No stops to render")
                 }
 
-                // Render user location as red circle (always on top)
                 UserLocationLayer(
-                    userLocation = mapState.mapDisplay.userLocation,
+                    userLocation = cameraFollowState.dotLocation(
+                        userLocation = mapState.mapDisplay.userLocation,
+                        cameraState = cameraState,
+                    ),
                 )
             }
 

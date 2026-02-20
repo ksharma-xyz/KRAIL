@@ -67,6 +67,7 @@ internal fun TrackUserLocation(
                     onPermissionDeny(status)
                     return@launch
                 }
+                // Only relevant on Android — iOS knows natively via CLAuthorizationStatus.notDetermined.
                 !allowPermissionRequest && status !is PermissionStatus.Granted -> {
                     log("[USER_LOCATION] Permission not granted; awaiting explicit user action")
                     return@launch

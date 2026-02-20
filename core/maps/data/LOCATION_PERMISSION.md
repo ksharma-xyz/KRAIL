@@ -67,6 +67,40 @@ the user explicitly taps the location button. Changing the flag is the key for
 
 ---
 
+## Camera follow & dot animation
+
+`CameraFollowState` controls both the camera and the location dot. The dot has three modes:
+
+| `isFollowing` | `isRecentering` | Dot position |
+|---|---|---|
+| `false` | — | Last GPS fix (dot may be off-screen when user has panned away) |
+| `true` | `true` | Last GPS fix — camera is flying *toward* the dot; dot holds still |
+| `true` | `false` | Mirrors the camera's animated target — frame-perfect sync, no vibration |
+
+**Why the split?** Two different animations must coexist without fighting each other:
+
+- **GPS follow** (user is physically moving) — GPS updates arrive, camera animates to each new fix.
+  The dot mirrors the camera target so only one animation system is driving the position. If the dot
+  were driven by GPS and the camera separately, the two slightly-out-of-sync animations would cause
+  visible vibration.
+
+- **Recenter** (user panned away, then tapped the location button) — the camera is moving *toward*
+  the dot. The dot is already at the right place. If the dot were to mirror the camera here, it would
+  immediately jump to wherever the camera happened to be (the panned-away position), flash there, and
+  then chase the camera as it flies back. Instead, `isRecentering = true` keeps the dot stationary
+  at the GPS fix throughout the recenter animation.
+
+**State transitions:**
+
+```
+startFollowing()        → isFollowing = true,  isRecentering = true
+animateTo() completes   → isRecentering = false   (dot switches to camera-mirror mode)
+stopFollowing()         → isFollowing = false, isRecentering = false
+manual pan (GESTURE)    → stopFollowing()
+```
+
+---
+
 ## Scenario table
 
 | Scenario | Behaviour |

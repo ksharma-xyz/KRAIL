@@ -15,6 +15,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import xyz.ksharma.krail.core.permission.AppPermission
 import xyz.ksharma.krail.core.permission.PermissionResult
 import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.krail.sandook.SandookPreferences
 import kotlin.coroutines.resume
 
 /**
@@ -27,9 +28,9 @@ internal class AndroidPermissionController(
     private val context: Context,
     private val launcher: ActivityResultLauncher<Array<String>>,
     private val setLauncherCallback: ((Map<String, Boolean>) -> Unit) -> Unit,
+    private val sandookPreferences: SandookPreferences,
 ) : PermissionController {
 
-    private val stateTracker = PermissionStateTracker()
     private var boundActivity: ComponentActivity? = null
 
     /**
@@ -53,7 +54,7 @@ internal class AndroidPermissionController(
     override suspend fun requestPermission(permission: AppPermission): PermissionResult {
         val permissions = permission.toAndroidPermissions()
         resolveExistingStatus(permission, permissions)?.let { return it }
-        stateTracker.markAsRequested(permission)
+        sandookPreferences.setBoolean(permission.toPreferenceKey(), true)
         return suspendCancellableCoroutine { continuation ->
             val callback: (Map<String, Boolean>) -> Unit = { results ->
                 val allGranted = results.values.all { it }
@@ -77,16 +78,16 @@ internal class AndroidPermissionController(
         }
         // Ask-once policy: asked and denied → Denied. Matches iOS which also allows only one
         // in-app request. The OS handles the "can ask again" state; we don't need to track it.
-        // In-memory tracking (resets on restart) is intentional — no DataStore needed.
+        // Persistent tracking via SandookPreferences survives app restarts.
         return when {
             allGranted -> PermissionStatus.Granted
-            stateTracker.wasRequested(permission) -> PermissionStatus.Denied
+            sandookPreferences.getBoolean(permission.toPreferenceKey()) == true -> PermissionStatus.Denied
             else -> PermissionStatus.NotDetermined
         }
     }
 
     override fun wasPermissionRequested(permission: AppPermission): Boolean =
-        stateTracker.wasRequested(permission)
+        sandookPreferences.getBoolean(permission.toPreferenceKey()) == true
 
     override fun openAppSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -109,10 +110,18 @@ internal class AndroidPermissionController(
             ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
         }
         if (allGranted) {
-            stateTracker.markAsRequested(permission)
+            sandookPreferences.setBoolean(permission.toPreferenceKey(), true)
             return PermissionResult.Granted
         }
         // Ask-once policy: already denied → skip dialog, direct user to Settings.
-        return if (stateTracker.wasRequested(permission)) PermissionResult.Denied else null
+        return if (sandookPreferences.getBoolean(permission.toPreferenceKey()) == true) {
+            PermissionResult.Denied
+        } else {
+            null
+        }
     }
+}
+
+private fun AppPermission.toPreferenceKey(): String = when (this) {
+    is AppPermission.Location -> SandookPreferences.KEY_LOCATION_PERMISSION_EVER_REQUESTED
 }

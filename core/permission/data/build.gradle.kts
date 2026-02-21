@@ -31,6 +31,7 @@ kotlin {
                 implementation(libs.core.ktx)
                 implementation(libs.activity.compose)
                 implementation(libs.lifecycle.runtime.ktx)
+                implementation(projects.sandook)
             }
         }
 

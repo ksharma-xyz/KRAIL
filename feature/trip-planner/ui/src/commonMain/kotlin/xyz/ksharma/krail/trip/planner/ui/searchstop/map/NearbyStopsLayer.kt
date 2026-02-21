@@ -18,6 +18,7 @@ import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
+import xyz.ksharma.krail.core.maps.state.MapLayerConfig
 import xyz.ksharma.krail.core.maps.state.geoJsonProperties
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import org.maplibre.spatialk.geojson.Feature as GeoJsonFeature
@@ -36,14 +37,24 @@ fun NearbyStopsLayer(
         data = GeoJsonData.Features(featureCollection),
     )
 
-    // Stop circles with transport mode colors
+    // Stop circles with transport mode colors (visual only, no click handler)
     CircleLayer(
         id = "nearby-stops-circle",
         source = geoJsonSource,
-        radius = const(8.dp),
-        color = Feature.get("color").asString().convertToColor(),
+        radius = const(MapLayerConfig.NEARBY_STOP_CIRCLE_RADIUS_DP.dp),
+        color = Feature["color"].asString().convertToColor(),
         strokeColor = const(Color.White),
         strokeWidth = const(2.dp),
+    )
+
+    // Invisible hit target rendered on top — expands the tappable area to 24dp radius
+    // without affecting the visual. Must be declared after the visible layer so it sits
+    // on top and receives click events first.
+    CircleLayer(
+        id = "nearby-stops-hit",
+        source = geoJsonSource,
+        radius = const(MapLayerConfig.STOP_HIT_TARGET_RADIUS_DP.dp),
+        color = const(Color.Transparent),
         onClick = { features ->
             log("[NEARBY_STOPS_UI] Circle clicked, features.size=${features.size}")
             val feature = features.firstOrNull()
@@ -52,14 +63,6 @@ fun NearbyStopsLayer(
             stops.find { it.stopId == stopId }?.let(onStopClick)
             ClickResult.Consume
         },
-    )
-
-    // Hit target for easier clicking
-    CircleLayer(
-        id = "nearby-stops-hit",
-        source = geoJsonSource,
-        radius = const(20.dp),
-        color = const(Color.Transparent),
     )
 }
 

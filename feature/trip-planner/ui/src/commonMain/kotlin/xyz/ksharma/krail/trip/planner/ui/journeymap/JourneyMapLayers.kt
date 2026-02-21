@@ -31,6 +31,7 @@ import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Feature.Companion.getStringProperty
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.MapLayerConfig
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFeatureMapper.toFeatureCollection
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapFilters
@@ -85,15 +86,24 @@ internal fun JourneyMapLayers(
         join = const(LineJoin.Round),
     )
 
-    // Regular stops - small white circles
+    // Regular stops - small white circles (visual only, no click handler)
     CircleLayer(
         id = "journey-stops-regular",
         source = journeySource,
         filter = JourneyMapFilters.isStopType(StopType.REGULAR),
         color = const(Color.White),
-        radius = const(6.dp),
+        radius = const(MapLayerConfig.JOURNEY_STOP_CIRCLE_RADIUS_DP.dp),
         strokeColor = const(Color.Black),
         strokeWidth = const(2.dp),
+    )
+
+    // Invisible hit target for regular stops — expands tappable area to STOP_HIT_TARGET_RADIUS_DP
+    CircleLayer(
+        id = "journey-stops-regular-hit",
+        source = journeySource,
+        filter = JourneyMapFilters.isStopType(StopType.REGULAR),
+        color = const(Color.Transparent),
+        radius = const(MapLayerConfig.STOP_HIT_TARGET_RADIUS_DP.dp),
         onClick = { features ->
             features.firstOrNull()
                 ?.getStringProperty(GeoJsonPropertyKeys.STOP_ID)

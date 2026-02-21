@@ -11,7 +11,7 @@ android-lifecycle = "2.10.0"
 activity-compose = "1.12.4"
 kotlinxCollectionsImmutable = "0.4.0"
 kotlinxDatetime = "0.7.1-0.6.x-compat"
-kotlinxIoCore = "0.8.2"
+kotlinxIoCore = "0.9.0"
 materialIconsCore = "1.7.3"
 moleculeRuntime = "2.2.0"
 # Navigation 3 for Compose Multiplatform

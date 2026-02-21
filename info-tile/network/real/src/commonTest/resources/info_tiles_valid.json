@@ -1,0 +1,108 @@
+[
+  {
+    "key": "metro_closure_feb_21_2026",
+    "title": "Metro closure 21-22 Feb",
+    "description": "No Metro Services will run between Tallawong and Sydenham. Replacement buses will operate between Tallawong and Chatswood. Use Train as the alternative for your journey.",
+    "type": "CRITICAL_ALERT",
+    "startDate": "2026-02-21",
+    "endDate": "2026-02-23",
+    "dismissCtaText": "Dismiss",
+    "primaryCta": {
+      "text": "Read more",
+      "url": "https://transportnsw.info/news/2026/upcoming-trackwork-on-sydney-metro"
+    }
+  },
+  {
+    "key": "metro_closure_mar_7_2026",
+    "title": "Metro closure 7-8 Mar",
+    "description": "No Metro Services will run between Tallawong and Sydenham. Replacement buses will operate between Tallawong and Chatswood. Use Train as the alternative for your journey.",
+    "type": "CRITICAL_ALERT",
+    "startDate": "2026-03-07",
+    "endDate": "2026-03-09",
+    "dismissCtaText": "Dismiss",
+    "primaryCta": {
+      "text": "Read more",
+      "url": "https://transportnsw.info/news/2026/upcoming-trackwork-on-sydney-metro"
+    }
+  },
+  {
+    "key": "metro_closure_mar_21_2026",
+    "title": "Metro closure 21-22 Mar",
+    "description": "No Metro Services will run between Tallawong and Sydenham. Replacement buses will operate between Tallawong and Chatswood. Use Train as the alternative for your journey.",
+    "type": "CRITICAL_ALERT",
+    "startDate": "2026-03-21",
+    "endDate": "2026-03-23",
+    "dismissCtaText": "Dismiss",
+    "primaryCta": {
+      "text": "Read more",
+      "url": "https://transportnsw.info/news/2026/upcoming-trackwork-on-sydney-metro"
+    }
+  },
+  {
+    "key": "new_feature_announcement",
+    "title": "New Trip Planning Features",
+    "description": "We've added real-time updates and better route alternatives. Check them out!",
+    "type": "INFO",
+    "startDate": "2026-02-15",
+    "endDate": null,
+    "dismissCtaText": "Got it",
+    "primaryCta": {
+      "text": "Learn more",
+      "url": "https://krail.app/features"
+    }
+  },
+  {
+    "key": "app_update_available",
+    "title": "Update Available",
+    "description": "A new version of KRAIL is available with performance improvements and bug fixes.",
+    "type": "APP_UPDATE",
+    "startDate": null,
+    "endDate": "2026-03-01",
+    "dismissCtaText": "Later",
+    "primaryCta": {
+      "text": "Update Now",
+      "url": "https://apps.apple.com/app/krail"
+    }
+  },
+  {
+    "key": "invite_friends",
+    "title": "Invite Your Friends",
+    "description": "You're the reason KRAIL is ad-free. Share it with friends and help Sydney ride better.",
+    "type": "INVITE_FRIENDS",
+    "startDate": null,
+    "endDate": null,
+    "showDismissButton": false,
+    "dismissCtaText": "Dismiss",
+    "primaryCta": {
+      "text": "Invite",
+      "url": null
+    }
+  },
+  {
+    "key": "weekend_service_change",
+    "title": "Weekend Service Changes",
+    "description": "Track work this weekend. Plan ahead for longer travel times.",
+    "type": "INFO",
+    "startDate": "2026-02-28",
+    "endDate": "2026-03-02",
+    "dismissCtaText": "Dismiss",
+    "primaryCta": {
+      "text": "View Details",
+      "url": "https://transportnsw.info/travel-info/service-updates"
+    }
+  },
+  {
+    "key": "one_day_event",
+    "title": "Today's Event",
+    "description": "Special event affecting services today only.",
+    "type": "CRITICAL_ALERT",
+    "startDate": "2026-02-21",
+    "endDate": "2026-02-21",
+    "dismissCtaText": "OK",
+    "primaryCta": {
+      "text": "More Info",
+      "url": "https://transportnsw.info/events"
+    }
+  }
+]
+

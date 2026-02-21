@@ -17,6 +17,7 @@ class SandookCallback(
 
     override fun onOpen(db: SupportSQLiteDatabase) {
         super.onOpen(db)
+        db.enableWriteAheadLogging()
         log("Opening database: ${db.version}")
     }
 

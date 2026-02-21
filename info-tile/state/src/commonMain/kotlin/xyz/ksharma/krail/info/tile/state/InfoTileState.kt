@@ -25,8 +25,16 @@ data class InfoTileData(
     val dismissCtaText: String = "Dismiss",
 
     /**
+     * ISO-8601 formatted date string representing the start date of the info tile.
+     * E.g., "2023-12-31" for December 31, 2023.
+     * If null, the tile will be shown immediately.
+     */
+    val startDate: String? = null,
+
+    /**
      * ISO-8601 formatted date string representing the end date of the info tile.
      * E.g., "2023-12-31" for December 31, 2023.
+     * If null, the tile will be shown indefinitely (until dismissed).
      */
     val endDate: String? = null,
 

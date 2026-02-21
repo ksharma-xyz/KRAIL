@@ -8,6 +8,7 @@ import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateInFuture
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateTodayOrInFuture
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateTodayOrInPast
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToAEST
@@ -142,36 +143,51 @@ class DateTimeHelperTest {
     // region isDateTodayOrInFuture tests
     @OptIn(ExperimentalTime::class)
     @Test
-    fun testIsDateTodayOrInFuture_validFutureDate() {
-        val futureDate = Clock.System.now()
+    fun testIsDateTodayOrInFuture() {
+        val today = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
-            .plus(1, DateTimeUnit.DAY)
-            .toString()
-        assertEquals(true, futureDate.isDateTodayOrInFuture())
+
+        // Test data: (dayOffset, expectedResult, testCase)
+        val testCases = listOf(
+            Triple(1, true, "future date (tomorrow)"),
+            Triple(30, true, "far future date (30 days)"),
+            Triple(0, true, "today (endDate is inclusive)"),
+            Triple(-1, false, "past date (yesterday)"),
+        )
+
+        testCases.forEach { (dayOffset, expected, testCase) ->
+            val dateStr = today.plus(dayOffset, DateTimeUnit.DAY).toString()
+            assertEquals(expected, dateStr.isDateTodayOrInFuture(), "Failed for: $testCase")
+        }
+
+        // Invalid format test
+        assertEquals(false, "not-a-date".isDateTodayOrInFuture(), "Failed for: invalid format")
     }
 
+    // endregion
+
+    // region isDateTodayOrInPast tests
     @OptIn(ExperimentalTime::class)
     @Test
-    fun testIsDateTodayOrInFuture_todayDate() {
-        val todayDate = Clock.System.now()
+    fun testIsDateTodayOrInPast() {
+        val today = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
-            .toString()
-        assertEquals(true, todayDate.isDateTodayOrInFuture())
-    }
 
-    @OptIn(ExperimentalTime::class)
-    @Test
-    fun testIsDateTodayOrInFuture_pastDate() {
-        val pastDate = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
-            .minus(1, DateTimeUnit.DAY)
-            .toString()
-        assertEquals(false, pastDate.isDateTodayOrInFuture())
-    }
+        // Test data: (dayOffset, expectedResult, testCase)
+        val testCases = listOf(
+            Triple(-1, true, "past date (yesterday)"),
+            Triple(-30, true, "far past date (30 days ago)"),
+            Triple(0, true, "today (startDate is inclusive)"),
+            Triple(1, false, "future date (tomorrow)"),
+        )
 
-    @Test
-    fun testIsDateTodayOrInFuture_invalidFormat() {
-        assertEquals(false, "not-a-date".isDateTodayOrInFuture())
+        testCases.forEach { (dayOffset, expected, testCase) ->
+            val dateStr = today.plus(dayOffset, DateTimeUnit.DAY).toString()
+            assertEquals(expected, dateStr.isDateTodayOrInPast(), "Failed for: $testCase")
+        }
+
+        // Invalid format test
+        assertEquals(false, "not-a-date".isDateTodayOrInPast(), "Failed for: invalid format")
     }
 
     // endregion

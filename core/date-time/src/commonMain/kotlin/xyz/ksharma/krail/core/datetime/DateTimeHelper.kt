@@ -15,6 +15,8 @@ import kotlin.time.Instant
 
 object DateTimeHelper {
 
+    private const val ERROR_MESSAGE = "Error parsing date string:"
+
     /**
      * Converts a UTC ISO 8601 date-time string (e.g., "2025-06-13T06:48:13Z")
      * to a 12-hour time format string (e.g., "6:48 am").
@@ -148,15 +150,14 @@ object DateTimeHelper {
      */
     @OptIn(ExperimentalTime::class)
     fun String.isDateInFuture(): Boolean {
-        return try {
+        return runCatching {
             val localDate = LocalDate.parse(this)
             val today = Clock.System.now()
                 .toLocalDateTime(TimeZone.currentSystemDefault()).date
             localDate > today
-        } catch (e: Exception) {
-            logError("Error parsing date string: $this", e)
-            false
-        }
+        }.onFailure { e ->
+            logError("$ERROR_MESSAGE: $this", e)
+        }.getOrDefault(false)
     }
 
     /**
@@ -169,14 +170,33 @@ object DateTimeHelper {
      */
     @OptIn(ExperimentalTime::class)
     fun String.isDateTodayOrInFuture(): Boolean {
-        return try {
+        return runCatching {
             val localDate = LocalDate.parse(this)
             val today = Clock.System.now()
                 .toLocalDateTime(TimeZone.currentSystemDefault()).date
             localDate >= today
-        } catch (e: Exception) {
-            logError("Error parsing date string: $this", e)
-            false
-        }
+        }.onFailure { e ->
+            logError("$ERROR_MESSAGE: $this", e)
+        }.getOrDefault(false)
+    }
+
+    /**
+     * Checks if the string represents today's date or a past date.
+     * The string should be in ISO-8601 format (e.g., "2023-12-31").
+     * Returns true if the date is today or in the past, false if it's in the future.
+     *
+     * @receiver String The date string to check.
+     * @return Boolean true if the date is today or in the past, false otherwise.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun String.isDateTodayOrInPast(): Boolean {
+        return runCatching {
+            val localDate = LocalDate.parse(this)
+            val today = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            localDate <= today
+        }.onFailure { e ->
+            logError("$ERROR_MESSAGE $this", e)
+        }.getOrDefault(false)
     }
 }

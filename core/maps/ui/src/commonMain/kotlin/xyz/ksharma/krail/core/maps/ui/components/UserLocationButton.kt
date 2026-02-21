@@ -20,12 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.debouncedKlickable
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.krailRipple
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -48,8 +47,8 @@ fun UserLocationButton(
     modifier: Modifier = Modifier,
     isActive: Boolean = true,
 ) {
-    val themeColor by LocalThemeColor.current
-    val targetColor = if (isActive) themeColor.hexToComposeColor() else KrailTheme.colors.softLabel
+    val targetColor =
+        if (isActive) KrailTheme.colors.userLocationDot else KrailTheme.colors.softLabel
     val color by animateColorAsState(
         targetValue = targetColor,
         animationSpec = tween(durationMillis = 400),
@@ -74,13 +73,17 @@ fun UserLocationButton(
         modifier = modifier
             .size(48.dp)
             .clip(CircleShape)
-            .debouncedKlickable(debounceMs = 1.seconds, onClick = onClick),
+            .debouncedKlickable(
+                debounceMs = 1.seconds,
+                indication = krailRipple(color = KrailTheme.colors.userLocationDot),
+                onClick = onClick,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         // Outer circle — pulses when inactive to signal permission is needed.
         Box(
             modifier = Modifier
-                .size(28.dp)
+                .size(24.dp)
                 .graphicsLayer {
                     val scale = if (!isActive) pulseScale else 1f
                     scaleX = scale
@@ -101,6 +104,8 @@ fun UserLocationButton(
     }
 }
 
+// region Preview
+
 @PreviewComponent
 @Composable
 private fun UserLocationButtonPreview() {
@@ -116,3 +121,5 @@ private fun UserLocationButtonPreview_isActive() {
         UserLocationButton(onClick = {}, isActive = false)
     }
 }
+
+// endregion

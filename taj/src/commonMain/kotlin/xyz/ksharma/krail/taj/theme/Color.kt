@@ -99,6 +99,9 @@ val magic_yellow = Color(0xFFFFC800)
 
 val md_theme_badge = Color(0xFFFF0000)
 
+// User location dot — static across light and dark themes
+val user_location_dot = Color(0xFF1C70F2)
+
 @Immutable
 data class KrailColors(
     val label: Color,
@@ -126,6 +129,7 @@ data class KrailColors(
     val futureJourney: Color,
     // Journey Map colors
     val walkingPath: Color,
+    val userLocationDot: Color,
     // theme settings
     val themeSelectionBackground: Color,
     val bottomSheetBackground: Color,
@@ -154,6 +158,7 @@ internal val KrailLightColors = KrailColors(
     pastJourney = md_theme_light_past_journey,
     futureJourney = md_theme_light_future_journey,
     walkingPath = Color(0xFF757575), // Gray for walking paths
+    userLocationDot = user_location_dot,
     labelPlaceholder = md_theme_light_onSurface_placeholder,
     themeSelectionBackground = md_theme_light_theme_selection_background,
     bottomSheetBackground = md_theme_light_modal_sheet_background,
@@ -182,6 +187,7 @@ internal val KrailDarkColors = KrailColors(
     pastJourney = md_theme_dark_past_journey,
     futureJourney = md_theme_dark_future_journey,
     walkingPath = Color(0xFF9E9E9E), // Lighter gray for dark mode walking paths
+    userLocationDot = user_location_dot,
     labelPlaceholder = md_theme_dark_onSurface_placeholder,
     themeSelectionBackground = md_theme_dark_theme_selection_background,
     bottomSheetBackground = md_theme_dark_modal_sheet_background,
@@ -211,6 +217,7 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         pastJourney = Color.Unspecified,
         futureJourney = Color.Unspecified,
         walkingPath = Color.Unspecified,
+        userLocationDot = Color.Unspecified,
         labelPlaceholder = Color.Unspecified,
         themeSelectionBackground = Color.Unspecified,
         bottomSheetBackground = Color.Unspecified,

@@ -4,6 +4,9 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+private const val PROP_STOP_ID = "stopId"
+private const val PROP_SOURCE = "source"
+
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
     data class ScreenViewEvent(val screen: AnalyticsScreen) : AnalyticsEvent(
@@ -50,7 +53,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "stop_selected",
         properties = buildMap {
-            put("stopId", stopId)
+            put(PROP_STOP_ID, stopId)
             put("isRecentSearch", isRecentSearch)
             searchQuery?.let { put("searchQuery", it) }
         },
@@ -185,12 +188,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region Generic Events
     data class BackClickEvent(
         val fromScreen: AnalyticsScreen,
-        val isPreviousBackStackEntryNull: Boolean,
     ) : AnalyticsEvent(
         name = "back_click",
         properties = mapOf(
             "fromScreen" to fromScreen.name,
-            "isPreviousBackStackEntryNull" to isPreviousBackStackEntryNull,
         ),
     )
 
@@ -283,7 +284,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "social_connection_link_click",
         properties = mapOf(
             "socialPlatform" to socialPlatformType.platformName,
-            "source" to source.source,
+            PROP_SOURCE to source.source,
         ),
     ) {
         enum class SocialPlatformType(val platformName: String) {
@@ -316,7 +317,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "park_ride_card_click",
         properties = mapOf(
-            "stopId" to stopId.trim(),
+            PROP_STOP_ID to stopId.trim(),
             "facilityId" to facilityId.trim(),
             "expand" to expand.toString().trim(),
             "time" to time.toString().trim(),
@@ -340,7 +341,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "discover_card_click",
         properties = mutableMapOf(
             // "location" to location,
-            "source" to source.actionName,
+            PROP_SOURCE to source.actionName,
             "cardId" to cardId,
             "cardType" to cardType.displayName,
         ).apply {
@@ -389,6 +390,182 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "cardType" to cardType.displayName,
         ),
     )
+
+    // endregion
+
+    // region SearchStopMap
+
+    /**
+     * Fired when the user taps the Map toggle button in SearchTopBar.
+     * Use to measure map feature adoption: how many users ever discover and open the map view.
+     *
+     * @param selected true = user opened map view, false = returned to list view.
+     */
+    data class MapToggleClickEvent(val selected: Boolean) : AnalyticsEvent(
+        name = "search_stop_map_toggle_click",
+        properties = mapOf("selected" to selected),
+    )
+
+    /**
+     * Fired when the user taps "Save" on the MapOptionsBottomSheet.
+     *
+     * This single event is the source of truth for all map-options analysis. One rich snapshot
+     * replaces what would otherwise be 4+ separate events. Use it to answer:
+     *  - "What % of users prefer 5km radius?" → aggregate on [radiusKm]
+     *  - "What transport mode filter combos are most common?" → aggregate on [transportModes]
+     *  - "Do users actually change the radius or just leave it at default?" → filter [radiusChanged]
+     *  - "Do map control toggles matter?" → look at [showDistanceScale] / [showCompass] distributions
+     *
+     * @param radiusKm          The saved search radius: 1.0, 3.0, or 5.0.
+     * @param transportModes    Sorted, comma-separated product-class integers of all *enabled* modes
+     *                          (e.g. "1,2,5,9").
+     * @param showDistanceScale Whether the distance scale overlay is enabled after saving.
+     * @param showCompass       Whether the compass overlay is enabled after saving.
+     * @param radiusChanged     Whether [radiusKm] differs from the value before the sheet opened.
+     * @param modesChanged      Whether any transport mode filter changed from the previous state.
+     */
+    data class MapOptionsSavedEvent(
+        val radiusKm: Double,
+        val transportModes: String,
+        val showDistanceScale: Boolean,
+        val showCompass: Boolean,
+        val radiusChanged: Boolean,
+        val modesChanged: Boolean,
+    ) : AnalyticsEvent(
+        name = "search_stop_map_options_saved",
+        properties = mapOf(
+            "radiusKm" to radiusKm,
+            "transportModes" to transportModes,
+            "showDistanceScale" to showDistanceScale,
+            "showCompass" to showCompass,
+            "radiusChanged" to radiusChanged,
+            "modesChanged" to modesChanged,
+        ),
+    )
+
+    /**
+     * Fired when the user selects a stop via the map's StopDetailsBottomSheet.
+     *
+     * Captures the map configuration context at the moment of selection, so you can correlate
+     * search settings with successful stop discovery:
+     *  - Does a wider [searchRadiusKm] lead to more stop selections?
+     *  - Do users with fewer [enabledModesCount] find stops faster?
+     *  - Does having [hadUserLocation] improve selection rate?
+     *
+     * NOTE: GPS coordinates are intentionally NOT captured — neither user location nor map centre.
+     * Logging lat/lon (even anonymously) requires declaring "Precise Location" data collection in
+     * both the Apple App Privacy label and the Google Play Data Safety section. Use the boolean
+     * [hadUserLocation] flag instead, which carries no privacy obligations.
+     *
+     * @param stopId             The ID of the stop the user selected.
+     * @param searchRadiusKm     The active search radius at the moment of selection.
+     * @param enabledModesCount  Number of transport modes currently enabled (not which ones —
+     *                           use [MapOptionsSavedEvent.transportModes] for mode-level detail).
+     * @param nearbyStopsCount   Number of stop markers visible on the map at time of selection.
+     * @param hadUserLocation    Whether the device location was available (permission granted +
+     *                           location resolved). Does NOT include coordinates.
+     */
+    data class StopSelectedFromMapEvent(
+        val stopId: String,
+        val searchRadiusKm: Double,
+        val enabledModesCount: Int,
+        val nearbyStopsCount: Int,
+        val hadUserLocation: Boolean,
+    ) : AnalyticsEvent(
+        name = "stop_selected_from_map",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            "searchRadiusKm" to searchRadiusKm,
+            "enabledModesCount" to enabledModesCount,
+            "nearbyStopsCount" to nearbyStopsCount,
+            "hadUserLocation" to hadUserLocation,
+        ),
+    )
+
+    /**
+     * Fired when the user taps a stop marker on the SearchStopMap (the bottom sheet opens).
+     *
+     * This is the first step of the map selection funnel:
+     *   nearby_stop_click → (user reviews sheet) → stop_selected_from_map
+     *
+     * Use the click→select ratio in BigQuery to understand drop-off:
+     *   COUNT(stop_selected_from_map) / COUNT(nearby_stop_click) per user session.
+     *
+     * @param stopId             The stop that was tapped.
+     * @param transportModesCount Number of transport modes served at this stop.
+     *                            Stops with more modes may attract more exploratory taps.
+     */
+    data class NearbyStopClickEvent(
+        val stopId: String,
+        val transportModesCount: Int,
+    ) : AnalyticsEvent(
+        name = "nearby_stop_click",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            "transportModesCount" to transportModesCount,
+        ),
+    )
+
+    /**
+     * Fired when the user taps the Options button on the map (SearchStopMap only).
+     * Use to measure how often users discover and open map configuration.
+     */
+    data object MapOptionsOpenedEvent : AnalyticsEvent(name = "search_stop_map_options_opened")
+
+    /**
+     * Fired when the user taps "Go to Settings" on the location permission denied banner.
+     *
+     * Tells you how many users hit the permission wall and were motivated enough to open Settings.
+     * Use this together with [MapLocationButtonClickEvent] (isLocationActive = false) to measure
+     * the permission recovery funnel:
+     *   location_button tap (no permission) → banner shown → settings click → (hopefully) grant
+     *
+     * [source] identifies which map screen the banner was shown on.
+     */
+    data class LocationPermissionSettingsClickEvent(
+        val source: Source,
+    ) : AnalyticsEvent(
+        name = "location_permission_settings_click",
+        properties = mapOf(PROP_SOURCE to source.value),
+    ) {
+        enum class Source(val value: String) {
+            SEARCH_STOP_MAP("search_stop_map"),
+            JOURNEY_MAP("journey_map"),
+        }
+    }
+
+    /**
+     * Fired when the user taps the User Location button on any map screen.
+     *
+     * [isLocationActive] tells you the state at tap time:
+     *  - true  → user already had location and is re-centering the camera
+     *  - false → user is attempting to start location (no permission yet, or was denied)
+     *
+     * [source] identifies which map screen the tap came from, so you can compare
+     * location usage between the stop-search flow and the journey-viewing flow.
+     *
+     * In BigQuery, filter `isLocationActive = false` to identify users who want location
+     * but can't get it. No coordinates are captured.
+     */
+    data class MapLocationButtonClickEvent(
+        val isLocationActive: Boolean,
+        val source: Source,
+    ) : AnalyticsEvent(
+        name = "user_location_button_click",
+        properties = mapOf(
+            "isLocationActive" to isLocationActive,
+            PROP_SOURCE to source.value,
+        ),
+    ) {
+        enum class Source(val value: String) {
+            SEARCH_STOP_MAP("search_stop_map"),
+            JOURNEY_MAP("journey_map"),
+        }
+    }
+
+    // endregion
+
+    // region JourneyMap
 
     // endregion
 

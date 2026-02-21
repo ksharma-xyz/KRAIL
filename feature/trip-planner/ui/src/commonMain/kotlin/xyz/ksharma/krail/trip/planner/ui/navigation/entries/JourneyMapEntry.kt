@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
@@ -9,7 +10,12 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMapScreen
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapMapper.toJourneyMapState
@@ -33,6 +39,11 @@ internal fun EntryProviderScope<NavKey>.JourneyMapEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     entry<JourneyMapRoute> { key ->
+        val analytics = koinInject<Analytics>()
+        LaunchedEffect(Unit) {
+            analytics.trackScreenViewEvent(screen = AnalyticsScreen.JourneyMap)
+        }
+
         // Get the TimeTableViewModel - it already has the journey data loaded
         val viewModel: TimeTableViewModel = koinViewModel()
 
@@ -60,7 +71,25 @@ internal fun EntryProviderScope<NavKey>.JourneyMapEntry(
 
         JourneyMapScreen(
             journeyMapState = journeyMapState,
-            onBackClick = { tripPlannerNavigator.goBack() },
+            onBackClick = {
+                analytics.track(AnalyticsEvent.BackClickEvent(fromScreen = AnalyticsScreen.JourneyMap))
+                tripPlannerNavigator.goBack()
+            },
+            onLocationButtonClick = { isLocationActive ->
+                analytics.track(
+                    AnalyticsEvent.MapLocationButtonClickEvent(
+                        isLocationActive = isLocationActive,
+                        source = AnalyticsEvent.MapLocationButtonClickEvent.Source.JOURNEY_MAP,
+                    ),
+                )
+            },
+            onPermissionSettingsClick = {
+                analytics.track(
+                    AnalyticsEvent.LocationPermissionSettingsClickEvent(
+                        source = AnalyticsEvent.LocationPermissionSettingsClickEvent.Source.JOURNEY_MAP,
+                    ),
+                )
+            },
             modifier = Modifier.fillMaxSize(),
         )
     }

@@ -238,7 +238,7 @@ class TimeTableViewModel(
 
             is TimeTableUiEvent.ModeClicked -> trackOnModeClickEvent(event.displayModeSelectionRow)
 
-            is TimeTableUiEvent.BackClick -> trackBackClickEvent(event.isPreviousBackStackEntryNull)
+            TimeTableUiEvent.BackClick -> trackBackClickEvent()
         }
     }
 
@@ -615,12 +615,9 @@ class TimeTableViewModel(
         return alerts
     }
 
-    private fun trackBackClickEvent(isPreviousBackStackEntryNull: Boolean) {
+    private fun trackBackClickEvent() {
         analytics.track(
-            AnalyticsEvent.BackClickEvent(
-                fromScreen = AnalyticsScreen.TimeTable,
-                isPreviousBackStackEntryNull = isPreviousBackStackEntryNull,
-            ),
+            AnalyticsEvent.BackClickEvent(fromScreen = AnalyticsScreen.TimeTable),
         )
     }
 

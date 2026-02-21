@@ -40,6 +40,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -47,6 +48,8 @@ import kotlinx.coroutines.flow.mapLatest
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
+import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Divider
@@ -164,6 +167,24 @@ private fun SearchStopScreenSinglePane(
     // Local UI state controls whether user is viewing list or map
     var showMap by rememberSaveable { mutableStateOf(false) }
 
+    // null = permission check not done yet (button hidden); true/false set once check completes.
+    // Keeping it null until then prevents the button from flashing in before we know
+    // whether to animate it, which would skip the slide-in entirely.
+    var animateMapButton: Boolean? by remember { mutableStateOf(null) }
+    val userLocationManager = rememberUserLocationManager()
+    LaunchedEffect(searchStopState.isMapsAvailable) {
+        if (searchStopState.isMapsAvailable) {
+            val status = userLocationManager.checkPermissionStatus()
+            log("permission status : $status")
+            if (status is PermissionStatus.NotDetermined) {
+                delay(500)
+                animateMapButton = true
+            } else {
+                animateMapButton = false
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -183,6 +204,7 @@ private fun SearchStopScreenSinglePane(
             keyboard = keyboard,
             isMapSelected = showMap,
             isMapAvailable = searchStopState.isMapsAvailable,
+            animateMapButton = animateMapButton,
             onMapToggle = { shouldShowMap ->
                 showMap = shouldShowMap
                 // Initialize map if user toggles to map view and it's not initialized

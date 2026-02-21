@@ -77,12 +77,6 @@ interface AppInfo {
     val locale: String
 
     /**
-     * Battery level.
-     * E.g. 50 for 50% battery level.
-     */
-    val batteryLevel: Int
-
-    /**
      * Timezone.
      * E.g. "Australia/Sydney"
      */

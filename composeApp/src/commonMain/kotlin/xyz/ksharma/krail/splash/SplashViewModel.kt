@@ -84,7 +84,6 @@ class SplashViewModel(
                 deviceModel = deviceModel,
                 krailTheme = _uiState.value.themeStyle.id,
                 locale = locale,
-                batteryLevel = batteryLevel,
                 timeZone = timeZone,
             ),
         )

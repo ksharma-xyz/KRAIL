@@ -205,7 +205,6 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val isDarkTheme: Boolean,
         val krailTheme: Int,
         val locale: String,
-        val batteryLevel: Int,
         val timeZone: String,
     ) : AnalyticsEvent(
         name = "app_start",
@@ -219,7 +218,6 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "krailTheme" to krailTheme,
             "timeStamp" to Clock.System.now().toString(),
             "locale" to locale.trim(),
-            "batteryLevel" to batteryLevel,
             "timeZone" to timeZone.trim(),
         ),
     )

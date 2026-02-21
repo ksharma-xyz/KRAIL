@@ -14,7 +14,6 @@ class FakeAppInfo(
     override val deviceModel: String = "Pixel 4",
     override val deviceManufacturer: String = "Google",
     override val locale: String = "en_AU",
-    override val batteryLevel: Int = 80,
     override val timeZone: String = "Australia/Sydney",
     override val appStoreUrl: String = "https://play.google.com/store/apps/details?id=xyz.ksharma.krail"
 ) : AppInfo

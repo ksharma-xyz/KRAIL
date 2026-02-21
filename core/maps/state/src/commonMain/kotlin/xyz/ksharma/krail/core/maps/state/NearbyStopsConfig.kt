@@ -7,8 +7,6 @@ package xyz.ksharma.krail.core.maps.state
 object NearbyStopsConfig {
     const val MAX_NEARBY_RESULTS = 200
     const val DEFAULT_RADIUS_KM = 1.0
-    const val MAX_RADIUS_KM = 5.0
-    const val MIN_RADIUS_KM = 0.5
 
     // Default Sydney coordinates (CBD)
     const val DEFAULT_CENTER_LAT = -33.8727

@@ -144,11 +144,7 @@ fun MapToggleButton(
 @Composable
 private fun PreviewMapToggleButtonSelected() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
-        MapToggleButton(
-            selected = true,
-        ) {
-            Text("Map")
-        }
+        MapToggleButton(selected = true) { Text("Map") }
     }
 }
 
@@ -156,10 +152,6 @@ private fun PreviewMapToggleButtonSelected() {
 @Composable
 private fun PreviewMapToggleButtonUnselected() {
     PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
-        MapToggleButton(
-            selected = false,
-        ) {
-            Text("Map")
-        }
+        MapToggleButton(selected = false) { Text("Map") }
     }
 }

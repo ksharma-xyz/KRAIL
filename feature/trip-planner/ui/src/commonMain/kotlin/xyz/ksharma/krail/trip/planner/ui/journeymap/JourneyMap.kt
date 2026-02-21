@@ -57,6 +57,8 @@ import kotlin.time.TimeSource
 fun JourneyMap(
     journeyMapState: JourneyMapUiState,
     modifier: Modifier = Modifier,
+    onLocationButtonClick: (isLocationActive: Boolean) -> Unit = {},
+    onPermissionSettingsClick: () -> Unit = {},
 ) {
     when (journeyMapState) {
         // Defensive fallback - data transformation is instant, users never see this
@@ -70,6 +72,8 @@ fun JourneyMap(
         is JourneyMapUiState.Ready -> {
             JourneyMapContent(
                 mapState = journeyMapState,
+                onLocationButtonClick = onLocationButtonClick,
+                onPermissionSettingsClick = onPermissionSettingsClick,
                 modifier = modifier,
             )
         }
@@ -83,6 +87,8 @@ fun JourneyMap(
 private fun JourneyMapContent(
     mapState: JourneyMapUiState.Ready,
     modifier: Modifier = Modifier,
+    onLocationButtonClick: (isLocationActive: Boolean) -> Unit = {},
+    onPermissionSettingsClick: () -> Unit = {},
 ) {
     // Track selected stop for details bottom sheet
     // Keyed to mapState so it resets when viewing a different journey
@@ -161,6 +167,7 @@ private fun JourneyMapContent(
         // User location button (bottom-end corner)
         UserLocationButton(
             onClick = {
+                onLocationButtonClick(userLocation != null)
                 scope.launch {
                     val userLoc = userLocation
                     if (userLoc != null) {
@@ -197,7 +204,10 @@ private fun JourneyMapContent(
             ) {
                 if (showPermissionBanner) {
                     LocationPermissionBanner(
-                        onGoToSettings = { userLocationManager.openAppSettings() },
+                        onGoToSettings = {
+                            onPermissionSettingsClick()
+                            userLocationManager.openAppSettings()
+                        },
                     )
                 }
                 badgeText?.let { text ->

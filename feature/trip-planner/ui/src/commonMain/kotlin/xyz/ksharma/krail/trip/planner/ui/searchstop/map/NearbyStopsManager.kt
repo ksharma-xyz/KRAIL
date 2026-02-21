@@ -74,10 +74,7 @@ internal class RealNearbyStopsManager(
         onStopsLoaded: (List<NearbyStop>) -> Unit,
         onError: (Throwable) -> Unit,
     ) {
-        log(
-            "[NEARBY_STOPS] loadNearbyStops() called for center: lat=${center.latitude}, " +
-                "lon=${center.longitude}",
-        )
+        log("[NEARBY_STOPS] loadNearbyStops() called")
 
         if (shouldUseCachedResults(center)) {
             log("[NEARBY_STOPS] Using cached nearby stops")
@@ -133,7 +130,7 @@ internal class RealNearbyStopsManager(
         val selectedModes = mapState.mapDisplay.selectedTransportModes
         val radiusKm = mapState.mapDisplay.searchRadiusKm
 
-        logQueryParameters(center, radiusKm, selectedModes)
+        logQueryParameters(radiusKm, selectedModes)
 
         return repository.getStopsNearby(
             centerLat = center.latitude,
@@ -186,13 +183,11 @@ internal class RealNearbyStopsManager(
     }
 
     private fun logQueryParameters(
-        center: LatLng,
         radiusKm: Double,
         selectedModes: Set<Int>,
     ) {
         log(
-            "[NEARBY_STOPS] Query params: centerLat=${center.latitude}, " +
-                "centerLon=${center.longitude}, radiusKm=$radiusKm, " +
+            "[NEARBY_STOPS] Query params: radiusKm=$radiusKm, " +
                 "productClasses=$selectedModes, maxResults=${NearbyStopsConfig.MAX_NEARBY_RESULTS}",
         )
     }

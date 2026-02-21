@@ -119,6 +119,17 @@ fun MapOptionsBottomSheet(
                                 }
                             }
                         }
+                        // Single analytics snapshot of the full saved config
+                        onEvent(
+                            SearchStopUiEvent.MapOptionsSaved(
+                                radiusKm = pendingRadiusKm,
+                                transportModes = pendingTransportModes.sorted().joinToString(","),
+                                showDistanceScale = pendingShowDistanceScale,
+                                showCompass = pendingShowCompass,
+                                radiusChanged = pendingRadiusKm != searchRadiusKm,
+                                modesChanged = modesChanged,
+                            ),
+                        )
                         onDismiss()
                     },
                 ) {

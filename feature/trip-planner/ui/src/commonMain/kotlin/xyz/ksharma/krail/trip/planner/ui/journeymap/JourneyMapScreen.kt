@@ -25,6 +25,8 @@ fun JourneyMapScreen(
     journeyMapState: JourneyMapUiState,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLocationButtonClick: (isLocationActive: Boolean) -> Unit = {},
+    onPermissionSettingsClick: () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         TitleBar(
@@ -40,6 +42,8 @@ fun JourneyMapScreen(
             is JourneyMapUiState.Ready -> {
                 JourneyMap(
                     journeyMapState = journeyMapState,
+                    onLocationButtonClick = onLocationButtonClick,
+                    onPermissionSettingsClick = onPermissionSettingsClick,
                     modifier = Modifier.weight(1f),
                 )
             }

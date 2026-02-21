@@ -110,13 +110,10 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.MapCenterChanged -> {
-                log("[NEARBY_STOPS] MapCenterChanged: lat=${event.center.latitude}, lon=${event.center.longitude}")
                 onMapCenterChanged(event.center)
             }
 
             is SearchStopUiEvent.UserLocationUpdated -> {
-                val locStr = event.location?.let { "lat=${it.latitude}, lon=${it.longitude}" } ?: "null"
-                log("[NEARBY_STOPS] UserLocationUpdated: $locStr")
                 onUserLocationUpdated(event.location)
             }
 
@@ -126,7 +123,12 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.NearbyStopClicked -> {
-                log("[NEARBY_STOPS] NearbyStopClicked: ${event.stop.stopName}")
+                analytics.track(
+                    AnalyticsEvent.NearbyStopClickEvent(
+                        stopId = event.stop.stopId,
+                        transportModesCount = event.stop.transportModes.size,
+                    ),
+                )
                 onNearbyStopClicked(event.stop)
             }
 
@@ -147,6 +149,56 @@ class SearchStopViewModel(
             is SearchStopUiEvent.ShowCompassToggled -> {
                 log("[NEARBY_STOPS] ShowCompassToggled: ${event.enabled}")
                 onShowCompassToggled(event.enabled)
+            }
+
+            is SearchStopUiEvent.MapToggleClicked -> {
+                analytics.track(AnalyticsEvent.MapToggleClickEvent(selected = event.selected))
+            }
+
+            SearchStopUiEvent.MapOptionsButtonClicked -> {
+                analytics.track(AnalyticsEvent.MapOptionsOpenedEvent)
+            }
+
+            is SearchStopUiEvent.LocationButtonClicked -> {
+                analytics.track(
+                    AnalyticsEvent.MapLocationButtonClickEvent(
+                        isLocationActive = event.hadLocation,
+                        source = AnalyticsEvent.MapLocationButtonClickEvent.Source.SEARCH_STOP_MAP,
+                    ),
+                )
+            }
+
+            SearchStopUiEvent.LocationPermissionSettingsClicked -> {
+                analytics.track(
+                    AnalyticsEvent.LocationPermissionSettingsClickEvent(
+                        source = AnalyticsEvent.LocationPermissionSettingsClickEvent.Source.SEARCH_STOP_MAP,
+                    ),
+                )
+            }
+
+            is SearchStopUiEvent.MapOptionsSaved -> {
+                analytics.track(
+                    AnalyticsEvent.MapOptionsSavedEvent(
+                        radiusKm = event.radiusKm,
+                        transportModes = event.transportModes,
+                        showDistanceScale = event.showDistanceScale,
+                        showCompass = event.showCompass,
+                        radiusChanged = event.radiusChanged,
+                        modesChanged = event.modesChanged,
+                    ),
+                )
+            }
+
+            is SearchStopUiEvent.TrackStopSelectedFromMap -> {
+                analytics.track(
+                    AnalyticsEvent.StopSelectedFromMapEvent(
+                        stopId = event.stopId,
+                        searchRadiusKm = event.searchRadiusKm,
+                        enabledModesCount = event.enabledModesCount,
+                        nearbyStopsCount = event.nearbyStopsCount,
+                        hadUserLocation = event.hadUserLocation,
+                    ),
+                )
             }
         }
     }
@@ -245,7 +297,7 @@ class SearchStopViewModel(
         }
 
         val center = mapState.mapDisplay.mapCenter
-        log("[NEARBY_STOPS] Loading stops for center: lat=${center.latitude}, lon=${center.longitude}")
+        log("[NEARBY_STOPS] Loading nearby stops")
 
         nearbyStopsManager.loadNearbyStops(
             mapState = mapState,
@@ -270,8 +322,6 @@ class SearchStopViewModel(
     }
 
     private fun onMapCenterChanged(center: LatLng) {
-        log("[NEARBY_STOPS] Map center changed to: lat=${center.latitude}, lon=${center.longitude}")
-
         // Update the center in state
         updateUiState { MapStateHelper.updateMapCenter(this, center) }
 

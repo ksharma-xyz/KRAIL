@@ -207,6 +207,7 @@ private fun SearchStopScreenSinglePane(
             animateMapButton = animateMapButton,
             onMapToggle = { shouldShowMap ->
                 showMap = shouldShowMap
+                onEvent(SearchStopUiEvent.MapToggleClicked(shouldShowMap))
                 // Initialize map if user toggles to map view and it's not initialized
                 if (shouldShowMap && searchStopState.mapUiState == null) {
                     onEvent(SearchStopUiEvent.InitializeMap)

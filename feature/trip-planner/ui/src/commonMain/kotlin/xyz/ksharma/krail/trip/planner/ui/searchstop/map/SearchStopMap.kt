@@ -176,10 +176,6 @@ private fun MapContent(
             snapshotFlow { cameraState.position.target }
                 .debounce(NearbyStopsConfig.CAMERA_PAN_DEBOUNCE_MS)
                 .collect { target ->
-                    log(
-                        "[NEARBY_STOPS_UI] Camera moved to: lat=${target.latitude}, " +
-                            "lon=${target.longitude}",
-                    )
                     onEvent(
                         SearchStopUiEvent.MapCenterChanged(
                             LatLng(target.latitude, target.longitude),
@@ -233,9 +229,15 @@ private fun MapContent(
             // Bottom left action buttons (Options and Location).
             // All location business logic lives here, not inside MapActionButtons.
             MapActionButtons(
-                onOptionsClick = { showOptionsBottomSheet = true },
+                onOptionsClick = {
+                    onEvent(SearchStopUiEvent.MapOptionsButtonClicked)
+                    showOptionsBottomSheet = true
+                },
                 isLocationActive = mapState.mapDisplay.userLocation != null,
                 onLocationButtonClick = {
+                    onEvent(
+                        SearchStopUiEvent.LocationButtonClicked(hadLocation = mapState.mapDisplay.userLocation != null),
+                    )
                     scope.launch {
                         val userLoc = mapState.mapDisplay.userLocation
                         if (userLoc != null) {
@@ -268,7 +270,10 @@ private fun MapContent(
             // Permission banner (shown when permission is denied)
             if (showPermissionBanner) {
                 LocationPermissionBanner(
-                    onGoToSettings = { userLocationManager.openAppSettings() },
+                    onGoToSettings = {
+                        onEvent(SearchStopUiEvent.LocationPermissionSettingsClicked)
+                        userLocationManager.openAppSettings()
+                    },
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
@@ -302,12 +307,24 @@ private fun MapContent(
                         )
                         onStopSelect(stopItem)
 
-                        // Track the selection
+                        // Track the selection via list path (stopId + search context)
                         onEvent(
                             SearchStopUiEvent.TrackStopSelected(
                                 stopItem = stopItem,
                                 isRecentSearch = false,
                                 searchQuery = null,
+                            ),
+                        )
+
+                        // Track the map-specific context (radius, modes, stop count)
+                        // No coordinates captured — hadUserLocation is a boolean only
+                        onEvent(
+                            SearchStopUiEvent.TrackStopSelectedFromMap(
+                                stopId = stop.stopId,
+                                searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
+                                enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
+                                nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
+                                hadUserLocation = mapState.mapDisplay.userLocation != null,
                             ),
                         )
 

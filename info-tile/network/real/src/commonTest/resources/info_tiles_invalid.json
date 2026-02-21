@@ -1,0 +1,92 @@
+[
+  {
+    "comment": "INVALID: startDate with wrong format",
+    "key": "invalid_start_date_format",
+    "title": "Invalid Start Date",
+    "description": "This tile has an incorrectly formatted start date",
+    "type": "INFO",
+    "startDate": "21/02/2026",
+    "endDate": "2026-02-23",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: endDate with wrong format",
+    "key": "invalid_end_date_format",
+    "title": "Invalid End Date",
+    "description": "This tile has an incorrectly formatted end date",
+    "type": "INFO",
+    "startDate": "2026-02-21",
+    "endDate": "February 23, 2026",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: Missing required field 'key'",
+    "title": "Missing Key",
+    "description": "This tile is missing the required key field",
+    "type": "INFO",
+    "startDate": "2026-02-21",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: Missing required field 'title'",
+    "key": "missing_title",
+    "description": "This tile is missing the required title field",
+    "type": "INFO",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: Missing required field 'description'",
+    "key": "missing_description",
+    "title": "Missing Description",
+    "type": "INFO",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: Invalid type value",
+    "key": "invalid_type",
+    "title": "Invalid Type",
+    "description": "This tile has an invalid type value",
+    "type": "UNKNOWN_TYPE",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: startDate is after endDate (logically invalid)",
+    "key": "start_after_end",
+    "title": "Start After End",
+    "description": "This tile has startDate after endDate, which is logically invalid",
+    "type": "INFO",
+    "startDate": "2026-02-25",
+    "endDate": "2026-02-20",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: Invalid date values",
+    "key": "invalid_date_values",
+    "title": "Invalid Date Values",
+    "description": "This tile has impossible date values",
+    "type": "INFO",
+    "startDate": "2026-13-45",
+    "endDate": "2026-02-32",
+    "dismissCtaText": "Dismiss"
+  },
+  {
+    "comment": "INVALID: primaryCta missing text",
+    "key": "invalid_cta_missing_text",
+    "title": "Invalid CTA",
+    "description": "This tile has a CTA without text",
+    "type": "INFO",
+    "dismissCtaText": "Dismiss",
+    "primaryCta": {
+      "url": "https://example.com"
+    }
+  },
+  {
+    "comment": "INVALID: Empty strings for required fields",
+    "key": "",
+    "title": "",
+    "description": "",
+    "type": "INFO",
+    "dismissCtaText": "Dismiss"
+  }
+]
+

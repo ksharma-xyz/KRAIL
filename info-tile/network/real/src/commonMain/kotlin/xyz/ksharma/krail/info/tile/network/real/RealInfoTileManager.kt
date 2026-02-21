@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateTodayOrInFuture
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.isDateTodayOrInPast
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -81,10 +82,18 @@ class RealInfoTileManager(
     private fun List<InfoTileData>.filterDismissedTiles(): List<InfoTileData> =
         filter { isKeyNotInDismissedTiles(it.key) }
 
+    /**
+     * Filters out tiles that are outside their display date range.
+     * A tile is shown if:
+     * - startDate is null OR startDate is today or in the past (tile has started)
+     * AND
+     * - endDate is null OR endDate is today or in the future (tile hasn't expired)
+     */
     private fun List<InfoTileData>.filterExpiredTiles(): List<InfoTileData> =
         filter { tile ->
-            val endDate = tile.endDate
-            endDate == null || endDate.isDateTodayOrInFuture()
+            val startDateValid = tile.startDate?.isDateTodayOrInPast() ?: true
+            val endDateValid = tile.endDate?.isDateTodayOrInFuture() ?: true
+            startDateValid && endDateValid
         }
 
     private fun isKeyNotInDismissedTiles(key: String): Boolean {

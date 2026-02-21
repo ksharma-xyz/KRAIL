@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -21,18 +21,15 @@ import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.geoJsonProperties
-import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import org.maplibre.spatialk.geojson.Feature as GeoJsonFeature
 
 /**
- * Renders user's current location as an animated pulsing circle on the map.
+ * Renders user's current location on the map.
  *
- * Features:
- * - Inner solid circle with theme color (10dp radius)
- * - Outer pulsing circle that animates from 10dp → 20dp with fading alpha
- * - White stroke for visibility
- * - Continuous pulse animation (2 seconds per cycle)
+ * - Outer ring: static 2dp stroke, transparent fill — always visible boundary.
+ * - Inner dot: solid fill, breathes between 80% and 20% of the outer radius, slow 2s cycle.
+ *   All sizing is derived from [outerRadius] — change that one value to resize the whole dot.
  *
  * @param userLocation User's current location, or null if unknown
  */
@@ -45,33 +42,23 @@ fun UserLocationLayer(
         return
     }
 
-    // Get theme color
-    val themeColor by LocalThemeColor.current
-    val themeComposeColor = themeColor.hexToComposeColor()
+    val locationColor = KrailTheme.colors.userLocationDot
 
-    // Pulsing animation - infinite repeating
+    // Single source of truth — all sizing derived from outerRadius.
+    val outerRadius = 10f
+    val innerRadiusMax = outerRadius * 0.8f // 8dp — largest inner size, 2dp gap from outer
+    val innerRadiusMin = outerRadius * 0.6f // 2dp — smallest inner size
+
+    // Inner breathes between innerRadiusMax and innerRadiusMin; 2s per half-cycle = 4s full breath.
     val infiniteTransition = rememberInfiniteTransition(label = "user-location-pulse")
-
-    // Outer circle radius: 10dp → 20dp (expands outward)
-    val outerRadius by infiniteTransition.animateFloat(
-        initialValue = 10f,
-        targetValue = 20f,
+    val innerRadius by infiniteTransition.animateFloat(
+        initialValue = innerRadiusMax,
+        targetValue = innerRadiusMin,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = EaseOut),
-            repeatMode = RepeatMode.Restart,
+            animation = tween(durationMillis = 2500, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "outer-radius",
-    )
-
-    // Outer circle opacity: 0.3 → 0.0 (fades out as it expands)
-    val outerOpacity by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = EaseOut),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "outer-opacity",
+        label = "inner-radius",
     )
 
     // Create GeoJSON feature for user location
@@ -92,22 +79,21 @@ fun UserLocationLayer(
         data = GeoJsonData.Features(featureCollection),
     )
 
-    // Outer pulsing circle (animates outward and fades)
+    // Outer ring — static boundary, transparent fill so only the 2dp stroke is visible.
     CircleLayer(
-        id = "user-location-pulse",
+        id = "user-location-outer",
         source = geoJsonSource,
         radius = const(outerRadius.dp),
-        color = const(themeComposeColor.copy(alpha = outerOpacity)),
-        strokeWidth = const(0.dp), // No stroke for pulse
+        color = const(Color.Transparent),
+        strokeColor = const(locationColor),
+        strokeWidth = const(2.dp),
     )
 
-    // Inner solid circle (main location indicator)
+    // Inner dot — breathes slowly between 90% and 50% of the outer radius.
     CircleLayer(
         id = "user-location-circle",
         source = geoJsonSource,
-        radius = const(10.dp), // Fixed size, 25% larger than stop circles (8dp)
-        color = const(themeComposeColor),
-        strokeColor = const(Color.White),
-        strokeWidth = const(3.dp), // Thick white stroke for visibility
+        radius = const(innerRadius.dp),
+        color = const(locationColor),
     )
 }

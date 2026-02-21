@@ -1,6 +1,11 @@
 package xyz.ksharma.krail.core.maps.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -32,7 +38,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * @param onClick Callback when button is clicked
  * @param isActive Whether location tracking is active (permission granted + has a fix).
- *                 When false the button renders in a muted grey to signal unavailability.
+ *                 When false the button renders in a muted grey to signal unavailability,
+ *                 and the outer circle pulses to grab the user's attention.
  * @param modifier Modifier to be applied to the component
  */
 @Composable
@@ -49,6 +56,20 @@ fun UserLocationButton(
         label = "UserLocationButtonColor",
     )
 
+    // Pulse animation: outer circle grows and shrinks when permission is not granted,
+    // drawing the user's attention to the button. graphicsLayer keeps the layout size
+    // fixed at 28dp so the pulse is purely visual and doesn't affect surrounding layout.
+    val infiniteTransition = rememberInfiniteTransition(label = "PulseTransition")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "PulseScale",
+    )
+
     Box(
         modifier = modifier
             .size(48.dp)
@@ -56,10 +77,15 @@ fun UserLocationButton(
             .debouncedKlickable(debounceMs = 1.seconds, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        // Outer circle
+        // Outer circle — pulses when inactive to signal permission is needed.
         Box(
             modifier = Modifier
                 .size(28.dp)
+                .graphicsLayer {
+                    val scale = if (!isActive) pulseScale else 1f
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .clip(CircleShape)
                 .background(color),
         )

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -59,6 +60,7 @@ fun SearchStopMap(
     modifier: Modifier = Modifier,
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
+    ornamentTopPadding: Dp = 0.dp,
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
 ) {
@@ -75,6 +77,7 @@ fun SearchStopMap(
                     mapState = mapUiState,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
+                    ornamentTopPadding = ornamentTopPadding,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                     modifier = Modifier.fillMaxSize(),
@@ -112,6 +115,7 @@ private fun MapContent(
     modifier: Modifier = Modifier,
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
+    ornamentTopPadding: Dp = 0.dp,
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -191,7 +195,7 @@ private fun MapContent(
                 baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
                 options = MapOptions(
                     ornamentOptions = OrnamentOptions(
-                        padding = PaddingValues(0.dp),
+                        padding = PaddingValues(top = ornamentTopPadding),
                         isLogoEnabled = LOGO_ENABLED,
                         isAttributionEnabled = ATTRIBUTION_ENABLED,
                         attributionAlignment = Alignment.BottomEnd,

@@ -35,6 +35,9 @@ import xyz.ksharma.krail.core.festival.model.NoFestival
 import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
@@ -54,6 +57,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+@Suppress("LongParameterList")
 class TimeTableViewModel(
     private val tripPlanningService: TripPlanningService,
     private val rateLimiter: RateLimiter,
@@ -61,6 +65,7 @@ class TimeTableViewModel(
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
     private val festivalManager: FestivalManager,
+    val flag: Flag,
 ) : ViewModel() {
 
     init {
@@ -77,6 +82,7 @@ class TimeTableViewModel(
         // Probably good to have data up to date.
         .onStart {
             log("onStart: Fetching Trip")
+            updateMapsAvailability()
             updateLoadingEmoji()
             fetchTrip()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTable)
@@ -157,10 +163,16 @@ class TimeTableViewModel(
 
     private val rawJourneyDataByJourneyId: MutableMap<String, TripResponse.Journey> = mutableMapOf()
 
+    private val isMapsAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.JOURNEY_MAPS_AVAILABLE.key)
+            .asBoolean(fallback = false)
+    }
+
     /**
      * Get raw journey data by ID for map visualization.
      */
-    fun getRawJourneyById(journeyId: String): TripResponse.Journey? = rawJourneyDataByJourneyId[journeyId]
+    fun getRawJourneyById(journeyId: String): TripResponse.Journey? =
+        rawJourneyDataByJourneyId[journeyId]
 
     /**
      * Initialize trip from entry.
@@ -619,6 +631,10 @@ class TimeTableViewModel(
         analytics.track(
             AnalyticsEvent.BackClickEvent(fromScreen = AnalyticsScreen.TimeTable),
         )
+    }
+
+    private fun updateMapsAvailability() {
+        updateUiState { copy(isMapsAvailable = this@TimeTableViewModel.isMapsAvailable) }
     }
 
     private fun updateLoadingEmoji() {

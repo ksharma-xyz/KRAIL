@@ -89,6 +89,7 @@ fun JourneyCard(
     onAlertClick: () -> Unit = {},
     onLegClick: (Boolean) -> Unit = {},
     onMapClick: () -> Unit = {},
+    isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     // Derive transport modes for styling and colors
@@ -163,6 +164,7 @@ fun JourneyCard(
                     onAlertClick = onAlertClick,
                     onLegClick = onLegClick,
                     onMapClick = onMapClick,
+                    isMapsAvailable = isMapsAvailable,
                     modifier = Modifier.clickable(
                         role = Role.Button,
                         onClick = onClick,
@@ -295,6 +297,7 @@ fun ExpandedJourneyCardContent(
     onLegClick: (Boolean) -> Unit,
     onMapClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isMapsAvailable: Boolean = false,
 ) {
     Column(modifier = modifier) {
         // Buttons row - Alert always at start, Maps always next to it
@@ -321,15 +324,17 @@ fun ExpandedJourneyCardContent(
             }
 
             // Map button
-            Button(
-                onClick = onMapClick,
-                dimensions = ButtonDefaults.smallButtonSize(),
-                colors = ButtonDefaults.buttonColors(
-                    customContainerColor = KrailTheme.colors.onSurface,
-                    customContentColor = KrailTheme.colors.surface,
-                ),
-            ) {
-                Text(text = "Maps")
+            if (isMapsAvailable) {
+                Button(
+                    onClick = onMapClick,
+                    dimensions = ButtonDefaults.smallButtonSize(),
+                    colors = ButtonDefaults.buttonColors(
+                        customContainerColor = KrailTheme.colors.onSurface,
+                        customContentColor = KrailTheme.colors.surface,
+                    ),
+                ) {
+                    Text(text = "Maps")
+                }
             }
         }
 

@@ -23,6 +23,7 @@ data class TimeTableState(
     // has to be null, otherwise it will switch from default to a festival.
     // It should load only once whether it is a festival or not.
     val loadingEmoji: LoadingEmoji? = null,
+    val isMapsAvailable: Boolean = false,
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable

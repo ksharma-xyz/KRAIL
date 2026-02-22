@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -197,10 +198,16 @@ private fun JourneyMapContent(
                 .padding(16.dp),
         )
 
-        // Top overlays — permission banner (if shown) then freshness badge directly below it
+        // Top overlays — permission banner (if shown) then freshness badge directly below it.
+        // fillMaxWidth + horizontal padding here so both children get consistent 16dp screen
+        // margins without each child needing to specify it individually.
         if (showPermissionBanner || badgeText != null) {
             Column(
-                modifier = Modifier.align(Alignment.TopCenter),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp),
             ) {
                 if (showPermissionBanner) {
                     LocationPermissionBanner(
@@ -216,7 +223,7 @@ private fun JourneyMapContent(
                         isStale = isStale,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(vertical = 8.dp),
                     )
                 }
             }

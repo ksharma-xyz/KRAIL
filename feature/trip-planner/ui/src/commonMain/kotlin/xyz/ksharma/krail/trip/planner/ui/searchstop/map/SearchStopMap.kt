@@ -1,7 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraPosition
@@ -38,6 +43,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
+import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
@@ -132,6 +138,15 @@ private fun MapContent(
     // False until the user explicitly taps the location button.
     // When true, TrackUserLocation is allowed to trigger the system permission dialog.
     var allowPermissionRequest by remember { mutableStateOf(false) }
+
+    // Badge expand animation — rememberSaveable so rotation doesn't replay it.
+    var badgeExpanded by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!badgeExpanded) {
+            delay(500)
+            badgeExpanded = true
+        }
+    }
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
 
@@ -165,6 +180,7 @@ private fun MapContent(
             cameraState = cameraState,
             allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
+                permissionStatus = PermissionStatus.Granted
                 showPermissionBanner = false
                 onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
             },
@@ -271,14 +287,38 @@ private fun MapContent(
                 modifier = Modifier.align(Alignment.BottomStart),
             )
 
-            // Permission banner (shown when permission is denied)
+            // Permission badge — shown when permission is not yet determined.
+            // Gives users a visible entry point to grant location access beyond the
+            // small location button. Disappears once the request is in-flight or
+            // a location fix arrives. Mutually exclusive with the banner (denied state).
+            if (permissionStatus is PermissionStatus.NotDetermined) {
+                MapTimetableDataBadge(
+                    text = if (badgeExpanded) "Location Permission Required" else "",
+                    onClick = { allowPermissionRequest = true },
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = ornamentTopPadding)
+                        .defaultMinSize(minWidth = 36.dp, minHeight = 36.dp)
+                        .animateContentSize(
+                            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                        ),
+                )
+            }
+
+            // Permission banner (shown when permission is denied).
+            // Top padding matches ornamentTopPadding so it clears the floating search bar
+            // (single-pane) or the status bar (dual-pane). Horizontal padding gives the
+            // rounded card visual some breathing room from screen edges.
             if (showPermissionBanner) {
                 LocationPermissionBanner(
                     onGoToSettings = {
                         onEvent(SearchStopUiEvent.LocationPermissionSettingsClicked)
                         userLocationManager.openAppSettings()
                     },
-                    modifier = Modifier.align(Alignment.TopCenter),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = ornamentTopPadding)
+                        .padding(horizontal = 16.dp),
                 )
             }
 

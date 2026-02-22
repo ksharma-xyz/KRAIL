@@ -2,12 +2,12 @@ package xyz.ksharma.krail.core.maps.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
@@ -39,37 +39,33 @@ fun LocationPermissionBanner(
     backgroundColor: Color = KrailTheme.colors.surface,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth()
-            .background(color = backgroundColor),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(color = backgroundColor)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
-
         Text(
             text = "Location Permission Required",
-            style = KrailTheme.typography.bodyMedium,
-            modifier = Modifier.padding(start = 24.dp, end = 16.dp),
+            style = KrailTheme.typography.titleMedium,
         )
 
         Text(
             text = "Enable location in Settings to see your position on the map.",
             style = KrailTheme.typography.bodySmall,
             color = KrailTheme.colors.softLabel,
-            modifier = Modifier.padding(top = 8.dp)
-                .padding(start = 24.dp, end = 16.dp),
+            modifier = Modifier.padding(top = 8.dp),
         )
 
         TextButton(
             onClick = onGoToSettings,
-            modifier = Modifier.padding(top = 12.dp)
-                .padding(start = 16.dp, end = 16.dp),
+            modifier = Modifier.padding(top = 10.dp),
         ) {
             Text(
                 text = "Go to Settings",
                 style = KrailTheme.typography.labelLarge,
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

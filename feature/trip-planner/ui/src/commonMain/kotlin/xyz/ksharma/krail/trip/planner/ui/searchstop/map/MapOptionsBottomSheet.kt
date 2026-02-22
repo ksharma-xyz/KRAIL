@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -71,8 +72,8 @@ fun MapOptionsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
+                .systemBarsPadding()
+                .verticalScroll(rememberScrollState()),
         ) {
             // Header: "Options" and "Done"
             Row(
@@ -146,7 +147,7 @@ fun MapOptionsBottomSheet(
 
             // Search Radius Section
             Text(
-                text = "Search Radius",
+                text = "Search Distance",
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -170,10 +171,16 @@ fun MapOptionsBottomSheet(
 
             // Transport Mode Section
             Text(
-                text = "Transport Mode",
+                text = "Show stops for",
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Text(
+                text = "Choose which types of nearby stops appear on the map.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp).padding(vertical = 4.dp),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -199,7 +206,7 @@ fun MapOptionsBottomSheet(
 
             // Map Controls Section
             Text(
-                text = "Map Controls",
+                text = "Map Display",
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.padding(horizontal = 16.dp),

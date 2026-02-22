@@ -49,8 +49,8 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>KRAIL uses your location to show you the nearest public transport stops, stations, and your current position on the map..</string>
+    <string>KRAIL uses your location to show your position on the map and display nearby public transport stops.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Krail App uses your location to provide real-time transport information and nearby stop information. While we currently only use location while the app is open, this allows for future features like arrival alerts while you are on the go.</string>
+    <string>KRAIL uses your location to show your position on the map and display nearby public transport stops.</string>
 </dict>
 </plist>

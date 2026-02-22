@@ -11,7 +11,6 @@ import platform.UIKit.UIDevice
 import platform.UIKit.UIScreen
 import platform.UIKit.UIUserInterfaceStyle
 import kotlin.experimental.ExperimentalNativeApi
-import kotlin.math.absoluteValue
 
 class IOSAppInfo : AppInfo {
 
@@ -54,12 +53,6 @@ class IOSAppInfo : AppInfo {
     override val locale: String
         get() = NSLocale.currentLocale.localeIdentifier
 
-    override val batteryLevel: Int
-        get() {
-            val level = UIDevice.currentDevice.batteryLevel
-            return (level * 100).toInt().absoluteValue
-        }
-
     override val timeZone: String
         get() = NSTimeZone.localTimeZone.name
 
@@ -69,8 +62,7 @@ class IOSAppInfo : AppInfo {
     override fun toString() =
         "iOSAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
             "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
-            "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
-            "timeZone=$timeZone)"
+            "deviceManufacturer=$deviceManufacturer, locale=$locale, timeZone=$timeZone)"
 }
 
 class IosAppInfoProvider : AppInfoProvider {

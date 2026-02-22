@@ -1,9 +1,7 @@
 package xyz.ksharma.krail.core.appinfo
 
 import android.content.Context
-import android.content.Context.BATTERY_SERVICE
 import android.content.res.Configuration
-import android.os.BatteryManager
 import android.os.Build
 
 class AndroidAppInfo(private val context: Context) : AppInfo {
@@ -60,12 +58,6 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
             return localeList.toLanguageTags()
         }
 
-    override val batteryLevel: Int
-        get() {
-            val bm = context.getSystemService(BATTERY_SERVICE) as BatteryManager
-            return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        }
-
     override val timeZone: String
         get() = java.util.TimeZone.getDefault().id
 
@@ -75,8 +67,7 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
     override fun toString() =
         "AndroidAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
             "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +
-            "deviceManufacturer=$deviceManufacturer, locale=$locale, batteryLevel=$batteryLevel, " +
-            "timeZone=$timeZone)"
+            "deviceManufacturer=$deviceManufacturer, locale=$locale, timeZone=$timeZone)"
 }
 
 class AndroidAppInfoProvider(

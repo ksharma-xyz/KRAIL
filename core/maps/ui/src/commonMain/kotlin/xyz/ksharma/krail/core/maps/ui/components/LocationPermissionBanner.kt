@@ -43,7 +43,7 @@ fun LocationPermissionBanner(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(color = backgroundColor)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Text(
             text = "Location Permission Required",

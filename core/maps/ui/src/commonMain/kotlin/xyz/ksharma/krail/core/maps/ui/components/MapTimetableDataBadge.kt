@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -32,6 +35,7 @@ fun MapTimetableDataBadge(
     text: String,
     modifier: Modifier = Modifier,
     isStale: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     val themeColor by LocalThemeColor.current
     val backgroundColor = if (isStale) {
@@ -47,11 +51,11 @@ fun MapTimetableDataBadge(
 
     Box(
         modifier = modifier
-            .background(
-                color = backgroundColor,
-                shape = RoundedCornerShape(24.dp),
-            )
+            .clip(RoundedCornerShape(24.dp))
+            .background(color = backgroundColor)
+            .then(if (onClick != null) Modifier.klickable { onClick() } else Modifier)
             .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,

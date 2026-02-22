@@ -14,6 +14,7 @@ import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.core.test.fakes.FakeAnalytics
 import xyz.ksharma.core.test.fakes.FakeFestivalManager
+import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeRateLimiter
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
@@ -59,6 +60,8 @@ class TimeTableViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val fakeFlag = FakeFlag()
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -69,6 +72,7 @@ class TimeTableViewModelTest {
             analytics = fakeAnalytics,
             ioDispatcher = testDispatcher,
             festivalManager = festivalManager,
+            flag = fakeFlag,
         )
     }
 

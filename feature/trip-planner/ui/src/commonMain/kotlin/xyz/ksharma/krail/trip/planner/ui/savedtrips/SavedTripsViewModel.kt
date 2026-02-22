@@ -96,6 +96,10 @@ class SavedTripsViewModel(
         flag.getFlagValue(FlagKeys.DISCOVER_AVAILABLE.key).asBoolean(false)
     }
 
+    private val isMapsAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key).asBoolean(false)
+    }
+
     /**
      * Will observe saved trips from the database.
      */
@@ -290,18 +294,19 @@ class SavedTripsViewModel(
     private fun observeSavedTrips() {
         log("onStart - observeSavedTrips called")
         observeSavedTripsJob?.cancel()
-        observeSavedTripsJob = viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            updateUiState { copy(isSavedTripsLoading = true) }
-            sandook.observeAllTrips()
-                .distinctUntilChanged()
-                .collectLatest { savedTrips ->
-                    log("Saved trips updated: $savedTrips")
-                    val trips = savedTrips.map { it.toTrip() }.toImmutableList()
-                    updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
+        observeSavedTripsJob =
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                updateUiState { copy(isSavedTripsLoading = true) }
+                sandook.observeAllTrips()
+                    .distinctUntilChanged()
+                    .collectLatest { savedTrips ->
+                        log("Saved trips updated: $savedTrips")
+                        val trips = savedTrips.map { it.toTrip() }.toImmutableList()
+                        updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-                    updateParkRideStopIdsInDb(savedTrips)
-                }
-        }
+                        updateParkRideStopIdsInDb(savedTrips)
+                    }
+            }
     }
 
     /**
@@ -660,7 +665,7 @@ class SavedTripsViewModel(
             InfoTileData.InfoTileType.CRITICAL_ALERT,
             InfoTileData.InfoTileType.INFO,
             InfoTileData.InfoTileType.APP_UPDATE,
-            -> {
+                -> {
                 infoTile.primaryCta?.url?.let { url ->
                     platformOps.openUrl(url)
                     trackInfoTileInteraction(

@@ -23,6 +23,8 @@ import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
@@ -49,13 +51,10 @@ class SearchStopViewModel(
             checkMapsAvailability()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
-    private val isMapsAvailable: Boolean = true
-    /*
-        by lazy {
-            flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
-                .asBoolean(fallback = false)
-        }
-     */
+    private val isMapsAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
+            .asBoolean(fallback = false)
+    }
 
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
@@ -123,12 +122,6 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.NearbyStopClicked -> {
-                analytics.track(
-                    AnalyticsEvent.NearbyStopClickEvent(
-                        stopId = event.stop.stopId,
-                        transportModesCount = event.stop.transportModes.size,
-                    ),
-                )
                 onNearbyStopClicked(event.stop)
             }
 
@@ -336,19 +329,15 @@ class SearchStopViewModel(
         // Invalidate cache and reload
         nearbyStopsManager.invalidateCache()
         loadNearbyStops()
-
-        // Track analytics
-       /* val currentState = _uiState.value
-        val screen = currentState.screen as? SearchScreen.Map
-        val mapState = screen?.mapUiState as? MapUiState.Ready
-        val selectedModes = mapState?.mapDisplay?.selectedTransportModes ?: emptySet()
-        val modeNames = selectedModes.mapNotNull { TransportMode.toTransportModeType(it)?.name }
-        val resultCount = mapState?.mapDisplay?.nearbyStops?.size ?: 0*/
     }
 
     private fun onNearbyStopClicked(stop: NearbyStopFeature) {
-        // Show bottom sheet with stop details
-        log("stop: $stop")
+        analytics.track(
+            AnalyticsEvent.NearbyStopClickEvent(
+                stopId = stop.stopId,
+                transportModesCount = stop.transportModes.size,
+            ),
+        )
     }
 
     private fun onUserLocationUpdated(location: LatLng?) {

@@ -226,9 +226,11 @@ private fun SearchStopScreenSinglePane(
     // Recomposition log — SideEffect runs on every recomposition.
     SideEffect {
         log(
-            "[SEARCH_STOP_SINGLE_PANE] recomposed: showMap=$showMap, " +
-                "mapState=${searchStopState.mapUiState?.let { it::class.simpleName }}, " +
-                "listState=${searchStopState.listState::class.simpleName}",
+            "[SEARCH_STOP_SINGLE_PANE] recomposed: showMap=$showMap " +
+                "| isMapsAvailable=${searchStopState.isMapsAvailable} " +
+                "| animateMapButton=$animateMapButton " +
+                "| mapState=${searchStopState.mapUiState?.let { it::class.simpleName } ?: "null"} " +
+                "| listState=${searchStopState.listState::class.simpleName}",
         )
     }
 
@@ -341,9 +343,28 @@ private fun SearchStopScreenDualPane(
 ) {
     // Dual-pane always shows the list — request focus on every fresh composition
     // (including after rotation). Single-pane handles its own focus via LaunchedEffect(showMap).
+    SideEffect {
+        log(
+            "[SEARCH_STOP_DUAL_PANE] isMapsAvailable=${searchStopState.isMapsAvailable} " +
+                "| mapUiState=${searchStopState.mapUiState?.let { it::class.simpleName } ?: "null"}",
+        )
+    }
+
+    // Focus and keyboard are one-shot — only needed on first entry.
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         keyboard?.show()
+    }
+
+    // Map init is keyed on isMapsAvailable so it re-runs if the remote config flag arrives
+    // after the first composition (the flag defaults to false in the initial state).
+    LaunchedEffect(searchStopState.isMapsAvailable) {
+        log(
+            "[SEARCH_STOP_DUAL_PANE] LaunchedEffect(isMapsAvailable): " +
+                "isMapsAvailable=${searchStopState.isMapsAvailable} " +
+                "mapUiState=${searchStopState.mapUiState?.let { it::class.simpleName } ?: "null"} " +
+                "→ willInitMap=${searchStopState.mapUiState == null && searchStopState.isMapsAvailable}",
+        )
         if (searchStopState.mapUiState == null && searchStopState.isMapsAvailable) {
             onEvent(SearchStopUiEvent.InitializeMap)
         }

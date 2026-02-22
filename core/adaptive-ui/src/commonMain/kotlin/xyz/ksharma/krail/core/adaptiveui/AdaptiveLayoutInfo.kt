@@ -3,6 +3,8 @@ package xyz.ksharma.krail.core.adaptiveui
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
+import xyz.ksharma.krail.core.log.log
 
 /**
  * Material Design 3 adaptive layout breakpoints and utilities.
@@ -179,10 +181,20 @@ fun rememberAdaptiveLayoutInfo(): AdaptiveLayoutInfo {
             WindowHeightSizeClass.EXPANDED
     }
 
-    return AdaptiveLayoutInfo(
+    val info = AdaptiveLayoutInfo(
         widthSizeClass = widthSizeClass,
         heightSizeClass = heightSizeClass,
         widthDp = windowSizeClass.minWidthDp,
         heightDp = windowSizeClass.minHeightDp,
     )
+
+    SideEffect {
+        log(
+            "[ADAPTIVE] windowSize=${windowSizeClass.minWidthDp}×${windowSizeClass.minHeightDp}dp " +
+                "| widthClass=$widthSizeClass heightClass=$heightSizeClass " +
+                "| dualPane=${info.shouldShowDualPane}",
+        )
+    }
+
+    return info
 }

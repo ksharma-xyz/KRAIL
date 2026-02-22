@@ -72,6 +72,14 @@ fun SavedTripsScreen(
     onEvent: (SavedTripUiEvent) -> Unit = {},
     onInviteFriendsTileDisplay: () -> Unit = {},
 ) {
+    val emptyStateTip = remember {
+        buildList {
+            add("Tap ★ on a trip to save it here.")
+            add("Saved trips also show Park & Ride.")
+            add("Find nearby stops on the map.")
+        }.random()
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -135,7 +143,7 @@ fun SavedTripsScreen(
                             ErrorMessage(
                                 emoji = "🌟",
                                 title = "Let's Go! Sydney",
-                                message = "Your saved trips will show up here.",
+                                message = emptyStateTip,
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .animateItem(),

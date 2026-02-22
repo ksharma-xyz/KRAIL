@@ -271,14 +271,20 @@ private fun MapContent(
                 modifier = Modifier.align(Alignment.BottomStart),
             )
 
-            // Permission banner (shown when permission is denied)
+            // Permission banner (shown when permission is denied).
+            // Top padding matches ornamentTopPadding so it clears the floating search bar
+            // (single-pane) or the status bar (dual-pane). Horizontal padding gives the
+            // rounded card visual some breathing room from screen edges.
             if (showPermissionBanner) {
                 LocationPermissionBanner(
                     onGoToSettings = {
                         onEvent(SearchStopUiEvent.LocationPermissionSettingsClicked)
                         userLocationManager.openAppSettings()
                     },
-                    modifier = Modifier.align(Alignment.TopCenter),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = ornamentTopPadding)
+                        .padding(horizontal = 16.dp),
                 )
             }
 

@@ -32,6 +32,7 @@ kotlin {
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.ui)
                 implementation(libs.material.adaptive)
+                implementation(projects.core.log)
             }
         }
     }

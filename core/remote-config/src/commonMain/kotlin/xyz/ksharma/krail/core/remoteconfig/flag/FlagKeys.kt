@@ -29,4 +29,5 @@ enum class FlagKeys(val key: String) {
     INFO_TILES("info_tiles_json"),
 
     SEARCH_STOP_MAPS_AVAILABLE("maps_stop_search"),
+    JOURNEY_MAPS_AVAILABLE("maps_journey"),
 }

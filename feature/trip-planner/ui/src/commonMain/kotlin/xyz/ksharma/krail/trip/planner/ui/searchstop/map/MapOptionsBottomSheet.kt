@@ -336,6 +336,8 @@ private fun MapControlToggle(
     }
 }
 
+// region Previews
+
 @PreviewComponent
 @Composable
 private fun PreviewMapOptionsBottomSheet() {
@@ -350,3 +352,5 @@ private fun PreviewMapOptionsBottomSheet() {
         )
     }
 }
+
+// endregion

@@ -1,17 +1,26 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -19,6 +28,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +42,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,8 +95,13 @@ fun SearchStopScreen(
     onStopSelect: (StopItem) -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
 ) {
+    SideEffect { log("[SEARCH_STOP_SCREEN] recomposed") }
+
     val themeColor by LocalThemeColor.current
-    var textFieldText: String by remember { mutableStateOf(searchQuery) }
+    // rememberSaveable so text survives rotation and dark/light mode config changes.
+    var textFieldText: String by rememberSaveable { mutableStateOf(searchQuery) }
+    // Hoisted here so it survives any config change regardless of which pane is active.
+    var showMap by rememberSaveable { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }
@@ -92,11 +110,6 @@ fun SearchStopScreen(
         if (backClicked) {
             goBack()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboard?.show()
     }
 
     LaunchedEffect(textFieldText) {
@@ -117,6 +130,9 @@ fun SearchStopScreen(
                 modifier = modifier,
                 searchStopState = searchStopState,
                 themeColor = themeColor,
+                initialText = textFieldText,
+                showMap = showMap,
+                onShowMapChange = { showMap = it },
                 focusRequester = focusRequester,
                 keyboard = keyboard,
                 onBackClick = { backClicked = true },
@@ -134,6 +150,7 @@ fun SearchStopScreen(
                 modifier = modifier,
                 searchStopState = searchStopState,
                 themeColor = themeColor,
+                initialText = textFieldText,
                 focusRequester = focusRequester,
                 keyboard = keyboard,
                 onBackClick = { backClicked = true },
@@ -156,6 +173,9 @@ fun SearchStopScreen(
 private fun SearchStopScreenSinglePane(
     searchStopState: SearchStopState,
     themeColor: String,
+    initialText: String,
+    showMap: Boolean,
+    onShowMapChange: (Boolean) -> Unit,
     focusRequester: FocusRequester,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     onBackClick: () -> Unit,
@@ -164,9 +184,6 @@ private fun SearchStopScreenSinglePane(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Local UI state controls whether user is viewing list or map
-    var showMap by rememberSaveable { mutableStateOf(false) }
-
     // null = permission check not done yet (button hidden); true/false set once check completes.
     // Keeping it null until then prevents the button from flashing in before we know
     // whether to animate it, which would skip the slide-in entirely.
@@ -185,68 +202,122 @@ private fun SearchStopScreenSinglePane(
         }
     }
 
-    Column(
+    // Capture TopBar height after layout so map ornaments (compass, scale bar) and list
+    // content both start below the floating TopBar.
+    var topBarHeightPx by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
+    val topBarHeightDp by remember { derivedStateOf { with(density) { topBarHeightPx.toDp() } } }
+
+    // Hide/show keyboard based on map toggle
+    LaunchedEffect(showMap) {
+        if (showMap) {
+            keyboard?.hide()
+            focusRequester.freeFocus()
+        } else {
+            keyboard?.show()
+            focusRequester.requestFocus()
+        }
+    }
+
+    // Force dark status bar icons when the map is visible (map is always light-themed).
+    // Reverts to system default (auto dark/light) when the list is shown.
+    StatusBarAppearanceEffect(lightStatusBar = showMap)
+
+    // Recomposition log — SideEffect runs on every recomposition.
+    SideEffect {
+        log(
+            "[SEARCH_STOP_SINGLE_PANE] recomposed: showMap=$showMap, " +
+                "mapState=${searchStopState.mapUiState?.let { it::class.simpleName }}, " +
+                "listState=${searchStopState.listState::class.simpleName}",
+        )
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        backgroundColorOf(themeColor.hexToComposeColor()),
-                        KrailTheme.colors.surface,
-                    ),
-                ),
-            )
             .imePadding(),
     ) {
+        // Map — only composed when map mode is active. Avoids rendering the map (and its
+        // heavy MapLibre internals) while the list is visible, which prevents the flash on
+        // re-navigation where mapUiState is still non-null from a previous visit.
+        val mapState = searchStopState.mapUiState
+        if (showMap && mapState != null) {
+            SearchStopMap(
+                modifier = Modifier.fillMaxSize(),
+                mapUiState = mapState,
+                keyboard = keyboard,
+                focusRequester = focusRequester,
+                ornamentTopPadding = topBarHeightDp,
+                onEvent = onEvent,
+                onStopSelect = onStopSelect,
+            )
+        }
+
+        // List — always appears instantly (EnterTransition.None) so there is no fade-in
+        // window during which the map (or surface background) would show through.
+        // The exit fadeOut is kept for the smooth list→map toggle animation.
+        AnimatedVisibility(
+            visible = !showMap,
+            enter = EnterTransition.None,
+            exit = fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                backgroundColorOf(themeColor.hexToComposeColor()),
+                                KrailTheme.colors.surface,
+                            ),
+                        ),
+                    ),
+            ) {
+                SearchStopListContent(
+                    listState = searchStopState.listState,
+                    searchStopState = searchStopState,
+                    keyboard = keyboard,
+                    focusRequester = focusRequester,
+                    onStopSelect = onStopSelect,
+                    onEvent = onEvent,
+                    modifier = Modifier.padding(top = topBarHeightDp),
+                )
+            }
+        }
+
+        // TopBar always floats on top — transparent background now shows map beneath it
         SearchTopBar(
             placeholderText = "Search here",
+            initialText = initialText,
             focusRequester = focusRequester,
             keyboard = keyboard,
             isMapSelected = showMap,
             isMapAvailable = searchStopState.isMapsAvailable,
             animateMapButton = animateMapButton,
             onMapToggle = { shouldShowMap ->
-                showMap = shouldShowMap
+                onShowMapChange(shouldShowMap)
                 onEvent(SearchStopUiEvent.MapToggleClicked(shouldShowMap))
-                // Initialize map if user toggles to map view and it's not initialized
                 if (shouldShowMap && searchStopState.mapUiState == null) {
                     onEvent(SearchStopUiEvent.InitializeMap)
                 }
             },
             onBackClick = onBackClick,
-            onTextChange = onTextChange,
+            onTextChange = { value ->
+                // Typing while map is visible switches back to list.
+                // onFocusGained was removed — focus events fire on pane transitions and
+                // dark/light mode changes too, which would spuriously reset map mode.
+                if (showMap) {
+                    onShowMapChange(false)
+                    onEvent(SearchStopUiEvent.MapToggleClicked(false))
+                }
+                onTextChange(value)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart)
+                .onGloballyPositioned { coords -> topBarHeightPx = coords.size.height },
         )
-
-        val mapState = searchStopState.mapUiState
-        if (showMap && mapState != null) {
-            // In single pane, when displaying map, keyboard is not required.
-            LaunchedEffect(Unit) {
-                keyboard?.hide()
-                focusRequester.freeFocus()
-            }
-
-            SearchStopMap(
-                modifier = Modifier.weight(1f),
-                mapUiState = mapState,
-                keyboard = keyboard,
-                focusRequester = focusRequester,
-                onEvent = onEvent,
-                onStopSelect = onStopSelect,
-            )
-        } else {
-            LaunchedEffect(Unit) {
-                keyboard?.show()
-                focusRequester.requestFocus()
-            }
-            SearchStopListContent(
-                listState = searchStopState.listState,
-                searchStopState = searchStopState,
-                keyboard = keyboard,
-                focusRequester = focusRequester,
-                onStopSelect = onStopSelect,
-                onEvent = onEvent,
-            )
-        }
     }
 }
 
@@ -259,6 +330,7 @@ private fun SearchStopScreenSinglePane(
 private fun SearchStopScreenDualPane(
     searchStopState: SearchStopState,
     themeColor: String,
+    initialText: String,
     focusRequester: FocusRequester,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     onBackClick: () -> Unit,
@@ -267,8 +339,11 @@ private fun SearchStopScreenDualPane(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Initialize map when entering dual-pane mode if maps are available
+    // Dual-pane always shows the list — request focus on every fresh composition
+    // (including after rotation). Single-pane handles its own focus via LaunchedEffect(showMap).
     LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        keyboard?.show()
         if (searchStopState.mapUiState == null && searchStopState.isMapsAvailable) {
             onEvent(SearchStopUiEvent.InitializeMap)
         }
@@ -302,6 +377,7 @@ private fun SearchStopScreenDualPane(
                 // Search top bar only spans the list width
                 SearchTopBar(
                     placeholderText = "Search here",
+                    initialText = initialText,
                     focusRequester = focusRequester,
                     keyboard = keyboard,
                     isMapSelected = false,
@@ -324,6 +400,8 @@ private fun SearchStopScreenDualPane(
             // Right pane: Map (edge-to-edge)
             // Show map if available and initialized
             searchStopState.mapUiState?.let { mapState ->
+                // Push compass/scale bar below the status bar so they don't sit behind it.
+                val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                 SearchStopMap(
                     modifier = Modifier
                         .weight(1f)
@@ -331,6 +409,7 @@ private fun SearchStopScreenDualPane(
                     mapUiState = mapState,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
+                    ornamentTopPadding = statusBarTopPadding,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                 )
@@ -484,6 +563,7 @@ private fun LazyListScope.searchResultsList(
     }
 }
 
+@Suppress("LongMethod")
 private fun LazyListScope.recentSearchStopsList(
     recentStops: List<SearchStopState.StopResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
@@ -491,37 +571,39 @@ private fun LazyListScope.recentSearchStopsList(
     onStopSelect: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
-    item("recent_stops_title") {
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Recent",
-                style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
-            )
-
-            Image(
-                painter = painterResource(TajRes.drawable.ic_close),
-                contentDescription = "Clear recent stops",
-                colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
+    if (recentStops.isNotEmpty()) {
+        item("recent_stops_title") {
+            Row(
                 modifier =
                 Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .klickable {
-                        onEvent(
-                            SearchStopUiEvent.ClearRecentSearchStops(
-                                recentSearchCount = recentStops.size,
-                            ),
-                        )
-                    },
-            )
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Recent",
+                    style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
+                )
+
+                Image(
+                    painter = painterResource(TajRes.drawable.ic_close),
+                    contentDescription = "Clear recent stops",
+                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
+                    modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .klickable {
+                            onEvent(
+                                SearchStopUiEvent.ClearRecentSearchStops(
+                                    recentSearchCount = recentStops.size,
+                                ),
+                            )
+                        },
+                )
+            }
         }
     }
 

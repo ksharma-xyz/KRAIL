@@ -61,6 +61,7 @@ fun SearchTopBar(
     onBackClick: () -> Unit,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    initialText: String = "",
     isMapAvailable: Boolean = false,
     isMapSelected: Boolean = false,
     animateMapButton: Boolean? = null,
@@ -92,6 +93,7 @@ fun SearchTopBar(
     ) {
         TextField(
             placeholder = placeholderText,
+            initialText = initialText.ifEmpty { null },
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester),

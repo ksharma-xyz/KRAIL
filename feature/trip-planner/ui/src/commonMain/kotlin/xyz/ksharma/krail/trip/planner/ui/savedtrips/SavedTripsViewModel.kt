@@ -290,18 +290,19 @@ class SavedTripsViewModel(
     private fun observeSavedTrips() {
         log("onStart - observeSavedTrips called")
         observeSavedTripsJob?.cancel()
-        observeSavedTripsJob = viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            updateUiState { copy(isSavedTripsLoading = true) }
-            sandook.observeAllTrips()
-                .distinctUntilChanged()
-                .collectLatest { savedTrips ->
-                    log("Saved trips updated: $savedTrips")
-                    val trips = savedTrips.map { it.toTrip() }.toImmutableList()
-                    updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
+        observeSavedTripsJob =
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                updateUiState { copy(isSavedTripsLoading = true) }
+                sandook.observeAllTrips()
+                    .distinctUntilChanged()
+                    .collectLatest { savedTrips ->
+                        log("Saved trips updated: $savedTrips")
+                        val trips = savedTrips.map { it.toTrip() }.toImmutableList()
+                        updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-                    updateParkRideStopIdsInDb(savedTrips)
-                }
-        }
+                        updateParkRideStopIdsInDb(savedTrips)
+                    }
+            }
     }
 
     /**

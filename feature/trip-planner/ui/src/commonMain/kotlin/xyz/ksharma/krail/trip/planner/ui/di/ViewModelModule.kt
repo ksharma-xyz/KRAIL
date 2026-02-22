@@ -74,6 +74,7 @@ val viewModelsModule = module {
             analytics = get(),
             ioDispatcher = get(named(IODispatcher)),
             festivalManager = get(),
+            flag = get(),
         )
     }
 

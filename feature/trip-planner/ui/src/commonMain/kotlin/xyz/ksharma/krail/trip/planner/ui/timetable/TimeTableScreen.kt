@@ -359,6 +359,7 @@ fun TimeTableScreen(
                         onMapClick = {
                             onMapClick(journey.journeyId)
                         },
+                        isMapsAvailable = timeTableState.isMapsAvailable,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             .animateItem(),
                         departureDeviation = journey.departureDeviation,
@@ -401,6 +402,7 @@ private fun JourneyCardItem(
     transportModeLineList: ImmutableList<TransportModeLine>? = null,
     onLegClick: (Boolean) -> Unit,
     onMapClick: () -> Unit = {},
+    isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
@@ -420,6 +422,7 @@ private fun JourneyCardItem(
             totalUniqueServiceAlerts = totalUniqueServiceAlerts,
             onLegClick = onLegClick,
             onMapClick = onMapClick,
+            isMapsAvailable = isMapsAvailable,
             modifier = modifier,
             departureDeviation = departureDeviation,
         )

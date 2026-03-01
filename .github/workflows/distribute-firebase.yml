@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download APK artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: androidApp-${{ inputs.variant }}-apk-${{ github.run_id }}
 

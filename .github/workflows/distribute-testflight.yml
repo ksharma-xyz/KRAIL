@@ -88,7 +88,7 @@ jobs:
           bundle exec fastlane upload_testflight
 
       - name: Upload IPA as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}
           path: iosApp/build/*.ipa

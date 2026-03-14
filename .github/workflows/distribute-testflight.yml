@@ -22,6 +22,13 @@ jobs:
   distribute:
     runs-on: macos-15
     environment: Firebase
+    env:
+      # Fastlane auto-detects these — no temp .p8 file needed (pattern from chrisbanes/tivi).
+      APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+      # Prevent xcodebuild settings query from timing out on slow CI runners.
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
     steps:
       - uses: actions/checkout@v6
 
@@ -68,12 +75,6 @@ jobs:
         run: |
           ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosArm64 --no-daemon --stacktrace
 
-      - name: Create App Store Connect API Key
-        run: |
-          mkdir -p ~/private_keys
-          echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
-          echo "APP_STORE_CONNECT_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" >> $GITHUB_ENV
-
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v6
         with:
@@ -100,8 +101,6 @@ jobs:
           bundle exec fastlane build_release
 
       - name: Upload to TestFlight
-        env:
-          APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
         run: |
           cd iosApp
           bundle exec fastlane upload_testflight

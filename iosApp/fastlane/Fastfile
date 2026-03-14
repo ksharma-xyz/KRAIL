@@ -1,11 +1,21 @@
 # Fastfile for KRAIL iOS App
 
+skip_docs
+
 default_platform(:ios)
 
 platform :ios do
+  after_all do |lane|
+    cleanup_ci_keychain if is_ci
+  end
+
+  error do |lane, exception|
+    cleanup_ci_keychain if is_ci
+  end
+
   desc "Build iOS App for Release"
   lane :build_release do
-    setup_ci if ENV['CI']
+    setup_ci if is_ci
 
     # Xcode version is selected by maxim-lobanov/setup-xcode in the CI workflow.
     # xcversion is removed — the underlying xcode-install gem is sunsetted and
@@ -40,9 +50,10 @@ platform :ios do
 
   desc "Upload to TestFlight"
   lane :upload_testflight do
-    # Upload to TestFlight
+    # Load API key from APP_STORE_CONNECT_API_KEY_* env vars (set in CI workflow) into lane context.
+    # upload_to_testflight then picks it up automatically — no api_key_path needed.
+    app_store_connect_api_key
     upload_to_testflight(
-      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
       skip_waiting_for_build_processing: true,
       skip_submission: true,
       distribute_external: false,
@@ -54,6 +65,16 @@ platform :ios do
   lane :release do
     build_release
     upload_testflight
+  end
+end
+
+# Deletes the temp keychain created by setup_ci so subsequent runs start clean.
+# Without this, a failed run leaves the keychain behind and the next run's
+# setup_ci call fails because the keychain already exists.
+def cleanup_ci_keychain(name = "fastlane_tmp_keychain")
+  if File.exist? File.expand_path("~/Library/Keychains/#{name}-db")
+    delete_keychain(name: name)
+    sh("security default-keychain -s ~/Library/Keychains/login.keychain-db")
   end
 end
 

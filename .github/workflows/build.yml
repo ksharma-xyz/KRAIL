@@ -7,6 +7,9 @@ on:
     branches: [ main, prod/* ] # PRs to prod branches still get a quality+build check
     types: [ opened, synchronize, reopened, ready_for_review ]
 
+permissions:
+  actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true

@@ -10,6 +10,10 @@ on:
   push:
     branches: ['prod/**']
 
+permissions:
+  actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
+  contents: write # allows RC tag creation
+
 jobs:
 
   # ── 1. Quality gate ─────────────────────────────────────────────────────────

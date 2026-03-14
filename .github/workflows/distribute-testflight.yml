@@ -94,7 +94,7 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           APP_BUNDLE_ID: xyz.ksharma.krail
           PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
-          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          DEVELOPMENT_TEAM: ${{ vars.DEVELOPMENT_TEAM }}
         run: |
           cd iosApp
           bundle exec fastlane build_release

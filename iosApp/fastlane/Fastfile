@@ -11,7 +11,10 @@ platform :ios do
     # xcversion is removed — the underlying xcode-install gem is sunsetted and
     # xcversion is broken on macos-15 runners (fastlane/fastlane#29469).
 
-    # Build the app
+    # Build the app.
+    # xcargs forces manual signing during the archive phase — without this, Xcode tries
+    # to manage signing automatically and fails in CI where it can't reach Apple servers.
+    # export_options.provisioningProfiles covers the export phase.
     build_app(
       scheme: "iosApp",
       project: "iosApp.xcodeproj",
@@ -20,7 +23,11 @@ platform :ios do
       output_directory: "./build",
       output_name: "iosApp.ipa",
       clean: true,
+      xcargs: "CODE_SIGN_STYLE=Manual " \
+              "CODE_SIGN_IDENTITY='Apple Distribution' " \
+              "PROVISIONING_PROFILE_SPECIFIER='#{ENV["PROVISIONING_PROFILE_NAME"]}'",
       export_options: {
+        signingStyle: "manual",
         provisioningProfiles: {
           ENV["APP_BUNDLE_ID"] => ENV["PROVISIONING_PROFILE_NAME"]
         }

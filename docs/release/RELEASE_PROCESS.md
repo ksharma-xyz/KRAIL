@@ -21,7 +21,7 @@ main (versionName = 1.18.0)
 main (versionName = 1.19.0)   ← ready for next cycle
 ```
 
-**Android** is fully automated. **iOS** is manual (Xcode → Archive → TestFlight) for now.
+**Android** is fully automated. **iOS** CI is a work in progress (see [iOS status](#ios-ci-status) below).
 
 **Key principle**: `main` always carries the *next* version. `versionName` is bumped
 automatically on `main` right after a release ships — you never bump it manually.
@@ -268,3 +268,37 @@ it manually (`git push origin :refs/tags/v{version}`) then re-run.
 `android-1-cut-release.yml` commits the bump. If you created the branch manually without
 running `android-1-cut-release.yml`, update `versionName` in `androidApp/build.gradle.kts`
 and `iosApp/iosApp/Info.plist` by hand and push.
+
+---
+
+## CI/CD Status
+
+### Android — ✅ Confirmed working (tested 2026-03-15)
+
+End-to-end test on `prod/0.0.1-test` ([run #23094566868](https://github.com/ksharma-xyz/KRAIL/actions/runs/23094566868)):
+
+| Job | Result |
+|---|---|
+| code-quality (Detekt) | ✅ passed |
+| build-android-release (signed AAB) | ✅ passed |
+| tag-release-candidate | ✅ created `v0.0.1-test-RC1` |
+| distribute-google-play (Internal) | ✅ uploaded |
+
+**Pending before June 2, 2026**: update two actions away from Node.js 20:
+- `filippoLeporati93/android-release-signer@v1`
+- `r0adkll/upload-google-play@v1`
+
+### iOS CI — ⚠️ In progress
+
+Manual trigger tested on `prod/0.0.1-test` ([run #23094707987](https://github.com/ksharma-xyz/KRAIL/actions/runs/23094707987)).
+Fails at `Build iOS App for Release` with provisioning profile mismatch:
+```
+No profiles for 'xyz.ksharma.krail' were found
+Xcode couldn't find any iOS App Development provisioning profiles
+```
+
+Known issues to resolve:
+1. **Pin Xcode version** — `latest-stable` selected Xcode 26.3 (pre-release). Change `xcode-version: 'latest-stable'` to `'~16'` in `distribute-testflight.yml` to stay on stable.
+2. **`PROVISIONING_PROFILE_NAME` secret** — must exactly match the profile display name in App Store Connect (e.g. `"Krail App Store Distribution"`). Even minor differences cause this error.
+
+Until iOS CI is confirmed working, use **Xcode → Archive → TestFlight** for iOS releases.

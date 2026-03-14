@@ -28,7 +28,7 @@ platform :ios do
       # applies to every target including SPM resource bundles and breaks MapLibre.
       # Instead, Xcode locates the downloaded profile by bundle ID + identity, and
       # export_options.provisioningProfiles maps it explicitly for the export phase.
-      xcargs: "CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution'",
+      xcargs: "CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' DEVELOPMENT_TEAM='#{ENV["APPLE_TEAM_ID"]}'",
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: {

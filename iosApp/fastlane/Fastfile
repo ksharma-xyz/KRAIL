@@ -7,8 +7,9 @@ platform :ios do
   lane :build_release do
     setup_ci if ENV['CI']
 
-    # Ensure we have the latest version of Xcode command line tools
-    xcversion(version: "~> 16.0")
+    # Xcode version is selected by maxim-lobanov/setup-xcode in the CI workflow.
+    # xcversion is removed — the underlying xcode-install gem is sunsetted and
+    # xcversion is broken on macos-15 runners (fastlane/fastlane#29469).
 
     # Build the app
     build_app(

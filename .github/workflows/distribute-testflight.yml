@@ -4,12 +4,19 @@ on:
   workflow_call:
     inputs:
       artifact-name:
-        required: true
+        required: false
         type: string
       notify-testers:
         required: false
         type: boolean
         default: false
+  workflow_dispatch:
+    inputs:
+      notify-testers:
+        description: 'Notify external testers after upload'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   distribute:
@@ -18,37 +25,48 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Select Xcode before anything else runs.
+      # xcversion is removed from Fastfile — it relies on the sunsetted xcode-install gem
+      # and is broken on macos-15 (fastlane/fastlane#29469, actions/runner-images#12205).
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
       - name: Setup environment variables
         run: |
           echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
           echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
 
-      - name: set up JDK
+      - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: 21
 
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: false
-
-      - name: Install dependencies
-        run: |
-          gem install bundler
-          bundle update
-          bundle install
+          bundler-cache: true
 
       - run: brew install swiftlint
 
-      - uses: gradle/actions/setup-gradle@v5
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
 
       - name: Firebase iOS - GoogleService-Info.plist file
         env:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
-        run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+        run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+
+      # The MapLibre SPM package must be compiled by Gradle before Xcode archives the app.
+      # Without this, fastlane's build_app (archive) fails to resolve the framework.
+      # Uses IosArm64 (real device target) unlike build-ios.yml which uses IosSimulatorArm64.
+      - name: Pre-build SPM for MapLibre (Gradle - device)
+        run: |
+          ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosArm64 --no-daemon --stacktrace
 
       - name: Create App Store Connect API Key
         run: |
@@ -90,7 +108,6 @@ jobs:
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.artifact-name }}
+          name: ${{ inputs.artifact-name || format('iosApp-release-ipa-{0}', github.run_id) }}
           path: iosApp/build/*.ipa
           retention-days: 30
-

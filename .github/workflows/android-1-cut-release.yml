@@ -1,4 +1,4 @@
-name: Start Android Release
+name: "Android: 1. Cut Release Branch"
 
 # Manual workflow to kick off a release cycle.
 #
@@ -10,7 +10,7 @@ name: Start Android Release
 #   1. Reads versionName from build.gradle.kts on the base branch
 #   2. Validates prod/{version} branch does not already exist
 #   3. Creates and pushes prod/{version}
-#   → Pushing the branch automatically triggers release-android.yml which
+#   → Pushing the branch automatically triggers android-2-deploy-rc.yml which
 #     builds, tags v{version}-RC1, and distributes to Google Play Internal.
 #
 # Usage: Actions → Start Android Release → Run workflow
@@ -58,4 +58,4 @@ jobs:
         run: |
           git checkout -b "prod/${{ steps.version.outputs.name }}"
           git push origin "prod/${{ steps.version.outputs.name }}"
-          echo "::notice::Created prod/${{ steps.version.outputs.name }} — release-android.yml will now build RC1 and push to Google Play Internal"
+          echo "::notice::Created prod/${{ steps.version.outputs.name }} — android-2-deploy-rc.yml will now build RC1 and push to Google Play Internal"

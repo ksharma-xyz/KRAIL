@@ -30,14 +30,13 @@ automatically on `main` right after a release ships — you never bump it manual
 
 ## Workflows at a Glance
 
-| Workflow | Trigger | What it does |
-|---|---|---|
-| `build.yml` | Push to `main`, PRs | Quality gate + debug/release build + Firebase |
-| `release-android.yml` | Push to `prod/**` | Release build + RC tag + Google Play Internal |
-| `start-release-android.yml` | Manual | Reads version from `main`, creates `prod/{version}` branch |
-| `finalize-release-android.yml` | Manual | Final tag + Google Play + GitHub Release + bumps `main` to next version |
-| `distribute-google-play-manual.yml` | Manual | Ad-hoc build + Google Play push |
-| `distribute-testflight-manual.yml` | Manual | iOS TestFlight upload |
+| Workflow file | UI name | Trigger | What it does |
+|---|---|---|---|
+| `build.yml` | Krail App CI | Push to `main`, PRs | Quality gate + debug/release build + Firebase |
+| `android-1-cut-release.yml` | Android: 1. Cut Release Branch | Manual | Reads version from `main`, creates `prod/{version}` branch |
+| `android-2-deploy-rc.yml` | Android: 2. Deploy RC → Google Play Internal | Auto on `prod/**` push | Release build + RC tag + Google Play Internal |
+| `android-3-ship-release.yml` | Android: 3. Ship to Production | Manual | Final tag + Google Play + GitHub Release + bumps `main` |
+| `distribute-testflight.yml` | Distribute TestFlight | Manual | iOS TestFlight build + upload |
 
 ---
 
@@ -55,13 +54,13 @@ release shipped). Just go to **Actions → Start Android Release → Run workflo
 This workflow:
 - Reads `versionName` from `main`'s `build.gradle.kts` (e.g. `1.19.0`)
 - Creates and pushes `prod/1.19.0`
-- Pushing the branch automatically triggers `release-android.yml`
+- Pushing the branch automatically triggers `android-2-deploy-rc.yml`
 
 No version input needed. No version bump happens here.
 
 ### 2. Watch the automatic release pipeline
 
-`release-android.yml` runs on every push to `prod/**`:
+`android-2-deploy-rc.yml` runs on every push to `prod/**`:
 
 ```
 code-quality
@@ -138,7 +137,7 @@ the RC tagging and Google Play upload pipeline runs.
 
 | Property | Where | Who updates it |
 |---|---|---|
-| `versionName` | `androidApp/build.gradle.kts` | `finalize-release-android.yml` (auto-bumps `main` after shipping) |
+| `versionName` | `androidApp/build.gradle.kts` | `finalize-android-2-deploy-rc.yml` (auto-bumps `main` after shipping) |
 | `versionCode` | GitHub repo variable `ANDROID_VERSION_CODE` | CI (increments on every release build) |
 
 Each release build reads `ANDROID_VERSION_CODE`, increments it by 1, writes the new
@@ -150,7 +149,7 @@ Settings, not inside any workflow file. See [One-Time Setup](#one-time-setup-and
 
 | Property | Where | Who updates it |
 |---|---|---|
-| `CFBundleShortVersionString` | `iosApp/iosApp/Info.plist` | `start-release.yml` (automated) |
+| `CFBundleShortVersionString` | `iosApp/iosApp/Info.plist` | `android-1-cut-release.yml` (automated) |
 | `CFBundleVersion` | `iosApp/iosApp/Info.plist` | Manual / Xcode archive |
 
 ### Git tags
@@ -159,7 +158,7 @@ Settings, not inside any workflow file. See [One-Time Setup](#one-time-setup-and
 |---|---|---|
 | `v1.19.0-RC1` | First release candidate | `release.yml` (automatic) |
 | `v1.19.0-RC2` | Second RC after a fix | `release.yml` (automatic) |
-| `v1.19.0` | Final production release | `finalize-release.yml` (manual) |
+| `v1.19.0` | Final production release | `android-3-ship-release.yml` (manual) |
 
 ---
 
@@ -168,9 +167,9 @@ Settings, not inside any workflow file. See [One-Time Setup](#one-time-setup-and
 | Track | Use for | How to target |
 |---|---|---|
 | `internal` | Team dogfooding during RC cycle | Automatic via `release.yml` |
-| `alpha` | Closed group testing | `finalize-release.yml` → choose `alpha` |
-| `beta` | Open beta / staged rollout | `finalize-release.yml` → choose `beta` |
-| `production` | Full release | `finalize-release.yml` → choose `production` |
+| `alpha` | Closed group testing | `android-3-ship-release.yml` → choose `alpha` |
+| `beta` | Open beta / staged rollout | `android-3-ship-release.yml` → choose `beta` |
+| `production` | Full release | `android-3-ship-release.yml` → choose `production` |
 
 ---
 
@@ -187,8 +186,8 @@ release cycle starts from `main`.
    git cherry-pick <commit-sha>
    git push origin prod/1.19.0
    ```
-3. Push to `prod/1.19.0` triggers `release-android.yml` → new RC tag → GP Internal
-4. Validate, then run `finalize-release-android.yml` when ready
+3. Push to `prod/1.19.0` triggers `android-2-deploy-rc.yml` → new RC tag → GP Internal
+4. Validate, then run `finalize-android-2-deploy-rc.yml` when ready
 
 **Patch release** (e.g. a critical fix after `v1.19.0` is already in production):
 
@@ -200,7 +199,7 @@ release cycle starts from `main`.
 
 ---
 
-## Checklist Before Running `finalize-release.yml`
+## Checklist Before Running `android-3-ship-release.yml`
 
 - [ ] Latest RC has been installed from Google Play Internal and validated
 - [ ] All required commits are on `prod/{version}` (no pending fixes)
@@ -257,15 +256,15 @@ All secrets are already configured. Reference only:
 The RC tag is already created — just re-run only the `distribute-google-play` job
 from the failed workflow run (GitHub Actions → re-run failed jobs).
 
-**`start-release.yml` fails with "branch already exists"**
+**`android-1-cut-release.yml` fails with "branch already exists"**
 The branch `prod/{version}` was already created. Either push directly to that branch
 or choose a new version number.
 
-**`finalize-release.yml` fails with "tag already exists"**
+**`android-3-ship-release.yml` fails with "tag already exists"**
 `v{version}` was already tagged. Check the existing tag — if it was a mistake, delete
 it manually (`git push origin :refs/tags/v{version}`) then re-run.
 
 **versionName in build not matching expected version**
-`start-release.yml` commits the bump. If you created the branch manually without
-running `start-release.yml`, update `versionName` in `androidApp/build.gradle.kts`
+`android-1-cut-release.yml` commits the bump. If you created the branch manually without
+running `android-1-cut-release.yml`, update `versionName` in `androidApp/build.gradle.kts`
 and `iosApp/iosApp/Info.plist` by hand and push.

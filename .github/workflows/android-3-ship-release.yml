@@ -1,4 +1,4 @@
-name: Finalize Android Release
+name: "Android: 3. Ship to Production"
 
 # Manual workflow to ship a release to production.
 #

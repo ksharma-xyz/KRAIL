@@ -1,4 +1,4 @@
-name: Release Android (prod/* branch)
+name: "Android: 2. Deploy RC → Google Play Internal"
 
 # Triggered automatically on every push to a prod/* branch.
 # Flow: quality gate → build release AAB → auto-increment RC tag → distribute to Google Play Internal.

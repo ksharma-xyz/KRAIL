@@ -31,7 +31,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 'latest-stable'
+          xcode-version: '~16'  # pin to stable Xcode 16.x; latest-stable can pick up pre-releases
 
       - name: Setup environment variables
         run: |

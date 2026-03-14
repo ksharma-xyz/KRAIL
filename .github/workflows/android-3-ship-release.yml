@@ -39,6 +39,10 @@ on:
         required: false
         type: string
 
+permissions:
+  actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
+  contents: write # allows final version tag creation and main version bump
+
 jobs:
 
   # ── 1. Build final release AAB from the prod branch ─────────────────────────

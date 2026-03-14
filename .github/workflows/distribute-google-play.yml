@@ -27,4 +27,4 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: xyz.ksharma.krail
           releaseFiles: aab/*.aab
-          track: internal
+          track: ${{ inputs.track }}

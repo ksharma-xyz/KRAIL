@@ -2,9 +2,9 @@ name: Krail App CI
 
 on:
   push:
-    branches: [ main, prod/* ]
+    branches: [ main ]          # prod/* is handled by release.yml
   pull_request:
-    branches: [ main, prod/* ]
+    branches: [ main, prod/* ] # PRs to prod branches still get a quality+build check
     types: [ opened, synchronize, reopened, ready_for_review ]
 
 concurrency:

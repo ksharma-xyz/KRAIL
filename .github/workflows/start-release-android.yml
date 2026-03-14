@@ -1,0 +1,61 @@
+name: Start Android Release
+
+# Manual workflow to kick off a release cycle.
+#
+# Reads the current versionName from main's build.gradle.kts (already bumped
+# automatically by 'Finalize Android Release') and creates a prod/{version}
+# branch from it. No version bump happens here — main is always ahead.
+#
+# What it does:
+#   1. Reads versionName from build.gradle.kts on the base branch
+#   2. Validates prod/{version} branch does not already exist
+#   3. Creates and pushes prod/{version}
+#   → Pushing the branch automatically triggers release-android.yml which
+#     builds, tags v{version}-RC1, and distributes to Google Play Internal.
+#
+# Usage: Actions → Start Android Release → Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      base-branch:
+        description: 'Branch to cut release from'
+        required: true
+        default: 'main'
+        type: string
+
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.base-branch }}
+          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+          fetch-depth: 0
+
+      - name: Read versionName from build.gradle.kts
+        id: version
+        run: |
+          VERSION=$(grep -oP '(?<=versionName = ")[^"]+' androidApp/build.gradle.kts)
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not read versionName from androidApp/build.gradle.kts"
+            exit 1
+          fi
+          echo "name=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Detected version: ${VERSION} — will create prod/${VERSION}"
+
+      - name: Check branch does not already exist
+        run: |
+          if git ls-remote --exit-code --heads origin "prod/${{ steps.version.outputs.name }}" > /dev/null 2>&1; then
+            echo "::error::Branch prod/${{ steps.version.outputs.name }} already exists."
+            exit 1
+          fi
+
+      - name: Create and push release branch
+        run: |
+          git checkout -b "prod/${{ steps.version.outputs.name }}"
+          git push origin "prod/${{ steps.version.outputs.name }}"
+          echo "::notice::Created prod/${{ steps.version.outputs.name }} — release-android.yml will now build RC1 and push to Google Play Internal"

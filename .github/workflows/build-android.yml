@@ -11,6 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: Firebase
+    permissions:
+      actions: write  # required to write back ANDROID_VERSION_CODE repo variable
     steps:
       - uses: actions/checkout@v6
 
@@ -64,7 +66,7 @@ jobs:
       - name: Set versionCode
         id: version_code
         env:
-          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -e
           CURRENT=${{ vars.ANDROID_VERSION_CODE }}

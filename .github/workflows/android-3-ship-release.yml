@@ -1,0 +1,176 @@
+name: "Android: 3. Ship to Production"
+
+# Manual workflow to ship a release to production.
+#
+# Run this only after the prod/{version} branch has been validated through
+# internal testing (RC tags) and you're ready to go live.
+#
+# What it does:
+#   1. Builds a final signed release AAB from the prod/{version} branch
+#   2. Creates the final v{version} tag
+#   3. Distributes to the chosen Google Play track (default: production)
+#   4. Creates a draft GitHub Release with auto-generated release notes
+#   5. Bumps versionName on main to the next version (e.g. 1.18.0 → 1.19.0)
+#      so development on main is always ahead of what's been shipped.
+#
+# After this workflow:
+#   - Review and publish the GitHub Release draft
+#   - Note: fixes always go to main first, then cherry-pick to prod/* — never the other way
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to finalize (e.g. 1.19.0) — must match an existing prod/* branch'
+        required: true
+        type: string
+      google-play-track:
+        description: 'Google Play track'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - beta
+          - alpha
+          - internal
+      next-version:
+        description: 'Next version to set on main after shipping (e.g. 1.20.0). Leave blank to auto-increment minor.'
+        required: false
+        type: string
+
+permissions:
+  actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
+  contents: write # allows final version tag creation and main version bump
+
+jobs:
+
+  # ── 1. Build final release AAB from the prod branch ─────────────────────────
+  build-android-release:
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: release
+    secrets: inherit
+
+  # ── 2. Create final semver tag ───────────────────────────────────────────────
+  tag-final-release:
+    needs: build-android-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 'prod/${{ inputs.version }}'
+          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+          fetch-depth: 0
+
+      - name: Validate prod branch exists
+        run: |
+          if ! git ls-remote --exit-code --heads origin "prod/${{ inputs.version }}" > /dev/null 2>&1; then
+            echo "::error::Branch prod/${{ inputs.version }} does not exist. Run 'Start Android Release' first."
+            exit 1
+          fi
+
+      - name: Check tag does not already exist
+        run: |
+          git fetch --tags --quiet
+          if git tag --list "v${{ inputs.version }}" | grep -q .; then
+            echo "::error::Tag v${{ inputs.version }} already exists."
+            exit 1
+          fi
+
+      - name: Create and push final tag
+        run: |
+          git tag "v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+          echo "::notice::Tagged v${{ inputs.version }}"
+
+  # ── 3. Distribute to Google Play ────────────────────────────────────────────
+  distribute-google-play:
+    needs: [build-android-release, tag-final-release]
+    uses: ./.github/workflows/distribute-google-play.yml
+    with:
+      artifact-name: androidApp-release-aab-${{ github.run_id }}
+      track: ${{ inputs.google-play-track }}
+    secrets: inherit
+
+  # ── 4. Create draft GitHub Release ──────────────────────────────────────────
+  create-github-release:
+    needs: tag-final-release
+    uses: ./.github/workflows/create-github-release.yml
+    with:
+      tag_name: v${{ inputs.version }}
+    secrets: inherit
+
+  # ── 5. Bump version on main ──────────────────────────────────────────────────
+  # Runs after shipping so main is always ahead of the last shipped version.
+  # Auto-increments minor (1.18.0 → 1.19.0) unless next-version is supplied.
+  bump-version-on-main:
+    needs: [distribute-google-play, create-github-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Compute next version
+        id: next
+        run: |
+          SUPPLIED="${{ inputs.next-version }}"
+          if [ -n "$SUPPLIED" ]; then
+            NEXT="$SUPPLIED"
+          else
+            # Auto-increment minor: 1.18.0 → 1.19.0
+            CURRENT="${{ inputs.version }}"
+            MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+            MINOR=$(echo "$CURRENT" | cut -d. -f2)
+            NEXT="${MAJOR}.$((MINOR + 1)).0"
+          fi
+          echo "next=${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Bumping main to ${NEXT}"
+
+      - name: Bump versionName in build.gradle.kts
+        run: |
+          sed -i 's/versionName = "[^"]*"/versionName = "${{ steps.next.outputs.next }}"/' androidApp/build.gradle.kts
+          grep "versionName" androidApp/build.gradle.kts
+
+      - name: Bump CFBundleShortVersionString in Info.plist
+        run: |
+          python3 - << 'EOF'
+          import re
+          version = "${{ steps.next.outputs.next }}"
+          path = "iosApp/iosApp/Info.plist"
+          with open(path, "r") as f:
+              content = f.read()
+          updated = re.sub(
+              r'(<key>CFBundleShortVersionString</key>\s*<string>)[^<]*(</string>)',
+              rf'\g<1>{version}\g<2>',
+              content,
+          )
+          if updated == content:
+              print("WARNING: CFBundleShortVersionString not found — skipping iOS version bump")
+          else:
+              with open(path, "w") as f:
+                  f.write(updated)
+              print(f"Updated CFBundleShortVersionString to {version}")
+          EOF
+
+      - name: Commit and push to main
+        run: |
+          git add androidApp/build.gradle.kts iosApp/iosApp/Info.plist
+          if git diff --staged --quiet; then
+            echo "No changes to commit — main may already be at ${{ steps.next.outputs.next }}"
+          else
+            git commit -m "chore: bump version to ${{ steps.next.outputs.next }} [skip ci]"
+            git push origin main
+          fi

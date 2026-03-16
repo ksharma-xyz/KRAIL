@@ -11,6 +11,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: Firebase
+    permissions:
+      actions: write  # required to write back ANDROID_VERSION_CODE repo variable
     steps:
       - uses: actions/checkout@v6
 
@@ -52,23 +54,41 @@ jobs:
           echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
           echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV
 
-      - name: Log GitHub Run Number
-        run: |
-          echo "GitHub run number: ${{ github.run_number }}"
-
-      # New step: compute versionCode in UTC and export to GITHUB_ENV
-      - name: Compute versionCode
-        id: compute_version_code
+      # versionCode is stored as a GitHub repository variable (Settings → Actions → Variables →
+      # ANDROID_VERSION_CODE) so it survives workflow renames and file restructures.
+      #
+      # Release builds: increment the counter and write it back via the GitHub API so the
+      # next build always gets a strictly higher number. Google Play rejects uploads where
+      # versionCode is not greater than the last uploaded build.
+      #
+      # Debug builds: read the current value without incrementing — debug APKs are never
+      # uploaded to Google Play so monotonicity doesn't matter for them.
+      - name: Set versionCode
+        id: version_code
+        env:
+          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
         run: |
           set -e
-          RUN_NUMBER=${{ github.run_number }}
-          START_TS=$(date -ud '2025-01-01 00:00:00Z' +%s)
-          NOW_TS=$(date -u +%s)
-          DAYS_SINCE=$(( (NOW_TS - START_TS) / 86400 ))
-          RUN_MOD=$(( RUN_NUMBER % 100 ))
-          VERSION_CODE=$(( 2000 + DAYS_SINCE + RUN_MOD ))
-          echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_ENV
-          echo "Computed versionCode: ${VERSION_CODE} (days=${DAYS_SINCE}, run#=${RUN_NUMBER}, run%100=${RUN_MOD})"
+          CURRENT=${{ vars.ANDROID_VERSION_CODE }}
+          if [ -z "$CURRENT" ]; then
+            echo "::error::Repository variable ANDROID_VERSION_CODE is not set. Add it in Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
+
+          if [[ "${{ inputs.variant }}" == "release" ]]; then
+            NEXT=$(( CURRENT + 1 ))
+            gh api \
+              --method PATCH \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${{ github.repository }}/actions/variables/ANDROID_VERSION_CODE" \
+              -f value="${NEXT}" \
+              || echo "::warning::Could not write back ANDROID_VERSION_CODE — PAT_KRAIL_GITHUB needs 'repo' scope (classic PAT) or 'Variables: Read and write' (fine-grained PAT). Fix this before real releases."
+            echo "VERSION_CODE=${NEXT}" >> $GITHUB_ENV
+            echo "versionCode: ${CURRENT} → ${NEXT}"
+          else
+            echo "VERSION_CODE=${CURRENT}" >> $GITHUB_ENV
+            echo "versionCode: ${CURRENT} (debug — not incrementing)"
+          fi
 
       - name: Build ${{ inputs.variant }}
         env:

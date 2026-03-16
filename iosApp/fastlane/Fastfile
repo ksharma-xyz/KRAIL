@@ -34,15 +34,12 @@ platform :ios do
       output_name: "iosApp.ipa",
       clean: true,
       # xcargs covers the archive phase; export_options.provisioningProfiles covers export.
-      # PROVISIONING_PROFILE_SPECIFIER is passed here so xcodebuild knows which profile
-      # to use during .xcarchive creation. xcargs apply globally, but in practice only
-      # the main app target resolves this profile — SPM resource bundles are unsigned.
-      # If SPM targets break again, replace PROVISIONING_PROFILE_SPECIFIER with
-      # PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] to scope it to device builds only.
+      # PROVISIONING_PROFILE_SPECIFIER is intentionally NOT in xcargs — it applies to every
+      # target including SPM packages (Firebase, gRPC, etc.) which reject it with errors.
+      # The downloaded profile is found by Xcode via bundle ID + CODE_SIGN_IDENTITY match.
       xcargs: "CODE_SIGN_STYLE=Manual " \
               "CODE_SIGN_IDENTITY='Apple Distribution' " \
-              "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}' " \
-              "PROVISIONING_PROFILE_SPECIFIER='#{ENV["PROVISIONING_PROFILE_NAME"]}'",
+              "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}'",
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: {

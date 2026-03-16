@@ -1,0 +1,85 @@
+name: "2. Deploy RC"
+
+# Triggered automatically on every push to a prod/* branch.
+# Flow: quality gate → build release AAB → auto-increment RC tag → Google Play Internal
+#       + TestFlight upload (runs in parallel with the Android pipeline).
+#
+# Branch naming convention: prod/{version}  e.g. prod/1.19.0
+# Tags created:             v{version}-RC{n} e.g. v1.19.0-RC1, v1.19.0-RC2 …
+
+on:
+  push:
+    branches: ['prod/**']
+
+permissions:
+  actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
+  contents: write # allows RC tag creation
+
+jobs:
+
+  # ── 1. Quality gate ─────────────────────────────────────────────────────────
+  code-quality:
+    uses: ./.github/workflows/code-quality.yml
+
+  # ── 2. Build signed release AAB ─────────────────────────────────────────────
+  build-android-release:
+    needs: code-quality
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: release
+    secrets: inherit
+
+  # ── 3. Auto-increment and push RC tag ───────────────────────────────────────
+  tag-release-candidate:
+    needs: build-android-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.compute.outputs.tag }}
+      version: ${{ steps.compute.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+
+      - name: Compute next RC tag
+        id: compute
+        run: |
+          set -e
+          BRANCH="${GITHUB_REF#refs/heads/}"      # prod/1.19.0
+          VERSION="${BRANCH#prod/}"                # 1.19.0
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          git fetch --tags --quiet
+
+          # Find the highest existing RC number for this version
+          EXISTING_MAX=$(git tag --list "v${VERSION}-RC*" \
+            | grep -oP '(?<=RC)[0-9]+' \
+            | sort -n | tail -1)
+
+          NEXT_RC=$([ -z "$EXISTING_MAX" ] && echo 1 || echo $((EXISTING_MAX + 1)))
+          TAG="v${VERSION}-RC${NEXT_RC}"
+
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Tagging this build as ${TAG}"
+
+      - name: Create and push RC tag
+        run: |
+          git tag "${{ steps.compute.outputs.tag }}"
+          git push origin "${{ steps.compute.outputs.tag }}"
+
+  # ── 4. Distribute to Google Play Internal ───────────────────────────────────
+  distribute-google-play:
+    needs: [build-android-release, tag-release-candidate]
+    uses: ./.github/workflows/distribute-google-play.yml
+    with:
+      artifact-name: androidApp-release-aab-${{ github.run_id }}
+      track: internal
+    secrets: inherit
+
+  # ── 5. Distribute to TestFlight (runs in parallel with Android pipeline) ────
+  distribute-testflight:
+    uses: ./.github/workflows/distribute-testflight.yml
+    secrets: inherit

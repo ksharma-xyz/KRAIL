@@ -3,29 +3,32 @@
 ## Overview
 
 ```
-main (versionName = 1.18.0)
+main (versionName = 1.19.0)
   │
   │  ← development happens here
   │
-  ├─ Start Android Release ──► prod/1.18.0 ──[fix]──[fix]
-  │                                │            │      │
-  │                             RC1 tag      RC2 tag  RC3 tag
-  │                                │            │      │
-  │                            GP Internal  GP Internal  GP Internal
-  │                            TF build     TF build     TF build
+  ├─ Cut Release Branch ──► prod/1.19.0 ──[fix]──[fix]
+  │         │                    │            │      │
+  │  main bumped to 1.20.0    RC1 tag      RC2 tag  RC3 tag
+  │                               │            │      │
+  │                           GP Internal  GP Internal  GP Internal
+  │                           TF build     TF build     TF build
   │
-  │                           (happy with RC3? run Finalize)
+  │                          (happy with RC3? run Tag Release)
   │
-  │  ◄── Finalize ships v1.18.0 tag + GP Production + GitHub Release
-  │  ◄── Finalize auto-bumps main to 1.19.0
+  │  ◄── Tag Release creates v1.19.0 tag + draft GitHub Release
   │
-main (versionName = 1.19.0)   ← ready for next cycle
+  │  Manual promotion:
+  │    Android → promote in Google Play Console
+  │    iOS     → submit in App Store Connect
+  │
+main (versionName = 1.20.0)   ← already bumped when branch was cut
 ```
 
 Both **Android** and **iOS** are fully automated on every push to `prod/**`.
 
 **Key principle**: `main` always carries the *next* version. `versionName` is bumped
-automatically on `main` right after a release ships — you never bump it manually.
+automatically on `main` right when the release branch is cut — you never bump it manually.
 
 ---
 
@@ -34,9 +37,10 @@ automatically on `main` right after a release ships — you never bump it manual
 | Workflow file | UI name | Trigger | What it does |
 |---|---|---|---|
 | `build.yml` | Krail App CI | Push to `main`, PRs | Quality gate + debug/release build + Firebase |
-| `release-1-cut.yml` | 1. Cut Release Branch | Manual | Reads version from `main`, creates `prod/{version}` branch |
+| `release-1-cut.yml` | 1. Cut Release Branch | Manual | Creates `prod/{version}` branch + bumps `main` to next version |
 | `release-2-deploy-rc.yml` | 2. Deploy RC | Auto on `prod/**` push | Android RC tag + Google Play Internal + iOS TestFlight |
-| `release-3-ship.yml` | 3. Ship to Production | Manual | Final tag + Google Play + GitHub Release + bumps `main` |
+| `release-3-tag.yml` | 3. Tag Release | Manual | Creates final `v{version}` tag |
+| `create-github-release.yml` | Create GitHub Release | Auto on `v*` tag push (non-RC), or manual | Creates draft GitHub Release |
 | `distribute-testflight.yml` | Distribute TestFlight | Auto (called by release-2) or Manual | iOS build + TestFlight upload |
 
 ---
@@ -46,18 +50,18 @@ automatically on `main` right after a release ships — you never bump it manual
 ### 1. Kick off the release branch
 
 `main` already has the correct `versionName` (bumped automatically when the previous
-release shipped). Just go to **Actions → Android: 1. Cut Release Branch → Run workflow**.
+release branch was cut). Just go to **Actions → 1. Cut Release Branch → Run workflow**.
 
 | Field | Example |
 |---|---|
 | Base branch | `main` (default) |
+| Next version | *(leave blank)* auto-increments minor: `1.20.0` |
 
 This workflow:
 - Reads `versionName` from `main`'s `build.gradle.kts` (e.g. `1.19.0`)
 - Creates and pushes `prod/1.19.0`
+- Immediately bumps `versionName` on `main` to `1.20.0` (commit tagged `[skip ci]`)
 - Pushing the branch automatically triggers `release-2-deploy-rc.yml`
-
-No version input needed. No version bump happens here.
 
 ### 2. Watch the automatic release pipeline
 
@@ -85,24 +89,29 @@ increments the counter: `v1.19.0-RC2`, `v1.19.0-RC3`, etc.
 
 ## Step-by-Step: Shipping to Production
 
-Once internal testing passes, run **Actions → Android: 3. Ship to Production → Run workflow**.
+Once internal testing passes:
+
+### 1. Tag the release
+
+Run **Actions → 3. Tag Release → Run workflow**.
 
 | Field | Example |
 |---|---|
 | Version | `1.19.0` |
-| Google Play track | `production` (or `beta` for staged rollout) |
-| Next version | *(leave blank)* auto-increments minor: `1.20.0` |
 
 This workflow:
-1. Builds a fresh signed AAB from `prod/1.19.0`
+1. Validates `prod/1.19.0` exists
 2. Creates and pushes the final `v1.19.0` tag
-3. Uploads the AAB to the chosen Google Play track
-4. Creates a **draft** GitHub Release with auto-generated notes
-5. Bumps `versionName` on `main` to `1.20.0` (commit tagged `[skip ci]`)
+3. Pushing the tag automatically triggers `create-github-release.yml` → draft GitHub Release
 
-After it finishes:
-- Review and publish the GitHub Release draft
-- Submit the latest TestFlight build for App Store review from App Store Connect
+### 2. Promote to production (manual)
+
+- **Android**: Google Play Console → your app → the latest internal build → Promote to Production
+- **iOS**: App Store Connect → TestFlight → the latest build → Submit for App Store review
+
+### 3. Publish the GitHub Release draft
+
+Review and publish the draft created by `create-github-release.yml`.
 
 ---
 
@@ -135,7 +144,7 @@ the RC tagging and Google Play upload pipeline runs.
 
 | Property | Where | Who updates it |
 |---|---|---|
-| `versionName` | `androidApp/build.gradle.kts` | `release-3-ship.yml` (auto-bumps `main` after shipping) |
+| `versionName` | `androidApp/build.gradle.kts` | `release-1-cut.yml` (bumps `main` immediately after cutting the branch) |
 | `versionCode` | GitHub repo variable `ANDROID_VERSION_CODE` | CI (increments on every release build) |
 
 Each release build reads `ANDROID_VERSION_CODE`, increments it by 1, writes the new
@@ -147,7 +156,7 @@ Settings, not inside any workflow file.
 
 | Property | Where | Who updates it |
 |---|---|---|
-| `CFBundleShortVersionString` | `iosApp/iosApp/Info.plist` | `release-1-cut.yml` (automated) |
+| `CFBundleShortVersionString` | `iosApp/iosApp/Info.plist` | `release-1-cut.yml` (bumps `main` immediately after cutting the branch) |
 | `CFBundleVersion` | GitHub repo variable `IOS_BUILD_NUMBER` | CI (increments on every TestFlight upload) |
 
 `CFBundleVersion` must be globally and strictly increasing across all App Store / TestFlight
@@ -159,7 +168,7 @@ uploads for this app — it does **not** reset when the marketing version change
 |---|---|---|
 | `v1.19.0-RC1` | First release candidate | `release-2-deploy-rc.yml` (automatic) |
 | `v1.19.0-RC2` | Second RC after a fix | `release-2-deploy-rc.yml` (automatic) |
-| `v1.19.0` | Final production release | `release-3-ship.yml` (manual) |
+| `v1.19.0` | Final production release | `release-3-tag.yml` (manual) |
 
 ---
 
@@ -168,9 +177,11 @@ uploads for this app — it does **not** reset when the marketing version change
 | Track | Use for | How to target |
 |---|---|---|
 | `internal` | Team dogfooding during RC cycle | Automatic via `release-2-deploy-rc.yml` |
-| `alpha` | Closed group testing | `release-3-ship.yml` → choose `alpha` |
-| `beta` | Open beta / staged rollout | `release-3-ship.yml` → choose `beta` |
-| `production` | Full release | `release-3-ship.yml` → choose `production` |
+| `production` | Full release | Google Play Console → promote from internal |
+
+**There is no CI workflow for production upload.** Promoting from internal to production
+is done manually in Google Play Console — this gives explicit human sign-off before
+anything reaches users.
 
 ---
 
@@ -188,7 +199,7 @@ release cycle starts from `main`.
    git push origin prod/1.19.0
    ```
 3. Push to `prod/1.19.0` triggers `release-2-deploy-rc.yml` → new RC tag → GP Internal + TestFlight
-4. Validate on both platforms, then run `release-3-ship.yml` when ready
+4. Validate on both platforms, then run `release-3-tag.yml` when ready
 
 **Patch release** (e.g. a critical fix after `v1.19.0` is already in production):
 
@@ -200,13 +211,12 @@ release cycle starts from `main`.
 
 ---
 
-## Checklist Before Running `release-3-ship.yml`
+## Checklist Before Running `release-3-tag.yml`
 
 - [ ] Latest RC has been installed from Google Play Internal and validated
 - [ ] Latest TestFlight build validated on iOS
 - [ ] All required commits are on `prod/{version}` (no pending fixes)
 - [ ] Release notes / changelog reviewed
-- [ ] Decided on Google Play rollout track (`production` for full, `beta` for staged)
 
 ---
 
@@ -281,12 +291,12 @@ from the failed workflow run (GitHub Actions → re-run failed jobs).
 The branch `prod/{version}` was already created. Either push directly to that branch
 or choose a new version number.
 
-**`release-3-ship.yml` fails with "tag already exists"**
+**`release-3-tag.yml` fails with "tag already exists"**
 `v{version}` was already tagged. Check the existing tag — if it was a mistake, delete
 it manually (`git push origin :refs/tags/v{version}`) then re-run.
 
 **versionName in build not matching expected version**
-`release-1-cut.yml` commits the bump. If you created the branch manually without
+`release-1-cut.yml` commits the bump to main. If you created the branch manually without
 running `release-1-cut.yml`, update `versionName` in `androidApp/build.gradle.kts`
 and `iosApp/iosApp/Info.plist` by hand and push.
 

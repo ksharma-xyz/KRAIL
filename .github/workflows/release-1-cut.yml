@@ -2,18 +2,17 @@ name: "1. Cut Release Branch"
 
 # Manual workflow to kick off a release cycle.
 #
-# Reads the current versionName from main's build.gradle.kts (already bumped
-# automatically by 'Finalize Android Release') and creates a prod/{version}
-# branch from it. No version bump happens here — main is always ahead.
+# Reads the current versionName from main's build.gradle.kts and:
+#   1. Creates prod/{version} from the base branch
+#   2. Immediately bumps versionName on main to the next version
+#      so development on main is always ahead of what's in the release branch.
 #
-# What it does:
-#   1. Reads versionName from build.gradle.kts on the base branch
-#   2. Validates prod/{version} branch does not already exist
-#   3. Creates and pushes prod/{version}
-#   → Pushing the branch automatically triggers release-2-deploy-rc.yml which
-#     builds, tags v{version}-RC1, and distributes to Google Play Internal.
+# Flow:
+#   main (1.19.0) → prod/1.19.0 created, main bumped to 1.20.0
+#   → Pushing prod/1.19.0 automatically triggers release-2-deploy-rc.yml
+#     which builds, tags v1.19.0-RC1, and distributes to GP Internal + TestFlight.
 #
-# Usage: Actions → Start Android Release → Run workflow
+# Usage: Actions → 1. Cut Release Branch → Run workflow
 
 on:
   workflow_dispatch:
@@ -22,6 +21,10 @@ on:
         description: 'Branch to cut release from'
         required: true
         default: 'main'
+        type: string
+      next-version:
+        description: 'Version to set on main after cutting (e.g. 1.20.0). Leave blank to auto-increment minor.'
+        required: false
         type: string
 
 jobs:
@@ -35,6 +38,11 @@ jobs:
           ref: ${{ inputs.base-branch }}
           token: ${{ secrets.PAT_KRAIL_GITHUB }}
           fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Read versionName from build.gradle.kts
         id: version
@@ -58,4 +66,62 @@ jobs:
         run: |
           git checkout -b "prod/${{ steps.version.outputs.name }}"
           git push origin "prod/${{ steps.version.outputs.name }}"
-          echo "::notice::Created prod/${{ steps.version.outputs.name }} — release-2-deploy-rc.yml will now build RC1 and push to Google Play Internal"
+          echo "::notice::Created prod/${{ steps.version.outputs.name }} — release-2-deploy-rc.yml will now build RC1"
+
+      # ── Bump version on main immediately after cutting the release branch ───────
+      # main always carries the *next* version so new PRs merged to main never
+      # accidentally share a versionName with an in-flight release branch.
+
+      - name: Compute next version
+        id: next
+        run: |
+          SUPPLIED="${{ inputs.next-version }}"
+          if [ -n "$SUPPLIED" ]; then
+            NEXT="$SUPPLIED"
+          else
+            CURRENT="${{ steps.version.outputs.name }}"
+            MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+            MINOR=$(echo "$CURRENT" | cut -d. -f2)
+            NEXT="${MAJOR}.$((MINOR + 1)).0"
+          fi
+          echo "next=${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "::notice::Bumping main to ${NEXT}"
+
+      - name: Switch to main for version bump
+        run: git checkout main
+
+      - name: Bump versionName in build.gradle.kts
+        run: |
+          sed -i 's/versionName = "[^"]*"/versionName = "${{ steps.next.outputs.next }}"/' androidApp/build.gradle.kts
+          grep "versionName" androidApp/build.gradle.kts
+
+      - name: Bump CFBundleShortVersionString in Info.plist
+        run: |
+          python3 - << 'EOF'
+          import re
+          version = "${{ steps.next.outputs.next }}"
+          path = "iosApp/iosApp/Info.plist"
+          with open(path, "r") as f:
+              content = f.read()
+          updated = re.sub(
+              r'(<key>CFBundleShortVersionString</key>\s*<string>)[^<]*(</string>)',
+              rf'\g<1>{version}\g<2>',
+              content,
+          )
+          if updated == content:
+              print("WARNING: CFBundleShortVersionString not found — skipping iOS version bump")
+          else:
+              with open(path, "w") as f:
+                  f.write(updated)
+              print(f"Updated CFBundleShortVersionString to {version}")
+          EOF
+
+      - name: Commit and push version bump to main
+        run: |
+          git add androidApp/build.gradle.kts iosApp/iosApp/Info.plist
+          if git diff --staged --quiet; then
+            echo "No changes to commit — main may already be at ${{ steps.next.outputs.next }}"
+          else
+            git commit -m "chore: bump version to ${{ steps.next.outputs.next }} [skip ci]"
+            git push origin main
+          fi

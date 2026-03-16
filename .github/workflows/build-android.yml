@@ -121,25 +121,16 @@ jobs:
           name: androidApp-release-apk-${{ github.run_id }}
           path: androidApp/build/outputs/apk/release/androidApp-release.apk
 
-      # Release AAB Signing and Uploading
-      - name: Sign Android Release AAB
-        if: ${{ inputs.variant == 'release' }}
-        id: signed_release_aab
-        uses: filippoLeporati93/android-release-signer@v1
-        with:
-          releaseDirectory: androidApp/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_FILE }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-
+      # Release AAB upload
+      # No separate signing step needed — build.gradle.kts signingConfig signs the AAB
+      # during bundleRelease using the keystore decoded above.
       - name: Upload Release AAB
         if: ${{ inputs.variant == 'release' }}
         uses: actions/upload-artifact@v7
         with:
           retention-days: 1
           name: androidApp-release-aab-${{ github.run_id }}
-          path: ${{ steps.signed_release_aab.outputs.signedReleaseFile }}
+          path: androidApp/build/outputs/bundle/release/androidApp-release.aab
 
       - name: Cleanup sensitive files
         run: rm -f keystore.jks

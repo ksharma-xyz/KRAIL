@@ -4,57 +4,78 @@ on:
   workflow_call:
     inputs:
       artifact-name:
-        required: true
+        required: false
         type: string
       notify-testers:
         required: false
         type: boolean
         default: false
+  workflow_dispatch:
+    inputs:
+      notify-testers:
+        description: 'Notify external testers after upload'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   distribute:
     runs-on: macos-15
     environment: Firebase
+    permissions:
+      actions: write  # required to write back IOS_BUILD_NUMBER repo variable
+    env:
+      # Fastlane auto-detects these — no temp .p8 file needed (pattern from chrisbanes/tivi).
+      APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+      # Prevent xcodebuild settings query from timing out on slow CI runners.
+      FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
     steps:
       - uses: actions/checkout@v6
+
+      # Select Xcode before anything else runs.
+      # xcversion is removed from Fastfile — it relies on the sunsetted xcode-install gem
+      # and is broken on macos-15 (fastlane/fastlane#29469, actions/runner-images#12205).
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '~16'  # pin to stable Xcode 16.x; latest-stable can pick up pre-releases
 
       - name: Setup environment variables
         run: |
           echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
           echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
 
-      - name: set up JDK
+      - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: 21
 
-      - uses: ruby/setup-ruby@v1
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: false
-
-      - name: Install dependencies
-        run: |
-          gem install bundler
-          bundle update
-          bundle install
+          bundler-cache: true
 
       - run: brew install swiftlint
 
-      - uses: gradle/actions/setup-gradle@v5
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
 
       - name: Firebase iOS - GoogleService-Info.plist file
         env:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
-        run: echo $DATA | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+        run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
 
-      - name: Create App Store Connect API Key
+      # The MapLibre SPM package must be compiled by Gradle before Xcode archives the app.
+      # Without this, fastlane's build_app (archive) fails to resolve the framework.
+      # Uses IosArm64 (real device target) unlike build-ios.yml which uses IosSimulatorArm64.
+      - name: Pre-build SPM for MapLibre (Gradle - device)
         run: |
-          mkdir -p ~/private_keys
-          echo "${{ secrets.APPSTORE_PRIVATE_KEY }}" > ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
-          echo "APP_STORE_CONNECT_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" >> $GITHUB_ENV
+          ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosArm64 --no-daemon --stacktrace
 
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v6
@@ -71,18 +92,48 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
+      # Resolve SPM packages before Fastlane runs so xcodebuild doesn't try to
+      # resolve dependencies while signing settings are active (causes silent failure).
+      - name: Resolve Swift Packages
+        run: |
+          cd iosApp
+          xcodebuild -resolvePackageDependencies -scheme iosApp -project iosApp.xcodeproj
+
+      # Increment IOS_BUILD_NUMBER repo variable so every upload to TestFlight has a
+      # strictly higher CFBundleVersion than the previous one. Apple rejects uploads
+      # where the build number is not greater than the last uploaded build.
+      # Same pattern as ANDROID_VERSION_CODE — survives workflow renames.
+      - name: Set iOS build number
+        env:
+          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+        run: |
+          set -e
+          CURRENT=${{ vars.IOS_BUILD_NUMBER }}
+          if [ -z "$CURRENT" ]; then
+            echo "::error::IOS_BUILD_NUMBER variable is not set. Add it in Settings → Variables."
+            exit 1
+          fi
+          NEXT=$(( CURRENT + 1 ))
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/actions/variables/IOS_BUILD_NUMBER" \
+            -f value="${NEXT}" \
+            || echo "::warning::Could not write back IOS_BUILD_NUMBER — check PAT scope."
+          echo "IOS_BUILD_NUMBER=${NEXT}" >> $GITHUB_ENV
+          echo "Build number: ${CURRENT} → ${NEXT}"
+
       - name: Build iOS App for Release
         env:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           APP_BUNDLE_ID: xyz.ksharma.krail
           PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+          DEVELOPMENT_TEAM: ${{ vars.DEVELOPMENT_TEAM }}
         run: |
           cd iosApp
           bundle exec fastlane build_release
 
       - name: Upload to TestFlight
-        env:
-          APP_STORE_CONNECT_API_KEY_PATH: ~/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
         run: |
           cd iosApp
           bundle exec fastlane upload_testflight
@@ -90,7 +141,14 @@ jobs:
       - name: Upload IPA as artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.artifact-name }}
+          name: ${{ inputs.artifact-name || format('iosApp-release-ipa-{0}', github.run_id) }}
           path: iosApp/build/*.ipa
           retention-days: 30
 
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-build-logs-${{ github.run_id }}
+          path: iosApp/build/logs
+          retention-days: 3

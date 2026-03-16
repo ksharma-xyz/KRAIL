@@ -1,4 +1,4 @@
-name: Distribute Google Play (Internal)
+name: Distribute Google Play
 
 on:
   workflow_call:
@@ -9,19 +9,43 @@ on:
       track:
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      track:
+        description: 'Google Play track'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+
+permissions:
+  actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
 
 jobs:
+  # Only runs for workflow_dispatch — builds a fresh signed AAB from the selected branch.
+  # workflow_call callers (release-2, release-3) pass a pre-built artifact instead.
+  build:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/build-android.yml
+    with:
+      variant: release
+    secrets: inherit
+
   distribute:
     runs-on: ubuntu-latest
     environment: Firebase
+    needs: [build]
+    # Run when build succeeded (workflow_dispatch) or was skipped (workflow_call).
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
     steps:
       - name: Download Release AAB artifact
         uses: actions/download-artifact@v8
         with:
-          name: ${{ inputs.artifact-name }}
+          name: ${{ inputs.artifact-name || format('androidApp-release-aab-{0}', github.run_id) }}
           path: aab
 
-      - name: Deploy to Play Store (Internal)
+      - name: Deploy to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}

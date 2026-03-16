@@ -21,10 +21,20 @@ platform :ios do
     # xcversion is removed — the underlying xcode-install gem is sunsetted and
     # xcversion is broken on macos-15 runners (fastlane/fastlane#29469).
 
-    # Build the app.
-    # xcargs forces manual signing during the archive phase — without this, Xcode tries
-    # to manage signing automatically and fails in CI where it can't reach Apple servers.
-    # export_options.provisioningProfiles covers the export phase.
+    # Set provisioning profile ONLY for the iosApp target by modifying the project file.
+    # This avoids putting PROVISIONING_PROFILE_SPECIFIER in xcargs, which would bleed
+    # into every SPM target (Firebase, gRPC, etc.) and cause "does not support
+    # provisioning profiles" errors on those targets.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "iosApp.xcodeproj",
+      team_id: ENV["DEVELOPMENT_TEAM"],
+      bundle_identifier: ENV["APP_BUNDLE_ID"],
+      code_sign_identity: "Apple Distribution",
+      profile_name: ENV["PROVISIONING_PROFILE_NAME"],
+      targets: ["iosApp"]
+    )
+
     build_app(
       scheme: "iosApp",
       project: "iosApp.xcodeproj",
@@ -34,12 +44,10 @@ platform :ios do
       output_name: "iosApp.ipa",
       buildlog_path: "./build/logs",
       clean: true,
-      # SPM packages were already resolved in the CI step above — skip redundant resolution.
       skip_package_dependencies_resolution: true,
-      # xcargs covers the archive phase; export_options.provisioningProfiles covers export.
-      # PROVISIONING_PROFILE_SPECIFIER is intentionally NOT in xcargs — it applies to every
-      # target including SPM packages (Firebase, gRPC, etc.) which reject it with errors.
-      # The downloaded profile is found by Xcode via bundle ID + CODE_SIGN_IDENTITY match.
+      # DEVELOPMENT_TEAM in xcargs ensures SPM packages (which are separate targets)
+      # also have a team set — required for them to compile. PROVISIONING_PROFILE_SPECIFIER
+      # is NOT here; it was set per-target above via update_code_signing_settings.
       xcargs: "CODE_SIGN_STYLE=Manual " \
               "CODE_SIGN_IDENTITY='Apple Distribution' " \
               "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}'",

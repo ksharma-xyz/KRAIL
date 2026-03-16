@@ -90,6 +90,26 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
+      - name: Verify signing configuration
+        run: |
+          echo "=== Signing config ==="
+          echo "DEVELOPMENT_TEAM : ${{ vars.DEVELOPMENT_TEAM }}"
+          echo "APP_BUNDLE_ID    : xyz.ksharma.krail"
+          echo "PROVISIONING_PROFILE_NAME set : ${{ secrets.IOS_PROVISIONING_PROFILE_NAME != '' }}"
+          echo "IOS_DIST_SIGNING_KEY_BASE64 set : ${{ secrets.IOS_DIST_SIGNING_KEY_BASE64 != '' }}"
+          echo "APPSTORE_KEY_ID set : ${{ secrets.APPSTORE_KEY_ID != '' }}"
+          echo "=== Installed provisioning profiles ==="
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null \
+            && echo "(profiles found)" \
+            || echo "WARNING: no profiles installed"
+
+      # Resolve SPM packages before Fastlane runs so xcodebuild doesn't try to
+      # resolve dependencies while signing settings are active (causes silent failure).
+      - name: Resolve Swift Packages
+        run: |
+          cd iosApp
+          xcodebuild -resolvePackageDependencies -scheme iosApp -project iosApp.xcodeproj
+
       - name: Build iOS App for Release
         env:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
@@ -111,3 +131,11 @@ jobs:
           name: ${{ inputs.artifact-name || format('iosApp-release-ipa-{0}', github.run_id) }}
           path: iosApp/build/*.ipa
           retention-days: 30
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-build-logs-${{ github.run_id }}
+          path: iosApp/build/logs
+          retention-days: 3

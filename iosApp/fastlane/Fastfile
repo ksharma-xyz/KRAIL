@@ -32,7 +32,10 @@ platform :ios do
       export_method: "app-store",
       output_directory: "./build",
       output_name: "iosApp.ipa",
+      buildlog_path: "./build/logs",
       clean: true,
+      # SPM packages were already resolved in the CI step above — skip redundant resolution.
+      skip_package_dependencies_resolution: true,
       # xcargs covers the archive phase; export_options.provisioningProfiles covers export.
       # PROVISIONING_PROFILE_SPECIFIER is intentionally NOT in xcargs — it applies to every
       # target including SPM packages (Firebase, gRPC, etc.) which reject it with errors.

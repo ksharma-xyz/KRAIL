@@ -33,12 +33,16 @@ platform :ios do
       output_directory: "./build",
       output_name: "iosApp.ipa",
       clean: true,
-      # CODE_SIGN_STYLE=Manual overrides automatic signing for the archive phase.
-      # PROVISIONING_PROFILE_SPECIFIER is intentionally NOT passed via xcargs — it
-      # applies to every target including SPM resource bundles and breaks MapLibre.
-      # Instead, Xcode locates the downloaded profile by bundle ID + identity, and
-      # export_options.provisioningProfiles maps it explicitly for the export phase.
-      xcargs: "CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}'",
+      # xcargs covers the archive phase; export_options.provisioningProfiles covers export.
+      # PROVISIONING_PROFILE_SPECIFIER is passed here so xcodebuild knows which profile
+      # to use during .xcarchive creation. xcargs apply globally, but in practice only
+      # the main app target resolves this profile — SPM resource bundles are unsigned.
+      # If SPM targets break again, replace PROVISIONING_PROFILE_SPECIFIER with
+      # PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] to scope it to device builds only.
+      xcargs: "CODE_SIGN_STYLE=Manual " \
+              "CODE_SIGN_IDENTITY='Apple Distribution' " \
+              "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}' " \
+              "PROVISIONING_PROFILE_SPECIFIER='#{ENV["PROVISIONING_PROFILE_NAME"]}'",
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: {

@@ -1,0 +1,61 @@
+name: "3. Tag Release"
+
+# Manual workflow to tag a validated release.
+#
+# Run this after the prod/{version} branch has passed internal testing
+# (Google Play Internal track + TestFlight) and you're ready to ship.
+#
+# What it does:
+#   1. Validates prod/{version} branch exists
+#   2. Creates and pushes the final v{version} tag
+#   → Pushing the tag automatically triggers create-github-release.yml (draft GitHub Release)
+#
+# Production rollout is intentionally manual:
+#   Android → promote the latest internal build in Google Play Console
+#   iOS     → submit the latest TestFlight build in App Store Connect
+#
+# Usage: Actions → 3. Tag Release → Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag (e.g. 1.19.0) — must match an existing prod/* branch'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 'prod/${{ inputs.version }}'
+          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+          fetch-depth: 0
+
+      - name: Validate prod branch exists
+        run: |
+          if ! git ls-remote --exit-code --heads origin "prod/${{ inputs.version }}" > /dev/null 2>&1; then
+            echo "::error::Branch prod/${{ inputs.version }} does not exist. Run '1. Cut Release Branch' first."
+            exit 1
+          fi
+
+      - name: Check tag does not already exist
+        run: |
+          git fetch --tags --quiet
+          if git tag --list "v${{ inputs.version }}" | grep -q .; then
+            echo "::error::Tag v${{ inputs.version }} already exists."
+            exit 1
+          fi
+
+      - name: Create and push final tag
+        run: |
+          git tag "v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+          echo "::notice::Tagged v${{ inputs.version }} — GitHub Release draft will be created automatically"

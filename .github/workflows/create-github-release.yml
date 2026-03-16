@@ -1,27 +1,38 @@
-name: Create Github Release
+name: Create GitHub Release
+
+# Triggered automatically when a final version tag (v1.2.3) is pushed.
+# RC tags (v1.2.3-RC1) are excluded — they are informational only.
+#
+# Can also be triggered manually or called from another workflow.
 
 on:
+  push:
+    tags:
+      - 'v[0-9]*'        # matches v1.2.3, v1.2.3-RC1, etc.
   workflow_call:
     inputs:
       tag_name:
         required: true
         type: string
-  workflow_dispatch: # Manual trigger for creating a release
+  workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release tag name'
+        description: 'Release tag name (e.g. v1.19.0)'
         required: true
         type: string
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Skip RC tags when triggered by a push (release-2-deploy-rc pushes v*-RC* tags).
+    # workflow_call / workflow_dispatch always run — callers are responsible for filtering.
+    if: ${{ github.event_name != 'push' || !contains(github.ref_name, '-RC') }}
     steps:
-      - name: Create Github Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
         with:
-          tag_name: ${{ inputs.tag_name }}
+          tag_name: ${{ inputs.tag_name || github.ref_name }}
           generate_release_notes: true
           draft: true

@@ -319,9 +319,9 @@ End-to-end test on `prod/0.0.1-test` ([run #23094566868](https://github.com/ksha
 | tag-release-candidate | ✅ created `v0.0.1-test-RC1` |
 | distribute-google-play (Internal) | ✅ uploaded |
 
-**Pending before June 2, 2026**: update two actions away from Node.js 20:
-- `filippoLeporati93/android-release-signer@v1`
-- `r0adkll/upload-google-play@v1`
+**Pending before June 2, 2026**: `r0adkll/upload-google-play@v1.1.3` targets Node.js 20 (deprecated June 2026).
+No v2 exists yet — monitor the repo and update when a Node 24-compatible release ships.
+(`filippoLeporati93/android-release-signer` was removed — Gradle's signingConfig already signs the AAB.)
 
 ### iOS TestFlight — ✅ Confirmed working (tested 2026-03-16)
 

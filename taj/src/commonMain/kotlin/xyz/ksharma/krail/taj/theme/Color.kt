@@ -19,9 +19,9 @@ val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
 
 // Light theme (Deviations colors)
-val md_theme_light_onTime = Color(0xFF31DB39)
-val md_theme_light_early = Color(0xFFFFC60F)
-val md_theme_light_late = Color(0xFFF12525)
+val md_theme_light_onTime = Color(0xFF31DB39) // DELETE
+val md_theme_light_early = Color(0xFF008913)
+val md_theme_light_late = Color(0xFFE72020)
 
 // Future and past journey colors
 val md_theme_light_future_journey = Color(0xFF3A3A3A)
@@ -53,8 +53,8 @@ val md_theme_dark_discover_chip_background = Color(0xFF292929)
 val md_theme_dark_discover_card_background = Color(0xFF292929)
 
 // Dark theme (Deviations colors)
-val md_theme_dark_onTime = Color(0xFF31DB39)
-val md_theme_dark_early = Color(0xFFFFC60F)
+val md_theme_dark_onTime = Color(0xFF31DB39) // DELETE
+val md_theme_dark_early = Color(0xFF00B219)
 val md_theme_dark_late = Color(0xFFFF2B2B)
 
 // Future and past journey colors

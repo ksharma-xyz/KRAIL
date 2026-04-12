@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -13,6 +14,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.DepartureBoardViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -32,6 +34,14 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        val departureBoardViewModel: DepartureBoardViewModel = koinViewModel()
+        val departureBoardEntries by departureBoardViewModel.entries.collectAsStateWithLifecycle()
+        val expandedDepartureBoardStopId by departureBoardViewModel.expandedStopId.collectAsStateWithLifecycle()
+
+        LaunchedEffect(savedTripState.savedTrips) {
+            departureBoardViewModel.setTrips(savedTripState.savedTrips)
+        }
 
         // Listen for StopSelected results from SearchStop screen
         // This uses the singleton ResultEventBus to ensure results are received
@@ -112,6 +122,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
             onEvent = { event -> viewModel.onEvent(event) },
             onInviteFriendsTileDisplay = { viewModel.markInviteFriendsTileAsSeen() },
+            departureBoardEntries = departureBoardEntries,
+            expandedDepartureBoardStopId = expandedDepartureBoardStopId,
+            onDepartureBoardExpand = departureBoardViewModel::onCardExpand,
+            onDepartureBoardCollapse = departureBoardViewModel::onCardCollapse,
         )
     }
 }

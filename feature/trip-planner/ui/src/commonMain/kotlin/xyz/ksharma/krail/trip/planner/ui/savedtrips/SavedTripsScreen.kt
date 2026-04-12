@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
+
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.animation.AnimatedVisibility
@@ -34,6 +36,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
@@ -54,6 +57,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
+import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardStopSection
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -71,6 +75,10 @@ fun SavedTripsScreen(
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
     onInviteFriendsTileDisplay: () -> Unit = {},
+    departureBoardEntries: ImmutableList<StopDepartureBoardEntry> = persistentListOf(),
+    expandedDepartureBoardStopId: String? = null,
+    onDepartureBoardExpand: (String) -> Unit = {},
+    onDepartureBoardCollapse: () -> Unit = {},
 ) {
     val emptyStateTip = remember {
         buildList {
@@ -119,9 +127,7 @@ fun SavedTripsScreen(
                 contentPadding = PaddingValues(bottom = 300.dp),
             ) {
                 when {
-                    savedTripsState.isSavedTripsLoading -> {
-                        Unit // display nothing while loading
-                    }
+                    savedTripsState.isSavedTripsLoading -> Unit
 
                     savedTripsState.savedTrips.isEmpty() -> {
                         savedTripsState.infoTiles?.let { infoTiles ->
@@ -194,7 +200,7 @@ fun SavedTripsScreen(
                                             "with friends and help Sydney ride better.",
                                         primaryCta = InfoTileCta(
                                             text = "Invite",
-                                            url = null, // Using nullable url from this version
+                                            url = null,
                                         ),
                                         type = InfoTileData.InfoTileType.INVITE_FRIENDS,
                                         showDismissButton = false,
@@ -224,6 +230,10 @@ fun SavedTripsScreen(
                             onEvent = onEvent,
                             onSavedTripCardClick = onSavedTripCardClick,
                             expandedMap = expandedMap,
+                            departureBoardEntries = departureBoardEntries,
+                            expandedDepartureBoardStopId = expandedDepartureBoardStopId,
+                            onDepartureBoardExpand = onDepartureBoardExpand,
+                            onDepartureBoardCollapse = onDepartureBoardCollapse,
                         )
                     }
                 }
@@ -256,7 +266,7 @@ private fun LazyListScope.infoTiles(
         AnimatedVisibility(
             visible = visible,
             exit = slideOutHorizontally(
-                targetOffsetX = { it }, // slide fully to the right
+                targetOffsetX = { it },
                 animationSpec = tween(300),
             ),
         ) {
@@ -279,6 +289,10 @@ private fun LazyListScope.savedTripsContent(
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     expandedMap: SnapshotStateMap<String, Boolean>,
+    departureBoardEntries: ImmutableList<StopDepartureBoardEntry>,
+    expandedDepartureBoardStopId: String?,
+    onDepartureBoardExpand: (String) -> Unit,
+    onDepartureBoardCollapse: () -> Unit,
 ) {
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
@@ -344,8 +358,26 @@ private fun LazyListScope.savedTripsContent(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
 
-        item(key = "park_ride_spacer_bottom") {
+    if (departureBoardEntries.isNotEmpty()) {
+        stickyHeader(key = "departure_board_title") {
+            SavedTripsTitle {
+                Text(text = "Departure Board")
+            }
+        }
+
+        departureBoardEntries.forEach { entry ->
+            departureBoardStopSection(
+                entry = entry,
+                isExpanded = expandedDepartureBoardStopId == entry.stopId,
+                onExpandChange = { expand ->
+                    if (expand) onDepartureBoardExpand(entry.stopId) else onDepartureBoardCollapse()
+                },
+            )
+        }
+
+        item(key = "departure_board_bottom_spacer") {
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

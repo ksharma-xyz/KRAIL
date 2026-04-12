@@ -72,6 +72,8 @@ kotlin {
                 implementation(projects.discover.network.api)
                 implementation(projects.discover.state)
                 implementation(projects.discover.ui)
+                implementation(projects.feature.departures.state)
+                implementation(projects.feature.departures.ui)
                 implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.parkRide.ui)
                 implementation(projects.feature.tripPlanner.network)

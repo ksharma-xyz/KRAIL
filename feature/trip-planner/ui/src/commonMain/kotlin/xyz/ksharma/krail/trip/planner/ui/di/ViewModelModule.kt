@@ -13,6 +13,7 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.DepartureBoardViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -106,6 +107,8 @@ val viewModelsModule = module {
             ioDispatcher = get(named(IODispatcher)),
         )
     }
+
+    viewModelOf(::DepartureBoardViewModel)
 
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
 

@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
@@ -66,7 +64,6 @@ class DepartureBoardRepository(
     private val lastPreviousFetchTime = mutableMapOf<String, Long>()
 
     private var activeJob: Job? = null
-    private var relativeTimeJob: Job? = null
     private var activeStopId: String? = null
 
     /**
@@ -87,8 +84,6 @@ class DepartureBoardRepository(
         if (activeStopId == stopId) return
         activeJob?.cancel()
         activeJob = null
-        relativeTimeJob?.cancel()
-        relativeTimeJob = null
         activeStopId = stopId
         if (stopId == null) {
             log("[$LOG_TAG] setActiveStop → null, polling stopped")
@@ -127,14 +122,6 @@ class DepartureBoardRepository(
                 fetchDepartures(stopId = stopId, showFullLoading = false)
             }
         }
-
-        relativeTimeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
-            while (true) {
-                delay(config.relativeTimeRefreshMs)
-                ensureActive()
-                updateRelativeTime(stopId)
-            }
-        }
     }
 
     /**
@@ -145,32 +132,6 @@ class DepartureBoardRepository(
      */
     fun stopIfActive(stopId: String) {
         if (activeStopId == stopId) setActiveStop(null)
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun updateRelativeTime(stopId: String) {
-        val flow = stateFor(stopId)
-        if (flow.value.departures.isEmpty() && flow.value.previousDepartures.isEmpty()) return
-        flow.update { state ->
-            state.copy(
-                departures = state.departures.map { d ->
-                    d.copy(
-                        relativeTimeText = runCatching {
-                            calculateTimeDifferenceFromNow(d.departureUtcDateTime)
-                                .toGenericFormattedTimeString()
-                        }.getOrDefault(""),
-                    )
-                }.toImmutableList(),
-                previousDepartures = state.previousDepartures.map { d ->
-                    d.copy(
-                        relativeTimeText = runCatching {
-                            calculateTimeDifferenceFromNow(d.departureUtcDateTime)
-                                .toGenericFormattedTimeString()
-                        }.getOrDefault(""),
-                    )
-                }.toImmutableList(),
-            )
-        }
     }
 
     /** Triggers an immediate silent refresh for [stopId], independent of the poll loop. */

@@ -66,6 +66,12 @@ data class TimeTableState(
          * Null when real-time estimate is unavailable.
          */
         val departureDeviation: DepartureDeviation? = null,
+
+        /**
+         * The scheduled (planned) departure time, only present when real-time data differs
+         * from the planned time. Show with strikethrough alongside [departureDeviation].
+         */
+        val scheduledOriginTime: String? = null,
     ) {
         val journeyId: String
             get() = buildString {

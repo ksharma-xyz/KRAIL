@@ -368,6 +368,7 @@ fun TimeTableScreen(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             .animateItem(),
                         departureDeviation = journey.departureDeviation,
+                        scheduledOriginTime = journey.scheduledOriginTime,
                     )
                 }
             } else { // Journey list is empty or null
@@ -409,6 +410,7 @@ private fun JourneyCardItem(
     onMapClick: () -> Unit = {},
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
+    scheduledOriginTime: String? = null,
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -430,6 +432,7 @@ private fun JourneyCardItem(
             isMapsAvailable = isMapsAvailable,
             modifier = modifier,
             departureDeviation = departureDeviation,
+            scheduledOriginTime = scheduledOriginTime,
         )
     }
 }

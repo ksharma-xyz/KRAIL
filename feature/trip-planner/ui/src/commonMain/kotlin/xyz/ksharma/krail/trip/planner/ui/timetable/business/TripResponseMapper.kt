@@ -82,6 +82,7 @@ internal fun TripResponse.buildJourneyListWithRawData():
                 legs = legsList,
                 totalUniqueServiceAlerts = legs.flatMap { leg -> leg.infos.orEmpty() }.toSet().size,
                 departureDeviation = firstPublicTransportLeg.getDepartureDeviation(),
+                scheduledOriginTime = firstPublicTransportLeg.getScheduledOriginTime(),
             ).also {
                 log("\tJourneyId: ${it.journeyId}")
                 // Store raw journey data for map visualization
@@ -270,6 +271,17 @@ private fun String.fromUTCToDisplayTimeString() = this.utcToLocalDateTimeAEST().
 
 private fun TripResponse.Leg.isWalkingLeg(): Boolean =
     transportation?.product?.productClass == 99L || transportation?.product?.productClass == 100L
+
+/**
+ * Returns the scheduled (planned) origin time formatted for display, but only when the
+ * real-time estimated departure differs from the planned time. Returns null otherwise,
+ * meaning there is nothing to strike-through.
+ */
+private fun TripResponse.Leg?.getScheduledOriginTime(): String? {
+    val est = this?.origin?.departureTimeEstimated ?: return null
+    val planned = this?.origin?.departureTimePlanned ?: return null
+    return if (est != planned) planned.fromUTCToDisplayTimeString() else null
+}
 
 @OptIn(ExperimentalTime::class)
 private fun TripResponse.Leg?.getDepartureDeviation(): TimeTableState.JourneyCardInfo.DepartureDeviation? {

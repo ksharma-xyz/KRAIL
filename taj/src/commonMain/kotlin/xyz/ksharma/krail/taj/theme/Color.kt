@@ -19,7 +19,6 @@ val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
 
 // Light theme (Deviations colors)
-val md_theme_light_onTime = Color(0xFF31DB39)
 val md_theme_light_early = Color(0xFF008913)
 val md_theme_light_late = Color(0xFFE72020)
 
@@ -53,7 +52,6 @@ val md_theme_dark_discover_chip_background = Color(0xFF292929)
 val md_theme_dark_discover_card_background = Color(0xFF292929)
 
 // Dark theme (Deviations colors)
-val md_theme_dark_onTime = Color(0xFF31DB39)
 val md_theme_dark_early = Color(0xFF00B219)
 val md_theme_dark_late = Color(0xFFFF2B2B)
 
@@ -121,7 +119,6 @@ data class KrailColors(
     val discoverCardBackground: Color,
     val magicYellow: Color,
     // Deviation colors
-    val deviationOnTime: Color,
     val deviationEarly: Color,
     val deviationLate: Color,
     // JourneyCard colors
@@ -152,7 +149,6 @@ internal val KrailLightColors = KrailColors(
     discoverChipBackground = md_theme_light_discover_chip_background,
     discoverCardBackground = md_theme_light_discover_card_background,
     magicYellow = magic_yellow,
-    deviationOnTime = md_theme_light_onTime,
     deviationEarly = md_theme_light_early,
     deviationLate = md_theme_light_late,
     pastJourney = md_theme_light_past_journey,
@@ -181,7 +177,6 @@ internal val KrailDarkColors = KrailColors(
     discoverChipBackground = md_theme_dark_discover_chip_background,
     discoverCardBackground = md_theme_dark_discover_card_background,
     magicYellow = magic_yellow,
-    deviationOnTime = md_theme_dark_onTime,
     deviationEarly = md_theme_dark_early,
     deviationLate = md_theme_dark_late,
     pastJourney = md_theme_dark_past_journey,
@@ -211,7 +206,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         discoverChipBackground = Color.Unspecified,
         discoverCardBackground = Color.Unspecified,
         magicYellow = Color.Unspecified,
-        deviationOnTime = Color.Unspecified,
         deviationEarly = Color.Unspecified,
         deviationLate = Color.Unspecified,
         pastJourney = Color.Unspecified,

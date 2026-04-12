@@ -3,7 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
 
 /**
  * List states for the Search Stop screen:

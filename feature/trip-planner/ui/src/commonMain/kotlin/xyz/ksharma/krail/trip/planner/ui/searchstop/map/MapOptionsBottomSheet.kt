@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toPersistentSet
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.TransportModeSortOrder
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
@@ -41,8 +44,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,7 +116,7 @@ fun MapOptionsBottomSheet(
                             val added = pendingTransportModes - selectedTransportModes
                             val removed = selectedTransportModes - pendingTransportModes
                             (added + removed).forEach { productClass ->
-                                TransportMode.toTransportModeType(productClass)?.let { mode ->
+                                NswTransportConfig.modeFromProductClass(productClass)?.let { mode ->
                                     onEvent(SearchStopUiEvent.TransportModeFilterToggled(mode))
                                 }
                             }
@@ -189,10 +190,11 @@ fun MapOptionsBottomSheet(
                 selectedModes = pendingTransportModes,
                 onModeToggle = { mode ->
                     val newModes = pendingTransportModes.toMutableSet()
-                    if (newModes.contains(mode.productClass)) {
-                        newModes.remove(mode.productClass)
+                    val pc = NswTransportConfig.productClassFor(mode)
+                    if (newModes.contains(pc)) {
+                        newModes.remove(pc)
                     } else {
-                        newModes.add(mode.productClass)
+                        newModes.add(pc)
                     }
                     pendingTransportModes = newModes
                 },
@@ -283,7 +285,7 @@ private fun TransportModeFilterRow(
     modifier: Modifier = Modifier,
 ) {
     val allModes = remember {
-        TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
+        NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
     }
 
     LazyRow(
@@ -294,7 +296,7 @@ private fun TransportModeFilterRow(
         items(allModes) { mode ->
             TransportModeChip(
                 transportMode = mode,
-                selected = selectedModes.contains(mode.productClass),
+                selected = selectedModes.contains(NswTransportConfig.productClassFor(mode)),
                 onClick = { onModeToggle(mode) },
             )
         }
@@ -344,7 +346,7 @@ private fun PreviewMapOptionsBottomSheet() {
     PreviewTheme {
         MapOptionsBottomSheet(
             searchRadiusKm = NearbyStopsConfig.DEFAULT_RADIUS_KM,
-            selectedTransportModes = TransportMode.allProductClasses().toPersistentSet(),
+            selectedTransportModes = NswTransportConfig.allProductClasses().toPersistentSet(),
             showDistanceScale = false,
             showCompass = true,
             onDismiss = {},

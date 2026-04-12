@@ -25,7 +25,8 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
@@ -361,7 +362,7 @@ class TimeTableViewModelTest {
                 legs = persistentListOf(
                     TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                         transportModeLine = TransportModeLine(
-                            transportMode = TransportMode.Train(),
+                            transportMode = NswTransportMode.Train,
                             lineName = "T1",
                         ),
                         displayText = "A via B",

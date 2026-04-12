@@ -48,11 +48,12 @@ import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENA
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
@@ -407,7 +408,7 @@ private fun PreviewSearchStopMapReady() {
                         latitude = -33.8688,
                         longitude = 151.2093,
                     ),
-                    transportModes = persistentListOf(TransportMode.Train()),
+                    transportModes = persistentListOf(TransportMode.Train),
                 ),
                 NearbyStopFeature(
                     stopId = "stop_2",
@@ -416,12 +417,12 @@ private fun PreviewSearchStopMapReady() {
                         latitude = -33.8734,
                         longitude = 151.2069,
                     ),
-                    transportModes = persistentListOf(TransportMode.Metro()),
+                    transportModes = persistentListOf(TransportMode.Metro),
                 ),
             ),
             selectedTransportModes = persistentSetOf(
-                TransportMode.Train().productClass,
-                TransportMode.Metro().productClass,
+                NswTransportMode.Train.productClass,
+                NswTransportMode.Metro.productClass,
             ),
             showCompass = true,
             showDistanceScale = true,

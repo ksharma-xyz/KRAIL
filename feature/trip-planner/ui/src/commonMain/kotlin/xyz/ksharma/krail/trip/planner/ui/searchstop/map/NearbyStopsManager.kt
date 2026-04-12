@@ -10,6 +10,7 @@ import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.sandook.utils.GeoUtils
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import kotlin.time.Clock
@@ -199,7 +200,7 @@ internal class RealNearbyStopsManager(
         stops.take(5).forEach { stop ->
             log(
                 "[NEARBY_STOPS] Stop: ${stop.stopName} (${stop.stopId}) - " +
-                    "modes=${stop.transportModes.map { it.name }}",
+                    "modes=${stop.transportModes.map { NswTransportConfig.nameFor(it) }}",
             )
         }
     }

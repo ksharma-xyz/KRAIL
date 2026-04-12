@@ -16,12 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 @Composable
 fun TransportModeChip(
@@ -32,7 +33,7 @@ fun TransportModeChip(
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) {
-            transportMode.colorCode.hexToComposeColor()
+            NswTransportConfig.colorFor(transportMode).hexToComposeColor()
         } else {
             KrailTheme.colors.surface
         },
@@ -40,14 +41,20 @@ fun TransportModeChip(
     )
 
     val borderColor by animateColorAsState(
-        targetValue = if (selected) Color.Transparent else transportMode.colorCode.hexToComposeColor(),
+        targetValue = if (selected) {
+            Color.Transparent
+        } else {
+            NswTransportConfig.colorFor(
+                transportMode,
+            ).hexToComposeColor()
+        },
         animationSpec = tween(200),
     )
 
     val textColor by animateColorAsState(
         targetValue = if (selected) {
             getForegroundColor(
-                backgroundColor = transportMode.colorCode.hexToComposeColor(),
+                backgroundColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
             )
         } else {
             Color.Gray
@@ -86,7 +93,7 @@ fun TransportModeChip(
                 displayBorder = true,
             )
 
-            Text(text = transportMode.name, color = textColor)
+            Text(text = NswTransportConfig.nameFor(transportMode), color = textColor)
         }
     }
 }

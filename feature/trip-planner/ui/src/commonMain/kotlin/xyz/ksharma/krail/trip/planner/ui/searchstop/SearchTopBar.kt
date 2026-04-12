@@ -35,13 +35,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.NavActionButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapToggleButton
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
  * @param animateMapButton Gates when the map toggle button becomes visible.
@@ -152,7 +152,7 @@ fun SearchTopBar(
 @Composable
 private fun PreviewSearchTopBar_List() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val focusRequester = remember { FocusRequester() }
             SearchTopBar(
@@ -175,7 +175,7 @@ private fun PreviewSearchTopBar_List() {
 @Composable
 private fun PreviewSearchTopBar_Map() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Metro().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val focusRequester = remember { FocusRequester() }
             SearchTopBar(
@@ -198,7 +198,7 @@ private fun PreviewSearchTopBar_Map() {
 @Composable
 private fun PreviewSearchTopBar_Compact() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val focusRequester = remember { FocusRequester() }
             Box(modifier = Modifier.width(360.dp).height(72.dp)) {

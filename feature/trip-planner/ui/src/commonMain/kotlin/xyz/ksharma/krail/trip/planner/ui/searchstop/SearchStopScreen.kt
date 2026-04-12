@@ -63,6 +63,8 @@ import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Divider
@@ -77,7 +79,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -660,7 +661,7 @@ private fun LazyListScope.recentSearchStopsList(
 @Composable
 private fun PreviewSearchStopScreen_ListLoading() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
                 listState = ListState.Results(
@@ -686,12 +687,12 @@ private fun PreviewSearchStopScreen_ListLoading() {
 @Composable
 private fun PreviewSearchStopScreen_ListResults_Maps() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val stopResult = SearchStopState.SearchResult.Stop(
                 stopName = "Central",
                 stopId = "stop_1",
-                transportModeType = persistentListOf(TransportMode.Train()),
+                transportModeType = persistentListOf(TransportMode.Train),
             )
             val trip = SearchStopState.SearchResult.Trip(
                 tripId = "trip_1",
@@ -702,16 +703,16 @@ private fun PreviewSearchStopScreen_ListResults_Maps() {
                         stopId = "stop_1",
                         stopName = "Central",
                         stopSequence = 1,
-                        transportModeType = persistentListOf(TransportMode.Train()),
+                        transportModeType = persistentListOf(TransportMode.Train),
                     ),
                     SearchStopState.TripStop(
                         stopId = "stop_2",
                         stopName = "Town Hall",
                         stopSequence = 2,
-                        transportModeType = persistentListOf(TransportMode.Train()),
+                        transportModeType = persistentListOf(TransportMode.Train),
                     ),
                 ),
-                transportMode = TransportMode.Train(),
+                transportMode = TransportMode.Train,
             )
 
             val state = SearchStopState(
@@ -728,7 +729,7 @@ private fun PreviewSearchStopScreen_ListResults_Maps() {
                     SearchStopState.StopResult(
                         "Central",
                         "stop_1",
-                        persistentListOf(TransportMode.Train()),
+                        persistentListOf(TransportMode.Train),
                     ),
                 ),
                 isMapsAvailable = true,
@@ -748,12 +749,12 @@ private fun PreviewSearchStopScreen_ListResults_Maps() {
 @Composable
 private fun PreviewSearchStopScreen_ListResults_NoMaps() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val stopResult = SearchStopState.SearchResult.Stop(
                 stopName = "Central",
                 stopId = "stop_1",
-                transportModeType = persistentListOf(TransportMode.Train()),
+                transportModeType = persistentListOf(TransportMode.Train),
             )
             val trip = SearchStopState.SearchResult.Trip(
                 tripId = "trip_1",
@@ -764,16 +765,16 @@ private fun PreviewSearchStopScreen_ListResults_NoMaps() {
                         stopId = "stop_1",
                         stopName = "Central",
                         stopSequence = 1,
-                        transportModeType = persistentListOf(TransportMode.Train()),
+                        transportModeType = persistentListOf(TransportMode.Train),
                     ),
                     SearchStopState.TripStop(
                         stopId = "stop_2",
                         stopName = "Town Hall",
                         stopSequence = 2,
-                        transportModeType = persistentListOf(TransportMode.Train()),
+                        transportModeType = persistentListOf(TransportMode.Train),
                     ),
                 ),
-                transportMode = TransportMode.Train(),
+                transportMode = TransportMode.Train,
             )
 
             val state = SearchStopState(
@@ -790,7 +791,7 @@ private fun PreviewSearchStopScreen_ListResults_NoMaps() {
                     SearchStopState.StopResult(
                         "Central",
                         "stop_1",
-                        persistentListOf(TransportMode.Train()),
+                        persistentListOf(TransportMode.Train),
                     ),
                 ),
                 isMapsAvailable = false,
@@ -809,23 +810,23 @@ private fun PreviewSearchStopScreen_ListResults_NoMaps() {
 @Composable
 private fun PreviewSearchStopScreen_Recent() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Bus().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val recent = listOf(
                 SearchStopState.StopResult(
                     "Central",
                     "stop_1",
-                    persistentListOf(TransportMode.Train()),
+                    persistentListOf(TransportMode.Train),
                 ),
                 SearchStopState.StopResult(
                     "Town Hall",
                     "stop_2",
-                    persistentListOf(TransportMode.Train()),
+                    persistentListOf(TransportMode.Train),
                 ),
                 SearchStopState.StopResult(
                     "Wynyard",
                     "stop_3",
-                    persistentListOf(TransportMode.Train()),
+                    persistentListOf(TransportMode.Train),
                 ),
             )
             val state = SearchStopState(
@@ -849,7 +850,7 @@ private fun PreviewSearchStopScreen_Recent() {
 @Composable
 private fun PreviewSearchStopScreen_NoMatch() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Metro().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
                 listState = ListState.NoMatch,
@@ -870,7 +871,7 @@ private fun PreviewSearchStopScreen_NoMatch() {
 @Composable
 private fun PreviewSearchStopScreen_Error() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Ferry.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
                 listState = ListState.Error,
@@ -891,7 +892,7 @@ private fun PreviewSearchStopScreen_Error() {
 @Composable
 private fun PreviewSearchStopScreen_Map() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.LightRail().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.LightRail.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val state = SearchStopState(
                 mapUiState = MapUiState.Ready(),

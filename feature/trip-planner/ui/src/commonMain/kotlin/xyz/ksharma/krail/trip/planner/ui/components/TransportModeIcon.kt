@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -25,7 +27,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 @Composable
 fun TransportModeIcon(
@@ -48,7 +49,7 @@ fun TransportModeIcon(
                 .heightIn(min = size.dpSize)
                 .clip(CircleShape)
                 .background(
-                    color = transportMode.colorCode.hexToComposeColor(),
+                    color = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
                     shape = CircleShape,
                 )
                 .borderIfEnabled(
@@ -58,7 +59,7 @@ fun TransportModeIcon(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = transportMode.name.first().toString().uppercase(),
+                text = NswTransportConfig.nameFor(transportMode).first().toString().uppercase(),
             )
         }
     }
@@ -91,7 +92,7 @@ private const val previewGroupName = "Transport Mode Icons"
 private fun TrainPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Train(),
+            transportMode = TransportMode.Train,
             displayBorder = false,
         )
     }
@@ -104,7 +105,7 @@ private fun TrainPreviewLarge() {
         backgroundColor = Color.Transparent,
     ) {
         TransportModeIcon(
-            transportMode = TransportMode.Train(),
+            transportMode = TransportMode.Train,
             displayBorder = false,
         )
     }
@@ -115,7 +116,7 @@ private fun TrainPreviewLarge() {
 private fun BusPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Bus(),
+            transportMode = TransportMode.Bus,
             displayBorder = false,
         )
     }
@@ -126,7 +127,7 @@ private fun BusPreview() {
 private fun MetroPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Metro(),
+            transportMode = TransportMode.Metro,
             displayBorder = false,
         )
     }
@@ -137,7 +138,7 @@ private fun MetroPreview() {
 private fun LightRailPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.LightRail(),
+            transportMode = TransportMode.LightRail,
             displayBorder = false,
         )
     }
@@ -148,7 +149,7 @@ private fun LightRailPreview() {
 private fun FerryPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Ferry(),
+            transportMode = TransportMode.Ferry,
             displayBorder = false,
         )
     }
@@ -159,7 +160,7 @@ private fun FerryPreview() {
 private fun TrainWithBackgroundPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Train(),
+            transportMode = TransportMode.Train,
             displayBorder = true,
         )
     }
@@ -170,7 +171,7 @@ private fun TrainWithBackgroundPreview() {
 private fun BusWithBackgroundPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Bus(),
+            transportMode = TransportMode.Bus,
             displayBorder = true,
         )
     }
@@ -181,7 +182,7 @@ private fun BusWithBackgroundPreview() {
 private fun MetroWithBackgroundPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Metro(),
+            transportMode = TransportMode.Metro,
             displayBorder = true,
         )
     }
@@ -192,7 +193,7 @@ private fun MetroWithBackgroundPreview() {
 private fun LightRailWithBackgroundPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.LightRail(),
+            transportMode = TransportMode.LightRail,
             displayBorder = true,
         )
     }
@@ -203,7 +204,7 @@ private fun LightRailWithBackgroundPreview() {
 private fun FerryWithBackgroundPreview() {
     PreviewTheme {
         TransportModeIcon(
-            transportMode = TransportMode.Ferry(),
+            transportMode = TransportMode.Ferry,
             displayBorder = true,
         )
     }

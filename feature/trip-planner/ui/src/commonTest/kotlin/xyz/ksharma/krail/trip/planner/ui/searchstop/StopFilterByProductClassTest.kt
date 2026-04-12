@@ -2,7 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.test.runTest
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -58,32 +59,32 @@ class StopFilterByProductClassTest {
                 stopName = "Town Hall Station",
                 stopId = "10101101",
                 transportModeType = listOf(
-                    TransportMode.Train(),
-                    TransportMode.Metro()
+                    NswTransportMode.Train,
+                    NswTransportMode.Metro
                 ).toImmutableList(),
             ),
             SearchStopState.StopResult(
                 stopName = "Wynyard Station",
                 stopId = "10101100",
-                transportModeType = listOf(TransportMode.Train()).toImmutableList(),
+                transportModeType = listOf(NswTransportMode.Train).toImmutableList(),
             ),
             SearchStopState.StopResult(
                 stopName = "Metro Only Station",
                 stopId = "10101105",
-                transportModeType = listOf(TransportMode.Metro()).toImmutableList(),
+                transportModeType = listOf(NswTransportMode.Metro).toImmutableList(),
             ),
             SearchStopState.StopResult(
                 stopName = "Schofields Station",
                 stopId = "12349",
                 transportModeType = listOf(
-                    TransportMode.Bus(),
-                    TransportMode.Train()
+                    NswTransportMode.Bus,
+                    NswTransportMode.Train
                 ).toImmutableList(),
             ),
             SearchStopState.StopResult(
                 stopName = "103 ABC Rd, Hallway",
                 stopId = "12356",
-                transportModeType = listOf(TransportMode.Bus()).toImmutableList(),
+                transportModeType = listOf(NswTransportMode.Bus).toImmutableList(),
             ),
         )
     }

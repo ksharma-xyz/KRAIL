@@ -10,12 +10,13 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.TransportModeSortOrder
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -145,7 +146,7 @@ class RealStopResultsManager(
                 stops = tripStops,
                 // default to bus because that's the only option offered in app.
                 transportMode = tripStops.firstOrNull()?.transportModeType?.firstOrNull()
-                    ?: TransportMode.Bus(),
+                    ?: TransportMode.Bus,
             )
         }
     }
@@ -154,9 +155,9 @@ class RealStopResultsManager(
     override fun prioritiseStops(
         stopResults: List<SearchStopState.SearchResult.Stop>,
     ): List<SearchStopState.SearchResult.Stop> {
-        val sortedTransportModes = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
+        val sortedTransportModes = NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
         val transportModePriorityMap = sortedTransportModes.mapIndexed { index, transportMode ->
-            transportMode.productClass to index
+            NswTransportConfig.productClassFor(transportMode) to index
         }.toMap()
 
         return stopResults.sortedWith(
@@ -166,7 +167,7 @@ class RealStopResultsManager(
                 },
                 { stopResult ->
                     stopResult.transportModeType.minOfOrNull {
-                        transportModePriorityMap[it.productClass] ?: Int.MAX_VALUE
+                        transportModePriorityMap[NswTransportConfig.productClassFor(it)] ?: Int.MAX_VALUE
                     } ?: Int.MAX_VALUE
                 },
                 { it.stopName },
@@ -235,7 +236,7 @@ class RealStopResultsManager(
     private fun String.toTransportModeList(): ImmutableList<TransportMode> {
         return this.split(",")
             .mapNotNull { productClass ->
-                productClass.toIntOrNull()?.let { TransportMode.toTransportModeType(it) }
+                productClass.toIntOrNull()?.let { NswTransportConfig.modeFromProductClass(it) }
             }
             .toImmutableList()
     }

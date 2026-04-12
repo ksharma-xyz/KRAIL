@@ -3,10 +3,10 @@ package xyz.ksharma.krail.trip.planner.ui.state.intro
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.magic_yellow
 import xyz.ksharma.krail.taj.toHex
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 data class IntroState(
     val pages: ImmutableList<IntroPage>,
@@ -56,15 +56,15 @@ data class IntroState(
                 IntroPage(
                     id = 1,
                     colorsList = persistentListOf(
-                        TransportMode.Ferry().colorCode,
+                        NswTransportMode.Ferry.colorCode,
                         magic_yellow.toHex(),
-                        TransportMode.Ferry().colorCode,
+                        NswTransportMode.Ferry.colorCode,
                     ),
                     title = "Live Updates",
                     tagline = "FASTEST\nROUTES\nEVERY TIME",
                     emoji = "\uD83D\uDE80",
                     ctaText = "LET'S KRAIL",
-                    primaryStyle = TransportMode.Ferry().colorCode,
+                    primaryStyle = NswTransportMode.Ferry.colorCode,
                     type = IntroPageType.REAL_TIME_ROUTES,
                 ),
                 IntroPage(
@@ -100,14 +100,14 @@ data class IntroState(
                     id = 4,
                     colorsList = persistentListOf(
                         KrailThemeStyle.Ferry.hexColorCode,
-                        TransportMode.LightRail().colorCode,
+                        NswTransportMode.LightRail.colorCode,
                         KrailThemeStyle.Ferry.hexColorCode,
                     ),
                     title = "Service Alerts",
                     tagline = "DELAYS?\nDETOURS?\nWE'LL TELL YOU.",
                     emoji = "⚠",
                     ctaText = "LET'S KRAIL",
-                    primaryStyle = TransportMode.LightRail().colorCode,
+                    primaryStyle = NswTransportMode.LightRail.colorCode,
                     type = IntroPageType.ALERTS,
                 ),
                 IntroPage(

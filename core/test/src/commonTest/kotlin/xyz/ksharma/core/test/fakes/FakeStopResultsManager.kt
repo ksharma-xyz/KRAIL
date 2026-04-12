@@ -2,7 +2,8 @@ package xyz.ksharma.core.test.fakes
 
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -21,22 +22,22 @@ class FakeStopResultsManager : StopResultsManager {
         SearchStopState.SearchResult.Stop(
             stopId = "10101",
             stopName = "Central Station",
-            transportModeType = persistentListOf(TransportMode.Train(), TransportMode.Bus())
+            transportModeType = persistentListOf(NswTransportMode.Train, NswTransportMode.Bus)
         ),
         SearchStopState.SearchResult.Stop(
             stopId = "10102",
             stopName = "Town Hall",
-            transportModeType = persistentListOf(TransportMode.Train())
+            transportModeType = persistentListOf(NswTransportMode.Train)
         ),
         SearchStopState.SearchResult.Stop(
             stopId = "10103",
             stopName = "Parramatta Station",
-            transportModeType = persistentListOf(TransportMode.Train(), TransportMode.Bus())
+            transportModeType = persistentListOf(NswTransportMode.Train, NswTransportMode.Bus)
         ),
         SearchStopState.SearchResult.Stop(
             stopId = "10104",
             stopName = "Sydney Airport",
-            transportModeType = persistentListOf(TransportMode.Train())
+            transportModeType = persistentListOf(NswTransportMode.Train)
         )
     )
 
@@ -138,7 +139,7 @@ class FakeStopResultsManager : StopResultsManager {
             SearchStopState.StopResult(
                 stopId = stopItem.stopId,
                 stopName = stopItem.stopName,
-                transportModeType = persistentListOf(TransportMode.Train()) // Default transport mode
+                transportModeType = persistentListOf(NswTransportMode.Train) // Default transport mode
             )
         }
 

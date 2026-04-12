@@ -26,6 +26,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
@@ -36,7 +38,6 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -128,7 +129,7 @@ private fun TripCardHeader(
     ) {
         TransportModeBadge(
             badgeText = trip.routeShortName,
-            backgroundColor = transportMode.colorCode.hexToComposeColor(),
+            backgroundColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
             modifier = Modifier.padding(end = 6.dp),
         )
 
@@ -185,9 +186,11 @@ private fun CollapsedTripContent(
     ) {
         Button(
             colors = ButtonColors(
-                containerColor = transportMode.colorCode.hexToComposeColor(),
+                containerColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
                 contentColor = Color.White,
-                disabledContainerColor = transportMode.colorCode.hexToComposeColor().copy(alpha = DisabledContentAlpha),
+                disabledContainerColor = NswTransportConfig.colorFor(
+                    transportMode,
+                ).hexToComposeColor().copy(alpha = DisabledContentAlpha),
                 disabledContentColor = Color.White.copy(alpha = DisabledContentAlpha),
             ),
             onClick = onClick,
@@ -279,7 +282,7 @@ private fun TripSearchListItemCollapsedPreview() {
                 stopName = "Seven Hills Station",
                 stopSequence = 0,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
             SearchStopState.TripStop(
@@ -287,7 +290,7 @@ private fun TripSearchListItemCollapsedPreview() {
                 stopName = "Blacktown Station",
                 stopSequence = 1,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
             SearchStopState.TripStop(
@@ -295,7 +298,7 @@ private fun TripSearchListItemCollapsedPreview() {
                 stopName = "Windsor Road Stop",
                 stopSequence = 2,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
         )
@@ -307,9 +310,9 @@ private fun TripSearchListItemCollapsedPreview() {
                 routeShortName = "702",
                 headsign = "Blacktown to Seven Hills",
                 stops = previewStops,
-                transportMode = TransportMode.Bus(),
+                transportMode = TransportMode.Bus,
             ),
-            transportMode = TransportMode.Bus(),
+            transportMode = TransportMode.Bus,
             itemState = TripSearchListItemState.COLLAPSED,
             onCardClick = {},
         )
@@ -326,7 +329,7 @@ private fun TripSearchListItemExpandedPreview() {
                 stopName = "Seven Hills Station",
                 stopSequence = 0,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
             SearchStopState.TripStop(
@@ -334,7 +337,7 @@ private fun TripSearchListItemExpandedPreview() {
                 stopName = "Blacktown Station",
                 stopSequence = 1,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
             SearchStopState.TripStop(
@@ -342,7 +345,7 @@ private fun TripSearchListItemExpandedPreview() {
                 stopName = "Windsor Road Stop",
                 stopSequence = 2,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
             SearchStopState.TripStop(
@@ -350,7 +353,7 @@ private fun TripSearchListItemExpandedPreview() {
                 stopName = "Parramatta Station",
                 stopSequence = 3,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
             SearchStopState.TripStop(
@@ -358,7 +361,7 @@ private fun TripSearchListItemExpandedPreview() {
                 stopName = "Westmead Hospital",
                 stopSequence = 4,
                 transportModeType = kotlinx.collections.immutable.persistentListOf(
-                    TransportMode.Bus(),
+                    TransportMode.Bus,
                 ),
             ),
         )
@@ -370,9 +373,9 @@ private fun TripSearchListItemExpandedPreview() {
                 routeShortName = "702",
                 headsign = "Blacktown to Seven Hills",
                 stops = previewStops,
-                transportMode = TransportMode.Bus(),
+                transportMode = TransportMode.Bus,
             ),
-            transportMode = TransportMode.Bus(),
+            transportMode = TransportMode.Bus,
             itemState = TripSearchListItemState.EXPANDED,
             onCardClick = {},
         )

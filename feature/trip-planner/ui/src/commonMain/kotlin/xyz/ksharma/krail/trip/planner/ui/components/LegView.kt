@@ -39,6 +39,8 @@ import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_a11y
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -48,7 +50,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
@@ -318,7 +319,7 @@ private fun StopsRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val buttonContainerColor by remember {
-            mutableStateOf(line.transportMode.colorCode.hexToComposeColor())
+            mutableStateOf(NswTransportConfig.colorFor(line.transportMode).hexToComposeColor())
         }
         Button(
             colors = ButtonColors(
@@ -349,7 +350,7 @@ private fun PreviewLegView() {
         LegView(
             routeText = "towards AVC via XYZ Rd",
             transportModeLine = TransportModeLine(
-                transportMode = TransportMode.Bus(),
+                transportMode = TransportMode.Bus,
                 lineName = "700",
             ),
             stops = listOf(
@@ -381,7 +382,7 @@ private fun PreviewLegViewTwoStops() {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
-                transportMode = TransportMode.Train(),
+                transportMode = TransportMode.Train,
                 lineName = "700",
             ),
             stops = listOf(
@@ -408,7 +409,7 @@ private fun PreviewLegViewMetro() {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
-                transportMode = TransportMode.Metro(),
+                transportMode = TransportMode.Metro,
                 lineName = "M1",
             ),
             stops = listOf(
@@ -435,7 +436,7 @@ private fun PreviewLegViewFerry() {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
-                transportMode = TransportMode.Ferry(),
+                transportMode = TransportMode.Ferry,
                 lineName = "F2",
             ),
             stops = listOf(
@@ -462,7 +463,7 @@ private fun PreviewLegViewLightRail() {
         LegView(
             routeText = "towards AVC via XYZ",
             transportModeLine = TransportModeLine(
-                transportMode = TransportMode.LightRail(),
+                transportMode = TransportMode.LightRail,
                 lineName = "L1",
             ),
             stops = listOf(
@@ -489,7 +490,7 @@ private fun PreviewStopsRow() {
         StopsRow(
             stops = "3 stops",
             line = TransportModeLine(
-                transportMode = TransportMode.Bus(),
+                transportMode = TransportMode.Bus,
                 lineName = "700",
             ),
             onClick = {},

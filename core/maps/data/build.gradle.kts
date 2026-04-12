@@ -40,8 +40,8 @@ kotlin {
                 // Sandook for database access
                 implementation(projects.sandook)
 
-                // Trip planner state for TransportMode
-                implementation(projects.feature.tripPlanner.state)
+                // Transport mode/line data
+                implementation(projects.core.transport)
 
                 implementation(libs.compose.runtime)
 

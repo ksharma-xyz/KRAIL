@@ -2,8 +2,9 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.toPersistentList
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 object StopResultMapper {
@@ -18,19 +19,18 @@ object StopResultMapper {
      * @return A list of [StopResult] objects representing the filtered stops.
      */
     fun StopFinderResponse.toStopResults(
-        selectedModes: Set<TransportMode> = TransportMode.values(),
+        selectedModes: Set<TransportMode> = NswTransportConfig.sortedModes().toSet(),
     ): List<SearchStopState.StopResult> {
         log("selectedModes: " + selectedModes)
 
         return locations.orEmpty().mapNotNull { location ->
-            val stopName = location.disassembledName ?: return@mapNotNull null // Skip if stop name is null
-            val stopId = location.id ?: return@mapNotNull null // Skip if stop ID is null
+            val stopName = location.disassembledName ?: return@mapNotNull null
+            val stopId = location.id ?: return@mapNotNull null
             val modes = location.productClasses.orEmpty()
-                .mapNotNull { productClass -> TransportMode.toTransportModeType(productClass) }
+                .mapNotNull { productClass -> NswTransportConfig.modeFromProductClass(productClass) }
 
             log("productClasses [${location.name}]: ${location.productClasses}")
 
-            // Filter based on selected mode types
             if (selectedModes.isNotEmpty() && !modes.any { it in selectedModes }) {
                 return@mapNotNull null
             }
@@ -42,7 +42,7 @@ object StopResultMapper {
             )
         }.sortedBy { stopResult ->
             stopResult.transportModeType.minOfOrNull { mode ->
-                selectedModes.find { it == mode }?.priority ?: Int.MAX_VALUE
+                mode.priority
             } ?: Int.MAX_VALUE
         }
     }

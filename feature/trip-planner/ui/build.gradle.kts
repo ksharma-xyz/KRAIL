@@ -67,6 +67,7 @@ kotlin {
                 implementation(projects.core.navigation)
                 implementation(projects.core.permission.data)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.core.transport)
                 implementation(projects.core.uiTooling)
                 implementation(projects.discover.network.api)
                 implementation(projects.discover.state)

@@ -44,6 +44,7 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
@@ -56,7 +57,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
@@ -92,18 +92,13 @@ fun JourneyCard(
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
 ) {
-    // Derive transport modes for styling and colors
-    val transportModeList: ImmutableList<TransportMode> = remember(transportModeLineList) {
-        transportModeLineList.map { it.transportMode }.toImmutableList()
-    }
-
     val isPastJourney by remember(timeToDeparture) {
         mutableStateOf(
             timeToDeparture.contains(other = "ago", ignoreCase = true),
         )
     }
     val firstLegTransportModeColor = if (!isPastJourney) {
-        transportModeList.firstOrNull()?.colorCode?.hexToComposeColor()
+        transportModeLineList.firstOrNull()?.lineColorCode?.hexToComposeColor()
             ?: KrailTheme.colors.onSurface
     } else {
         KrailTheme.colors.onSurface
@@ -571,9 +566,9 @@ private fun Preview_Default_InlineModesAndPlatform() {
             platformNumber = "1",
             platformText = "Platform 1",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "700"),
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
-                TransportModeLine(transportMode = TransportMode.Ferry(), lineName = "F2"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+                TransportModeLine(transportMode = TransportMode.Ferry, lineName = "F2"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -598,14 +593,14 @@ private fun Preview_ManyModes_Wrap() {
             platformText = "Platform 3",
 
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "333"),
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "610X"),
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T8"),
-                TransportModeLine(transportMode = TransportMode.Ferry(), lineName = "F1"),
-                TransportModeLine(transportMode = TransportMode.Metro(), lineName = "M1"),
-                TransportModeLine(transportMode = TransportMode.LightRail(), lineName = "L2"),
-                TransportModeLine(transportMode = TransportMode.Coach(), lineName = "C1"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "333"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "610X"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T8"),
+                TransportModeLine(transportMode = TransportMode.Ferry, lineName = "F1"),
+                TransportModeLine(transportMode = TransportMode.Metro, lineName = "M1"),
+                TransportModeLine(transportMode = TransportMode.LightRail, lineName = "L2"),
+                TransportModeLine(transportMode = TransportMode.Coach, lineName = "C1"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -630,23 +625,14 @@ private fun Preview_JourneyCard_Expanded() {
             platformText = "Platform 3",
 
             transportModeLineList = persistentListOf(
-                TransportModeLine(
-                    transportMode = TransportMode.Train(),
-                    lineName = "T1",
-                ),
-                TransportModeLine(
-                    transportMode = TransportMode.Bus(),
-                    lineName = "700",
-                ),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
             ),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
                     displayText = "towards Abc via Rainy Rd",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Train(),
-                        lineName = "T1",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
                     totalDuration = "20 mins",
                     tripId = "T1",
                 ),
@@ -657,10 +643,7 @@ private fun Preview_JourneyCard_Expanded() {
                     stops = PREVIEW_STOPS.take(2).toImmutableList(),
                     displayText = "towards Xyz via Awesome Rd",
                     totalDuration = "10 mins",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Bus(),
-                        lineName = "700",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
                     tripId = "700",
                 ),
             ),
@@ -686,23 +669,14 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
             platformText = "Platform 3",
 
             transportModeLineList = persistentListOf(
-                TransportModeLine(
-                    transportMode = TransportMode.Train(),
-                    lineName = "T1",
-                ),
-                TransportModeLine(
-                    transportMode = TransportMode.Bus(),
-                    lineName = "700",
-                ),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
             ),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
                     displayText = "towards Abc via Rainy Rd",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Train(),
-                        lineName = "T1",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
                     totalDuration = "20 mins",
                     tripId = "T1",
                 ),
@@ -713,10 +687,7 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
                     stops = PREVIEW_STOPS.take(2).toImmutableList(),
                     displayText = "towards Xyz via Awesome Rd",
                     totalDuration = "10 mins",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Bus(),
-                        lineName = "700",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
                     tripId = "700",
                 ),
             ),
@@ -741,7 +712,7 @@ private fun Preview_Default_WithWalkTime() {
             platformNumber = "2",
             platformText = "Platform 2",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T2"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T2"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -765,7 +736,7 @@ private fun Preview_Default_WithDeviation_Early() {
             platformNumber = "1",
             platformText = "Platform 1",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T4"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T4"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -789,17 +760,14 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
             platformNumber = "5",
             platformText = "Platform 5",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "M92"),
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T3"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "M92"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T3"),
             ),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
                     displayText = "towards Central",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Bus(),
-                        lineName = "M92",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "M92"),
                     totalDuration = "15 mins",
                     tripId = "M92",
                 ),
@@ -810,10 +778,7 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
                     stops = PREVIEW_STOPS,
                     displayText = "towards North Shore",
                     totalDuration = "22 mins",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Train(),
-                        lineName = "T3",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Train, lineName = "T3"),
                     tripId = "T3",
                 ),
             ),
@@ -838,17 +803,14 @@ private fun Preview_Expanded_MultipleAlerts() {
             platformNumber = null,
             platformText = null,
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Ferry(), lineName = "F1"),
-                TransportModeLine(transportMode = TransportMode.Bus(), lineName = "380"),
+                TransportModeLine(transportMode = TransportMode.Ferry, lineName = "F1"),
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "380"),
             ),
             legList = persistentListOf(
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS.take(2).toImmutableList(),
                     displayText = "to Circular Quay",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Ferry(),
-                        lineName = "F1",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Ferry, lineName = "F1"),
                     totalDuration = "25 mins",
                     tripId = "F1",
                 ),
@@ -859,10 +821,7 @@ private fun Preview_Expanded_MultipleAlerts() {
                     stops = PREVIEW_STOPS,
                     displayText = "to Bondi Junction",
                     totalDuration = "15 mins",
-                    transportModeLine = TransportModeLine(
-                        transportMode = TransportMode.Bus(),
-                        lineName = "380",
-                    ),
+                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "380"),
                     tripId = "380",
                 ),
             ),
@@ -887,7 +846,7 @@ private fun Preview_Default_PastJourney() {
             platformNumber = "4",
             platformText = "Platform 4",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,

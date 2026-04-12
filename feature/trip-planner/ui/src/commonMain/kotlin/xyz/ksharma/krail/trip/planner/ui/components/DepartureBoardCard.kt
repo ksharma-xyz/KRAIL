@@ -62,7 +62,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
  *
  * Supports two modes:
  * - **Uncontrolled** (default): manages its own expanded state via [rememberSaveable].
- *   Filter state is also managed internally and reset on collapse.
+ *   Filter state is managed internally and persists across collapse/expand and rotation.
  *   Used in the stop details bottom sheet where only one card exists.
  * - **Controlled**: caller drives expansion via [isExpanded] + [onExpandChange].
  *   Used in the saved trips accordion where only one card can be open at a time.

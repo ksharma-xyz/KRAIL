@@ -112,6 +112,15 @@ class DepartureBoardViewModel(
         repository.setActiveStop(stopId)
     }
 
+    /**
+     * Triggers a one-shot fetch of past departures (~15 min window) for [stopId].
+     * Results land in [DeparturesState.previousDepartures] and are shown when the user
+     * has toggled "Show previous" in the UI.
+     */
+    fun onLoadPreviousDepartures(stopId: String) {
+        repository.loadPreviousDepartures(stopId)
+    }
+
     /** Collapses the currently open card and stops polling. */
     fun onCardCollapse() {
         val current = _expandedStopId.value ?: return

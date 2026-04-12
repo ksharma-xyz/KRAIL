@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
+import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -47,74 +50,79 @@ fun DepartureRow(
     departure: StopDeparture,
     modifier: Modifier = Modifier,
 ) {
-    val lineColor = remember(departure.lineColorCode) { departure.lineColorCode.hexToComposeColor() }
+    val isPrevious = departure.timing == DepartureTiming.Previous
+    val lineColor = remember(departure.lineColorCode) {
+        departure.lineColorCode.hexToComposeColor()
+    }
     val transportMode = remember(departure.transportModeName) {
         departure.transportModeName.toTransportMode()
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        // Line 1: relative time + mode icon + line badge (left) | platform text (right)
-        FlowRow(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+    CompositionLocalProvider(LocalContentAlpha provides if (isPrevious) 0.5f else 1f) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            // Line 1: relative time + mode icon + line badge (left) | platform text (right)
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                if (departure.relativeTimeText.isNotBlank()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (departure.relativeTimeText.isNotBlank()) {
+                        Text(
+                            text = departure.relativeTimeText,
+                            style = KrailTheme.typography.titleMedium,
+                            color = lineColor,
+                        )
+                    }
+
+                    transportMode?.let {
+                        TransportModeIcon(
+                            transportMode = it,
+                            size = TransportModeIconSize.XSmall,
+                            displayBorder = false,
+                        )
+                    }
+
+                    TransportModeBadge(
+                        badgeText = departure.lineNumber,
+                        backgroundColor = lineColor,
+                        modifier = Modifier.padding(end = 8.dp),
+                    )
+                }
+
+                departure.platformText?.let {
                     Text(
-                        text = departure.relativeTimeText,
-                        style = KrailTheme.typography.titleMedium,
-                        color = lineColor,
+                        text = it,
+                        textAlign = TextAlign.End,
+                        style = KrailTheme.typography.bodyMedium,
+                        color = KrailTheme.colors.label,
                     )
                 }
-
-                transportMode?.let {
-                    TransportModeIcon(
-                        transportMode = it,
-                        size = TransportModeIconSize.XSmall,
-                        displayBorder = false,
-                    )
-                }
-
-                TransportModeBadge(
-                    badgeText = departure.lineNumber,
-                    backgroundColor = lineColor,
-                    modifier = Modifier.padding(end = 8.dp),
-                )
             }
 
-            departure.platformText?.let {
-                Text(
-                    text = it,
-                    textAlign = TextAlign.End,
-                    style = KrailTheme.typography.bodyMedium,
-                    color = KrailTheme.colors.label,
-                )
-            }
+            // Line 2: delay indicator (if delayed/early) + departure time
+            DepartureTimeRow(
+                departureTimeText = departure.departureTimeText,
+                scheduledTimeText = departure.scheduledTimeText,
+                delayMinutes = departure.delayMinutes,
+            )
+
+            // Line 3: destination in softLabel
+            Text(
+                text = departure.destinationName,
+                style = KrailTheme.typography.bodyMedium,
+                color = KrailTheme.colors.softLabel,
+            )
         }
-
-        // Line 2: delay indicator (if delayed/early) + departure time
-        DepartureTimeRow(
-            departureTimeText = departure.departureTimeText,
-            scheduledTimeText = departure.scheduledTimeText,
-            delayMinutes = departure.delayMinutes,
-        )
-
-        // Line 3: destination in softLabel
-        Text(
-            text = departure.destinationName,
-            style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.softLabel,
-        )
     }
 }
 

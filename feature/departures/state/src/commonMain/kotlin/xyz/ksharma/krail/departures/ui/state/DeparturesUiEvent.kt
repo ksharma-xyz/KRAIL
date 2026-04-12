@@ -24,4 +24,12 @@ sealed interface DeparturesUiEvent {
      * to true while the refresh is in flight so the UI can show a subtle indicator.
      */
     data object Refresh : DeparturesUiEvent
+
+    /**
+     * Requests past departures (~15 min window) for [stopId].
+     *
+     * Results land in [DeparturesState.previousDepartures] and are shown when the
+     * user taps "Show previous" in the departure board UI.
+     */
+    data class LoadPreviousDepartures(val stopId: String) : DeparturesUiEvent
 }

@@ -69,8 +69,9 @@ class DeparturesViewModel(
 
     @OptIn(ExperimentalTime::class)
     private fun updateRelativeTimeText() = viewModelScope.launch {
-        val updated = withContext(ioDispatcher) {
-            _uiState.value.departures.map { departure ->
+        val current = _uiState.value
+        val updatedDepartures = withContext(ioDispatcher) {
+            current.departures.map { departure ->
                 departure.copy(
                     relativeTimeText = runCatching {
                         calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
@@ -79,7 +80,17 @@ class DeparturesViewModel(
                 )
             }.toImmutableList()
         }
-        _uiState.update { it.copy(departures = updated) }
+        val updatedPrevious = withContext(ioDispatcher) {
+            current.previousDepartures.map { departure ->
+                departure.copy(
+                    relativeTimeText = runCatching {
+                        calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
+                            .toGenericFormattedTimeString()
+                    }.getOrDefault(""),
+                )
+            }.toImmutableList()
+        }
+        _uiState.update { it.copy(departures = updatedDepartures, previousDepartures = updatedPrevious) }
     }
 
     fun onEvent(event: DeparturesUiEvent) {
@@ -105,6 +116,11 @@ class DeparturesViewModel(
                 val stopId = activeStopId.value ?: return
                 log("[$LOG_TAG] Refresh → stopId=$stopId")
                 repository.refresh(stopId)
+            }
+
+            is DeparturesUiEvent.LoadPreviousDepartures -> {
+                log("[$LOG_TAG] LoadPreviousDepartures → stopId=${event.stopId}")
+                repository.loadPreviousDepartures(event.stopId)
             }
         }
     }

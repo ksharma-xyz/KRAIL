@@ -11,14 +11,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.departures.network.api.service.DeparturesService
 import xyz.ksharma.krail.departures.ui.business.toStopDepartures
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
+import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * Singleton repository that owns the departure-polling loop.
@@ -43,6 +48,10 @@ class DepartureBoardRepository(
     // Tracks the epoch-ms of the last successful fetch per stop, to avoid redundant
     // API calls when a stop is collapsed then re-expanded within the 30-second window.
     private val lastFetchTime = mutableMapOf<String, Long>()
+
+    // Same guard for previous-departures fetches — avoids a new API call if the user
+    // collapses and re-expands "Show previous" within the same refresh window.
+    private val lastPreviousFetchTime = mutableMapOf<String, Long>()
 
     private var activeJob: Job? = null
     private var relativeTimeJob: Job? = null
@@ -121,17 +130,27 @@ class DepartureBoardRepository(
     @OptIn(ExperimentalTime::class)
     private fun updateRelativeTime(stopId: String) {
         val flow = stateFor(stopId)
-        val current = flow.value
-        if (current.departures.isEmpty()) return
-        val updated = current.departures.map { departure ->
-            departure.copy(
-                relativeTimeText = runCatching {
-                    calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                        .toGenericFormattedTimeString()
-                }.getOrDefault(""),
+        if (flow.value.departures.isEmpty() && flow.value.previousDepartures.isEmpty()) return
+        flow.update { state ->
+            state.copy(
+                departures = state.departures.map { d ->
+                    d.copy(
+                        relativeTimeText = runCatching {
+                            calculateTimeDifferenceFromNow(d.departureUtcDateTime)
+                                .toGenericFormattedTimeString()
+                        }.getOrDefault(""),
+                    )
+                }.toImmutableList(),
+                previousDepartures = state.previousDepartures.map { d ->
+                    d.copy(
+                        relativeTimeText = runCatching {
+                            calculateTimeDifferenceFromNow(d.departureUtcDateTime)
+                                .toGenericFormattedTimeString()
+                        }.getOrDefault(""),
+                    )
+                }.toImmutableList(),
             )
-        }.toImmutableList()
-        flow.update { it.copy(departures = updated) }
+        }
     }
 
     /** Triggers an immediate silent refresh for [stopId], independent of the poll loop. */
@@ -156,12 +175,15 @@ class DepartureBoardRepository(
         }.onSuccess { response ->
             val departures = response.toStopDepartures()
             log("[$LOG_TAG] success — ${departures.size} departures for stopId=$stopId")
-            flow.update {
+            flow.update { current ->
                 DeparturesState(
                     isLoading = false,
                     silentLoading = false,
                     isError = false,
                     departures = departures,
+                    // Preserve previously fetched past departures across regular refreshes.
+                    previousDepartures = current.previousDepartures,
+                    isPreviousLoading = current.isPreviousLoading,
                 )
             }
         }.onFailure { throwable ->
@@ -175,6 +197,63 @@ class DepartureBoardRepository(
                     silentLoading = false,
                     isError = it.departures.isEmpty(),
                 )
+            }
+        }
+    }
+
+    /**
+     * Fetches departures from the past [PREVIOUS_WINDOW_MINUTES] minutes for [stopId]
+     * and stores only the ones with a departure time before now.
+     *
+     * Called when the user taps "Show previous" in the departure board UI.
+     * Results are stored in [DeparturesState.previousDepartures] and survive regular refreshes.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun loadPreviousDepartures(stopId: String) {
+        scope.launch {
+            val nowMs = Clock.System.now().toEpochMilliseconds()
+            val elapsedMs = nowMs - (lastPreviousFetchTime[stopId] ?: 0L)
+            val flow = stateFor(stopId)
+
+            // If we already have data and it's still within the refresh window, skip the fetch.
+            if (elapsedMs < config.refreshIntervalMs && flow.value.previousDepartures.isNotEmpty()) {
+                log("[$LOG_TAG] previous departures cache hit for stopId=$stopId (${elapsedMs}ms ago)")
+                return@launch
+            }
+
+            flow.update { it.copy(isPreviousLoading = true) }
+            val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
+            runCatching {
+                departuresService.departures(
+                    stopId = stopId,
+                    date = fromTime.toApiDateString(),
+                    time = fromTime.toApiTimeString(),
+                )
+            }.onSuccess { response ->
+                val now = Clock.System.now()
+                val previous = response.toStopDepartures()
+                    .filter { departure ->
+                        runCatching {
+                            Instant.parse(departure.departureUtcDateTime) < now
+                        }.getOrDefault(false)
+                    }
+                    .map { it.copy(timing = DepartureTiming.Previous) }
+                    .toImmutableList()
+                log("[$LOG_TAG] previous departures — ${previous.size} found for stopId=$stopId")
+                lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds()
+                flow.update {
+                    it.copy(
+                        previousDepartures = previous,
+                        isPreviousLoading = false,
+                        previousWindowMinutes = config.previousDeparturesWindowMinutes,
+                    )
+                }
+            }.onFailure { throwable ->
+                logError(
+                    message = "[$LOG_TAG] failed to fetch previous departures for stopId=$stopId",
+                    throwable = throwable,
+                )
+                flow.update { it.copy(isPreviousLoading = false) }
             }
         }
     }

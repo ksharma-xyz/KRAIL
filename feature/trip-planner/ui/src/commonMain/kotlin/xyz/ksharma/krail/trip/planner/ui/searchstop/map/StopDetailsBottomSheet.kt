@@ -25,7 +25,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardCard
+import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopActionButton
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet as SharedStopDetailsBottomSheet
@@ -55,7 +55,7 @@ fun StopDetailsBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         additionalInfo = {
-            DepartureBoardCard(
+            DepartureBoardStopCard(
                 stopId = stop.stopId,
                 state = departuresState,
                 onEvent = departuresViewModel::onEvent,

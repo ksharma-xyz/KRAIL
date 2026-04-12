@@ -47,6 +47,8 @@ import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
+import xyz.ksharma.krail.core.maps.ui.utils.dotLocation
+import xyz.ksharma.krail.core.maps.ui.utils.rememberCameraFollowState
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
@@ -59,7 +61,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SearchStopMap(
@@ -162,6 +163,7 @@ private fun MapContent(
                 zoom = NearbyStopsConfig.DEFAULT_ZOOM,
             ),
         )
+        val cameraFollowState = rememberCameraFollowState(cameraState)
 
         // Trigger initial load with default camera position
         LaunchedEffect(Unit) {
@@ -178,7 +180,7 @@ private fun MapContent(
 
         TrackUserLocation(
             userLocationManager = userLocationManager,
-            cameraState = cameraState,
+            cameraFollowState = cameraFollowState,
             allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
                 permissionStatus = PermissionStatus.Granted
@@ -203,6 +205,11 @@ private fun MapContent(
                         ),
                     )
                 }
+        }
+
+        // Disengage follow mode when the user manually pans the map.
+        LaunchedEffect(cameraFollowState) {
+            cameraFollowState.manualPan.collect { cameraFollowState.stopFollowing() }
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -241,9 +248,11 @@ private fun MapContent(
                     log("[NEARBY_STOPS_UI] No stops to render")
                 }
 
-                // Render user location as red circle (always on top)
                 UserLocationLayer(
-                    userLocation = mapState.mapDisplay.userLocation,
+                    userLocation = cameraFollowState.dotLocation(
+                        userLocation = mapState.mapDisplay.userLocation,
+                        cameraState = cameraState,
+                    ),
                 )
             }
 
@@ -259,18 +268,17 @@ private fun MapContent(
                     onEvent(
                         SearchStopUiEvent.LocationButtonClicked(hadLocation = mapState.mapDisplay.userLocation != null),
                     )
-                    scope.launch {
-                        val userLoc = mapState.mapDisplay.userLocation
-                        if (userLoc != null) {
-                            // Tracking is running — re-center camera on latest known position
-                            cameraState.animateTo(
-                                CameraPosition(
-                                    target = userLoc.toPosition(),
-                                    zoom = UserLocationConfig.RECENTER_ZOOM,
-                                ),
-                                duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
-                            )
-                        } else {
+                    val userLoc = mapState.mapDisplay.userLocation
+                    if (userLoc != null) {
+                        // Re-center camera and enter follow mode so the camera tracks the user.
+                        cameraFollowState.startFollowing()
+                        cameraFollowState.animateTo(
+                            latLng = userLoc,
+                            zoom = UserLocationConfig.RECENTER_ZOOM,
+                            durationMs = UserLocationConfig.RECENTER_ANIMATION_MS,
+                        )
+                    } else {
+                        scope.launch {
                             val status = userLocationManager.checkPermissionStatus()
                             if (status is PermissionStatus.Denied) {
                                 // Cannot request — direct user to Settings instead
@@ -380,8 +388,6 @@ private fun MapContent(
         }
     }
 }
-
-private fun LatLng.toPosition(): Position = Position(latitude = latitude, longitude = longitude)
 
 // region Previews
 

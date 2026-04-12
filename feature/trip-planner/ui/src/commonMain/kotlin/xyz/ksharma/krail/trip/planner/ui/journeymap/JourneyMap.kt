@@ -38,12 +38,13 @@ import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
+import xyz.ksharma.krail.core.maps.ui.utils.dotLocation
+import xyz.ksharma.krail.core.maps.ui.utils.rememberCameraFollowState
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -126,12 +127,13 @@ private fun JourneyMapContent(
     }
 
     val cameraState = rememberCameraState(firstPosition = cameraPosition)
+    val cameraFollowState = rememberCameraFollowState(cameraState)
 
     TrackUserLocation(
         userLocationManager = userLocationManager,
-        cameraState = cameraState,
+        cameraFollowState = cameraFollowState,
         allowPermissionRequest = allowPermissionRequest,
-        autoCenter = false,
+        autoCenter = true,
         onLocationUpdate = { latLng ->
             showPermissionBanner = false
             userLocation = latLng
@@ -140,6 +142,11 @@ private fun JourneyMapContent(
             showPermissionBanner = true
         },
     )
+
+    // Disengage follow mode when the user manually pans the map.
+    LaunchedEffect(cameraFollowState) {
+        cameraFollowState.manualPan.collect { cameraFollowState.stopFollowing() }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         MaplibreMap(
@@ -160,7 +167,7 @@ private fun JourneyMapContent(
         ) {
             JourneyMapLayers(
                 mapState = mapState,
-                userLocation = userLocation,
+                userLocation = cameraFollowState.dotLocation(userLocation, cameraState),
                 onStopSelect = { selectedStop = it },
             )
         }
@@ -169,18 +176,17 @@ private fun JourneyMapContent(
         UserLocationButton(
             onClick = {
                 onLocationButtonClick(userLocation != null)
-                scope.launch {
-                    val userLoc = userLocation
-                    if (userLoc != null) {
-                        // Re-center camera on latest known position
-                        cameraState.animateTo(
-                            CameraPosition(
-                                target = Position(latitude = userLoc.latitude, longitude = userLoc.longitude),
-                                zoom = UserLocationConfig.RECENTER_ZOOM,
-                            ),
-                            duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
-                        )
-                    } else {
+                val userLoc = userLocation
+                if (userLoc != null) {
+                    // Re-center camera and enter follow mode so the camera tracks the user.
+                    cameraFollowState.startFollowing()
+                    cameraFollowState.animateTo(
+                        latLng = userLoc,
+                        zoom = UserLocationConfig.RECENTER_ZOOM,
+                        durationMs = UserLocationConfig.RECENTER_ANIMATION_MS,
+                    )
+                } else {
+                    scope.launch {
                         val status = userLocationManager.checkPermissionStatus()
                         if (status is PermissionStatus.Denied) {
                             showPermissionBanner = true

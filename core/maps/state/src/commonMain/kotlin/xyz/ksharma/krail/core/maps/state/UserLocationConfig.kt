@@ -18,4 +18,7 @@ object UserLocationConfig {
 
     /** Camera animation duration (ms) for manual re-center taps. */
     const val RECENTER_ANIMATION_MS = 1_000L
+
+    /** Camera animation duration (ms) for each follow-mode location update. */
+    const val FOLLOW_ANIMATION_MS = 800L
 }

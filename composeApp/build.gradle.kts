@@ -63,6 +63,8 @@ kotlin {
             implementation(projects.core.permission.data)
             implementation(projects.core.remoteConfig)
             implementation(projects.discover.network.real)
+            implementation(projects.feature.departures.network)
+            implementation(projects.feature.departures.ui)
             implementation(projects.feature.parkRide.network)
             implementation(projects.feature.tripPlanner.network)
             implementation(projects.feature.tripPlanner.state)

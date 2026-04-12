@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.state
 
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportLine
 

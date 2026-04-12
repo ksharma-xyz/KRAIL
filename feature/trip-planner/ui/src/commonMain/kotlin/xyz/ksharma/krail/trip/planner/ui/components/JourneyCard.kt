@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -25,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
@@ -244,43 +241,6 @@ private fun JourneyCardHeader(
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun DepartureDeviationIndicator(
-    deviation: TimeTableState.JourneyCardInfo.DepartureDeviation,
-    modifier: Modifier = Modifier,
-) {
-    val (dotColor, label) = when (deviation) {
-        is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
-            KrailTheme.colors.deviationLate to deviation.text
-
-        is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
-            KrailTheme.colors.deviationEarly to deviation.text
-
-        TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime ->
-            KrailTheme.colors.deviationOnTime to "On time"
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(
-                    color = dotColor.copy(alpha = LocalContentAlpha.current),
-                    shape = CircleShape,
-                ),
-        )
-        Text(
-            text = label,
-            style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.onSurface,
-        )
     }
 }
 

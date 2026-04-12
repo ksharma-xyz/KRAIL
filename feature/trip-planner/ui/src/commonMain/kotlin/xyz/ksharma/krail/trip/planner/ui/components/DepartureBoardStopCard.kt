@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber", "TooManyFunctions", "CyclomaticComplexMethod")
-
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -32,10 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
@@ -49,10 +45,7 @@ import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.modifier.CardShape
-import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 
 /**
@@ -90,29 +83,11 @@ fun DepartureBoardStopCard(
     var internalExpanded by rememberSaveable { mutableStateOf(false) }
     val expanded = isExpanded ?: internalExpanded
 
-    var showPrevious by remember { mutableStateOf(false) }
-
     // Filter state — keyed to stopId so rotating the device while a filter is active
     // restores the same selection. Empty string is the "no filter" sentinel (primitives only
     // are safe across process death / configuration changes via rememberSaveable).
     var selectedLineKey by rememberSaveable(key = "filter_$stopId") { mutableStateOf("") }
     val selectedLine: String? = selectedLineKey.ifEmpty { null }
-
-    val filteredDepartures: ImmutableList<StopDeparture> = remember(state.departures, selectedLine) {
-        if (selectedLine == null) {
-            state.departures
-        } else {
-            state.departures.filter { it.lineNumber == selectedLine }.toImmutableList()
-        }
-    }
-
-    val filteredPreviousDepartures: ImmutableList<StopDeparture> = remember(state.previousDepartures, selectedLine) {
-        if (selectedLine == null) {
-            state.previousDepartures
-        } else {
-            state.previousDepartures.filter { it.lineNumber == selectedLine }.toImmutableList()
-        }
-    }
 
     val arrowRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
@@ -138,43 +113,16 @@ fun DepartureBoardStopCard(
             .background(KrailTheme.colors.surface),
     ) {
         // ── Header — SubtleButton acts as the expand/collapse toggle ─────────
-        SubtleButton(
+        CardHeader(
+            title = title,
+            expanded = expanded,
+            silentLoading = state.silentLoading,
+            arrowRotation = arrowRotation,
             onClick = {
                 val next = !expanded
                 if (onExpandChange != null) onExpandChange(next) else internalExpanded = next
             },
-            dimensions = ButtonDefaults.largeButtonSize(),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = title,
-                    style = KrailTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (expanded && state.silentLoading) {
-                        AnimatedDots(
-                            modifier = Modifier.size(width = 32.dp, height = 16.dp),
-                            color = KrailTheme.colors.softLabel,
-                        )
-                    }
-                    Image(
-                        painter = painterResource(Res.drawable.ic_arrow_down),
-                        contentDescription = if (expanded) "Collapse" else "Expand",
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.softLabel),
-                        modifier = Modifier.size(18.dp).rotate(arrowRotation),
-                    )
-                }
-            }
-        }
+        )
 
         // ── Expanded content ─────────────────────────────────────────────────
         AnimatedVisibility(
@@ -184,75 +132,197 @@ fun DepartureBoardStopCard(
             exit = shrinkVertically(shrinkTowards = Alignment.Top) +
                 fadeOut(animationSpec = tween(durationMillis = 150)),
         ) {
-            Column {
-                when {
-                    state.isLoading -> LoadingContent()
-                    state.isError -> ErrorContent(
-                        onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
+            DeparturesBody(
+                state = state,
+                isExpanded = isExpanded,
+                onEvent = onEvent,
+                stopId = stopId,
+                selectedLine = selectedLine,
+                onLineSelect = { selectedLineKey = it ?: "" },
+                maxItems = maxItems,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CardHeader(
+    title: String,
+    expanded: Boolean,
+    silentLoading: Boolean,
+    arrowRotation: Float,
+    onClick: () -> Unit,
+) {
+    SubtleButton(
+        onClick = onClick,
+        dimensions = ButtonDefaults.largeButtonSize(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = KrailTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (expanded && silentLoading) {
+                    AnimatedDots(
+                        modifier = Modifier.size(width = 32.dp, height = 16.dp),
+                        color = KrailTheme.colors.softLabel,
                     )
-                    state.departures.isEmpty() -> EmptyContent()
-                    else -> {
-                        LinesServedRow(
-                            departures = state.departures,
-                            selectedLine = selectedLine,
-                            onLineSelect = { selectedLineKey = it ?: "" },
-                        )
-                        Divider(modifier = Modifier.padding(horizontal = 16.dp))
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // "Show previous / Hide previous" toggle
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            TextButton(
-                                onClick = {
-                                    showPrevious = !showPrevious
-                                    if (showPrevious && state.previousDepartures.isEmpty() &&
-                                        !state.isPreviousLoading
-                                    ) {
-                                        onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId))
-                                    }
-                                },
-                            ) {
-                                Text(text = if (showPrevious) "Hide previous" else "Show previous")
-                            }
-                        }
-
-                        when {
-                            showPrevious && state.isPreviousLoading -> {
-                                LoadingContent()
-                                when {
-                                    filteredDepartures.isEmpty() -> FilterEmptyContent()
-                                    else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                                }
-                            }
-                            showPrevious && filteredPreviousDepartures.isEmpty() -> {
-                                Text(
-                                    text = "No previous departures in the last ${state.previousWindowMinutes} minutes.",
-                                    style = KrailTheme.typography.bodyMedium,
-                                    color = KrailTheme.colors.softLabel,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                                )
-                                when {
-                                    filteredDepartures.isEmpty() -> FilterEmptyContent()
-                                    else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                                }
-                            }
-                            showPrevious -> DepartureRowList(
-                                departures = remember(filteredPreviousDepartures, filteredDepartures) {
-                                    (filteredPreviousDepartures + filteredDepartures).toImmutableList()
-                                },
-                                maxItems = maxItems,
-                            )
-                            filteredDepartures.isEmpty() -> FilterEmptyContent()
-                            else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                        }
-                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Image(
+                    painter = painterResource(Res.drawable.ic_arrow_down),
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.softLabel),
+                    modifier = Modifier.size(18.dp).rotate(arrowRotation),
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun DeparturesBody(
+    state: DeparturesState,
+    isExpanded: Boolean?,
+    onEvent: (DeparturesUiEvent) -> Unit,
+    stopId: String,
+    selectedLine: String?,
+    onLineSelect: (String?) -> Unit,
+    maxItems: Int?,
+) {
+    Column {
+        when {
+            state.isLoading -> LoadingContent()
+            state.isError -> DeparturesErrorContent(
+                onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
+            )
+            state.departures.isEmpty() -> EmptyContent()
+            else -> DeparturesSuccessContent(
+                state = state,
+                onEvent = onEvent,
+                stopId = stopId,
+                selectedLine = selectedLine,
+                onLineSelect = onLineSelect,
+                maxItems = maxItems,
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun DeparturesSuccessContent(
+    state: DeparturesState,
+    onEvent: (DeparturesUiEvent) -> Unit,
+    stopId: String,
+    selectedLine: String?,
+    onLineSelect: (String?) -> Unit,
+    maxItems: Int?,
+    modifier: Modifier = Modifier,
+) {
+    var showPrevious by remember { mutableStateOf(false) }
+
+    val filteredDepartures: ImmutableList<StopDeparture> = remember(state.departures, selectedLine) {
+        if (selectedLine == null) {
+            state.departures
+        } else {
+            state.departures.filter { it.lineNumber == selectedLine }.toImmutableList()
+        }
+    }
+
+    val filteredPreviousDepartures: ImmutableList<StopDeparture> = remember(state.previousDepartures, selectedLine) {
+        if (selectedLine == null) {
+            state.previousDepartures
+        } else {
+            state.previousDepartures.filter { it.lineNumber == selectedLine }.toImmutableList()
+        }
+    }
+
+    Column(modifier = modifier) {
+        LinesServedRow(
+            departures = state.departures,
+            selectedLine = selectedLine,
+            onLineSelect = onLineSelect,
+        )
+        Divider(modifier = Modifier.padding(horizontal = 16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // "Show previous / Hide previous" toggle
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            TextButton(
+                onClick = {
+                    showPrevious = !showPrevious
+                    if (showPrevious && state.previousDepartures.isEmpty() && !state.isPreviousLoading) {
+                        onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId))
+                    }
+                },
+            ) {
+                Text(text = if (showPrevious) "Hide previous" else "Show previous")
+            }
+        }
+
+        PreviousDeparturesSection(
+            showPrevious = showPrevious,
+            isPreviousLoading = state.isPreviousLoading,
+            previousWindowMinutes = state.previousWindowMinutes,
+            filteredDepartures = filteredDepartures,
+            filteredPreviousDepartures = filteredPreviousDepartures,
+            maxItems = maxItems,
+        )
+    }
+}
+
+@Composable
+private fun PreviousDeparturesSection(
+    showPrevious: Boolean,
+    isPreviousLoading: Boolean,
+    previousWindowMinutes: Long,
+    filteredDepartures: ImmutableList<StopDeparture>,
+    filteredPreviousDepartures: ImmutableList<StopDeparture>,
+    maxItems: Int?,
+) {
+    Column {
+        when {
+            showPrevious && isPreviousLoading -> {
+                LoadingContent()
+                if (filteredDepartures.isEmpty()) {
+                    FilterEmptyContent()
+                } else {
+                    DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                }
+            }
+            showPrevious && filteredPreviousDepartures.isEmpty() -> {
+                Text(
+                    text = "No previous departures in the last $previousWindowMinutes minutes.",
+                    style = KrailTheme.typography.bodyMedium,
+                    color = KrailTheme.colors.softLabel,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+                if (filteredDepartures.isEmpty()) {
+                    FilterEmptyContent()
+                } else {
+                    DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                }
+            }
+            showPrevious -> DepartureRowList(
+                departures = remember(filteredPreviousDepartures, filteredDepartures) {
+                    (filteredPreviousDepartures + filteredDepartures).toImmutableList()
+                },
+                maxItems = maxItems,
+            )
+            filteredDepartures.isEmpty() -> FilterEmptyContent()
+            else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
         }
     }
 }
@@ -260,7 +330,7 @@ fun DepartureBoardStopCard(
 // ── Private content slots ─────────────────────────────────────────────────────
 
 @Composable
-private fun LoadingContent() {
+internal fun LoadingContent() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -272,19 +342,6 @@ private fun LoadingContent() {
             color = KrailTheme.colors.onSurface,
         )
     }
-}
-
-@Composable
-private fun ErrorContent(onRetry: () -> Unit) {
-    ErrorMessage(
-        title = "Couldn't load departures",
-        message = "Check your connection and try again.",
-        actionData = ActionData(
-            actionText = "Retry",
-            onActionClick = onRetry,
-        ),
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 @Composable
@@ -305,166 +362,4 @@ private fun FilterEmptyContent() {
         color = KrailTheme.colors.softLabel,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
     )
-}
-
-// ── Previews ──────────────────────────────────────────────────────────────────
-
-private const val TRANSPORT_MODE_TRAIN = "Train"
-private const val TRANSPORT_MODE_BUS = "Bus"
-private const val TRANSPORT_MODE_FERRY = "Ferry"
-private const val SAMPLE_DATE_PREFIX = "2026-04-08T01:"
-
-private val previewTrainDepartures = persistentListOf(
-    StopDeparture(
-        lineNumber = "T1",
-        lineColorCode = "#F99D1C",
-        transportModeName = TRANSPORT_MODE_TRAIN,
-        destinationName = "Liverpool via Strathfield",
-        departureTimeText = "11:30 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}30:00Z",
-        platformText = "Platform 4",
-        isRealTime = true,
-    ),
-    StopDeparture(
-        lineNumber = "T2",
-        lineColorCode = "#0098CD",
-        transportModeName = TRANSPORT_MODE_TRAIN,
-        destinationName = "Bondi Junction",
-        departureTimeText = "11:33 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}33:00Z",
-        platformText = "Platform 7",
-        isRealTime = false,
-    ),
-    StopDeparture(
-        lineNumber = "T4",
-        lineColorCode = "#005AA3",
-        transportModeName = TRANSPORT_MODE_TRAIN,
-        destinationName = "Illawarra via Sydenham",
-        departureTimeText = "11:36 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}36:00Z",
-        platformText = "Platform 2",
-        isRealTime = true,
-    ),
-)
-
-private val previewBusDepartures = persistentListOf(
-    StopDeparture(
-        lineNumber = "333",
-        lineColorCode = "#00B5EF",
-        transportModeName = TRANSPORT_MODE_BUS,
-        destinationName = "Parramatta Interchange",
-        departureTimeText = "11:40 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}40:00Z",
-        platformText = "Stand B",
-        isRealTime = true,
-    ),
-    StopDeparture(
-        lineNumber = "370",
-        lineColorCode = "#00B5EF",
-        transportModeName = TRANSPORT_MODE_BUS,
-        destinationName = "Coogee Beach",
-        departureTimeText = "11:45 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}45:00Z",
-        platformText = null,
-        isRealTime = false,
-    ),
-)
-
-private val previewFerryDepartures = persistentListOf(
-    StopDeparture(
-        lineNumber = "F1",
-        lineColorCode = "#00774B",
-        transportModeName = TRANSPORT_MODE_FERRY,
-        destinationName = "Manly Wharf",
-        departureTimeText = "11:30 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}30:00Z",
-        platformText = "Wharf 1",
-        isRealTime = true,
-    ),
-    StopDeparture(
-        lineNumber = "F2",
-        lineColorCode = "#144734",
-        transportModeName = TRANSPORT_MODE_FERRY,
-        destinationName = "Parramatta River",
-        departureTimeText = "11:45 AM",
-        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}45:00Z",
-        platformText = "Wharf 3",
-        isRealTime = false,
-    ),
-)
-
-@Preview(name = "Collapsed", showBackground = true)
-@Composable
-private fun DepartureBoardStopCardCollapsedPreview() {
-    PreviewTheme(KrailThemeStyle.Train) {
-        DepartureBoardStopCard(
-            stopId = "10101010",
-            state = DeparturesState(),
-            onEvent = {},
-        )
-    }
-}
-
-@Preview(name = "Loading", showBackground = true)
-@Composable
-private fun DepartureBoardStopCardLoadingPreview() {
-    PreviewTheme(KrailThemeStyle.Train) {
-        Column { LoadingContent() }
-    }
-}
-
-@PreviewComponent
-@Composable
-private fun DepartureBoardStopCardLoadedTrainPreview() {
-    PreviewTheme(KrailThemeStyle.Train) {
-        Column {
-            LinesServedRow(
-                departures = previewTrainDepartures,
-                selectedLine = "T2",
-                onLineSelect = {},
-            )
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
-            DepartureRowList(departures = previewTrainDepartures)
-        }
-    }
-}
-
-@Preview(name = "Loaded — Bus theme", showBackground = true)
-@Composable
-private fun DepartureBoardStopCardLoadedBusPreview() {
-    PreviewTheme(KrailThemeStyle.Bus) {
-        Column {
-            LinesServedRow(
-                departures = previewBusDepartures,
-                selectedLine = null,
-                onLineSelect = {},
-            )
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
-            DepartureRowList(departures = previewBusDepartures)
-        }
-    }
-}
-
-@Preview(name = "Error state", showBackground = true)
-@Composable
-private fun DepartureBoardStopCardErrorPreview() {
-    PreviewTheme(KrailThemeStyle.Metro) {
-        Column { ErrorContent(onRetry = {}) }
-    }
-}
-
-@Preview(name = "Ferry theme", showBackground = true)
-@Composable
-private fun DepartureBoardStopCardFerryPreview() {
-    PreviewTheme(KrailThemeStyle.Ferry) {
-        Column {
-            LinesServedRow(
-                departures = previewFerryDepartures,
-                selectedLine = null,
-                onLineSelect = {},
-            )
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
-            DepartureRowList(departures = previewFerryDepartures)
-        }
-    }
 }

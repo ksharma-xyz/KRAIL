@@ -43,10 +43,6 @@ fun StopDetailsBottomSheet(
 ) {
     val departuresViewModel = koinViewModel<DeparturesViewModel>()
     val departuresState by departuresViewModel.uiState.collectAsStateWithLifecycle()
-    // Collecting isActive keeps the relative-time tick loop alive (WhileSubscribed).
-
-    @Suppress("UNUSED_VARIABLE")
-    val isActive by departuresViewModel.isActive.collectAsStateWithLifecycle()
 
     SharedStopDetailsBottomSheet(
         stopId = stop.stopId,

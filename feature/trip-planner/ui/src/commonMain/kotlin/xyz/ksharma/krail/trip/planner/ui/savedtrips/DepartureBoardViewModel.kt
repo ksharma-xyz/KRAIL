@@ -94,6 +94,14 @@ class DepartureBoardViewModel(
             }
             .distinctBy { it.first }
         _stops.value = uniqueStops
+
+        // If the expanded stop is no longer in the new stop list (e.g. the trip was deleted),
+        // stop polling and collapse the card so no dangling background fetch continues.
+        val expandedId = _expandedStopId.value
+        if (expandedId != null && uniqueStops.none { it.first == expandedId }) {
+            repository.stopIfActive(expandedId)
+            _expandedStopId.value = null
+        }
     }
 
     /** Expands the card for [stopId], collapsing any previously open card instantly. */

@@ -10,8 +10,9 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import kotlin.math.absoluteValue
@@ -142,7 +143,7 @@ private fun List<TripResponse.Leg>.logTransportModes() = forEachIndexed { index,
 
 private fun List<TripResponse.Leg>.getTransportModeLines() = mapNotNull { leg ->
     leg.transportation?.product?.productClass?.toInt()?.let { productClass ->
-        val mode = TransportMode.toTransportModeType(productClass)
+        val mode = NswTransportConfig.modeFromProductClass(productClass)
         val lineName = leg.transportation?.disassembledName
         if (mode != null && lineName != null) {
             TransportModeLine(transportMode = mode, lineName = lineName)
@@ -163,12 +164,12 @@ private fun String.getTimeText() = let {
 private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
     val transportMode =
         transportation?.product?.productClass?.toInt()
-            ?.let { TransportMode.toTransportModeType(productClass = it) }
+            ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
     val lineName = transportation?.disassembledName
 
     val productClass = transportation?.product?.productClass?.toInt()
     val displayText = when (productClass) {
-        TransportMode.Train().productClass, TransportMode.Metro().productClass ->
+        NswTransportMode.Train.productClass, NswTransportMode.Metro.productClass ->
             "towards ${transportation?.destination?.name}"
         else -> transportation?.description
     }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
@@ -28,7 +29,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIcon
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIconSize
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 
 /**
  * Generic stop details bottom sheet for map features in trip-planner module.

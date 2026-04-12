@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 
 import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 sealed interface SearchStopUiEvent {

@@ -9,7 +9,8 @@ import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.RouteFeature
 import xyz.ksharma.krail.core.maps.state.SelectedStopUi
 import xyz.ksharma.krail.core.maps.state.StopFeature
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 
 /**
  * Map UI state for Search Stop screen.
@@ -42,7 +43,7 @@ data class MapDisplay(
     val stops: ImmutableList<StopFeature> = persistentListOf(),
     val selectedStop: SelectedStopUi? = null,
     val nearbyStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
-    val selectedTransportModes: ImmutableSet<Int> = TransportMode.allProductClasses().toImmutableSet(),
+    val selectedTransportModes: ImmutableSet<Int> = NswTransportConfig.allProductClasses().toImmutableSet(),
     val mapCenter: LatLng = LatLng(
         NearbyStopsConfig.DEFAULT_CENTER_LAT,
         NearbyStopsConfig.DEFAULT_CENTER_LON,

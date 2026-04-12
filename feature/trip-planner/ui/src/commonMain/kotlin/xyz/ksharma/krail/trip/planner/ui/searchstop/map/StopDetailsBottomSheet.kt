@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.park.ride.ui.components.ParkAndRideIcon
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -21,7 +22,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopActionButton
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet as SharedStopDetailsBottomSheet
 
@@ -99,9 +99,9 @@ private fun PreviewStopDetailsBottomSheet() {
                 151.2070,
             ),
             transportModes = persistentListOf(
-                TransportMode.Train(),
-                TransportMode.Bus(),
-                TransportMode.LightRail(),
+                TransportMode.Train,
+                TransportMode.Bus,
+                TransportMode.LightRail,
             ),
             hasParkAndRide = true,
         )
@@ -124,7 +124,7 @@ private fun PreviewStopDetailsBottomSheetSingleMode() {
                 -33.8818,
                 151.2372,
             ),
-            transportModes = persistentListOf(TransportMode.Bus()),
+            transportModes = persistentListOf(TransportMode.Bus),
         )
         StopDetailsBottomSheet(
             stop = stop,
@@ -145,7 +145,7 @@ private fun PreviewStopDetailsBottomSheetFerry() {
                 -33.8612,
                 151.2107,
             ),
-            transportModes = persistentListOf(TransportMode.Ferry()),
+            transportModes = persistentListOf(TransportMode.Ferry),
         )
         StopDetailsBottomSheet(
             stop = stop,

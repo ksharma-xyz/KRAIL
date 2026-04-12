@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.cardBackground
@@ -32,7 +34,6 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 @Composable
@@ -85,8 +86,9 @@ fun SavedTripCard(
                 contentDescription = "Save Trip",
                 colorFilter = ColorFilter.tint(
                     if (isAppInDarkMode().not()) {
-                        primaryTransportMode?.colorCode
-                            ?.hexToComposeColor() ?: themeColor()
+                        primaryTransportMode?.let { NswTransportConfig.colorFor(it) }
+                            ?.hexToComposeColor()
+                            ?: themeColor()
                     } else {
                         KrailTheme.colors.onSurface
                     },
@@ -109,7 +111,7 @@ private fun SavedTripCardPreview() {
                 toStopId = "2",
                 toStopName = "Harris Park Station",
             ),
-            primaryTransportMode = TransportMode.Train(),
+            primaryTransportMode = TransportMode.Train,
             onCardClick = {},
             onStarClick = {},
         )
@@ -131,7 +133,7 @@ private fun SavedTripCardListPreview() {
                     toStopId = "2",
                     toStopName = "Harris Park Station",
                 ),
-                primaryTransportMode = TransportMode.Train(),
+                primaryTransportMode = TransportMode.Train,
                 onCardClick = {},
                 onStarClick = {},
             )
@@ -143,7 +145,7 @@ private fun SavedTripCardListPreview() {
                     toStopId = "2",
                     toStopName = "Albert Rd, Stand A",
                 ),
-                primaryTransportMode = TransportMode.Bus(),
+                primaryTransportMode = TransportMode.Bus,
                 onCardClick = {},
                 onStarClick = {},
             )
@@ -155,7 +157,7 @@ private fun SavedTripCardListPreview() {
                     toStopId = "2",
                     toStopName = "Circular Quay Wharf",
                 ),
-                primaryTransportMode = TransportMode.Ferry(),
+                primaryTransportMode = TransportMode.Ferry,
                 onCardClick = {},
                 onStarClick = {},
             )
@@ -167,7 +169,7 @@ private fun SavedTripCardListPreview() {
                     toStopId = "2",
                     toStopName = "Town Hall Station",
                 ),
-                primaryTransportMode = TransportMode.Metro(),
+                primaryTransportMode = TransportMode.Metro,
                 onCardClick = {},
                 onStarClick = {},
             )

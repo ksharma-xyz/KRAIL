@@ -20,6 +20,7 @@ import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.MapLayerConfig
 import xyz.ksharma.krail.core.maps.state.geoJsonProperties
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import org.maplibre.spatialk.geojson.Feature as GeoJsonFeature
 
@@ -87,7 +88,9 @@ private fun List<NearbyStopFeature>.toFeatureCollection(): FeatureCollection<*, 
     }
 
     val features = map { stop ->
-        val color = stop.transportModes.firstOrNull()?.colorCode ?: "#000000"
+        val color = stop.transportModes.firstOrNull()
+            ?.let { NswTransportConfig.colorFor(it) }
+            ?: "#000000"
         GeoJsonFeature(
             geometry = Point(
                 coordinates = Position(

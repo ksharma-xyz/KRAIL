@@ -9,6 +9,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.geoJsonProperties
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyLegFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
@@ -87,7 +88,7 @@ object JourneyMapFeatureMapper {
                 property(GeoJsonPropertyKeys.IS_WALKING, isWalking)
                 propertyIfNotNull(GeoJsonPropertyKeys.LINE_NAME, lineName ?: if (isWalking) "Walking" else null)
                 transportMode?.let { mode ->
-                    property(GeoJsonPropertyKeys.MODE_TYPE, mode.productClass)
+                    property(GeoJsonPropertyKeys.MODE_TYPE, NswTransportConfig.productClassFor(mode))
                 }
             },
         )
@@ -118,7 +119,7 @@ object JourneyMapFeatureMapper {
                 property(GeoJsonPropertyKeys.IS_WALKING, false)
                 propertyIfNotNull(GeoJsonPropertyKeys.LINE_NAME, lineName)
                 transportMode?.let { mode ->
-                    property(GeoJsonPropertyKeys.MODE_TYPE, mode.productClass)
+                    property(GeoJsonPropertyKeys.MODE_TYPE, NswTransportConfig.productClassFor(mode))
                 }
             },
         )

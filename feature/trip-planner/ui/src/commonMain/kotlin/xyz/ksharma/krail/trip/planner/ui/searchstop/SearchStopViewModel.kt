@@ -25,10 +25,11 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
@@ -117,7 +118,7 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.TransportModeFilterToggled -> {
-                log("[NEARBY_STOPS] TransportModeFilterToggled: mode=${event.mode.name}")
+                log("[NEARBY_STOPS] TransportModeFilterToggled: mode=${NswTransportConfig.nameFor(event.mode)}")
                 onModeToggled(event.mode)
             }
 

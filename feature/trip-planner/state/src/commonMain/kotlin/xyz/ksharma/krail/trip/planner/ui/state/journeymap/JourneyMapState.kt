@@ -2,7 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.state.journeymap
 
 import xyz.ksharma.krail.core.maps.state.CameraFocus
 import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
 
 /**
  * Platform-agnostic types for journey map UI state.

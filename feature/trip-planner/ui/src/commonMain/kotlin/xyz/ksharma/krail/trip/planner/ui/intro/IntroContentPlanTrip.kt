@@ -21,11 +21,12 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.JourneyTimeOptionsGroup
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.TimeSelection
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,7 +82,9 @@ fun IntroContentPlanTrip(
                 )
 
                 CompositionLocalProvider(
-                    LocalThemeColor provides rememberSaveable { mutableStateOf(TransportMode.Coach().colorCode) },
+                    LocalThemeColor provides rememberSaveable {
+                        mutableStateOf(NswTransportConfig.colorFor(TransportMode.Coach))
+                    },
                     LocalDensity provides Density(
                         (density.density - 0.6f).coerceIn(1.5f, 2.5f),
                         fontScale = 1f,

@@ -5,7 +5,8 @@ import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -87,10 +88,11 @@ object MapStateHelper {
         mode: TransportMode,
     ): SearchStopState = state.withMapState {
         val currentModes = mapDisplay.selectedTransportModes.toMutableSet()
-        if (currentModes.contains(mode.productClass)) {
-            currentModes.remove(mode.productClass)
+        val pc = NswTransportConfig.productClassFor(mode)
+        if (currentModes.contains(pc)) {
+            currentModes.remove(pc)
         } else {
-            currentModes.add(mode.productClass)
+            currentModes.add(pc)
         }
         copy(
             mapDisplay = mapDisplay.copy(

@@ -15,9 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.trip.planner.ui.components.LegView
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
@@ -50,7 +50,7 @@ fun IntroContentRealTime(
             LegView(
                 routeText = "Circular Quay to Mosman Bay",
                 transportModeLine = TransportModeLine(
-                    transportMode = TransportMode.Ferry(),
+                    transportMode = TransportMode.Ferry,
                     lineName = "F6",
                 ),
                 stops = stopsList(),

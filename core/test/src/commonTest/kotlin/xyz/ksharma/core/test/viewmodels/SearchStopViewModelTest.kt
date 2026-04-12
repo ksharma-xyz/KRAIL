@@ -19,7 +19,8 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -203,12 +204,12 @@ class SearchStopViewModelTest {
             val recentStop1 = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(TransportMode.Train())
+                transportModeType = persistentListOf(NswTransportMode.Train)
             )
             val recentStop2 = SearchStopState.StopResult(
                 stopId = "recent2",
                 stopName = "Recent Stop 2",
-                transportModeType = persistentListOf(TransportMode.Bus())
+                transportModeType = persistentListOf(NswTransportMode.Bus)
             )
 
             fakeStopResultsManager.addRecentSearchStop(recentStop1)
@@ -237,12 +238,12 @@ class SearchStopViewModelTest {
             val recentStop1 = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(TransportMode.Train())
+                transportModeType = persistentListOf(NswTransportMode.Train)
             )
             val recentStop2 = SearchStopState.StopResult(
                 stopId = "recent2",
                 stopName = "Recent Stop 2",
-                transportModeType = persistentListOf(TransportMode.Bus())
+                transportModeType = persistentListOf(NswTransportMode.Bus)
             )
 
             fakeStopResultsManager.addRecentSearchStop(recentStop1)
@@ -278,7 +279,7 @@ class SearchStopViewModelTest {
             val recentStop = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(TransportMode.Train())
+                transportModeType = persistentListOf(NswTransportMode.Train)
             )
             fakeStopResultsManager.addRecentSearchStop(recentStop)
 
@@ -346,7 +347,7 @@ class SearchStopViewModelTest {
             val recentStop = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(TransportMode.Train())
+                transportModeType = persistentListOf(NswTransportMode.Train)
             )
             fakeStopResultsManager.addRecentSearchStop(recentStop)
 

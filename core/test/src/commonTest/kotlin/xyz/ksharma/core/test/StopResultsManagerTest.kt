@@ -4,7 +4,8 @@ import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 // TODO Write UTs separately
@@ -62,21 +63,21 @@ class RealStopResultsManagerTest {
 
             // Create test data
             val stopResults = listOf(
-                createStopResult("200060", "Stop A", listOf(TransportMode.Train())),
-                createStopResult("200080", "Stop B", listOf(TransportMode.Bus())),
-                createStopResult("200070", "Stop C", listOf(TransportMode.Ferry())),
-                createStopResult("200090", "Stop D", listOf(TransportMode.Train(), TransportMode.Bus()))
+                createStopResult("200060", "Stop A", listOf(NswTransportMode.Train)),
+                createStopResult("200080", "Stop B", listOf(NswTransportMode.Bus)),
+                createStopResult("200070", "Stop C", listOf(NswTransportMode.Ferry)),
+                createStopResult("200090", "Stop D", listOf(NswTransportMode.Train, NswTransportMode.Bus))
             )
 
             val expectedResults = listOf(
-                createStopResult("200060", "Stop A", listOf(TransportMode.Train())),
-                createStopResult("200070", "Stop C", listOf(TransportMode.Ferry())),
+                createStopResult("200060", "Stop A", listOf(NswTransportMode.Train)),
+                createStopResult("200070", "Stop C", listOf(NswTransportMode.Ferry)),
                 createStopResult(
                     "200090",
                     "Stop D",
-                    listOf(TransportMode.Train(), TransportMode.Bus())
+                    listOf(NswTransportMode.Train, NswTransportMode.Bus)
                 ),
-                createStopResult("200080", "Stop B", listOf(TransportMode.Bus()))
+                createStopResult("200080", "Stop B", listOf(NswTransportMode.Bus))
             )
 
             // Call the method

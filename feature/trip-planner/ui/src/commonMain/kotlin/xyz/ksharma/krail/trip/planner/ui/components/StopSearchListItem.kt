@@ -15,10 +15,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 @Composable
@@ -69,8 +69,8 @@ private fun StopSearchListItemPreview() {
             stopId = "123",
             stopName = "Stop Name",
             transportModeSet = persistentSetOf(
-                TransportMode.Bus(),
-                TransportMode.LightRail(),
+                TransportMode.Bus,
+                TransportMode.LightRail,
             ),
             textColor = KrailTheme.colors.onSurface,
         )
@@ -85,8 +85,8 @@ private fun StopSearchListItemLongNamePreview() {
             stopId = "123",
             stopName = "This is a very long stop name that should wrap to the next line",
             transportModeSet = persistentSetOf(
-                TransportMode.Train(),
-                TransportMode.Ferry(),
+                TransportMode.Train,
+                TransportMode.Ferry,
             ),
             textColor = KrailTheme.colors.onSurface,
         )

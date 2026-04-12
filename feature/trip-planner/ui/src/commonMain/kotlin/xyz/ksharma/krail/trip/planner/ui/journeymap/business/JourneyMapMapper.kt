@@ -4,9 +4,10 @@ import xyz.ksharma.krail.core.maps.state.BoundingBox
 import xyz.ksharma.krail.core.maps.state.CameraFocus
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.core.transport.nsw.NswTransportLine
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyLegFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
@@ -65,11 +66,11 @@ object JourneyMapMapper {
         return when {
             transportMode == null -> WALKING_PATH_COLOR
             lineName != null ->
-                TransportModeLine.TransportLine.entries
+                NswTransportLine.entries
                     .firstOrNull { it.key == lineName }
                     ?.hexColor
-                    ?: transportMode.colorCode
-            else -> transportMode.colorCode
+                    ?: NswTransportConfig.colorFor(transportMode)
+            else -> NswTransportConfig.colorFor(transportMode)
         }
     }
 
@@ -238,6 +239,6 @@ object JourneyMapMapper {
      */
     private fun TripResponse.Transportation.toTransportMode(): TransportMode? {
         val productClass = product?.productClass?.toInt() ?: return null
-        return TransportMode.toTransportModeType(productClass)
+        return NswTransportConfig.modeFromProductClass(productClass)
     }
 }

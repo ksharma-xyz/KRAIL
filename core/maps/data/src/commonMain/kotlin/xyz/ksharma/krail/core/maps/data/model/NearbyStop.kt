@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.core.maps.data.model
 
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
+import xyz.ksharma.krail.core.transport.TransportMode
 
 /**
  * Nearby stop data model.

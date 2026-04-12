@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.LocalThemeColor
@@ -35,7 +36,6 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toAdaptiveSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
 @Composable
@@ -146,7 +146,7 @@ fun CollapsibleAlert(
 @Composable
 private fun PreviewCollapsibleAlertCollapsed() {
     PreviewTheme {
-        val color = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
+        val color = remember { mutableStateOf(NswTransportMode.Ferry.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides color) {
             CollapsibleAlert(
                 serviceAlert = ServiceAlert(
@@ -165,7 +165,7 @@ private fun PreviewCollapsibleAlertCollapsed() {
 @Composable
 private fun PreviewCollapsibleAlertExpanded() {
     PreviewTheme {
-        val color = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
+        val color = remember { mutableStateOf(NswTransportMode.Ferry.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides color) {
             CollapsibleAlert(
                 serviceAlert = ServiceAlert(

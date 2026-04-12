@@ -52,6 +52,10 @@ import krail.feature.trip_planner.ui.generated.resources.ic_star
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.TransportModeSortOrder
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -71,9 +75,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
@@ -245,18 +247,21 @@ fun TimeTableScreen(
                             .animateItem(),
                     ) {
                         items(
-                            items = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY),
-                            key = { item -> item.productClass },
+                            items = NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY),
+                            key = { item -> NswTransportConfig.productClassFor(item) },
                         ) {
                             TransportModeChip(
                                 transportMode = it,
-                                selected = !unselectedModesProductClass.contains(it.productClass),
+                                selected = !unselectedModesProductClass.contains(
+                                    NswTransportConfig.productClassFor(it),
+                                ),
                                 onClick = {
                                     // Toggle / Set behavior
-                                    if (unselectedModesProductClass.contains(it.productClass)) {
-                                        unselectedModesProductClass.removeAll(listOf(it.productClass))
+                                    val pc = NswTransportConfig.productClassFor(it)
+                                    if (unselectedModesProductClass.contains(pc)) {
+                                        unselectedModesProductClass.removeAll(listOf(pc))
                                     } else {
-                                        unselectedModesProductClass.add(it.productClass)
+                                        unselectedModesProductClass.add(pc)
                                     }
                                     log("After operation Exclude - : $unselectedModesProductClass")
                                 },
@@ -455,7 +460,7 @@ fun ActionButton(
 @Composable
 private fun PreviewTimeTableScreen() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Ferry().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Ferry.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             TimeTableScreen(
                 timeTableState = TimeTableState(
@@ -475,7 +480,7 @@ private fun PreviewTimeTableScreen() {
                             travelTime = "30 mins",
                             transportModeLines = persistentListOf(
                                 TransportModeLine(
-                                    transportMode = TransportMode.Bus(),
+                                    transportMode = TransportMode.Bus,
                                     lineName = "123",
                                 ),
                             ),
@@ -500,7 +505,7 @@ private fun PreviewTimeTableScreen() {
 @Composable
 private fun PreviewTimeTableScreenError() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             TimeTableScreen(
                 timeTableState = TimeTableState(
@@ -527,7 +532,7 @@ private fun PreviewTimeTableScreenError() {
 @Composable
 private fun PreviewTimeTableScreenNoResults() {
     PreviewTheme {
-        val themeColor = remember { mutableStateOf(TransportMode.Train().colorCode) }
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             TimeTableScreen(
                 timeTableState = TimeTableState(

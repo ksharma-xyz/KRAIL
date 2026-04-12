@@ -10,11 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopInfoRow
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyStopUiMapper.getTimeInfo
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet as SharedStopDetailsBottomSheet

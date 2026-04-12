@@ -13,10 +13,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import xyz.ksharma.krail.core.transport.TransportModeSortOrder
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
-import xyz.ksharma.krail.trip.planner.ui.state.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.TransportModeSortOrder
 
 @Composable
 fun IntroContentSelectTransportMode(
@@ -24,7 +24,7 @@ fun IntroContentSelectTransportMode(
     style: String, // hexCode - // todo - see if it can be color instead.
     modifier: Modifier = Modifier,
 ) {
-    val allModes = TransportMode.sortedValues(TransportModeSortOrder.PRIORITY)
+    val allModes = NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
     val selectedProductClasses = remember { mutableStateSetOf<String>() }
 
     LaunchedEffect(Unit) {
@@ -36,10 +36,12 @@ fun IntroContentSelectTransportMode(
             when {
                 step == 0 -> { /* none selected */ }
                 step in 1..total -> {
-                    selectedProductClasses.addAll(allModes.take(step).map { it.productClass.toString() })
+                    selectedProductClasses.addAll(
+                        allModes.take(step).map { NswTransportConfig.productClassFor(it).toString() },
+                    )
                 }
                 step == total + 1 -> { // all selected
-                    selectedProductClasses.addAll(allModes.map { it.productClass.toString() })
+                    selectedProductClasses.addAll(allModes.map { NswTransportConfig.productClassFor(it).toString() })
                 }
             }
             delay(1000)
@@ -73,12 +75,13 @@ fun IntroContentSelectTransportMode(
                 allModes.forEach { mode ->
                     TransportModeChip(
                         transportMode = mode,
-                        selected = selectedProductClasses.contains(mode.productClass.toString()),
+                        selected = selectedProductClasses.contains(NswTransportConfig.productClassFor(mode).toString()),
                         onClick = {
-                            if (selectedProductClasses.contains(mode.productClass.toString())) {
-                                selectedProductClasses.remove(mode.productClass.toString())
+                            val pc = NswTransportConfig.productClassFor(mode).toString()
+                            if (selectedProductClasses.contains(pc)) {
+                                selectedProductClasses.remove(pc)
                             } else {
-                                selectedProductClasses.add(mode.productClass.toString())
+                                selectedProductClasses.add(pc)
                             }
                         },
                     )

@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
@@ -41,6 +44,10 @@ class DeparturesViewModel(
      */
     val isActive: StateFlow<Boolean> = MutableStateFlow(false).onStart {
         while (true) {
+            // Throw if the collecting coroutine was cancelled — avoids launching unnecessary
+            // work between the end of delay() (which already throws on cancel) and the guard
+            // check, and makes the intent explicit.
+            currentCoroutineContext().ensureActive()
             if (_uiState.value.departures.isNotEmpty()) {
                 updateRelativeTimeText()
             }
@@ -68,30 +75,33 @@ class DeparturesViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun updateRelativeTimeText() = viewModelScope.launch {
-        val current = _uiState.value
-        val updatedDepartures = withContext(ioDispatcher) {
-            current.departures.map { departure ->
-                departure.copy(
-                    relativeTimeText = runCatching {
-                        calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                            .toGenericFormattedTimeString()
-                    }.getOrDefault(""),
-                )
-            }.toImmutableList()
+    private fun updateRelativeTimeText() =
+        viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
+            val current = _uiState.value
+            val updatedDepartures = withContext(ioDispatcher) {
+                current.departures.map { departure ->
+                    departure.copy(
+                        relativeTimeText = runCatching {
+                            calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
+                                .toGenericFormattedTimeString()
+                        }.getOrDefault(""),
+                    )
+                }.toImmutableList()
+            }
+            ensureActive()
+            val updatedPrevious = withContext(ioDispatcher) {
+                current.previousDepartures.map { departure ->
+                    departure.copy(
+                        relativeTimeText = runCatching {
+                            calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
+                                .toGenericFormattedTimeString()
+                        }.getOrDefault(""),
+                    )
+                }.toImmutableList()
+            }
+            ensureActive()
+            _uiState.update { it.copy(departures = updatedDepartures, previousDepartures = updatedPrevious) }
         }
-        val updatedPrevious = withContext(ioDispatcher) {
-            current.previousDepartures.map { departure ->
-                departure.copy(
-                    relativeTimeText = runCatching {
-                        calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                            .toGenericFormattedTimeString()
-                    }.getOrDefault(""),
-                )
-            }.toImmutableList()
-        }
-        _uiState.update { it.copy(departures = updatedDepartures, previousDepartures = updatedPrevious) }
-    }
 
     fun onEvent(event: DeparturesUiEvent) {
         when (event) {

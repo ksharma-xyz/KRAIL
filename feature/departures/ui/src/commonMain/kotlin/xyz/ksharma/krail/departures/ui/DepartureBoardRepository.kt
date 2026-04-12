@@ -5,11 +5,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
@@ -18,6 +19,8 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.departures.network.api.service.DeparturesService
 import xyz.ksharma.krail.departures.ui.business.toStopDepartures
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
@@ -38,7 +41,7 @@ import kotlin.time.Instant
  */
 class DepartureBoardRepository(
     private val departuresService: DeparturesService,
-    ioDispatcher: CoroutineDispatcher,
+    private val ioDispatcher: CoroutineDispatcher,
     private val config: DepartureBoardConfig = DepartureBoardConfig(),
 ) {
 
@@ -94,7 +97,10 @@ class DepartureBoardRepository(
         if (!hasData) stateFor(stopId).update { DeparturesState(isLoading = true) }
         log("[$LOG_TAG] setActiveStop → stopId=$stopId, hasData=$hasData")
 
-        activeJob = scope.launch {
+        activeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+            // Check cancellation before any work — covers the gap between launch() and the
+            // first suspension point (the withLock below).
+            ensureActive()
             val nowMs = Clock.System.now().toEpochMilliseconds()
             val elapsedMs = nowMs - (fetchTimeMutex.withLock { lastFetchTime[stopId] } ?: 0L)
 
@@ -110,14 +116,19 @@ class DepartureBoardRepository(
             }
             while (true) {
                 delay(config.refreshIntervalMs)
+                // delay() throws CancellationException when the job is cancelled. The explicit
+                // ensureActive() here is a belt-and-suspenders guard in case a future refactor
+                // moves delay() away from being the first statement.
+                ensureActive()
                 log("[$LOG_TAG] auto-refresh for stopId=$stopId")
                 fetchDepartures(stopId = stopId, showFullLoading = false)
             }
         }
 
-        relativeTimeJob = scope.launch {
+        relativeTimeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
             while (true) {
                 delay(config.relativeTimeRefreshMs)
+                ensureActive()
                 updateRelativeTime(stopId)
             }
         }
@@ -161,7 +172,9 @@ class DepartureBoardRepository(
 
     /** Triggers an immediate silent refresh for [stopId], independent of the poll loop. */
     fun refresh(stopId: String) {
-        scope.launch { fetchDepartures(stopId = stopId, showFullLoading = false) }
+        scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+            fetchDepartures(stopId = stopId, showFullLoading = false)
+        }
     }
 
     private fun stateFor(stopId: String): MutableStateFlow<DeparturesState> =
@@ -169,6 +182,8 @@ class DepartureBoardRepository(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun fetchDepartures(stopId: String, showFullLoading: Boolean) {
+        // Throw immediately if this coroutine was cancelled before we touch any state.
+        currentCoroutineContext().ensureActive()
         val flow = stateFor(stopId)
         if (showFullLoading) {
             flow.update { DeparturesState(isLoading = true) }
@@ -176,9 +191,13 @@ class DepartureBoardRepository(
             flow.update { it.copy(silentLoading = true) }
         }
         fetchTimeMutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
-        runCatching {
-            departuresService.departures(stopId = stopId, date = null, time = null)
+        // suspendSafeResult re-throws CancellationException so it is never silently swallowed.
+        departuresService.suspendSafeResult(ioDispatcher) {
+            departures(stopId = stopId, date = null, time = null)
         }.onSuccess { response ->
+            // Check again after the network call — the job may have been cancelled while
+            // the request was in flight.
+            currentCoroutineContext().ensureActive()
             val departures = response.toStopDepartures()
             log("[$LOG_TAG] success — ${departures.size} departures for stopId=$stopId")
             flow.update { current ->
@@ -217,26 +236,29 @@ class DepartureBoardRepository(
      */
     @OptIn(ExperimentalTime::class)
     fun loadPreviousDepartures(stopId: String) {
-        scope.launch {
+        scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
             val nowMs = Clock.System.now().toEpochMilliseconds()
             val elapsedMs = nowMs - (fetchTimeMutex.withLock { lastPreviousFetchTime[stopId] } ?: 0L)
             val flow = stateFor(stopId)
 
             // If we already have data and it's still within the refresh window, skip the fetch.
-            if (elapsedMs < config.refreshIntervalMs && flow.value.previousDepartures.isNotEmpty()) {
+            val isCacheHit = elapsedMs < config.refreshIntervalMs && flow.value.previousDepartures.isNotEmpty()
+            if (isCacheHit) {
                 log("[$LOG_TAG] previous departures cache hit for stopId=$stopId (${elapsedMs}ms ago)")
-                return@launch
+                return@launchWithExceptionHandler
             }
 
             flow.update { it.copy(isPreviousLoading = true) }
             val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
-            runCatching {
-                departuresService.departures(
+            // suspendSafeResult re-throws CancellationException so it is never silently swallowed.
+            departuresService.suspendSafeResult(ioDispatcher) {
+                departures(
                     stopId = stopId,
                     date = fromTime.toApiDateString(),
                     time = fromTime.toApiTimeString(),
                 )
             }.onSuccess { response ->
+                currentCoroutineContext().ensureActive()
                 val now = Clock.System.now()
                 val previous = response.toStopDepartures()
                     .filter { departure ->
@@ -246,8 +268,12 @@ class DepartureBoardRepository(
                     }
                     .map { it.copy(timing = DepartureTiming.Previous) }
                     .toImmutableList()
+
                 log("[$LOG_TAG] previous departures — ${previous.size} found for stopId=$stopId")
-                fetchTimeMutex.withLock { lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
+                fetchTimeMutex.withLock {
+                    lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds()
+                }
+
                 flow.update {
                     it.copy(
                         previousDepartures = previous,

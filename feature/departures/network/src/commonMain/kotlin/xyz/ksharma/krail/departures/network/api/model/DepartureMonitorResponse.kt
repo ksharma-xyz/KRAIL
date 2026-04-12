@@ -53,8 +53,9 @@ data class DepartureMonitorResponse(
     /**
      * The stop / platform this departure departs from.
      *
-     * [disassembledName] is the human-readable platform label (e.g. "Platform 1",
-     * "Stand A"). Fall back to [name] if [disassembledName] is absent.
+     * [disassembledName] is the human-readable platform label (e.g. "Platform 1", "Stand A").
+     * Use [displayName] to resolve the label with automatic fallback to [name] when
+     * [disassembledName] is absent.
      */
     @Serializable
     data class Location(
@@ -62,7 +63,14 @@ data class DepartureMonitorResponse(
         @SerialName("name") val name: String? = null,
         @SerialName("disassembledName") val disassembledName: String? = null,
         @SerialName("parent") val parent: Parent? = null,
-    )
+    ) {
+        /**
+         * Human-readable display label for the stop or platform.
+         * Returns [disassembledName] when present (e.g. "Platform 1", "Stand A"),
+         * falling back to [name] when [disassembledName] is absent.
+         */
+        val displayName: String? get() = disassembledName ?: name
+    }
 
     @Serializable
     data class Parent(

@@ -21,7 +21,7 @@ class DepartureMonitorResponseTest {
     }
 
     @Test
-    fun `Given stopEvent with estimatedTime When parsed Then estimatedTime takes priority over planned`() {
+    fun `Given stopEvent with estimatedTime When parsed Then both planned and estimated times deserialize correctly`() {
         val response = json.decodeFromString<DepartureMonitorResponse>(SAMPLE_RESPONSE)
         val event = response.stopEvents?.first()
 
@@ -62,9 +62,39 @@ class DepartureMonitorResponseTest {
     }
 
     @Test
-    fun `Given stopEvent without platform info When parsed Then disassembledName falls back to name`() {
+    fun `Given location with disassembledName present When accessing displayName Then returns disassembledName`() {
+        val location = DepartureMonitorResponse.Location(
+            id = "10111012",
+            name = "Town Hall Station, Platform 1",
+            disassembledName = "Platform 1",
+        )
+
+        assertEquals("Platform 1", location.displayName)
+    }
+
+    @Test
+    fun `Given location with disassembledName absent When accessing displayName Then falls back to name`() {
+        val location = DepartureMonitorResponse.Location(
+            id = "10111012",
+            name = "Town Hall Station",
+            disassembledName = null,
+        )
+
+        assertEquals("Town Hall Station", location.displayName)
+    }
+
+    @Test
+    fun `Given location with both name and disassembledName absent When accessing displayName Then returns null`() {
+        val location = DepartureMonitorResponse.Location(id = "10111012")
+
+        assertNull(location.displayName)
+    }
+
+    @Test
+    fun `Given metro stopEvent without separate platform identifier When parsed Then disassembledName deserializes correctly`() {
         val response = json.decodeFromString<DepartureMonitorResponse>(SAMPLE_RESPONSE)
-        // Third event has no platform — disassembledName equals the stop name
+        // Third event is a metro station without a separate platform identifier;
+        // the JSON explicitly carries disassembledName equal to the stop name.
         val location = response.stopEvents?.get(2)?.location
 
         assertNotNull(location)

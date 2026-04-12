@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
@@ -44,6 +46,10 @@ class DepartureBoardRepository(
 
     // Accessed only from the Main thread (ViewModel calls), so a plain map is safe.
     private val cache = mutableMapOf<String, MutableStateFlow<DeparturesState>>()
+
+    // Guards lastFetchTime and lastPreviousFetchTime — both maps are written from IO
+    // dispatcher coroutines so they need synchronization.
+    private val fetchTimeMutex = Mutex()
 
     // Tracks the epoch-ms of the last successful fetch per stop, to avoid redundant
     // API calls when a stop is collapsed then re-expanded within the 30-second window.
@@ -90,7 +96,7 @@ class DepartureBoardRepository(
 
         activeJob = scope.launch {
             val nowMs = Clock.System.now().toEpochMilliseconds()
-            val elapsedMs = nowMs - (lastFetchTime[stopId] ?: 0L)
+            val elapsedMs = nowMs - (fetchTimeMutex.withLock { lastFetchTime[stopId] } ?: 0L)
 
             if (elapsedMs >= config.refreshIntervalMs) {
                 // Either never fetched, or the 30-second window has expired — fetch now.
@@ -169,7 +175,7 @@ class DepartureBoardRepository(
         } else {
             flow.update { it.copy(silentLoading = true) }
         }
-        lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds()
+        fetchTimeMutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
         runCatching {
             departuresService.departures(stopId = stopId, date = null, time = null)
         }.onSuccess { response ->
@@ -184,6 +190,7 @@ class DepartureBoardRepository(
                     // Preserve previously fetched past departures across regular refreshes.
                     previousDepartures = current.previousDepartures,
                     isPreviousLoading = current.isPreviousLoading,
+                    previousWindowMinutes = current.previousWindowMinutes,
                 )
             }
         }.onFailure { throwable ->
@@ -202,8 +209,8 @@ class DepartureBoardRepository(
     }
 
     /**
-     * Fetches departures from the past [PREVIOUS_WINDOW_MINUTES] minutes for [stopId]
-     * and stores only the ones with a departure time before now.
+     * Fetches departures from the past [DepartureBoardConfig.previousDeparturesWindowMinutes]
+     * minutes for [stopId] and stores only the ones with a departure time before now.
      *
      * Called when the user taps "Show previous" in the departure board UI.
      * Results are stored in [DeparturesState.previousDepartures] and survive regular refreshes.
@@ -212,7 +219,7 @@ class DepartureBoardRepository(
     fun loadPreviousDepartures(stopId: String) {
         scope.launch {
             val nowMs = Clock.System.now().toEpochMilliseconds()
-            val elapsedMs = nowMs - (lastPreviousFetchTime[stopId] ?: 0L)
+            val elapsedMs = nowMs - (fetchTimeMutex.withLock { lastPreviousFetchTime[stopId] } ?: 0L)
             val flow = stateFor(stopId)
 
             // If we already have data and it's still within the refresh window, skip the fetch.
@@ -240,7 +247,7 @@ class DepartureBoardRepository(
                     .map { it.copy(timing = DepartureTiming.Previous) }
                     .toImmutableList()
                 log("[$LOG_TAG] previous departures — ${previous.size} found for stopId=$stopId")
-                lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds()
+                fetchTimeMutex.withLock { lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
                 flow.update {
                     it.copy(
                         previousDepartures = previous,

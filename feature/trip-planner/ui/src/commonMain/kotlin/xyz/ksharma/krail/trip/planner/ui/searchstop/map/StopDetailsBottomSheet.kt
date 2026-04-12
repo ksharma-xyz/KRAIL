@@ -10,17 +10,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.collections.immutable.persistentListOf
+import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.departures.ui.DeparturesViewModel
 import xyz.ksharma.krail.park.ride.ui.components.ParkAndRideIcon
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardCard
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopActionButton
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet as SharedStopDetailsBottomSheet
@@ -36,6 +41,13 @@ fun StopDetailsBottomSheet(
     onSelectStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val departuresViewModel = koinViewModel<DeparturesViewModel>()
+    val departuresState by departuresViewModel.uiState.collectAsStateWithLifecycle()
+    // Collecting isActive keeps the relative-time tick loop alive (WhileSubscribed).
+
+    @Suppress("UNUSED_VARIABLE")
+    val isActive by departuresViewModel.isActive.collectAsStateWithLifecycle()
+
     SharedStopDetailsBottomSheet(
         stopId = stop.stopId,
         stopName = stop.stopName,
@@ -43,6 +55,15 @@ fun StopDetailsBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         additionalInfo = {
+            DepartureBoardCard(
+                stopId = stop.stopId,
+                state = departuresState,
+                onEvent = departuresViewModel::onEvent,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Parking section (if available)
             if (stop.hasParkAndRide) {
                 ParkingInfoSection(modifier = Modifier.padding(horizontal = 16.dp))

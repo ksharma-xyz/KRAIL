@@ -10,7 +10,6 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeStri
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
@@ -35,7 +34,7 @@ internal fun DepartureMonitorResponse.toStopDepartures(): ImmutableList<StopDepa
 internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture? {
     val isRealTime = departureTimeEstimated != null
     val departureUtc = departureTimeEstimated ?: departureTimePlanned ?: run {
-        logError("DepartureMonitorMapper", Exception("StopEvent has no departure time, skipping"))
+        log("[DepartureMonitorMapper] skipping StopEvent — no departure time (both planned and estimated are null)")
         return null
     }
 
@@ -96,13 +95,8 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
 private fun DepartureMonitorResponse.Location.resolvePlatformText(): String? {
     val locationLabel = disassembledName ?: return null
     // Without a parent, this location IS the stop itself — no platform sub-label to extract.
-    val parentNode = parent ?: return null
-    log(
-        "[DEPARTURES] resolvePlatformText — disassembledName=\"$locationLabel\" " +
-            "parent=\"${parentNode.disassembledName}\"",
-    )
+    parent ?: return null
     return extractPlatformText(locationLabel)
-        .also { log("[DEPARTURES] resolvePlatformText → result=\"$it\"") }
 }
 
 // Resolves the hex colour for a line badge via NswTransportConfig:

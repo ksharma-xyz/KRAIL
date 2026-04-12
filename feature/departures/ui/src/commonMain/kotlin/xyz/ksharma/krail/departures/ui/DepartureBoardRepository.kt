@@ -124,7 +124,7 @@ class DepartureBoardRepository(
         val elapsedMs = nowMs - mutex.withLock { lastFetchTime[stopId] ?: 0L }
 
         mutex.withLock {
-            if (activeStopId != stopId) return  // guard: stop was switched while we prepared
+            if (activeStopId != stopId) return // guard: stop was switched while we prepared
             activeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
                 // Check cancellation before any work — covers the gap between launch() and the
                 // first suspension point.
@@ -135,7 +135,10 @@ class DepartureBoardRepository(
                     fetchDepartures(stopId = stopId, showFullLoading = !hasData)
                 } else {
                     // Still within the 30-second window — show cached data, wait for the remainder.
-                    log("[$LOG_TAG] within refresh window for $stopId, waiting ${config.refreshIntervalMs - elapsedMs}ms")
+                    log(
+                        "[$LOG_TAG] within refresh window for $stopId, " +
+                            "waiting ${config.refreshIntervalMs - elapsedMs}ms",
+                    )
                     delay(config.refreshIntervalMs - elapsedMs)
                     fetchDepartures(stopId = stopId, showFullLoading = false)
                 }
@@ -167,11 +170,13 @@ class DepartureBoardRepository(
         } else {
             flow.update { it.copy(silentLoading = true) }
         }
-        mutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
         // suspendSafeResult re-throws CancellationException so it is never silently swallowed.
         departuresService.suspendSafeResult(ioDispatcher) {
             departures(stopId = stopId, date = null, time = null)
         }.onSuccess { response ->
+            // Record fetch time only on success — a failed request should not block the
+            // refresh window, so the next setActiveStop can retry immediately.
+            mutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
             // Check again after the network call — the job may have been cancelled while
             // the request was in flight.
             currentCoroutineContext().ensureActive()

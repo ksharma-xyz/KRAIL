@@ -51,7 +51,7 @@ data class DeparturesState(
     val departures: ImmutableList<StopDeparture> = persistentListOf(),
 
     /**
-     * Departures that occurred in the past ~15 minutes.
+     * Departures that occurred in the past [previousWindowMinutes] minutes.
      * Empty until the user requests them via the "Show previous" toggle.
      * Preserved across regular refreshes so the user doesn't lose the data on auto-refresh.
      */

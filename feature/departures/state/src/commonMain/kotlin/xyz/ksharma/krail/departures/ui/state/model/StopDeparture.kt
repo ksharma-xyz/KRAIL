@@ -7,7 +7,7 @@ import androidx.compose.runtime.Stable
  * Used by the UI to apply different visual treatments (e.g. dimmed alpha for past departures).
  */
 enum class DepartureTiming {
-    /** Departure occurred in the past (~15 min window, shown via "Show previous" toggle). */
+    /** Departure occurred in the past (configurable window, shown via "Show previous" toggle). */
     Previous,
 
     /** Departure is upcoming. Default for all normally fetched departures. */

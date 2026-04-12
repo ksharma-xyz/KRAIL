@@ -126,7 +126,8 @@ object DateTimeHelper {
     }
 
     /**
-     * Formats an [Instant] as a date string in YYYYMMDD format in the AEST timezone.
+     * Formats an [Instant] as a date string in YYYYMMDD format in the Australia/Sydney timezone
+     * (observes DST — AEST in winter, AEDT in summer).
      * Used as the `date` parameter for NSW Transport API requests (e.g. "20260412").
      */
     @OptIn(ExperimentalTime::class)
@@ -138,7 +139,8 @@ object DateTimeHelper {
     }
 
     /**
-     * Formats an [Instant] as a time string in HHMM 24-hour format in the AEST timezone.
+     * Formats an [Instant] as a time string in HHMM 24-hour format in the Australia/Sydney
+     * timezone (observes DST — AEST in winter, AEDT in summer).
      * Used as the `time` parameter for NSW Transport API requests (e.g. "1430").
      */
     @OptIn(ExperimentalTime::class)

@@ -1,8 +1,10 @@
 package xyz.ksharma.krail.core.datetime
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.log.logError
 import kotlin.math.absoluteValue
@@ -16,6 +18,8 @@ import kotlin.time.Instant
 object DateTimeHelper {
 
     private const val ERROR_MESSAGE = "Error parsing date string:"
+    private const val AEST_TIMEZONE = "Australia/Sydney"
+    private const val DATE_LABEL_ABBREV_LENGTH = 3
 
     /**
      * Converts a UTC ISO 8601 date-time string (e.g., "2025-06-13T06:48:13Z")
@@ -37,7 +41,7 @@ object DateTimeHelper {
     @OptIn(ExperimentalTime::class)
     fun String.utcToAEST(): String {
         val instant = Instant.parse(this)
-        val aestZone = TimeZone.of("Australia/Sydney")
+        val aestZone = TimeZone.of(AEST_TIMEZONE)
         val localDateTime = instant.toLocalDateTime(aestZone)
         return localDateTime.toString()
     }
@@ -45,7 +49,7 @@ object DateTimeHelper {
     @OptIn(ExperimentalTime::class)
     fun String.utcToLocalDateTimeAEST(): LocalDateTime {
         val instant = Instant.parse(this)
-        val aestZone = TimeZone.of("Australia/Sydney")
+        val aestZone = TimeZone.of(AEST_TIMEZONE)
         val localDateTime = instant.toLocalDateTime(aestZone)
         return localDateTime
     }
@@ -59,7 +63,7 @@ object DateTimeHelper {
 
     /* fun String.aestToHHMM(): String {
          val dateTimeString = if (this.length == 16) "$this:00" else this
-         val localDateTime = Instant.parse(dateTimeString).toLocalDateTime(TimeZone.of("Australia/Sydney"))
+         val localDateTime = Instant.parse(dateTimeString).toLocalDateTime(TimeZone.of(AEST_TIMEZONE))
          val hour = if (localDateTime.hour % 12 == 0) 12 else localDateTime.hour % 12 // Ensure 12-hour format
          val minute = localDateTime.minute.toString().padStart(2, '0')
          val amPm = if (localDateTime.hour < 12) "AM" else "PM"
@@ -178,6 +182,35 @@ object DateTimeHelper {
         }.onFailure { e ->
             logError("$ERROR_MESSAGE: $this", e)
         }.getOrDefault(false)
+    }
+
+    /**
+     * Converts a UTC ISO-8601 departure timestamp to a human-readable date label in AEST.
+     *
+     * Returns "Today", "Tomorrow", or a short date like "Wed 9 Apr" for anything further out.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun String.toDepartureDateLabel(): String {
+        return runCatching {
+            val aestZone = TimeZone.of(AEST_TIMEZONE)
+            val today = Clock.System.now().toLocalDateTime(aestZone).date
+            val tomorrow = today.plus(1, DateTimeUnit.DAY)
+            when (val departureDate = Instant.parse(this).toLocalDateTime(aestZone).date) {
+                today -> "Today"
+                tomorrow -> "Tomorrow"
+                else -> {
+                    val day = departureDate.dayOfWeek.name
+                        .take(DATE_LABEL_ABBREV_LENGTH)
+                        .lowercase()
+                        .replaceFirstChar { it.uppercase() }
+                    val month = departureDate.month.name
+                        .take(DATE_LABEL_ABBREV_LENGTH)
+                        .lowercase()
+                        .replaceFirstChar { it.uppercase() }
+                    "$day ${departureDate.dayOfMonth} $month"
+                }
+            }
+        }.getOrDefault("")
     }
 
     /**

@@ -122,6 +122,13 @@ class DeparturesViewModel(
                 log("[$LOG_TAG] LoadPreviousDepartures → stopId=${event.stopId}")
                 repository.loadPreviousDepartures(event.stopId)
             }
+
+            DeparturesUiEvent.StopPolling -> {
+                val stopId = activeStopId.value ?: return
+                log("[$LOG_TAG] StopPolling → stopId=$stopId")
+                repository.stopIfActive(stopId)
+                activeStopId.value = null
+            }
         }
     }
 

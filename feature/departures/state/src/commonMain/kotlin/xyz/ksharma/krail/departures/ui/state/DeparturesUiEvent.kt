@@ -32,4 +32,12 @@ sealed interface DeparturesUiEvent {
      * user taps "Show previous" in the departure board UI.
      */
     data class LoadPreviousDepartures(val stopId: String) : DeparturesUiEvent
+
+    /**
+     * Stops the active polling loop for the current stop.
+     *
+     * Typically fired when the departure board card collapses in uncontrolled mode
+     * so no background fetches run while departures are not visible.
+     */
+    data object StopPolling : DeparturesUiEvent
 }

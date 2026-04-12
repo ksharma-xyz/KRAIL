@@ -121,8 +121,13 @@ fun DepartureBoardStopCard(
     )
 
     LaunchedEffect(expanded, stopId) {
-        if (expanded && isExpanded == null) {
-            onEvent(DeparturesUiEvent.LoadDepartures(stopId))
+        if (isExpanded == null) {
+            // Uncontrolled mode: start polling on expand, stop it on collapse.
+            if (expanded) {
+                onEvent(DeparturesUiEvent.LoadDepartures(stopId))
+            } else {
+                onEvent(DeparturesUiEvent.StopPolling)
+            }
         }
     }
 

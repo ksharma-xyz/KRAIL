@@ -47,7 +47,10 @@ class DepartureBoardRepository(
 
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
 
-    // Accessed only from the Main thread (ViewModel calls), so a plain map is safe.
+    // Cache entries are always pre-created on the Main thread (via observeStop / setActiveStop)
+    // before any IO coroutine calls stateFor(). IO coroutines only read existing entries —
+    // they never insert new keys — so a plain map is safe without additional locking.
+    // IMPORTANT: preserve this invariant if you add new entry points to stateFor().
     private val cache = mutableMapOf<String, MutableStateFlow<DeparturesState>>()
 
     // Guards lastFetchTime and lastPreviousFetchTime — both maps are written from IO

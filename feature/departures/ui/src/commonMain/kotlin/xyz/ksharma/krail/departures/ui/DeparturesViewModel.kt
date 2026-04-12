@@ -17,12 +17,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import kotlin.time.ExperimentalTime
@@ -61,7 +59,7 @@ class DeparturesViewModel(
 
     init {
         // Collect repository flow into _uiState so updateRelativeTimeText() can mutate it.
-        viewModelScope.launch {
+        viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
             activeStopId
                 .flatMapLatest { stopId ->
                     if (stopId != null) {
@@ -74,33 +72,36 @@ class DeparturesViewModel(
         }
     }
 
+    // Compute relative time inside the atomic update lambda so it always operates on the
+    // current state — never on a stale snapshot. The previous pattern (snapshot → withContext
+    // → update) had a window where the repository could push a new departure between the
+    // snapshot and the update call, causing that departure to be silently dropped.
+    //
+    // withContext(ioDispatcher) is also removed — we are already on ioDispatcher (launched
+    // via launchWithExceptionHandler(ioDispatcher)), so it was a no-op context switch.
     @OptIn(ExperimentalTime::class)
     private fun updateRelativeTimeText() =
         viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
-            val current = _uiState.value
-            val updatedDepartures = withContext(ioDispatcher) {
-                current.departures.map { departure ->
-                    departure.copy(
-                        relativeTimeText = runCatching {
-                            calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                                .toGenericFormattedTimeString()
-                        }.getOrDefault(""),
-                    )
-                }.toImmutableList()
+            _uiState.update { current ->
+                current.copy(
+                    departures = current.departures.map { departure ->
+                        departure.copy(
+                            relativeTimeText = runCatching {
+                                calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
+                                    .toGenericFormattedTimeString()
+                            }.getOrDefault(""),
+                        )
+                    }.toImmutableList(),
+                    previousDepartures = current.previousDepartures.map { departure ->
+                        departure.copy(
+                            relativeTimeText = runCatching {
+                                calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
+                                    .toGenericFormattedTimeString()
+                            }.getOrDefault(""),
+                        )
+                    }.toImmutableList(),
+                )
             }
-            ensureActive()
-            val updatedPrevious = withContext(ioDispatcher) {
-                current.previousDepartures.map { departure ->
-                    departure.copy(
-                        relativeTimeText = runCatching {
-                            calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                                .toGenericFormattedTimeString()
-                        }.getOrDefault(""),
-                    )
-                }.toImmutableList()
-            }
-            ensureActive()
-            _uiState.update { it.copy(departures = updatedDepartures, previousDepartures = updatedPrevious) }
         }
 
     fun onEvent(event: DeparturesUiEvent) {

@@ -109,24 +109,23 @@ class DeparturesViewModel(
             is DeparturesUiEvent.LoadDepartures -> {
                 val current = activeStopId.value
                 // Guard: same stop already loaded without error → no-op (rotation-safe)
-                if (event.stopId == current &&
-                    !uiState.value.isError &&
-                    !uiState.value.isLoading
-                ) {
+                if (event.stopId == current && !uiState.value.isError && !uiState.value.isLoading) {
                     log("[$LOG_TAG] LoadDepartures ignored — stop ${event.stopId} already loaded")
-                    return
+                } else {
+                    log("[$LOG_TAG] LoadDepartures → stopId=${event.stopId}")
+                    // Stop polling the previous stop if this ViewModel owns it
+                    current?.let { repository.stopIfActive(it) }
+                    activeStopId.value = event.stopId
+                    repository.setActiveStop(event.stopId)
                 }
-                log("[$LOG_TAG] LoadDepartures → stopId=${event.stopId}")
-                // Stop polling the previous stop if this ViewModel owns it
-                current?.let { repository.stopIfActive(it) }
-                activeStopId.value = event.stopId
-                repository.setActiveStop(event.stopId)
             }
 
             DeparturesUiEvent.Refresh -> {
-                val stopId = activeStopId.value ?: return
-                log("[$LOG_TAG] Refresh → stopId=$stopId")
-                repository.refresh(stopId)
+                val stopId = activeStopId.value
+                if (stopId != null) {
+                    log("[$LOG_TAG] Refresh → stopId=$stopId")
+                    repository.refresh(stopId)
+                }
             }
 
             is DeparturesUiEvent.LoadPreviousDepartures -> {
@@ -135,10 +134,12 @@ class DeparturesViewModel(
             }
 
             DeparturesUiEvent.StopPolling -> {
-                val stopId = activeStopId.value ?: return
-                log("[$LOG_TAG] StopPolling → stopId=$stopId")
-                repository.stopIfActive(stopId)
-                activeStopId.value = null
+                val stopId = activeStopId.value
+                if (stopId != null) {
+                    log("[$LOG_TAG] StopPolling → stopId=$stopId")
+                    repository.stopIfActive(stopId)
+                    activeStopId.value = null
+                }
             }
         }
     }

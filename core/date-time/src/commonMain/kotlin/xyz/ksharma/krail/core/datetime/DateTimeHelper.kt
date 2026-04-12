@@ -259,4 +259,22 @@ object DateTimeHelper {
             logError("$ERROR_MESSAGE $this", e)
         }.getOrDefault(false)
     }
+
+    /**
+     * Extracts a platform / stand / wharf label from a stop's [disassembledName] field.
+     *
+     * The NSW Transport API embeds platform information inside the stop name string,
+     * e.g. "Seven Hills Station, Stand A" or "Central Station, Platform 3".
+     * This function finds all such labels and joins them with ", " when multiple match.
+     *
+     * Returns `null` when no platform keyword is present (e.g. a plain bus stop name).
+     *
+     * Used by both the departures mapper and the trip-planner mapper so the regex
+     * lives in one place.
+     */
+    fun extractPlatformText(disassembledName: String): String? {
+        val regex = Regex("(Platform|Stand|Wharf|Side)\\s*(\\d+|[A-Z])", RegexOption.IGNORE_CASE)
+        val matches = regex.findAll(disassembledName).toList()
+        return if (matches.isNotEmpty()) matches.joinToString(", ") { it.value } else null
+    }
 }

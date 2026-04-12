@@ -80,6 +80,7 @@ fun SavedTripsScreen(
     onDepartureBoardExpand: (String) -> Unit = {},
     onDepartureBoardCollapse: () -> Unit = {},
     onLoadPreviousDepartures: (String) -> Unit = {},
+    onRefreshDepartureBoardStop: (String) -> Unit = {},
 ) {
     val emptyStateTip = remember {
         buildList {
@@ -236,6 +237,7 @@ fun SavedTripsScreen(
                             onDepartureBoardExpand = onDepartureBoardExpand,
                             onDepartureBoardCollapse = onDepartureBoardCollapse,
                             onLoadPreviousDepartures = onLoadPreviousDepartures,
+                            onRefreshDepartureBoardStop = onRefreshDepartureBoardStop,
                         )
                     }
                 }
@@ -296,6 +298,7 @@ private fun LazyListScope.savedTripsContent(
     onDepartureBoardExpand: (String) -> Unit,
     onDepartureBoardCollapse: () -> Unit,
     onLoadPreviousDepartures: (String) -> Unit = {},
+    onRefreshDepartureBoardStop: (String) -> Unit = {},
 ) {
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
@@ -378,6 +381,7 @@ private fun LazyListScope.savedTripsContent(
                     if (expand) onDepartureBoardExpand(entry.stopId) else onDepartureBoardCollapse()
                 },
                 onLoadPreviousDepartures = onLoadPreviousDepartures,
+                onRefreshStop = onRefreshDepartureBoardStop,
             )
         }
 

@@ -112,6 +112,11 @@ class DepartureBoardViewModel(
         repository.setActiveStop(stopId)
     }
 
+    /** Triggers an immediate silent refresh for [stopId] without disrupting the poll loop. */
+    fun onRefreshStop(stopId: String) {
+        repository.refresh(stopId)
+    }
+
     /**
      * Triggers a one-shot fetch of past departures (~15 min window) for [stopId].
      * Results land in [DeparturesState.previousDepartures] and are shown when the user

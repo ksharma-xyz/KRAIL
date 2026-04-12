@@ -892,7 +892,7 @@ private fun JourneyCardCollapsedDelayedPreview() {
             platformNumber = "4",
             platformText = "Platform 4",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T1"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -917,7 +917,7 @@ private fun JourneyCardCollapsedEarlyPreview() {
             platformNumber = "2",
             platformText = "Platform 2",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T2"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T2"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,
@@ -942,7 +942,7 @@ private fun JourneyCardCollapsedOnTimePreview() {
             platformNumber = "1",
             platformText = "Platform 1",
             transportModeLineList = persistentListOf(
-                TransportModeLine(transportMode = TransportMode.Train(), lineName = "T4"),
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T4"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,

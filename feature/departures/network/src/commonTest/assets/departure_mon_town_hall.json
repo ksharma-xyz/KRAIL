@@ -1,0 +1,106 @@
+{
+  "version": "10.6.14.22",
+  "stopEvents": [
+    {
+      "departureTimePlanned": "2026-04-08T09:00:00Z",
+      "departureTimeEstimated": "2026-04-08T09:03:00Z",
+      "location": {
+        "id": "10111012",
+        "name": "Town Hall Station, Platform 1",
+        "disassembledName": "Platform 1",
+        "parent": {
+          "id": "10111010",
+          "name": "Town Hall Station",
+          "disassembledName": "Town Hall"
+        }
+      },
+      "transportation": {
+        "id": "sydneytrains:T1:H:sidneytrains:T1:H",
+        "name": "Train: Rouse Hill to Cronulla",
+        "disassembledName": "T1",
+        "number": "T1",
+        "description": "Rouse Hill to Cronulla",
+        "destination": {
+          "id": "10101116",
+          "name": "Cronulla Station"
+        },
+        "product": {
+          "class": 1,
+          "iconId": 1,
+          "name": "Train"
+        },
+        "operator": {
+          "id": "sydneytrains",
+          "name": "Sydney Trains"
+        }
+      }
+    },
+    {
+      "departureTimePlanned": "2026-04-08T09:05:00Z",
+      "location": {
+        "id": "10111014",
+        "name": "Town Hall Station, Platform 3",
+        "disassembledName": "Platform 3",
+        "parent": {
+          "id": "10111010",
+          "name": "Town Hall Station",
+          "disassembledName": "Town Hall"
+        }
+      },
+      "transportation": {
+        "id": "sydneytrains:T2:H:sydneytrains:T2:H",
+        "name": "Train: Campbelltown to Macdonaldtown",
+        "disassembledName": "T2",
+        "number": "T2",
+        "description": "Campbelltown to Macdonaldtown",
+        "destination": {
+          "id": "10102040",
+          "name": "Macdonaldtown Station"
+        },
+        "product": {
+          "class": 1,
+          "iconId": 1,
+          "name": "Train"
+        },
+        "operator": {
+          "id": "sydneytrains",
+          "name": "Sydney Trains"
+        }
+      }
+    },
+    {
+      "departureTimePlanned": "2026-04-08T09:08:00Z",
+      "departureTimeEstimated": "2026-04-08T09:08:00Z",
+      "location": {
+        "id": "200070",
+        "name": "Town Hall Station",
+        "disassembledName": "Town Hall",
+        "parent": {
+          "id": "200070",
+          "name": "Town Hall Station",
+          "disassembledName": "Town Hall"
+        }
+      },
+      "transportation": {
+        "id": "sydneymetro:M1:H:sydneymetro:M1:H",
+        "name": "Metro: Tallawong to Sydenham",
+        "disassembledName": "M1",
+        "number": "M1",
+        "description": "Tallawong to Sydenham",
+        "destination": {
+          "id": "10111199",
+          "name": "Sydenham Station"
+        },
+        "product": {
+          "class": 2,
+          "iconId": 2,
+          "name": "Metro"
+        },
+        "operator": {
+          "id": "sydneymetro",
+          "name": "Sydney Metro"
+        }
+      }
+    }
+  ]
+}

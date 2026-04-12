@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +60,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.StopDepartureBoardEntry
  *  - `"${stopId}_header"` — sticky tappable card
  *  - `"${stopId}_content"` — collapsible content with services row + departure list
  *
- * The content item hosts [DepartureBoardStopContent] which owns the per-stop filter state.
+ * The content item hosts [DepartureBoardAccordionContent] which owns the per-stop filter state.
  * Filter state naturally resets when the item collapses because [remember] is keyed to the
  * item's composition lifetime.
  */
@@ -182,6 +183,15 @@ private fun DepartureBoardAccordionContent(
     val selectedLine: String? = selectedLineKey.ifEmpty { null }
 
     var showPrevious by remember { mutableStateOf(false) }
+    // Tracks whether a previous-departures fetch has been requested but isPreviousLoading
+    // hasn't arrived yet. Without this, the "No previous departures" text flashes for one
+    // frame before the repository sets isPreviousLoading = true.
+    var previousRequested by remember { mutableStateOf(false) }
+
+    // Clear the local guard once the repository acknowledges the request (loading starts/ends).
+    LaunchedEffect(state.isPreviousLoading) {
+        if (!state.isPreviousLoading) previousRequested = false
+    }
 
     val filteredDepartures = remember(state.departures, selectedLine) {
         if (selectedLine == null) {
@@ -219,14 +229,16 @@ private fun DepartureBoardAccordionContent(
                     onClick = {
                         showPrevious = !showPrevious
                         if (showPrevious && state.previousDepartures.isEmpty() && !state.isPreviousLoading) {
+                            previousRequested = true
                             onLoadPreviousDepartures(stopId)
                         }
                     },
                 )
 
                 when {
-                    // Previous fetch in progress — show inline loader above upcoming
-                    showPrevious && state.isPreviousLoading -> {
+                    // Previous fetch in progress (or requested but not yet acknowledged) —
+                    // show inline loader above upcoming departures.
+                    showPrevious && (state.isPreviousLoading || previousRequested) -> {
                         SectionLoadingContent()
                         when {
                             filteredDepartures.isEmpty() -> SectionEmptyContent(hasActiveFilter = true)

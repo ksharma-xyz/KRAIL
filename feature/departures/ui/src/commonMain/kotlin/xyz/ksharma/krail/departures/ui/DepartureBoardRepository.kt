@@ -59,6 +59,12 @@ class DepartureBoardRepository(
     private var activeJob: Job? = null
     private var activeStopId: String? = null
 
+    /** Monotonically increasing counter — each `startPolling` call gets its own session ID. */
+    private var pollSessionCounter = 0
+
+    @OptIn(ExperimentalTime::class)
+    private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
+
     /**
      * Returns a hot [Flow] of [DeparturesState] for [stopId].
      * Backed by a [MutableStateFlow] kept in the in-memory cache.
@@ -74,16 +80,23 @@ class DepartureBoardRepository(
      */
     fun setActiveStop(stopId: String?) {
         scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
-            mutex.withLock {
-                if (activeStopId == stopId) return@launchWithExceptionHandler
+            val t = nowMs()
+            val prev = mutex.withLock {
+                if (activeStopId == stopId) {
+                    log("[$LOG_TAG] t=$t setActiveStop NOOP — already active: $stopId")
+                    return@launchWithExceptionHandler
+                }
+                val old = activeStopId
                 activeJob?.cancel()
                 activeJob = null
                 activeStopId = stopId
+                old
             }
             if (stopId == null) {
-                log("[$LOG_TAG] setActiveStop → null, polling stopped")
+                log("[$LOG_TAG] t=$t setActiveStop → null (was $prev), polling stopped")
                 return@launchWithExceptionHandler
             }
+            log("[$LOG_TAG] t=$t setActiveStop → $stopId (was $prev), cancelled prior job, starting polling")
             startPolling(stopId)
         }
     }
@@ -96,12 +109,15 @@ class DepartureBoardRepository(
      */
     fun stopIfActive(stopId: String) {
         scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+            val t = nowMs()
             mutex.withLock {
                 if (activeStopId == stopId) {
                     activeJob?.cancel()
                     activeJob = null
                     activeStopId = null
-                    log("[$LOG_TAG] stopIfActive → stopped polling for $stopId")
+                    log("[$LOG_TAG] t=$t stopIfActive MATCHED — stopped polling for $stopId")
+                } else {
+                    log("[$LOG_TAG] t=$t stopIfActive NOOP — active=$activeStopId, requested=$stopId")
                 }
             }
         }
@@ -110,21 +126,29 @@ class DepartureBoardRepository(
     /** Triggers an immediate silent refresh for [stopId], independent of the poll loop. */
     fun refresh(stopId: String) {
         scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+            log("[$LOG_TAG] t=${nowMs()} refresh triggered for stopId=$stopId")
             fetchDepartures(stopId = stopId, showFullLoading = false)
         }
     }
 
     @OptIn(ExperimentalTime::class)
     private suspend fun startPolling(stopId: String) {
+        val sessionId = ++pollSessionCounter
+        val t0 = nowMs()
         val hasData = stateFor(stopId).value.departures.isNotEmpty()
         if (!hasData) stateFor(stopId).update { DeparturesState(isLoading = true) }
-        log("[$LOG_TAG] setActiveStop → stopId=$stopId, hasData=$hasData")
+        log("[$LOG_TAG] t=$t0 startPolling session=#$sessionId stopId=$stopId hasData=$hasData")
 
         val nowMs = Clock.System.now().toEpochMilliseconds()
-        val elapsedMs = nowMs - mutex.withLock { lastFetchTime[stopId] ?: 0L }
+        val lastFetch = mutex.withLock { lastFetchTime[stopId] ?: 0L }
+        val elapsedMs = nowMs - lastFetch
+        log("[$LOG_TAG] t=$t0 session=#$sessionId lastFetchTime=$lastFetch elapsedMs=$elapsedMs refreshIntervalMs=${config.refreshIntervalMs}")
 
         mutex.withLock {
-            if (activeStopId != stopId) return  // guard: stop was switched while we prepared
+            if (activeStopId != stopId) {
+                log("[$LOG_TAG] t=${this@DepartureBoardRepository.nowMs()} session=#$sessionId ABORTED — active stop changed to $activeStopId before job launched")
+                return  // guard: stop was switched while we prepared
+            }
             activeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
                 // Check cancellation before any work — covers the gap between launch() and the
                 // first suspension point.
@@ -132,23 +156,28 @@ class DepartureBoardRepository(
                 if (elapsedMs >= config.refreshIntervalMs) {
                     // Either never fetched, or the 30-second window has expired — fetch now.
                     // If we have cached data, do a silent refresh (dots in header, not a spinner).
-                    fetchDepartures(stopId = stopId, showFullLoading = !hasData)
+                    log("[$LOG_TAG] t=${nowMs()} session=#$sessionId window expired ($elapsedMs >= ${config.refreshIntervalMs}ms), fetching now (showFullLoading=${!hasData})")
+                    fetchDepartures(stopId = stopId, showFullLoading = !hasData, sessionId = sessionId)
                 } else {
                     // Still within the 30-second window — show cached data, wait for the remainder.
-                    log("[$LOG_TAG] within refresh window for $stopId, waiting ${config.refreshIntervalMs - elapsedMs}ms")
-                    delay(config.refreshIntervalMs - elapsedMs)
-                    fetchDepartures(stopId = stopId, showFullLoading = false)
+                    val waitMs = config.refreshIntervalMs - elapsedMs
+                    log("[$LOG_TAG] t=${nowMs()} session=#$sessionId within refresh window, waiting ${waitMs}ms before first fetch")
+                    delay(waitMs)
+                    fetchDepartures(stopId = stopId, showFullLoading = false, sessionId = sessionId)
                 }
+                var iteration = 1
                 while (true) {
                     delay(config.refreshIntervalMs)
                     // delay() throws CancellationException when the job is cancelled. The explicit
                     // ensureActive() here is a belt-and-suspenders guard in case a future refactor
                     // moves delay() away from being the first statement.
                     ensureActive()
-                    log("[$LOG_TAG] auto-refresh for stopId=$stopId")
-                    fetchDepartures(stopId = stopId, showFullLoading = false)
+                    log("[$LOG_TAG] t=${nowMs()} session=#$sessionId auto-refresh #$iteration for stopId=$stopId")
+                    fetchDepartures(stopId = stopId, showFullLoading = false, sessionId = sessionId)
+                    iteration++
                 }
             }
+            log("[$LOG_TAG] t=${nowMs()} session=#$sessionId job launched: $activeJob")
         }
     }
 
@@ -158,9 +187,11 @@ class DepartureBoardRepository(
         }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun fetchDepartures(stopId: String, showFullLoading: Boolean) {
+    private suspend fun fetchDepartures(stopId: String, showFullLoading: Boolean, sessionId: Int = -1) {
         // Throw immediately if this coroutine was cancelled before we touch any state.
         currentCoroutineContext().ensureActive()
+        val fetchStart = nowMs()
+        log("[$LOG_TAG] t=$fetchStart session=#$sessionId fetchDepartures START stopId=$stopId showFullLoading=$showFullLoading")
         val flow = stateFor(stopId)
         if (showFullLoading) {
             flow.update { DeparturesState(isLoading = true) }
@@ -171,14 +202,15 @@ class DepartureBoardRepository(
         departuresService.suspendSafeResult(ioDispatcher) {
             departures(stopId = stopId, date = null, time = null)
         }.onSuccess { response ->
+            val fetchEnd = nowMs()
             // Record fetch time only on success — a failed request should not block the
             // refresh window, so the next setActiveStop can retry immediately.
-            mutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
+            mutex.withLock { lastFetchTime[stopId] = fetchEnd }
             // Check again after the network call — the job may have been cancelled while
             // the request was in flight.
             currentCoroutineContext().ensureActive()
             val departures = response.toStopDepartures()
-            log("[$LOG_TAG] success — ${departures.size} departures for stopId=$stopId")
+            log("[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures SUCCESS stopId=$stopId count=${departures.size} durationMs=${fetchEnd - fetchStart}")
             flow.update { current ->
                 DeparturesState(
                     isLoading = false,
@@ -192,8 +224,9 @@ class DepartureBoardRepository(
                 )
             }
         }.onFailure { throwable ->
+            val fetchEnd = nowMs()
             logError(
-                message = "[$LOG_TAG] failed to fetch departures for stopId=$stopId",
+                message = "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures FAILURE stopId=$stopId durationMs=${fetchEnd - fetchStart}",
                 throwable = throwable,
             )
             flow.update {
@@ -216,17 +249,19 @@ class DepartureBoardRepository(
     @OptIn(ExperimentalTime::class)
     fun loadPreviousDepartures(stopId: String) {
         scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
-            val nowMs = Clock.System.now().toEpochMilliseconds()
-            val elapsedMs = nowMs - mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
+            val t0 = nowMs()
+            val lastPrevFetch = mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
+            val elapsedMs = t0 - lastPrevFetch
             val flow = stateFor(stopId)
 
             // If we already have data and it's still within the refresh window, skip the fetch.
             val isCacheHit = elapsedMs < config.refreshIntervalMs && flow.value.previousDepartures.isNotEmpty()
             if (isCacheHit) {
-                log("[$LOG_TAG] previous departures cache hit for stopId=$stopId (${elapsedMs}ms ago)")
+                log("[$LOG_TAG] t=$t0 loadPreviousDepartures CACHE HIT stopId=$stopId elapsedMs=$elapsedMs count=${flow.value.previousDepartures.size}")
                 return@launchWithExceptionHandler
             }
 
+            log("[$LOG_TAG] t=$t0 loadPreviousDepartures START stopId=$stopId elapsedMs=$elapsedMs windowMinutes=${config.previousDeparturesWindowMinutes}")
             flow.update { it.copy(isPreviousLoading = true) }
             val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
             // suspendSafeResult re-throws CancellationException so it is never silently swallowed.
@@ -239,7 +274,8 @@ class DepartureBoardRepository(
             }.onSuccess { response ->
                 currentCoroutineContext().ensureActive()
                 val now = Clock.System.now()
-                val previous = response.toStopDepartures()
+                val allFromResponse = response.toStopDepartures()
+                val previous = allFromResponse
                     .filter { departure ->
                         runCatching {
                             Instant.parse(departure.departureUtcDateTime) < now
@@ -247,8 +283,9 @@ class DepartureBoardRepository(
                     }
                     .map { it.copy(timing = DepartureTiming.Previous) }
                     .toImmutableList()
-                log("[$LOG_TAG] previous departures — ${previous.size} found for stopId=$stopId")
-                mutex.withLock { lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
+                val t1 = nowMs()
+                log("[$LOG_TAG] t=$t1 loadPreviousDepartures SUCCESS stopId=$stopId total=${allFromResponse.size} filtered=${previous.size} durationMs=${t1 - t0}")
+                mutex.withLock { lastPreviousFetchTime[stopId] = t1 }
                 flow.update {
                     it.copy(
                         previousDepartures = previous,
@@ -257,8 +294,9 @@ class DepartureBoardRepository(
                     )
                 }
             }.onFailure { throwable ->
+                val t1 = nowMs()
                 logError(
-                    message = "[$LOG_TAG] failed to fetch previous departures for stopId=$stopId",
+                    message = "[$LOG_TAG] t=$t1 loadPreviousDepartures FAILURE stopId=$stopId durationMs=${t1 - t0}",
                     throwable = throwable,
                 )
                 flow.update { it.copy(isPreviousLoading = false) }

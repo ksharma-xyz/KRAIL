@@ -167,11 +167,13 @@ class DepartureBoardRepository(
         } else {
             flow.update { it.copy(silentLoading = true) }
         }
-        mutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
         // suspendSafeResult re-throws CancellationException so it is never silently swallowed.
         departuresService.suspendSafeResult(ioDispatcher) {
             departures(stopId = stopId, date = null, time = null)
         }.onSuccess { response ->
+            // Record fetch time only on success — a failed request should not block the
+            // refresh window, so the next setActiveStop can retry immediately.
+            mutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
             // Check again after the network call — the job may have been cancelled while
             // the request was in flight.
             currentCoroutineContext().ensureActive()

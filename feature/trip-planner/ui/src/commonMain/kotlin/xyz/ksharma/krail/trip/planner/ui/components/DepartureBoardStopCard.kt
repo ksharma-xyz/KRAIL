@@ -43,7 +43,6 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.ButtonDefaults
-import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
@@ -272,10 +271,8 @@ private fun DeparturesSuccessContent(
             selectedLine = selectedLine,
             onLineSelect = onLineSelect,
         )
-        Divider(modifier = Modifier.padding(horizontal = 16.dp))
-        Spacer(modifier = Modifier.height(12.dp))
 
-        // "Show previous / Hide previous" toggle
+        // "Show / Hide previous departures" toggle
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
@@ -288,7 +285,7 @@ private fun DeparturesSuccessContent(
                     }
                 },
             ) {
-                Text(text = if (showPrevious) "Hide previous" else "Show previous")
+                Text(text = if (showPrevious) "Hide previous departures" else "Show previous departures")
             }
         }
 

@@ -93,6 +93,13 @@ class DepartureBoardRepository(
                 activeStopId = stopId
                 old
             }
+            // If we cancelled a mid-flight job for the previous stop, its onSuccess/onFailure
+            // callbacks never run — clear any stale loading state so the UI doesn't show
+            // spinning dots indefinitely.
+            if (prev != null) {
+                cache[prev]?.update { it.copy(isLoading = false, silentLoading = false) }
+                log("[$LOG_TAG] t=$t setActiveStop CLEARED loading state for abandoned stop $prev")
+            }
             if (stopId == null) {
                 log("[$LOG_TAG] t=$t setActiveStop → null (was $prev), polling stopped")
                 return@launchWithExceptionHandler
@@ -111,15 +118,23 @@ class DepartureBoardRepository(
     fun stopIfActive(stopId: String) {
         scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
             val t = nowMs()
-            mutex.withLock {
+            val wasActive = mutex.withLock {
                 if (activeStopId == stopId) {
                     activeJob?.cancel()
                     activeJob = null
                     activeStopId = null
                     log("[$LOG_TAG] t=$t stopIfActive MATCHED — stopped polling for $stopId")
+                    true
                 } else {
                     log("[$LOG_TAG] t=$t stopIfActive NOOP — active=$activeStopId, requested=$stopId")
+                    false
                 }
+            }
+            // If we cancelled a mid-flight job, its onSuccess/onFailure callbacks never run —
+            // clear any stale loading state so the UI doesn't show spinning dots indefinitely.
+            if (wasActive) {
+                cache[stopId]?.update { it.copy(isLoading = false, silentLoading = false) }
+                log("[$LOG_TAG] t=${nowMs()} stopIfActive CLEARED loading state for $stopId")
             }
         }
     }

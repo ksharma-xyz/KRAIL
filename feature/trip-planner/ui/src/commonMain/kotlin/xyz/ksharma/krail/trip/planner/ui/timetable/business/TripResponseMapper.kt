@@ -4,6 +4,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifference
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.extractPlatformText
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
@@ -115,9 +116,7 @@ private fun List<TripResponse.Leg>.getTotalStops() = sumOf { leg -> leg.stopSequ
 
 fun TripResponse.Leg?.getPlatformText(): String? {
     val disassembledName = this?.origin?.disassembledName ?: return null
-    val regex = Regex("(Platform|Stand|Wharf|Side)\\s*(\\d+|[A-Z])", RegexOption.IGNORE_CASE)
-    val matches = regex.findAll(disassembledName).toList()
-    return if (matches.isNotEmpty()) matches.joinToString(", ") { it.value } else null
+    return extractPlatformText(disassembledName)
 }
 
 /**

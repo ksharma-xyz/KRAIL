@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,6 +38,10 @@ import kotlin.time.Instant
  *
  * The in-memory cache survives for the app lifetime, so previously loaded data
  * remains available while offline or when a card is re-expanded.
+ *
+ * Thread safety: all mutable state ([cache], [lastFetchTime], [activeStopId], job
+ * references) is protected by [mutex]. Callers (ViewModels) may invoke public
+ * functions from any thread — the mutex serialises access.
  */
 class DepartureBoardRepository(
     private val departuresService: DeparturesService,
@@ -44,23 +50,10 @@ class DepartureBoardRepository(
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+    private val mutex = Mutex()
 
-    // Cache entries are always pre-created on the Main thread (via observeStop / setActiveStop)
-    // before any IO coroutine calls stateFor(). IO coroutines only read existing entries —
-    // they never insert new keys — so a plain map is safe without additional locking.
-    // IMPORTANT: preserve this invariant if you add new entry points to stateFor().
     private val cache = mutableMapOf<String, MutableStateFlow<DeparturesState>>()
-
-    // Guards lastFetchTime and lastPreviousFetchTime — both maps are written from IO
-    // dispatcher coroutines so they need synchronization.
-    private val fetchTimeMutex = Mutex()
-
-    // Tracks the epoch-ms of the last successful fetch per stop, to avoid redundant
-    // API calls when a stop is collapsed then re-expanded within the 30-second window.
     private val lastFetchTime = mutableMapOf<String, Long>()
-
-    // Same guard for previous-departures fetches — avoids a new API call if the user
-    // collapses and re-expands "Show previous" within the same refresh window.
     private val lastPreviousFetchTime = mutableMapOf<String, Long>()
 
     private var activeJob: Job? = null
@@ -70,7 +63,7 @@ class DepartureBoardRepository(
      * Returns a hot [Flow] of [DeparturesState] for [stopId].
      * Backed by a [MutableStateFlow] kept in the in-memory cache.
      */
-    fun observeStop(stopId: String): Flow<DeparturesState> = stateFor(stopId)
+    fun observeStop(stopId: String): Flow<DeparturesState> = flow { emitAll(stateFor(stopId)) }
 
     /**
      * Switches the active polling stop to [stopId].
@@ -79,48 +72,19 @@ class DepartureBoardRepository(
      * - [stopId] is `null` → cancels the current poll, nothing new starts.
      * - Otherwise → cancels the current poll, starts a 30-second refresh loop for [stopId].
      */
-    @OptIn(ExperimentalTime::class)
     fun setActiveStop(stopId: String?) {
-        if (activeStopId == stopId) return
-        activeJob?.cancel()
-        activeJob = null
-        activeStopId = stopId
-        if (stopId == null) {
-            log("[$LOG_TAG] setActiveStop → null, polling stopped")
-            return
-        }
-
-        val hasData = stateFor(stopId).value.departures.isNotEmpty()
-        // Only show the full loading spinner when there is nothing cached to display.
-        if (!hasData) stateFor(stopId).update { DeparturesState(isLoading = true) }
-        log("[$LOG_TAG] setActiveStop → stopId=$stopId, hasData=$hasData")
-
-        activeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
-            // Check cancellation before any work — covers the gap between launch() and the
-            // first suspension point (the withLock below).
-            ensureActive()
-            val nowMs = Clock.System.now().toEpochMilliseconds()
-            val elapsedMs = nowMs - (fetchTimeMutex.withLock { lastFetchTime[stopId] } ?: 0L)
-
-            if (elapsedMs >= config.refreshIntervalMs) {
-                // Either never fetched, or the 30-second window has expired — fetch now.
-                // If we have cached data, do a silent refresh (dots in header, not a spinner).
-                fetchDepartures(stopId = stopId, showFullLoading = !hasData)
-            } else {
-                // Still within the 30-second window — show cached data, wait for the remainder.
-                log("[$LOG_TAG] within refresh window for $stopId, waiting ${config.refreshIntervalMs - elapsedMs}ms")
-                delay(config.refreshIntervalMs - elapsedMs)
-                fetchDepartures(stopId = stopId, showFullLoading = false)
+        scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+            mutex.withLock {
+                if (activeStopId == stopId) return@launchWithExceptionHandler
+                activeJob?.cancel()
+                activeJob = null
+                activeStopId = stopId
             }
-            while (true) {
-                delay(config.refreshIntervalMs)
-                // delay() throws CancellationException when the job is cancelled. The explicit
-                // ensureActive() here is a belt-and-suspenders guard in case a future refactor
-                // moves delay() away from being the first statement.
-                ensureActive()
-                log("[$LOG_TAG] auto-refresh for stopId=$stopId")
-                fetchDepartures(stopId = stopId, showFullLoading = false)
+            if (stopId == null) {
+                log("[$LOG_TAG] setActiveStop → null, polling stopped")
+                return@launchWithExceptionHandler
             }
+            startPolling(stopId)
         }
     }
 
@@ -131,7 +95,16 @@ class DepartureBoardRepository(
      * accidentally stopping a loop started by another consumer.
      */
     fun stopIfActive(stopId: String) {
-        if (activeStopId == stopId) setActiveStop(null)
+        scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+            mutex.withLock {
+                if (activeStopId == stopId) {
+                    activeJob?.cancel()
+                    activeJob = null
+                    activeStopId = null
+                    log("[$LOG_TAG] stopIfActive → stopped polling for $stopId")
+                }
+            }
+        }
     }
 
     /** Triggers an immediate silent refresh for [stopId], independent of the poll loop. */
@@ -141,8 +114,48 @@ class DepartureBoardRepository(
         }
     }
 
-    private fun stateFor(stopId: String): MutableStateFlow<DeparturesState> =
-        cache.getOrPut(stopId) { MutableStateFlow(DeparturesState(isLoading = false)) }
+    @OptIn(ExperimentalTime::class)
+    private suspend fun startPolling(stopId: String) {
+        val hasData = stateFor(stopId).value.departures.isNotEmpty()
+        if (!hasData) stateFor(stopId).update { DeparturesState(isLoading = true) }
+        log("[$LOG_TAG] setActiveStop → stopId=$stopId, hasData=$hasData")
+
+        val nowMs = Clock.System.now().toEpochMilliseconds()
+        val elapsedMs = nowMs - mutex.withLock { lastFetchTime[stopId] ?: 0L }
+
+        mutex.withLock {
+            if (activeStopId != stopId) return  // guard: stop was switched while we prepared
+            activeJob = scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
+                // Check cancellation before any work — covers the gap between launch() and the
+                // first suspension point.
+                ensureActive()
+                if (elapsedMs >= config.refreshIntervalMs) {
+                    // Either never fetched, or the 30-second window has expired — fetch now.
+                    // If we have cached data, do a silent refresh (dots in header, not a spinner).
+                    fetchDepartures(stopId = stopId, showFullLoading = !hasData)
+                } else {
+                    // Still within the 30-second window — show cached data, wait for the remainder.
+                    log("[$LOG_TAG] within refresh window for $stopId, waiting ${config.refreshIntervalMs - elapsedMs}ms")
+                    delay(config.refreshIntervalMs - elapsedMs)
+                    fetchDepartures(stopId = stopId, showFullLoading = false)
+                }
+                while (true) {
+                    delay(config.refreshIntervalMs)
+                    // delay() throws CancellationException when the job is cancelled. The explicit
+                    // ensureActive() here is a belt-and-suspenders guard in case a future refactor
+                    // moves delay() away from being the first statement.
+                    ensureActive()
+                    log("[$LOG_TAG] auto-refresh for stopId=$stopId")
+                    fetchDepartures(stopId = stopId, showFullLoading = false)
+                }
+            }
+        }
+    }
+
+    private suspend fun stateFor(stopId: String): MutableStateFlow<DeparturesState> =
+        mutex.withLock {
+            cache.getOrPut(stopId) { MutableStateFlow(DeparturesState(isLoading = false)) }
+        }
 
     @OptIn(ExperimentalTime::class)
     private suspend fun fetchDepartures(stopId: String, showFullLoading: Boolean) {
@@ -154,11 +167,13 @@ class DepartureBoardRepository(
         } else {
             flow.update { it.copy(silentLoading = true) }
         }
-        fetchTimeMutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
         // suspendSafeResult re-throws CancellationException so it is never silently swallowed.
         departuresService.suspendSafeResult(ioDispatcher) {
             departures(stopId = stopId, date = null, time = null)
         }.onSuccess { response ->
+            // Record fetch time only on success — a failed request should not block the
+            // refresh window, so the next setActiveStop can retry immediately.
+            mutex.withLock { lastFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
             // Check again after the network call — the job may have been cancelled while
             // the request was in flight.
             currentCoroutineContext().ensureActive()
@@ -202,7 +217,7 @@ class DepartureBoardRepository(
     fun loadPreviousDepartures(stopId: String) {
         scope.launchWithExceptionHandler<DepartureBoardRepository>(ioDispatcher) {
             val nowMs = Clock.System.now().toEpochMilliseconds()
-            val elapsedMs = nowMs - (fetchTimeMutex.withLock { lastPreviousFetchTime[stopId] } ?: 0L)
+            val elapsedMs = nowMs - mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
             val flow = stateFor(stopId)
 
             // If we already have data and it's still within the refresh window, skip the fetch.
@@ -232,12 +247,8 @@ class DepartureBoardRepository(
                     }
                     .map { it.copy(timing = DepartureTiming.Previous) }
                     .toImmutableList()
-
                 log("[$LOG_TAG] previous departures — ${previous.size} found for stopId=$stopId")
-                fetchTimeMutex.withLock {
-                    lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds()
-                }
-
+                mutex.withLock { lastPreviousFetchTime[stopId] = Clock.System.now().toEpochMilliseconds() }
                 flow.update {
                     it.copy(
                         previousDepartures = previous,

@@ -196,4 +196,3 @@ private fun DepartureBoardEmptyContent(hasActiveFilter: Boolean) {
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
     )
 }
-

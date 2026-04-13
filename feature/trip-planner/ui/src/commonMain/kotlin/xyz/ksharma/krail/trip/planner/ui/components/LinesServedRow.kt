@@ -54,11 +54,11 @@ import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 // Stagger timing constants
-private const val BADGE_STAGGER_MS = 55           // delay between each badge
-private const val BADGE_ENTER_DURATION_MS = 220   // how long each badge takes to appear
-private const val BADGE_EXIT_DURATION_MS = 160    // how long each badge takes to disappear
-private const val BADGE_ENTER_OFFSET_MS = 80      // head-start before badges start appearing
-private const val CONTAINER_ENTER_MS = 250        // badge container expand duration
+private const val BADGE_STAGGER_MS = 55 // delay between each badge
+private const val BADGE_ENTER_DURATION_MS = 220 // how long each badge takes to appear
+private const val BADGE_EXIT_DURATION_MS = 160 // how long each badge takes to disappear
+private const val BADGE_ENTER_OFFSET_MS = 80 // head-start before badges start appearing
+private const val CONTAINER_ENTER_MS = 250 // badge container expand duration
 
 // Shared height for all interactive items in the filter row so they align visually:
 //   FilterPill  → 7dp padding + 24dp icon  + 7dp padding = 38dp  (natural)
@@ -156,7 +156,6 @@ internal fun LinesServedRow(
                                 modifier = Modifier.padding(start = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-
                                 ModeIconButton(
                                     transportMode = transportMode,
                                     modifier = Modifier.padding(start = 4.dp),
@@ -324,7 +323,7 @@ private val previewDepartures: ImmutableList<StopDeparture> = persistentListOf(
     StopDeparture(
         lineNumber = "T1",
         lineColorCode = "#F99D1C",
-        transportModeName = "Train",
+        transportModeName = TransportMode.Train.name,
         destinationName = "Liverpool",
         departureTimeText = "11:30 AM",
         departureUtcDateTime = "2026-04-11T01:30:00Z",
@@ -332,7 +331,7 @@ private val previewDepartures: ImmutableList<StopDeparture> = persistentListOf(
     StopDeparture(
         lineNumber = "T2",
         lineColorCode = "#0098CD",
-        transportModeName = "Train",
+        transportModeName = TransportMode.Train.name,
         destinationName = "Bondi Junction",
         departureTimeText = "11:33 AM",
         departureUtcDateTime = "2026-04-11T01:33:00Z",
@@ -340,14 +339,14 @@ private val previewDepartures: ImmutableList<StopDeparture> = persistentListOf(
     StopDeparture(
         lineNumber = "T4",
         lineColorCode = "#005AA3",
-        transportModeName = "Train",
+        transportModeName = TransportMode.Train.name,
         destinationName = "Illawarra",
         departureTimeText = "11:36 AM",
         departureUtcDateTime = "2026-04-11T01:36:00Z",
     ),
     StopDeparture(
         lineNumber = "309",
-        lineColorCode = "#00B5EF",
+        lineColorCode = "#00B5FF",
         transportModeName = "Bus",
         destinationName = "Bondi Beach",
         departureTimeText = "11:31 AM",

@@ -210,7 +210,6 @@ fun DepartureBoardAccordionSection(
     }
 }
 
-
 // ── Previews ──────────────────────────────────────────────────────────────────
 
 private const val TRANSPORT_MODE_TRAIN = "Train"

@@ -193,7 +193,7 @@ class DepartureBoardRepository(
         // Throw immediately if this coroutine was cancelled before we touch any state.
         currentCoroutineContext().ensureActive()
         val fetchStart = nowMs()
-        log("[$LOG_TAG] t=$fetchStart session=#$sessionId fetchDepartures START stopId=$stopId showFullLoading=$showFullLoading")
+        log("[$LOG_TAG] t=$fetchStart session=#$sessionId fetchDepartures START [API] stopId=$stopId showFullLoading=$showFullLoading")
         val flow = stateFor(stopId)
         if (showFullLoading) {
             flow.update { DeparturesState(isLoading = true) }
@@ -275,7 +275,7 @@ class DepartureBoardRepository(
                 return@launchWithExceptionHandler
             }
 
-            log("[$LOG_TAG] t=$t0 loadPreviousDepartures START stopId=$stopId lastFetch=$elapsedLabel windowMinutes=${config.previousDeparturesWindowMinutes}")
+            log("[$LOG_TAG] t=$t0 loadPreviousDepartures START [API] stopId=$stopId lastFetch=$elapsedLabel windowMinutes=${config.previousDeparturesWindowMinutes}")
             flow.update { it.copy(isPreviousLoading = true) }
             val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
             // suspendSafeResult re-throws CancellationException so it is never silently swallowed.

@@ -17,12 +17,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class DeparturesViewModel(
@@ -32,6 +34,9 @@ class DeparturesViewModel(
 
     // Tracks which stop this ViewModel instance is responsible for polling.
     private val activeStopId = MutableStateFlow<String?>(null)
+
+    @OptIn(ExperimentalTime::class)
+    private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
 
     private val _uiState: MutableStateFlow<DeparturesState> = MutableStateFlow(DeparturesState())
     val uiState: StateFlow<DeparturesState> = _uiState.asStateFlow()
@@ -57,18 +62,25 @@ class DeparturesViewModel(
         initialValue = true,
     )
 
+    private var relativeTimeTickCount = 0
+
     init {
+        log("[$LOG_TAG] t=${nowMs()} ViewModel CREATED")
         // Collect repository flow into _uiState so updateRelativeTimeText() can mutate it.
         viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
             activeStopId
                 .flatMapLatest { stopId ->
+                    log("[$LOG_TAG] t=${nowMs()} activeStopId changed → $stopId, switching repo flow")
                     if (stopId != null) {
-                        repository.observeStop(stopId)
+                        repository.pollStop(stopId)
                     } else {
                         flowOf(DeparturesState(isLoading = false))
                     }
                 }
-                .collect { state -> _uiState.value = state }
+                .collect { state ->
+                    log("[$LOG_TAG] t=${nowMs()} repo state received: isLoading=${state.isLoading} silentLoading=${state.silentLoading} isError=${state.isError} departures=${state.departures.size} prevDepartures=${state.previousDepartures.size}")
+                    _uiState.value = state
+                }
         }
     }
 
@@ -82,8 +94,10 @@ class DeparturesViewModel(
     @OptIn(ExperimentalTime::class)
     private fun updateRelativeTimeText() =
         viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
+            val tick = ++relativeTimeTickCount
+            val t = nowMs()
             _uiState.update { current ->
-                current.copy(
+                val updated = current.copy(
                     departures = current.departures.map { departure ->
                         departure.copy(
                             relativeTimeText = runCatching {
@@ -101,51 +115,59 @@ class DeparturesViewModel(
                         )
                     }.toImmutableList(),
                 )
+                log("[$LOG_TAG] t=$t relativeTime tick=#$tick updated departures=${updated.departures.size} prev=${updated.previousDepartures.size}")
+                updated
             }
         }
 
     fun onEvent(event: DeparturesUiEvent) {
+        val t = nowMs()
         when (event) {
             is DeparturesUiEvent.LoadDepartures -> {
                 val current = activeStopId.value
-                // Guard: same stop already loaded without error → no-op (rotation-safe)
-                if (event.stopId == current && !uiState.value.isError && !uiState.value.isLoading) {
-                    log("[$LOG_TAG] LoadDepartures ignored — stop ${event.stopId} already loaded")
-                } else {
-                    log("[$LOG_TAG] LoadDepartures → stopId=${event.stopId}")
-                    // Stop polling the previous stop if this ViewModel owns it
-                    current?.let { repository.stopIfActive(it) }
+                if (event.stopId != current) {
+                    log("[$LOG_TAG] t=$t onEvent LoadDepartures → stopId=${event.stopId} (was $current)")
+                    // Switching activeStopId causes flatMapLatest to cancel the old pollStop
+                    // flow and start a new one — no manual stopIfActive/setActiveStop needed.
                     activeStopId.value = event.stopId
-                    repository.setActiveStop(event.stopId)
+                } else {
+                    log("[$LOG_TAG] t=$t onEvent LoadDepartures SAME STOP — already polling ${event.stopId}")
                 }
             }
 
             DeparturesUiEvent.Refresh -> {
                 val stopId = activeStopId.value
                 if (stopId != null) {
-                    log("[$LOG_TAG] Refresh → stopId=$stopId")
-                    repository.refresh(stopId)
+                    log("[$LOG_TAG] t=$t onEvent Refresh → stopId=$stopId")
+                    viewModelScope.launch { repository.refresh(stopId) }
+                } else {
+                    log("[$LOG_TAG] t=$t onEvent Refresh NOOP — no active stop")
                 }
             }
 
             is DeparturesUiEvent.LoadPreviousDepartures -> {
-                log("[$LOG_TAG] LoadPreviousDepartures → stopId=${event.stopId}")
-                repository.loadPreviousDepartures(event.stopId)
+                log("[$LOG_TAG] t=$t onEvent LoadPreviousDepartures → stopId=${event.stopId}")
+                viewModelScope.launch { repository.loadPreviousDepartures(event.stopId) }
             }
 
             DeparturesUiEvent.StopPolling -> {
                 val stopId = activeStopId.value
                 if (stopId != null) {
-                    log("[$LOG_TAG] StopPolling → stopId=$stopId")
-                    repository.stopIfActive(stopId)
+                    log("[$LOG_TAG] t=$t onEvent StopPolling → stopId=$stopId")
+                    // Setting to null switches flatMapLatest to flowOf(idle state),
+                    // which cancels the pollStop flow and stops the polling loop.
                     activeStopId.value = null
+                } else {
+                    log("[$LOG_TAG] t=$t onEvent StopPolling NOOP — no active stop")
                 }
             }
         }
     }
 
     override fun onCleared() {
-        activeStopId.value?.let { repository.stopIfActive(it) }
+        log("[$LOG_TAG] t=${nowMs()} ViewModel CLEARED activeStopId=${activeStopId.value}")
+        // viewModelScope cancellation propagates to the flatMapLatest → pollStop chain,
+        // which clears loading state via its finally block. No manual cleanup needed.
         super.onCleared()
     }
 

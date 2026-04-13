@@ -57,7 +57,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
-import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardStopSection
+import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionSection
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -79,6 +79,7 @@ fun SavedTripsScreen(
     expandedDepartureBoardStopId: String? = null,
     onDepartureBoardExpand: (String) -> Unit = {},
     onDepartureBoardCollapse: () -> Unit = {},
+    onLoadPreviousDepartures: (String) -> Unit = {},
 ) {
     val emptyStateTip = remember {
         buildList {
@@ -234,6 +235,7 @@ fun SavedTripsScreen(
                             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
                             onDepartureBoardExpand = onDepartureBoardExpand,
                             onDepartureBoardCollapse = onDepartureBoardCollapse,
+                            onLoadPreviousDepartures = onLoadPreviousDepartures,
                         )
                     }
                 }
@@ -293,6 +295,7 @@ private fun LazyListScope.savedTripsContent(
     expandedDepartureBoardStopId: String?,
     onDepartureBoardExpand: (String) -> Unit,
     onDepartureBoardCollapse: () -> Unit,
+    onLoadPreviousDepartures: (String) -> Unit = {},
 ) {
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
@@ -368,12 +371,13 @@ private fun LazyListScope.savedTripsContent(
         }
 
         departureBoardEntries.forEach { entry ->
-            departureBoardStopSection(
+            departureBoardAccordionSection(
                 entry = entry,
                 isExpanded = expandedDepartureBoardStopId == entry.stopId,
                 onExpandChange = { expand ->
                     if (expand) onDepartureBoardExpand(entry.stopId) else onDepartureBoardCollapse()
                 },
+                onLoadPreviousDepartures = onLoadPreviousDepartures,
             )
         }
 

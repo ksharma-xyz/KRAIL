@@ -3,6 +3,18 @@ package xyz.ksharma.krail.departures.ui.state.model
 import androidx.compose.runtime.Stable
 
 /**
+ * Timing context for a departure row — whether it has already departed or is upcoming.
+ * Used by the UI to apply different visual treatments (e.g. dimmed alpha for past departures).
+ */
+enum class DepartureTiming {
+    /** Departure occurred in the past (configurable window, shown via "Show previous" toggle). */
+    Previous,
+
+    /** Departure is upcoming. Default for all normally fetched departures. */
+    Upcoming,
+}
+
+/**
  * A single upcoming departure from a stop, ready for display in the UI.
  *
  * This is a lean, UI-focused model derived from [DepartureMonitorResponse.StopEvent].
@@ -109,4 +121,11 @@ data class StopDeparture(
      * Null when either field is missing from the API response.
      */
     val tripId: String? = null,
+
+    /**
+     * Whether this departure is a past departure (shown via "Show previous") or upcoming.
+     * Defaults to [DepartureTiming.Upcoming] for all normally fetched departures.
+     * Set to [DepartureTiming.Previous] by the repository when loading past departures.
+     */
+    val timing: DepartureTiming = DepartureTiming.Upcoming,
 )

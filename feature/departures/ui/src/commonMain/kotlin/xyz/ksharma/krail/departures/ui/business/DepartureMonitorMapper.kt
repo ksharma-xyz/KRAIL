@@ -98,8 +98,16 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
 // platform/stand/wharf keyword is found.
 private fun DepartureMonitorResponse.Location.resolvePlatformText(): String? {
     val locationLabel = disassembledName ?: return null
-    log("[DEPARTURES] resolvePlatformText — disassembledName=\"$locationLabel\" parent=\"${parent?.disassembledName}\"")
-    val regex = Regex("(Platform|Stand|Wharf|Side)\\s*(\\d+|[A-Z])", RegexOption.IGNORE_CASE)
+    // Without a parent, this location IS the stop itself — no platform sub-label to extract.
+    val parentNode = parent ?: return null
+    log(
+        "[DEPARTURES] resolvePlatformText — disassembledName=\"$locationLabel\" " +
+            "parent=\"${parentNode.disassembledName}\"",
+    )
+    val regex = Regex(
+        "(Platform|Stand|Wharf|Side)\\s*(\\d+|[A-Z])",
+        RegexOption.IGNORE_CASE,
+    )
     val matches = regex.findAll(locationLabel).toList()
     val result = if (matches.isNotEmpty()) matches.joinToString(", ") { it.value } else null
     log("[DEPARTURES] resolvePlatformText → result=\"$result\"")

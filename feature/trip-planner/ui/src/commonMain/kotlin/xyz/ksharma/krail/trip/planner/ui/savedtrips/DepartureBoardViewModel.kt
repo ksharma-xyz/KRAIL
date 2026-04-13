@@ -74,8 +74,13 @@ class DepartureBoardViewModel(
                 } else {
                     combine(
                         stops.map { (stopId, stopName) ->
-                            (if (stopId == expandedId) repository.pollStop(stopId)
-                            else repository.observeStop(stopId))
+                            (
+                                if (stopId == expandedId) {
+                                    repository.pollStop(stopId)
+                                } else {
+                                    repository.observeStop(stopId)
+                                }
+                                )
                                 .map { state -> StopDepartureBoardEntry(stopId, stopName, state) }
                         },
                     ) { array -> array.toList().toImmutableList() }

@@ -52,8 +52,6 @@ class DepartureBoardRepository(
     private val lastFetchTime = mutableMapOf<String, Long>()
     private val lastPreviousFetchTime = mutableMapOf<String, Long>()
 
-    /** Monotonically increasing counter for log correlation — not shared across threads safely,
-     *  but only used for debugging so a rare tear is acceptable. */
     private var pollSessionCounter = 0
 
     @OptIn(ExperimentalTime::class)
@@ -92,13 +90,20 @@ class DepartureBoardRepository(
             val t0 = nowMs()
             val elapsedMs = t0 - lastFetch
             val elapsedLabel = if (lastFetch == 0L) "never fetched" else "${elapsedMs}ms ago"
-            log("[$LOG_TAG] t=$t0 session=#$sessionId pollStop START stopId=$stopId hasData=$hasData lastFetch=$elapsedLabel refreshIntervalMs=${config.refreshIntervalMs}")
+            log(
+                "[$LOG_TAG] t=$t0 session=#$sessionId pollStop START stopId=$stopId " +
+                    "hasData=$hasData lastFetch=$elapsedLabel " +
+                    "refreshIntervalMs=${config.refreshIntervalMs}",
+            )
 
             if (lastFetch == 0L || elapsedMs >= config.refreshIntervalMs) {
                 fetchDepartures(stopId, showFullLoading = !hasData, sessionId = sessionId)
             } else {
                 val waitMs = config.refreshIntervalMs - elapsedMs
-                log("[$LOG_TAG] t=$t0 session=#$sessionId within refresh window, waiting ${waitMs}ms before first fetch")
+                log(
+                    "[$LOG_TAG] t=$t0 session=#$sessionId within refresh window, " +
+                        "waiting ${waitMs}ms before first fetch",
+                )
                 delay(waitMs)
                 fetchDepartures(stopId, showFullLoading = false, sessionId = sessionId)
             }
@@ -107,7 +112,10 @@ class DepartureBoardRepository(
             while (true) {
                 delay(config.refreshIntervalMs)
                 ensureActive()
-                log("[$LOG_TAG] t=${nowMs()} session=#$sessionId auto-refresh #$iteration for stopId=$stopId")
+                log(
+                    "[$LOG_TAG] t=${nowMs()} session=#$sessionId auto-refresh #$iteration " +
+                        "for stopId=$stopId",
+                )
                 fetchDepartures(stopId, showFullLoading = false, sessionId = sessionId)
                 iteration++
             }
@@ -131,10 +139,14 @@ class DepartureBoardRepository(
         }
 
     @OptIn(ExperimentalTime::class)
+    @Suppress("LongMethod", "MagicNumber")
     private suspend fun fetchDepartures(stopId: String, showFullLoading: Boolean, sessionId: Int = -1) {
         currentCoroutineContext().ensureActive()
         val fetchStart = nowMs()
-        log("[$LOG_TAG] t=$fetchStart session=#$sessionId fetchDepartures START [API] stopId=$stopId showFullLoading=$showFullLoading")
+        log(
+            "[$LOG_TAG] t=$fetchStart session=#$sessionId fetchDepartures START [API] " +
+                "stopId=$stopId showFullLoading=$showFullLoading",
+        )
         val flow = stateFor(stopId)
         if (showFullLoading) {
             flow.update { DeparturesState(isLoading = true) }
@@ -152,9 +164,15 @@ class DepartureBoardRepository(
             val prevWindowMs = config.previousDeparturesWindowMinutes * 60_000L
             val isPrevStale = prevFetchTime > 0L && (fetchEnd - prevFetchTime) > prevWindowMs
             if (isPrevStale) {
-                log("[$LOG_TAG] t=$fetchEnd session=#$sessionId previousDepartures STALE — clearing (age=${fetchEnd - prevFetchTime}ms > window=${prevWindowMs}ms)")
+                log(
+                    "[$LOG_TAG] t=$fetchEnd session=#$sessionId previousDepartures STALE —" +
+                        " clearing (age=${fetchEnd - prevFetchTime}ms > window=${prevWindowMs}ms)",
+                )
             }
-            log("[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures SUCCESS stopId=$stopId count=${departures.size} durationMs=${fetchEnd - fetchStart}")
+            log(
+                "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures SUCCESS stopId=$stopId " +
+                    "count=${departures.size} durationMs=${fetchEnd - fetchStart}",
+            )
             flow.update { current ->
                 DeparturesState(
                     isLoading = false,
@@ -169,7 +187,8 @@ class DepartureBoardRepository(
         }.onFailure { throwable ->
             val fetchEnd = nowMs()
             logError(
-                message = "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures FAILURE stopId=$stopId durationMs=${fetchEnd - fetchStart}",
+                message = "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures FAILURE " +
+                    "stopId=$stopId durationMs=${fetchEnd - fetchStart}",
                 throwable = throwable,
             )
             flow.update {
@@ -189,6 +208,7 @@ class DepartureBoardRepository(
      * Called when the user taps "Show previous" in the departure board UI.
      * Results are stored in [DeparturesState.previousDepartures] and survive regular refreshes.
      */
+    @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     suspend fun loadPreviousDepartures(stopId: String) {
         val t0 = nowMs()
@@ -199,11 +219,17 @@ class DepartureBoardRepository(
 
         val isCacheHit = elapsedMs < config.refreshIntervalMs && flow.value.previousDepartures.isNotEmpty()
         if (isCacheHit) {
-            log("[$LOG_TAG] t=$t0 loadPreviousDepartures CACHE HIT stopId=$stopId lastFetch=$elapsedLabel count=${flow.value.previousDepartures.size}")
+            log(
+                "[$LOG_TAG] t=$t0 loadPreviousDepartures CACHE HIT stopId=$stopId " +
+                    "lastFetch=$elapsedLabel count=${flow.value.previousDepartures.size}",
+            )
             return
         }
 
-        log("[$LOG_TAG] t=$t0 loadPreviousDepartures START [API] stopId=$stopId lastFetch=$elapsedLabel windowMinutes=${config.previousDeparturesWindowMinutes}")
+        log(
+            "[$LOG_TAG] t=$t0 loadPreviousDepartures START [API] stopId=$stopId " +
+                "lastFetch=$elapsedLabel windowMinutes=${config.previousDeparturesWindowMinutes}",
+        )
         flow.update { it.copy(isPreviousLoading = true) }
         val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
         departuresService.suspendSafeResult(ioDispatcher) {
@@ -225,7 +251,10 @@ class DepartureBoardRepository(
                 .map { it.copy(timing = DepartureTiming.Previous) }
                 .toImmutableList()
             val t1 = nowMs()
-            log("[$LOG_TAG] t=$t1 loadPreviousDepartures SUCCESS stopId=$stopId total=${allFromResponse.size} filtered=${previous.size} durationMs=${t1 - t0}")
+            log(
+                "[$LOG_TAG] t=$t1 loadPreviousDepartures SUCCESS stopId=$stopId " +
+                    "total=${allFromResponse.size} filtered=${previous.size} durationMs=${t1 - t0}",
+            )
             mutex.withLock { lastPreviousFetchTime[stopId] = t1 }
             flow.update {
                 it.copy(
@@ -237,7 +266,8 @@ class DepartureBoardRepository(
         }.onFailure { throwable ->
             val t1 = nowMs()
             logError(
-                message = "[$LOG_TAG] t=$t1 loadPreviousDepartures FAILURE stopId=$stopId durationMs=${t1 - t0}",
+                message = "[$LOG_TAG] t=$t1 loadPreviousDepartures FAILURE " +
+                    "stopId=$stopId durationMs=${t1 - t0}",
                 throwable = throwable,
             )
             flow.update { it.copy(isPreviousLoading = false) }

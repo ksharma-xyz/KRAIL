@@ -30,267 +30,174 @@ class DepartureBoardRepositoryTest {
         config = testConfig,
     )
 
-    // ── setActiveStop / observeStop ───────────────────────────────────────────
+    // ── pollStop — initial fetch ──────────────────────────────────────────────
 
     @Test
-    fun `Given no active stop When setActiveStop is called Then observeStop emits loading state`() =
-        runTest {
-            val service = FakeDeparturesService()
-            val repo = makeRepo(service)
-
-            repo.observeStop(STOP_A).test {
-                // Initial state before setActiveStop
-                val initial = awaitItem()
-                assertFalse(initial.isLoading, "Initial state should not be loading")
-
-                repo.setActiveStop(STOP_A)
-                advanceUntilIdle()
-
-                // After setActiveStop with no cached data, repository emits loading=true
-                val loading = awaitItem()
-                assertTrue(loading.isLoading, "Should show full loading when no cached data")
-
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `Given active stop set When API succeeds Then observeStop emits departures`() =
+    fun `Given no cached data When pollStop collected Then emits loading then success`() =
         runTest {
             val service = FakeDeparturesService(response = buildResponse(count = 3))
             val repo = makeRepo(service)
 
-            repo.observeStop(STOP_A).test {
-                awaitItem() // initial
+            repo.pollStop(STOP_A).test {
+                // loading
+                val loading = awaitItem()
+                assertTrue(loading.isLoading, "Should show full loading when no cached data")
 
-                repo.setActiveStop(STOP_A)
                 advanceUntilIdle()
 
-                // loading state
-                awaitItem()
-
-                val result = awaitItem()
-                assertFalse(result.isLoading)
-                assertFalse(result.isError)
-                assertEquals(3, result.departures.size)
+                val success = awaitItem()
+                assertFalse(success.isLoading)
+                assertFalse(success.isError)
+                assertEquals(3, success.departures.size)
 
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `Given active stop set When API fails Then observeStop emits error state`() =
+    fun `Given no cached data When API fails Then emits error state`() = runTest {
+        val service = FakeDeparturesService(shouldThrow = true)
+        val repo = makeRepo(service)
+
+        repo.pollStop(STOP_A).test {
+            awaitItem() // loading
+
+            advanceUntilIdle()
+
+            val error = awaitItem()
+            assertFalse(error.isLoading)
+            assertTrue(error.isError, "Should show error when API fails with no cached data")
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    // ── pollStop — cancellation clears loading state ──────────────────────────
+
+    @Test
+    fun `Given pollStop collected When collection cancelled Then loading flags cleared`() =
         runTest {
-            val service = FakeDeparturesService(shouldThrow = true)
+            val service = FakeDeparturesService(response = buildResponse(count = 1))
             val repo = makeRepo(service)
 
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading — cancelled mid-flight
+                cancelAndIgnoreRemainingEvents()
+            }
+            advanceUntilIdle()
+
+            // After cancellation, cache should have isLoading=false
             repo.observeStop(STOP_A).test {
-                awaitItem() // initial
+                val state = awaitItem()
+                assertFalse(state.isLoading, "isLoading must be cleared after pollStop cancelled")
+                assertFalse(state.silentLoading, "silentLoading must be cleared after pollStop cancelled")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 
-                repo.setActiveStop(STOP_A)
-                advanceUntilIdle()
+    // ── pollStop — auto-refresh loop ──────────────────────────────────────────
 
+    @Test
+    fun `Given active pollStop When refresh interval elapses Then API is called again`() =
+        runTest {
+            val service = FakeDeparturesService(response = buildResponse(count = 1))
+            val repo = makeRepo(service)
+
+            repo.pollStop(STOP_A).test {
                 awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // first success
+                val callsAfterFirst = service.callCount
 
-                val result = awaitItem()
-                assertFalse(result.isLoading)
-                assertTrue(result.isError, "Should show error when API fails and no cached data")
+                advanceTimeBy(testConfig.refreshIntervalMs + 100)
+                advanceUntilIdle()
 
+                assertTrue(service.callCount > callsAfterFirst, "Auto-refresh should fire after interval elapses")
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
-    @Test
-    fun `Given setActiveStop called with same stop When already active Then NOOP - no extra loading emitted`() =
-        runTest {
-            val service = FakeDeparturesService(response = buildResponse(count = 2))
-            val repo = makeRepo(service)
-
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-
-            val callCountBefore = service.callCount
-
-            repo.setActiveStop(STOP_A) // same stop — should NOOP
-            advanceUntilIdle()
-
-            assertEquals(callCountBefore, service.callCount, "No extra API call for same stop")
-        }
+    // ── pollStop — refresh window (cache hit) ─────────────────────────────────
 
     @Test
-    fun `Given stop A is active When setActiveStop called with null Then polling stops`() =
+    fun `Given recent successful fetch When pollStop re-collected quickly Then waits for window before fetch`() =
         runTest {
             val service = FakeDeparturesService(response = buildResponse(count = 1))
             val repo = makeRepo(service)
 
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-            val callsAfterFirstActivation = service.callCount
+            // First collection — fetches immediately
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
+                cancelAndIgnoreRemainingEvents()
+            }
+            val callsAfterFirst = service.callCount
 
-            repo.setActiveStop(null)
-            advanceUntilIdle()
-
-            // Advance past the refresh interval — no new calls should fire
-            advanceTimeBy(testConfig.refreshIntervalMs * 3)
-            advanceUntilIdle()
-
-            assertEquals(callsAfterFirstActivation, service.callCount, "No further calls after stop set to null")
+            // Re-collect immediately — still within the refresh window
+            repo.pollStop(STOP_A).test {
+                // Should NOT emit a new loading state (has cached data)
+                advanceUntilIdle()
+                // No new fetch should have fired yet
+                assertEquals(callsAfterFirst, service.callCount, "No immediate re-fetch within the refresh window")
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
-    // ── stopIfActive ─────────────────────────────────────────────────────────
+    // ── observeStop — reads cache without polling ─────────────────────────────
 
     @Test
-    fun `Given stop A is active When stopIfActive called with A Then loading state is cleared`() =
+    fun `Given no active polling When observeStop collected Then emits idle state — no API call`() =
         runTest {
             val service = FakeDeparturesService(response = buildResponse(count = 2))
             val repo = makeRepo(service)
 
             repo.observeStop(STOP_A).test {
-                awaitItem() // initial
-
-                repo.setActiveStop(STOP_A)
-                advanceUntilIdle()
-
-                // Consume loading + success
-                awaitItem()
-                awaitItem()
-
-                repo.stopIfActive(STOP_A)
-                advanceUntilIdle()
-
-                // After stopIfActive, loading flags must be false
-                // (the repo clears them even if a job was cancelled mid-flight)
-                expectNoEvents()
-
+                val initial = awaitItem()
+                assertFalse(initial.isLoading, "observeStop should not trigger loading")
+                assertEquals(0, service.callCount, "observeStop must not call the API")
                 cancelAndIgnoreRemainingEvents()
             }
-        }
-
-    @Test
-    fun `Given stop A is active When stopIfActive called with stop B Then polling for A continues`() =
-        runTest {
-            val service = FakeDeparturesService(response = buildResponse(count = 1))
-            val repo = makeRepo(service)
-
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-            val callsAfterActivation = service.callCount
-
-            repo.stopIfActive(STOP_B) // wrong stop — should NOOP
-            advanceUntilIdle()
-
-            // Advance past one refresh window — polling should still fire
-            advanceTimeBy(testConfig.refreshIntervalMs + 100)
-            advanceUntilIdle()
-
-            assertTrue(service.callCount > callsAfterActivation, "Polling should continue after NOOP stopIfActive")
         }
 
     // ── refresh ───────────────────────────────────────────────────────────────
 
     @Test
-    fun `Given active stop When refresh called Then API is called immediately`() =
-        runTest {
-            val service = FakeDeparturesService(response = buildResponse(count = 1))
-            val repo = makeRepo(service)
+    fun `Given cached data When refresh called Then API is called immediately`() = runTest {
+        val service = FakeDeparturesService(response = buildResponse(count = 1))
+        val repo = makeRepo(service)
 
-            repo.setActiveStop(STOP_A)
+        repo.pollStop(STOP_A).test {
+            awaitItem() // loading
             advanceUntilIdle()
+            awaitItem() // success
             val callsBefore = service.callCount
 
             repo.refresh(STOP_A)
             advanceUntilIdle()
 
             assertEquals(callsBefore + 1, service.callCount, "refresh should trigger one extra API call")
+            cancelAndIgnoreRemainingEvents()
         }
-
-    // ── refresh window (cache hit) ────────────────────────────────────────────
-
-    @Test
-    fun `Given recent fetch When setActiveStop same stop then switch back quickly Then no duplicate fetch`() =
-        runTest {
-            val service = FakeDeparturesService(response = buildResponse(count = 1))
-            val repo = makeRepo(service)
-
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-            val callsAfterFirst = service.callCount
-
-            repo.setActiveStop(STOP_B)
-            advanceUntilIdle()
-            repo.setActiveStop(STOP_A) // return to A quickly — should be within the refresh window
-            advanceUntilIdle()
-
-            // Stop A was fetched recently — the window check in startPolling means no immediate re-fetch
-            assertEquals(callsAfterFirst, service.callCount - 1, "Re-activating stop A within window should wait, not fetch immediately")
-        }
-
-    // ── auto-refresh loop ─────────────────────────────────────────────────────
-
-    @Test
-    fun `Given active stop When refresh interval elapses Then API is called again`() =
-        runTest {
-            val service = FakeDeparturesService(response = buildResponse(count = 1))
-            val repo = makeRepo(service)
-
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-            val callsAfterFirst = service.callCount
-
-            advanceTimeBy(testConfig.refreshIntervalMs + 100)
-            advanceUntilIdle()
-
-            assertTrue(service.callCount > callsAfterFirst, "Auto-refresh should fire after interval elapses")
-        }
-
-    // ── stale loading state cleared on job cancel ─────────────────────────────
-
-    @Test
-    fun `Given silent refresh in flight When setActiveStop switches stop Then abandoned stop loading is cleared`() =
-        runTest {
-            val service = FakeDeparturesService(response = buildResponse(count = 1))
-            val repo = makeRepo(service)
-
-            // Load stop A once so it has data (enabling silent refresh on re-activation)
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-
-            repo.observeStop(STOP_A).test {
-                awaitItem() // current state
-
-                // Switch away — cancels any in-flight job for stop A
-                repo.setActiveStop(STOP_B)
-                advanceUntilIdle()
-
-                // Stop A's loading flags should be cleared after the job is cancelled
-                val stateAfterSwitch = expectMostRecentItem()
-                assertFalse(stateAfterSwitch.isLoading, "isLoading must be false after stop switched away")
-                assertFalse(stateAfterSwitch.silentLoading, "silentLoading must be false after stop switched away")
-
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
+    }
 
     // ── loadPreviousDepartures ────────────────────────────────────────────────
 
     @Test
     fun `Given loadPreviousDepartures called When API succeeds Then previousDepartures populated`() =
         runTest {
-            // Use a departure time in the past so the filter keeps it
             val pastTime = "2020-01-01T00:00:00Z"
             val service = FakeDeparturesService(response = buildResponse(count = 2, plannedTime = pastTime))
             val repo = makeRepo(service)
 
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
-
-            repo.observeStop(STOP_A).test {
-                awaitItem() // current state after initial fetch
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
 
                 repo.loadPreviousDepartures(STOP_A)
                 advanceUntilIdle()
 
-                // isPreviousLoading = true then false
                 val loading = awaitItem()
                 assertTrue(loading.isPreviousLoading)
 
@@ -308,14 +215,12 @@ class DepartureBoardRepositoryTest {
             val service = FakeDeparturesService(response = buildResponse(count = 1))
             val repo = makeRepo(service)
 
-            repo.setActiveStop(STOP_A)
-            advanceUntilIdle()
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
 
-            // Now make service throw for the next call (previous departures fetch)
-            service.shouldThrow = true
-
-            repo.observeStop(STOP_A).test {
-                awaitItem() // current state
+                service.shouldThrow = true
 
                 repo.loadPreviousDepartures(STOP_A)
                 advanceUntilIdle()
@@ -326,6 +231,35 @@ class DepartureBoardRepositoryTest {
                 val done = awaitItem()
                 assertFalse(done.isPreviousLoading, "isPreviousLoading must be cleared even on failure")
 
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // ── silent-loading cleared on cancellation ────────────────────────────────
+
+    @Test
+    fun `Given silent refresh in flight When collection cancelled Then silentLoading cleared`() =
+        runTest {
+            val service = FakeDeparturesService(response = buildResponse(count = 1))
+            val repo = makeRepo(service)
+
+            // First collect — populates cache so next collect does a silent refresh
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // Second collect — cancels while silentLoading may be in flight
+            repo.pollStop(STOP_A).test {
+                cancelAndIgnoreRemainingEvents()
+            }
+            advanceUntilIdle()
+
+            repo.observeStop(STOP_A).test {
+                val state = awaitItem()
+                assertFalse(state.silentLoading, "silentLoading must be cleared after cancellation")
                 cancelAndIgnoreRemainingEvents()
             }
         }

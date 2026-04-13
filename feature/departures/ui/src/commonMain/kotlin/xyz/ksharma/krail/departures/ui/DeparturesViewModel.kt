@@ -35,9 +35,6 @@ class DeparturesViewModel(
     // Tracks which stop this ViewModel instance is responsible for polling.
     private val activeStopId = MutableStateFlow<String?>(null)
 
-    @OptIn(ExperimentalTime::class)
-    private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
-
     private val _uiState: MutableStateFlow<DeparturesState> = MutableStateFlow(DeparturesState())
     val uiState: StateFlow<DeparturesState> = _uiState.asStateFlow()
 
@@ -78,7 +75,12 @@ class DeparturesViewModel(
                     }
                 }
                 .collect { state ->
-                    log("[$LOG_TAG] t=${nowMs()} repo state received: isLoading=${state.isLoading} silentLoading=${state.silentLoading} isError=${state.isError} departures=${state.departures.size} prevDepartures=${state.previousDepartures.size}")
+                    log(
+                        "[$LOG_TAG] t=${nowMs()} repo state received: isLoading=${state.isLoading} " +
+                            "silentLoading=${state.silentLoading} isError=${state.isError} " +
+                            "departures=${state.departures.size} " +
+                            "prevDepartures=${state.previousDepartures.size}",
+                    )
                     _uiState.value = state
                 }
         }
@@ -115,7 +117,10 @@ class DeparturesViewModel(
                         )
                     }.toImmutableList(),
                 )
-                log("[$LOG_TAG] t=$t relativeTime tick=#$tick updated departures=${updated.departures.size} prev=${updated.previousDepartures.size}")
+                log(
+                    "[$LOG_TAG] t=$t relativeTime tick=#$tick updated departures=${updated.departures.size} " +
+                        "prev=${updated.previousDepartures.size}",
+                )
                 updated
             }
         }
@@ -170,6 +175,9 @@ class DeparturesViewModel(
         // which clears loading state via its finally block. No manual cleanup needed.
         super.onCleared()
     }
+
+    @OptIn(ExperimentalTime::class)
+    private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
 
     companion object {
         const val LOG_TAG = "DEPARTURES"

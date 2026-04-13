@@ -79,6 +79,7 @@ object DateTimeHelper {
         return instant - now
     }
 
+    @Suppress("MagicNumber")
     fun Duration.toGenericFormattedTimeString(): String {
         val totalSeconds = this.toLong(DurationUnit.SECONDS)
         val totalMinutes = this.toLong(DurationUnit.MINUTES)

@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.departures.ui
 
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -142,7 +143,8 @@ class DepartureBoardRepository(
         val nowMs = Clock.System.now().toEpochMilliseconds()
         val lastFetch = mutex.withLock { lastFetchTime[stopId] ?: 0L }
         val elapsedMs = nowMs - lastFetch
-        log("[$LOG_TAG] t=$t0 session=#$sessionId lastFetchTime=$lastFetch elapsedMs=$elapsedMs refreshIntervalMs=${config.refreshIntervalMs}")
+        val elapsedLabel = if (lastFetch == 0L) "never fetched" else "${elapsedMs}ms ago"
+        log("[$LOG_TAG] t=$t0 session=#$sessionId lastFetch=$elapsedLabel refreshIntervalMs=${config.refreshIntervalMs}")
 
         mutex.withLock {
             if (activeStopId != stopId) {
@@ -210,6 +212,16 @@ class DepartureBoardRepository(
             // the request was in flight.
             currentCoroutineContext().ensureActive()
             val departures = response.toStopDepartures()
+            // Check whether the cached "previous departures" are too old to keep.
+            // If the last previous-fetch is older than the look-back window (default 30 min),
+            // the data has fully rolled out of the window — clear it so the UI shows a fresh
+            // "Show previous" button instead of hour-old past trips.
+            val prevFetchTime = mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
+            val prevWindowMs = config.previousDeparturesWindowMinutes * 60_000L
+            val isPrevStale = prevFetchTime > 0L && (fetchEnd - prevFetchTime) > prevWindowMs
+            if (isPrevStale) {
+                log("[$LOG_TAG] t=$fetchEnd session=#$sessionId previousDepartures STALE — clearing (age=${fetchEnd - prevFetchTime}ms > window=${prevWindowMs}ms)")
+            }
             log("[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures SUCCESS stopId=$stopId count=${departures.size} durationMs=${fetchEnd - fetchStart}")
             flow.update { current ->
                 DeparturesState(
@@ -217,9 +229,10 @@ class DepartureBoardRepository(
                     silentLoading = false,
                     isError = false,
                     departures = departures,
-                    // Preserve previously fetched past departures across regular refreshes.
-                    previousDepartures = current.previousDepartures,
-                    isPreviousLoading = current.isPreviousLoading,
+                    // Preserve previously fetched past departures across regular refreshes,
+                    // but discard them if the cache is older than the look-back window.
+                    previousDepartures = if (isPrevStale) persistentListOf() else current.previousDepartures,
+                    isPreviousLoading = if (isPrevStale) false else current.isPreviousLoading,
                     previousWindowMinutes = current.previousWindowMinutes,
                 )
             }
@@ -252,16 +265,17 @@ class DepartureBoardRepository(
             val t0 = nowMs()
             val lastPrevFetch = mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
             val elapsedMs = t0 - lastPrevFetch
+            val elapsedLabel = if (lastPrevFetch == 0L) "never fetched" else "${elapsedMs}ms ago"
             val flow = stateFor(stopId)
 
             // If we already have data and it's still within the refresh window, skip the fetch.
             val isCacheHit = elapsedMs < config.refreshIntervalMs && flow.value.previousDepartures.isNotEmpty()
             if (isCacheHit) {
-                log("[$LOG_TAG] t=$t0 loadPreviousDepartures CACHE HIT stopId=$stopId elapsedMs=$elapsedMs count=${flow.value.previousDepartures.size}")
+                log("[$LOG_TAG] t=$t0 loadPreviousDepartures CACHE HIT stopId=$stopId lastFetch=$elapsedLabel count=${flow.value.previousDepartures.size}")
                 return@launchWithExceptionHandler
             }
 
-            log("[$LOG_TAG] t=$t0 loadPreviousDepartures START stopId=$stopId elapsedMs=$elapsedMs windowMinutes=${config.previousDeparturesWindowMinutes}")
+            log("[$LOG_TAG] t=$t0 loadPreviousDepartures START stopId=$stopId lastFetch=$elapsedLabel windowMinutes=${config.previousDeparturesWindowMinutes}")
             flow.update { it.copy(isPreviousLoading = true) }
             val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
             // suspendSafeResult re-throws CancellationException so it is never silently swallowed.

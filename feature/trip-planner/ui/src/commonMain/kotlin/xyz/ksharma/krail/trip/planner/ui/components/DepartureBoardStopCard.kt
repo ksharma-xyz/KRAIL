@@ -30,10 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
@@ -47,7 +49,10 @@ import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.modifier.CardShape
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 
 /**
@@ -88,7 +93,7 @@ fun DepartureBoardStopCard(
     // Filter state — keyed to stopId so rotating the device while a filter is active
     // restores the same selection. Empty string is the "no filter" sentinel (primitives only
     // are safe across process death / configuration changes via rememberSaveable).
-    var selectedLineKey by rememberSaveable(key = "filter_$stopId") { mutableStateOf("") }
+    var selectedLineKey by rememberSaveable { mutableStateOf("") }
     val selectedLine: String? = selectedLineKey.ifEmpty { null }
 
     val arrowRotation by animateFloatAsState(
@@ -187,7 +192,7 @@ private fun CardHeader(
                 modifier = Modifier.weight(1f),
             )
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (expanded && silentLoading) {
@@ -220,10 +225,13 @@ private fun DeparturesBody(
     Column {
         when {
             state.isLoading -> LoadingContent()
+
             state.isError -> DeparturesErrorContent(
                 onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
             )
+
             state.departures.isEmpty() -> EmptyContent()
+
             else -> DeparturesSuccessContent(
                 state = state,
                 onEvent = onEvent,
@@ -233,6 +241,7 @@ private fun DeparturesBody(
                 maxItems = maxItems,
             )
         }
+
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
@@ -380,3 +389,196 @@ private fun FilterEmptyContent() {
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
     )
 }
+
+// region Previews
+
+private const val TRANSPORT_MODE_TRAIN = "Train"
+private const val TRANSPORT_MODE_BUS = "Bus"
+private const val TRANSPORT_MODE_FERRY = "Ferry"
+private const val SAMPLE_DATE_PREFIX = "2026-04-08T01:"
+
+private val previewTrainDepartures = persistentListOf(
+    StopDeparture(
+        lineNumber = "T1",
+        lineColorCode = "#F99D1C",
+        transportModeName = TRANSPORT_MODE_TRAIN,
+        destinationName = "Liverpool via Strathfield",
+        departureTimeText = "11:30 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}30:00Z",
+        platformText = "Platform 4",
+        isRealTime = true,
+    ),
+    StopDeparture(
+        lineNumber = "T2",
+        lineColorCode = "#0098CD",
+        transportModeName = TRANSPORT_MODE_TRAIN,
+        destinationName = "Bondi Junction",
+        departureTimeText = "11:33 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}33:00Z",
+        platformText = "Platform 7",
+        isRealTime = false,
+    ),
+    StopDeparture(
+        lineNumber = "T4",
+        lineColorCode = "#005AA3",
+        transportModeName = TRANSPORT_MODE_TRAIN,
+        destinationName = "Illawarra via Sydenham",
+        departureTimeText = "11:36 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}36:00Z",
+        platformText = "Platform 2",
+        isRealTime = true,
+    ),
+)
+
+private val previewBusDepartures = persistentListOf(
+    StopDeparture(
+        lineNumber = "333",
+        lineColorCode = "#00B5EF",
+        transportModeName = TRANSPORT_MODE_BUS,
+        destinationName = "Parramatta Interchange",
+        departureTimeText = "11:40 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}40:00Z",
+        platformText = "Stand B",
+        isRealTime = true,
+    ),
+    StopDeparture(
+        lineNumber = "370",
+        lineColorCode = "#00B5EF",
+        transportModeName = TRANSPORT_MODE_BUS,
+        destinationName = "Coogee Beach",
+        departureTimeText = "11:45 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}45:00Z",
+        platformText = null,
+        isRealTime = false,
+    ),
+)
+
+private val previewFerryDepartures = persistentListOf(
+    StopDeparture(
+        lineNumber = "F1",
+        lineColorCode = "#00774B",
+        transportModeName = TRANSPORT_MODE_FERRY,
+        destinationName = "Manly Wharf",
+        departureTimeText = "11:30 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}30:00Z",
+        platformText = "Wharf 1",
+        isRealTime = true,
+    ),
+    StopDeparture(
+        lineNumber = "F2",
+        lineColorCode = "#144734",
+        transportModeName = TRANSPORT_MODE_FERRY,
+        destinationName = "Parramatta River",
+        departureTimeText = "11:45 AM",
+        departureUtcDateTime = "${SAMPLE_DATE_PREFIX}45:00Z",
+        platformText = "Wharf 3",
+        isRealTime = false,
+    ),
+)
+
+@Preview(name = "Collapsed", showBackground = true)
+@Composable
+private fun DepartureBoardStopCardCollapsedPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(),
+            onEvent = {},
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureBoardStopCardLoadingPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(isLoading = true),
+            onEvent = {},
+            isExpanded = true,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureBoardStopCardLoadedTrainPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(
+                isLoading = false,
+                departures = previewTrainDepartures,
+            ),
+            onEvent = {},
+            isExpanded = true,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureBoardStopCardLoadedBusPreview() {
+    PreviewTheme(KrailThemeStyle.Bus) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(
+                isLoading = false,
+                departures = previewBusDepartures,
+            ),
+            onEvent = {},
+            isExpanded = true,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureBoardStopCardLoadedFerryPreview() {
+    PreviewTheme(KrailThemeStyle.Ferry) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(
+                isLoading = false,
+                departures = previewFerryDepartures,
+            ),
+            onEvent = {},
+            isExpanded = true,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureBoardStopCardErrorPreview() {
+    PreviewTheme(KrailThemeStyle.Metro) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(
+                isLoading = false,
+                isError = true,
+            ),
+            onEvent = {},
+            isExpanded = true,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureBoardStopCardEmptyPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureBoardStopCard(
+            stopId = "10101010",
+            state = DeparturesState(
+                isLoading = false,
+                departures = persistentListOf(),
+            ),
+            onEvent = {},
+            isExpanded = true,
+        )
+    }
+}
+
+// endregion

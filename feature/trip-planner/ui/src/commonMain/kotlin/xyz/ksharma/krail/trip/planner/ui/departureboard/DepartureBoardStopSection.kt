@@ -224,11 +224,10 @@ private fun DepartureBoardAccordionContent(
                     selectedLine = selectedLine,
                     onLineSelect = { selectedLineKey = it ?: "" },
                 )
-                Divider(modifier = Modifier.padding(horizontal = 12.dp))
-                Spacer(modifier = Modifier.height(4.dp))
 
                 // "Show previous / Hide previous" toggle
                 ShowPreviousButton(
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
                     showPrevious = showPrevious,
                     onClick = {
                         showPrevious = !showPrevious
@@ -326,7 +325,7 @@ private fun ShowPreviousButton(
         contentAlignment = Alignment.Center,
     ) {
         TextButton(onClick = onClick) {
-            Text(text = if (showPrevious) "Hide previous" else "Show previous")
+            Text(text = if (showPrevious) "Hide previous departures" else "Show previous departures")
         }
     }
 }

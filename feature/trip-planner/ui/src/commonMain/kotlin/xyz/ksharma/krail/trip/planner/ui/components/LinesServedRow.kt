@@ -2,9 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -13,12 +11,17 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -28,9 +31,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
@@ -41,10 +45,12 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.ButtonDefaults
-import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 // Stagger timing constants
@@ -54,13 +60,19 @@ private const val BADGE_EXIT_DURATION_MS = 160    // how long each badge takes t
 private const val BADGE_ENTER_OFFSET_MS = 80      // head-start before badges start appearing
 private const val CONTAINER_ENTER_MS = 250        // badge container expand duration
 
+// Shared height for all interactive items in the filter row so they align visually:
+//   FilterPill  → 7dp padding + 24dp icon  + 7dp padding = 38dp  (natural)
+//   Badge Large → 7dp padding + 20dp text  + 7dp padding = 34dp  (grows to 38dp via heightIn)
+//   ModeIcon    → Medium icon (28dp) centred inside 38dp bounding box
+private val FILTER_ROW_ITEM_HEIGHT = 38.dp
+
 /**
  * A single horizontally-scrollable row containing a collapsible filter button and mode groups.
  *
  * **Layout**: everything lives in one `Row` + `horizontalScroll` — no second row, no column.
  * - Left: a filter pill button. Collapsed → icon only. Expanded → icon + "Lines" text (the button
- *   itself shrinks/grows via [animateContentSize] inside [SubtleButton]).
- * - Right (when expanded): one group per transport mode. Each group is a `[ModeIconButton] [badges]`
+ *   itself shrinks/grows via [animateContentSize]).
+ * - Right (when expanded): one group per transport mode. Each group is a [ModeIconButton] + badges
  *   pair. The mode icon is the [TransportModeIcon] circle — tapping it collapses/expands its badges.
  *
  * **Badge animations** (staggered for a satisfying "one-by-one" effect):
@@ -107,32 +119,15 @@ internal fun LinesServedRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // ── Filter pill — shrinks to icon-only when closed ────────────────────
-        SubtleButton(
+        // ── Filter pill — shrinks to icon-only circle when closed, expands to pill ──
+        FilterPill(
+            expanded = filterExpanded,
             onClick = {
                 val opening = !filterExpanded
                 filterExpanded = opening
                 if (opening) collapsedModes = emptySet() // all modes start expanded on open
             },
-            dimensions = ButtonDefaults.mediumButtonSize(),
-        ) {
-            Row(
-                // animateContentSize makes the SubtleButton's Box measure the intermediate width,
-                // so the pill background/clip follow the animation automatically.
-                modifier = Modifier.animateContentSize(tween(250)),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_filter),
-                    contentDescription = if (filterExpanded) "Hide line filter" else "Show line filter",
-                    colorFilter = ColorFilter.tint(ButtonDefaults.subtleButtonColors().contentColor),
-                )
-                if (filterExpanded) {
-                    Text(text = "Lines")
-                }
-            }
-        }
+        )
 
         // ── All mode groups — slide in / out as one block ─────────────────────
         AnimatedVisibility(
@@ -154,20 +149,24 @@ internal fun LinesServedRow(
                             // Outer spacedBy(8dp) applies between MODE GROUPS, not inside a group,
                             // so when badges collapse the container starts narrowing immediately
                             // and the next group repositions smoothly.
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            // padding(start = 4.dp) adds extra breathing room before each mode icon
+                            // without touching any AnimatedVisibility, so all animations are safe.
+                            Row(
+                                modifier = Modifier.padding(start = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
 
                                 ModeIconButton(
                                     transportMode = transportMode,
-                                    expanded = isExpanded,
+                                    modifier = Modifier.padding(start = 4.dp),
                                     onClick = {
-                                        val wasExpanded = isExpanded
-                                        collapsedModes = if (wasExpanded) {
+                                        collapsedModes = if (isExpanded) {
                                             collapsedModes + modeName
                                         } else {
                                             collapsedModes - modeName
                                         }
                                         // Clear filter if hiding its mode so it's never invisible.
-                                        if (wasExpanded && lines.any { it.lineNumber == selectedLine }) {
+                                        if (isExpanded && lines.any { it.lineNumber == selectedLine }) {
                                             onLineSelect(null)
                                         }
                                     },
@@ -191,7 +190,7 @@ internal fun LinesServedRow(
                                     ),
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(start = 8.dp),
+                                        modifier = Modifier.padding(start = 12.dp),
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
@@ -218,6 +217,7 @@ internal fun LinesServedRow(
                                                     backgroundColor = departure.lineColorCode.hexToComposeColor(),
                                                     size = BadgeSize.Large,
                                                     selected = isSelected,
+                                                    modifier = Modifier.heightIn(min = FILTER_ROW_ITEM_HEIGHT),
                                                     onClick = {
                                                         onLineSelect(if (isSelected) null else departure.lineNumber)
                                                     },
@@ -236,33 +236,85 @@ internal fun LinesServedRow(
 }
 
 /**
- * The transport mode icon circle used as a tap target to expand/collapse that mode's badges.
+ * A pill/circle button for the filter toggle.
  *
- * Springs to 1.2× scale when badges are expanded so you can tell at a glance which modes are open.
- * The white border on the icon ensures it pops against the card background in both themes.
+ * - **Collapsed** (icon-only): horizontal padding equals vertical padding (7 dp each side)
+ *   so the button measures as a perfect square and [RoundedCornerShape(50)] renders a circle.
+ * - **Expanded** (icon + "Lines" text): horizontal padding grows to 12 dp, producing a standard
+ *   pill shape. Both the padding and the content width animate simultaneously.
  */
 @Composable
-private fun ModeIconButton(
-    transportMode: TransportMode,
+private fun FilterPill(
     expanded: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scale by animateFloatAsState(
-        targetValue = if (expanded) 1.2f else 1f,
-        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
-        label = "mode-icon-scale-${transportMode.name}",
+    val colors = ButtonDefaults.subtleButtonColors()
+    // Animate horizontal padding: 7 dp (equal to vertical → circle) ↔ 12 dp (wider → pill).
+    val hPad by animateDpAsState(
+        targetValue = if (expanded) 12.dp else 7.dp,
+        animationSpec = tween(250),
+        label = "filter-pill-hpad",
     )
-
-    TransportModeIcon(
-        transportMode = transportMode,
-        size = TransportModeIconSize.Small,
-        displayBorder = true,
-        borderColor = androidx.compose.ui.graphics.Color.White,
+    Box(
         modifier = modifier
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(RoundedCornerShape(50))
+            .background(colors.containerColor)
+            .klickable { onClick() }
+            .padding(horizontal = hPad, vertical = 7.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier.animateContentSize(tween(250)),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.ic_filter),
+                contentDescription = if (expanded) "Hide line filter" else "Show line filter",
+                colorFilter = ColorFilter.tint(colors.contentColor),
+                modifier = Modifier.size(24.dp),
+            )
+            if (expanded) {
+                Text(
+                    text = "Filter",
+                    style = KrailTheme.typography.titleMedium,
+                    color = colors.contentColor,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The transport mode icon circle used as a tap target to expand/collapse that mode's badges.
+ *
+ * The icon is centred inside a [FILTER_ROW_ITEM_HEIGHT]-tall Box so it aligns with the
+ * [FilterPill] and the [TransportModeBadge] pills without changing its actual visual circle size.
+ * The white border is shown only in dark mode — on a light surface it is invisible and makes
+ * the icon appear smaller, so it is suppressed there.
+ */
+@Composable
+private fun ModeIconButton(
+    transportMode: TransportMode,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isDarkMode = LocalThemeController.current.isAppDarkMode()
+
+    Box(
+        modifier = modifier
+            .heightIn(min = FILTER_ROW_ITEM_HEIGHT)
             .clickable(indication = null, interactionSource = null) { onClick() },
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        TransportModeIcon(
+            transportMode = transportMode,
+            size = TransportModeIconSize.Medium,
+            displayBorder = isDarkMode,
+            borderColor = Color.White,
+        )
+    }
 }
 
 // region Previews

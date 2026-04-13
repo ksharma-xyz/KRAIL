@@ -58,6 +58,9 @@ fun DepartureRow(
         departure.transportModeName.toTransportMode()
     }
 
+    // For previous departures, dim all text to 50% alpha (same as JourneyCard's past journey treatment).
+    // TransportModeIcon and TransportModeBadge intentionally override LocalContentAlpha to 1f internally,
+    // so they remain fully opaque — only text dims.
     CompositionLocalProvider(LocalContentAlpha provides if (isPrevious) 0.5f else 1f) {
         Column(
             modifier = modifier
@@ -80,7 +83,10 @@ fun DepartureRow(
                         Text(
                             text = departure.relativeTimeText,
                             style = KrailTheme.typography.titleMedium,
-                            color = lineColor,
+                            // Mirror JourneyCard: swap line colour → onSurface for previous
+                            // departures so the text reads as grey at 50% alpha instead of
+                            // a dim version of the (still vivid) transport line colour.
+                            color = if (isPrevious) KrailTheme.colors.onSurface else lineColor,
                         )
                     }
 
@@ -104,7 +110,9 @@ fun DepartureRow(
                         text = it,
                         textAlign = TextAlign.End,
                         style = KrailTheme.typography.bodyMedium,
-                        color = KrailTheme.colors.label,
+                        // softLabel at 50% alpha is near-invisible; use onSurface for previous
+                        // so the platform label stays readable when dimmed.
+                        color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.label,
                     )
                 }
             }
@@ -116,11 +124,13 @@ fun DepartureRow(
                 delayMinutes = departure.delayMinutes,
             )
 
-            // Line 3: destination in softLabel
+            // Line 3: destination
             Text(
                 text = departure.destinationName,
                 style = KrailTheme.typography.bodyMedium,
-                color = KrailTheme.colors.softLabel,
+                // softLabel at 50% alpha is near-invisible; use onSurface for previous
+                // so the destination stays readable when dimmed.
+                color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.softLabel,
             )
         }
     }
@@ -201,12 +211,12 @@ fun DepartureRowList(
                 if (index > 0) Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 Text(
                     text = departure.dateLabel,
-                    style = KrailTheme.typography.labelLarge,
-                    color = KrailTheme.colors.softLabel,
+                    style = KrailTheme.typography.titleMedium,
+                    color = KrailTheme.colors.onSurface,
                     modifier = Modifier
                         .semantics { heading() }
                         .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp),
+                        .padding(top = 16.dp, bottom = 8.dp),
                 )
                 lastDateLabel = departure.dateLabel
             }
@@ -354,6 +364,115 @@ private fun DepartureRowListMetroPreview() {
     PreviewTheme(KrailThemeStyle.Metro) {
         Column {
             DepartureRowList(departures = sampleDepartures)
+        }
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureRowPreviousTrainPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureRow(
+            departure = StopDeparture(
+                lineNumber = "T1",
+                lineColorCode = "#F99D1C",
+                transportModeName = TRANSPORT_MODE_TRAIN,
+                destinationName = "Liverpool via Strathfield",
+                departureTimeText = "11:30 AM",
+                departureUtcDateTime = "2026-04-10T01:30:00Z",
+                relativeTimeText = "5 mins ago",
+                platformText = "Platform 4",
+                isRealTime = true,
+                timing = DepartureTiming.Previous,
+            ),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DepartureRowPreviousBusDelayedPreview() {
+    PreviewTheme(KrailThemeStyle.Bus) {
+        DepartureRow(
+            departure = StopDeparture(
+                lineNumber = BUS_LINE_700,
+                lineColorCode = BUS_COLOR,
+                transportModeName = TRANSPORT_MODE_BUS,
+                destinationName = BUS_DESTINATION,
+                departureTimeText = BUS_DEPARTURE_TIME,
+                departureUtcDateTime = BUS_UTC_DATE,
+                relativeTimeText = "12 mins ago",
+                platformText = BUS_PLATFORM,
+                isRealTime = true,
+                scheduledTimeText = "11:28 am",
+                delayMinutes = 2,
+                timing = DepartureTiming.Previous,
+            ),
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureRowListWithPreviousPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        Column {
+            DepartureRowList(
+                departures = persistentListOf(
+                    StopDeparture(
+                        lineNumber = "T1",
+                        lineColorCode = "#F99D1C",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Liverpool via Strathfield",
+                        departureTimeText = "11:20 AM",
+                        departureUtcDateTime = "2026-04-10T01:20:00Z",
+                        relativeTimeText = "10 mins ago",
+                        platformText = "Platform 4",
+                        isRealTime = true,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Previous,
+                    ),
+                    StopDeparture(
+                        lineNumber = "T2",
+                        lineColorCode = "#0098CD",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Bondi Junction",
+                        departureTimeText = "11:25 AM",
+                        departureUtcDateTime = "2026-04-10T01:25:00Z",
+                        relativeTimeText = "5 mins ago",
+                        platformText = "Platform 7",
+                        isRealTime = false,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Previous,
+                    ),
+                    StopDeparture(
+                        lineNumber = "T1",
+                        lineColorCode = "#F99D1C",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Liverpool via Strathfield",
+                        departureTimeText = "11:30 AM",
+                        departureUtcDateTime = "2026-04-10T01:30:00Z",
+                        relativeTimeText = "in 2 mins",
+                        platformText = "Platform 4",
+                        isRealTime = true,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Upcoming,
+                    ),
+                    StopDeparture(
+                        lineNumber = "T4",
+                        lineColorCode = "#005AA3",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Illawarra via Sydenham",
+                        departureTimeText = "11:36 AM",
+                        departureUtcDateTime = "2026-04-10T01:36:00Z",
+                        relativeTimeText = "in 8 mins",
+                        platformText = "Platform 2",
+                        isRealTime = true,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Upcoming,
+                    ),
+                ),
+            )
         }
     }
 }

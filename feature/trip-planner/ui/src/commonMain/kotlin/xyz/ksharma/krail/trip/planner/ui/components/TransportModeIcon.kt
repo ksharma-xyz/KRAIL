@@ -40,7 +40,10 @@ fun TransportModeIcon(
         LocalTextColor provides Color.White,
         // should be same as StopsRow and TransportModeInfo
         LocalTextStyle provides KrailTheme.typography.titleSmall,
-        // Alpha should always be 100%
+        // Alpha is intentionally always 100% — the mode icon circle must remain fully opaque
+        // even when used inside a parent that sets LocalContentAlpha to 0.5f (e.g. previous
+        // departure rows or past journey cards). The icon's coloured circle is its primary
+        // identity signal and should never be dimmed.
         LocalContentAlpha provides ContentAlphaTokens.EnabledContentAlpha,
     ) {
         Box(

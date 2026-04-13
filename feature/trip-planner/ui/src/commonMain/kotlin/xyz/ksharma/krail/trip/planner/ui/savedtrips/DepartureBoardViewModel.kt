@@ -112,6 +112,19 @@ class DepartureBoardViewModel(
         repository.setActiveStop(stopId)
     }
 
+    /**
+     * Re-activates the polling loop for the currently expanded stop.
+     *
+     * Call this when the screen returns to the foreground (ON_START). If the user navigated
+     * away (e.g. to the map stop-picker) the repository's active polling loop may have been
+     * cancelled by another consumer. Calling [repository.setActiveStop] restarts it so the
+     * departure board shows fresh data rather than a stale cache snapshot.
+     */
+    fun resumeActivePolling() {
+        val stopId = _expandedStopId.value ?: return
+        repository.setActiveStop(stopId)
+    }
+
     /** Triggers an immediate silent refresh for [stopId] without disrupting the poll loop. */
     fun onRefreshStop(stopId: String) {
         repository.refresh(stopId)

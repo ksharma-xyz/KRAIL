@@ -80,13 +80,17 @@ object DateTimeHelper {
     }
 
     fun Duration.toGenericFormattedTimeString(): String {
+        val totalSeconds = this.toLong(DurationUnit.SECONDS)
         val totalMinutes = this.toLong(DurationUnit.MINUTES)
         val hours = this.toLong(DurationUnit.HOURS)
         val partialMinutes = totalMinutes - (hours * 60.minutes.inWholeMinutes)
 
         return when {
             totalMinutes < 0 -> "${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"} ago"
-            totalMinutes == 0L -> "Now"
+            // Just departed or departing within 15 seconds — show "Now"
+            totalSeconds <= 15L -> "Now"
+            // 16–59 seconds upcoming — floor to "in 1 min" rather than "Now"
+            totalMinutes == 0L -> "in 1 min"
             hours == 1L -> "in ${hours.absoluteValue}h ${partialMinutes.absoluteValue}m"
             hours >= 2 -> "in ${hours.absoluteValue}h"
             else -> "in ${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"}"

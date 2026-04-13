@@ -138,7 +138,6 @@ internal fun createLightDarkModeAnimatedColors(
         discoverChipBackground = targetColors.discoverChipBackground,
         discoverCardBackground = targetColors.discoverCardBackground,
         magicYellow = targetColors.magicYellow,
-        deviationOnTime = targetColors.deviationOnTime,
         deviationEarly = targetColors.deviationEarly,
         deviationLate = targetColors.deviationLate,
         pastJourney = targetColors.pastJourney,

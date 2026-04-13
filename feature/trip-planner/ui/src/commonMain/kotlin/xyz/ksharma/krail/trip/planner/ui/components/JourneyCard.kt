@@ -29,8 +29,12 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,6 +92,7 @@ fun JourneyCard(
     onMapClick: () -> Unit = {},
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
+    scheduledOriginTime: String? = null,
 ) {
     val isPastJourney by remember(timeToDeparture) {
         mutableStateOf(
@@ -127,20 +132,19 @@ fun JourneyCard(
                         indication = null,
                     ),
             ) {
-                // Origin time
-                Text(
-                    text = originTime,
-                    style = KrailTheme.typography.titleMedium,
-                    color = KrailTheme.colors.onSurface,
+                // Origin time — shows inline deviation (strikethrough + label) when late/early
+                JourneyOriginTimeRow(
+                    originTime = originTime,
+                    scheduledOriginTime = scheduledOriginTime,
+                    departureDeviation = departureDeviation,
                     modifier = Modifier.padding(top = 4.dp),
                 )
 
-                // Destination time + travel time + walk time + deviation
+                // Destination time + travel time + walk time
                 ResponsiveJourneyInfoRow(
                     destinationTime = destinationTime,
                     totalTravelTime = totalTravelTime,
                     totalWalkTime = totalWalkTime,
-                    departureDeviation = departureDeviation,
                 )
             }
 
@@ -379,46 +383,28 @@ private fun ResponsiveJourneyInfoRow(
     destinationTime: String,
     totalTravelTime: String,
     totalWalkTime: String?,
-    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation?,
 ) {
-    // Always show destination + time info, use FlowRow for better wrapping in large font scenarios
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Group: destination time + travel time + walk time (stay together)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(end = 16.dp),
-        ) {
-            Text(
-                text = destinationTime,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.onSurface,
-            )
+        Text(
+            text = destinationTime,
+            style = KrailTheme.typography.titleMedium,
+            color = KrailTheme.colors.onSurface,
+        )
 
+        TextWithIcon(
+            painter = painterResource(Res.drawable.ic_clock),
+            text = totalTravelTime,
+            textStyle = KrailTheme.typography.bodyLarge,
+        )
+
+        if (totalWalkTime != null) {
             TextWithIcon(
-                painter = painterResource(Res.drawable.ic_clock),
-                text = totalTravelTime,
+                painter = painterResource(Res.drawable.ic_walk),
+                text = totalWalkTime,
                 textStyle = KrailTheme.typography.bodyLarge,
-            )
-
-            if (totalWalkTime != null) {
-                TextWithIcon(
-                    painter = painterResource(Res.drawable.ic_walk),
-                    text = totalWalkTime,
-                    textStyle = KrailTheme.typography.bodyLarge,
-                )
-            }
-        }
-
-        // Deviation indicator at end with proper spacing
-        if (departureDeviation != null) {
-            DepartureDeviationIndicator(
-                deviation = departureDeviation,
-                modifier = Modifier.padding(start = 8.dp),
             )
         }
     }
@@ -494,6 +480,76 @@ private fun TextWithIcon(
     }
 }
 
+/**
+ * Displays the origin departure time.
+ *
+ * When the service is late or early and a [scheduledOriginTime] is available, shows:
+ *  1. Strikethrough scheduled time + coloured deviation label (e.g. "2 mins late")
+ *  2. The actual [originTime] on the next line
+ *
+ * When on-time or no real-time data: just the [originTime].
+ */
+@Composable
+private fun JourneyOriginTimeRow(
+    originTime: String,
+    scheduledOriginTime: String?,
+    departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation?,
+    modifier: Modifier = Modifier,
+) {
+    val showDeviation = scheduledOriginTime != null && (
+        departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ||
+            departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Early
+        )
+
+    if (showDeviation) {
+        val isLate = departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late
+        val deviationColor = if (isLate) KrailTheme.colors.deviationLate else KrailTheme.colors.deviationEarly
+        // Format to match DepartureRow: "Delayed 2 mins" / "Early 1 min"
+        // The stored text is "2 mins late" / "1 min early" — strip the trailing word.
+        val deviationText = when (departureDeviation) {
+            is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
+                "Delayed ${departureDeviation.text.removeSuffix(" late")}"
+            is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
+                "Early ${departureDeviation.text.removeSuffix(" early")}"
+            else -> ""
+        }
+
+        Column(modifier = modifier) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
+                            append(scheduledOriginTime)
+                        }
+                    },
+                    style = KrailTheme.typography.bodyMedium,
+                    color = KrailTheme.colors.softLabel,
+                )
+                Text(
+                    text = deviationText,
+                    style = KrailTheme.typography.bodyMedium,
+                    color = deviationColor,
+                )
+            }
+            Text(
+                text = originTime,
+                style = KrailTheme.typography.titleMedium,
+                color = KrailTheme.colors.onSurface,
+            )
+        }
+    } else {
+        Text(
+            text = originTime,
+            style = KrailTheme.typography.titleMedium,
+            color = KrailTheme.colors.onSurface,
+            modifier = modifier,
+        )
+    }
+}
+
 // region Previews
 
 private val PREVIEW_STOPS = persistentListOf(
@@ -536,6 +592,7 @@ private fun Preview_Default_InlineModesAndPlatform() {
             totalUniqueServiceAlerts = 0,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("2 mins late"),
+            scheduledOriginTime = "8:23am",
         )
     }
 }
@@ -568,6 +625,7 @@ private fun Preview_ManyModes_Wrap() {
             totalUniqueServiceAlerts = 0,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("4 mins late"),
+            scheduledOriginTime = "7:11am",
         )
     }
 }
@@ -656,6 +714,7 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
             totalUniqueServiceAlerts = 0,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("2 mins early"),
+            scheduledOriginTime = "8:27am",
         )
     }
 }
@@ -704,6 +763,7 @@ private fun Preview_Default_WithDeviation_Early() {
             totalUniqueServiceAlerts = 0,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("1 min early"),
+            scheduledOriginTime = "6:31am",
         )
     }
 }
@@ -747,6 +807,7 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
             totalUniqueServiceAlerts = 2,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("3 mins late"),
+            scheduledOriginTime = "10:17am",
         )
     }
 }
@@ -790,6 +851,7 @@ private fun Preview_Expanded_MultipleAlerts() {
             totalUniqueServiceAlerts = 3,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("5 mins late"),
+            scheduledOriginTime = "2:25pm",
         )
     }
 }
@@ -807,6 +869,80 @@ private fun Preview_Default_PastJourney() {
             platformText = "Platform 4",
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun JourneyCardCollapsedDelayedPreview() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 5 mins",
+            originTime = "8:28am",
+            destinationTime = "8:55am",
+            totalTravelTime = "27 mins",
+            platformNumber = "4",
+            platformText = "Platform 4",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Late("3 mins late"),
+            scheduledOriginTime = "8:25am",
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun JourneyCardCollapsedEarlyPreview() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 4 mins",
+            originTime = "8:24am",
+            destinationTime = "8:50am",
+            totalTravelTime = "26 mins",
+            platformNumber = "2",
+            platformText = "Platform 2",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T2"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.Early("1 min early"),
+            scheduledOriginTime = "8:25am",
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun JourneyCardCollapsedOnTimePreview() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 7 mins",
+            originTime = "8:25am",
+            destinationTime = "8:52am",
+            totalTravelTime = "27 mins",
+            platformNumber = "1",
+            platformText = "Platform 1",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T4"),
             ),
             legList = persistentListOf(),
             cardState = JourneyCardState.DEFAULT,

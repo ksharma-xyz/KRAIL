@@ -264,6 +264,130 @@ class DepartureBoardRepositoryTest {
             }
         }
 
+    // ── cache isolation ───────────────────────────────────────────────────────
+
+    @Test
+    fun `Given two stops polled separately When each succeeds Then their states are independent`() =
+        runTest {
+            val service = FakeDeparturesService(response = buildResponse(count = 2))
+            val repo = makeRepo(service)
+
+            // Poll STOP_A — 2 departures
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // Poll STOP_B — 4 departures (change response)
+            service.response = buildResponse(count = 4)
+            repo.pollStop(STOP_B).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // STOP_A should still have its original 2 departures
+            repo.observeStop(STOP_A).test {
+                val stateA = awaitItem()
+                assertEquals(2, stateA.departures.size, "STOP_A state must not be affected by STOP_B poll")
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // STOP_B should have 4 departures
+            repo.observeStop(STOP_B).test {
+                val stateB = awaitItem()
+                assertEquals(4, stateB.departures.size, "STOP_B state should reflect its own poll")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // ── loadPreviousDepartures — cache hit ────────────────────────────────────
+
+    @Test
+    fun `Given loadPreviousDepartures succeeded When called again quickly Then no extra API call`() =
+        runTest {
+            val pastTime = "2020-01-01T00:00:00Z"
+            val service = FakeDeparturesService(response = buildResponse(count = 2, plannedTime = pastTime))
+            val repo = makeRepo(service)
+
+            repo.pollStop(STOP_A).test {
+                awaitItem() // loading
+                advanceUntilIdle()
+                awaitItem() // success
+
+                repo.loadPreviousDepartures(STOP_A)
+                advanceUntilIdle()
+
+                awaitItem() // isPreviousLoading = true
+                awaitItem() // done — previousDepartures populated
+
+                val callsAfterFirst = service.callCount
+
+                // Second call within the refresh window — should be a cache hit (NOOP)
+                repo.loadPreviousDepartures(STOP_A)
+                advanceUntilIdle()
+
+                assertEquals(
+                    callsAfterFirst,
+                    service.callCount,
+                    "Second loadPreviousDepartures within the refresh window must not call the API",
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // ── fetchDepartures — error with existing data ────────────────────────────
+
+    @Test
+    fun `Given cached departures When refresh fails Then isError stays false`() = runTest {
+        val service = FakeDeparturesService(response = buildResponse(count = 2))
+        val repo = makeRepo(service)
+
+        repo.pollStop(STOP_A).test {
+            awaitItem() // loading
+            advanceUntilIdle()
+            awaitItem() // success (2 departures cached)
+
+            service.shouldThrow = true
+            repo.refresh(STOP_A)
+            advanceUntilIdle()
+
+            // silentLoading cleared; departures preserved; isError stays false
+            val afterFailure = awaitItem()
+            assertFalse(afterFailure.isError, "isError must stay false when cached data exists")
+            assertEquals(2, afterFailure.departures.size, "Cached departures must survive a failed refresh")
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    // ── observeStop — reflects pollStop results ───────────────────────────────
+
+    @Test
+    fun `Given pollStop completed When observeStop collected Then returns cached data`() = runTest {
+        val service = FakeDeparturesService(response = buildResponse(count = 3))
+        val repo = makeRepo(service)
+
+        repo.pollStop(STOP_A).test {
+            awaitItem() // loading
+            advanceUntilIdle()
+            awaitItem() // success
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // observeStop should see the data that pollStop fetched
+        repo.observeStop(STOP_A).test {
+            val state = awaitItem()
+            assertEquals(3, state.departures.size, "observeStop should reflect data fetched by pollStop")
+            assertFalse(state.isLoading)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private fun buildResponse(

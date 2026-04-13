@@ -18,6 +18,17 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+/**
+ * Tests for [DeparturesViewModel].
+ *
+ * Covers the **single-stop departure screen** — the sheet that opens when a user taps a stop
+ * (e.g. from a search result or a journey leg). The ViewModel drives that screen via a sealed
+ * [DeparturesUiEvent] interface: `LoadDepartures`, `Refresh`, `StopPolling`, and
+ * `LoadPreviousDepartures`.
+ *
+ * For the saved-trips screen that shows an accordion of multiple stops, see
+ * [DepartureBoardViewModelTest] in the `feature:trip-planner:ui` module.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeparturesViewModelTest {
 
@@ -181,6 +192,43 @@ class DeparturesViewModelTest {
             }
         }
 
+    // ── LoadDepartures — stop switching / NOOP ────────────────────────────────
+
+    @Test
+    fun `Given polling stop A When LoadDepartures for different stop B Then switches and polls B`() =
+        runTest {
+            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(STOP_A))
+            advanceUntilIdle()
+            val callsForA = fakeService.callCount
+            assertTrue(callsForA >= 1, "Polling STOP_A should trigger at least one API call")
+
+            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(STOP_B))
+            advanceUntilIdle()
+
+            assertTrue(
+                fakeService.callCount > callsForA,
+                "Switching to STOP_B should trigger an additional API call",
+            )
+        }
+
+    @Test
+    fun `Given active stop When LoadDepartures sent for same stop Then no extra API call`() =
+        runTest {
+            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(STOP_A))
+            advanceUntilIdle()
+            val callsAfterFirst = fakeService.callCount
+
+            // Same stop — ViewModel guards against re-setting the same activeStopId
+            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(STOP_A))
+            advanceUntilIdle()
+
+            assertEquals(
+                callsAfterFirst,
+                fakeService.callCount,
+                "Sending LoadDepartures for the same stop must be a NOOP",
+            )
+        }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private fun buildResponse(
@@ -207,5 +255,6 @@ class DeparturesViewModelTest {
 
     private companion object {
         const val STOP_A = "10111010"
+        const val STOP_B = "10111020"
     }
 }

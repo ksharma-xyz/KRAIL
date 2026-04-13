@@ -120,6 +120,7 @@ kotlin {
                 implementation(libs.test.turbine)
 
                 implementation(projects.sandook)
+                implementation(projects.feature.departures.network)
             }
         }
     }

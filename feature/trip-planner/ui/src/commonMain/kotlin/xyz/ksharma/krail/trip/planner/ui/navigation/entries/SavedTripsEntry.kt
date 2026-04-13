@@ -5,9 +5,7 @@ import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
@@ -43,14 +41,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 
         LaunchedEffect(savedTripState.savedTrips) {
             departureBoardViewModel.setTrips(savedTripState.savedTrips)
-        }
-
-        // Re-activate the polling loop when returning to this screen.
-        // If the user visited another screen (e.g. map stop picker) while a departure
-        // card was expanded, that screen's ViewModel may have cancelled the repo's
-        // polling loop. ON_START fires every time the screen comes back into view.
-        LifecycleEventEffect(Lifecycle.Event.ON_START) {
-            departureBoardViewModel.resumeActivePolling()
         }
 
         // Listen for StopSelected results from SearchStop screen

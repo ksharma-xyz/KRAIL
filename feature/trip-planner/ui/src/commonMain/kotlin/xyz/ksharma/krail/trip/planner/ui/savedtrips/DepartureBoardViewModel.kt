@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.departures.ui.DepartureBoardRepository
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -34,9 +35,13 @@ data class StopDepartureBoardEntry(
 /**
  * ViewModel for the Departure Board section on the saved trips screen.
  *
- * Manages an accordion: at most one card is expanded at a time. Expanding a card
- * delegates to [DepartureBoardRepository.setActiveStop], which enforces the single
- * polling loop constraint across the whole app.
+ * Manages an accordion: at most one card is expanded at a time.
+ *
+ * **Polling is collection-driven**: expanding a card switches [_expandedStopId], which causes
+ * [entries]'s [flatMapLatest] to cancel the previous [DepartureBoardRepository.pollStop] flow
+ * and start a new one. When the UI stops collecting [entries] (app backgrounded,
+ * [SharingStarted.WhileSubscribed] times out), the entire chain — including network polling —
+ * stops automatically. No lifecycle hooks are required.
  */
 class DepartureBoardViewModel(
     private val repository: DepartureBoardRepository,
@@ -52,31 +57,35 @@ class DepartureBoardViewModel(
 
     /**
      * One entry per unique stop from the saved trips list.
-     * Each entry's [StopDepartureBoardEntry.state] is kept live via [DepartureBoardRepository].
+     *
+     * The **expanded** stop is polled via [DepartureBoardRepository.pollStop] — its network loop
+     * runs exactly while this StateFlow has active subscribers. All other stops observe the cache
+     * via [DepartureBoardRepository.observeStop] (no network calls).
+     *
+     * [flatMapLatest] ensures that switching the expanded stop (or changing the stop list)
+     * cancels the previous inner subscription before starting the new one, so only one polling
+     * loop ever runs at a time.
      */
-    val entries: StateFlow<ImmutableList<StopDepartureBoardEntry>> = _stops
-        .flatMapLatest { stops ->
-            if (stops.isEmpty()) {
-                flowOf(persistentListOf())
-            } else {
-                combine(
-                    stops.map { (stopId, stopName) ->
-                        repository.observeStop(stopId).map { state ->
-                            StopDepartureBoardEntry(
-                                stopId = stopId,
-                                stopName = stopName,
-                                state = state,
-                            )
-                        }
-                    },
-                ) { array -> array.toList().toImmutableList() }
+    val entries: StateFlow<ImmutableList<StopDepartureBoardEntry>> =
+        combine(_stops, _expandedStopId) { stops, expandedId -> stops to expandedId }
+            .flatMapLatest { (stops, expandedId) ->
+                if (stops.isEmpty()) {
+                    flowOf(persistentListOf())
+                } else {
+                    combine(
+                        stops.map { (stopId, stopName) ->
+                            (if (stopId == expandedId) repository.pollStop(stopId)
+                            else repository.observeStop(stopId))
+                                .map { state -> StopDepartureBoardEntry(stopId, stopName, state) }
+                        },
+                    ) { array -> array.toList().toImmutableList() }
+                }
             }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = persistentListOf(),
-        )
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = persistentListOf(),
+            )
 
     /**
      * Updates the stop list derived from [trips].
@@ -96,38 +105,33 @@ class DepartureBoardViewModel(
         _stops.value = uniqueStops
 
         // If the expanded stop is no longer in the new stop list (e.g. the trip was deleted),
-        // stop polling and collapse the card so no dangling background fetch continues.
+        // collapse the card — flatMapLatest will cancel its pollStop flow automatically.
         val expandedId = _expandedStopId.value
         if (expandedId != null && uniqueStops.none { it.first == expandedId }) {
-            repository.stopIfActive(expandedId)
             _expandedStopId.value = null
         }
     }
 
-    /** Expands the card for [stopId], collapsing any previously open card instantly. */
+    /**
+     * Expands the card for [stopId].
+     *
+     * Setting [_expandedStopId] triggers [flatMapLatest] in [entries] which cancels the previous
+     * [DepartureBoardRepository.pollStop] flow and starts a new one for [stopId] — the old
+     * polling loop is stopped and loading state is cleaned up via the flow's `finally` block.
+     */
     fun onCardExpand(stopId: String) {
         if (_expandedStopId.value == stopId) return
-        _expandedStopId.value?.let { repository.stopIfActive(it) }
         _expandedStopId.value = stopId
-        repository.setActiveStop(stopId)
     }
 
-    /**
-     * Re-activates the polling loop for the currently expanded stop.
-     *
-     * Call this when the screen returns to the foreground (ON_START). If the user navigated
-     * away (e.g. to the map stop-picker) the repository's active polling loop may have been
-     * cancelled by another consumer. Calling [repository.setActiveStop] restarts it so the
-     * departure board shows fresh data rather than a stale cache snapshot.
-     */
-    fun resumeActivePolling() {
-        val stopId = _expandedStopId.value ?: return
-        repository.setActiveStop(stopId)
+    /** Collapses the currently open card. [flatMapLatest] cancels the polling loop. */
+    fun onCardCollapse() {
+        _expandedStopId.value = null
     }
 
     /** Triggers an immediate silent refresh for [stopId] without disrupting the poll loop. */
     fun onRefreshStop(stopId: String) {
-        repository.refresh(stopId)
+        viewModelScope.launch { repository.refresh(stopId) }
     }
 
     /**
@@ -136,18 +140,6 @@ class DepartureBoardViewModel(
      * has toggled "Show previous" in the UI.
      */
     fun onLoadPreviousDepartures(stopId: String) {
-        repository.loadPreviousDepartures(stopId)
-    }
-
-    /** Collapses the currently open card and stops polling. */
-    fun onCardCollapse() {
-        val current = _expandedStopId.value ?: return
-        repository.stopIfActive(current)
-        _expandedStopId.value = null
-    }
-
-    override fun onCleared() {
-        _expandedStopId.value?.let { repository.stopIfActive(it) }
-        super.onCleared()
+        viewModelScope.launch { repository.loadPreviousDepartures(stopId) }
     }
 }

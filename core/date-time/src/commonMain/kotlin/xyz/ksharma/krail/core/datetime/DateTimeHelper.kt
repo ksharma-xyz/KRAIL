@@ -10,7 +10,9 @@ import xyz.ksharma.krail.core.log.logError
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -20,6 +22,12 @@ object DateTimeHelper {
     private const val ERROR_MESSAGE = "Error parsing date string:"
     private const val AEST_TIMEZONE = "Australia/Sydney"
     private const val DATE_LABEL_ABBREV_LENGTH = 3
+
+    // A departure that left ≤15 s ago or arrives ≤15 s from now is displayed as "Now".
+    private val NOW_THRESHOLD = 15.seconds
+
+    // Beyond this duration an absolute time label is more useful than "in Xh".
+    private val CONTEXTUAL_TIME_THRESHOLD = 4.hours
 
     /**
      * Converts a UTC ISO 8601 date-time string (e.g., "2025-06-13T06:48:13Z")
@@ -79,22 +87,52 @@ object DateTimeHelper {
         return instant - now
     }
 
-    @Suppress("MagicNumber")
     fun Duration.toGenericFormattedTimeString(): String {
-        val totalSeconds = this.toLong(DurationUnit.SECONDS)
-        val totalMinutes = this.toLong(DurationUnit.MINUTES)
-        val hours = this.toLong(DurationUnit.HOURS)
-        val partialMinutes = totalMinutes - (hours * 60.minutes.inWholeMinutes)
+        val totalMinutes = this.inWholeMinutes
+        val hours = this.inWholeHours
+        val partialMinutes = (this - hours.hours).inWholeMinutes
 
         return when {
-            totalMinutes < 0 -> "${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"} ago"
-            // Just departed or departing within 15 seconds — show "Now"
-            totalSeconds <= 15L -> "Now"
-            // 16–59 seconds upcoming — floor to "in 1 min" rather than "Now"
-            totalMinutes == 0L -> "in 1 min"
-            hours == 1L -> "in ${hours.absoluteValue}h ${partialMinutes.absoluteValue}m"
-            hours >= 2 -> "in ${hours.absoluteValue}h"
-            else -> "in ${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"}"
+            // More than a full minute in the past — "X min(s) ago"
+            this <= (-1).minutes -> {
+                val abs = totalMinutes.absoluteValue
+                "$abs ${if (abs == 1L) "min" else "mins"} ago"
+            }
+            // Within NOW_THRESHOLD of departure (past or future) — "Now"
+            this <= NOW_THRESHOLD -> "Now"
+            // 16–59 s away — round up and floor to "in 1 min"
+            this < 1.minutes -> "in 1 min"
+            // Under an hour — "in X min(s)"
+            this < 1.hours -> "in $totalMinutes ${if (totalMinutes == 1L) "min" else "mins"}"
+            // Exactly 1 h up to (but not including) 2 h — "in 1h Xm"
+            this < 2.hours -> "in ${hours}h ${partialMinutes}m"
+            // 2 h or more — drop the minutes, just show hours
+            else -> "in ${hours}h"
+        }
+    }
+
+    /**
+     * Returns a human-readable departure time string for a UTC ISO-8601 [departureUtc] string,
+     * relative to [now].
+     *
+     * - Within [CONTEXTUAL_TIME_THRESHOLD] (4 h): delegates to [toGenericFormattedTimeString]
+     *   for a relative label ("in 3 mins", "in 1h 20m", "Now", "2 mins ago", …).
+     * - Beyond the threshold: switches to an absolute label so the user has a concrete anchor
+     *   ("Tomorrow at 9:00 AM", "Today at 10:30 PM", "Wed 9 Apr at 2:00 PM").
+     *
+     * Using a duration-based threshold (rather than a calendar-day boundary) means a departure
+     * at 12:03 AM when it is currently 11:55 PM still shows "in 8 mins", not "Tomorrow at …".
+     */
+    @OptIn(ExperimentalTime::class)
+    fun String.toDepartureRelativeString(now: Instant = Clock.System.now()): String {
+        val departure = Instant.parse(this)
+        val duration = departure - now
+        return if (duration >= CONTEXTUAL_TIME_THRESHOLD) {
+            val dateLabel = toDepartureDateLabel(now)
+            val localDt = departure.toLocalDateTime(TimeZone.of(AEST_TIMEZONE))
+            "$dateLabel at ${localDt.toHHMM()}"
+        } else {
+            duration.toGenericFormattedTimeString()
         }
     }
 
@@ -220,10 +258,10 @@ object DateTimeHelper {
      * Returns "Today", "Tomorrow", or a short date like "Wed 9 Apr" for anything further out.
      */
     @OptIn(ExperimentalTime::class)
-    fun String.toDepartureDateLabel(): String {
+    fun String.toDepartureDateLabel(now: Instant = Clock.System.now()): String {
         return runCatching {
             val aestZone = TimeZone.of(AEST_TIMEZONE)
-            val today = Clock.System.now().toLocalDateTime(aestZone).date
+            val today = now.toLocalDateTime(aestZone).date
             val yesterday = today.plus(-1, DateTimeUnit.DAY)
             val tomorrow = today.plus(1, DateTimeUnit.DAY)
             when (val departureDate = Instant.parse(this).toLocalDateTime(aestZone).date) {

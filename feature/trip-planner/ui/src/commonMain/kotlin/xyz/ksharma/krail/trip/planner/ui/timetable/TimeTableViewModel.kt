@@ -24,10 +24,9 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isBefore
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isFuture
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.festival.FestivalManager
@@ -580,9 +579,7 @@ class TimeTableViewModel(
     ): List<TimeTableState.JourneyCardInfo> {
         return journeyList.map { journeyCardInfo ->
             journeyCardInfo.copy(
-                timeText = calculateTimeDifferenceFromNow(
-                    utcDateString = journeyCardInfo.originUtcDateTime,
-                ).toGenericFormattedTimeString(),
+                timeText = journeyCardInfo.originUtcDateTime.toDepartureRelativeString(),
             )
         }
     }

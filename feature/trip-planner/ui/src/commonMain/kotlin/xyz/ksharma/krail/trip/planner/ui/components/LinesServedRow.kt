@@ -105,7 +105,8 @@ internal fun LinesServedRow(
         }
 
     // Whether the full filter row (mode groups) is visible.
-    var filterExpanded by rememberSaveable { mutableStateOf(false) }
+    // Starts expanded so users immediately see all available lines without an extra tap.
+    var filterExpanded by rememberSaveable { mutableStateOf(true) }
 
     // Modes that are individually collapsed. Reset when the filter reopens.
     // Does not need to survive rotation — collapsing all modes on rotation is fine UX.

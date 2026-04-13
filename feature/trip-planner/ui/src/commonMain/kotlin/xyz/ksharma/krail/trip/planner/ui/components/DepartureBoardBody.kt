@@ -97,7 +97,7 @@ internal fun DepartureBoardBody(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 4.dp, bottom = 12.dp),
+                        .padding(top = 8.dp, bottom = 12.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     TextButton(

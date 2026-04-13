@@ -79,14 +79,19 @@ object DateTimeHelper {
         return instant - now
     }
 
+    @Suppress("MagicNumber")
     fun Duration.toGenericFormattedTimeString(): String {
+        val totalSeconds = this.toLong(DurationUnit.SECONDS)
         val totalMinutes = this.toLong(DurationUnit.MINUTES)
         val hours = this.toLong(DurationUnit.HOURS)
         val partialMinutes = totalMinutes - (hours * 60.minutes.inWholeMinutes)
 
         return when {
             totalMinutes < 0 -> "${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"} ago"
-            totalMinutes == 0L -> "Now"
+            // Just departed or departing within 15 seconds — show "Now"
+            totalSeconds <= 15L -> "Now"
+            // 16–59 seconds upcoming — floor to "in 1 min" rather than "Now"
+            totalMinutes == 0L -> "in 1 min"
             hours == 1L -> "in ${hours.absoluteValue}h ${partialMinutes.absoluteValue}m"
             hours >= 2 -> "in ${hours.absoluteValue}h"
             else -> "in ${totalMinutes.absoluteValue} ${if (totalMinutes.absoluteValue == 1L) "min" else "mins"}"
@@ -258,5 +263,23 @@ object DateTimeHelper {
         }.onFailure { e ->
             logError("$ERROR_MESSAGE $this", e)
         }.getOrDefault(false)
+    }
+
+    /**
+     * Extracts a platform / stand / wharf label from a stop's [disassembledName] field.
+     *
+     * The NSW Transport API embeds platform information inside the stop name string,
+     * e.g. "Seven Hills Station, Stand A" or "Central Station, Platform 3".
+     * This function finds all such labels and joins them with ", " when multiple match.
+     *
+     * Returns `null` when no platform keyword is present (e.g. a plain bus stop name).
+     *
+     * Used by both the departures mapper and the trip-planner mapper so the regex
+     * lives in one place.
+     */
+    fun extractPlatformText(disassembledName: String): String? {
+        val regex = Regex("(Platform|Stand|Wharf|Side)\\s*(\\d+|[A-Z])", RegexOption.IGNORE_CASE)
+        val matches = regex.findAll(disassembledName).toList()
+        return if (matches.isNotEmpty()) matches.joinToString(", ") { it.value } else null
     }
 }

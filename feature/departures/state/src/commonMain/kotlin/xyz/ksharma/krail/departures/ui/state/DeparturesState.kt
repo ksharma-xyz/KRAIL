@@ -40,12 +40,6 @@ data class DeparturesState(
     val isError: Boolean = false,
 
     /**
-     * The human-readable name of the stop whose departures are displayed.
-     * Null until the first successful response is received.
-     */
-    val stopName: String? = null,
-
-    /**
      * The ordered list of upcoming departures. Empty during loading / error states.
      */
     val departures: ImmutableList<StopDeparture> = persistentListOf(),

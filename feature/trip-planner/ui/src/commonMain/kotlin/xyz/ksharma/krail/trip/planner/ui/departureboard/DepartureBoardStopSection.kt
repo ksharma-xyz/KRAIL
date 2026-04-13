@@ -49,6 +49,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureRowList
+import xyz.ksharma.krail.trip.planner.ui.components.DeparturesErrorContent
 import xyz.ksharma.krail.trip.planner.ui.components.LinesServedRow
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.StopDepartureBoardEntry
@@ -69,6 +70,7 @@ fun LazyListScope.departureBoardAccordionSection(
     isExpanded: Boolean,
     onExpandChange: (Boolean) -> Unit,
     onLoadPreviousDepartures: (String) -> Unit = {},
+    onRefreshStop: (String) -> Unit = {},
 ) {
     stickyHeader(key = "${entry.stopId}_header", contentType = "stop_header") {
         DepartureBoardAccordionSectionHeader(
@@ -85,6 +87,7 @@ fun LazyListScope.departureBoardAccordionSection(
                 stopId = entry.stopId,
                 state = entry.state,
                 onLoadPreviousDepartures = onLoadPreviousDepartures,
+                onRefreshStop = onRefreshStop,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -175,6 +178,7 @@ private fun DepartureBoardAccordionContent(
     stopId: String,
     state: DeparturesState,
     onLoadPreviousDepartures: (String) -> Unit,
+    onRefreshStop: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Empty string = no filter. Non-null String is guaranteed safe through rememberSaveable
@@ -212,7 +216,7 @@ private fun DepartureBoardAccordionContent(
     Column(modifier = modifier) {
         when {
             state.isLoading -> SectionLoadingContent()
-            state.isError -> SectionErrorContent()
+            state.isError -> DeparturesErrorContent(onRetry = { onRefreshStop(stopId) })
             state.departures.isEmpty() -> SectionEmptyContent(hasActiveFilter = false)
             else -> {
                 LinesServedRow(
@@ -287,6 +291,7 @@ fun DepartureBoardAccordionSection(
     onExpandChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onLoadPreviousDepartures: (String) -> Unit = {},
+    onRefreshStop: (String) -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         DepartureBoardAccordionSectionHeader(
@@ -301,6 +306,7 @@ fun DepartureBoardAccordionSection(
                     stopId = entry.stopId,
                     state = entry.state,
                     onLoadPreviousDepartures = onLoadPreviousDepartures,
+                    onRefreshStop = onRefreshStop,
                 )
             }
         }
@@ -340,16 +346,6 @@ private fun SectionLoadingContent() {
             color = KrailTheme.colors.onSurface,
         )
     }
-}
-
-@Composable
-private fun SectionErrorContent() {
-    Text(
-        text = "Couldn't load departures. Collapse and re-expand to retry.",
-        style = KrailTheme.typography.bodyMedium,
-        color = KrailTheme.colors.softLabel,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-    )
 }
 
 @Composable

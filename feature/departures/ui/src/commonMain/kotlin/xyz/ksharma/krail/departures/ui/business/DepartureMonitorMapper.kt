@@ -4,12 +4,12 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.extractPlatformText
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureDateLabel
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
@@ -34,7 +34,7 @@ internal fun DepartureMonitorResponse.toStopDepartures(): ImmutableList<StopDepa
 internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture? {
     val isRealTime = departureTimeEstimated != null
     val departureUtc = departureTimeEstimated ?: departureTimePlanned ?: run {
-        logError("DepartureMonitorMapper", Exception("StopEvent has no departure time, skipping"))
+        log("[DepartureMonitorMapper] skipping StopEvent — no departure time (both planned and estimated are null)")
         return null
     }
 
@@ -86,10 +86,6 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
         scheduledTimeText = scheduledTimeText,
         delayMinutes = delayMinutes,
         dateLabel = runCatching { departureUtc.toDepartureDateLabel() }.getOrDefault(""),
-        // transportation.id is a route+direction+period key (e.g. "nsw:020T1:W:R:sj2"), shared
-        // by all services on that route variant. Combining it with the fixed planned departure
-        // time gives a stable, unique identifier per service run.
-        tripId = transportation?.id?.let { routeId -> "${routeId}_$departureTimePlanned" },
     )
 }
 
@@ -99,19 +95,8 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
 private fun DepartureMonitorResponse.Location.resolvePlatformText(): String? {
     val locationLabel = disassembledName ?: return null
     // Without a parent, this location IS the stop itself — no platform sub-label to extract.
-    val parentNode = parent ?: return null
-    log(
-        "[DEPARTURES] resolvePlatformText — disassembledName=\"$locationLabel\" " +
-            "parent=\"${parentNode.disassembledName}\"",
-    )
-    val regex = Regex(
-        "(Platform|Stand|Wharf|Side)\\s*(\\d+|[A-Z])",
-        RegexOption.IGNORE_CASE,
-    )
-    val matches = regex.findAll(locationLabel).toList()
-    val result = if (matches.isNotEmpty()) matches.joinToString(", ") { it.value } else null
-    log("[DEPARTURES] resolvePlatformText → result=\"$result\"")
-    return result
+    parent ?: return null
+    return extractPlatformText(locationLabel)
 }
 
 // Resolves the hex colour for a line badge via NswTransportConfig:

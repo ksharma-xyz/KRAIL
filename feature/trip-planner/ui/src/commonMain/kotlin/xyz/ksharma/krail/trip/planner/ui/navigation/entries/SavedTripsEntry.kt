@@ -127,6 +127,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             onDepartureBoardExpand = departureBoardViewModel::onCardExpand,
             onDepartureBoardCollapse = departureBoardViewModel::onCardCollapse,
             onLoadPreviousDepartures = departureBoardViewModel::onLoadPreviousDepartures,
+            onRefreshDepartureBoardStop = departureBoardViewModel::onRefreshStop,
         )
     }
 }

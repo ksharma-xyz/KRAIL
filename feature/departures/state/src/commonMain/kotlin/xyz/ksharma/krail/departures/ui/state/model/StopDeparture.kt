@@ -115,14 +115,6 @@ data class StopDeparture(
     val dateLabel: String = "",
 
     /**
-     * Stable unique key for this departure, built from [transportation.id] (route+direction+period)
-     * combined with [departureTimePlanned]. The API's [transportation.id] alone is shared by all
-     * services on the same route variant; appending the planned time makes it unique per run.
-     * Null when either field is missing from the API response.
-     */
-    val tripId: String? = null,
-
-    /**
      * Whether this departure is a past departure (shown via "Show previous") or upcoming.
      * Defaults to [DepartureTiming.Upcoming] for all normally fetched departures.
      * Set to [DepartureTiming.Previous] by the repository when loading past departures.

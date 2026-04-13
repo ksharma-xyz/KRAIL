@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +26,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
-import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -59,85 +57,80 @@ fun DepartureRow(
         departure.transportModeName.toTransportMode()
     }
 
-    // For previous departures, dim all text to 50% alpha (same as JourneyCard's past journey treatment).
-    // TransportModeIcon and TransportModeBadge intentionally override LocalContentAlpha to 1f internally,
-    // so they remain fully opaque — only text dims.
-    CompositionLocalProvider(LocalContentAlpha provides if (isPrevious) 0.5f else 1f) {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .then(
-                    if (isPrevious) Modifier.background(KrailTheme.colors.pastDepartureRowSurface)
-                    else Modifier,
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (isPrevious) Modifier.background(KrailTheme.colors.pastDepartureRowSurface)
+                else Modifier,
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        // Line 1: relative time + mode icon + line badge (left) | platform text (right)
+        FlowRow(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            // Line 1: relative time + mode icon + line badge (left) | platform text (right)
-            FlowRow(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (departure.relativeTimeText.isNotBlank()) {
-                        Text(
-                            text = departure.relativeTimeText,
-                            style = KrailTheme.typography.titleMedium,
-                            // Mirror JourneyCard: swap line colour → onSurface for previous
-                            // departures so the text reads as grey at 50% alpha instead of
-                            // a dim version of the (still vivid) transport line colour.
-                            color = if (isPrevious) KrailTheme.colors.onSurface else lineColor,
-                        )
-                    }
-
-                    transportMode?.let {
-                        TransportModeIcon(
-                            transportMode = it,
-                            size = TransportModeIconSize.XSmall,
-                            displayBorder = false,
-                        )
-                    }
-
-                    TransportModeBadge(
-                        badgeText = departure.lineNumber,
-                        backgroundColor = lineColor,
-                        modifier = Modifier.padding(end = 8.dp),
-                    )
-                }
-
-                departure.platformText?.let {
+                if (departure.relativeTimeText.isNotBlank()) {
                     Text(
-                        text = it,
-                        textAlign = TextAlign.End,
-                        style = KrailTheme.typography.bodyMedium,
-                        // softLabel at 50% alpha is near-invisible; use onSurface for previous
-                        // so the platform label stays readable when dimmed.
-                        color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.label,
+                        text = departure.relativeTimeText,
+                        style = KrailTheme.typography.titleMedium,
+                        // Mirror JourneyCard: swap line colour → onSurface for previous
+                        // departures so the text reads as grey at 50% alpha instead of
+                        // a dim version of the (still vivid) transport line colour.
+                        color = if (isPrevious) KrailTheme.colors.onSurface else lineColor,
                     )
                 }
+
+                transportMode?.let {
+                    TransportModeIcon(
+                        transportMode = it,
+                        size = TransportModeIconSize.XSmall,
+                        displayBorder = false,
+                    )
+                }
+
+                TransportModeBadge(
+                    badgeText = departure.lineNumber,
+                    backgroundColor = lineColor,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
             }
 
-            // Line 2: delay indicator (if delayed/early) + departure time
-            DepartureTimeRow(
-                departureTimeText = departure.departureTimeText,
-                scheduledTimeText = departure.scheduledTimeText,
-                delayMinutes = departure.delayMinutes,
-            )
-
-            // Line 3: destination
-            Text(
-                text = departure.destinationName,
-                style = KrailTheme.typography.bodyMedium,
-                // softLabel at 50% alpha is near-invisible; use onSurface for previous
-                // so the destination stays readable when dimmed.
-                color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.softLabel,
-            )
+            departure.platformText?.let {
+                Text(
+                    text = it,
+                    textAlign = TextAlign.End,
+                    style = KrailTheme.typography.bodyMedium,
+                    // softLabel at 50% alpha is near-invisible; use onSurface for previous
+                    // so the platform label stays readable when dimmed.
+                    color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.label,
+                )
+            }
         }
+
+        // Line 2: delay indicator (if delayed/early) + departure time
+        DepartureTimeRow(
+            departureTimeText = departure.departureTimeText,
+            scheduledTimeText = departure.scheduledTimeText,
+            delayMinutes = departure.delayMinutes,
+        )
+
+        // Line 3: destination
+        Text(
+            text = departure.destinationName,
+            style = KrailTheme.typography.bodyMedium,
+            // softLabel at 50% alpha is near-invisible; use onSurface for previous
+            // so the destination stays readable when dimmed.
+            color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.softLabel,
+        )
     }
 }
 
@@ -152,12 +145,15 @@ private fun DepartureTimeRow(
     departureTimeText: String,
     scheduledTimeText: String?,
     delayMinutes: Int,
+    isPastDeparture: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     if (scheduledTimeText != null && delayMinutes != 0) {
         val isDelayed = delayMinutes > 0
-        val deviationColor = if (isDelayed) KrailTheme.colors.deviationLate else KrailTheme.colors.deviationEarly
-        val deviationLabel = if (isDelayed) "Delayed $delayMinutes min" else "Early ${-delayMinutes} min"
+        val deviationColor =
+            if (isDelayed) KrailTheme.colors.deviationLate else KrailTheme.colors.deviationEarly
+        val deviationLabel =
+            if (isDelayed) "Delayed $delayMinutes min" else "Early ${-delayMinutes} min"
         Column(modifier = modifier) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -170,25 +166,25 @@ private fun DepartureTimeRow(
                         }
                     },
                     style = KrailTheme.typography.bodyMedium,
-                    color = KrailTheme.colors.softLabel,
+                    color = if (isPastDeparture) KrailTheme.colors.onSurface else KrailTheme.colors.softLabel,
                 )
                 Text(
                     text = deviationLabel,
                     style = KrailTheme.typography.bodyMedium,
-                    color = deviationColor,
+                    color = if (isPastDeparture) KrailTheme.colors.onSurface else deviationColor,
                 )
             }
             Text(
                 text = departureTimeText,
                 style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.label,
+                color = if (isPastDeparture) KrailTheme.colors.onSurface else KrailTheme.colors.label,
             )
         }
     } else {
         Text(
             text = departureTimeText,
             style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.label,
+            color = if (isPastDeparture) KrailTheme.colors.onSurface else KrailTheme.colors.label,
             modifier = modifier,
         )
     }

@@ -230,8 +230,6 @@ private fun DeparturesBody(
                 onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
             )
 
-            state.departures.isEmpty() -> EmptyContent()
-
             else -> DeparturesSuccessContent(
                 state = state,
                 onEvent = onEvent,
@@ -275,13 +273,19 @@ private fun DeparturesSuccessContent(
     }
 
     Column(modifier = modifier) {
-        LinesServedRow(
-            departures = state.departures,
-            selectedLine = selectedLine,
-            onLineSelect = onLineSelect,
-        )
+        // Filter row only when there are lines to show; otherwise surface the empty message.
+        if (state.departures.isNotEmpty()) {
+            LinesServedRow(
+                departures = state.departures,
+                selectedLine = selectedLine,
+                onLineSelect = onLineSelect,
+            )
+        } else {
+            EmptyContent()
+        }
 
-        // "Show / Hide previous departures" toggle
+        // "Show / Hide previous departures" toggle — always shown once content is loaded
+        // so users can look at past services even when there are no upcoming ones.
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
@@ -304,6 +308,7 @@ private fun DeparturesSuccessContent(
             previousWindowMinutes = state.previousWindowMinutes,
             filteredDepartures = filteredDepartures,
             filteredPreviousDepartures = filteredPreviousDepartures,
+            hasUpcomingDepartures = state.departures.isNotEmpty(),
             maxItems = maxItems,
         )
     }
@@ -317,15 +322,20 @@ private fun PreviousDeparturesSection(
     filteredDepartures: ImmutableList<StopDeparture>,
     filteredPreviousDepartures: ImmutableList<StopDeparture>,
     maxItems: Int?,
+    // false when the parent stop has no upcoming departures at all — prevents showing
+    // the misleading "No departures match the selected filter" message in that case.
+    hasUpcomingDepartures: Boolean = true,
 ) {
     Column {
         when {
             showPrevious && isPreviousLoading -> {
                 LoadingContent()
-                if (filteredDepartures.isEmpty()) {
-                    FilterEmptyContent()
-                } else {
-                    DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                if (hasUpcomingDepartures) {
+                    if (filteredDepartures.isEmpty()) {
+                        FilterEmptyContent()
+                    } else {
+                        DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                    }
                 }
             }
             showPrevious && filteredPreviousDepartures.isEmpty() -> {
@@ -335,10 +345,12 @@ private fun PreviousDeparturesSection(
                     color = KrailTheme.colors.softLabel,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
-                if (filteredDepartures.isEmpty()) {
-                    FilterEmptyContent()
-                } else {
-                    DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                if (hasUpcomingDepartures) {
+                    if (filteredDepartures.isEmpty()) {
+                        FilterEmptyContent()
+                    } else {
+                        DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                    }
                 }
             }
             showPrevious -> DepartureRowList(
@@ -347,8 +359,11 @@ private fun PreviousDeparturesSection(
                 },
                 maxItems = maxItems,
             )
-            filteredDepartures.isEmpty() -> FilterEmptyContent()
-            else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+            // No previous section open — show upcoming or filter-empty message.
+            // Only relevant when there ARE upcoming departures; the empty-stop case is
+            // already handled by EmptyContent() above the button.
+            hasUpcomingDepartures && filteredDepartures.isEmpty() -> FilterEmptyContent()
+            hasUpcomingDepartures -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
         }
     }
 }
@@ -383,7 +398,7 @@ private fun EmptyContent() {
 @Composable
 private fun FilterEmptyContent() {
     Text(
-        text = "No departures match the selected line.",
+        text = "No departures match the selected filter.",
         style = KrailTheme.typography.bodyMedium,
         color = KrailTheme.colors.softLabel,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),

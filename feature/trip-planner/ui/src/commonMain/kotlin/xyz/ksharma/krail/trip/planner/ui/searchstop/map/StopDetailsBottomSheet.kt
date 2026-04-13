@@ -55,7 +55,6 @@ fun StopDetailsBottomSheet(
                 stopId = stop.stopId,
                 state = departuresState,
                 onEvent = departuresViewModel::onEvent,
-                modifier = Modifier.padding(horizontal = 16.dp),
             )
 
             Spacer(modifier = Modifier.height(16.dp))

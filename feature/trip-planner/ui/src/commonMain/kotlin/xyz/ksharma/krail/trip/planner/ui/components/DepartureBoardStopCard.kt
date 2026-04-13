@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -10,23 +11,20 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
@@ -34,9 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
 import org.jetbrains.compose.resources.painterResource
@@ -47,7 +43,6 @@ import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -90,17 +85,23 @@ fun DepartureBoardStopCard(
     var internalExpanded by rememberSaveable { mutableStateOf(false) }
     val expanded = isExpanded ?: internalExpanded
 
-    // Filter state — keyed to stopId so rotating the device while a filter is active
-    // restores the same selection. Empty string is the "no filter" sentinel (primitives only
-    // are safe across process death / configuration changes via rememberSaveable).
-    var selectedLineKey by rememberSaveable { mutableStateOf("") }
-    val selectedLine: String? = selectedLineKey.ifEmpty { null }
 
     val arrowRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         animationSpec = tween(durationMillis = 300),
         label = "arrow-rotation",
     )
+    val outerPadding by animateDpAsState(
+        targetValue = if (expanded) 0.dp else 16.dp,
+        animationSpec = tween(durationMillis = 300),
+        label = "outer-padding",
+    )
+    val cornerRadius by animateDpAsState(
+        targetValue = if (expanded) 0.dp else 16.dp,
+        animationSpec = tween(durationMillis = 300),
+        label = "corner-radius",
+    )
+    val animatedShape = RoundedCornerShape(cornerRadius)
 
     LaunchedEffect(expanded, stopId) {
         if (isExpanded == null) {
@@ -133,7 +134,8 @@ fun DepartureBoardStopCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(CardShape)
+            .padding(horizontal = outerPadding)
+            .clip(animatedShape)
             .background(KrailTheme.colors.surface),
     ) {
         // ── Header — SubtleButton acts as the expand/collapse toggle ─────────
@@ -156,13 +158,10 @@ fun DepartureBoardStopCard(
             exit = shrinkVertically(shrinkTowards = Alignment.Top) +
                 fadeOut(animationSpec = tween(durationMillis = 150)),
         ) {
-            DeparturesBody(
+            DepartureBoardBody(
                 state = state,
-                isExpanded = isExpanded,
-                onEvent = onEvent,
-                stopId = stopId,
-                selectedLine = selectedLine,
-                onLineSelect = { selectedLineKey = it ?: "" },
+                onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
+                onLoadPreviousDepartures = { onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId)) },
                 maxItems = maxItems,
             )
         }
@@ -210,199 +209,6 @@ private fun CardHeader(
             }
         }
     }
-}
-
-@Composable
-private fun DeparturesBody(
-    state: DeparturesState,
-    isExpanded: Boolean?,
-    onEvent: (DeparturesUiEvent) -> Unit,
-    stopId: String,
-    selectedLine: String?,
-    onLineSelect: (String?) -> Unit,
-    maxItems: Int?,
-) {
-    Column {
-        when {
-            state.isLoading -> LoadingContent()
-
-            state.isError -> DeparturesErrorContent(
-                onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
-            )
-
-            else -> DeparturesSuccessContent(
-                state = state,
-                onEvent = onEvent,
-                stopId = stopId,
-                selectedLine = selectedLine,
-                onLineSelect = onLineSelect,
-                maxItems = maxItems,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@Composable
-private fun DeparturesSuccessContent(
-    state: DeparturesState,
-    onEvent: (DeparturesUiEvent) -> Unit,
-    stopId: String,
-    selectedLine: String?,
-    onLineSelect: (String?) -> Unit,
-    maxItems: Int?,
-    modifier: Modifier = Modifier,
-) {
-    var showPrevious by remember { mutableStateOf(false) }
-
-    val filteredDepartures: ImmutableList<StopDeparture> = remember(state.departures, selectedLine) {
-        if (selectedLine == null) {
-            state.departures
-        } else {
-            state.departures.filter { it.lineNumber == selectedLine }.toImmutableList()
-        }
-    }
-
-    val filteredPreviousDepartures: ImmutableList<StopDeparture> = remember(state.previousDepartures, selectedLine) {
-        if (selectedLine == null) {
-            state.previousDepartures
-        } else {
-            state.previousDepartures.filter { it.lineNumber == selectedLine }.toImmutableList()
-        }
-    }
-
-    Column(modifier = modifier) {
-        // Filter row only when there are lines to show; otherwise surface the empty message.
-        if (state.departures.isNotEmpty()) {
-            LinesServedRow(
-                departures = state.departures,
-                selectedLine = selectedLine,
-                onLineSelect = onLineSelect,
-            )
-        } else {
-            EmptyContent()
-        }
-
-        // "Show / Hide previous departures" toggle — always shown once content is loaded
-        // so users can look at past services even when there are no upcoming ones.
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            TextButton(
-                onClick = {
-                    showPrevious = !showPrevious
-                    if (showPrevious && state.previousDepartures.isEmpty() && !state.isPreviousLoading) {
-                        onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId))
-                    }
-                },
-            ) {
-                Text(text = if (showPrevious) "Hide previous departures" else "Show previous departures")
-            }
-        }
-
-        PreviousDeparturesSection(
-            showPrevious = showPrevious,
-            isPreviousLoading = state.isPreviousLoading,
-            previousWindowMinutes = state.previousWindowMinutes,
-            filteredDepartures = filteredDepartures,
-            filteredPreviousDepartures = filteredPreviousDepartures,
-            hasUpcomingDepartures = state.departures.isNotEmpty(),
-            maxItems = maxItems,
-        )
-    }
-}
-
-@Composable
-private fun PreviousDeparturesSection(
-    showPrevious: Boolean,
-    isPreviousLoading: Boolean,
-    previousWindowMinutes: Long,
-    filteredDepartures: ImmutableList<StopDeparture>,
-    filteredPreviousDepartures: ImmutableList<StopDeparture>,
-    maxItems: Int?,
-    // false when the parent stop has no upcoming departures at all — prevents showing
-    // the misleading "No departures match the selected filter" message in that case.
-    hasUpcomingDepartures: Boolean = true,
-) {
-    Column {
-        when {
-            showPrevious && isPreviousLoading -> {
-                LoadingContent()
-                if (hasUpcomingDepartures) {
-                    if (filteredDepartures.isEmpty()) {
-                        FilterEmptyContent()
-                    } else {
-                        DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                    }
-                }
-            }
-            showPrevious && filteredPreviousDepartures.isEmpty() -> {
-                Text(
-                    text = "No previous departures in the last $previousWindowMinutes minutes.",
-                    style = KrailTheme.typography.bodyMedium,
-                    color = KrailTheme.colors.softLabel,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                )
-                if (hasUpcomingDepartures) {
-                    if (filteredDepartures.isEmpty()) {
-                        FilterEmptyContent()
-                    } else {
-                        DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                    }
-                }
-            }
-            showPrevious -> DepartureRowList(
-                departures = remember(filteredPreviousDepartures, filteredDepartures) {
-                    (filteredPreviousDepartures + filteredDepartures).toImmutableList()
-                },
-                maxItems = maxItems,
-            )
-            // No previous section open — show upcoming or filter-empty message.
-            // Only relevant when there ARE upcoming departures; the empty-stop case is
-            // already handled by EmptyContent() above the button.
-            hasUpcomingDepartures && filteredDepartures.isEmpty() -> FilterEmptyContent()
-            hasUpcomingDepartures -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-        }
-    }
-}
-
-// ── Private content slots ─────────────────────────────────────────────────────
-
-@Composable
-internal fun LoadingContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 28.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        AnimatedDots(
-            modifier = Modifier.size(width = 64.dp, height = 24.dp),
-            color = KrailTheme.colors.onSurface,
-        )
-    }
-}
-
-@Composable
-private fun EmptyContent() {
-    Text(
-        text = "No upcoming departures found.",
-        style = KrailTheme.typography.bodyMedium,
-        color = KrailTheme.colors.softLabel,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-    )
-}
-
-@Composable
-private fun FilterEmptyContent() {
-    Text(
-        text = "No departures match the selected filter.",
-        style = KrailTheme.typography.bodyMedium,
-        color = KrailTheme.colors.softLabel,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-    )
 }
 
 // region Previews

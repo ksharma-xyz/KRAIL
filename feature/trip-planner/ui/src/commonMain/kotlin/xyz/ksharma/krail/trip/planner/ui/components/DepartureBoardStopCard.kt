@@ -47,6 +47,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -76,7 +77,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
  * @param maxItems        Maximum number of departure rows to show. `null` means show all.
  */
 @Composable
-fun DepartureBoardCard(
+fun DepartureBoardStopCard(
     stopId: String,
     state: DeparturesState,
     onEvent: (DeparturesUiEvent) -> Unit,
@@ -88,6 +89,8 @@ fun DepartureBoardCard(
 ) {
     var internalExpanded by rememberSaveable { mutableStateOf(false) }
     val expanded = isExpanded ?: internalExpanded
+
+    var showPrevious by remember { mutableStateOf(false) }
 
     // Filter state — keyed to stopId so rotating the device while a filter is active
     // restores the same selection. Empty string is the "no filter" sentinel (primitives only
@@ -103,6 +106,14 @@ fun DepartureBoardCard(
         }
     }
 
+    val filteredPreviousDepartures: ImmutableList<StopDeparture> = remember(state.previousDepartures, selectedLine) {
+        if (selectedLine == null) {
+            state.previousDepartures
+        } else {
+            state.previousDepartures.filter { it.lineNumber == selectedLine }.toImmutableList()
+        }
+    }
+
     val arrowRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         animationSpec = tween(durationMillis = 300),
@@ -110,8 +121,13 @@ fun DepartureBoardCard(
     )
 
     LaunchedEffect(expanded, stopId) {
-        if (expanded && isExpanded == null) {
-            onEvent(DeparturesUiEvent.LoadDepartures(stopId))
+        if (isExpanded == null) {
+            // Uncontrolled mode: start polling on expand, stop it on collapse.
+            if (expanded) {
+                onEvent(DeparturesUiEvent.LoadDepartures(stopId))
+            } else {
+                onEvent(DeparturesUiEvent.StopPolling)
+            }
         }
     }
 
@@ -182,12 +198,56 @@ fun DepartureBoardCard(
                             onLineSelect = { selectedLineKey = it ?: "" },
                         )
                         Divider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // "Show previous / Hide previous" toggle
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    showPrevious = !showPrevious
+                                    if (showPrevious && state.previousDepartures.isEmpty() &&
+                                        !state.isPreviousLoading
+                                    ) {
+                                        onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId))
+                                    }
+                                },
+                            ) {
+                                Text(text = if (showPrevious) "Hide previous" else "Show previous")
+                            }
+                        }
+
                         when {
-                            filteredDepartures.isEmpty() -> FilterEmptyContent()
-                            else -> DepartureRowList(
-                                departures = filteredDepartures,
+                            showPrevious && state.isPreviousLoading -> {
+                                LoadingContent()
+                                when {
+                                    filteredDepartures.isEmpty() -> FilterEmptyContent()
+                                    else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                                }
+                            }
+                            showPrevious && filteredPreviousDepartures.isEmpty() -> {
+                                Text(
+                                    text = "No previous departures in the last ${state.previousWindowMinutes} minutes.",
+                                    style = KrailTheme.typography.bodyMedium,
+                                    color = KrailTheme.colors.softLabel,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                )
+                                when {
+                                    filteredDepartures.isEmpty() -> FilterEmptyContent()
+                                    else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+                                }
+                            }
+                            showPrevious -> DepartureRowList(
+                                departures = remember(filteredPreviousDepartures, filteredDepartures) {
+                                    (filteredPreviousDepartures + filteredDepartures).toImmutableList()
+                                },
                                 maxItems = maxItems,
                             )
+                            filteredDepartures.isEmpty() -> FilterEmptyContent()
+                            else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
                         }
                     }
                 }
@@ -335,9 +395,9 @@ private val previewFerryDepartures = persistentListOf(
 
 @Preview(name = "Collapsed", showBackground = true)
 @Composable
-private fun DepartureBoardCardCollapsedPreview() {
+private fun DepartureBoardStopCardCollapsedPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
-        DepartureBoardCard(
+        DepartureBoardStopCard(
             stopId = "10101010",
             state = DeparturesState(),
             onEvent = {},
@@ -347,7 +407,7 @@ private fun DepartureBoardCardCollapsedPreview() {
 
 @Preview(name = "Loading", showBackground = true)
 @Composable
-private fun DepartureBoardCardLoadingPreview() {
+private fun DepartureBoardStopCardLoadingPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         Column { LoadingContent() }
     }
@@ -355,7 +415,7 @@ private fun DepartureBoardCardLoadingPreview() {
 
 @PreviewComponent
 @Composable
-private fun DepartureBoardCardLoadedTrainPreview() {
+private fun DepartureBoardStopCardLoadedTrainPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         Column {
             LinesServedRow(
@@ -371,7 +431,7 @@ private fun DepartureBoardCardLoadedTrainPreview() {
 
 @Preview(name = "Loaded — Bus theme", showBackground = true)
 @Composable
-private fun DepartureBoardCardLoadedBusPreview() {
+private fun DepartureBoardStopCardLoadedBusPreview() {
     PreviewTheme(KrailThemeStyle.Bus) {
         Column {
             LinesServedRow(
@@ -387,7 +447,7 @@ private fun DepartureBoardCardLoadedBusPreview() {
 
 @Preview(name = "Error state", showBackground = true)
 @Composable
-private fun DepartureBoardCardErrorPreview() {
+private fun DepartureBoardStopCardErrorPreview() {
     PreviewTheme(KrailThemeStyle.Metro) {
         Column { ErrorContent(onRetry = {}) }
     }
@@ -395,7 +455,7 @@ private fun DepartureBoardCardErrorPreview() {
 
 @Preview(name = "Ferry theme", showBackground = true)
 @Composable
-private fun DepartureBoardCardFerryPreview() {
+private fun DepartureBoardStopCardFerryPreview() {
     PreviewTheme(KrailThemeStyle.Ferry) {
         Column {
             LinesServedRow(

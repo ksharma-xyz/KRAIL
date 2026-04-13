@@ -49,4 +49,24 @@ data class DeparturesState(
      * The ordered list of upcoming departures. Empty during loading / error states.
      */
     val departures: ImmutableList<StopDeparture> = persistentListOf(),
+
+    /**
+     * Departures that occurred in the past [previousWindowMinutes] minutes.
+     * Empty until the user requests them via the "Show previous" toggle.
+     * Preserved across regular refreshes so the user doesn't lose the data on auto-refresh.
+     */
+    val previousDepartures: ImmutableList<StopDeparture> = persistentListOf(),
+
+    /**
+     * True while a past-departures fetch is in flight after the user taps "Show previous".
+     */
+    val isPreviousLoading: Boolean = false,
+
+    /**
+     * How many minutes into the past the "Show previous" window covers.
+     * Set by the repository from [DepartureBoardConfig.previousDeparturesWindowMinutes] so
+     * the UI can display the correct number without hardcoding it. Will reflect remote-config
+     * overrides automatically once that wiring is in place.
+     */
+    val previousWindowMinutes: Long = 30L,
 )

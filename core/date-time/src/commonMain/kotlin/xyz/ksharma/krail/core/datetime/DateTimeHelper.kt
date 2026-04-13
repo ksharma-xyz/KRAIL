@@ -125,6 +125,31 @@ object DateTimeHelper {
         } ?: false
     }
 
+    /**
+     * Formats an [Instant] as a date string in YYYYMMDD format in the Australia/Sydney timezone
+     * (observes DST — AEST in winter, AEDT in summer).
+     * Used as the `date` parameter for NSW Transport API requests (e.g. "20260412").
+     */
+    @OptIn(ExperimentalTime::class)
+    fun Instant.toApiDateString(): String {
+        val local = this.toLocalDateTime(TimeZone.of(AEST_TIMEZONE))
+        return "${local.year}" +
+            local.monthNumber.toString().padStart(2, '0') +
+            local.dayOfMonth.toString().padStart(2, '0')
+    }
+
+    /**
+     * Formats an [Instant] as a time string in HHMM 24-hour format in the Australia/Sydney
+     * timezone (observes DST — AEST in winter, AEDT in summer).
+     * Used as the `time` parameter for NSW Transport API requests (e.g. "1430").
+     */
+    @OptIn(ExperimentalTime::class)
+    fun Instant.toApiTimeString(): String {
+        val local = this.toLocalDateTime(TimeZone.of(AEST_TIMEZONE))
+        return local.hour.toString().padStart(2, '0') +
+            local.minute.toString().padStart(2, '0')
+    }
+
     @OptIn(ExperimentalTime::class)
     fun Instant.isBefore(other: Instant): Boolean = this < other
 
@@ -194,8 +219,10 @@ object DateTimeHelper {
         return runCatching {
             val aestZone = TimeZone.of(AEST_TIMEZONE)
             val today = Clock.System.now().toLocalDateTime(aestZone).date
+            val yesterday = today.plus(-1, DateTimeUnit.DAY)
             val tomorrow = today.plus(1, DateTimeUnit.DAY)
             when (val departureDate = Instant.parse(this).toLocalDateTime(aestZone).date) {
+                yesterday -> "Yesterday"
                 today -> "Today"
                 tomorrow -> "Tomorrow"
                 else -> {

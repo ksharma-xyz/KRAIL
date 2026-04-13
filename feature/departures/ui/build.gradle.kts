@@ -36,6 +36,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.di)
                 implementation(projects.core.log)

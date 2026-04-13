@@ -29,7 +29,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
  *
  * This composable is **stateless** — callers drive [selectedLine] and [onLineSelect].
  * Typically the filter state lives in the nearest enclosing composable that owns the
- * departure list (e.g. [DepartureBoardCard] or `DepartureBoardStopContent`).
+ * departure list (e.g. [DepartureBoardStopCard] or [DepartureBoardAccordionContent]).
  *
  * @param departures    Full (unfiltered) departure list — only used to derive unique lines.
  * @param selectedLine  The currently active filter line number, or `null` for "show all".

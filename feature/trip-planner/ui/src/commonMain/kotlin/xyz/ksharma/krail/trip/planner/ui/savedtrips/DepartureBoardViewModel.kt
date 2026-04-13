@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +67,7 @@ class DepartureBoardViewModel(
      * cancels the previous inner subscription before starting the new one, so only one polling
      * loop ever runs at a time.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     val entries: StateFlow<ImmutableList<StopDepartureBoardEntry>> =
         combine(_stops, _expandedStopId) { stops, expandedId -> stops to expandedId }
             .flatMapLatest { (stops, expandedId) ->

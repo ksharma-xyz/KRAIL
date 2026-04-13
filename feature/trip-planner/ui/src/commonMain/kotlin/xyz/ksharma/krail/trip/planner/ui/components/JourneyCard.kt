@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,12 +28,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,7 +41,6 @@ import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -58,6 +52,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
@@ -94,84 +89,91 @@ fun JourneyCard(
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
 ) {
-    val isPastJourney by remember(timeToDeparture) {
+    val isPast by remember(timeToDeparture) {
         mutableStateOf(
             timeToDeparture.contains(other = "ago", ignoreCase = true),
         )
     }
-    val firstLegTransportModeColor = if (!isPastJourney) {
-        transportModeLineList.firstOrNull()?.lineColorCode?.hexToComposeColor()
-            ?: KrailTheme.colors.onSurface
-    } else {
-        KrailTheme.colors.onSurface
-    }
+    // Use pastDepartureColor: for past journeys the departure-time text resolves to onSurface
+    // (reads as neutral grey) instead of the vivid transport line colour.
+    val firstLegTransportModeColor = pastDepartureColor(
+        isPast = isPast,
+        activeColor = transportModeLineList.firstOrNull()?.lineColorCode?.hexToComposeColor()
+            ?: KrailTheme.colors.onSurface,
+    )
 
-    CompositionLocalProvider(LocalContentAlpha provides if (isPastJourney) 0.5f else 1f) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            // Past journeys get a distinct background instead of alpha-dimming.
+            .background(
+                if (isPast) {
+                    KrailTheme.colors.pastDepartureRowSurface
+                } else {
+                    KrailTheme.colors.surface
+                },
+            )
+            .animateContentSize(),
+    ) {
+        JourneyCardHeader(
+            transportModeLineList = transportModeLineList,
+            platformText = platformText,
+            timeToDeparture = timeToDeparture,
+            firstLegTransportModeColor = firstLegTransportModeColor,
+            onClick = onClick,
+        )
+
+        // Always visible content
         Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(color = KrailTheme.colors.surface)
-                .animateContentSize(),
+            modifier = Modifier
+                .semantics(mergeDescendants = true) { }
+                .clickable(
+                    role = Role.Button,
+                    onClick = onClick,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ),
         ) {
-            JourneyCardHeader(
-                transportModeLineList = transportModeLineList,
-                platformText = platformText,
-                timeToDeparture = timeToDeparture,
-                firstLegTransportModeColor = firstLegTransportModeColor,
-                onClick = onClick,
+            // Origin time — shows inline deviation (strikethrough + label) when late/early
+            JourneyOriginTimeRow(
+                originTime = originTime,
+                scheduledOriginTime = scheduledOriginTime,
+                departureDeviation = departureDeviation,
+                isPast = isPast,
+                modifier = Modifier.padding(top = 4.dp),
             )
 
-            // Always visible content
-            Column(
-                modifier = Modifier
-                    .semantics(mergeDescendants = true) { }
-                    .clickable(
-                        role = Role.Button,
-                        onClick = onClick,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ),
-            ) {
-                // Origin time — shows inline deviation (strikethrough + label) when late/early
-                JourneyOriginTimeRow(
-                    originTime = originTime,
-                    scheduledOriginTime = scheduledOriginTime,
-                    departureDeviation = departureDeviation,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-
-                // Destination time + travel time + walk time
-                ResponsiveJourneyInfoRow(
-                    destinationTime = destinationTime,
-                    totalTravelTime = totalTravelTime,
-                    totalWalkTime = totalWalkTime,
-                )
-            }
-
-            // Expandable content - only leg details
-            when (cardState) {
-                JourneyCardState.DEFAULT -> {
-                    // No additional content in default state
-                }
-
-                JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
-                    legList = legList,
-                    totalUniqueServiceAlerts = totalUniqueServiceAlerts,
-                    onAlertClick = onAlertClick,
-                    onLegClick = onLegClick,
-                    onMapClick = onMapClick,
-                    isMapsAvailable = isMapsAvailable,
-                    modifier = Modifier.clickable(
-                        role = Role.Button,
-                        onClick = onClick,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ),
-                )
-            }
-
-            Divider(modifier = Modifier.padding(top = 16.dp))
+            // Destination time + travel time + walk time
+            ResponsiveJourneyInfoRow(
+                destinationTime = destinationTime,
+                totalTravelTime = totalTravelTime,
+                totalWalkTime = totalWalkTime,
+            )
         }
+
+        // Expandable content - only leg details
+        when (cardState) {
+            JourneyCardState.DEFAULT -> {
+                // No additional content in default state
+            }
+
+            JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
+                legList = legList,
+                totalUniqueServiceAlerts = totalUniqueServiceAlerts,
+                onAlertClick = onAlertClick,
+                onLegClick = onLegClick,
+                onMapClick = onMapClick,
+                isMapsAvailable = isMapsAvailable,
+                modifier = Modifier.clickable(
+                    role = Role.Button,
+                    onClick = onClick,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ),
+            )
+        }
+
+        Divider(modifier = Modifier.padding(top = 16.dp))
     }
 }
 
@@ -454,7 +456,6 @@ private fun TextWithIcon(
     textStyle: TextStyle = KrailTheme.typography.bodyMedium,
     color: Color = KrailTheme.colors.onSurface,
 ) {
-    val contentAlpha = LocalContentAlpha.current
     val density = LocalDensity.current
     val iconSize = with(density) { 14.sp.toDp() }
 
@@ -467,7 +468,7 @@ private fun TextWithIcon(
         Image(
             painter = painter,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(color = color.copy(alpha = contentAlpha)),
+            colorFilter = ColorFilter.tint(color = color),
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .size(iconSize),
@@ -481,19 +482,15 @@ private fun TextWithIcon(
 }
 
 /**
- * Displays the origin departure time.
- *
- * When the service is late or early and a [scheduledOriginTime] is available, shows:
- *  1. Strikethrough scheduled time + coloured deviation label (e.g. "2 mins late")
- *  2. The actual [originTime] on the next line
- *
- * When on-time or no real-time data: just the [originTime].
+ * Converts JourneyCard's [TimeTableState.JourneyCardInfo.DepartureDeviation] into the
+ * plain strings expected by [ScheduledTimeRow], then delegates rendering to it.
  */
 @Composable
 private fun JourneyOriginTimeRow(
     originTime: String,
     scheduledOriginTime: String?,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation?,
+    isPast: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val showDeviation = scheduledOriginTime != null && (
@@ -501,53 +498,37 @@ private fun JourneyOriginTimeRow(
             departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Early
         )
 
-    if (showDeviation) {
-        val isLate = departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late
-        val deviationColor = if (isLate) KrailTheme.colors.deviationLate else KrailTheme.colors.deviationEarly
-        // Format to match DepartureRow: "Delayed 2 mins" / "Early 1 min"
-        // The stored text is "2 mins late" / "1 min early" — strip the trailing word.
-        val deviationText = when (departureDeviation) {
+    val deviationLabel: String? = if (showDeviation) {
+        when (departureDeviation) {
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
                 "Delayed ${departureDeviation.text.removeSuffix(" late")}"
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
                 "Early ${departureDeviation.text.removeSuffix(" early")}"
-            else -> ""
-        }
-
-        Column(modifier = modifier) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                            append(scheduledOriginTime)
-                        }
-                    },
-                    style = KrailTheme.typography.bodyMedium,
-                    color = KrailTheme.colors.softLabel,
-                )
-                Text(
-                    text = deviationText,
-                    style = KrailTheme.typography.bodyMedium,
-                    color = deviationColor,
-                )
-            }
-            Text(
-                text = originTime,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.onSurface,
-            )
+            else -> null
         }
     } else {
-        Text(
-            text = originTime,
-            style = KrailTheme.typography.titleMedium,
-            color = KrailTheme.colors.onSurface,
-            modifier = modifier,
-        )
+        null
     }
+
+    val deviationColor: Color = if (showDeviation) {
+        if (departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late) {
+            KrailTheme.colors.deviationLate
+        } else {
+            KrailTheme.colors.deviationEarly
+        }
+    } else {
+        Color.Unspecified
+    }
+
+    ScheduledTimeRow(
+        timeText = originTime,
+        isPast = isPast,
+        scheduledTimeText = if (showDeviation) scheduledOriginTime else null,
+        deviationLabel = deviationLabel,
+        deviationColor = deviationColor,
+        onTimeTextStyle = KrailTheme.typography.titleMedium,
+        modifier = modifier,
+    )
 }
 
 // region Previews

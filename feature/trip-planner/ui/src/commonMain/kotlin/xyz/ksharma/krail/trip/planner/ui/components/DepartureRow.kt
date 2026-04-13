@@ -13,13 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
@@ -34,6 +31,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.departureboard.toTransportMode
+import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 
 /**
  * Displays a single departure row:
@@ -49,7 +47,7 @@ fun DepartureRow(
     departure: StopDeparture,
     modifier: Modifier = Modifier,
 ) {
-    val isPrevious = departure.timing == DepartureTiming.Previous
+    val isPast = departure.timing == DepartureTiming.Previous
     val lineColor = remember(departure.lineColorCode) {
         departure.lineColorCode.hexToComposeColor()
     }
@@ -57,12 +55,36 @@ fun DepartureRow(
         departure.transportModeName.toTransportMode()
     }
 
+    // Pre-compute deviation info so ScheduledTimeRow can be called with plain strings/colours.
+    val hasDeviation = departure.scheduledTimeText != null && departure.delayMinutes != 0
+    val deviationLabel: String? = if (hasDeviation) {
+        if (departure.delayMinutes > 0) {
+            "Delayed ${departure.delayMinutes} min"
+        } else {
+            "Early ${-departure.delayMinutes} min"
+        }
+    } else {
+        null
+    }
+    val deviationColor: Color = if (hasDeviation) {
+        if (departure.delayMinutes > 0) {
+            KrailTheme.colors.deviationLate
+        } else {
+            KrailTheme.colors.deviationEarly
+        }
+    } else {
+        Color.Unspecified
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (isPrevious) Modifier.background(KrailTheme.colors.pastDepartureRowSurface)
-                else Modifier,
+                if (isPast) {
+                    Modifier.background(KrailTheme.colors.pastDepartureRowSurface)
+                } else {
+                    Modifier
+                },
             )
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -82,10 +104,7 @@ fun DepartureRow(
                     Text(
                         text = departure.relativeTimeText,
                         style = KrailTheme.typography.titleMedium,
-                        // Mirror JourneyCard: swap line colour → onSurface for previous
-                        // departures so the text reads as grey at 50% alpha instead of
-                        // a dim version of the (still vivid) transport line colour.
-                        color = if (isPrevious) KrailTheme.colors.onSurface else lineColor,
+                        color = pastDepartureColor(isPast, lineColor),
                     )
                 }
 
@@ -109,83 +128,26 @@ fun DepartureRow(
                     text = it,
                     textAlign = TextAlign.End,
                     style = KrailTheme.typography.bodyMedium,
-                    // softLabel at 50% alpha is near-invisible; use onSurface for previous
-                    // so the platform label stays readable when dimmed.
-                    color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.label,
+                    color = pastDepartureColor(isPast, KrailTheme.colors.label),
                 )
             }
         }
 
-        // Line 2: delay indicator (if delayed/early) + departure time
-        DepartureTimeRow(
-            departureTimeText = departure.departureTimeText,
-            scheduledTimeText = departure.scheduledTimeText,
-            delayMinutes = departure.delayMinutes,
+        // Line 2: scheduled vs actual departure time (shared composable, handles deviation row)
+        ScheduledTimeRow(
+            timeText = departure.departureTimeText,
+            isPast = isPast,
+            scheduledTimeText = if (hasDeviation) departure.scheduledTimeText else null,
+            deviationLabel = deviationLabel,
+            deviationColor = deviationColor,
+            onTimeTextStyle = KrailTheme.typography.bodyMedium,
         )
 
         // Line 3: destination
         Text(
             text = departure.destinationName,
             style = KrailTheme.typography.bodyMedium,
-            // softLabel at 50% alpha is near-invisible; use onSurface for previous
-            // so the destination stays readable when dimmed.
-            color = if (isPrevious) KrailTheme.colors.onSurface else KrailTheme.colors.softLabel,
-        )
-    }
-}
-
-/**
- * Shows departure time with optional delay indicator.
- * - On time: just the time in label color
- * - Delayed: strikethrough scheduled time + "Delayed X min" in deviationLate + actual time
- * - Early: strikethrough scheduled time + "Early X min" in deviationEarly + actual time
- */
-@Composable
-private fun DepartureTimeRow(
-    departureTimeText: String,
-    scheduledTimeText: String?,
-    delayMinutes: Int,
-    isPastDeparture: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    if (scheduledTimeText != null && delayMinutes != 0) {
-        val isDelayed = delayMinutes > 0
-        val deviationColor =
-            if (isDelayed) KrailTheme.colors.deviationLate else KrailTheme.colors.deviationEarly
-        val deviationLabel =
-            if (isDelayed) "Delayed $delayMinutes min" else "Early ${-delayMinutes} min"
-        Column(modifier = modifier) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                            append(scheduledTimeText)
-                        }
-                    },
-                    style = KrailTheme.typography.bodyMedium,
-                    color = if (isPastDeparture) KrailTheme.colors.onSurface else KrailTheme.colors.softLabel,
-                )
-                Text(
-                    text = deviationLabel,
-                    style = KrailTheme.typography.bodyMedium,
-                    color = if (isPastDeparture) KrailTheme.colors.onSurface else deviationColor,
-                )
-            }
-            Text(
-                text = departureTimeText,
-                style = KrailTheme.typography.titleMedium,
-                color = if (isPastDeparture) KrailTheme.colors.onSurface else KrailTheme.colors.label,
-            )
-        }
-    } else {
-        Text(
-            text = departureTimeText,
-            style = KrailTheme.typography.bodyMedium,
-            color = if (isPastDeparture) KrailTheme.colors.onSurface else KrailTheme.colors.label,
-            modifier = modifier,
+            color = pastDepartureColor(isPast, KrailTheme.colors.softLabel),
         )
     }
 }

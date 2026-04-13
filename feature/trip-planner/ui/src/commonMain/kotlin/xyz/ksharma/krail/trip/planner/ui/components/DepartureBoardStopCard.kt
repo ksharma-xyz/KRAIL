@@ -25,6 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import xyz.ksharma.krail.core.log.log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,11 +102,28 @@ fun DepartureBoardStopCard(
         if (isExpanded == null) {
             // Uncontrolled mode: start polling on expand, stop it on collapse.
             if (expanded) {
+                log("[DEPARTURES] UI card EXPANDED stopId=$stopId — sending LoadDepartures")
                 onEvent(DeparturesUiEvent.LoadDepartures(stopId))
             } else {
+                log("[DEPARTURES] UI card COLLAPSED stopId=$stopId — sending StopPolling")
                 onEvent(DeparturesUiEvent.StopPolling)
             }
         }
+    }
+
+    // Lifecycle events — lets us see when the Activity/Fragment goes to background / returns,
+    // and correlate with repository polling behaviour in the logs.
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        log("[DEPARTURES] UI ON_PAUSE stopId=$stopId expanded=$expanded")
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        log("[DEPARTURES] UI ON_STOP stopId=$stopId expanded=$expanded — polling continues in repo scope")
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        log("[DEPARTURES] UI ON_START stopId=$stopId expanded=$expanded")
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        log("[DEPARTURES] UI ON_RESUME stopId=$stopId expanded=$expanded")
     }
 
     Column(

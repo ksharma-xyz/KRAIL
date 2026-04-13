@@ -124,9 +124,13 @@ class DeparturesViewModel(
         when (event) {
             is DeparturesUiEvent.LoadDepartures -> {
                 val current = activeStopId.value
-                // Guard: same stop already loaded without error → no-op (rotation-safe)
+                // Guard: same stop already in a good state — don't restart the polling loop,
+                // but always call setActiveStop so the repository can revive a stopped poll
+                // (e.g. after a long screen-lock where Android paused or killed background work).
+                // The repository has its own NOOP guard when the loop is already running.
                 if (event.stopId == current && !uiState.value.isError && !uiState.value.isLoading) {
-                    log("[$LOG_TAG] t=$t onEvent LoadDepartures NOOP — stop ${event.stopId} already loaded (isLoading=${uiState.value.isLoading} isError=${uiState.value.isError})")
+                    log("[$LOG_TAG] t=$t onEvent LoadDepartures SAME STOP — ensuring polling live for ${event.stopId}")
+                    repository.setActiveStop(event.stopId)
                 } else {
                     log("[$LOG_TAG] t=$t onEvent LoadDepartures → stopId=${event.stopId} (was $current)")
                     // Stop polling the previous stop if this ViewModel owns it

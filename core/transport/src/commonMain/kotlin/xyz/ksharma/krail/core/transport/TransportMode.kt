@@ -33,9 +33,9 @@ sealed class TransportMode(
     @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6)
 
     companion object {
-        val all: List<TransportMode> = listOf(Train, Metro, Bus, LightRail, Ferry, Coach)
+        val all: List<TransportMode> by lazy { listOf(Train, Metro, Bus, LightRail, Ferry, Coach) }
 
-        private val byProductClass: Map<Int, TransportMode> = all.associateBy { it.productClass }
+        private val byProductClass: Map<Int, TransportMode> by lazy { all.associateBy { it.productClass } }
 
         fun fromProductClass(productClass: Int): TransportMode? = byProductClass[productClass]
     }

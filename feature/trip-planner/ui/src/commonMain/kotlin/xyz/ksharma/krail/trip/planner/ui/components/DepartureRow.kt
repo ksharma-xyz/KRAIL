@@ -2,31 +2,23 @@
 
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
-import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -35,6 +27,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.departureboard.toTransportMode
+import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 
 /**
  * Displays a single departure row:
@@ -50,7 +43,7 @@ fun DepartureRow(
     departure: StopDeparture,
     modifier: Modifier = Modifier,
 ) {
-    val isPrevious = departure.timing == DepartureTiming.Previous
+    val isPast = departure.timing == DepartureTiming.Previous
     val lineColor = remember(departure.lineColorCode) {
         departure.lineColorCode.hexToComposeColor()
     }
@@ -58,123 +51,77 @@ fun DepartureRow(
         departure.transportModeName.toTransportMode()
     }
 
-    CompositionLocalProvider(LocalContentAlpha provides if (isPrevious) 0.5f else 1f) {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            // Line 1: relative time + mode icon + line badge (left) | platform text (right)
-            FlowRow(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (departure.relativeTimeText.isNotBlank()) {
-                        Text(
-                            text = departure.relativeTimeText,
-                            style = KrailTheme.typography.titleMedium,
-                            color = lineColor,
-                        )
-                    }
-
-                    transportMode?.let {
-                        TransportModeIcon(
-                            transportMode = it,
-                            size = TransportModeIconSize.XSmall,
-                            displayBorder = false,
-                        )
-                    }
-
-                    TransportModeBadge(
-                        badgeText = departure.lineNumber,
-                        backgroundColor = lineColor,
-                        modifier = Modifier.padding(end = 8.dp),
-                    )
-                }
-
-                departure.platformText?.let {
-                    Text(
-                        text = it,
-                        textAlign = TextAlign.End,
-                        style = KrailTheme.typography.bodyMedium,
-                        color = KrailTheme.colors.label,
-                    )
-                }
-            }
-
-            // Line 2: delay indicator (if delayed/early) + departure time
-            DepartureTimeRow(
-                departureTimeText = departure.departureTimeText,
-                scheduledTimeText = departure.scheduledTimeText,
-                delayMinutes = departure.delayMinutes,
-            )
-
-            // Line 3: destination in softLabel
-            Text(
-                text = departure.destinationName,
-                style = KrailTheme.typography.bodyMedium,
-                color = KrailTheme.colors.softLabel,
-            )
-        }
-    }
-}
-
-/**
- * Shows departure time with optional delay indicator.
- * - On time: just the time in label color
- * - Delayed: strikethrough scheduled time + "Delayed X min" in deviationLate + actual time
- * - Early: strikethrough scheduled time + "Early X min" in deviationEarly + actual time
- */
-@Composable
-private fun DepartureTimeRow(
-    departureTimeText: String,
-    scheduledTimeText: String?,
-    delayMinutes: Int,
-    modifier: Modifier = Modifier,
-) {
-    if (scheduledTimeText != null && delayMinutes != 0) {
-        val isDelayed = delayMinutes > 0
-        val deviationColor = if (isDelayed) KrailTheme.colors.deviationLate else KrailTheme.colors.deviationEarly
-        val deviationLabel = if (isDelayed) "Delayed $delayMinutes min" else "Early ${-delayMinutes} min"
-        Column(modifier = modifier) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                            append(scheduledTimeText)
-                        }
-                    },
-                    style = KrailTheme.typography.bodyMedium,
-                    color = KrailTheme.colors.softLabel,
-                )
-                Text(
-                    text = deviationLabel,
-                    style = KrailTheme.typography.bodyMedium,
-                    color = deviationColor,
-                )
-            }
-            Text(
-                text = departureTimeText,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.label,
-            )
+    // Pre-compute deviation info so ScheduledTimeRow can be called with plain strings/colours.
+    val hasDeviation = departure.scheduledTimeText != null && departure.delayMinutes != 0
+    val deviationLabel: String? = if (hasDeviation) {
+        if (departure.delayMinutes > 0) {
+            "Delayed ${departure.delayMinutes} min"
+        } else {
+            "Early ${-departure.delayMinutes} min"
         }
     } else {
+        null
+    }
+    val deviationColor: Color = if (hasDeviation) {
+        if (departure.delayMinutes > 0) {
+            KrailTheme.colors.deviationLate
+        } else {
+            KrailTheme.colors.deviationEarly
+        }
+    } else {
+        Color.Unspecified
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (isPast) {
+                    Modifier.background(KrailTheme.colors.pastDepartureRowSurface)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        // Line 1: relative time + mode icon + line badge (left) | platform text (right)
+        DepartureHeaderRow(
+            relativeTimeText = departure.relativeTimeText,
+            isPast = isPast,
+            activeTimeColor = lineColor,
+            platformText = departure.platformText,
+            // activePlatformColor defaults to KrailTheme.colors.label — correct for departure rows
+        ) {
+            transportMode?.let {
+                TransportModeIcon(
+                    transportMode = it,
+                    size = TransportModeIconSize.XSmall,
+                    displayBorder = false,
+                )
+            }
+            TransportModeBadge(
+                badgeText = departure.lineNumber,
+                backgroundColor = lineColor,
+                modifier = Modifier.padding(end = 8.dp),
+            )
+        }
+
+        // Line 2: scheduled vs actual departure time (shared composable, handles deviation row)
+        ScheduledTimeRow(
+            timeText = departure.departureTimeText,
+            isPast = isPast,
+            scheduledTimeText = if (hasDeviation) departure.scheduledTimeText else null,
+            deviationLabel = deviationLabel,
+            deviationColor = deviationColor,
+            onTimeTextStyle = KrailTheme.typography.bodyMedium,
+        )
+
+        // Line 3: destination
         Text(
-            text = departureTimeText,
+            text = departure.destinationName,
             style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.label,
-            modifier = modifier,
+            color = pastDepartureColor(isPast, KrailTheme.colors.softLabel),
         )
     }
 }
@@ -201,12 +148,12 @@ fun DepartureRowList(
                 if (index > 0) Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 Text(
                     text = departure.dateLabel,
-                    style = KrailTheme.typography.labelLarge,
-                    color = KrailTheme.colors.softLabel,
+                    style = KrailTheme.typography.titleMedium,
+                    color = KrailTheme.colors.onSurface,
                     modifier = Modifier
                         .semantics { heading() }
                         .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp),
+                        .padding(top = 16.dp, bottom = 8.dp),
                 )
                 lastDateLabel = departure.dateLabel
             }
@@ -354,6 +301,115 @@ private fun DepartureRowListMetroPreview() {
     PreviewTheme(KrailThemeStyle.Metro) {
         Column {
             DepartureRowList(departures = sampleDepartures)
+        }
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureRowPreviousTrainPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureRow(
+            departure = StopDeparture(
+                lineNumber = "T1",
+                lineColorCode = "#F99D1C",
+                transportModeName = TRANSPORT_MODE_TRAIN,
+                destinationName = "Liverpool via Strathfield",
+                departureTimeText = "11:30 AM",
+                departureUtcDateTime = "2026-04-10T01:30:00Z",
+                relativeTimeText = "5 mins ago",
+                platformText = "Platform 4",
+                isRealTime = true,
+                timing = DepartureTiming.Previous,
+            ),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DepartureRowPreviousBusDelayedPreview() {
+    PreviewTheme(KrailThemeStyle.Bus) {
+        DepartureRow(
+            departure = StopDeparture(
+                lineNumber = BUS_LINE_700,
+                lineColorCode = BUS_COLOR,
+                transportModeName = TRANSPORT_MODE_BUS,
+                destinationName = BUS_DESTINATION,
+                departureTimeText = BUS_DEPARTURE_TIME,
+                departureUtcDateTime = BUS_UTC_DATE,
+                relativeTimeText = "12 mins ago",
+                platformText = BUS_PLATFORM,
+                isRealTime = true,
+                scheduledTimeText = "11:28 am",
+                delayMinutes = 2,
+                timing = DepartureTiming.Previous,
+            ),
+        )
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun DepartureRowListWithPreviousPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        Column {
+            DepartureRowList(
+                departures = persistentListOf(
+                    StopDeparture(
+                        lineNumber = "T1",
+                        lineColorCode = "#F99D1C",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Liverpool via Strathfield",
+                        departureTimeText = "11:20 AM",
+                        departureUtcDateTime = "2026-04-10T01:20:00Z",
+                        relativeTimeText = "10 mins ago",
+                        platformText = "Platform 4",
+                        isRealTime = true,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Previous,
+                    ),
+                    StopDeparture(
+                        lineNumber = "T2",
+                        lineColorCode = "#0098CD",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Bondi Junction",
+                        departureTimeText = "11:25 AM",
+                        departureUtcDateTime = "2026-04-10T01:25:00Z",
+                        relativeTimeText = "5 mins ago",
+                        platformText = "Platform 7",
+                        isRealTime = false,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Previous,
+                    ),
+                    StopDeparture(
+                        lineNumber = "T1",
+                        lineColorCode = "#F99D1C",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Liverpool via Strathfield",
+                        departureTimeText = "11:30 AM",
+                        departureUtcDateTime = "2026-04-10T01:30:00Z",
+                        relativeTimeText = "in 2 mins",
+                        platformText = "Platform 4",
+                        isRealTime = true,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Upcoming,
+                    ),
+                    StopDeparture(
+                        lineNumber = "T4",
+                        lineColorCode = "#005AA3",
+                        transportModeName = TRANSPORT_MODE_TRAIN,
+                        destinationName = "Illawarra via Sydenham",
+                        departureTimeText = "11:36 AM",
+                        departureUtcDateTime = "2026-04-10T01:36:00Z",
+                        relativeTimeText = "in 8 mins",
+                        platformText = "Platform 2",
+                        isRealTime = true,
+                        dateLabel = "Today",
+                        timing = DepartureTiming.Upcoming,
+                    ),
+                ),
+            )
         }
     }
 }

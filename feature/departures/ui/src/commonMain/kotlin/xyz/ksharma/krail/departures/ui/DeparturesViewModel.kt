@@ -18,8 +18,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
@@ -103,16 +102,14 @@ class DeparturesViewModel(
                     departures = current.departures.map { departure ->
                         departure.copy(
                             relativeTimeText = runCatching {
-                                calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                                    .toGenericFormattedTimeString()
+                                departure.departureUtcDateTime.toDepartureRelativeString()
                             }.getOrDefault(""),
                         )
                     }.toImmutableList(),
                     previousDepartures = current.previousDepartures.map { departure ->
                         departure.copy(
                             relativeTimeText = runCatching {
-                                calculateTimeDifferenceFromNow(departure.departureUtcDateTime)
-                                    .toGenericFormattedTimeString()
+                                departure.departureUtcDateTime.toDepartureRelativeString()
                             }.getOrDefault(""),
                         )
                     }.toImmutableList(),

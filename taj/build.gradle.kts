@@ -57,6 +57,8 @@ kotlin {
             dependencies {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
+                // Needed to feed NswTransportLine entries into ContrastAnalyzer tests
+                implementation(projects.core.transport)
             }
         }
 
@@ -64,6 +66,8 @@ kotlin {
         androidUnitTest {
             dependencies {
                 implementation(projects.core.snapshotTesting)
+                // Needed for NswTransportLine snapshot tests
+                implementation(projects.core.transport)
             }
         }
 

@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -19,6 +20,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -58,6 +60,16 @@ internal fun DepartureHeaderRow(
     activePlatformColor: Color = KrailTheme.colors.label,
     modeContent: @Composable RowScope.() -> Unit,
 ) {
+    val surface = KrailTheme.colors.surface
+    val resolvedTimeColor = pastDepartureColor(
+        isPast = isPast,
+        activeColor = activeTimeColor.ensureMinimumContrast(surface),
+    )
+    val resolvedPlatformColor = pastDepartureColor(
+        isPast = isPast,
+        activeColor = activePlatformColor.ensureMinimumContrast(surface),
+    )
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -71,7 +83,7 @@ internal fun DepartureHeaderRow(
                 Text(
                     text = relativeTimeText,
                     style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                    color = pastDepartureColor(isPast, activeTimeColor),
+                    color = resolvedTimeColor,
                 )
             }
             modeContent()
@@ -82,7 +94,7 @@ internal fun DepartureHeaderRow(
                 text = it,
                 textAlign = TextAlign.End,
                 style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                color = pastDepartureColor(isPast, activePlatformColor),
+                color = resolvedPlatformColor,
                 modifier = Modifier.padding(start = 4.dp),
             )
         }
@@ -94,8 +106,13 @@ internal fun DepartureHeaderRow(
 private const val TRAIN_COLOR = "#F99D1C"
 private const val BUS_COLOR = "#00B5EF"
 
+// Colors that are low-contrast on dark backgrounds — used for contrast-enforcement previews
+private const val T4_COLOR = "#005AA3" // ~2.35:1 on dark surface (below WCAG AA)
+private const val T8_COLOR = "#00954C" // ~4.32:1 on dark surface (just below WCAG AA)
+
 // ── DepartureRow context (single mode, neutral platform colour) ───────────────
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Upcoming_SingleMode_WithPlatform() {
@@ -116,6 +133,7 @@ private fun Preview_Upcoming_SingleMode_WithPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Past_SingleMode_WithPlatform() {
@@ -136,6 +154,7 @@ private fun Preview_Past_SingleMode_WithPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Upcoming_Bus_NoPlatform() {
@@ -156,6 +175,7 @@ private fun Preview_Upcoming_Bus_NoPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Past_Bus_NoPlatform() {
@@ -178,6 +198,7 @@ private fun Preview_Past_Bus_NoPlatform() {
 
 // ── JourneyCardHeader context (multi-mode, line colour platform) ──────────────
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Upcoming_MultiMode_LineColorPlatform() {
@@ -200,6 +221,7 @@ private fun Preview_Upcoming_MultiMode_LineColorPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Past_MultiMode_LineColorPlatform() {
@@ -218,6 +240,61 @@ private fun Preview_Past_MultiMode_LineColorPlatform() {
                 ),
                 showBadge = { it.transportMode is TransportMode.Bus },
             )
+        }
+    }
+}
+
+// ── Contrast enforcement previews — low-contrast line colors on dark backgrounds ──
+
+/**
+ * T4 (#005AA3) is ~2.35:1 on the dark surface — well below WCAG AA.
+ * [ensureMinimumContrast] brightens it until it reaches 4.5:1.
+ * The dark-mode variant of this preview demonstrates the fix.
+ */
+@ScreenshotTest(description = "T4 dark navy line — contrast enforcement brightens color in dark mode")
+@PreviewComponent
+@Composable
+private fun Preview_ContrastEnforcement_T4_LowContrast() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureHeaderRow(
+            relativeTimeText = "in 3 mins",
+            isPast = false,
+            activeTimeColor = T4_COLOR.hexToComposeColor(),
+            activePlatformColor = T4_COLOR.hexToComposeColor(),
+            platformText = "Platform 2",
+        ) {
+            TransportModeIcon(
+                transportMode = TransportMode.Train,
+                size = TransportModeIconSize.XSmall,
+                displayBorder = false,
+            )
+            TransportModeBadge(badgeText = "T4", backgroundColor = T4_COLOR.hexToComposeColor())
+        }
+    }
+}
+
+/**
+ * T8 (#00954C) is ~4.32:1 on dark surface — just below WCAG AA.
+ * [ensureMinimumContrast] slightly brightens it to meet the 4.5:1 threshold.
+ */
+@ScreenshotTest(description = "T8 green line — contrast enforcement makes marginal color compliant")
+@PreviewComponent
+@Composable
+private fun Preview_ContrastEnforcement_T8_MarginalContrast() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureHeaderRow(
+            relativeTimeText = "in 8 mins",
+            isPast = false,
+            activeTimeColor = T8_COLOR.hexToComposeColor(),
+            activePlatformColor = T8_COLOR.hexToComposeColor(),
+            platformText = "Platform 5",
+        ) {
+            TransportModeIcon(
+                transportMode = TransportMode.Train,
+                size = TransportModeIconSize.XSmall,
+                displayBorder = false,
+            )
+            TransportModeBadge(badgeText = "T8", backgroundColor = T8_COLOR.hexToComposeColor())
         }
     }
 }

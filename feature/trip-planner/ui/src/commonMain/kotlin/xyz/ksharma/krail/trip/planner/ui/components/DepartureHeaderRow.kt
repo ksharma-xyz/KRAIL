@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportLine
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -106,9 +107,14 @@ internal fun DepartureHeaderRow(
 private const val TRAIN_COLOR = "#F99D1C"
 private const val BUS_COLOR = "#00B5EF"
 
-// Colors that are low-contrast on dark backgrounds — used for contrast-enforcement previews
-private const val T4_COLOR = "#005AA3" // ~2.35:1 on dark surface (below WCAG AA)
-private const val T8_COLOR = "#00954C" // ~4.32:1 on dark surface (just below WCAG AA)
+// Colors that are low-contrast on dark backgrounds — used for contrast-enforcement previews.
+// Values are taken directly from NswTransportLine so that if the official brand colour ever
+// changes in the enum the preview (and the snapshot regression) automatically reflects it.
+//
+//  T4 (#005AA3) → ~2.35:1 on dark surface — well below WCAG AA.  ensureMinimumContrast brightens it.
+//  T8 (#00954C) → ~4.32:1 on dark surface — just below WCAG AA.  ensureMinimumContrast nudges it up.
+private val T4_COLOR = NswTransportLine.EASTERN_SUBURBS_ILLAWARRA.hexColor
+private val T8_COLOR = NswTransportLine.AIRPORT_SOUTH.hexColor
 
 // ── DepartureRow context (single mode, neutral platform colour) ───────────────
 

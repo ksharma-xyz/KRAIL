@@ -50,6 +50,9 @@ kotlin {
 
                 // Lightweight annotation only - no Roborazzi/Robolectric bloat!
                 implementation(projects.core.snapshotTestingAnnotations)
+
+                // NSW transport line enum — used for the contrast catalog preview
+                implementation(projects.core.transport)
             }
         }
 

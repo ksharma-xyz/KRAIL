@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +28,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,14 +43,12 @@ import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
-import xyz.ksharma.krail.taj.components.SeparatorIcon
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
+import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
@@ -94,13 +90,6 @@ fun JourneyCard(
             timeToDeparture.contains(other = "ago", ignoreCase = true),
         )
     }
-    // Use pastDepartureColor: for past journeys the departure-time text resolves to onSurface
-    // (reads as neutral grey) instead of the vivid transport line colour.
-    val firstLegTransportModeColor = pastDepartureColor(
-        isPast = isPast,
-        activeColor = transportModeLineList.firstOrNull()?.lineColorCode?.hexToComposeColor()
-            ?: KrailTheme.colors.onSurface,
-    )
 
     Column(
         modifier = modifier
@@ -113,26 +102,27 @@ fun JourneyCard(
                     KrailTheme.colors.surface
                 },
             )
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            )
+            .padding(horizontal = 12.dp)
+            .padding(top = 8.dp)
             .animateContentSize(),
     ) {
         JourneyCardHeader(
             transportModeLineList = transportModeLineList,
             platformText = platformText,
             timeToDeparture = timeToDeparture,
-            firstLegTransportModeColor = firstLegTransportModeColor,
-            onClick = onClick,
         )
 
         // Always visible content
         Column(
             modifier = Modifier
-                .semantics(mergeDescendants = true) { }
-                .clickable(
-                    role = Role.Button,
-                    onClick = onClick,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ),
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) { },
         ) {
             // Origin time — shows inline deviation (strikethrough + label) when late/early
             JourneyOriginTimeRow(
@@ -148,6 +138,7 @@ fun JourneyCard(
                 destinationTime = destinationTime,
                 totalTravelTime = totalTravelTime,
                 totalWalkTime = totalWalkTime,
+                isPast = isPast,
             )
         }
 
@@ -174,79 +165,6 @@ fun JourneyCard(
         }
 
         Divider(modifier = Modifier.padding(top = 16.dp))
-    }
-}
-
-@Composable
-private fun JourneyCardHeader(
-    transportModeLineList: ImmutableList<TransportModeLine>,
-    platformText: String?,
-    timeToDeparture: String,
-    firstLegTransportModeColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .clickable(
-                role = Role.Button,
-                onClick = onClick,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            )
-            .padding(bottom = 4.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-                Text(
-                    text = timeToDeparture,
-                    style = KrailTheme.typography.titleMedium,
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier
-                        .padding(end = 8.dp),
-                )
-            } else {
-                FlowRow(
-                    horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier.weight(1f).padding(end = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = timeToDeparture,
-                        style = KrailTheme.typography.titleMedium,
-                        color = firstLegTransportModeColor,
-                        modifier = Modifier
-                            .padding(end = 8.dp),
-                    )
-                    TransportModesRow(
-                        transportModeLineList = transportModeLineList,
-                        showBadge = { it.transportMode is TransportMode.Bus },
-                    )
-                }
-            }
-
-            platformText?.let { text ->
-                Text(
-                    text = text,
-                    textAlign = TextAlign.Center,
-                    style = KrailTheme.typography.titleMedium,
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
-
-        if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-            // Always show badges/icons on a new line for large font scale; let FlowRow wrap
-            TransportModesRow(
-                transportModeLineList = transportModeLineList,
-                showBadge = { it.transportMode is TransportMode.Bus },
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
     }
 }
 
@@ -385,6 +303,7 @@ private fun ResponsiveJourneyInfoRow(
     destinationTime: String,
     totalTravelTime: String,
     totalWalkTime: String?,
+    isPast: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -392,7 +311,7 @@ private fun ResponsiveJourneyInfoRow(
     ) {
         Text(
             text = destinationTime,
-            style = KrailTheme.typography.titleMedium,
+            style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
             color = KrailTheme.colors.onSurface,
         )
 
@@ -408,42 +327,6 @@ private fun ResponsiveJourneyInfoRow(
                 text = totalWalkTime,
                 textStyle = KrailTheme.typography.bodyLarge,
             )
-        }
-    }
-}
-
-@Composable
-private fun displayAdaptiveTransportModeList(
-    transportModeLineList: ImmutableList<TransportModeLine>,
-    platformText: String?,
-): Boolean = isLargeFontScale() || transportModeLineList.size > 2 && platformText != null
-
-@Composable
-private fun TransportModesRow(
-    transportModeLineList: ImmutableList<TransportModeLine>,
-    showBadge: (TransportModeLine) -> Boolean,
-    modifier: Modifier = Modifier,
-) {
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        itemVerticalAlignment = Alignment.CenterVertically,
-    ) {
-        transportModeLineList.forEachIndexed { index, line ->
-            if (showBadge(line)) {
-                TransportModeBadge(
-                    backgroundColor = line.lineColorCode.hexToComposeColor(),
-                    badgeText = line.lineName,
-                )
-            }
-            TransportModeIcon(
-                transportMode = line.transportMode,
-                size = TransportModeIconSize.Small,
-            )
-            if (index != transportModeLineList.lastIndex) {
-                SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
-            }
         }
     }
 }
@@ -494,16 +377,18 @@ private fun JourneyOriginTimeRow(
     modifier: Modifier = Modifier,
 ) {
     val showDeviation = scheduledOriginTime != null && (
-        departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ||
-            departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Early
-        )
+            departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ||
+                    departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Early
+            )
 
     val deviationLabel: String? = if (showDeviation) {
         when (departureDeviation) {
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
                 "Delayed ${departureDeviation.text.removeSuffix(" late")}"
+
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
                 "Early ${departureDeviation.text.removeSuffix(" early")}"
+
             else -> null
         }
     } else {
@@ -631,7 +516,10 @@ private fun Preview_JourneyCard_Expanded() {
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
                     displayText = "towards Abc via Rainy Rd",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train,
+                        lineName = "T1"
+                    ),
                     totalDuration = "20 mins",
                     tripId = "T1",
                 ),
@@ -642,7 +530,10 @@ private fun Preview_JourneyCard_Expanded() {
                     stops = PREVIEW_STOPS.take(2).toImmutableList(),
                     displayText = "towards Xyz via Awesome Rd",
                     totalDuration = "10 mins",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "700"
+                    ),
                     tripId = "700",
                 ),
             ),
@@ -675,7 +566,10 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
                     displayText = "towards Abc via Rainy Rd",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train,
+                        lineName = "T1"
+                    ),
                     totalDuration = "20 mins",
                     tripId = "T1",
                 ),
@@ -686,7 +580,10 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
                     stops = PREVIEW_STOPS.take(2).toImmutableList(),
                     displayText = "towards Xyz via Awesome Rd",
                     totalDuration = "10 mins",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "700"
+                    ),
                     tripId = "700",
                 ),
             ),
@@ -768,7 +665,10 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS,
                     displayText = "towards Central",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "M92"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "M92"
+                    ),
                     totalDuration = "15 mins",
                     tripId = "M92",
                 ),
@@ -779,7 +679,10 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
                     stops = PREVIEW_STOPS,
                     displayText = "towards North Shore",
                     totalDuration = "22 mins",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Train, lineName = "T3"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Train,
+                        lineName = "T3"
+                    ),
                     tripId = "T3",
                 ),
             ),
@@ -812,7 +715,10 @@ private fun Preview_Expanded_MultipleAlerts() {
                 TimeTableState.JourneyCardInfo.Leg.TransportLeg(
                     stops = PREVIEW_STOPS.take(2).toImmutableList(),
                     displayText = "to Circular Quay",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Ferry, lineName = "F1"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Ferry,
+                        lineName = "F1"
+                    ),
                     totalDuration = "25 mins",
                     tripId = "F1",
                 ),
@@ -823,7 +729,10 @@ private fun Preview_Expanded_MultipleAlerts() {
                     stops = PREVIEW_STOPS,
                     displayText = "to Bondi Junction",
                     totalDuration = "15 mins",
-                    transportModeLine = TransportModeLine(transportMode = TransportMode.Bus, lineName = "380"),
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "380"
+                    ),
                     tripId = "380",
                 ),
             ),

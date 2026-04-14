@@ -54,10 +54,10 @@ internal fun DepartureBoardBody(
     var selectedLineKey by rememberSaveable { mutableStateOf("") }
     val selectedLine: String? = selectedLineKey.ifEmpty { null }
 
-    var showPrevious by remember { mutableStateOf(false) }
+    var showPrevious by rememberSaveable { mutableStateOf(false) }
     // Guards against a one-frame flash of "No previous departures" before the repository
     // acknowledges the request by setting isPreviousLoading = true.
-    var previousRequested by remember { mutableStateOf(false) }
+    var previousRequested by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.isPreviousLoading) {
         if (!state.isPreviousLoading) previousRequested = false

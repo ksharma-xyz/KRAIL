@@ -32,6 +32,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.departureboard.toTransportMode
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
+import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 
 /**
  * Displays a single departure row:
@@ -103,7 +104,7 @@ fun DepartureRow(
                 if (departure.relativeTimeText.isNotBlank()) {
                     Text(
                         text = departure.relativeTimeText,
-                        style = KrailTheme.typography.titleMedium,
+                        style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
                         color = pastDepartureColor(isPast, lineColor),
                     )
                 }

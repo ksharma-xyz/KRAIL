@@ -365,7 +365,7 @@ fun TimeTableScreen(
                             onMapClick(journey.journeyId)
                         },
                         isMapsAvailable = timeTableState.isMapsAvailable,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = 8.dp)
                             .animateItem(),
                         departureDeviation = journey.departureDeviation,
                         scheduledOriginTime = journey.scheduledOriginTime,

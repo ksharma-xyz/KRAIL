@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
+import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 
 /**
  * Shared UI component that renders a departure or origin time, with an optional
@@ -89,7 +90,7 @@ fun ScheduledTimeRow(
             }
             Text(
                 text = timeText,
-                style = KrailTheme.typography.titleMedium,
+                style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
                 color = KrailTheme.colors.label,
             )
         }
@@ -97,7 +98,7 @@ fun ScheduledTimeRow(
         // On-time layout: single time text
         Text(
             text = timeText,
-            style = onTimeTextStyle,
+            style = pastDepartureTextStyle(isPast, onTimeTextStyle),
             color = KrailTheme.colors.label,
             modifier = modifier,
         )

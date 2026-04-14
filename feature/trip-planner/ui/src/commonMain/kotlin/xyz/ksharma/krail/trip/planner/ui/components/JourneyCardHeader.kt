@@ -3,8 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,17 +11,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.SeparatorIcon
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
-import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
-import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -50,60 +44,33 @@ internal fun JourneyCardHeader(
     val isPast by remember(timeToDeparture) {
         mutableStateOf(timeToDeparture.contains(other = "ago", ignoreCase = true))
     }
-    val firstLegTransportModeColor = pastDepartureColor(
-        isPast = isPast,
-        activeColor = transportModeLineList.firstOrNull()?.lineColorCode?.hexToComposeColor()
-            ?: KrailTheme.colors.onSurface,
-    )
+    val activeLineColor = transportModeLineList.firstOrNull()?.lineColorCode?.hexToComposeColor()
+        ?: KrailTheme.colors.onSurface
+    val isAdaptive = displayAdaptiveTransportModeList(transportModeLineList, platformText)
 
     Column(
         modifier = modifier.padding(bottom = 4.dp),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
+        DepartureHeaderRow(
+            relativeTimeText = timeToDeparture,
+            isPast = isPast,
+            activeTimeColor = activeLineColor,
+            // Platform uses the line colour (e.g. orange "Platform 1") rather than the neutral label
+            activePlatformColor = activeLineColor,
+            platformText = platformText,
         ) {
-            if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-                Text(
-                    text = timeToDeparture,
-                    style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier.padding(end = 8.dp),
-                )
-            } else {
-                FlowRow(
-                    horizontalArrangement = Arrangement.Start,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = timeToDeparture,
-                        style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                        color = firstLegTransportModeColor,
-                        modifier = Modifier.padding(end = 8.dp),
-                    )
-                    TransportModesRow(
-                        transportModeLineList = transportModeLineList,
-                        showBadge = { it.transportMode is TransportMode.Bus },
-                    )
-                }
-            }
-
-            platformText?.let { text ->
-                Text(
-                    text = text,
-                    textAlign = TextAlign.Center,
-                    style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                    color = firstLegTransportModeColor,
-                    modifier = Modifier.padding(start = 4.dp),
+            // When adaptive layout is active, modes move to their own row below; show nothing here.
+            if (!isAdaptive) {
+                TransportModesRow(
+                    transportModeLineList = transportModeLineList,
+                    showBadge = { it.transportMode is TransportMode.Bus },
                 )
             }
         }
 
-        if (displayAdaptiveTransportModeList(transportModeLineList, platformText)) {
-            // On large font scale or with many modes, show badges/icons on their own line
+        if (isAdaptive) {
+            // Large font scale or many modes: badges/icons on their own line so they don't
+            // crowd the platform label.
             TransportModesRow(
                 transportModeLineList = transportModeLineList,
                 showBadge = { it.transportMode is TransportMode.Bus },

@@ -5,18 +5,14 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
@@ -32,7 +28,6 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.departureboard.toTransportMode
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
-import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 
 /**
  * Displays a single departure row:
@@ -91,47 +86,25 @@ fun DepartureRow(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Line 1: relative time + mode icon + line badge (left) | platform text (right)
-        FlowRow(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+        DepartureHeaderRow(
+            relativeTimeText = departure.relativeTimeText,
+            isPast = isPast,
+            activeTimeColor = lineColor,
+            platformText = departure.platformText,
+            // activePlatformColor defaults to KrailTheme.colors.label — correct for departure rows
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (departure.relativeTimeText.isNotBlank()) {
-                    Text(
-                        text = departure.relativeTimeText,
-                        style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                        color = pastDepartureColor(isPast, lineColor),
-                    )
-                }
-
-                transportMode?.let {
-                    TransportModeIcon(
-                        transportMode = it,
-                        size = TransportModeIconSize.XSmall,
-                        displayBorder = false,
-                    )
-                }
-
-                TransportModeBadge(
-                    badgeText = departure.lineNumber,
-                    backgroundColor = lineColor,
-                    modifier = Modifier.padding(end = 8.dp),
+            transportMode?.let {
+                TransportModeIcon(
+                    transportMode = it,
+                    size = TransportModeIconSize.XSmall,
+                    displayBorder = false,
                 )
             }
-
-            departure.platformText?.let {
-                Text(
-                    text = it,
-                    textAlign = TextAlign.End,
-                    style = KrailTheme.typography.bodyMedium,
-                    color = pastDepartureColor(isPast, KrailTheme.colors.label),
-                )
-            }
+            TransportModeBadge(
+                badgeText = departure.lineNumber,
+                backgroundColor = lineColor,
+                modifier = Modifier.padding(end = 8.dp),
+            )
         }
 
         // Line 2: scheduled vs actual departure time (shared composable, handles deviation row)

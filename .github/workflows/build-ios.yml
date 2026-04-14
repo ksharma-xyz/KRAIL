@@ -23,11 +23,11 @@ jobs:
           echo "Current default xcodebuild version:"
           xcodebuild -version
 
-      # Automatically selects the latest stable Xcode version
+      # Requires Xcode 26+ for iOS 26 SDK (App Store mandate from April 28 2026)
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 'latest-stable'
+          xcode-version: '~26'
 
       - name: Verify Selection
         run: |

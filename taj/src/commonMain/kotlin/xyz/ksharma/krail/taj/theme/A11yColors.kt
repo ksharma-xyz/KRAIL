@@ -13,6 +13,7 @@ private const val LARGE_TEXT_SIZE_CONTRAST_AA = 3.0f
 
 private const val MAX_CONTRAST_ITERATIONS = 20
 private const val CONTRAST_STEP = 0.05f
+private const val BACKGROUND_LUMINANCE_MIDPOINT = 0.5f
 
 /**
  * Calculates the contrast ratio between two colors
@@ -88,7 +89,7 @@ fun Color.ensureMinimumContrast(
     minContrast: Float = DEFAULT_TEXT_SIZE_CONTRAST_AA,
 ): Color {
     if (contrastRatio(background) >= minContrast) return this
-    val shouldLighten = background.luminance() < 0.5f
+    val shouldLighten = background.luminance() < BACKGROUND_LUMINANCE_MIDPOINT
     var adapted = this
     repeat(MAX_CONTRAST_ITERATIONS) {
         if (adapted.contrastRatio(background) >= minContrast) return adapted

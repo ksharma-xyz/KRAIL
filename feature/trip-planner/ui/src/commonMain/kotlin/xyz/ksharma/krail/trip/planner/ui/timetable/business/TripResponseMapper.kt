@@ -3,10 +3,9 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifference
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.extractPlatformText
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
@@ -156,9 +155,7 @@ private fun List<TripResponse.Leg>.getTransportModeLines() = mapNotNull { leg ->
 private fun List<TripResponse.Leg>.getLegsList() = mapNotNull { it.toUiModel() }.toImmutableList()
 
 @OptIn(ExperimentalTime::class)
-private fun String.getTimeText() = let {
-    calculateTimeDifferenceFromNow(utcDateString = it).toGenericFormattedTimeString()
-}
+private fun String.getTimeText() = toDepartureRelativeString()
 
 @Suppress("ComplexCondition")
 private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {

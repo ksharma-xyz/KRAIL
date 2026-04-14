@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.roborazzi)
     alias(libs.plugins.krail.android.kmp.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -17,6 +18,10 @@ kotlin {
         namespace = "xyz.ksharma.krail.trip.planner.ui"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
 
         // MANDATORY for AGP 9 to include assets
         androidResources {
@@ -51,6 +56,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.snapshotTestingAnnotations)
                 implementation(projects.core.adaptiveUi)
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appVersion)
@@ -120,6 +126,13 @@ kotlin {
                 implementation(libs.test.turbine)
 
                 implementation(projects.sandook)
+                implementation(projects.feature.departures.network)
+            }
+        }
+
+        androidUnitTest {
+            dependencies {
+                implementation(projects.core.snapshotTesting)
             }
         }
     }

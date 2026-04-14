@@ -3,10 +3,9 @@ package xyz.ksharma.krail.departures.ui.business
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifferenceFromNow
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.extractPlatformText
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureDateLabel
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
@@ -79,7 +78,7 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
             .getOrDefault(departureUtc),
         departureUtcDateTime = departureUtc,
         relativeTimeText = runCatching {
-            calculateTimeDifferenceFromNow(departureUtc).toGenericFormattedTimeString()
+            departureUtc.toDepartureRelativeString()
         }.getOrDefault(""),
         platformText = location?.resolvePlatformText(),
         isRealTime = isRealTime,

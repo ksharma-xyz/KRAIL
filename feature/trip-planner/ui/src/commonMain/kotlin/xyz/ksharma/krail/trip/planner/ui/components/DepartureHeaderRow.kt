@@ -1,10 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,14 +71,16 @@ internal fun DepartureHeaderRow(
         activeColor = activePlatformColor.ensureMinimumContrast(surface),
     )
 
-    Row(
+    FlowRow(
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        itemVerticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            itemVerticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (relativeTimeText.isNotBlank()) {
                 Text(
@@ -96,7 +98,6 @@ internal fun DepartureHeaderRow(
                 textAlign = TextAlign.End,
                 style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
                 color = resolvedPlatformColor,
-                modifier = Modifier.padding(start = 4.dp),
             )
         }
     }
@@ -113,8 +114,6 @@ private val BUS_COLOR = KrailThemeStyle.Bus.hexColorCode
 // Values are taken directly from NswTransportLine so that if the official brand colour ever
 // changes in the enum the preview (and the snapshot regression) automatically reflects it.
 //
-//  T4 (#005AA3) → ~2.35:1 on dark surface — well below WCAG AA.  ensureMinimumContrast brightens it.
-//  T8 (#00954C) → ~4.32:1 on dark surface — just below WCAG AA.  ensureMinimumContrast nudges it up.
 private val T4_COLOR = NswTransportLine.EASTERN_SUBURBS_ILLAWARRA.hexColor
 private val T8_COLOR = NswTransportLine.AIRPORT_SOUTH.hexColor
 
@@ -131,6 +130,44 @@ private fun Preview_Upcoming_SingleMode_WithPlatform() {
             activeTimeColor = TRAIN_COLOR.hexToComposeColor(),
             platformText = "Platform 4",
         ) {
+            TransportModeIcon(
+                transportMode = TransportMode.Train,
+                size = TransportModeIconSize.XSmall,
+                displayBorder = false,
+            )
+            TransportModeBadge(badgeText = "T1", backgroundColor = TRAIN_COLOR.hexToComposeColor())
+        }
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun Preview_Tomorrow_SingleMode_WithPlatform_LargeText() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureHeaderRow(
+            relativeTimeText = "Tomorrow 10:10 AM",
+            isPast = false,
+            activeTimeColor = TRAIN_COLOR.hexToComposeColor(),
+            platformText = "Platform 24",
+        ) {
+            TransportModeIcon(
+                transportMode = TransportMode.Train,
+                size = TransportModeIconSize.XSmall,
+                displayBorder = false,
+            )
+            TransportModeBadge(badgeText = "T1", backgroundColor = TRAIN_COLOR.hexToComposeColor())
+            TransportModeIcon(
+                transportMode = TransportMode.Train,
+                size = TransportModeIconSize.XSmall,
+                displayBorder = false,
+            )
+            TransportModeBadge(badgeText = "T1", backgroundColor = TRAIN_COLOR.hexToComposeColor())
+            TransportModeIcon(
+                transportMode = TransportMode.Train,
+                size = TransportModeIconSize.XSmall,
+                displayBorder = false,
+            )
+            TransportModeBadge(badgeText = "T1", backgroundColor = TRAIN_COLOR.hexToComposeColor())
             TransportModeIcon(
                 transportMode = TransportMode.Train,
                 size = TransportModeIconSize.XSmall,

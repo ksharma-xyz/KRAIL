@@ -104,8 +104,10 @@ internal fun DepartureHeaderRow(
 
 // region Previews
 
-private const val TRAIN_COLOR = "#F99D1C"
-private const val BUS_COLOR = "#00B5EF"
+// Values sourced from the enum / theme — no hardcoded hex strings.
+// If the official brand colour changes, the preview automatically reflects it.
+private val TRAIN_COLOR = NswTransportLine.NORTH_SHORE_WESTERN.hexColor  // T1
+private val BUS_COLOR = KrailThemeStyle.Bus.hexColorCode
 
 // Colors that are low-contrast on dark backgrounds — used for contrast-enforcement previews.
 // Values are taken directly from NswTransportLine so that if the official brand colour ever

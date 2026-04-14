@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package xyz.ksharma.krail.trip.planner.ui.contrast
 
 import androidx.compose.foundation.background
@@ -143,7 +145,12 @@ private fun NswTransportLineFerryFixesPreview() {
  */
 @ScreenshotTest
 @Preview(name = "Light Rail Fixes — Light", showBackground = true, widthDp = 420)
-@Preview(name = "Light Rail Fixes — Dark", showBackground = true, widthDp = 420, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
+@Preview(
+    name = "Light Rail Fixes — Dark",
+    showBackground = true,
+    widthDp = 420,
+    uiMode = AndroidUiModes.UI_MODE_NIGHT_YES,
+)
 @Composable
 private fun NswTransportLineLightRailFixesPreview() {
     PreviewTheme {
@@ -479,6 +486,7 @@ private fun FixedColorRow(
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+@Suppress("MagicNumber")
 private fun Float.fmt1dp(): String {
     val tenths = (this * 10).toInt()
     return "${tenths / 10}.${tenths % 10}"
@@ -490,6 +498,11 @@ private fun NswTransportLine.isLightRailLine(): Boolean = key.startsWith("L") ||
 
 // Static indicator colours — intentionally not from KrailTheme so they're always the same
 // regardless of light/dark mode: green = passes, red = fails, orange = partially fails.
+@Suppress("MagicNumber")
 private val PASS_COLOR = Color(0xFF2E7D32)
+
+@Suppress("MagicNumber")
 private val FAIL_COLOR = Color(0xFFC62828)
+
+@Suppress("MagicNumber")
 private val WARN_COLOR = Color(0xFFE65100)

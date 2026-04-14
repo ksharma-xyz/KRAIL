@@ -97,39 +97,42 @@ class ContrastAnalyzer(
      * Designed for `println()` in tests — paste the output to quickly understand
      * which colors need `ensureMinimumContrast` treatment and in which modes.
      */
+    @Suppress("LongMethod")
     fun generateReport(results: List<ContrastResult>): String = buildString {
         val pass = "OK"
         val fail = "!!"
 
-        appendLine("=".repeat(82))
-        appendLine("Color Contrast Report  (min: ${minContrast}:1 — WCAG AA UI-component threshold)")
+        appendLine("=".repeat(REPORT_TABLE_WIDTH))
+        appendLine("Color Contrast Report  (min: $minContrast:1 — WCAG AA UI-component threshold)")
         appendLine(
             "Light surface: ${lightSurface.toDisplayHex()}  |  " +
                 "Dark surface: ${darkSurface.toDisplayHex()}",
         )
-        appendLine("=".repeat(82))
+        appendLine("=".repeat(REPORT_TABLE_WIDTH))
         appendLine(
-            "%-42s %-10s %-14s %-14s %s".format(
-                "Label", "Hex", "Light", "Dark", "Category",
-            ),
+            "${"Label".padEnd(REPORT_LABEL_COL_WIDTH)} " +
+                "${"Hex".padEnd(REPORT_HEX_COL_WIDTH)} " +
+                "${"Light".padEnd(REPORT_RATIO_COL_WIDTH)} " +
+                "${"Dark".padEnd(REPORT_RATIO_COL_WIDTH)} " +
+                "Category",
         )
-        appendLine("-".repeat(82))
+        appendLine("-".repeat(REPORT_TABLE_WIDTH))
 
         results.sortedBy { it.entry.label }.forEach { r ->
+            val lightStr = "${r.lightModeContrast.fmt2dp()}:1 [${if (r.passesLight) pass else fail}]"
+            val darkStr = "${r.darkModeContrast.fmt2dp()}:1 [${if (r.passesDark) pass else fail}]"
             appendLine(
-                "%-42s %-10s %-14s %-14s %s".format(
-                    r.entry.label.take(42),
-                    r.entry.hexColor,
-                    "${"%.2f".format(r.lightModeContrast)}:1 [${if (r.passesLight) pass else fail}]",
-                    "${"%.2f".format(r.darkModeContrast)}:1 [${if (r.passesDark) pass else fail}]",
+                "${r.entry.label.take(REPORT_LABEL_COL_WIDTH).padEnd(REPORT_LABEL_COL_WIDTH)} " +
+                    "${r.entry.hexColor.padEnd(REPORT_HEX_COL_WIDTH)} " +
+                    "${lightStr.padEnd(REPORT_RATIO_COL_WIDTH)} " +
+                    "${darkStr.padEnd(REPORT_RATIO_COL_WIDTH)} " +
                     r.category,
-                ),
             )
         }
 
         appendLine()
         appendLine("=== Summary by Category ===")
-        results.groupBy { it.category }.toSortedMap().forEach { (category, items) ->
+        results.groupBy { it.category }.entries.sortedBy { it.key }.forEach { (category, items) ->
             appendLine("\n$category (${items.size}):")
             items.sortedBy { it.entry.label }
                 .forEach { r -> appendLine("  ${r.entry.label}  ${r.entry.hexColor}") }
@@ -138,12 +141,14 @@ class ContrastAnalyzer(
         val needsFix = results.filter { !it.passesLight && !it.passesDark }
         if (needsFix.isNotEmpty()) {
             appendLine()
-            appendLine("⚠ ${needsFix.size} entry(ies) fail on BOTH surfaces — require ensureMinimumContrast everywhere:")
+            appendLine(
+                "⚠ ${needsFix.size} entry(ies) fail on BOTH surfaces — require ensureMinimumContrast everywhere:",
+            )
             needsFix.forEach { r ->
                 appendLine(
                     "  ${r.entry.label}: " +
-                        "light=${"%.2f".format(r.lightModeContrast)}:1  " +
-                        "dark=${"%.2f".format(r.darkModeContrast)}:1",
+                        "light=${r.lightModeContrast.fmt2dp()}:1  " +
+                        "dark=${r.darkModeContrast.fmt2dp()}:1",
                 )
             }
         } else {
@@ -167,8 +172,26 @@ class ContrastAnalyzer(
 }
 
 private fun Color.toDisplayHex(): String {
-    val r = (red * 255).toInt().toString(16).padStart(2, '0').uppercase()
-    val g = (green * 255).toInt().toString(16).padStart(2, '0').uppercase()
-    val b = (blue * 255).toInt().toString(16).padStart(2, '0').uppercase()
+    val r = (red * COLOR_CHANNEL_MAX).toInt().toString(HEX_RADIX).padStart(HEX_DIGITS_PER_CHANNEL, '0').uppercase()
+    val g = (green * COLOR_CHANNEL_MAX).toInt().toString(HEX_RADIX).padStart(HEX_DIGITS_PER_CHANNEL, '0').uppercase()
+    val b = (blue * COLOR_CHANNEL_MAX).toInt().toString(HEX_RADIX).padStart(HEX_DIGITS_PER_CHANNEL, '0').uppercase()
     return "#$r$g$b"
 }
+
+/** Rounds a float to 2 decimal places as a string — KMP-safe alternative to String.format("%.2f"). */
+private fun Float.fmt2dp(): String {
+    val hundredths = (this * DECIMAL_SCALE + DECIMAL_ROUNDING_OFFSET).toInt()
+    return "${hundredths / DECIMAL_SCALE}.${(hundredths % DECIMAL_SCALE).toString().padStart(2, '0')}"
+}
+
+private const val REPORT_TABLE_WIDTH = 82
+private const val REPORT_LABEL_COL_WIDTH = 42
+private const val REPORT_HEX_COL_WIDTH = 10
+private const val REPORT_RATIO_COL_WIDTH = 14
+
+private const val COLOR_CHANNEL_MAX = 255
+private const val HEX_DIGITS_PER_CHANNEL = 2
+private const val HEX_RADIX = 16
+
+private const val DECIMAL_SCALE = 100
+private const val DECIMAL_ROUNDING_OFFSET = 0.5f

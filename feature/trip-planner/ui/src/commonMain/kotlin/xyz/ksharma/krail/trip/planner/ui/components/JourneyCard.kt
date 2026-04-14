@@ -377,9 +377,9 @@ private fun JourneyOriginTimeRow(
     modifier: Modifier = Modifier,
 ) {
     val showDeviation = scheduledOriginTime != null && (
-            departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ||
-                    departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Early
-            )
+        departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ||
+            departureDeviation is TimeTableState.JourneyCardInfo.DepartureDeviation.Early
+        )
 
     val deviationLabel: String? = if (showDeviation) {
         when (departureDeviation) {
@@ -518,7 +518,7 @@ private fun Preview_JourneyCard_Expanded() {
                     displayText = "towards Abc via Rainy Rd",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Train,
-                        lineName = "T1"
+                        lineName = "T1",
                     ),
                     totalDuration = "20 mins",
                     tripId = "T1",
@@ -532,7 +532,7 @@ private fun Preview_JourneyCard_Expanded() {
                     totalDuration = "10 mins",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Bus,
-                        lineName = "700"
+                        lineName = "700",
                     ),
                     tripId = "700",
                 ),
@@ -568,7 +568,7 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
                     displayText = "towards Abc via Rainy Rd",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Train,
-                        lineName = "T1"
+                        lineName = "T1",
                     ),
                     totalDuration = "20 mins",
                     tripId = "T1",
@@ -582,7 +582,7 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
                     totalDuration = "10 mins",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Bus,
-                        lineName = "700"
+                        lineName = "700",
                     ),
                     tripId = "700",
                 ),
@@ -667,7 +667,7 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
                     displayText = "towards Central",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Bus,
-                        lineName = "M92"
+                        lineName = "M92",
                     ),
                     totalDuration = "15 mins",
                     tripId = "M92",
@@ -681,7 +681,7 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
                     totalDuration = "22 mins",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Train,
-                        lineName = "T3"
+                        lineName = "T3",
                     ),
                     tripId = "T3",
                 ),
@@ -717,7 +717,7 @@ private fun Preview_Expanded_MultipleAlerts() {
                     displayText = "to Circular Quay",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Ferry,
-                        lineName = "F1"
+                        lineName = "F1",
                     ),
                     totalDuration = "25 mins",
                     tripId = "F1",
@@ -731,7 +731,7 @@ private fun Preview_Expanded_MultipleAlerts() {
                     totalDuration = "15 mins",
                     transportModeLine = TransportModeLine(
                         transportMode = TransportMode.Bus,
-                        lineName = "380"
+                        lineName = "380",
                     ),
                     tripId = "380",
                 ),

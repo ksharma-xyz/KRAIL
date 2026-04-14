@@ -167,7 +167,7 @@ private fun Preview_JourneyCardHeader_MultiMode_Inline() {
 private fun Preview_JourneyCardHeader_ManyModes_WrappedLayout() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
         JourneyCardHeader(
-            timeToDeparture = "in 3 mins",
+            timeToDeparture = "Tomorrow 10:10 am Okay",
             platformText = "Platform 5",
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Bus, lineName = "333"),

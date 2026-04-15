@@ -1,0 +1,3907 @@
+{
+  "version": "10.6.21.17",
+  "systemMessages": [],
+  "locations": [
+    {
+      "id": "200070",
+      "isGlobalId": true,
+      "name": "Town Hall Station, Sydney",
+      "disassembledName": "Town Hall Station",
+      "coord": [
+        -33.873539,
+        151.20693
+      ],
+      "type": "stop",
+      "matchQuality": 100000,
+      "isBest": true,
+      "parent": {
+        "id": "placeID:95301001:1",
+        "name": "Sydney",
+        "type": "locality"
+      },
+      "assignedStops": [
+        {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "coord": [
+            -33.873539,
+            151.20693
+          ],
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "connectingMode": 100,
+          "properties": {
+            "stopId": "10101101"
+          },
+          "modes": [
+            1,
+            4,
+            5,
+            11
+          ]
+        }
+      ],
+      "properties": {
+        "stopId": "10101101"
+      }
+    }
+  ],
+  "stopEvents": [
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000458",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873872,
+          151.206935
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "8",
+          "platform": "LR1",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:32:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:32:36Z",
+      "departureTimeEstimated": "2026-04-15T06:34:36Z",
+      "transportation": {
+        "id": "nsw:780L3: :H:sj2",
+        "name": "Sydney Light Rail Network L3 Kingsford Line",
+        "disassembledName": "L3",
+        "number": "L3 Kingsford Line",
+        "description": "Circular Quay to Juniors Kingsford",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "Sydney Light Rail Network",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101617",
+          "name": "Juniors Kingsford",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1037,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1",
+          "gtfsId": "3004.nsw-78-L3.1.TA.3701.sj2"
+        },
+        "origin": {
+          "id": "10101103",
+          "name": "Circular Quay, Sydney",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "49177-12521:1000",
+        "AVMSTripID": "49177-12521:1000"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000249",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand H, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand H, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873058,
+          151.207814
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "11",
+          "platform": "H",
+          "platformName": "Town Hall, Park St, Stand H",
+          "plannedPlatformName": "Town Hall, Park St, Stand H"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand H, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand H",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:33:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:33:00Z",
+      "departureTimeEstimated": "2026-04-15T06:36:42Z",
+      "transportation": {
+        "id": "nsw:17500:X:R:sj2",
+        "name": "Sydney Buses Network 500X",
+        "disassembledName": "500X",
+        "number": "500X",
+        "description": "West Ryde to City Hyde Park via Victoria Rd (Express Service)",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2507",
+          "name": "Busways North West"
+        },
+        "destination": {
+          "id": "10133986",
+          "name": "City Hyde Park",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 274,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-17-500-X.1.TA.351.sj2"
+        },
+        "origin": {
+          "id": "10101201",
+          "name": "West Ryde Station, West Ryde",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2537863",
+        "AVMSTripID": "2537863",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "EXTRA_TRIP",
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "200070",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873844,
+          151.206956
+        ],
+        "properties": {
+          "realtimeStatus": [
+            "EXTRA_TRIP"
+          ],
+          "stopId": "10101101",
+          "area": "8",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:33:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:33:06Z",
+      "departureTimeEstimated": "2026-04-15T06:36:42Z",
+      "transportation": {
+        "id": "nsw:780L2: :R:sj2",
+        "name": "1001_L2 L2 Randwick Line",
+        "disassembledName": "L2",
+        "number": "L2 Randwick Line",
+        "description": "Randwick to Circular Quay",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "1001_L2",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101103",
+          "name": "Circular Quay, Sydney",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 65532,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1"
+        },
+        "origin": {
+          "id": "10101612",
+          "name": "Randwick Light Rail, Randwick",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "AVMSTripID": "49177-12508-R:X"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000252",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand K, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand K, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873225,
+          151.208459
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "13",
+          "platform": "K",
+          "platformName": "Town Hall, Park St, Stand K",
+          "plannedPlatformName": "Town Hall, Park St, Stand K"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand K, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand K",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:34:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:34:00Z",
+      "departureTimeEstimated": "2026-04-15T06:35:48Z",
+      "transportation": {
+        "id": "nsw:17506: :H:sj2",
+        "name": "Sydney Buses Network 506",
+        "disassembledName": "506",
+        "number": "506",
+        "description": "City Domain to Macquarie University via East Ryde",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2507",
+          "name": "Busways North West"
+        },
+        "destination": {
+          "id": "10116468",
+          "name": "East Ryde",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 170,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-17-506.1.TA.174.sj2"
+        },
+        "origin": {
+          "id": "10147824",
+          "name": "St Mary's Cathedral, St Marys Rd, Sydney",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2322310",
+        "AVMSTripID": "2322310",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000249",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand H, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand H, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873058,
+          151.207814
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "11",
+          "platform": "H",
+          "platformName": "Town Hall, Park St, Stand H",
+          "plannedPlatformName": "Town Hall, Park St, Stand H"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand H, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand H",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:34:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:34:00Z",
+      "departureTimeEstimated": "2026-04-15T06:35:24Z",
+      "transportation": {
+        "id": "nsw:74389: :H:sj2",
+        "name": "Sydney Buses Network 389",
+        "disassembledName": "389",
+        "number": "389",
+        "description": "Pyrmont to Bondi Junction",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2459",
+          "name": "Transit Systems"
+        },
+        "destination": {
+          "id": "10101109",
+          "name": "Bondi Jct. Interchange",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 569,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-74-389.1.TA.625.sj2"
+        },
+        "origin": {
+          "id": "10101638",
+          "name": "Pyrmont Bay Light Rail, Pyrmont",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2474926",
+        "AVMSTripID": "2474926",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000396",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 6, Sydney",
+        "disassembledName": "Town Hall Station, Platform 6, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873616,
+          151.206772
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "5",
+          "platform": "THL6",
+          "platformName": "Platform 6",
+          "plannedPlatformName": "Platform 6"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 6, Sydney",
+          "disassembledName": "Town Hall Station, Platform 6",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:35:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:35:42Z",
+      "departureTimeEstimated": "2026-04-15T06:35:00Z",
+      "transportation": {
+        "id": "nsw:020T8: :H:sj2",
+        "name": "Sydney Trains Network T8 Airport & South Line",
+        "disassembledName": "T8",
+        "number": "T8 Airport & South Line",
+        "description": "City to Macarthur via Airport or Sydenham",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101296",
+          "name": "Campbelltown via East Hills",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1244,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T8.1.TA.5852.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        },
+        {
+          "priority": "normal",
+          "id": "20a5344256577330c368e7ab08dac60f665d2c5a",
+          "version": 2701,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "appliesTo": "departingArriving",
+            "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+            "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+              "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+              "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+            }
+          ],
+          "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+          "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+          "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+          "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "25-F.2005.100.124.B.8.90176332",
+        "AVMSTripID": "25-F.2005.100.124.B.8.90176332"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000394",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 4, Sydney",
+        "disassembledName": "Town Hall Station, Platform 4, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873591,
+          151.206997
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "4",
+          "platform": "THL4",
+          "platformName": "Platform 4",
+          "plannedPlatformName": "Platform 4"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 4, Sydney",
+          "disassembledName": "Town Hall Station, Platform 4",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:36:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:36:00Z",
+      "departureTimeEstimated": "2026-04-15T06:36:00Z",
+      "transportation": {
+        "id": "nsw:020T4: :H:sj2",
+        "name": "Sydney Trains Network T4 Eastern Suburbs & Illawarra Line",
+        "disassembledName": "T4",
+        "number": "T4 Eastern Suburbs & Illawarra Line",
+        "description": "Bondi Junction to Waterfall or Cronulla",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101355",
+          "name": "Waterfall via Wolli Creek",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 835,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T4.1.TA.3861.sj2"
+        },
+        "origin": {
+          "id": "10101109",
+          "name": "Bondi Junction Station, Bondi Junction",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "normal",
+          "id": "ems-70265",
+          "version": 1,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "smsText": "Some trains run to a changed timetable and stopping pattern",
+            "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Some trains run to a changed timetable and stopping pattern",
+              "url": "https://transportnsw.info/alerts/details#/ems-70265",
+              "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+              "subtitle": "Some trains run to a changed timetable and stopping pattern",
+              "smsText": "Some trains run to a changed timetable and stopping pattern",
+              "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+            }
+          ],
+          "urlText": "Some trains run to a changed timetable and stopping pattern",
+          "url": "https://transportnsw.info/alerts/details#/ems-70265",
+          "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+          "subtitle": "Some trains run to a changed timetable and stopping pattern"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "616P.2005.100.16.T.8.90177475",
+        "AVMSTripID": "616P.2005.100.16.T.8.90177475"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000392",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 2, Sydney",
+        "disassembledName": "Town Hall Station, Platform 2, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873552,
+          151.206801
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "1",
+          "platform": "THL2",
+          "platformName": "Platform 2",
+          "plannedPlatformName": "Platform 2"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 2, Sydney",
+          "disassembledName": "Town Hall Station, Platform 2",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:36:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:36:00Z",
+      "departureTimeEstimated": "2026-04-15T06:36:00Z",
+      "transportation": {
+        "id": "nsw:020T9: :R:sj2",
+        "name": "Sydney Trains Network T9 Northern Line",
+        "disassembledName": "T9",
+        "number": "T9 Northern Line",
+        "description": "Hornsby to North Shore via City",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101100",
+          "name": "Epping via Central",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1021,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T9.1.TA.871.sj2"
+        },
+        "origin": {
+          "id": "10101121",
+          "name": "Gordon Station, Gordon",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "140N.2005.100.16.A.8.90174994",
+        "AVMSTripID": "140N.2005.100.16.A.8.90174994"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000458",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873872,
+          151.206935
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "8",
+          "platform": "LR1",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:36:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:36:54Z",
+      "departureTimeEstimated": "2026-04-15T06:37:48Z",
+      "transportation": {
+        "id": "nsw:780L2: :H:sj2",
+        "name": "Sydney Light Rail Network L2 Randwick Line",
+        "disassembledName": "L2",
+        "number": "L2 Randwick Line",
+        "description": "Circular Quay to Randwick",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "Sydney Light Rail Network",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101612",
+          "name": "Randwick",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 927,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1",
+          "gtfsId": "3004.nsw-78-L2.1.TA.3115.sj2"
+        },
+        "origin": {
+          "id": "10101103",
+          "name": "Circular Quay, Sydney",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "49177-12524:1000",
+        "AVMSTripID": "49177-12524:1000"
+      }
+    },
+    {
+      "isCancelled": true,
+      "realtimeStatus": [
+        "EXTRA_STOPS",
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000391",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 1, Sydney",
+        "disassembledName": "Town Hall Station, Platform 1, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873638,
+          151.206935
+        ],
+        "properties": {
+          "realtimeStatus": [
+            "DEPARTURE_CANCELLED"
+          ],
+          "stopId": "10101101",
+          "area": "1",
+          "platform": "THL1",
+          "platformName": "Platform 1",
+          "plannedPlatformName": "Platform 1"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 1, Sydney",
+          "disassembledName": "Town Hall Station, Platform 1",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:37:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:37:00Z",
+      "transportation": {
+        "id": "nsw:020T2: :H:sj2",
+        "name": "Sydney Trains Network T2 Leppington & Inner West Line",
+        "disassembledName": "T2",
+        "number": "T2 Leppington & Inner West Line",
+        "description": "City to Parramatta or Leppington",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101428",
+          "name": "Leppington via Granville",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1813,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T2.1.TA.5555.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "normal",
+          "id": "20a5344256577330c368e7ab08dac60f665d2c5a",
+          "version": 2701,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "appliesTo": "departingArriving",
+            "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+            "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+              "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+              "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+            }
+          ],
+          "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+          "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+          "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+          "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "23-H.2005.100.16.B.8.90176288",
+        "AVMSTripID": "23-H.2005.100.16.B.8.90176288"
+      }
+    },
+    {
+      "location": {
+        "id": "2000395",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 5, Sydney",
+        "disassembledName": "Town Hall Station, Platform 5, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.87372,
+          151.206896
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "5",
+          "platform": "THL5",
+          "platformName": "Platform 5",
+          "plannedPlatformName": "Platform 5"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 5, Sydney",
+          "disassembledName": "Town Hall Station, Platform 5",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:37:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:37:00Z",
+      "transportation": {
+        "id": "nsw:020T4: :R:sj2",
+        "name": "Sydney Trains Network T4 Eastern Suburbs & Illawarra Line",
+        "disassembledName": "T4",
+        "number": "T4 Eastern Suburbs & Illawarra Line",
+        "description": "Waterfall or Cronulla to Bondi Junction",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101109",
+          "name": "Bondi Junction",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 221,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T4.1.TA.911.sj2"
+        },
+        "origin": {
+          "id": "10101345",
+          "name": "Sutherland Station, Sutherland",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        },
+        {
+          "priority": "normal",
+          "id": "ems-70265",
+          "version": 1,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "smsText": "Some trains run to a changed timetable and stopping pattern",
+            "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Some trains run to a changed timetable and stopping pattern",
+              "url": "https://transportnsw.info/alerts/details#/ems-70265",
+              "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+              "subtitle": "Some trains run to a changed timetable and stopping pattern",
+              "smsText": "Some trains run to a changed timetable and stopping pattern",
+              "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+            }
+          ],
+          "urlText": "Some trains run to a changed timetable and stopping pattern",
+          "url": "https://transportnsw.info/alerts/details#/ems-70265",
+          "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+          "subtitle": "Some trains run to a changed timetable and stopping pattern"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "471J.2005.100.24.H.8.90176862"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000393",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 3, Sydney",
+        "disassembledName": "Town Hall Station, Platform 3, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873654,
+          151.20672
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "3",
+          "platform": "THL3",
+          "platformName": "Platform 3",
+          "plannedPlatformName": "Platform 3"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 3, Sydney",
+          "disassembledName": "Town Hall Station, Platform 3",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:37:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:37:36Z",
+      "departureTimeEstimated": "2026-04-15T06:37:00Z",
+      "transportation": {
+        "id": "nsw:020T9: :H:sj2",
+        "name": "Sydney Trains Network T9 Northern Line",
+        "disassembledName": "T9",
+        "number": "T9 Northern Line",
+        "description": "North Shore to Hornsby via City",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101121",
+          "name": "Gordon via Lindfield",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 258,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T9.1.TA.4372.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "122S.2005.100.16.A.8.90174397",
+        "AVMSTripID": "122S.2005.100.16.A.8.90174397"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000425",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand J, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand J, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873145,
+          151.207645
+        ],
+        "properties": {
+          "occupancy": "FEW_SEATS",
+          "stopId": "10101101",
+          "area": "12",
+          "platform": "J",
+          "platformName": "Town Hall, Park St, Stand J",
+          "plannedPlatformName": "Town Hall, Park St, Stand J"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand J, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand J",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:37:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:37:00Z",
+      "departureTimeEstimated": "2026-04-15T06:36:48Z",
+      "transportation": {
+        "id": "nsw:30311: :R:sj2",
+        "name": "Sydney Buses Network 311",
+        "disassembledName": "311",
+        "number": "311",
+        "description": "Central Belmore Park to City Millers Point via Darlinghurst & Potts Point",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2509",
+          "name": "Transdev John Holland Buses"
+        },
+        "destination": {
+          "id": "10111099",
+          "name": "City Millers Point",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 42,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-30-311.1.TA.54.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2356020",
+        "AVMSTripID": "2356020",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000426",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand G, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand G, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873105,
+          151.20882
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "10",
+          "platform": "G",
+          "platformName": "Town Hall, Park St, Stand G",
+          "plannedPlatformName": "Town Hall, Park St, Stand G"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand G, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand G",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:37:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:37:00Z",
+      "departureTimeEstimated": "2026-04-15T06:40:06Z",
+      "transportation": {
+        "id": "nsw:30324: :H:sj2",
+        "name": "Sydney Buses Network 324",
+        "disassembledName": "324",
+        "number": "324",
+        "description": "City Walsh Bay to Watsons Bay via Old South Head Rd",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2509",
+          "name": "Transdev John Holland Buses"
+        },
+        "destination": {
+          "id": "10111999",
+          "name": "Watsons Bay",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 385,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-30-324.1.TA.409.sj2"
+        },
+        "origin": {
+          "id": "10134386",
+          "name": "Walsh Bay Arts Precinct, Hickson Rd, Dawes Point",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2532367",
+        "AVMSTripID": "2532367",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000459",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873857,
+          151.206859
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "8",
+          "platform": "LR2",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:37:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:37:06Z",
+      "departureTimeEstimated": "2026-04-15T06:41:06Z",
+      "transportation": {
+        "id": "nsw:780L3: :R:sj2",
+        "name": "Sydney Light Rail Network L3 Kingsford Line",
+        "disassembledName": "L3",
+        "number": "L3 Kingsford Line",
+        "description": "Juniors Kingsford to Circular Quay",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "Sydney Light Rail Network",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101103",
+          "name": "Circular Quay",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 409,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1",
+          "gtfsId": "3004.nsw-78-L3.1.TA.1471.sj2"
+        },
+        "origin": {
+          "id": "10101617",
+          "name": "Juniors Kingsford Light Rail, Kingsford",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "49177-12512:1000",
+        "AVMSTripID": "49177-12512:1000"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000425",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand J, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand J, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873145,
+          151.207645
+        ],
+        "properties": {
+          "occupancy": "STANDING_ONLY",
+          "stopId": "10101101",
+          "area": "12",
+          "platform": "J",
+          "platformName": "Town Hall, Park St, Stand J",
+          "plannedPlatformName": "Town Hall, Park St, Stand J"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand J, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand J",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:38:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:38:00Z",
+      "departureTimeEstimated": "2026-04-15T06:43:24Z",
+      "transportation": {
+        "id": "nsw:74389: :R:sj2",
+        "name": "Sydney Buses Network 389",
+        "disassembledName": "389",
+        "number": "389",
+        "description": "Bondi Junction to Pyrmont",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2459",
+          "name": "Transit Systems"
+        },
+        "destination": {
+          "id": "10101638",
+          "name": "Maritime Museum",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 221,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-74-389.1.TA.313.sj2"
+        },
+        "origin": {
+          "id": "10101109",
+          "name": "Bondi Junction Station, Bondi Junction",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2290088",
+        "AVMSTripID": "2290088",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000394",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 4, Sydney",
+        "disassembledName": "Town Hall Station, Platform 4, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873591,
+          151.206997
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "4",
+          "platform": "THL4",
+          "platformName": "Platform 4",
+          "plannedPlatformName": "Platform 4"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 4, Sydney",
+          "disassembledName": "Town Hall Station, Platform 4",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:39:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:39:00Z",
+      "departureTimeEstimated": "2026-04-15T06:39:00Z",
+      "transportation": {
+        "id": "nsw:020T4: :H:sj2",
+        "name": "Sydney Trains Network T4 Eastern Suburbs & Illawarra Line",
+        "disassembledName": "T4",
+        "number": "T4 Eastern Suburbs & Illawarra Line",
+        "description": "Bondi Junction to Waterfall or Cronulla",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101339",
+          "name": "Hurstville via Banksia",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 739,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T4.1.TA.3391.sj2"
+        },
+        "origin": {
+          "id": "10101109",
+          "name": "Bondi Junction Station, Bondi Junction",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "normal",
+          "id": "ems-70265",
+          "version": 1,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "smsText": "Some trains run to a changed timetable and stopping pattern",
+            "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Some trains run to a changed timetable and stopping pattern",
+              "url": "https://transportnsw.info/alerts/details#/ems-70265",
+              "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+              "subtitle": "Some trains run to a changed timetable and stopping pattern",
+              "smsText": "Some trains run to a changed timetable and stopping pattern",
+              "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+            }
+          ],
+          "urlText": "Some trains run to a changed timetable and stopping pattern",
+          "url": "https://transportnsw.info/alerts/details#/ems-70265",
+          "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+          "subtitle": "Some trains run to a changed timetable and stopping pattern"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "600F.2005.100.16.T.8.90177131",
+        "AVMSTripID": "600F.2005.100.16.T.8.90177131"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000425",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand J, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand J, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873145,
+          151.207645
+        ],
+        "properties": {
+          "occupancy": "FEW_SEATS",
+          "stopId": "10101101",
+          "area": "12",
+          "platform": "J",
+          "platformName": "Town Hall, Park St, Stand J",
+          "plannedPlatformName": "Town Hall, Park St, Stand J"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand J, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand J",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:39:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:39:00Z",
+      "departureTimeEstimated": "2026-04-15T06:40:54Z",
+      "transportation": {
+        "id": "nsw:30325: :R:sj2",
+        "name": "Sydney Buses Network 325",
+        "disassembledName": "325",
+        "number": "325",
+        "description": "Watsons Bay to City Walsh Bay via Vaucluse Rd",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2509",
+          "name": "Transdev John Holland Buses"
+        },
+        "destination": {
+          "id": "10134386",
+          "name": "Walsh Bay",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 52,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-30-325.1.TA.73.sj2"
+        },
+        "origin": {
+          "id": "10111999",
+          "name": "Robertson Park, Military Rd, Watsons Bay",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2531685",
+        "AVMSTripID": "2531685",
+        "pbyb": "1"
+      }
+    },
+    {
+      "location": {
+        "id": "2000252",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand K, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand K, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873225,
+          151.208459
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "13",
+          "platform": "K",
+          "platformName": "Town Hall, Park St, Stand K",
+          "plannedPlatformName": "Town Hall, Park St, Stand K"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand K, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand K",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:39:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:39:00Z",
+      "transportation": {
+        "id": "nsw:74504: :H:sj2",
+        "name": "Sydney Buses Network 504",
+        "disassembledName": "504",
+        "number": "504",
+        "description": "City Domain to Chiswick",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2459",
+          "name": "Transit Systems"
+        },
+        "destination": {
+          "id": "10112944",
+          "name": "Chiswick",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 224,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-74-504.1.TA.263.sj2"
+        },
+        "origin": {
+          "id": "10101101",
+          "name": "Town Hall Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2285113",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "EXTRA_STOPS",
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000396",
+        "isGlobalId": true,
+        "name": "Town Hall Station, THL6, Sydney",
+        "disassembledName": "Town Hall Station, THL6, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873616,
+          151.206772
+        ],
+        "properties": {
+          "realtimeStatus": [
+            "EXTRA_STOP"
+          ],
+          "stopId": "10101101",
+          "area": "5",
+          "platform": "THL6",
+          "platformName": "THL6",
+          "plannedPlatformName": "THL6"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, THL6, Sydney",
+          "disassembledName": "Town Hall Station, THL6",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:00Z",
+      "departureTimeEstimated": "2026-04-15T06:40:00Z",
+      "transportation": {
+        "id": "nsw:020T2: :H:sj2",
+        "name": "Sydney Trains Network T2 Leppington & Inner West Line",
+        "disassembledName": "T2",
+        "number": "T2 Leppington & Inner West Line",
+        "description": "City to Parramatta or Leppington",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101428",
+          "name": "Leppington Station, Leppington",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1809,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T2.1.TA.5517.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        },
+        {
+          "priority": "normal",
+          "id": "20a5344256577330c368e7ab08dac60f665d2c5a",
+          "version": 2701,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "appliesTo": "departingArriving",
+            "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+            "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+              "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+              "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+            }
+          ],
+          "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+          "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+          "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+          "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "97-M.2005.100.16.A.8.90178671",
+        "AVMSTripID": "97-M.2005.100.16.A.8.90178671"
+      }
+    },
+    {
+      "isCancelled": true,
+      "realtimeStatus": [
+        "EXTRA_STOPS",
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000391",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 1, Sydney",
+        "disassembledName": "Town Hall Station, Platform 1, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873638,
+          151.206935
+        ],
+        "properties": {
+          "realtimeStatus": [
+            "DEPARTURE_CANCELLED"
+          ],
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "1",
+          "platform": "THL1",
+          "platformName": "Platform 1",
+          "plannedPlatformName": "Platform 1"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 1, Sydney",
+          "disassembledName": "Town Hall Station, Platform 1",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:00Z",
+      "transportation": {
+        "id": "nsw:020T3: :H:sj2",
+        "name": "Sydney Trains Network T3 Liverpool & Inner West Line",
+        "disassembledName": "T3",
+        "number": "T3 Liverpool & Inner West Line",
+        "description": "City to Liverpool or Lidcombe",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101289",
+          "name": "Liverpool via Regents Park",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 355,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T3.1.TA.1135.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "normal",
+          "id": "20a5344256577330c368e7ab08dac60f665d2c5a",
+          "version": 2701,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "appliesTo": "departingArriving",
+            "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+            "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+              "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+              "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+            }
+          ],
+          "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+          "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+          "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+          "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "87-W.2005.100.124.A.8.90178343",
+        "AVMSTripID": "87-W.2005.100.124.A.8.90178343"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000395",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 5, Sydney",
+        "disassembledName": "Town Hall Station, Platform 5, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.87372,
+          151.206896
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "5",
+          "platform": "THL5",
+          "platformName": "Platform 5",
+          "plannedPlatformName": "Platform 5"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 5, Sydney",
+          "disassembledName": "Town Hall Station, Platform 5",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:00Z",
+      "departureTimeEstimated": "2026-04-15T06:40:00Z",
+      "transportation": {
+        "id": "nsw:020T4: :R:sj2",
+        "name": "Sydney Trains Network T4 Eastern Suburbs & Illawarra Line",
+        "disassembledName": "T4",
+        "number": "T4 Eastern Suburbs & Illawarra Line",
+        "description": "Waterfall or Cronulla to Bondi Junction",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101109",
+          "name": "Bondi Junction",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 538,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T4.1.TA.2261.sj2"
+        },
+        "origin": {
+          "id": "10101351",
+          "name": "Cronulla Station, Cronulla",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        },
+        {
+          "priority": "normal",
+          "id": "ems-70265",
+          "version": 1,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "smsText": "Some trains run to a changed timetable and stopping pattern",
+            "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Some trains run to a changed timetable and stopping pattern",
+              "url": "https://transportnsw.info/alerts/details#/ems-70265",
+              "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+              "subtitle": "Some trains run to a changed timetable and stopping pattern",
+              "smsText": "Some trains run to a changed timetable and stopping pattern",
+              "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+            }
+          ],
+          "urlText": "Some trains run to a changed timetable and stopping pattern",
+          "url": "https://transportnsw.info/alerts/details#/ems-70265",
+          "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+          "subtitle": "Some trains run to a changed timetable and stopping pattern"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "624K.2005.100.24.T.8.90177636",
+        "AVMSTripID": "624K.2005.100.24.T.8.90177636"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000396",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 6, Sydney",
+        "disassembledName": "Town Hall Station, Platform 6, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873616,
+          151.206772
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "5",
+          "platform": "THL6",
+          "platformName": "Platform 6",
+          "plannedPlatformName": "Platform 6"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 6, Sydney",
+          "disassembledName": "Town Hall Station, Platform 6",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:42Z",
+      "departureTimeEstimated": "2026-04-15T06:40:00Z",
+      "transportation": {
+        "id": "nsw:020T8: :H:sj2",
+        "name": "Sydney Trains Network T8 Airport & South Line",
+        "disassembledName": "T8",
+        "number": "T8 Airport & South Line",
+        "description": "City to Macarthur via Airport or Sydenham",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101297",
+          "name": "Macarthur via Airport",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1435,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T8.1.TA.6890.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        },
+        {
+          "priority": "normal",
+          "id": "20a5344256577330c368e7ab08dac60f665d2c5a",
+          "version": 2701,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "appliesTo": "departingArriving",
+            "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+            "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+              "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+              "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "smsText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+              "speechText": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time."
+            }
+          ],
+          "urlText": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line",
+          "url": "https://transportnsw.info/alerts/details#/20a5344256577330c368e7ab08dac60f665d2c5a",
+          "content": "Trains are running late due to urgent signal repairs at Museum.\n\nStops may change at short notice.  \n\nTrains will be stopping at different platforms and extended travel time will be experienced through the affected area.\n\nFor service updates, please listen to announcements and check transport apps\n\nAllow extra travel time.",
+          "subtitle": "Airport & South Line, Leppington & Inner West Line, Liverpool & Inner West Line"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "63-K.2005.100.124.M.8.90177692",
+        "AVMSTripID": "63-K.2005.100.124.M.8.90177692"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000393",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 3, Sydney",
+        "disassembledName": "Town Hall Station, Platform 3, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873654,
+          151.20672
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "3",
+          "platform": "THL3",
+          "platformName": "Platform 3",
+          "plannedPlatformName": "Platform 3"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 3, Sydney",
+          "disassembledName": "Town Hall Station, Platform 3",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:36Z",
+      "departureTimeEstimated": "2026-04-15T06:40:12Z",
+      "transportation": {
+        "id": "nsw:02CCN: :H:sj2",
+        "name": "Intercity Trains Network Central Coast & Newcastle Line",
+        "disassembledName": "CCN",
+        "number": "Central Coast & Newcastle Line",
+        "description": "Central to Newcastle via Strathfield or Gordon",
+        "product": {
+          "id": 2,
+          "class": 1,
+          "name": "Intercity Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "X0000",
+          "name": "NSW Trains"
+        },
+        "destination": {
+          "id": "10101145",
+          "name": "Wyong via Gordon",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 374,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.nswtrainlink.info/",
+          "gtfsId": "3001.nsw-2-CCN.1.TA.1356.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 2
+      },
+      "infos": [
+        {
+          "priority": "veryLow",
+          "id": "ems-190",
+          "version": 18777282,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "smsText": "Some services on this line may not be wheelchair accessible. "
+          },
+          "infoLinks": [
+            {
+              "urlText": "Some services on this line may not be wheelchair accessible. ",
+              "url": "https://transportnsw.info/alerts/details#/ems-190",
+              "content": "<div>Please contact NSW TrainLink on 131 500 ahead of your journey to confirm if your trip will be accessible.</div>",
+              "subtitle": "Some services on this line may not be wheelchair accessible. ",
+              "smsText": "Some services on this line may not be wheelchair accessible. "
+            }
+          ],
+          "urlText": "Some services on this line may not be wheelchair accessible. ",
+          "url": "https://transportnsw.info/alerts/details#/ems-190",
+          "content": "<div>Please contact NSW TrainLink on 131 500 ahead of your journey to confirm if your trip will be accessible.</div>",
+          "subtitle": "Some services on this line may not be wheelchair accessible. "
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "285E.2005.100.24.H.8.90176473",
+        "AVMSTripID": "285E.2005.100.24.H.8.90176473"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000252",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand K, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand K, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873225,
+          151.208459
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "13",
+          "platform": "K",
+          "platformName": "Town Hall, Park St, Stand K",
+          "plannedPlatformName": "Town Hall, Park St, Stand K"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand K, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand K",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:00Z",
+      "departureTimeEstimated": "2026-04-15T06:40:00Z",
+      "transportation": {
+        "id": "nsw:17500:X:H:sj2",
+        "name": "Sydney Buses Network 500X",
+        "disassembledName": "500X",
+        "number": "500X",
+        "description": "City Hyde Park to West Ryde via Victoria Rd (Express Service)",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2507",
+          "name": "Busways North West"
+        },
+        "destination": {
+          "id": "10101201",
+          "name": "West Ryde Station - Ryedale Rd",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 623,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-17-500-X.1.TA.718.sj2"
+        },
+        "origin": {
+          "id": "10133986",
+          "name": "Hyde Park, Park St, Sydney",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2407314",
+        "AVMSTripID": "2407314",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000426",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand G, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand G, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873105,
+          151.20882
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "10",
+          "platform": "G",
+          "platformName": "Town Hall, Park St, Stand G",
+          "plannedPlatformName": "Town Hall, Park St, Stand G"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand G, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand G",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:00Z",
+      "departureTimeEstimated": "2026-04-15T06:40:30Z",
+      "transportation": {
+        "id": "nsw:30311: :H:sj2",
+        "name": "Sydney Buses Network 311",
+        "disassembledName": "311",
+        "number": "311",
+        "description": "City Millers Point to Central Belmore Park via Potts Point & Darlinghurst",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2509",
+          "name": "Transdev John Holland Buses"
+        },
+        "destination": {
+          "id": "10101100",
+          "name": "Central Eddy Ave",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 113,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-30-311.1.TA.128.sj2"
+        },
+        "origin": {
+          "id": "10111093",
+          "name": "Argyle St at Watson Rd, Millers Point",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2403269",
+        "AVMSTripID": "2403269",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000458",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873872,
+          151.206935
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "8",
+          "platform": "LR1",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:40:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:40:36Z",
+      "departureTimeEstimated": "2026-04-15T06:41:48Z",
+      "transportation": {
+        "id": "nsw:780L3: :H:sj2",
+        "name": "Sydney Light Rail Network L3 Kingsford Line",
+        "disassembledName": "L3",
+        "number": "L3 Kingsford Line",
+        "description": "Circular Quay to Juniors Kingsford",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "Sydney Light Rail Network",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101617",
+          "name": "Juniors Kingsford",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1041,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1",
+          "gtfsId": "3004.nsw-78-L3.1.TA.3717.sj2"
+        },
+        "origin": {
+          "id": "10101103",
+          "name": "Circular Quay, Sydney",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "49177-12527:1000",
+        "AVMSTripID": "49177-12527:1000"
+      }
+    },
+    {
+      "location": {
+        "id": "2000252",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand K, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand K, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873225,
+          151.208459
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "13",
+          "platform": "K",
+          "platformName": "Town Hall, Park St, Stand K",
+          "plannedPlatformName": "Town Hall, Park St, Stand K"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand K, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand K",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:41:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:41:00Z",
+      "transportation": {
+        "id": "nsw:74502: :H:sj2",
+        "name": "Sydney Buses Network 502",
+        "disassembledName": "502",
+        "number": "502",
+        "description": "City Town Hall and Drummoyne to Cabarita Wharf",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2459",
+          "name": "Transit Systems"
+        },
+        "destination": {
+          "id": "10112831",
+          "name": "Five Dock - Ramsay Rd",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 39,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-74-502.1.TA.39.sj2"
+        },
+        "origin": {
+          "id": "10101101",
+          "name": "Town Hall Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2284768",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000459",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873857,
+          151.206859
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "8",
+          "platform": "LR2",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:41:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:41:06Z",
+      "departureTimeEstimated": "2026-04-15T06:43:36Z",
+      "transportation": {
+        "id": "nsw:780L2: :R:sj2",
+        "name": "Sydney Light Rail Network L2 Randwick Line",
+        "disassembledName": "L2",
+        "number": "L2 Randwick Line",
+        "description": "Randwick to Circular Quay",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "Sydney Light Rail Network",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101103",
+          "name": "Circular Quay",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 540,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1",
+          "gtfsId": "3004.nsw-78-L2.1.TA.1861.sj2"
+        },
+        "origin": {
+          "id": "10101612",
+          "name": "Randwick Light Rail, Randwick",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "49177-12514:1000",
+        "AVMSTripID": "49177-12514:1000"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000392",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 2, Sydney",
+        "disassembledName": "Town Hall Station, Platform 2, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873552,
+          151.206801
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "1",
+          "platform": "THL2",
+          "platformName": "Platform 2",
+          "plannedPlatformName": "Platform 2"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 2, Sydney",
+          "disassembledName": "Town Hall Station, Platform 2",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:42:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:42:00Z",
+      "departureTimeEstimated": "2026-04-15T06:42:00Z",
+      "transportation": {
+        "id": "nsw:020T1:N:R:sj2",
+        "name": "Sydney Trains Network T1 North Shore & Western Line",
+        "disassembledName": "T1",
+        "number": "T1 North Shore & Western Line",
+        "description": "Berowra to City via Gordon",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101100",
+          "name": "Richmond via Central",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 87,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T1-N.1.TA.317.sj2"
+        },
+        "origin": {
+          "id": "10101112",
+          "name": "North Sydney Station, North Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "121N.2005.100.112.A.8.90174359",
+        "AVMSTripID": "121N.2005.100.112.A.8.90174359"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000249",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand H, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand H, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873058,
+          151.207814
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "11",
+          "platform": "H",
+          "platformName": "Town Hall, Park St, Stand H",
+          "plannedPlatformName": "Town Hall, Park St, Stand H"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand H, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand H",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:42:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:42:00Z",
+      "departureTimeEstimated": "2026-04-15T06:41:36Z",
+      "transportation": {
+        "id": "nsw:17506: :R:sj2",
+        "name": "Sydney Buses Network 506",
+        "disassembledName": "506",
+        "number": "506",
+        "description": "Macquarie University to City Domain via East Ryde",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2507",
+          "name": "Busways North West"
+        },
+        "destination": {
+          "id": "10111226",
+          "name": "City The Domain",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 8,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-17-506.1.TA.1.sj2"
+        },
+        "origin": {
+          "id": "10116284",
+          "name": "Buffalo Rd before Cressy Rd, Ryde",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2537826",
+        "AVMSTripID": "2537826",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000252",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand K, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand K, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873225,
+          151.208459
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "13",
+          "platform": "K",
+          "platformName": "Town Hall, Park St, Stand K",
+          "plannedPlatformName": "Town Hall, Park St, Stand K"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand K, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand K",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:42:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:42:00Z",
+      "departureTimeEstimated": "2026-04-15T06:42:00Z",
+      "transportation": {
+        "id": "nsw:17507: :H:sj2",
+        "name": "Sydney Buses Network 507",
+        "disassembledName": "507",
+        "number": "507",
+        "description": "City Hyde Park & Gladesville to Meadowbank via Putney",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2507",
+          "name": "Busways North West"
+        },
+        "destination": {
+          "id": "10101202",
+          "name": "Meadowbank Station",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 193,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-17-507.1.TA.197.sj2"
+        },
+        "origin": {
+          "id": "10133986",
+          "name": "Hyde Park, Park St, Sydney",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2230531",
+        "AVMSTripID": "2230531",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000249",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand H, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand H, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873058,
+          151.207814
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "11",
+          "platform": "H",
+          "platformName": "Town Hall, Park St, Stand H",
+          "plannedPlatformName": "Town Hall, Park St, Stand H"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand H, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand H",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:42:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:42:00Z",
+      "departureTimeEstimated": "2026-04-15T06:37:42Z",
+      "transportation": {
+        "id": "nsw:74504: :R:sj2",
+        "name": "Sydney Buses Network 504",
+        "disassembledName": "504",
+        "number": "504",
+        "description": "Chiswick to City Domain",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2459",
+          "name": "Transit Systems"
+        },
+        "destination": {
+          "id": "10111226",
+          "name": "The Domain",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 193,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-74-504.1.TA.160.sj2"
+        },
+        "origin": {
+          "id": "10112891",
+          "name": "Chiswick Shops, Blackwall Point Rd, Chiswick",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2514731",
+        "AVMSTripID": "2514731",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000394",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 4, Sydney",
+        "disassembledName": "Town Hall Station, Platform 4, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873591,
+          151.206997
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "4",
+          "platform": "THL4",
+          "platformName": "Platform 4",
+          "plannedPlatformName": "Platform 4"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 4, Sydney",
+          "disassembledName": "Town Hall Station, Platform 4",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:43:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:43:00Z",
+      "departureTimeEstimated": "2026-04-15T06:43:00Z",
+      "transportation": {
+        "id": "nsw:02SCO: :H:sj2",
+        "name": "Intercity Trains Network South Coast Line",
+        "disassembledName": "SCO",
+        "number": "South Coast Line",
+        "description": "Bondi Junction and Central to Bomaderry or Port Kembla",
+        "product": {
+          "id": 2,
+          "class": 1,
+          "name": "Intercity Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "X0000",
+          "name": "NSW Trains"
+        },
+        "destination": {
+          "id": "10101372",
+          "name": "Dapto via Wolli Creek",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 412,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.nswtrainlink.info/",
+          "gtfsId": "3001.nsw-2-SCO.1.TA.1703.sj2"
+        },
+        "origin": {
+          "id": "10101109",
+          "name": "Bondi Junction Station, Bondi Junction",
+          "type": "stop"
+        },
+        "iconId": 2
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70482",
+          "version": 7,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "250020",
+            "smsText": "Wollongong Station Lift 3 between the car park and Wollongong Station is not available",
+            "speechText": "At Wollongong Station Lift 3 between the car park and Wollongong Station is temporarily out of service."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Wollongong Station Lift 3 between the car park and Wollongong Station is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70482",
+              "content": "At Wollongong Station Lift 3 between the car park and Wollongong Station is temporarily out of service.",
+              "subtitle": "Wollongong Station Lift 3 between the car park and Wollongong Station is not available",
+              "smsText": "Wollongong Station Lift 3 between the car park and Wollongong Station is not available",
+              "speechText": "At Wollongong Station Lift 3 between the car park and Wollongong Station is temporarily out of service."
+            }
+          ],
+          "urlText": "Wollongong Station Lift 3 between the car park and Wollongong Station is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70482",
+          "content": "At Wollongong Station Lift 3 between the car park and Wollongong Station is temporarily out of service.",
+          "subtitle": "Wollongong Station Lift 3 between the car park and Wollongong Station is not available"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "369J.2005.100.24.H.8.90176648",
+        "AVMSTripID": "369J.2005.100.24.H.8.90176648"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000249",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand H, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand H, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873058,
+          151.207814
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "11",
+          "platform": "H",
+          "platformName": "Town Hall, Park St, Stand H",
+          "plannedPlatformName": "Town Hall, Park St, Stand H"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand H, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand H",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:43:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:43:00Z",
+      "departureTimeEstimated": "2026-04-15T06:41:06Z",
+      "transportation": {
+        "id": "nsw:17500:X:R:sj2",
+        "name": "Sydney Buses Network 500X",
+        "disassembledName": "500X",
+        "number": "500X",
+        "description": "West Ryde to City Hyde Park via Victoria Rd (Express Service)",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2507",
+          "name": "Busways North West"
+        },
+        "destination": {
+          "id": "10133986",
+          "name": "City Hyde Park",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 277,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-17-500-X.1.TA.352.sj2"
+        },
+        "origin": {
+          "id": "10101201",
+          "name": "West Ryde Station, West Ryde",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2537776",
+        "AVMSTripID": "2537776",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000249",
+        "isGlobalId": true,
+        "name": "Town Hall, Park St, Stand H, Sydney",
+        "disassembledName": "Town Hall, Park St, Stand H, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873058,
+          151.207814
+        ],
+        "properties": {
+          "occupancy": "FEW_SEATS",
+          "stopId": "10101101",
+          "area": "11",
+          "platform": "H",
+          "platformName": "Town Hall, Park St, Stand H",
+          "plannedPlatformName": "Town Hall, Park St, Stand H"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall, Park St, Stand H, Sydney",
+          "disassembledName": "Town Hall, Park St, Stand H",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:43:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:43:00Z",
+      "departureTimeEstimated": "2026-04-15T06:41:48Z",
+      "transportation": {
+        "id": "nsw:74389: :H:sj2",
+        "name": "Sydney Buses Network 389",
+        "disassembledName": "389",
+        "number": "389",
+        "description": "Pyrmont to Bondi Junction",
+        "product": {
+          "id": 5,
+          "class": 5,
+          "name": "Sydney Buses Network",
+          "iconId": 5
+        },
+        "operator": {
+          "id": "2459",
+          "name": "Transit Systems"
+        },
+        "destination": {
+          "id": "10101109",
+          "name": "Bondi Jct. Interchange",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 572,
+          "lineDisplay": "LINE",
+          "globalId": "3002",
+          "OperatorURL": "http://transportnsw.info",
+          "gtfsId": "3002.nsw-74-389.1.TA.634.sj2"
+        },
+        "origin": {
+          "id": "10101638",
+          "name": "Pyrmont Bay Light Rail, Pyrmont",
+          "type": "stop"
+        },
+        "iconId": 5
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "2475157",
+        "AVMSTripID": "2475157",
+        "pbyb": "1"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000393",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 3, Sydney",
+        "disassembledName": "Town Hall Station, Platform 3, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873654,
+          151.20672
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "3",
+          "platform": "THL3",
+          "platformName": "Platform 3",
+          "plannedPlatformName": "Platform 3"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 3, Sydney",
+          "disassembledName": "Town Hall Station, Platform 3",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:44:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:44:36Z",
+      "departureTimeEstimated": "2026-04-15T06:44:00Z",
+      "transportation": {
+        "id": "nsw:020T1:N:H:sj2",
+        "name": "Sydney Trains Network T1 North Shore & Western Line",
+        "disassembledName": "T1",
+        "number": "T1 North Shore & Western Line",
+        "description": "City to Berowra via Gordon",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101131",
+          "name": "Berowra via Gordon",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1128,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T1-N.1.TA.5051.sj2"
+        },
+        "origin": {
+          "id": "10101100",
+          "name": "Central Station, Sydney",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "120P.2005.100.16.A.8.90174330",
+        "AVMSTripID": "120P.2005.100.16.A.8.90174330"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000395",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 5, Sydney",
+        "disassembledName": "Town Hall Station, Platform 5, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.87372,
+          151.206896
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "5",
+          "platform": "THL5",
+          "platformName": "Platform 5",
+          "plannedPlatformName": "Platform 5"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 5, Sydney",
+          "disassembledName": "Town Hall Station, Platform 5",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:44:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:44:00Z",
+      "departureTimeEstimated": "2026-04-15T06:44:00Z",
+      "transportation": {
+        "id": "nsw:020T4: :R:sj2",
+        "name": "Sydney Trains Network T4 Eastern Suburbs & Illawarra Line",
+        "disassembledName": "T4",
+        "number": "T4 Eastern Suburbs & Illawarra Line",
+        "description": "Waterfall or Cronulla to Bondi Junction",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101109",
+          "name": "Bondi Junction",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 74,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T4.1.TA.363.sj2"
+        },
+        "origin": {
+          "id": "10101339",
+          "name": "Hurstville Station, Hurstville",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "infos": [
+        {
+          "priority": "low",
+          "id": "ems-70478",
+          "version": 464,
+          "type": "infrastructure",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "infrastructure",
+            "appliesTo": "departingArriving",
+            "stopIDglobalID": "200070:2000395,2000396",
+            "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+            "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "url": "https://transportnsw.info/alerts/details#/ems-70478",
+              "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+              "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "smsText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+              "speechText": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110."
+            }
+          ],
+          "urlText": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available",
+          "url": "https://transportnsw.info/alerts/details#/ems-70478",
+          "content": "At Town Hall Station Escalator 1 between the concourse and Platform 5/6 is temporarily out of service.\n\nIf you need help, ask staff or phone 02 9379 4110.",
+          "subtitle": "Town Hall Station Escalator 1 between the concourse and Platform 5/6 is not available"
+        },
+        {
+          "priority": "normal",
+          "id": "ems-70265",
+          "version": 1,
+          "type": "lineInfo",
+          "properties": {
+            "publisher": "ems.comm.addinfo",
+            "infoType": "lineInfo",
+            "smsText": "Some trains run to a changed timetable and stopping pattern",
+            "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+          },
+          "infoLinks": [
+            {
+              "urlText": "Some trains run to a changed timetable and stopping pattern",
+              "url": "https://transportnsw.info/alerts/details#/ems-70265",
+              "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+              "subtitle": "Some trains run to a changed timetable and stopping pattern",
+              "smsText": "Some trains run to a changed timetable and stopping pattern",
+              "speechText": "Monday 20 and Tuesday 21 April Nightly from 9 40 PM to 1 30 AM, some trains make extra stops at St Peters and Erskineville."
+            }
+          ],
+          "urlText": "Some trains run to a changed timetable and stopping pattern",
+          "url": "https://transportnsw.info/alerts/details#/ems-70265",
+          "content": "<div><strong>Monday 20 and Tuesday 21 April</strong></div>\n<ul>\n<li><strong>Nightly from 9.40pm to 1.30am</strong>, some trains make extra stops at St Peters and Erskineville.</li>\n<li>Trackwork on the City Circle may also affect how you travel.<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a>&nbsp;before you travel for up-to-date real time information.&nbsp;You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>",
+          "subtitle": "Some trains run to a changed timetable and stopping pattern"
+        }
+      ],
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "627H.2005.100.120.T.8.90177679",
+        "AVMSTripID": "627H.2005.100.120.T.8.90177679"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000458",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "disassembledName": "Town Hall Station, Town Hall Light Rail, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873872,
+          151.206935
+        ],
+        "properties": {
+          "stopId": "10101101",
+          "area": "8",
+          "platform": "LR1",
+          "platformName": "Town Hall Light Rail",
+          "plannedPlatformName": "Town Hall Light Rail"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Sydney",
+          "disassembledName": "Town Hall Station",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:44:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:44:36Z",
+      "departureTimeEstimated": "2026-04-15T06:47:00Z",
+      "transportation": {
+        "id": "nsw:780L2: :H:sj2",
+        "name": "Sydney Light Rail Network L2 Randwick Line",
+        "disassembledName": "L2",
+        "number": "L2 Randwick Line",
+        "description": "Circular Quay to Randwick",
+        "product": {
+          "id": 13,
+          "class": 4,
+          "name": "Sydney Light Rail Network",
+          "iconId": 4
+        },
+        "operator": {
+          "id": "SLR",
+          "name": "Sydney Light Rail"
+        },
+        "destination": {
+          "id": "10101612",
+          "name": "Randwick",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 1156,
+          "lineDisplay": "LINE",
+          "globalId": "3004",
+          "OperatorURL": "http://transportnsw.info",
+          "FrequencyLine": "1",
+          "gtfsId": "3004.nsw-78-L2.1.TA.4106.sj2"
+        },
+        "origin": {
+          "id": "10101103",
+          "name": "Circular Quay, Sydney",
+          "type": "stop"
+        },
+        "iconId": 13
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "49177-12531:1000",
+        "AVMSTripID": "49177-12531:1000"
+      }
+    },
+    {
+      "realtimeStatus": [
+        "MONITORED"
+      ],
+      "isRealtimeControlled": true,
+      "location": {
+        "id": "2000392",
+        "isGlobalId": true,
+        "name": "Town Hall Station, Platform 2, Sydney",
+        "disassembledName": "Town Hall Station, Platform 2, Sydney",
+        "type": "platform",
+        "coord": [
+          -33.873552,
+          151.206801
+        ],
+        "properties": {
+          "occupancy": "MANY_SEATS",
+          "stopId": "10101101",
+          "area": "1",
+          "platform": "THL2",
+          "platformName": "Platform 2",
+          "plannedPlatformName": "Platform 2"
+        },
+        "parent": {
+          "id": "200070",
+          "isGlobalId": true,
+          "name": "Town Hall Station, Platform 2, Sydney",
+          "disassembledName": "Town Hall Station, Platform 2",
+          "type": "stop",
+          "parent": {
+            "name": "Sydney",
+            "type": "locality"
+          },
+          "properties": {
+            "stopId": "10101101"
+          }
+        }
+      },
+      "departureTimePlanned": "2026-04-15T06:45:00Z",
+      "departureTimeBaseTimetable": "2026-04-15T06:45:00Z",
+      "departureTimeEstimated": "2026-04-15T06:45:00Z",
+      "transportation": {
+        "id": "nsw:020T1:N:R:sj2",
+        "name": "Sydney Trains Network T1 North Shore & Western Line",
+        "disassembledName": "T1",
+        "number": "T1 North Shore & Western Line",
+        "description": "Berowra to City via Gordon",
+        "product": {
+          "id": 1,
+          "class": 1,
+          "name": "Sydney Trains Network",
+          "iconId": 1
+        },
+        "operator": {
+          "id": "x0001",
+          "name": "Sydney Trains"
+        },
+        "destination": {
+          "id": "10101100",
+          "name": "Penrith via Central",
+          "type": "stop"
+        },
+        "properties": {
+          "isTTB": true,
+          "tripCode": 401,
+          "lineDisplay": "LINE",
+          "globalId": "3001",
+          "OperatorURL": "http://www.sydneytrains.info/",
+          "gtfsId": "3001.nsw-2-T1-N.1.TA.2017.sj2"
+        },
+        "origin": {
+          "id": "10101131",
+          "name": "Berowra Station, Berowra",
+          "type": "stop"
+        },
+        "iconId": 1
+      },
+      "properties": {
+        "WheelchairAccess": "true",
+        "RealtimeTripId": "190L.2005.100.16.B.8.90176036",
+        "AVMSTripID": "190L.2005.100.16.B.8.90176036"
+      }
+    }
+  ]
+}

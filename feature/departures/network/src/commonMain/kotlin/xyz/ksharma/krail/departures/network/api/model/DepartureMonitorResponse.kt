@@ -56,6 +56,11 @@ data class DepartureMonitorResponse(
      * [disassembledName] is the human-readable platform label (e.g. "Platform 1", "Stand A").
      * Use [displayName] to resolve the label with automatic fallback to [name] when
      * [disassembledName] is absent.
+     *
+     * [properties] may carry a [LocationProperties.platformName] for stops whose platform
+     * label doesn't follow the "Keyword + Number/Letter" convention (e.g. Light Rail stops
+     * like "Town Hall Light Rail"). This is used as a fallback when the regex in
+     * `extractPlatformText` finds no match.
      */
     @Serializable
     data class Location(
@@ -63,6 +68,7 @@ data class DepartureMonitorResponse(
         @SerialName("name") val name: String? = null,
         @SerialName("disassembledName") val disassembledName: String? = null,
         @SerialName("parent") val parent: Parent? = null,
+        @SerialName("properties") val properties: LocationProperties? = null,
     ) {
         /**
          * Human-readable display label for the stop or platform.
@@ -71,6 +77,19 @@ data class DepartureMonitorResponse(
          */
         val displayName: String? get() = disassembledName ?: name
     }
+
+    /**
+     * Extra metadata attached to a [Location] by the NSW Transport API.
+     *
+     * [platformName] is the human-readable name of the specific bay/berth/platform
+     * (e.g. "Town Hall Light Rail", "Town Hall, Park St, Stand J").
+     * [platform] is the raw platform code (e.g. "LR1", "J").
+     */
+    @Serializable
+    data class LocationProperties(
+        @SerialName("platformName") val platformName: String? = null,
+        @SerialName("platform") val platform: String? = null,
+    )
 
     @Serializable
     data class Parent(

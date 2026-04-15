@@ -4,7 +4,6 @@ import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -131,6 +130,7 @@ class DepartureMonitorMapperTest {
     }
 
     // region: platform text
+    // --- baseline (no properties) ---
 
     @Test
     fun `Given location with distinct platform label When mapped Then platformText is set`() {
@@ -157,6 +157,104 @@ class DepartureMonitorMapperTest {
         val event = buildStopEvent(
             locationDisassembledName = "Platform 1",
             parentDisassembledName = null,
+        )
+
+        assertNull(event.toStopDeparture()?.platformText)
+    }
+
+    // --- full compound disassembledName (as seen in the live API, no properties) ---
+
+    @Test
+    fun `Given train location with full compound disassembledName When mapped Then platformText extracts Platform label`() {
+        // Live API returns "Town Hall Station, Platform 1, Sydney" — not just "Platform 1".
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall Station, Platform 1, Sydney",
+            parentDisassembledName = "Town Hall Station",
+        )
+
+        assertEquals("Platform 1", event.toStopDeparture()?.platformText)
+    }
+
+    // --- properties.platformName is a real label (differs from platform code) ---
+    // The regex is run on platformName first; the full disassembledName is NOT used.
+
+    @Test
+    fun `Given THL train platform with clean platformName When mapped Then platformText is Platform N`() {
+        // Typical case: platform="THL6", platformName="Platform 6"
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall Station, Platform 6, Sydney",
+            parentDisassembledName = "Town Hall Station",
+            locationPlatformCode = "THL6",
+            locationPlatformName = "Platform 6",
+        )
+
+        assertEquals("Platform 6", event.toStopDeparture()?.platformText)
+    }
+
+    @Test
+    fun `Given bus location with compound platformName containing Stand J When mapped Then platformText is Stand J`() {
+        // Live API: platform="J", platformName="Town Hall, Park St, Stand J"
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall, Park St, Stand J, Sydney",
+            parentDisassembledName = "Town Hall",
+            locationPlatformCode = "J",
+            locationPlatformName = "Town Hall, Park St, Stand J",
+        )
+
+        assertEquals("Stand J", event.toStopDeparture()?.platformText)
+    }
+
+    @Test
+    fun `Given light rail location with platformName Town Hall Light Rail When mapped Then platformText is Town Hall Light Rail`() {
+        // Live API: platform="LR1", platformName="Town Hall Light Rail"
+        // Regex finds no Platform/Stand/Wharf/Side keyword → label used as-is.
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall Station, Town Hall Light Rail, Sydney",
+            parentDisassembledName = "Town Hall Station",
+            locationPlatformCode = "LR1",
+            locationPlatformName = "Town Hall Light Rail",
+        )
+
+        assertEquals("Town Hall Light Rail", event.toStopDeparture()?.platformText)
+    }
+
+    @Test
+    fun `Given light rail location with missing platform key and platformName Town Hall Light Rail When mapped Then platformText is Town Hall Light Rail`() {
+        // Live API occasionally omits the platform code but keeps platformName.
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall Station, Town Hall Light Rail, Sydney",
+            parentDisassembledName = "Town Hall Station",
+            locationPlatformCode = null,
+            locationPlatformName = "Town Hall Light Rail",
+        )
+
+        assertEquals("Town Hall Light Rail", event.toStopDeparture()?.platformText)
+    }
+
+    // --- properties.platformName equals raw platform code (API inconsistency) ---
+
+    @Test
+    fun `Given THL platform where platformName echoes raw code THL6 When mapped Then platformText derives Platform 6 from code`() {
+        // Inconsistent API response: platform="THL6", platformName="THL6"
+        // Number is extracted from the code and formatted as "Platform N".
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall Station, Platform 6, Sydney",
+            parentDisassembledName = "Town Hall Station",
+            locationPlatformCode = "THL6",
+            locationPlatformName = "THL6",
+        )
+
+        assertEquals("Platform 6", event.toStopDeparture()?.platformText)
+    }
+
+    // --- no properties at all ---
+
+    @Test
+    fun `Given light rail location with no properties When mapped Then platformText is null`() {
+        // Without properties there is no fallback label for Light Rail names.
+        val event = buildStopEvent(
+            locationDisassembledName = "Town Hall Station, Town Hall Light Rail, Sydney",
+            parentDisassembledName = "Town Hall Station",
         )
 
         assertNull(event.toStopDeparture()?.platformText)
@@ -212,6 +310,10 @@ class DepartureMonitorMapperTest {
         destinationName: String? = "Cronulla Station",
         locationDisassembledName: String? = "Platform 1",
         parentDisassembledName: String? = "Town Hall",
+        /** Mirrors `location.properties.platformName` from the live NSW Transport API. */
+        locationPlatformName: String? = null,
+        /** Mirrors `location.properties.platform` (raw code, e.g. "THL6", "J", "LR1"). */
+        locationPlatformCode: String? = null,
     ) = DepartureMonitorResponse.StopEvent(
         departureTimePlanned = plannedTime,
         departureTimeEstimated = estimatedTime,
@@ -226,6 +328,12 @@ class DepartureMonitorMapperTest {
                     disassembledName = it,
                 )
             },
+            properties = if (locationPlatformName != null || locationPlatformCode != null) {
+                DepartureMonitorResponse.LocationProperties(
+                    platformName = locationPlatformName,
+                    platform = locationPlatformCode,
+                )
+            } else null,
         ),
         transportation = DepartureMonitorResponse.Transportation(
             id = "sydneytrains:$lineNumber:H",

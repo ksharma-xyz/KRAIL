@@ -19,7 +19,14 @@ class PlatformTextTest {
             "M2 Motorway, Barclay Rd" to null,
             "Wynyard Station, Platform 3" to "Platform 3",
             "Seven Hills Station, Stand A" to "Stand A",
-            "Circular Quay, Wharf 2" to "Wharf 2"
+            "Circular Quay, Wharf 2" to "Wharf 2",
+            // Full compound names as returned by the live Departure Monitor API (includes suburb).
+            "Town Hall Station, Platform 1, Sydney" to "Platform 1",
+            "Town Hall, Park St, Stand J, Sydney" to "Stand J",
+            // Light Rail platform names contain no Platform/Stand/Wharf/Side keyword so the
+            // regex cannot extract anything — the fix lives in DepartureMonitorMapper which
+            // falls back to properties.platformName for these stops.
+            "Town Hall Station, Town Hall Light Rail, Sydney" to null,
         )
 
         disassembledNameSamples.forEach { (input, expected) ->

@@ -88,13 +88,50 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
     )
 }
 
-// Returns the platform label (e.g. "Stand A", "Platform 7") extracted from the full
-// disassembledName (e.g. "Seven Hills Station, Stand A, Seven Hills"), or null if no
-// platform/stand/wharf keyword is found.
+// Returns the platform label (e.g. "Stand H", "Platform 6", "Town Hall Light Rail")
+// ready for display.
+//
+// All three fields in `location.properties` are considered:
+//   platform     = raw code   ("THL6", "J", "LR1")
+//   platformName = human label ("Platform 6", "Town Hall, Park St, Stand J", "Town Hall Light Rail")
+//                  — but sometimes the API echoes the raw code here too (e.g. "THL6")
+//
+// Decision tree (primary source is always properties.platformName, NOT disassembledName):
+//   A. platformName is a real label (differs from the raw platform code):
+//      1. Run regex → extracts "Platform N", "Stand X", etc. from compound strings
+//      2. No match   → return platformName as-is (e.g. "Town Hall Light Rail")
+//   B. platformName equals the raw platform code — API returned raw code as label:
+//      → Extract trailing digits from the code → "Platform N"
+//      → No digits → return the code itself
+//   C. No properties at all (legacy / edge case):
+//      → Fall back to regex on disassembledName
 private fun DepartureMonitorResponse.Location.resolvePlatformText(): String? {
-    val locationLabel = disassembledName ?: return null
     // Without a parent, this location IS the stop itself — no platform sub-label to extract.
     parent ?: return null
+
+    val pName = properties?.platformName
+    val pCode = properties?.platform
+
+    if (pName != null) {
+        return if (pName != pCode) {
+            // A – real human-readable label: try regex first, then use as-is.
+            extractPlatformText(pName) ?: pName
+        } else {
+            // B – API echoed the raw code (e.g. platformName = "THL6"):
+            //     extract the trailing number and format as "Platform N".
+            val num = Regex("\\d+").find(pName)?.value
+            if (num != null) "Platform $num" else pName
+        }
+    }
+
+    // C – No platformName; try extracting a number from the raw platform code.
+    if (pCode != null) {
+        val num = Regex("\\d+").find(pCode)?.value
+        if (num != null) return "Platform $num"
+    }
+
+    // Last resort: regex on the full disassembledName (handles data without properties).
+    val locationLabel = disassembledName ?: return null
     return extractPlatformText(locationLabel)
 }
 

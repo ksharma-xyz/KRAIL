@@ -205,27 +205,29 @@ class DepartureMonitorMapperTest {
     }
 
     @Test
-    fun `Given light rail location with platformName Town Hall Light Rail When mapped Then platformText is Town Hall Light Rail`() {
-        // Live API: platform="LR1", platformName="Town Hall Light Rail"
-        // Regex finds no Platform/Stand/Wharf/Side keyword → label used as-is.
+    fun `Given light rail location with platformName Town Hall Light Rail When mapped Then platformText includes code and name`() {
+        // Live API: platform="LR1", platformName="Town Hall Light Rail", cls=4 (Light Rail)
+        // Mode-aware rule → "$pCode · $pName"
         val event = buildStopEvent(
             locationDisassembledName = "Town Hall Station, Town Hall Light Rail, Sydney",
             parentDisassembledName = "Town Hall Station",
             locationPlatformCode = "LR1",
             locationPlatformName = "Town Hall Light Rail",
+            productClass = 4,
         )
 
-        assertEquals("Town Hall Light Rail", event.toStopDeparture()?.platformText)
+        assertEquals("LR1 · Town Hall Light Rail", event.toStopDeparture()?.platformText)
     }
 
     @Test
-    fun `Given light rail location with missing platform key and platformName Town Hall Light Rail When mapped Then platformText is Town Hall Light Rail`() {
-        // Live API occasionally omits the platform code but keeps platformName.
+    fun `Given light rail location with missing platform key and platformName Town Hall Light Rail When mapped Then platformText is name only`() {
+        // Live API occasionally omits the platform code but keeps platformName; cls=4 (Light Rail).
         val event = buildStopEvent(
             locationDisassembledName = "Town Hall Station, Town Hall Light Rail, Sydney",
             parentDisassembledName = "Town Hall Station",
             locationPlatformCode = null,
             locationPlatformName = "Town Hall Light Rail",
+            productClass = 4,
         )
 
         assertEquals("Town Hall Light Rail", event.toStopDeparture()?.platformText)

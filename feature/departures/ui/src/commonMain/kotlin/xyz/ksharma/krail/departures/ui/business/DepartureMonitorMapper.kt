@@ -9,6 +9,7 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
@@ -73,14 +74,14 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
             productClass = transportation?.product?.cls,
         ),
         transportModeName = resolveTransportModeName(transportation?.product?.cls),
-        destinationName = transportation?.destination?.name ?: "",
+        destinationName = transportation?.description ?: transportation?.destination?.name ?: "",
         departureTimeText = runCatching { departureUtc.utcToLocalDateTimeAEST().toHHMM() }
             .getOrDefault(departureUtc),
         departureUtcDateTime = departureUtc,
         relativeTimeText = runCatching {
             departureUtc.toDepartureRelativeString()
         }.getOrDefault(""),
-        platformText = location?.resolvePlatformText(),
+        platformText = location?.resolvePlatformText(transportation?.product?.cls),
         isRealTime = isRealTime,
         scheduledTimeText = scheduledTimeText,
         delayMinutes = delayMinutes,
@@ -88,14 +89,78 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
     )
 }
 
-// Returns the platform label (e.g. "Stand A", "Platform 7") extracted from the full
-// disassembledName (e.g. "Seven Hills Station, Stand A, Seven Hills"), or null if no
-// platform/stand/wharf keyword is found.
-private fun DepartureMonitorResponse.Location.resolvePlatformText(): String? {
-    val locationLabel = disassembledName ?: return null
-    // Without a parent, this location IS the stop itself — no platform sub-label to extract.
+// Returns the platform label ready for display, using transport-mode–aware rules.
+//
+//   platform     = raw API code  ("THL6", "CE17", "J", "LR1", "F1")
+//   platformName = human label   ("Platform 6", "Town Hall, Park St, Stand J",
+//                                 "Town Hall Light Rail", "Taronga Zoo Wharf")
+//                  — sometimes echoes the raw code (e.g. platformName = "THL6")
+//
+// Rules by product class:
+//   cls 1/2/7 (Train / Metro / Coach):
+//     platformName is "Platform N" → return it as-is.
+//     platformName == platform code (API bug) → extract number → "Platform N".
+//   cls 4 (Light Rail):
+//     code present and differs from name → "$pCode · $pName" (e.g. "LR1 · Town Hall Light Rail")
+//     no code (or code absent)           → just the name    (e.g. "Town Hall Light Rail")
+//   cls 5 / 11 (Bus / School Bus):
+//     extract "Stand X" from compound platformName via regex.
+//   cls 9 (Ferry):
+//     return the raw platform code only  (e.g. "F1").
+//   unknown:
+//     try regex on platformName, then disassembledName.
+@Suppress("MagicNumber", "CyclomaticComplexMethod")
+private fun DepartureMonitorResponse.Location.resolvePlatformText(productClass: Int?): String? {
+    // Without a parent, this location IS the stop itself — no platform sub-label.
     parent ?: return null
-    return extractPlatformText(locationLabel)
+
+    val pName = properties?.platformName
+    val pCode = properties?.platform
+
+    return when (productClass) {
+        // ── Train (1), Metro (2), Coach (7) ──────────────────────────────────────
+        // platformName is always "Platform N"; edge-case: API echoes raw code here.
+        TransportMode.Train.productClass,
+        TransportMode.Metro.productClass,
+        TransportMode.Coach.productClass,
+        -> {
+            if (pName != null && pName != pCode) {
+                // Normal case: "Platform 17", "Platform 26"
+                extractPlatformText(pName)
+            } else if (pCode != null) {
+                // Bad case: platformName == "THL6" → derive "Platform 6" from code
+                val num = Regex("\\d+").find(pCode)?.value
+                num?.let { "Platform $it" }
+            } else {
+                // No properties at all — fall back to regex on disassembledName
+                disassembledName?.let { extractPlatformText(it) }
+            }
+        }
+
+        // ── Light Rail (4) ───────────────────────────────────────────────────────
+        // Show code AND name: "LR1 · Central Chalmers Street Light Rail"
+        // If the platform field is absent, just show the name.
+        TransportMode.LightRail.productClass -> when {
+            pCode != null && pName != null && pCode != pName -> "$pCode · $pName"
+            pName != null -> pName
+            pCode != null -> pCode
+            else -> null
+        }
+
+        // ── Bus (5), School Bus (11) ─────────────────────────────────────────────
+        // Extract "Stand X" from compound platformName:
+        //   "Central Station, Eddy Ave, Stand A" → "Stand A"
+        // Note: School Bus (11) is not yet a TransportMode subclass — kept as literal.
+        TransportMode.Bus.productClass, 11 -> (pName ?: disassembledName)?.let { extractPlatformText(it) }
+
+        // ── Ferry (9) ────────────────────────────────────────────────────────────
+        // Wharf name is the stop name itself; raw code ("F1") is the useful label.
+        TransportMode.Ferry.productClass -> pCode
+
+        // ── Unknown / fallback ───────────────────────────────────────────────────
+        else -> pName?.let { extractPlatformText(it) ?: it }
+            ?: disassembledName?.let { extractPlatformText(it) }
+    }
 }
 
 // Resolves the hex colour for a line badge via NswTransportConfig:

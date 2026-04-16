@@ -55,6 +55,7 @@ kotlin {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
                 implementation(libs.test.turbine)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
     }

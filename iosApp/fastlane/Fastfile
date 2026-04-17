@@ -18,23 +18,37 @@ platform :ios do
     setup_ci if is_ci
 
     # Xcode version is selected by maxim-lobanov/setup-xcode in the CI workflow.
-    # xcversion is removed — the underlying xcode-install gem is sunsetted and
-    # xcversion is broken on macos-15 runners (fastlane/fastlane#29469).
+    # xcversion is not used — the underlying xcode-install gem is sunsetted and
+    # broken on macos-15 runners (fastlane/fastlane#29469).
 
-    # Stamp the build number from the IOS_BUILD_NUMBER CI variable so every TestFlight
-    # upload has a strictly incrementing CFBundleVersion. Skipped when running locally
-    # (IOS_BUILD_NUMBER not set) — local builds use whatever is in the project file.
-    if ENV['IOS_BUILD_NUMBER'] && !ENV['IOS_BUILD_NUMBER'].empty?
-      increment_build_number(
-        xcodeproj: "iosApp.xcodeproj",
-        build_number: ENV['IOS_BUILD_NUMBER']
-      )
+    # The project has GENERATE_INFOPLIST_FILE = YES, so Xcode generates Info.plist
+    # at build time from CURRENT_PROJECT_VERSION — patching the plist file on disk
+    # (set_info_plist_value) has no effect. The correct approach is to pass
+    # CURRENT_PROJECT_VERSION via xcargs, overriding the hardcoded project value.
+    # IOS_BUILD_NUMBER is set by the CI workflow step before this lane runs.
+    # Skipped for local builds (IOS_BUILD_NUMBER not set).
+    build_number = ENV['IOS_BUILD_NUMBER']
+    if build_number.nil? || build_number.empty?
+      UI.message("IOS_BUILD_NUMBER not set — using CURRENT_PROJECT_VERSION from Config.xcconfig (local build).")
+      build_number = nil
+    end
+
+    # Read MARKETING_VERSION from Config.xcconfig so it's always in sync with the
+    # source of truth. xcargs overrides whatever may be hardcoded in the xcodeproj,
+    # which is required when GENERATE_INFOPLIST_FILE = YES (Xcode generates Info.plist
+    # from build settings at archive time, not from the plist on disk).
+    xcconfig_path = File.expand_path("Configuration/Config.xcconfig", __dir__ + "/..")
+    marketing_version = File.read(xcconfig_path).match(/^MARKETING_VERSION\s*=\s*(.+)/)&.captures&.first&.strip
+    if marketing_version.nil? || marketing_version.empty?
+      UI.important("MARKETING_VERSION not found in Config.xcconfig — Xcode will use the xcodeproj value.")
+      marketing_version = nil
+    else
+      UI.message("MARKETING_VERSION = #{marketing_version} (from Config.xcconfig)")
     end
 
     # Set provisioning profile ONLY for the iosApp target by modifying the project file.
     # This avoids putting PROVISIONING_PROFILE_SPECIFIER in xcargs, which would bleed
-    # into every SPM target (Firebase, gRPC, etc.) and cause "does not support
-    # provisioning profiles" errors on those targets.
+    # into every SPM target and cause "does not support provisioning profiles" errors.
     update_code_signing_settings(
       use_automatic_signing: false,
       path: "iosApp.xcodeproj",
@@ -55,12 +69,17 @@ platform :ios do
       buildlog_path: "./build/logs",
       clean: true,
       skip_package_dependencies_resolution: true,
-      # DEVELOPMENT_TEAM in xcargs ensures SPM packages (which are separate targets)
-      # also have a team set — required for them to compile. PROVISIONING_PROFILE_SPECIFIER
-      # is NOT here; it was set per-target above via update_code_signing_settings.
-      xcargs: "CODE_SIGN_STYLE=Manual " \
-              "CODE_SIGN_IDENTITY='Apple Distribution' " \
-              "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}'",
+      # CURRENT_PROJECT_VERSION overrides the hardcoded value in the xcodeproj so the
+      # generated Info.plist gets the correct CFBundleVersion.
+      # DEVELOPMENT_TEAM ensures SPM package targets also have a team set.
+      # PROVISIONING_PROFILE_SPECIFIER is NOT here — set per-target above.
+      xcargs: [
+        "CODE_SIGN_STYLE=Manual",
+        "CODE_SIGN_IDENTITY='Apple Distribution'",
+        "DEVELOPMENT_TEAM='#{ENV["DEVELOPMENT_TEAM"]}'",
+        marketing_version ? "MARKETING_VERSION=#{marketing_version}" : nil,
+        build_number ? "CURRENT_PROJECT_VERSION=#{build_number}" : nil
+      ].compact.join(" "),
       export_options: {
         signingStyle: "manual",
         provisioningProfiles: {

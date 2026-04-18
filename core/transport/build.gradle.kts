@@ -30,5 +30,10 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
             }
         }
+        commonTest {
+            dependencies {
+                implementation(libs.test.kotlin)
+            }
+        }
     }
 }

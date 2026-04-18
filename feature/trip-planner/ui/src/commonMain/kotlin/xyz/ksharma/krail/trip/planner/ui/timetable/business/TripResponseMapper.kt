@@ -11,7 +11,6 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
-import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
@@ -165,12 +164,11 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
             ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
     val lineName = transportation?.disassembledName
 
-    val productClass = transportation?.product?.productClass?.toInt()
-    val displayText = when (productClass) {
-        NswTransportMode.Train.productClass, NswTransportMode.Metro.productClass ->
-            "towards ${transportation?.destination?.name}"
-        else -> transportation?.description
-    }
+    val displayText = NswTransportConfig.resolveServiceDisplayText(
+        productClass = transportation?.product?.productClass?.toInt(),
+        destinationName = transportation?.destination?.name,
+        description = transportation?.description,
+    )
     val numberOfStops = stopSequence?.size
     // duration can be null for some legs (e.g. first bus leg in a multi-leg journey).
     // Fall back to calculating duration from departure/arrival times via resolveDurationSeconds().

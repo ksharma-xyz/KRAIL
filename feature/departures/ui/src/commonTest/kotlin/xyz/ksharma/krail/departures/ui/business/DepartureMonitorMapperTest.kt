@@ -263,17 +263,90 @@ class DepartureMonitorMapperTest {
     }
 
     // region: destination name
+    // Logic mirrors TripResponseMapper: Train/Metro → "towards <destination>", others → description.
 
     @Test
-    fun `Given transportation with destination When mapped Then destinationName is correct`() {
-        val event = buildStopEvent(destinationName = "Cronulla Station")
+    fun `Given Train event with destination When mapped Then destinationName is towards destination`() {
+        // Train (cls=1): must show directional label, not the full route description
+        val event = buildStopEvent(
+            productClass = 1,
+            destinationName = "Cronulla Station",
+            description = "Waterfall or Cronulla to Bondi Junction",
+        )
 
-        assertEquals("Cronulla Station", event.toStopDeparture()?.destinationName)
+        assertEquals("towards Cronulla Station", event.toStopDeparture()?.destinationName)
     }
 
     @Test
-    fun `Given transportation with no destination When mapped Then destinationName is empty`() {
-        val event = buildStopEvent(destinationName = null)
+    fun `Given Metro event with destination When mapped Then destinationName is towards destination`() {
+        val event = buildStopEvent(
+            productClass = 2,
+            destinationName = "Tallawong",
+            description = "Sydenham to Tallawong",
+        )
+
+        assertEquals("towards Tallawong", event.toStopDeparture()?.destinationName)
+    }
+
+    @Test
+    fun `Given Train event with no destination but has description When mapped Then destinationName uses description`() {
+        // Falls back to description when destination.name is absent
+        val event = buildStopEvent(
+            productClass = 1,
+            destinationName = null,
+            description = "Emu Plains or Richmond to City",
+        )
+
+        assertEquals("Emu Plains or Richmond to City", event.toStopDeparture()?.destinationName)
+    }
+
+    @Test
+    fun `Given Train event with no destination and no description When mapped Then destinationName is empty`() {
+        val event = buildStopEvent(productClass = 1, destinationName = null, description = null)
+
+        assertEquals("", event.toStopDeparture()?.destinationName)
+    }
+
+    @Test
+    fun `Given Bus event with description When mapped Then destinationName uses description as-is`() {
+        // Bus (cls=5): description is a concise route label — use it directly
+        val event = buildStopEvent(
+            productClass = 5,
+            destinationName = "Rouse Hill Station",
+            description = "Seven Hills to Rouse Hill Station via Norwest & Kellyville",
+        )
+
+        assertEquals(
+            "Seven Hills to Rouse Hill Station via Norwest & Kellyville",
+            event.toStopDeparture()?.destinationName,
+        )
+    }
+
+    @Test
+    fun `Given Bus event with no description When mapped Then destinationName falls back to destination name`() {
+        val event = buildStopEvent(
+            productClass = 5,
+            destinationName = "Rouse Hill Station",
+            description = null,
+        )
+
+        assertEquals("Rouse Hill Station", event.toStopDeparture()?.destinationName)
+    }
+
+    @Test
+    fun `Given Ferry event with description When mapped Then destinationName uses description`() {
+        val event = buildStopEvent(
+            productClass = 9,
+            destinationName = "Manly Wharf",
+            description = "Circular Quay to Manly",
+        )
+
+        assertEquals("Circular Quay to Manly", event.toStopDeparture()?.destinationName)
+    }
+
+    @Test
+    fun `Given transportation with no destination and no description When mapped Then destinationName is empty`() {
+        val event = buildStopEvent(destinationName = null, description = null)
 
         assertEquals("", event.toStopDeparture()?.destinationName)
     }
@@ -310,6 +383,7 @@ class DepartureMonitorMapperTest {
         lineNumber: String = "T1",
         productClass: Int? = 1,
         destinationName: String? = "Cronulla Station",
+        description: String? = null,
         locationDisassembledName: String? = "Platform 1",
         parentDisassembledName: String? = "Town Hall",
         /** Mirrors `location.properties.platformName` from the live NSW Transport API. */
@@ -340,6 +414,7 @@ class DepartureMonitorMapperTest {
         transportation = DepartureMonitorResponse.Transportation(
             id = "sydneytrains:$lineNumber:H",
             disassembledName = lineNumber,
+            description = description,
             destination = destinationName?.let {
                 DepartureMonitorResponse.Destination(id = "stop_id", name = it)
             },

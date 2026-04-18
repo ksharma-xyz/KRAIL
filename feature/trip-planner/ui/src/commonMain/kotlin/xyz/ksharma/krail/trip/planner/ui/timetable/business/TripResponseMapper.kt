@@ -157,7 +157,8 @@ private fun List<TripResponse.Leg>.getLegsList() = mapNotNull { it.toUiModel() }
 @OptIn(ExperimentalTime::class)
 private fun String.getTimeText() = toDepartureRelativeString()
 
-@Suppress("ComplexCondition")
+@OptIn(ExperimentalTime::class)
+@Suppress("ComplexCondition", "CyclomaticComplexMethod")
 private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
     val transportMode =
         transportation?.product?.productClass?.toInt()
@@ -171,7 +172,9 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
         else -> transportation?.description
     }
     val numberOfStops = stopSequence?.size
-    val displayDuration = duration?.seconds?.toFormattedDurationTimeString()
+    // duration can be null for some legs (e.g. first bus leg in a multi-leg journey).
+    // Fall back to calculating duration from departure/arrival times via resolveDurationSeconds().
+    val displayDuration = resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
     val stops = stopSequence?.mapNotNull { it.toUiModel() }?.toImmutableList()
     val alerts = infos?.mapNotNull { it.toAlert() }?.toImmutableList()
 
@@ -211,6 +214,33 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
                 null
             }
         }
+    }
+}
+
+/**
+ * Resolves the duration of a leg in seconds.
+ *
+ * The API sometimes omits [TripResponse.Leg.duration] (returns null) for certain legs —
+ * commonly the first short bus hop in a multi-leg journey. In those cases we calculate
+ * the duration from the departure and arrival timestamps that are always present.
+ *
+ * Priority: explicit [TripResponse.Leg.duration] > calculated from dep/arr timestamps > null
+ */
+@OptIn(ExperimentalTime::class)
+internal fun TripResponse.Leg.resolveDurationSeconds(): Long? {
+    if (duration != null) return duration
+    val dep = origin?.departureTimeEstimated ?: origin?.departureTimePlanned
+    val arr = destination?.arrivalTimeEstimated ?: destination?.arrivalTimePlanned
+    return if (dep != null && arr != null) {
+        runCatching {
+            val depInstant = Instant.parse(dep)
+            val arrInstant = Instant.parse(arr)
+            (arrInstant - depInstant).inWholeSeconds.takeIf { it > 0 }
+        }.onFailure { error ->
+            logError("error - $error")
+        }.getOrNull()
+    } else {
+        null
     }
 }
 

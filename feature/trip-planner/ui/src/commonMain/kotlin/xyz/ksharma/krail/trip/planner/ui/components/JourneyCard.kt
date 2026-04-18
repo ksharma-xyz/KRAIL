@@ -185,10 +185,16 @@ fun JourneyCard(
                                 textColor = onSurfaceColor,
                                 density = screenDensity,
                             )
-                        shareManager.shareImage(bitmap)
-                            .onFailure { error ->
-                                logError("error while sharing image: $error")
-                            }
+                        shareManager.shareImage(
+                            bitmap = bitmap,
+                            text = buildShareText(
+                                legList = legList,
+                                destinationTime = destinationTime,
+                                totalTravelTime = totalTravelTime,
+                            ),
+                        ).onFailure { error ->
+                            logError("error while sharing image: $error")
+                        }
                     }
                 },
                 modifier = Modifier.clickable(
@@ -478,6 +484,39 @@ private fun JourneyOriginTimeRow(
         onTimeTextStyle = KrailTheme.typography.titleMedium,
         modifier = modifier,
     )
+}
+
+/**
+ * Builds the share text for a journey.
+ *
+ * Example output:
+ * ```
+ * Hey mate!
+ *
+ * I'll reach Central Station, Platform 1 at 8:40am — about 30 mins away.
+ *
+ * Plan your trip on KRAIL!
+ * https://krail.app
+ * ```
+ */
+private fun buildShareText(
+    legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
+    destinationTime: String,
+    totalTravelTime: String,
+): String {
+    val lastStopName = legList
+        .filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
+        .lastOrNull()
+        ?.stops
+        ?.lastOrNull()
+        ?.name
+
+    val journeyLine = if (lastStopName != null) {
+        "I'll reach $lastStopName at $destinationTime — about $totalTravelTime away."
+    } else {
+        "I'll arrive at $destinationTime — about $totalTravelTime away."
+    }
+    return "Hey mate!\n\n$journeyLine\n\nPlan your trip on KRAIL!\nhttps://krail.app"
 }
 
 // region Previews

@@ -13,20 +13,17 @@ import java.io.File
 
 class AndroidShareManager(private val context: Context) : ShareManager {
 
-    override suspend fun shareImage(bitmap: ImageBitmap, title: String): Result<Unit> =
+    override suspend fun shareImage(bitmap: ImageBitmap, title: String, text: String?): Result<Unit> =
         runCatching {
-            // Heavy work: bitmap compression + file write — must not block the Main thread.
             val uri = withContext(Dispatchers.IO) {
                 saveBitmapToCache(bitmap.asAndroidBitmap())
             }
-
-            // startActivity is a UI operation and must run on the Main thread.
-            // FLAG_ACTIVITY_NEW_TASK is required when starting from a non-Activity context.
             withContext(Dispatchers.Main) {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "image/png"
                     putExtra(Intent.EXTRA_STREAM, uri)
                     putExtra(Intent.EXTRA_SUBJECT, title)
+                    if (text != null) putExtra(Intent.EXTRA_TEXT, text)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 val chooser = Intent.createChooser(shareIntent, title).apply {

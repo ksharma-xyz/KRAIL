@@ -20,7 +20,7 @@ import platform.UIKit.UIViewController
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 class IosShareManager : ShareManager {
 
-    override suspend fun shareImage(bitmap: ImageBitmap, title: String): Result<Unit> =
+    override suspend fun shareImage(bitmap: ImageBitmap, title: String, text: String?): Result<Unit> =
         runCatching {
             // Skia PNG encoding is CPU-heavy — run on Default to keep the Main thread free.
             val byteArray = withContext(Dispatchers.Default) {
@@ -44,8 +44,14 @@ class IosShareManager : ShareManager {
 
             // All UIKit calls (UIActivityViewController, presentViewController) must be on Main.
             withContext(Dispatchers.Main) {
+                // iOS: pass both image and text in activityItems — apps like Messages, WhatsApp
+                // use the text as the message body/caption alongside the image.
+                val activityItems = buildList {
+                    add(uiImage)
+                    if (text != null) add(text)
+                }
                 val activityVC = UIActivityViewController(
-                    activityItems = listOf(uiImage),
+                    activityItems = activityItems,
                     applicationActivities = null,
                 )
                 val topVC = checkNotNull(topmostViewController()) {

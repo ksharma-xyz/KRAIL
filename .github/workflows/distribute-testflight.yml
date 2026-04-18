@@ -25,18 +25,18 @@ jobs:
     permissions:
       actions: write  # required to write back IOS_BUILD_NUMBER repo variable
     env:
-      # Fastlane auto-detects these — no temp .p8 file needed (pattern from chrisbanes/tivi).
+      # Fastlane auto-detects these — no temp .p8 file needed.
       APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
       APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
       APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       # Prevent xcodebuild settings query from timing out on slow CI runners.
       FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       # Select Xcode before anything else runs.
-      # xcversion is removed from Fastfile — it relies on the sunsetted xcode-install gem
-      # and is broken on macos-15 (fastlane/fastlane#29469, actions/runner-images#12205).
+      # xcversion is not used — relies on the sunsetted xcode-install gem
+      # and is broken on macos-15 runners (fastlane/fastlane#29469).
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -48,7 +48,7 @@ jobs:
           echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 21
@@ -58,14 +58,12 @@ jobs:
         with:
           bundler-cache: true
 
-      - run: brew install swiftlint
-
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v4
         with:
           cache-disabled: true
 
-      - name: Firebase iOS - GoogleService-Info.plist file
+      - name: Firebase iOS - GoogleService-Info.plist
         env:
           DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
         run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
@@ -78,13 +76,13 @@ jobs:
           ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosArm64 --no-daemon --stacktrace
 
       - name: Import Code-Signing Certificates
-        uses: Apple-Actions/import-codesign-certs@v6
+        uses: Apple-Actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.IOS_DIST_SIGNING_KEY_BASE64 }}
           p12-password: ${{ secrets.IOS_DIST_SIGNING_KEY_PASSWORD }}
 
       - name: Download Provisioning Profiles
-        uses: Apple-Actions/download-provisioning-profiles@v5
+        uses: Apple-Actions/download-provisioning-profiles@v3
         with:
           bundle-id: xyz.ksharma.krail
           profile-type: IOS_APP_STORE
@@ -92,36 +90,44 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
 
-      # Resolve SPM packages before Fastlane runs so xcodebuild doesn't try to
+      # Resolve Swift Packages before Fastlane runs so xcodebuild doesn't try to
       # resolve dependencies while signing settings are active (causes silent failure).
       - name: Resolve Swift Packages
         run: |
           cd iosApp
           xcodebuild -resolvePackageDependencies -scheme iosApp -project iosApp.xcodeproj
 
-      # Increment IOS_BUILD_NUMBER repo variable so every upload to TestFlight has a
-      # strictly higher CFBundleVersion than the previous one. Apple rejects uploads
-      # where the build number is not greater than the last uploaded build.
-      # Same pattern as ANDROID_VERSION_CODE — survives workflow renames.
+      # Derive the next build number using iosApp/scripts/ios_next_build_number.py.
+      # Strategy: next = max(asc_latest, github_floor) + 1
+      #   - ASC is the ground truth for what Apple has already accepted
+      #     (covers manual uploads that CI doesn't know about).
+      #   - The GitHub variable acts as a monotonic floor so we never go
+      #     backwards even if the ASC API returns a stale/lower value.
       - name: Set iOS build number
         env:
           GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          ASC_APP_ID: "6738934832"
+          IOS_BUILD_NUMBER_FLOOR: ${{ vars.IOS_BUILD_NUMBER }}
         run: |
           set -e
-          CURRENT=${{ vars.IOS_BUILD_NUMBER }}
-          if [ -z "$CURRENT" ]; then
-            echo "::error::IOS_BUILD_NUMBER variable is not set. Add it in Settings → Variables."
-            exit 1
-          fi
-          NEXT=$(( CURRENT + 1 ))
+          # Use a venv to avoid PEP 668 "externally-managed-environment" errors
+          # on Homebrew Python (macOS GitHub-hosted runners).
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet "PyJWT>=2.8" "cryptography>=42"
+
+          NEXT=$(.venv/bin/python iosApp/scripts/ios_next_build_number.py)
+          echo "IOS_BUILD_NUMBER=${NEXT}" >> $GITHUB_ENV
+
+          # Update GitHub variable as an audit trail (best-effort, non-fatal).
           gh api \
             --method PATCH \
             -H "Accept: application/vnd.github+json" \
             "/repos/${{ github.repository }}/actions/variables/IOS_BUILD_NUMBER" \
             -f value="${NEXT}" \
-            || echo "::warning::Could not write back IOS_BUILD_NUMBER — check PAT scope."
-          echo "IOS_BUILD_NUMBER=${NEXT}" >> $GITHUB_ENV
-          echo "Build number: ${CURRENT} → ${NEXT}"
+            || echo "::warning::Could not write back IOS_BUILD_NUMBER — check PAT_KRAIL_GITHUB scope."
 
       - name: Build iOS App for Release
         env:
@@ -129,7 +135,18 @@ jobs:
           APP_BUNDLE_ID: xyz.ksharma.krail
           PROVISIONING_PROFILE_NAME: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
           DEVELOPMENT_TEAM: ${{ vars.DEVELOPMENT_TEAM }}
+          # IOS_BUILD_NUMBER is NOT declared here — ${{ env.IOS_BUILD_NUMBER }} evaluates
+          # the job-level env at parse time (always empty here) and would OVERRIDE the
+          # value exported by the previous step via $GITHUB_ENV. $GITHUB_ENV propagation
+          # is the correct and sufficient mechanism for step-to-step value passing.
         run: |
+          set -e
+          # Guard: IOS_BUILD_NUMBER must be a positive integer before we build.
+          if ! [[ "$IOS_BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::IOS_BUILD_NUMBER='${IOS_BUILD_NUMBER}' is not a valid positive integer. Aborting build to prevent uploading an IPA with a stale build number."
+            exit 1
+          fi
+          echo "Stamping IPA with CFBundleVersion=${IOS_BUILD_NUMBER}"
           cd iosApp
           bundle exec fastlane build_release
 
@@ -139,7 +156,7 @@ jobs:
           bundle exec fastlane upload_testflight
 
       - name: Upload IPA as artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact-name || format('iosApp-release-ipa-{0}', github.run_id) }}
           path: iosApp/build/*.ipa
@@ -147,7 +164,7 @@ jobs:
 
       - name: Upload build logs
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: ios-build-logs-${{ github.run_id }}
           path: iosApp/build/logs

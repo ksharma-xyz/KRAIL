@@ -162,6 +162,40 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     )
 
+    /**
+     * Fired when the user taps the "Share with Friend" button on an expanded journey card.
+     *
+     * All values are pre-formatted by the caller using typed objects (e.g. [kotlin.time.Instant],
+     * [kotlin.time.Duration]) so the format is guaranteed — no raw display strings are accepted.
+     *
+     * @param transportModes Comma-separated transport mode names (e.g. `"Train,Bus"`).
+     * @param lines          Comma-separated line identifiers in journey order (e.g. `"T1,700"`).
+     * @param legCount       Total number of legs in the journey.
+     * @param totalTravelTime Duration formatted as `"30 mins"` or `"1h 5m"` — derived from
+     *                        `Duration.toFormattedDurationTimeString()`.
+     * @param originTime     Departure time formatted as `"8:25 AM"` (12-hour, uppercase AM/PM) —
+     *                       derived from `Instant → toLocalDateTime(AEST) → toHHMM()`.
+     * @param isPastDeparture `true` when the departure had already passed at share time.
+     */
+    data class ShareJourneyClickEvent(
+        val transportModes: String,
+        val lines: String,
+        val legCount: Int,
+        val totalTravelTime: String,
+        val originTime: String,
+        val isPastDeparture: Boolean,
+    ) : AnalyticsEvent(
+        name = "share_journey_click",
+        properties = mapOf(
+            "transportModes" to transportModes,
+            "lines" to lines,
+            "legCount" to legCount,
+            "totalTravelTime" to totalTravelTime,
+            "originTime" to originTime,
+            "isPastDeparture" to isPastDeparture,
+        ),
+    )
+
     data class JourneyCardExpandEvent(val hasStarted: Boolean) : AnalyticsEvent(
         name = "journey_card_expand",
         properties = mapOf("hasStarted" to hasStarted),

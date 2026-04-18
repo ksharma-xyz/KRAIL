@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -365,6 +366,16 @@ fun TimeTableScreen(
                             onMapClick(journey.journeyId)
                         },
                         isMapsAvailable = timeTableState.isMapsAvailable,
+                        onShareJourney = { bitmap, shareText, isPastDeparture ->
+                            onEvent(
+                                TimeTableUiEvent.ShareJourneyClicked(
+                                    bitmap = bitmap,
+                                    shareText = shareText,
+                                    journeyId = journey.journeyId,
+                                    isPastDeparture = isPastDeparture,
+                                ),
+                            )
+                        },
                         modifier = Modifier.padding(vertical = 8.dp)
                             .animateItem(),
                         departureDeviation = journey.departureDeviation,
@@ -408,6 +419,7 @@ private fun JourneyCardItem(
     transportModeLineList: ImmutableList<TransportModeLine>? = null,
     onLegClick: (Boolean) -> Unit,
     onMapClick: () -> Unit = {},
+    onShareJourney: (ImageBitmap, String, Boolean) -> Unit = { _, _, _ -> },
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
@@ -429,6 +441,7 @@ private fun JourneyCardItem(
             totalUniqueServiceAlerts = totalUniqueServiceAlerts,
             onLegClick = onLegClick,
             onMapClick = onMapClick,
+            onShareJourney = onShareJourney,
             isMapsAvailable = isMapsAvailable,
             modifier = modifier,
             departureDeviation = departureDeviation,

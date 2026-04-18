@@ -37,6 +37,7 @@ import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
+import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
@@ -62,14 +63,11 @@ class TimeTableViewModel(
     private val rateLimiter: RateLimiter,
     private val sandook: Sandook,
     private val analytics: Analytics,
+    private val shareManager: ShareManager,
     private val ioDispatcher: CoroutineDispatcher,
     private val festivalManager: FestivalManager,
     val flag: Flag,
 ) : ViewModel() {
-
-    init {
-        log("init: $this, ")
-    }
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
@@ -250,6 +248,8 @@ class TimeTableViewModel(
             is TimeTableUiEvent.ModeClicked -> trackOnModeClickEvent(event.displayModeSelectionRow)
 
             TimeTableUiEvent.BackClick -> trackBackClickEvent()
+
+            is TimeTableUiEvent.ShareJourneyClicked -> onShareJourneyClicked(event)
         }
     }
 
@@ -622,6 +622,27 @@ class TimeTableViewModel(
             alerts = alerts.map { it.toSelectServiceAlertsByJourneyId(journey.journeyId) },
         )
         return alerts
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun onShareJourneyClicked(event: TimeTableUiEvent.ShareJourneyClicked) {
+        viewModelScope.launch {
+            journeys[event.journeyId]?.let { journey ->
+                val originInstant = Instant.parse(journey.originUtcDateTime)
+                val destinationInstant = Instant.parse(journey.destinationUtcDateTime)
+                analytics.trackShareJourneyClickEvent(
+                    transportModeLines = journey.transportModeLines,
+                    legCount = journey.legs.size,
+                    originInstant = originInstant,
+                    travelDuration = destinationInstant - originInstant,
+                    isPastDeparture = event.isPastDeparture,
+                )
+            }
+            shareManager.shareImage(bitmap = event.bitmap, text = event.shareText)
+                .onFailure { error ->
+                    logError("error while sharing image", error as? Throwable)
+                }
+        }
     }
 
     private fun trackBackClickEvent() {

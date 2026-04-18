@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -45,9 +46,6 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.koinInject
-import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.AlertButton
@@ -93,6 +91,11 @@ fun JourneyCard(
     onAlertClick: () -> Unit = {},
     onLegClick: (Boolean) -> Unit = {},
     onMapClick: () -> Unit = {},
+    onShareJourney: (
+        bitmap: ImageBitmap,
+        shareText: String,
+        isPastDeparture: Boolean,
+    ) -> Unit = { _, _, _ -> },
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
@@ -103,10 +106,10 @@ fun JourneyCard(
         )
     }
 
-    val shareManager: ShareManager = koinInject()
     val coroutineScope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
-    val cardBackground = if (isPast) KrailTheme.colors.pastDepartureRowSurface else KrailTheme.colors.surface
+    val cardBackground =
+        if (isPast) KrailTheme.colors.pastDepartureRowSurface else KrailTheme.colors.surface
     // Capture these during composition — they cannot be read inside the coroutine lambda.
     val onSurfaceColor = KrailTheme.colors.onSurface
     val screenDensity = LocalDensity.current.density
@@ -189,17 +192,15 @@ fun JourneyCard(
                                 density = screenDensity,
                             )
                         }
-                        shareManager.shareImage(
-                            bitmap = branded,
-                            text = buildShareText(
+                        onShareJourney(
+                            branded,
+                            buildShareText(
                                 legList = legList,
                                 destinationTime = destinationTime,
                                 totalTravelTime = totalTravelTime,
                             ),
-                        ).onFailure { error ->
-                            // Pass as Throwable so the full stack trace is preserved in logs.
-                            logError("error while sharing image", error as? Throwable)
-                        }
+                            isPast,
+                        )
                     }
                 },
                 modifier = Modifier.clickable(
@@ -287,7 +288,7 @@ fun ExpandedJourneyCardContent(
                         modifier = Modifier.size(iconSize),
                     )
 
-                    Text("Share with Friend")
+                    Text("Share")
                 }
             }
         }

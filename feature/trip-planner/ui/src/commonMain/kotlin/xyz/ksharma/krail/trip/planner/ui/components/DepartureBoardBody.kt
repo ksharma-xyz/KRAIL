@@ -40,6 +40,12 @@ import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
  * @param onRetry                  Called when the user taps "Retry" on the error state.
  * @param onLoadPreviousDepartures Called when the user first opens the "Show previous" panel
  *                                 and no previous departures have been fetched yet.
+ * @param onLineFilterChange       Optional: called when the user selects or clears a line filter.
+ *                                 Receives the affected line number, its transport mode, and
+ *                                 whether the filter was applied (`true`) or cleared (`false`).
+ *                                 The line number is always the affected line — even on deselect.
+ * @param onShowPreviousToggle     Optional: called on every "Show / Hide previous" toggle.
+ *                                 `true` = user showed the panel; `false` = user hid it.
  * @param maxItems                 Maximum departure rows to show. `null` = show all.
  */
 @Composable
@@ -48,6 +54,8 @@ internal fun DepartureBoardBody(
     onRetry: () -> Unit,
     onLoadPreviousDepartures: () -> Unit,
     modifier: Modifier = Modifier,
+    onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)? = null,
+    onShowPreviousToggle: ((show: Boolean) -> Unit)? = null,
     maxItems: Int? = null,
 ) {
     // Empty string = no filter. rememberSaveable round-trips safely as a String primitive.
@@ -90,7 +98,17 @@ internal fun DepartureBoardBody(
                     LinesServedRow(
                         departures = state.departures,
                         selectedLine = selectedLine,
-                        onLineSelect = { selectedLineKey = it ?: "" },
+                        onLineSelect = { newLine ->
+                            // Capture the previously selected line BEFORE updating state so
+                            // we can report it when the filter is being cleared (deselected).
+                            val previousLine = selectedLine
+                            selectedLineKey = newLine ?: ""
+                            val affectedLine = newLine ?: previousLine
+                            val transportMode = affectedLine?.let { line ->
+                                state.departures.firstOrNull { it.lineNumber == line }?.transportModeName
+                            }
+                            onLineFilterChange?.invoke(affectedLine, transportMode, newLine != null)
+                        },
                     )
                 }
 
@@ -103,6 +121,7 @@ internal fun DepartureBoardBody(
                     TextButton(
                         onClick = {
                             showPrevious = !showPrevious
+                            onShowPreviousToggle?.invoke(showPrevious)
                             if (showPrevious &&
                                 state.previousDepartures.isEmpty() &&
                                 !state.isPreviousLoading

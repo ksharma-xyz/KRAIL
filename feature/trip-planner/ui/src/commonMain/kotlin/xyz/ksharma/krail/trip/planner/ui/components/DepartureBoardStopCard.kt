@@ -63,6 +63,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
  *   Used in the saved trips accordion where only one card can be open at a time.
  *
  * @param stopId          NSW Transport stop ID, e.g. "10111010".
+ * @param stopName        Human-readable stop name. Used in analytics for uncontrolled mode.
  * @param state           Current [DeparturesState] from the ViewModel or repository.
  * @param onEvent         Callback to send events to the ViewModel (only used in uncontrolled mode).
  * @param isExpanded      When non-null, puts the card in controlled mode with this expansion state.
@@ -76,6 +77,7 @@ fun DepartureBoardStopCard(
     state: DeparturesState,
     onEvent: (DeparturesUiEvent) -> Unit,
     modifier: Modifier = Modifier,
+    stopName: String = "",
     isExpanded: Boolean? = null,
     onExpandChange: ((Boolean) -> Unit)? = null,
     title: String = "Departure Board",
@@ -106,7 +108,7 @@ fun DepartureBoardStopCard(
             // Uncontrolled mode: start polling on expand, stop it on collapse.
             if (expanded) {
                 log("[DEPARTURES] UI card EXPANDED stopId=$stopId — sending LoadDepartures")
-                onEvent(DeparturesUiEvent.LoadDepartures(stopId))
+                onEvent(DeparturesUiEvent.LoadDepartures(stopId, stopName))
             } else {
                 log("[DEPARTURES] UI card COLLAPSED stopId=$stopId — sending StopPolling")
                 onEvent(DeparturesUiEvent.StopPolling)
@@ -144,7 +146,13 @@ fun DepartureBoardStopCard(
             arrowRotation = arrowRotation,
             onClick = {
                 val next = !expanded
-                if (onExpandChange != null) onExpandChange(next) else internalExpanded = next
+                if (onExpandChange != null) {
+                    onExpandChange(next)
+                } else {
+                    // Uncontrolled mode: track the expand/collapse click as a nearby-stop event.
+                    internalExpanded = next
+                    onEvent(DeparturesUiEvent.NearbyStopDepartureBoardToggle(stopId, stopName, next))
+                }
             },
         )
 
@@ -160,6 +168,19 @@ fun DepartureBoardStopCard(
                 state = state,
                 onRetry = { if (isExpanded == null) onEvent(DeparturesUiEvent.Refresh) },
                 onLoadPreviousDepartures = { onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId)) },
+                onLineFilterChange = { lineNumber, transportMode, selected ->
+                    onEvent(
+                        DeparturesUiEvent.LineFilterChanged(
+                            stopId = stopId,
+                            selected = selected,
+                            lineNumber = lineNumber,
+                            transportMode = transportMode,
+                        ),
+                    )
+                },
+                onShowPreviousToggle = { show ->
+                    onEvent(DeparturesUiEvent.TogglePreviousDepartures(stopId, show))
+                },
                 maxItems = maxItems,
                 modifier = Modifier.padding(top = 4.dp),
             )

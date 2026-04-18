@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
@@ -26,8 +29,11 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("TooManyFunctions", "")
 class DeparturesViewModel(
     private val repository: DepartureBoardRepository,
+    private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
@@ -123,47 +129,102 @@ class DeparturesViewModel(
         }
 
     fun onEvent(event: DeparturesUiEvent) {
-        val t = nowMs()
         when (event) {
-            is DeparturesUiEvent.LoadDepartures -> {
-                val current = activeStopId.value
-                if (event.stopId != current) {
-                    log("[$LOG_TAG] t=$t onEvent LoadDepartures → stopId=${event.stopId} (was $current)")
-                    // Switching activeStopId causes flatMapLatest to cancel the old pollStop
-                    // flow and start a new one — no manual stopIfActive/setActiveStop needed.
-                    activeStopId.value = event.stopId
-                } else {
-                    log("[$LOG_TAG] t=$t onEvent LoadDepartures SAME STOP — already polling ${event.stopId}")
-                }
-            }
-
-            DeparturesUiEvent.Refresh -> {
-                val stopId = activeStopId.value
-                if (stopId != null) {
-                    log("[$LOG_TAG] t=$t onEvent Refresh → stopId=$stopId")
-                    viewModelScope.launch { repository.refresh(stopId) }
-                } else {
-                    log("[$LOG_TAG] t=$t onEvent Refresh NOOP — no active stop")
-                }
-            }
-
-            is DeparturesUiEvent.LoadPreviousDepartures -> {
-                log("[$LOG_TAG] t=$t onEvent LoadPreviousDepartures → stopId=${event.stopId}")
-                viewModelScope.launch { repository.loadPreviousDepartures(event.stopId) }
-            }
-
-            DeparturesUiEvent.StopPolling -> {
-                val stopId = activeStopId.value
-                if (stopId != null) {
-                    log("[$LOG_TAG] t=$t onEvent StopPolling → stopId=$stopId")
-                    // Setting to null switches flatMapLatest to flowOf(idle state),
-                    // which cancels the pollStop flow and stops the polling loop.
-                    activeStopId.value = null
-                } else {
-                    log("[$LOG_TAG] t=$t onEvent StopPolling NOOP — no active stop")
-                }
-            }
+            is DeparturesUiEvent.LoadDepartures -> onLoadDepartures(event)
+            DeparturesUiEvent.Refresh -> onRefresh()
+            is DeparturesUiEvent.LoadPreviousDepartures -> onLoadPreviousDepartures(event.stopId)
+            DeparturesUiEvent.StopPolling -> onStopPolling()
+            is DeparturesUiEvent.LineFilterChanged -> onLineFilterChanged(event)
+            is DeparturesUiEvent.TogglePreviousDepartures -> onTogglePreviousDepartures(event)
+            is DeparturesUiEvent.NearbyStopDepartureBoardToggle -> onNearbyStopDepartureBoardToggle(event)
         }
+    }
+
+    private fun onLoadDepartures(event: DeparturesUiEvent.LoadDepartures) {
+        val t = nowMs()
+        val current = activeStopId.value
+        if (event.stopId != current) {
+            log(
+                "[$LOG_TAG] t=$t onEvent LoadDepartures → stopId=${event.stopId} " +
+                    "(was $current)",
+            )
+            analytics.trackDepartureBoardScreenView(
+                stopId = event.stopId,
+                stopName = event.stopName,
+                source = DepartureBoardSource.STOP_SHEET,
+            )
+            activeStopId.value = event.stopId
+        } else {
+            log(
+                "[$LOG_TAG] t=$t onEvent LoadDepartures SAME STOP — already polling " +
+                    event.stopId,
+            )
+        }
+    }
+
+    private fun onRefresh() {
+        val t = nowMs()
+        val stopId = activeStopId.value
+        if (stopId != null) {
+            log("[$LOG_TAG] t=$t onEvent Refresh → stopId=$stopId")
+            viewModelScope.launch { repository.refresh(stopId) }
+        } else {
+            log("[$LOG_TAG] t=$t onEvent Refresh NOOP — no active stop")
+        }
+    }
+
+    private fun onLoadPreviousDepartures(stopId: String) {
+        log("[$LOG_TAG] t=${nowMs()} onEvent LoadPreviousDepartures → stopId=$stopId")
+        viewModelScope.launch { repository.loadPreviousDepartures(stopId) }
+    }
+
+    private fun onStopPolling() {
+        val t = nowMs()
+        val stopId = activeStopId.value
+        if (stopId != null) {
+            log("[$LOG_TAG] t=$t onEvent StopPolling → stopId=$stopId")
+            activeStopId.value = null
+        } else {
+            log("[$LOG_TAG] t=$t onEvent StopPolling NOOP — no active stop")
+        }
+    }
+
+    private fun onLineFilterChanged(event: DeparturesUiEvent.LineFilterChanged) {
+        log(
+            "[$LOG_TAG] t=${nowMs()} onEvent LineFilterChanged → stopId=${event.stopId} " +
+                "line=${event.lineNumber} selected=${event.selected}",
+        )
+        analytics.trackDepartureBoardLineFilterClick(
+            stopId = event.stopId,
+            selected = event.selected,
+            lineNumber = event.lineNumber,
+            transportMode = event.transportMode,
+            source = DepartureBoardSource.STOP_SHEET,
+        )
+    }
+
+    private fun onTogglePreviousDepartures(event: DeparturesUiEvent.TogglePreviousDepartures) {
+        log(
+            "[$LOG_TAG] t=${nowMs()} onEvent TogglePreviousDepartures → stopId=${event.stopId} " +
+                "show=${event.show}",
+        )
+        analytics.trackDepartureBoardShowPrevious(
+            stopId = event.stopId,
+            show = event.show,
+            source = DepartureBoardSource.STOP_SHEET,
+        )
+    }
+
+    private fun onNearbyStopDepartureBoardToggle(event: DeparturesUiEvent.NearbyStopDepartureBoardToggle) {
+        log(
+            "[$LOG_TAG] t=${nowMs()} onEvent NearbyStopDepartureBoardToggle → " +
+                "stopId=${event.stopId} expand=${event.expand}",
+        )
+        analytics.trackNearbyStopDepartureBoardClick(
+            stopId = event.stopId,
+            stopName = event.stopName,
+            expand = event.expand,
+        )
     }
 
     override fun onCleared() {

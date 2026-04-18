@@ -58,6 +58,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionSection
+import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -77,10 +78,7 @@ fun SavedTripsScreen(
     onInviteFriendsTileDisplay: () -> Unit = {},
     departureBoardEntries: ImmutableList<StopDepartureBoardEntry> = persistentListOf(),
     expandedDepartureBoardStopId: String? = null,
-    onDepartureBoardExpand: (String) -> Unit = {},
-    onDepartureBoardCollapse: () -> Unit = {},
-    onLoadPreviousDepartures: (String) -> Unit = {},
-    onRefreshDepartureBoardStop: (String) -> Unit = {},
+    onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
 ) {
     val emptyStateTip = remember {
         buildList {
@@ -234,10 +232,7 @@ fun SavedTripsScreen(
                             expandedMap = expandedMap,
                             departureBoardEntries = departureBoardEntries,
                             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
-                            onDepartureBoardExpand = onDepartureBoardExpand,
-                            onDepartureBoardCollapse = onDepartureBoardCollapse,
-                            onLoadPreviousDepartures = onLoadPreviousDepartures,
-                            onRefreshDepartureBoardStop = onRefreshDepartureBoardStop,
+                            onDepartureBoardEvent = onDepartureBoardEvent,
                         )
                     }
                 }
@@ -295,10 +290,7 @@ private fun LazyListScope.savedTripsContent(
     expandedMap: SnapshotStateMap<String, Boolean>,
     departureBoardEntries: ImmutableList<StopDepartureBoardEntry>,
     expandedDepartureBoardStopId: String?,
-    onDepartureBoardExpand: (String) -> Unit,
-    onDepartureBoardCollapse: () -> Unit,
-    onLoadPreviousDepartures: (String) -> Unit = {},
-    onRefreshDepartureBoardStop: (String) -> Unit = {},
+    onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
 ) {
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
@@ -377,11 +369,7 @@ private fun LazyListScope.savedTripsContent(
             departureBoardAccordionSection(
                 entry = entry,
                 isExpanded = expandedDepartureBoardStopId == entry.stopId,
-                onExpandChange = { expand ->
-                    if (expand) onDepartureBoardExpand(entry.stopId) else onDepartureBoardCollapse()
-                },
-                onLoadPreviousDepartures = onLoadPreviousDepartures,
-                onRefreshStop = onRefreshDepartureBoardStop,
+                onEvent = onDepartureBoardEvent,
             )
         }
 

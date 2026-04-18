@@ -124,10 +124,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             onInviteFriendsTileDisplay = { viewModel.markInviteFriendsTileAsSeen() },
             departureBoardEntries = departureBoardEntries,
             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
-            onDepartureBoardExpand = departureBoardViewModel::onCardExpand,
-            onDepartureBoardCollapse = departureBoardViewModel::onCardCollapse,
-            onLoadPreviousDepartures = departureBoardViewModel::onLoadPreviousDepartures,
-            onRefreshDepartureBoardStop = departureBoardViewModel::onRefreshStop,
+            onDepartureBoardEvent = departureBoardViewModel::onEvent,
         )
     }
 }

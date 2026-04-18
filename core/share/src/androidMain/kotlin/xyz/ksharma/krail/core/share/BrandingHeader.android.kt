@@ -1,7 +1,9 @@
 package xyz.ksharma.krail.core.share
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -18,14 +20,17 @@ actual fun ImageBitmap.withBrandingHeader(
 ): ImageBitmap {
     // graphicsLayer.toImageBitmap() on Android returns a hardware-backed bitmap (GPU memory).
     // Software Canvas cannot draw hardware bitmaps directly — copy to ARGB_8888 in RAM first.
-    val original = asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, false)
+    val original = asAndroidBitmap().copy(
+        Bitmap.Config.ARGB_8888,
+        false,
+    )
     val width = original.width
 
     // Convert sp/dp to pixels using screen density
-    val titleSizePx = 28f * density      // slightly larger than titleLarge
-    val subtitleSizePx = 12f * density   // caption ~12sp
-    val paddingPx = 24f * density        // 24dp top and bottom padding
-    val gapPx = 4f * density             // 4dp gap between title and subtitle (tight)
+    val titleSizePx = BRANDING_TITLE_SIZE_SP * density
+    val subtitleSizePx = BRANDING_SUBTITLE_SIZE_SP * density
+    val paddingPx = BRANDING_HEADER_PADDING_DP * density
+    val gapPx = BRANDING_TITLE_SUBTITLE_GAP_DP * density
 
     // Baseline positions — drawText y is the text baseline.
     // We treat titleSizePx as the approximate ascent (works well for most system fonts).
@@ -46,7 +51,7 @@ actual fun ImageBitmap.withBrandingHeader(
     val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = textColor.toArgb()
         textSize = titleSizePx
-        typeface = android.graphics.Typeface.create("Roboto", android.graphics.Typeface.BOLD)
+        typeface = Typeface.create("Roboto", Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
     canvas.drawText(titleText, width / 2f, titleBaseline, titlePaint)
@@ -55,7 +60,7 @@ actual fun ImageBitmap.withBrandingHeader(
     val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = textColor.toArgb()
         textSize = subtitleSizePx
-        typeface = android.graphics.Typeface.create("Roboto", android.graphics.Typeface.BOLD)
+        typeface = Typeface.create("Roboto", Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
     canvas.drawText(subtitleText, width / 2f, subtitleBaseline, subtitlePaint)
@@ -65,4 +70,3 @@ actual fun ImageBitmap.withBrandingHeader(
 
     return combined.asImageBitmap()
 }
-

@@ -35,15 +35,19 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_share
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.share.ShareManager
+import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
@@ -57,9 +61,6 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
-import org.koin.compose.koinInject
-import xyz.ksharma.krail.core.share.ShareManager
-import xyz.ksharma.krail.core.share.withBrandingHeader
 
 /**
  * A card that displays information about a journey.
@@ -185,8 +186,7 @@ fun JourneyCard(
                             )
                         shareManager.shareImage(bitmap)
                             .onFailure { error ->
-                                // TODO: surface to UI when a snackbar / error state is wired up.
-                                println("ShareManager error: $error")
+                                logError("error while sharing image: $error")
                             }
                     }
                 },

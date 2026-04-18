@@ -15,6 +15,13 @@ import org.jetbrains.skia.Surface
 import org.jetbrains.skia.TextLine
 import org.jetbrains.skia.Typeface
 
+// ARGB channel bit-shift positions and max channel value for Skia colour packing
+private const val ARGB_MAX_CHANNEL = 255
+private const val ARGB_ALPHA_SHIFT = 24
+private const val ARGB_RED_SHIFT = 16
+private const val ARGB_GREEN_SHIFT = 8
+private const val ARGB_BLUE_SHIFT = 0
+
 actual fun ImageBitmap.withBrandingHeader(
     titleText: String,
     subtitleText: String,
@@ -26,11 +33,10 @@ actual fun ImageBitmap.withBrandingHeader(
     val width = originalBitmap.width
     val originalHeight = originalBitmap.height
 
-    // Convert sp/dp to pixels using screen density
-    val titleSizePx = 28f * density      // slightly larger than titleLarge
-    val subtitleSizePx = 12f * density   // caption ~12sp
-    val paddingPx = 24f * density        // 24dp top and bottom padding
-    val gapPx = 4f * density             // 4dp gap between title and subtitle (tight)
+    val titleSizePx = BRANDING_TITLE_SIZE_SP * density
+    val subtitleSizePx = BRANDING_SUBTITLE_SIZE_SP * density
+    val paddingPx = BRANDING_HEADER_PADDING_DP * density
+    val gapPx = BRANDING_TITLE_SUBTITLE_GAP_DP * density
 
     val titleBaseline = paddingPx + titleSizePx
     val subtitleBaseline = titleBaseline + gapPx + subtitleSizePx
@@ -40,17 +46,20 @@ actual fun ImageBitmap.withBrandingHeader(
 
     // Skia uses ARGB packed int
     fun Color.toSkiaArgb(): Int =
-        ((alpha * 255).toInt() shl 24) or
-            ((red * 255).toInt() shl 16) or
-            ((green * 255).toInt() shl 8) or
-            (blue * 255).toInt()
+        ((alpha * ARGB_MAX_CHANNEL).toInt() shl ARGB_ALPHA_SHIFT) or
+            ((red * ARGB_MAX_CHANNEL).toInt() shl ARGB_RED_SHIFT) or
+            ((green * ARGB_MAX_CHANNEL).toInt() shl ARGB_GREEN_SHIFT) or
+            ((blue * ARGB_MAX_CHANNEL).toInt() shl ARGB_BLUE_SHIFT)
 
     val surface = Surface.makeRasterN32Premul(width, totalHeight)
     val canvas: Canvas = surface.canvas
 
     // — Header background —
     val bgPaint = Paint().apply { color = backgroundColor.toSkiaArgb() }
-    canvas.drawRect(Rect.makeXYWH(0f, 0f, width.toFloat(), headerHeight.toFloat()), bgPaint)
+    canvas.drawRect(
+        Rect.makeXYWH(0f, 0f, width.toFloat(), headerHeight.toFloat()),
+        bgPaint,
+    )
 
     val textPaint = Paint().apply { color = textColor.toSkiaArgb() }
 

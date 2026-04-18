@@ -23,4 +23,3 @@ expect fun ImageBitmap.withBrandingHeader(
     textColor: Color,
     density: Float,
 ): ImageBitmap
-

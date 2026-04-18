@@ -62,6 +62,7 @@ kotlin {
             implementation(projects.core.network)
             implementation(projects.core.permission.data)
             implementation(projects.core.remoteConfig)
+            implementation(projects.core.share)
             implementation(projects.discover.network.real)
             implementation(projects.feature.departures.network)
             implementation(projects.feature.departures.ui)

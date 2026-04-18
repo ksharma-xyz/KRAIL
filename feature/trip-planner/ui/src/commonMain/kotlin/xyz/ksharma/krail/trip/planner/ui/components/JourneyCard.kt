@@ -17,13 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -34,10 +38,16 @@ import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
+import krail.feature.trip_planner.ui.generated.resources.ic_share
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.share.ShareManager
+import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
@@ -91,17 +101,28 @@ fun JourneyCard(
         )
     }
 
+    val shareManager: ShareManager = koinInject()
+    val coroutineScope = rememberCoroutineScope()
+    val graphicsLayer = rememberGraphicsLayer()
+    val cardBackground = if (isPast) KrailTheme.colors.pastDepartureRowSurface else KrailTheme.colors.surface
+    // Capture these during composition — they cannot be read inside the coroutine lambda.
+    val onSurfaceColor = KrailTheme.colors.onSurface
+    val screenDensity = LocalDensity.current.density
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            // Past journeys get a distinct background instead of alpha-dimming.
-            .background(
-                if (isPast) {
-                    KrailTheme.colors.pastDepartureRowSurface
-                } else {
-                    KrailTheme.colors.surface
-                },
-            )
+            .background(cardBackground)
+            .drawWithContent {
+                graphicsLayer.record {
+                    // Draw the background explicitly inside the layer so it is included
+                    // in the captured bitmap. Without this, .background() draws on the
+                    // main canvas outside the layer and the shared image is transparent.
+                    drawRect(color = cardBackground)
+                    this@drawWithContent.drawContent()
+                }
+                drawLayer(graphicsLayer)
+            }
             .clickable(
                 role = Role.Button,
                 onClick = onClick,
@@ -155,6 +176,20 @@ fun JourneyCard(
                 onLegClick = onLegClick,
                 onMapClick = onMapClick,
                 isMapsAvailable = isMapsAvailable,
+                onShareClick = {
+                    coroutineScope.launch {
+                        val bitmap = graphicsLayer.toImageBitmap()
+                            .withBrandingHeader(
+                                backgroundColor = cardBackground,
+                                textColor = onSurfaceColor,
+                                density = screenDensity,
+                            )
+                        shareManager.shareImage(bitmap)
+                            .onFailure { error ->
+                                logError("error while sharing image: $error")
+                            }
+                    }
+                },
                 modifier = Modifier.clickable(
                     role = Role.Button,
                     onClick = onClick,
@@ -177,6 +212,7 @@ fun ExpandedJourneyCardContent(
     onMapClick: () -> Unit,
     modifier: Modifier = Modifier,
     isMapsAvailable: Boolean = false,
+    onShareClick: () -> Unit = {},
 ) {
     Column(modifier = modifier) {
         // Buttons row - Alert always at start, Maps always next to it
@@ -214,6 +250,25 @@ fun ExpandedJourneyCardContent(
                 ) {
                     Text(text = "Maps")
                 }
+            }
+
+            // Share button
+            Button(
+                onClick = onShareClick,
+                dimensions = ButtonDefaults.smallButtonSize(),
+                colors = ButtonDefaults.buttonColors(
+                    customContainerColor = KrailTheme.colors.onSurface,
+                    customContentColor = KrailTheme.colors.surface,
+                ),
+            ) {
+                val density = LocalDensity.current
+                val iconSize = with(density) { 14.sp.toDp() }
+                Image(
+                    painter = painterResource(Res.drawable.ic_share),
+                    contentDescription = "Share journey",
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                    modifier = Modifier.size(iconSize),
+                )
             }
         }
 

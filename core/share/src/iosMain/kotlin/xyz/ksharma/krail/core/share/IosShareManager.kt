@@ -1,0 +1,65 @@
+package xyz.ksharma.krail.core.share
+
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asSkiaBitmap
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.skia.EncodedImageFormat
+import org.jetbrains.skia.Image
+import platform.Foundation.NSData
+import platform.Foundation.create
+import platform.UIKit.UIActivityViewController
+import platform.UIKit.UIApplication
+import platform.UIKit.UIImage
+import platform.UIKit.UIViewController
+
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+class IosShareManager : ShareManager {
+
+    override suspend fun shareImage(bitmap: ImageBitmap, title: String): Result<Unit> =
+        runCatching {
+            // Skia PNG encoding is CPU-heavy — run on Default to keep the Main thread free.
+            val byteArray = withContext(Dispatchers.Default) {
+                val skiaBitmap = bitmap.asSkiaBitmap()
+                val skiaImage = Image.makeFromBitmap(skiaBitmap)
+                // encodeToData returns null when Skia cannot encode (e.g. empty bitmap).
+                // Propagate as an exception so runCatching captures it.
+                checkNotNull(skiaImage.encodeToData(EncodedImageFormat.PNG, 100)) {
+                    "Skia encodeToData returned null — bitmap may be empty or invalid"
+                }.bytes
+            }
+
+            // Pin the ByteArray so the GC cannot move it while the C pointer is live,
+            // then wrap in NSData. Both are cheap and can stay on whichever thread we're on.
+            val nsData = byteArray.usePinned { pinned ->
+                NSData.create(bytes = pinned.addressOf(0), length = byteArray.size.toULong())
+            }
+            val uiImage = checkNotNull(UIImage(data = nsData)) {
+                "UIImage(data:) returned null — NSData may be malformed"
+            }
+
+            // All UIKit calls (UIActivityViewController, presentViewController) must be on Main.
+            withContext(Dispatchers.Main) {
+                val activityVC = UIActivityViewController(
+                    activityItems = listOf(uiImage),
+                    applicationActivities = null,
+                )
+                val topVC = checkNotNull(topmostViewController()) {
+                    "No UIViewController available to present the share sheet from"
+                }
+                topVC.presentViewController(activityVC, animated = true, completion = null)
+            }
+        }
+
+    private fun topmostViewController(): UIViewController? {
+        var topVC = UIApplication.sharedApplication.keyWindow?.rootViewController
+        while (topVC?.presentedViewController != null) {
+            topVC = topVC.presentedViewController
+        }
+        return topVC
+    }
+}

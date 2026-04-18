@@ -136,14 +136,14 @@ internal fun DepartureBoardAccordionSectionHeader(
             if (isExpanded && entry.state.silentLoading) {
                 AnimatedDots(
                     modifier = Modifier.size(width = 32.dp, height = 16.dp),
-                    color = KrailTheme.colors.softLabel,
+                    color = KrailTheme.colors.onSurface,
                 )
             }
 
             Image(
                 painter = painterResource(Res.drawable.ic_arrow_down),
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                colorFilter = ColorFilter.tint(KrailTheme.colors.softLabel),
+                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
                 modifier = Modifier.size(18.dp).rotate(arrowRotation),
             )
         }

@@ -6,6 +6,8 @@ import kotlin.time.ExperimentalTime
 
 private const val PROP_STOP_ID = "stopId"
 private const val PROP_SOURCE = "source"
+private const val PROP_EXPAND = "expand"
+private const val PROP_STOP_NAME = "stopName"
 
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
@@ -351,7 +353,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         properties = mapOf(
             PROP_STOP_ID to stopId.trim(),
             "facilityId" to facilityId.trim(),
-            "expand" to expand.toString().trim(),
+            PROP_EXPAND to expand.toString().trim(),
             "time" to time.toString().trim(),
         ),
     )
@@ -601,6 +603,136 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     // endregion
 
+    // region DepartureBoard
+
+    /**
+     * Identifies which departure board surface fired the event.
+     *
+     *  - [SAVED_TRIPS] — the accordion on the Saved Trips screen (driven by [DepartureBoardViewModel])
+     *  - [STOP_SHEET]  — the bottom sheet opened when a user taps a stop
+     *                    (driven by [DeparturesViewModel])
+     */
+    enum class DepartureBoardSource(val value: String) {
+        SAVED_TRIPS("saved_trips"),
+        STOP_SHEET("stop_sheet"),
+    }
+
+    /**
+     * Fired when departure polling starts for a stop (i.e. the board is opened / becomes active).
+     * Use to measure how often users check live departures and which stops are most viewed.
+     *
+     * @param stopId   NSW Transport stop ID being polled.
+     * @param stopName Human-readable stop name shown in the UI.
+     * @param source   Which surface opened the board.
+     */
+    data class DepartureBoardScreenViewEvent(
+        val stopId: String,
+        val stopName: String,
+        val source: DepartureBoardSource,
+    ) : AnalyticsEvent(
+        name = "dep_board_screen_view",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            PROP_STOP_NAME to stopName,
+            PROP_SOURCE to source.value,
+        ),
+    )
+
+    /**
+     * Fired when the user taps a line chip to filter or clear departures.
+     * Use to understand which lines users care about most at each stop and
+     * how often they reset the filter.
+     *
+     * @param stopId        Stop where the chip was tapped.
+     * @param selected      `true` = filter applied; `false` = filter cleared.
+     * @param lineNumber    The affected line, e.g. "T1", "333". Always present — even when
+     *                      [selected] is `false`, the previously selected line is passed so
+     *                      we know which line was deselected.
+     * @param transportMode Human-readable mode name, e.g. "Train". Always present alongside [lineNumber].
+     * @param source        Which surface the tap came from.
+     */
+    data class DepartureBoardLineFilterClickEvent(
+        val stopId: String,
+        val selected: Boolean,
+        val lineNumber: String? = null,
+        val transportMode: String? = null,
+        val source: DepartureBoardSource,
+    ) : AnalyticsEvent(
+        name = "dep_board_line_filter_click",
+        properties = buildMap {
+            put(PROP_STOP_ID, stopId)
+            put("selected", selected)
+            put(PROP_SOURCE, source.value)
+            lineNumber?.let { put("lineNumber", it) }
+            transportMode?.let { put("transportMode", it) }
+        },
+    )
+
+    /**
+     * Fired when the user toggles the "Show / Hide previous departures" panel.
+     * Use to measure demand for past departure data and validate the UX of the toggle.
+     *
+     * @param stopId Stop whose previous departures the user wants to see.
+     * @param show   `true` = user opened the panel; `false` = user closed it.
+     * @param source Which surface the toggle was used on.
+     */
+    data class DepartureBoardShowPreviousEvent(
+        val stopId: String,
+        val show: Boolean,
+        val source: DepartureBoardSource,
+    ) : AnalyticsEvent(
+        name = "dep_board_show_previous",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            "show" to show,
+            PROP_SOURCE to source.value,
+        ),
+    )
+
+    /**
+     * Fired when the user taps a stop card in the saved-trips departure board accordion.
+     * Use to track which stops users most frequently monitor and expand/collapse patterns.
+     *
+     * @param stopId   Stop that was tapped.
+     * @param stopName Human-readable stop name.
+     * @param expand   `true` = card is being expanded; `false` = card is being collapsed.
+     */
+    data class DepartureBoardStopClickEvent(
+        val stopId: String,
+        val stopName: String,
+        val expand: Boolean,
+    ) : AnalyticsEvent(
+        name = "dep_board_stop_click",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            PROP_STOP_NAME to stopName,
+            PROP_EXPAND to expand,
+        ),
+    )
+
+    /**
+     * Fired when the user taps the Departure Board header in the nearby-stop bottom sheet
+     * (stop selection / stop details sheet) to expand or collapse the live board.
+     *
+     * @param stopId   NSW Transport stop ID of the nearby stop.
+     * @param stopName Human-readable stop name.
+     * @param expand   `true` = board is being expanded; `false` = board is being collapsed.
+     */
+    data class NearbyStopDepartureBoardClickEvent(
+        val stopId: String,
+        val stopName: String,
+        val expand: Boolean,
+    ) : AnalyticsEvent(
+        name = "nearby_stop_dep_board_click",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            PROP_STOP_NAME to stopName,
+            PROP_EXPAND to expand,
+        ),
+    )
+
+    // endregion
+
     // region InfoTiles
 
     data class InfoTileInteraction(
@@ -615,7 +747,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ).apply {
             dismiss?.let { put("dismiss", dismiss) }
             ctaUrl?.let { put("cta_click", ctaUrl) }
-            expand?.let { put("expand", expand) }
+            expand?.let { put(PROP_EXPAND, expand) }
         },
     )
 

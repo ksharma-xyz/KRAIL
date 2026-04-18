@@ -15,6 +15,12 @@ interface ShareManager {
      *
      * @param bitmap The image to share.
      * @param title Optional chooser title (Android) or subject.
+     * @param text Optional text to accompany the image — used as a caption/message body
+     *             by apps that support it (e.g. WhatsApp, Messages, Instagram).
      */
-    suspend fun shareImage(bitmap: ImageBitmap, title: String = "Krail Journey"): Result<Unit>
+    suspend fun shareImage(
+        bitmap: ImageBitmap,
+        title: String = "Krail Journey",
+        text: String? = null,
+    ): Result<Unit>
 }

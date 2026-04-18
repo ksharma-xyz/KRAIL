@@ -75,11 +75,11 @@ actual fun ImageBitmap.withBrandingHeader(
     val titleX = (width - titleLine.width) / 2f
     canvas.drawTextLine(titleLine, titleX, titleBaseline, textPaint)
 
-    // — Subtitle: URL — semi-bold weight, centred
-    val regularTypeface: Typeface =
+    // — Subtitle: URL — bold, centred
+    val boldSubtitleTypeface: Typeface =
         FontMgr.default.matchFamilyStyle("Helvetica Neue", FontStyle.BOLD)
             ?: Typeface.makeEmpty()
-    val subtitleFont = Font(regularTypeface, subtitleSizePx)
+    val subtitleFont = Font(boldSubtitleTypeface, subtitleSizePx)
     val subtitleLine = TextLine.make(subtitleText, subtitleFont)
     val subtitleX = (width - subtitleLine.width) / 2f
     canvas.drawTextLine(subtitleLine, subtitleX, subtitleBaseline, textPaint)

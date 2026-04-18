@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.ImageBitmap
  * Returns a new [ImageBitmap] with a KRAIL branding header painted above the original image.
  *
  * The header contains:
- *  - [titleText]    — centred, bold, titleLarge size (~22sp)
+ *  - [titleText]    — centred, bold, ~28sp
  *  - [subtitleText] — centred, caption size (~12sp)
  *  - 24 dp padding above the title and below the subtitle
  *

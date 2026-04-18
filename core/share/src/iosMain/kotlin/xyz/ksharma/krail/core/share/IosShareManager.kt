@@ -12,10 +12,14 @@ import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 import platform.Foundation.NSData
 import platform.Foundation.create
+import platform.Foundation.setValue
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 import platform.UIKit.UIImage
 import platform.UIKit.UIViewController
+import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
+import platform.UIKit.popoverPresentationController
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 class IosShareManager : ShareManager {
@@ -44,8 +48,6 @@ class IosShareManager : ShareManager {
 
             // All UIKit calls (UIActivityViewController, presentViewController) must be on Main.
             withContext(Dispatchers.Main) {
-                // iOS: pass both image and text in activityItems — apps like Messages, WhatsApp
-                // use the text as the message body/caption alongside the image.
                 val activityItems = buildList {
                     add(uiImage)
                     if (text != null) add(text)
@@ -54,15 +56,37 @@ class IosShareManager : ShareManager {
                     activityItems = activityItems,
                     applicationActivities = null,
                 )
+                // Pass title as the email/AirDrop subject — ignored by apps that don't support it.
+                activityVC.setValue(title, forKey = "subject")
+
                 val topVC = checkNotNull(topmostViewController()) {
                     "No UIViewController available to present the share sheet from"
                 }
+                // iPad requires a popover anchor — without this the app crashes on iPad at presentation.
+                activityVC.popoverPresentationController?.sourceView = topVC.view
+                activityVC.popoverPresentationController?.sourceRect = topVC.view.bounds
                 topVC.presentViewController(activityVC, animated = true, completion = null)
             }
         }
 
     private fun topmostViewController(): UIViewController? {
-        var topVC = UIApplication.sharedApplication.keyWindow?.rootViewController
+        // keyWindow is deprecated in iOS 13+ (unreliable in multi-scene apps).
+        // Walk connectedScenes to find the active foreground key window instead.
+        val keyWindow: UIWindow? = UIApplication.sharedApplication
+            .connectedScenes
+            .filterIsInstance<UIWindowScene>()
+            .firstOrNull { it.activationState == platform.UIKit.UISceneActivationStateForegroundActive }
+            ?.windows
+            ?.filterIsInstance<UIWindow>()
+            ?.firstOrNull { it.isKeyWindow() }
+            ?: UIApplication.sharedApplication.connectedScenes
+                .filterIsInstance<UIWindowScene>()
+                .firstOrNull()
+                ?.windows
+                ?.filterIsInstance<UIWindow>()
+                ?.firstOrNull()
+
+        var topVC = keyWindow?.rootViewController
         while (topVC?.presentedViewController != null) {
             topVC = topVC.presentedViewController
         }

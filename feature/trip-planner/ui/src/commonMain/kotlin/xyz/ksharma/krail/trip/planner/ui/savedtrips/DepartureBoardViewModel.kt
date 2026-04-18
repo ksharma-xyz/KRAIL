@@ -16,8 +16,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.departures.ui.DepartureBoardRepository
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
+import xyz.ksharma.krail.departures.ui.trackDepartureBoardLineFilterClick
+import xyz.ksharma.krail.departures.ui.trackDepartureBoardShowPrevious
+import xyz.ksharma.krail.departures.ui.trackDepartureBoardStopClick
+import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
@@ -46,6 +52,7 @@ data class StopDepartureBoardEntry(
  */
 class DepartureBoardViewModel(
     private val repository: DepartureBoardRepository,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     // Unique stops derived from the saved trips list (both from- and to-stops, deduplicated).
@@ -120,6 +127,30 @@ class DepartureBoardViewModel(
     }
 
     /**
+     * Single entry-point for all UI-initiated events.
+     * Delegates to the appropriate internal function so callers don't need
+     * separate function references for each action.
+     */
+    fun onEvent(event: DepartureBoardUiEvent) {
+        when (event) {
+            is DepartureBoardUiEvent.ExpandStop -> onCardExpand(event.stopId)
+            DepartureBoardUiEvent.CollapseStop -> onCardCollapse()
+            is DepartureBoardUiEvent.LoadPreviousDepartures -> onLoadPreviousDepartures(event.stopId)
+            is DepartureBoardUiEvent.RefreshStop -> onRefreshStop(event.stopId)
+            is DepartureBoardUiEvent.LineFilterChanged -> onLineFilterChanged(
+                stopId = event.stopId,
+                selected = event.selected,
+                lineNumber = event.lineNumber,
+                transportMode = event.transportMode,
+            )
+            is DepartureBoardUiEvent.TogglePreviousDepartures -> onTogglePreviousDepartures(
+                stopId = event.stopId,
+                show = event.show,
+            )
+        }
+    }
+
+    /**
      * Expands the card for [stopId].
      *
      * Setting [_expandedStopId] triggers [flatMapLatest] in [entries] which cancels the previous
@@ -129,10 +160,16 @@ class DepartureBoardViewModel(
     fun onCardExpand(stopId: String) {
         if (_expandedStopId.value == stopId) return
         _expandedStopId.value = stopId
+        val stopName = _stops.value.firstOrNull { it.first == stopId }?.second ?: ""
+        analytics.trackDepartureBoardStopClick(stopId = stopId, stopName = stopName, expand = true)
     }
 
     /** Collapses the currently open card. [flatMapLatest] cancels the polling loop. */
     fun onCardCollapse() {
+        _expandedStopId.value?.let { stopId ->
+            val stopName = _stops.value.firstOrNull { it.first == stopId }?.second ?: ""
+            analytics.trackDepartureBoardStopClick(stopId = stopId, stopName = stopName, expand = false)
+        }
         _expandedStopId.value = null
     }
 
@@ -148,5 +185,23 @@ class DepartureBoardViewModel(
      */
     fun onLoadPreviousDepartures(stopId: String) {
         viewModelScope.launch { repository.loadPreviousDepartures(stopId) }
+    }
+
+    private fun onTogglePreviousDepartures(stopId: String, show: Boolean) {
+        analytics.trackDepartureBoardShowPrevious(
+            stopId = stopId,
+            show = show,
+            source = DepartureBoardSource.SAVED_TRIPS,
+        )
+    }
+
+    private fun onLineFilterChanged(stopId: String, selected: Boolean, lineNumber: String?, transportMode: String?) {
+        analytics.trackDepartureBoardLineFilterClick(
+            stopId = stopId,
+            selected = selected,
+            lineNumber = lineNumber,
+            transportMode = transportMode,
+            source = DepartureBoardSource.SAVED_TRIPS,
+        )
     }
 }

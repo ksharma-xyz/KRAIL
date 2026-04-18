@@ -8,8 +8,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
-import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -53,6 +54,7 @@ class DeparturesViewModelTest {
         )
         viewModel = DeparturesViewModel(
             repository = repository,
+            analytics = NoOpAnalytics,
             ioDispatcher = testDispatcher,
         )
     }
@@ -257,4 +259,11 @@ class DeparturesViewModelTest {
         const val STOP_A = "10111010"
         const val STOP_B = "10111020"
     }
+}
+
+/** No-op [Analytics] for tests — discards all events. */
+private object NoOpAnalytics : Analytics {
+    override fun track(event: AnalyticsEvent) = Unit
+    override fun setUserId(userId: String) = Unit
+    override fun setUserProperty(name: String, value: String) = Unit
 }

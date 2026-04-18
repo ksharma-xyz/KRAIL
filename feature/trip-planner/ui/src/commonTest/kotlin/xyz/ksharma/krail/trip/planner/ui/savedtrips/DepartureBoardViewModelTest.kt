@@ -16,6 +16,8 @@ import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 import xyz.ksharma.krail.departures.network.api.service.DeparturesService
 import xyz.ksharma.krail.departures.ui.DepartureBoardConfig
 import xyz.ksharma.krail.departures.ui.DepartureBoardRepository
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -58,7 +60,7 @@ class DepartureBoardViewModelTest {
             ioDispatcher = testDispatcher,
             config = testConfig,
         )
-        viewModel = DepartureBoardViewModel(repository = repository)
+        viewModel = DepartureBoardViewModel(repository = repository, analytics = NoOpAnalytics)
     }
 
     @AfterTest
@@ -407,6 +409,13 @@ class DepartureBoardViewModelTest {
             toStopName = "Stop C",
         )
     }
+}
+
+/** No-op [Analytics] for tests — discards all events. */
+private object NoOpAnalytics : Analytics {
+    override fun track(event: AnalyticsEvent) = Unit
+    override fun setUserId(userId: String) = Unit
+    override fun setUserProperty(name: String, value: String) = Unit
 }
 
 /**

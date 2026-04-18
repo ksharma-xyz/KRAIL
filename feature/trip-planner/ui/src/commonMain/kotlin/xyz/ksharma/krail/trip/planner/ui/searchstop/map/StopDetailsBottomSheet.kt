@@ -53,6 +53,7 @@ fun StopDetailsBottomSheet(
         additionalInfo = {
             DepartureBoardStopCard(
                 stopId = stop.stopId,
+                stopName = stop.stopName,
                 state = departuresState,
                 onEvent = departuresViewModel::onEvent,
             )

@@ -40,6 +40,7 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.StopDepartureBoardEntry
+import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 
 // ── LazyListScope extension ───────────────────────────────────────────────────
 
@@ -55,15 +56,21 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.StopDepartureBoardEntry
 fun LazyListScope.departureBoardAccordionSection(
     entry: StopDepartureBoardEntry,
     isExpanded: Boolean,
-    onExpandChange: (Boolean) -> Unit,
-    onLoadPreviousDepartures: (String) -> Unit = {},
-    onRefreshStop: (String) -> Unit = {},
+    onEvent: (DepartureBoardUiEvent) -> Unit,
 ) {
     stickyHeader(key = "${entry.stopId}_header", contentType = "stop_header") {
         DepartureBoardAccordionSectionHeader(
             entry = entry,
             isExpanded = isExpanded,
-            onExpandChange = onExpandChange,
+            onExpandChange = { expand ->
+                onEvent(
+                    if (expand) {
+                        DepartureBoardUiEvent.ExpandStop(entry.stopId)
+                    } else {
+                        DepartureBoardUiEvent.CollapseStop
+                    },
+                )
+            },
             modifier = Modifier.padding(bottom = 16.dp),
         )
     }
@@ -73,8 +80,21 @@ fun LazyListScope.departureBoardAccordionSection(
             DepartureBoardAccordionContent(
                 stopId = entry.stopId,
                 state = entry.state,
-                onLoadPreviousDepartures = onLoadPreviousDepartures,
-                onRefreshStop = onRefreshStop,
+                onLoadPreviousDepartures = { onEvent(DepartureBoardUiEvent.LoadPreviousDepartures(it)) },
+                onRefreshStop = { onEvent(DepartureBoardUiEvent.RefreshStop(it)) },
+                onLineFilterChange = { lineNumber, transportMode, selected ->
+                    onEvent(
+                        DepartureBoardUiEvent.LineFilterChanged(
+                            stopId = entry.stopId,
+                            selected = selected,
+                            lineNumber = lineNumber,
+                            transportMode = transportMode,
+                        ),
+                    )
+                },
+                onShowPreviousToggle = { show ->
+                    onEvent(DepartureBoardUiEvent.TogglePreviousDepartures(entry.stopId, show))
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -165,11 +185,15 @@ private fun DepartureBoardAccordionContent(
     onLoadPreviousDepartures: (String) -> Unit,
     onRefreshStop: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)? = null,
+    onShowPreviousToggle: ((Boolean) -> Unit)? = null,
 ) {
     DepartureBoardBody(
         state = state,
         onRetry = { onRefreshStop(stopId) },
         onLoadPreviousDepartures = { onLoadPreviousDepartures(stopId) },
+        onLineFilterChange = onLineFilterChange,
+        onShowPreviousToggle = onShowPreviousToggle,
         modifier = modifier,
     )
 }

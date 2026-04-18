@@ -126,6 +126,7 @@ kotlin {
                 implementation(libs.test.kotlinxCoroutineTest)
                 implementation(libs.test.turbine)
 
+                implementation(projects.core.analytics)
                 implementation(projects.sandook)
                 implementation(projects.feature.departures.network)
             }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,7 +42,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
-import krail.feature.trip_planner.ui.generated.resources.ic_share
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -54,6 +54,7 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.icons.rememberShareIconPainter
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -216,12 +217,13 @@ fun ExpandedJourneyCardContent(
 ) {
     Column(modifier = modifier) {
         // Buttons row - Alert always at start, Maps always next to it
-        Row(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            itemVerticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (totalUniqueServiceAlerts > 0) {
                 AlertButton(
@@ -261,14 +263,21 @@ fun ExpandedJourneyCardContent(
                     customContentColor = KrailTheme.colors.surface,
                 ),
             ) {
-                val density = LocalDensity.current
-                val iconSize = with(density) { 14.sp.toDp() }
-                Image(
-                    painter = painterResource(Res.drawable.ic_share),
-                    contentDescription = "Share journey",
-                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                    modifier = Modifier.size(iconSize),
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val density = LocalDensity.current
+                    val iconSize = with(density) { 14.sp.toDp() }
+                    Image(
+                        painter = rememberShareIconPainter(),
+                        contentDescription = "Share journey",
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                        modifier = Modifier.size(iconSize),
+                    )
+
+                    Text("Share with Friend")
+                }
             }
         }
 

@@ -2,7 +2,6 @@ package xyz.ksharma.krail.core.share
 
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.Typeface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -17,14 +16,16 @@ actual fun ImageBitmap.withBrandingHeader(
     textColor: Color,
     density: Float,
 ): ImageBitmap {
-    val original = asAndroidBitmap()
+    // graphicsLayer.toImageBitmap() on Android returns a hardware-backed bitmap (GPU memory).
+    // Software Canvas cannot draw hardware bitmaps directly — copy to ARGB_8888 in RAM first.
+    val original = asAndroidBitmap().copy(android.graphics.Bitmap.Config.ARGB_8888, false)
     val width = original.width
 
     // Convert sp/dp to pixels using screen density
-    val titleSizePx = 22f * density      // titleLarge ~22sp
+    val titleSizePx = 28f * density      // slightly larger than titleLarge
     val subtitleSizePx = 12f * density   // caption ~12sp
     val paddingPx = 24f * density        // 24dp top and bottom padding
-    val gapPx = 8f * density             // 8dp gap between title and subtitle
+    val gapPx = 4f * density             // 4dp gap between title and subtitle (tight)
 
     // Baseline positions — drawText y is the text baseline.
     // We treat titleSizePx as the approximate ascent (works well for most system fonts).
@@ -40,19 +41,21 @@ actual fun ImageBitmap.withBrandingHeader(
     canvas.drawRect(0f, 0f, width.toFloat(), headerHeight.toFloat(), bgPaint)
 
     // — Title: "KRAIL" — bold, centred
+    // Roboto is the Android system font, always present. Using it explicitly avoids
+    // relying on Typeface.DEFAULT which may vary by device/OEM.
     val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = textColor.toArgb()
         textSize = titleSizePx
-        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        typeface = android.graphics.Typeface.create("Roboto", android.graphics.Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
     canvas.drawText(titleText, width / 2f, titleBaseline, titlePaint)
 
-    // — Subtitle: URL — regular weight, centred
+    // — Subtitle: URL — semi-bold, centred
     val subtitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = textColor.toArgb()
         textSize = subtitleSizePx
-        typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        typeface = android.graphics.Typeface.create("Roboto", android.graphics.Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
     canvas.drawText(subtitleText, width / 2f, subtitleBaseline, subtitlePaint)

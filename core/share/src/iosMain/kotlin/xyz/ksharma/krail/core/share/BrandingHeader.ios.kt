@@ -27,10 +27,10 @@ actual fun ImageBitmap.withBrandingHeader(
     val originalHeight = originalBitmap.height
 
     // Convert sp/dp to pixels using screen density
-    val titleSizePx = 22f * density      // titleLarge ~22sp
+    val titleSizePx = 28f * density      // slightly larger than titleLarge
     val subtitleSizePx = 12f * density   // caption ~12sp
     val paddingPx = 24f * density        // 24dp top and bottom padding
-    val gapPx = 8f * density             // 8dp gap between title and subtitle
+    val gapPx = 4f * density             // 4dp gap between title and subtitle (tight)
 
     val titleBaseline = paddingPx + titleSizePx
     val subtitleBaseline = titleBaseline + gapPx + subtitleSizePx
@@ -55,20 +55,21 @@ actual fun ImageBitmap.withBrandingHeader(
     val textPaint = Paint().apply { color = textColor.toSkiaArgb() }
 
     // — Title: "KRAIL" — bold, centred
-    // FontMgr.default.matchFamilyStyle resolves the system font in the requested weight.
-    // Falls back to the default typeface if the font manager can't match.
-    val boldTypeface: Typeface = checkNotNull(FontMgr.default.matchFamilyStyle("", FontStyle.BOLD)) {
-        "FontMgr could not match a bold system font"
-    }
+    // Empty string "" fails on iOS — CoreText bridge can't resolve a nameless family and returns
+    // null, falling back to makeEmpty() with no weight. "Helvetica Neue" is guaranteed present
+    // on every iOS version and resolves correctly with bold/regular weights via CoreText.
+    val boldTypeface: Typeface =
+        FontMgr.default.matchFamilyStyle("Helvetica Neue", FontStyle.BOLD)
+            ?: Typeface.makeEmpty()
     val titleFont = Font(boldTypeface, titleSizePx)
     val titleLine = TextLine.make(titleText, titleFont)
     val titleX = (width - titleLine.width) / 2f
     canvas.drawTextLine(titleLine, titleX, titleBaseline, textPaint)
 
-    // — Subtitle: URL — regular weight, centred
-    val regularTypeface: Typeface = checkNotNull(FontMgr.default.matchFamilyStyle("", FontStyle.NORMAL)) {
-        "FontMgr could not match a regular system font"
-    }
+    // — Subtitle: URL — semi-bold weight, centred
+    val regularTypeface: Typeface =
+        FontMgr.default.matchFamilyStyle("Helvetica Neue", FontStyle.BOLD)
+            ?: Typeface.makeEmpty()
     val subtitleFont = Font(regularTypeface, subtitleSizePx)
     val subtitleLine = TextLine.make(subtitleText, subtitleFont)
     val subtitleX = (width - subtitleLine.width) / 2f

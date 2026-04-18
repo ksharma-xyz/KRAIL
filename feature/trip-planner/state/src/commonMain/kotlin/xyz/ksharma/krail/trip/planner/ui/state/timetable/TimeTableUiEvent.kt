@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.state.timetable
 
+import androidx.compose.ui.graphics.ImageBitmap
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 
 sealed interface TimeTableUiEvent {
@@ -29,4 +30,11 @@ sealed interface TimeTableUiEvent {
      * when tru, the selection row is displayed else it is hidden.
      */
     data class ModeClicked(val displayModeSelectionRow: Boolean) : TimeTableUiEvent
+
+    data class ShareJourneyClicked(
+        val bitmap: ImageBitmap,
+        val shareText: String,
+        val journeyId: String,
+        val isPastDeparture: Boolean,
+    ) : TimeTableUiEvent
 }

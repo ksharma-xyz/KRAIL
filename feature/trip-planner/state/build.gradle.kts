@@ -44,6 +44,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
 
                 implementation(libs.compose.runtime)
+                implementation(libs.compose.ui)
                 implementation(libs.kotlinx.datetime)
             }
         }

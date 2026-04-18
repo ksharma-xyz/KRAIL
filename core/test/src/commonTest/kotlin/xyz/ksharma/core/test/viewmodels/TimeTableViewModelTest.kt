@@ -17,9 +17,11 @@ import xyz.ksharma.core.test.fakes.FakeFestivalManager
 import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeRateLimiter
 import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.core.test.fakes.FakeShareManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
 import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder.buildTripResponse
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
+import xyz.ksharma.core.test.fakes.FakeImageBitmap
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
@@ -54,6 +56,7 @@ class TimeTableViewModelTest {
 
     private val sandook: Sandook = FakeSandook()
     private val fakeAnalytics: Analytics = FakeAnalytics()
+    private val fakeShareManager = FakeShareManager()
     private val tripPlanningService = FakeTripPlanningService()
     private val rateLimiter = FakeRateLimiter()
     private val festivalManager = FakeFestivalManager()
@@ -71,6 +74,7 @@ class TimeTableViewModelTest {
             rateLimiter = rateLimiter,
             sandook = sandook,
             analytics = fakeAnalytics,
+            shareManager = fakeShareManager,
             ioDispatcher = testDispatcher,
             festivalManager = festivalManager,
             flag = fakeFlag,
@@ -660,4 +664,137 @@ class TimeTableViewModelTest {
             assertTrue((fakeAnalytics as FakeAnalytics).isEventTracked("mode_selection_done"))
         }
     // endregion
+
+    // region Test for ShareJourneyClicked
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun `GIVEN journey in cache WHEN ShareJourneyClicked is triggered THEN shareImage is called with correct bitmap and text`() =
+        runTest {
+            // GIVEN
+            val journeyId = "journey_share_1"
+            viewModel.journeys[journeyId] = buildShareTestJourney(journeyId)
+            val bitmap = FakeImageBitmap()
+            val shareText = "Hey mate!\n\nI'll reach Central at 8:40am."
+
+            // WHEN
+            viewModel.onEvent(
+                TimeTableUiEvent.ShareJourneyClicked(
+                    bitmap = bitmap,
+                    shareText = shareText,
+                    journeyId = journeyId,
+                    isPastDeparture = false,
+                ),
+            )
+            advanceUntilIdle()
+
+            // THEN
+            assertTrue(fakeShareManager.shareImageCalled)
+            assertEquals(shareText, fakeShareManager.lastSharedText)
+        }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun `GIVEN journey in cache WHEN ShareJourneyClicked is triggered THEN share_journey_click analytics event is tracked`() =
+        runTest {
+            // GIVEN
+            val journeyId = "journey_share_2"
+            viewModel.journeys[journeyId] = buildShareTestJourney(journeyId)
+
+            // WHEN
+            viewModel.onEvent(
+                TimeTableUiEvent.ShareJourneyClicked(
+                    bitmap = FakeImageBitmap(),
+                    shareText = "test",
+                    journeyId = journeyId,
+                    isPastDeparture = true,
+                ),
+            )
+            advanceUntilIdle()
+
+            // THEN
+            assertTrue((fakeAnalytics as FakeAnalytics).isEventTracked("share_journey_click"))
+        }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun `GIVEN journey NOT in cache WHEN ShareJourneyClicked is triggered THEN shareImage is still called but analytics is skipped`() =
+        runTest {
+            // GIVEN - journeys cache is empty
+
+            // WHEN
+            viewModel.onEvent(
+                TimeTableUiEvent.ShareJourneyClicked(
+                    bitmap = FakeImageBitmap(),
+                    shareText = "test",
+                    journeyId = "non_existent_id",
+                    isPastDeparture = false,
+                ),
+            )
+            advanceUntilIdle()
+
+            // THEN - share still fires, analytics skipped gracefully
+            assertTrue(fakeShareManager.shareImageCalled)
+            assertFalse((fakeAnalytics as FakeAnalytics).isEventTracked("share_journey_click"))
+        }
+
+    @OptIn(ExperimentalTime::class)
+    @Test
+    fun `GIVEN shareManager fails WHEN ShareJourneyClicked is triggered THEN error is handled without crash`() =
+        runTest {
+            // GIVEN
+            val journeyId = "journey_share_fail"
+            viewModel.journeys[journeyId] = buildShareTestJourney(journeyId)
+            fakeShareManager.shouldFail = true
+
+            // WHEN
+            viewModel.onEvent(
+                TimeTableUiEvent.ShareJourneyClicked(
+                    bitmap = FakeImageBitmap(),
+                    shareText = "test",
+                    journeyId = journeyId,
+                    isPastDeparture = false,
+                ),
+            )
+            advanceUntilIdle()
+
+            // THEN - called but returned failure, no exception propagated
+            assertTrue(fakeShareManager.shareImageCalled)
+        }
+
+    // endregion
+
+    @OptIn(ExperimentalTime::class)
+    private fun buildShareTestJourney(journeyId: String): TimeTableState.JourneyCardInfo {
+        val now = Clock.System.now()
+        return TimeTableState.JourneyCardInfo(
+            originUtcDateTime = now.toString(),
+            destinationUtcDateTime = now.plus(30.minutes).toString(),
+            timeText = "in 5 mins",
+            platformText = "Platform 1",
+            platformNumber = "1",
+            originTime = "8:10 AM",
+            destinationTime = "8:40 AM",
+            travelTime = "30 mins",
+            totalWalkTime = null,
+            transportModeLines = persistentListOf(
+                TransportModeLine(transportMode = NswTransportMode.Train, lineName = "T1"),
+            ),
+            legs = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    transportModeLine = TransportModeLine(
+                        transportMode = NswTransportMode.Train,
+                        lineName = "T1",
+                    ),
+                    displayText = "towards Central",
+                    totalDuration = "30 mins",
+                    stops = persistentListOf(
+                        Stop(name = "Central", time = "8:40 AM", isWheelchairAccessible = true),
+                    ),
+                    tripId = journeyId,
+                ),
+            ),
+            totalUniqueServiceAlerts = 0,
+        )
+    }
 }

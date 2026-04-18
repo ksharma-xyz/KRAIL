@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -39,7 +38,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
@@ -113,12 +114,11 @@ fun JourneyCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(cardBackground)
+            // No outer .background() here — drawRect inside graphicsLayer.record fills the
+            // background in both the captured bitmap and the on-screen render via drawLayer,
+            // so a separate .background() modifier would paint it twice redundantly.
             .drawWithContent {
                 graphicsLayer.record {
-                    // Draw the background explicitly inside the layer so it is included
-                    // in the captured bitmap. Without this, .background() draws on the
-                    // main canvas outside the layer and the shared image is transparent.
                     drawRect(color = cardBackground)
                     this@drawWithContent.drawContent()
                 }
@@ -179,21 +179,26 @@ fun JourneyCard(
                 isMapsAvailable = isMapsAvailable,
                 onShareClick = {
                     coroutineScope.launch {
-                        val bitmap = graphicsLayer.toImageBitmap()
-                            .withBrandingHeader(
+                        // toImageBitmap() must stay on Main (Compose draw thread).
+                        // withBrandingHeader is CPU-heavy (Canvas/Skia) — move to Default.
+                        val cardBitmap = graphicsLayer.toImageBitmap()
+                        val branded = withContext(Dispatchers.Default) {
+                            cardBitmap.withBrandingHeader(
                                 backgroundColor = cardBackground,
                                 textColor = onSurfaceColor,
                                 density = screenDensity,
                             )
+                        }
                         shareManager.shareImage(
-                            bitmap = bitmap,
+                            bitmap = branded,
                             text = buildShareText(
                                 legList = legList,
                                 destinationTime = destinationTime,
                                 totalTravelTime = totalTravelTime,
                             ),
                         ).onFailure { error ->
-                            logError("error while sharing image: $error")
+                            // Pass as Throwable so the full stack trace is preserved in logs.
+                            logError("error while sharing image", error as? Throwable)
                         }
                     }
                 },

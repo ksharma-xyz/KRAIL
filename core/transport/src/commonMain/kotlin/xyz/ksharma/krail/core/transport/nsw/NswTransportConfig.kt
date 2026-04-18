@@ -33,4 +33,30 @@ object NswTransportConfig : TransportConfig {
 
     override fun lineColor(lineKey: String): String? =
         NswTransportLine.entries.firstOrNull { it.key == lineKey }?.hexColor
+
+    /**
+     * Resolves the human-readable direction label shown on departure boards and leg views.
+     *
+     * NSW convention:
+     *  - **Train / Metro**: `"towards <destination>"` — the API [description] is the full
+     *    route label (e.g. "Emu Plains or Richmond to City") which is unhelpful on a board;
+     *    [destinationName] (the actual terminus) is far more useful.
+     *  - **All other modes**: [description] already contains a concise route label
+     *    (e.g. "Seven Hills to Rouse Hill Station via Norwest") — use it directly.
+     *
+     * @param productClass NSW product class int (1 = Train, 2 = Metro, 5 = Bus, etc.).
+     * @param destinationName The terminus stop name from `transportation.destination.name`.
+     * @param description     The route description from `transportation.description`.
+     * @return A display-ready string, or null if both inputs are null.
+     */
+    fun resolveServiceDisplayText(
+        productClass: Int?,
+        destinationName: String?,
+        description: String?,
+    ): String? = when (productClass) {
+        TransportMode.Train.productClass,
+        TransportMode.Metro.productClass,
+        -> destinationName?.let { "towards $it" } ?: description
+        else -> description ?: destinationName
+    }
 }

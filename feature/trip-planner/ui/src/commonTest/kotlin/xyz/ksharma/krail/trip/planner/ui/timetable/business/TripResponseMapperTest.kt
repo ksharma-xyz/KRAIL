@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business
 
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures.OranParkToSevenHillsFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -234,11 +235,75 @@ class TripResponseMapperTest {
             ?.getOrNull(1)         // second journey = the null-duration one
             ?.legs
             ?.firstOrNull()        // first TransportLeg
-        val legDuration = (firstLegOfNullDurationJourney
-            as? xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState.JourneyCardInfo.Leg.TransportLeg)
-            ?.totalDuration
+        val legDuration =
+            (firstLegOfNullDurationJourney as? TimeTableState.JourneyCardInfo.Leg.TransportLeg)
+                ?.totalDuration
 
-        assertEquals("1 min", legDuration, "Null-duration leg duration should be calculated as 1 min")
+        assertEquals(
+            "1 min",
+            legDuration,
+            "Null-duration leg duration should be calculated as 1 min"
+        )
+    }
+
+    //endregion
+
+    //endregion
+
+    //region displayText on TransportLeg
+
+    @Test
+    fun `Given Train leg with destination When buildJourneyList Then displayText is towards destination`() {
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    destinationName = "Bondi Junction via Central",
+                    description = "Waterfall or Cronulla to Bondi Junction"
+                )
+            ),
+        )
+
+        val leg = response.buildJourneyList()
+            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+
+        assertEquals("towards Bondi Junction via Central", leg?.displayText)
+    }
+
+    @Test
+    fun `Given Metro leg with destination When buildJourneyList Then displayText is towards destination`() {
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 2L,
+                    destinationName = "Tallawong",
+                    description = "Sydenham to Tallawong"
+                )
+            ),
+        )
+
+        val leg = response.buildJourneyList()
+            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+
+        assertEquals("towards Tallawong", leg?.displayText)
+    }
+
+    @Test
+    fun `Given Bus leg with description When buildJourneyList Then displayText uses description`() {
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 5L,
+                    destinationName = "Rouse Hill Station",
+                    description = "Seven Hills to Rouse Hill Station via Norwest"
+                )
+            ),
+        )
+
+        val leg = response.buildJourneyList()
+            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+
+        assertEquals("Seven Hills to Rouse Hill Station via Norwest", leg?.displayText)
     }
 
     //endregion
@@ -265,6 +330,60 @@ class TripResponseMapperTest {
         destination = TripResponse.StopSequence(
             arrivalTimePlanned = arrTime,
             arrivalTimeEstimated = arrTime,
+        ),
+    )
+
+    /**
+     * Builds a minimal [TripResponse.Journey] with a single public transport leg.
+     * The leg has two stops, a duration, and the given transport mode/destination fields.
+     * This lets end-to-end [buildJourneyList] tests verify the leg's displayText without JSON fixtures.
+     */
+    private fun buildJourneyWithTransportLeg(
+        productClass: Long,
+        destinationName: String?,
+        description: String?,
+        depTime: String = "2026-04-18T22:00:00Z",
+        arrTime: String = "2026-04-18T22:30:00Z",
+    ) = TripResponse.Journey(
+        legs = listOf(
+            TripResponse.Leg(
+                duration = 1800L,
+                origin = TripResponse.StopSequence(
+                    name = "Origin Station",
+                    disassembledName = "Origin Station, Platform 1",
+                    departureTimePlanned = depTime,
+                    departureTimeEstimated = depTime,
+                ),
+                destination = TripResponse.StopSequence(
+                    name = "Destination Station",
+                    disassembledName = "Destination Station, Platform 2",
+                    arrivalTimePlanned = arrTime,
+                    arrivalTimeEstimated = arrTime,
+                ),
+                stopSequence = listOf(
+                    TripResponse.StopSequence(
+                        name = "Origin Station",
+                        disassembledName = "Origin Station, Platform 1",
+                        departureTimePlanned = depTime,
+                        departureTimeEstimated = depTime,
+                    ),
+                    TripResponse.StopSequence(
+                        name = "Destination Station",
+                        disassembledName = "Destination Station, Platform 2",
+                        arrivalTimePlanned = arrTime,
+                        arrivalTimeEstimated = arrTime,
+                    ),
+                ),
+                transportation = TripResponse.Transportation(
+                    disassembledName = "T1",
+                    description = description,
+                    destination = destinationName?.let { TripResponse.OperatorClass(name = it) },
+                    product = TripResponse.Product(
+                        productClass = productClass,
+                        name = "Train",
+                    ),
+                ),
+            ),
         ),
     )
 

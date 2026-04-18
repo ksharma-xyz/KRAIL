@@ -74,7 +74,11 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
             productClass = transportation?.product?.cls,
         ),
         transportModeName = resolveTransportModeName(transportation?.product?.cls),
-        destinationName = transportation?.description ?: transportation?.destination?.name ?: "",
+        destinationName = NswTransportConfig.resolveServiceDisplayText(
+            productClass = transportation?.product?.cls,
+            destinationName = transportation?.destination?.name,
+            description = transportation?.description,
+        ) ?: "",
         departureTimeText = runCatching { departureUtc.utcToLocalDateTimeAEST().toHHMM() }
             .getOrDefault(departureUtc),
         departureUtcDateTime = departureUtc,

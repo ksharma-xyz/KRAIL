@@ -19,6 +19,7 @@ import xyz.ksharma.krail.core.maps.data.di.mapsDataModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
 import xyz.ksharma.krail.core.permission.data.di.permissionModuleCommon
 import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
+import xyz.ksharma.krail.core.share.di.shareModule
 import xyz.ksharma.krail.departures.network.api.di.departuresNetworkModule
 import xyz.ksharma.krail.departures.ui.di.departuresUiModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
@@ -61,6 +62,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             festivalModule,
             discoverModule,
             infoTileModule,
+            shareModule,
             // Navigation modules
             appNavigationModule,
             tripPlannerNavigationModule,

@@ -66,23 +66,19 @@ class SearchStopViewModelTest {
     fun `GIVEN SearchStopViewModel WHEN uiState is collected THEN analytics event is tracked`() =
         runTest {
             viewModel.uiState.test {
-                // First item is the initial state
                 val state = awaitItem()
                 assertTrue(state.searchResults.isEmpty())
                 assertTrue(state.recentStops.isEmpty())
-                // Initial listState should be Recent
                 assertIs<ListState.Recent>(state.listState)
 
-                // Second item is the state after checkMapsAvailability() is called
-                val stateWithMapsAvailability = awaitItem()
-                assertTrue(stateWithMapsAvailability.searchResults.isEmpty())
-                assertTrue(stateWithMapsAvailability.recentStops.isEmpty())
-
+                // checkMapsAvailability() sets isMapsAvailable=false (same as default) so no
+                // second emission; just advance to let onStart run trackScreenViewEvent.
                 advanceUntilIdle()
                 assertScreenViewEventTracked(
                     fakeAnalytics,
                     expectedScreenName = AnalyticsScreen.SearchStop.name,
                 )
+                cancelAndIgnoreRemainingEvents()
             }
         }
 

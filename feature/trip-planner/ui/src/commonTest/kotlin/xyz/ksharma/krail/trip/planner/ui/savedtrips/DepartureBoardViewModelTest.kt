@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -248,7 +249,8 @@ class DepartureBoardViewModelTest {
             viewModel.onCardExpand(STOP_A_FROM)
 
             viewModel.entries.test {
-                advanceUntilIdle()
+                // Advance past one poll interval (not advanceUntilIdle — pollStop loops forever)
+                advanceTimeBy(testConfig.refreshIntervalMs + 100L)
 
                 assertTrue(
                     fakeService.callCount >= 1,
@@ -256,6 +258,8 @@ class DepartureBoardViewModelTest {
                 )
                 cancelAndIgnoreRemainingEvents()
             }
+            // Let WhileSubscribed(5_000) expire so stateIn cancels the upstream poll loop
+            advanceTimeBy(5_100L)
         }
 
     @Test
@@ -265,14 +269,15 @@ class DepartureBoardViewModelTest {
             viewModel.onCardExpand(STOP_A_FROM)
 
             viewModel.entries.test {
-                advanceUntilIdle()
+                // Advance past one poll interval (not advanceUntilIdle — pollStop loops forever)
+                advanceTimeBy(testConfig.refreshIntervalMs + 100L)
                 val callsWhileExpanded = fakeService.callCount
                 assertTrue(callsWhileExpanded >= 1)
 
                 viewModel.onCardCollapse()
-                advanceUntilIdle()
+                // After collapse flatMapLatest switches to observeStop — no more API calls
+                advanceTimeBy(testConfig.refreshIntervalMs + 100L)
 
-                // After collapse the polling loop is cancelled; no new fetches in the window
                 assertEquals(
                     callsWhileExpanded,
                     fakeService.callCount,
@@ -280,16 +285,18 @@ class DepartureBoardViewModelTest {
                 )
                 cancelAndIgnoreRemainingEvents()
             }
+            // Let WhileSubscribed(5_000) expire so stateIn cancels the upstream
+            advanceTimeBy(5_100L)
         }
 
     // ── onRefreshStop ─────────────────────────────────────────────────────────
 
     @Test
     fun `Given expanded stop When onRefreshStop called Then extra API call is made`() = runTest {
-        // Populate repository cache for the stop via pollStop
+        // Populate repository cache via one poll cycle (not advanceUntilIdle — pollStop loops forever)
         repository.pollStop(STOP_A_FROM).test {
             awaitItem()
-            advanceUntilIdle()
+            advanceTimeBy(testConfig.refreshIntervalMs + 100L)
             awaitItem()
             cancelAndIgnoreRemainingEvents()
         }
@@ -309,10 +316,10 @@ class DepartureBoardViewModelTest {
             val pastTime = "2020-01-01T00:00:00Z"
             fakeService.response = buildResponse(count = 1, plannedTime = pastTime)
 
-            // Populate repository cache so the stop has data before loading previous
+            // Populate repository cache via one poll cycle (not advanceUntilIdle — pollStop loops forever)
             repository.pollStop(STOP_A_FROM).test {
                 awaitItem()
-                advanceUntilIdle()
+                advanceTimeBy(testConfig.refreshIntervalMs + 100L)
                 awaitItem()
                 cancelAndIgnoreRemainingEvents()
             }

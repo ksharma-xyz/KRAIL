@@ -250,6 +250,85 @@ class TripResponseMapperTest {
 
     //endregion
 
+    //region journeyId uniqueness
+
+    /**
+     * Regression test for the deduplication bug introduced when [buildJourneyList] was
+     * changed to set `tripId = transportation?.id` (without appending `RealtimeTripId`).
+     *
+     * When multiple trips run on the same route (e.g., T1 trains at 10:33, 10:48, 11:03),
+     * they share the same `transportation.id` (e.g., "nsw:020T1:W:H:sj2"). With just the
+     * stable ID as `tripId`, [JourneyCardInfo.journeyId] collapses to the same string for
+     * all of them, and the `associateBy { it.journeyId }` map in [updateTripsCache] keeps
+     * only the last entry — silently dropping the rest from the UI.
+     *
+     * The fix: `tripId = transportation.id + RealtimeTripId` (unique per scheduled run),
+     * with a separate `transportationId = transportation.id` used for tracking deep links.
+     */
+    @Test
+    fun `buildJourneyList returns distinct journeys for same route at different departure times`() {
+        val sharedTransportationId = "nsw:020T1:W:H:sj2"
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    transportationId = sharedTransportationId,
+                    realtimeTripId = "tripA111",
+                    depTime = "2026-04-20T12:33:00Z",
+                    arrTime = "2026-04-20T13:06:00Z",
+                ),
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    transportationId = sharedTransportationId,
+                    realtimeTripId = "tripB222",
+                    depTime = "2026-04-20T12:48:00Z",
+                    arrTime = "2026-04-20T13:21:00Z",
+                ),
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    transportationId = sharedTransportationId,
+                    realtimeTripId = "tripC333",
+                    depTime = "2026-04-20T13:03:00Z",
+                    arrTime = "2026-04-20T13:36:00Z",
+                ),
+            ),
+        )
+
+        val journeys = response.buildJourneyList()
+
+        assertEquals(3, journeys?.size, "All same-route trips must survive — must not be deduplicated by shared transportation.id")
+        val journeyIds = journeys?.map { it.journeyId }
+        assertEquals(3, journeyIds?.distinct()?.size, "Each journey must produce a unique journeyId")
+    }
+
+    /**
+     * Verifies that [transportationId] on each [TransportLeg] is set to [Transportation.id]
+     * only (the stable timetable ID), separate from the full [tripId] which also includes
+     * the volatile [RealtimeTripId] for deduplication.
+     */
+    @Test
+    fun `buildJourneyList sets transportationId to transportation id only`() {
+        val transportationId = "nsw:020T1:W:H:sj2"
+        val realtimeTripId = "tripX999"
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    transportationId = transportationId,
+                    realtimeTripId = realtimeTripId,
+                ),
+            ),
+        )
+
+        val leg = response.buildJourneyList()
+            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+
+        assertEquals(transportationId, leg?.transportationId, "transportationId must be transportation.id only")
+        assertEquals("$transportationId$realtimeTripId", leg?.tripId, "tripId must be transportation.id + RealtimeTripId for uniqueness")
+    }
+
+    //endregion
+
     //region displayText on TransportLeg
 
     @Test
@@ -340,8 +419,10 @@ class TripResponseMapperTest {
      */
     private fun buildJourneyWithTransportLeg(
         productClass: Long,
-        destinationName: String?,
-        description: String?,
+        destinationName: String? = null,
+        description: String? = null,
+        transportationId: String = "nsw:020T1:W:H:sj2",
+        realtimeTripId: String = "defaultRtId",
         depTime: String = "2026-04-18T22:00:00Z",
         arrTime: String = "2026-04-18T22:30:00Z",
     ) = TripResponse.Journey(
@@ -375,12 +456,16 @@ class TripResponseMapperTest {
                     ),
                 ),
                 transportation = TripResponse.Transportation(
+                    id = transportationId,
                     disassembledName = "T1",
                     description = description,
                     destination = destinationName?.let { TripResponse.OperatorClass(name = it) },
                     product = TripResponse.Product(
                         productClass = productClass,
                         name = "Train",
+                    ),
+                    properties = TripResponse.TransportationProperties(
+                        realtimeTripId = realtimeTripId,
                     ),
                 ),
             ),

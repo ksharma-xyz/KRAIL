@@ -1,7 +1,8 @@
-@file:Suppress("MagicNumber")
+@file:Suppress("MagicNumber", "ReturnCount", "UnusedParameter")
 
 package xyz.ksharma.krail.feature.track.network
 
+import com.google.transit.realtime.FeedEntity
 import com.google.transit.realtime.FeedMessage
 import com.google.transit.realtime.VehiclePosition
 import xyz.ksharma.krail.core.log.log
@@ -52,7 +53,8 @@ object GtfsRealtimeMatcher {
             21 -> listOf("lightrail/newcastle")
             // Parramatta Light Rail iconId TBD — add once confirmed from a real trip response
             4, 5, 6, 9,
-            14, 23 -> listOf("buses")
+            14, 23,
+            -> listOf("buses")
 
             15 -> listOf("regionbuses/newcastlehunter")
             10 -> listOf("ferries/sydneyferries")
@@ -64,7 +66,7 @@ object GtfsRealtimeMatcher {
             35 -> listOf(
                 "regionbuses/northcoast",
                 "regionbuses/northcoast2",
-                "regionbuses/northcoast3"
+                "regionbuses/northcoast3",
             )
 
             36 -> listOf("regionbuses/riverinamurray", "regionbuses/riverinamurray2")
@@ -90,18 +92,7 @@ object GtfsRealtimeMatcher {
                 ?: return null
         val pos = vehicle.position ?: return null
 
-        // Log full vehicle details so we can confirm the match is for the right vehicle
-        // and understand what data is available before the trip starts.
-        log(
-            "[LIVETRACK_MATCH] matched vehicle — " +
-                "vehicleId=${vehicle.vehicle?.id} label=${vehicle.vehicle?.label} licensePlate=${vehicle.vehicle?.license_plate} | " +
-                "trip_id=${vehicle.trip?.trip_id} route_id=${vehicle.trip?.route_id} " +
-                "start_time=${vehicle.trip?.start_time} start_date=${vehicle.trip?.start_date} " +
-                "scheduleRelationship=${vehicle.trip?.schedule_relationship} | " +
-                "lat=${pos.latitude} lon=${pos.longitude} bearing=${pos.bearing} speed=${pos.speed} | " +
-                "currentStopSeq=${vehicle.current_stop_sequence} currentStopId=${vehicle.stop_id} " +
-                "status=${vehicle.current_status} timestampEpoch=${vehicle.timestamp}"
-        )
+        logMatchedVehicle(vehicle, pos)
 
         return LiveVehiclePosition(
             latitude = pos.latitude.toDouble(),
@@ -126,71 +117,33 @@ object GtfsRealtimeMatcher {
         val tripUpdateEntities = entity.filter { it.trip_update != null }
         val lineToken = normalise(transportationId.substringAfterLast(":").ifBlank { transportationId })
 
-        log(
-            "[LIVETRACK_MATCH] feed total=${entity.size} " +
-                "(vehicles=${vehicleEntities.size}, tripUpdates=${tripUpdateEntities.size}) — " +
-                "seeking realtimeTripId=$realtimeTripId, lineToken=$lineToken, startDate=$startDate"
-        )
-
-        // Sample first 5 vehicle entries.
-        val vehicleSample = vehicleEntities.take(5).map { e ->
-            "trip_id=${e.vehicle?.trip?.trip_id} | route_id=${e.vehicle?.trip?.route_id} | start_date=${e.vehicle?.trip?.start_date} | start_time=${e.vehicle?.trip?.start_time}"
-        }
-        log("[LIVETRACK_MATCH] vehicle sample (first 5):\n${vehicleSample.joinToString("\n")}")
-
-        // If no vehicle entities, dump trip_update sample so we know what the feed actually contains.
-        if (vehicleEntities.isEmpty() && tripUpdateEntities.isNotEmpty()) {
-            val tuSample = tripUpdateEntities.take(5).map { e ->
-                "trip_id=${e.trip_update?.trip?.trip_id} | route_id=${e.trip_update?.trip?.route_id} | start_date=${e.trip_update?.trip?.start_date} | start_time=${e.trip_update?.trip?.start_time}"
-            }
-            log("[LIVETRACK_MATCH] ⚠️ feed has NO vehicle positions — TripUpdate sample (first 5):\n${tuSample.joinToString("\n")}")
-        }
-
-        // Show any entry whose trip_id contains our realtimeTripId (partial match scan).
-        if (!realtimeTripId.isNullOrBlank()) {
-            val candidatesByTripId = vehicleEntities.filter {
-                val tid = it.vehicle?.trip?.trip_id ?: return@filter false
-                tid == realtimeTripId || tid.endsWith(realtimeTripId) || tid.contains(realtimeTripId)
-            }
-            log("[LIVETRACK_MATCH] vehicle trip_id candidates (exact/endsWith/contains '$realtimeTripId'): ${candidatesByTripId.size} — ${candidatesByTripId.map { it.vehicle?.trip?.trip_id }}")
-
-            // Also scan trip_updates so we can confirm whether the trip exists in the feed at all.
-            val tuCandidates = tripUpdateEntities.filter {
-                val tid = it.trip_update?.trip?.trip_id ?: return@filter false
-                tid == realtimeTripId || tid.endsWith(realtimeTripId) || tid.contains(realtimeTripId)
-            }
-            log("[LIVETRACK_MATCH] tripUpdate trip_id candidates (exact/endsWith/contains '$realtimeTripId'): ${tuCandidates.size} — ${tuCandidates.map { it.trip_update?.trip?.trip_id }}")
-        }
-
-        // Show any entry whose route_id normalises to our lineToken.
-        val candidatesByRoute = vehicleEntities.filter {
-            val rid = it.vehicle?.trip?.route_id ?: return@filter false
-            normalise(rid) == lineToken
-        }
-        log("[LIVETRACK_MATCH] route_id candidates (normalised == '$lineToken'): ${candidatesByRoute.size} — ${candidatesByRoute.take(5).map { "trip_id=${it.vehicle?.trip?.trip_id} route_id=${it.vehicle?.trip?.route_id} start_date=${it.vehicle?.trip?.start_date}" }}")
+        logFeedOverview(vehicleEntities, tripUpdateEntities, realtimeTripId, lineToken, startDate)
+        logMatchCandidates(vehicleEntities, tripUpdateEntities, realtimeTripId, lineToken)
 
         // Primary match — exact trip_id
         if (!realtimeTripId.isNullOrBlank()) {
             entity.firstOrNull { it.vehicle?.trip?.trip_id == realtimeTripId }
-                ?.vehicle?.let {
+                ?.vehicle
+                ?.let {
                     log("[LIVETRACK_MATCH] ✅ primary exact match hit")
                     return it
                 }
 
             entity.firstOrNull { it.vehicle?.trip?.trip_id?.endsWith(realtimeTripId) == true }
-                ?.vehicle?.let {
+                ?.vehicle
+                ?.let {
                     log("[LIVETRACK_MATCH] ✅ primary endsWith match hit")
                     return it
                 }
 
-            log("[LIVETRACK_MATCH] ❌ primary match missed — no trip_id exact/endsWith match for '$realtimeTripId'")
+            log("[LIVETRACK_MATCH] ❌ primary match missed — '$realtimeTripId'")
         }
 
         // Fallback — route_id exact match (normalised) + optional start_date guard.
         val result = entity.firstOrNull { e ->
             val trip = e.vehicle?.trip ?: return@firstOrNull false
             normalise(trip.route_id ?: return@firstOrNull false) == lineToken &&
-                    (trip.start_date == null || trip.start_date == startDate)
+                (trip.start_date == null || trip.start_date == startDate)
         }?.vehicle
 
         if (result != null) {
@@ -198,35 +151,8 @@ object GtfsRealtimeMatcher {
             return result
         }
 
-        log("[LIVETRACK_MATCH] ❌ fallback route_id match missed — lineToken=$lineToken, startDate=$startDate")
-
-        // Pre-trip probe: search any vehicle on the same route ignoring start_date entirely.
-        // A transit agency may pre-assign the vehicle to this trip_id in the feed even before
-        // departure, OR the vehicle may still be running a prior service on the same route.
-        // Logging these helps us determine if pre-trip tracking is feasible.
-        val preTripCandidates = vehicleEntities.filter {
-            val rid = it.vehicle?.trip?.route_id ?: return@filter false
-            normalise(rid) == lineToken
-        }
-        if (preTripCandidates.isNotEmpty()) {
-            log(
-                "[LIVETRACK_PRETIP] 🔍 found ${preTripCandidates.size} vehicle(s) on route '$lineToken' " +
-                    "regardless of start_date (our date=$startDate) — this is the pre-trip probe:"
-            )
-            preTripCandidates.forEach { e ->
-                val v = e.vehicle ?: return@forEach
-                log(
-                    "[LIVETRACK_PRETIP]   vehicleId=${v.vehicle?.id} label=${v.vehicle?.label} | " +
-                        "trip_id=${v.trip?.trip_id} start_date=${v.trip?.start_date} start_time=${v.trip?.start_time} " +
-                        "scheduleRelationship=${v.trip?.schedule_relationship} | " +
-                        "lat=${v.position?.latitude} lon=${v.position?.longitude} bearing=${v.position?.bearing} " +
-                        "currentStopId=${v.stop_id} status=${v.current_status} timestampEpoch=${v.timestamp}"
-                )
-            }
-        } else {
-            log("[LIVETRACK_PRETIP] 🔍 no vehicles found for route '$lineToken' in feed at all — vehicle not yet published or wrong feed")
-        }
-
+        log("[LIVETRACK_MATCH] ❌ fallback route_id missed — lineToken=$lineToken, startDate=$startDate")
+        logPreTripCandidates(vehicleEntities, lineToken, startDate)
         return null
     }
 
@@ -244,13 +170,19 @@ object GtfsRealtimeMatcher {
         val lineToken =
             normalise(transportationId.substringAfterLast(":").ifBlank { transportationId })
 
-        val tripUpdate = (if (!realtimeTripId.isNullOrBlank()) {
+        val byTripId = if (!realtimeTripId.isNullOrBlank()) {
             entity.firstOrNull { it.trip_update?.trip?.trip_id == realtimeTripId }?.trip_update
-                ?: entity.firstOrNull { it.trip_update?.trip?.trip_id?.endsWith(realtimeTripId) == true }?.trip_update
-        } else null) ?: entity.firstOrNull { e ->
+                ?: entity.firstOrNull {
+                    it.trip_update?.trip?.trip_id?.endsWith(realtimeTripId) == true
+                }?.trip_update
+        } else {
+            null
+        }
+
+        val tripUpdate = byTripId ?: entity.firstOrNull { e ->
             val trip = e.trip_update?.trip ?: return@firstOrNull false
             normalise(trip.route_id ?: return@firstOrNull false) == lineToken &&
-                    (trip.start_date == null || trip.start_date == startDate)
+                (trip.start_date == null || trip.start_date == startDate)
         }?.trip_update
 
         return tripUpdate?.stop_time_update
@@ -264,11 +196,96 @@ object GtfsRealtimeMatcher {
             ?: emptyMap()
     }
 
-    /**
-     * Normalises a route/line token for comparison:
-     * lowercase, strips whitespace and non-alphanumeric characters.
-     * "T1 " → "t1", "T1_EXT" → "t1ext", "B1" → "b1"
-     */
+    // ── Diagnostic logging helpers ────────────────────────────────────────────
+
+    private fun logMatchedVehicle(vehicle: VehiclePosition, pos: VehiclePosition.Position) {
+        log(
+            "[LIVETRACK_MATCH] matched vehicle — " +
+                "vehicleId=${vehicle.vehicle?.id} label=${vehicle.vehicle?.label} | " +
+                "trip_id=${vehicle.trip?.trip_id} route_id=${vehicle.trip?.route_id} " +
+                "start_time=${vehicle.trip?.start_time} start_date=${vehicle.trip?.start_date} | " +
+                "lat=${pos.latitude} lon=${pos.longitude} bearing=${pos.bearing} " +
+                "status=${vehicle.current_status} timestampEpoch=${vehicle.timestamp}",
+        )
+    }
+
+    private fun logFeedOverview(
+        vehicleEntities: List<FeedEntity>,
+        tripUpdateEntities: List<FeedEntity>,
+        realtimeTripId: String?,
+        lineToken: String,
+        startDate: String,
+    ) {
+        log(
+            "[LIVETRACK_MATCH] feed vehicles=${vehicleEntities.size} " +
+                "tripUpdates=${tripUpdateEntities.size} — " +
+                "seeking realtimeTripId=$realtimeTripId lineToken=$lineToken startDate=$startDate",
+        )
+        val vehicleSample = vehicleEntities.take(5).map { e ->
+            "trip_id=${e.vehicle?.trip?.trip_id} route_id=${e.vehicle?.trip?.route_id}"
+        }
+        log("[LIVETRACK_MATCH] vehicle sample (first 5):\n${vehicleSample.joinToString("\n")}")
+    }
+
+    private fun logMatchCandidates(
+        vehicleEntities: List<FeedEntity>,
+        tripUpdateEntities: List<FeedEntity>,
+        realtimeTripId: String?,
+        lineToken: String,
+    ) {
+        if (vehicleEntities.isEmpty() && tripUpdateEntities.isNotEmpty()) {
+            val tuSample = tripUpdateEntities.take(5)
+                .map { e -> "trip_id=${e.trip_update?.trip?.trip_id}" }
+            log("[LIVETRACK_MATCH] ⚠️ no vehicle positions — TripUpdate sample:\n${tuSample.joinToString("\n")}")
+        }
+
+        if (!realtimeTripId.isNullOrBlank()) {
+            val byTripId = vehicleEntities.filter {
+                val tid = it.vehicle?.trip?.trip_id ?: return@filter false
+                tid == realtimeTripId || tid.endsWith(realtimeTripId) || tid.contains(realtimeTripId)
+            }
+            val tripIds = byTripId.map { it.vehicle?.trip?.trip_id }
+            log("[LIVETRACK_MATCH] trip_id candidates: ${byTripId.size} — $tripIds")
+
+            val tuByTripId = tripUpdateEntities.filter {
+                val tid = it.trip_update?.trip?.trip_id ?: return@filter false
+                tid == realtimeTripId || tid.endsWith(realtimeTripId) || tid.contains(realtimeTripId)
+            }
+            val tuTripIds = tuByTripId.map { it.trip_update?.trip?.trip_id }
+            log("[LIVETRACK_MATCH] tripUpdate candidates: ${tuByTripId.size} — $tuTripIds")
+        }
+
+        val byRoute = vehicleEntities.filter {
+            val rid = it.vehicle?.trip?.route_id ?: return@filter false
+            normalise(rid) == lineToken
+        }
+        log("[LIVETRACK_MATCH] route_id candidates (normalised='$lineToken'): ${byRoute.size}")
+    }
+
+    private fun logPreTripCandidates(
+        vehicleEntities: List<FeedEntity>,
+        lineToken: String,
+        startDate: String,
+    ) {
+        val preTripCandidates = vehicleEntities.filter {
+            val rid = it.vehicle?.trip?.route_id ?: return@filter false
+            normalise(rid) == lineToken
+        }
+        if (preTripCandidates.isNotEmpty()) {
+            log("[LIVETRACK_PRETIP] 🔍 ${preTripCandidates.size} vehicle(s) on '$lineToken' (our date=$startDate):")
+            preTripCandidates.forEach { e ->
+                val v = e.vehicle ?: return@forEach
+                log(
+                    "[LIVETRACK_PRETIP]   vehicleId=${v.vehicle?.id} " +
+                        "trip_id=${v.trip?.trip_id} start_date=${v.trip?.start_date} " +
+                        "status=${v.current_status}",
+                )
+            }
+        } else {
+            log("[LIVETRACK_PRETIP] 🔍 no vehicles found for '$lineToken' in feed")
+        }
+    }
+
     private fun normalise(value: String): String =
         value.lowercase().replace(Regex("[^a-z0-9]"), "")
 }

@@ -11,6 +11,7 @@ import xyz.ksharma.krail.core.log.logError
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -95,12 +96,12 @@ object DateTimeHelper {
 
         return when {
             // Days in the past — "X day(s) ago"
-            this <= (-24).hours -> {
+            this <= (-1).days -> {
                 val absDays = (-this).inWholeDays
                 "$absDays ${if (absDays == 1L) "day" else "days"} ago"
             }
-            // Hours in the past — "X hour(s) ago"
-            this <= (-60).minutes -> {
+            // Hours in the past — only beyond 2 h so 60–90 min shows as "X mins ago"
+            this <= (-2).hours -> {
                 val absHours = (-this).inWholeHours
                 "$absHours ${if (absHours == 1L) "hour" else "hours"} ago"
             }
@@ -188,8 +189,8 @@ object DateTimeHelper {
     fun Instant.toApiDateString(): String {
         val local = this.toLocalDateTime(TimeZone.of(AEST_TIMEZONE))
         return "${local.year}" +
-                local.month.number.toString().padStart(2, '0') +
-                local.day.toString().padStart(2, '0')
+            local.month.number.toString().padStart(2, '0') +
+            local.day.toString().padStart(2, '0')
     }
 
     /**

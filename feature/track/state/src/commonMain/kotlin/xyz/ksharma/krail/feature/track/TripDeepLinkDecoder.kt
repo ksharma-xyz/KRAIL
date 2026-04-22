@@ -18,9 +18,10 @@ object TripDeepLinkDecoder {
     }.getOrNull()
 }
 
+private const val BASE64_BLOCK_SIZE = 4
+
 @OptIn(ExperimentalEncodingApi::class)
 internal fun String.decodeBase64Url(): String? = runCatching {
-    // Re-add padding stripped during encoding
-    val padded = this + "=".repeat((4 - this.length % 4) % 4)
+    val padded = this + "=".repeat((BASE64_BLOCK_SIZE - this.length % BASE64_BLOCK_SIZE) % BASE64_BLOCK_SIZE)
     Base64.UrlSafe.decode(padded).decodeToString()
 }.getOrNull()

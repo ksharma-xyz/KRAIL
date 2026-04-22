@@ -16,10 +16,15 @@ import androidx.compose.ui.unit.Dp
  * @param circleRadius The radius of the circle.
  * @return A [Modifier] that draws the line and circle.
  */
-internal fun Modifier.timeLineTop(color: Color, strokeWidth: Dp, circleRadius: Dp): Modifier {
+internal fun Modifier.timeLineTop(
+    color: Color,
+    strokeWidth: Dp,
+    circleRadius: Dp,
+    circleColor: Color = color,
+): Modifier {
     return this.drawBehind {
         drawCircle(
-            color = color,
+            color = circleColor,
             radius = circleRadius.toPx(),
             center = Offset(x = 0f, y = this.size.height / 2),
         )
@@ -53,7 +58,45 @@ internal fun Modifier.timeLineCenter(color: Color, strokeWidth: Dp): Modifier {
     }
 }
 
-internal fun Modifier.timeLineCenterWithStop(color: Color, strokeWidth: Dp, circleRadius: Dp): Modifier {
+/**
+ * Draws a split vertical line: [completedColor] for the top [fraction] of height,
+ * [pendingColor] for the remainder. Used to show approximate vehicle progress on a segment.
+ */
+internal fun Modifier.timeLineCenterSplit(
+    completedColor: Color,
+    pendingColor: Color,
+    strokeWidth: Dp,
+    fraction: Float,
+): Modifier {
+    return this.drawBehind {
+        val splitY = size.height * fraction.coerceIn(0f, 1f)
+        if (splitY > 0f) {
+            drawLine(
+                color = completedColor,
+                start = Offset(x = 0f, y = 0f),
+                end = Offset(x = 0f, y = splitY),
+                strokeWidth = strokeWidth.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
+        if (splitY < size.height) {
+            drawLine(
+                color = pendingColor,
+                start = Offset(x = 0f, y = splitY),
+                end = Offset(x = 0f, y = size.height),
+                strokeWidth = strokeWidth.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
+    }
+}
+
+internal fun Modifier.timeLineCenterWithStop(
+    color: Color,
+    strokeWidth: Dp,
+    circleRadius: Dp,
+    circleColor: Color = color,
+): Modifier {
     return this.drawBehind {
         drawLine(
             color = color,
@@ -63,7 +106,7 @@ internal fun Modifier.timeLineCenterWithStop(color: Color, strokeWidth: Dp, circ
             cap = StrokeCap.Round,
         )
         drawCircle(
-            color = color,
+            color = circleColor,
             radius = circleRadius.toPx(),
             center = Offset(0f, this.size.height / 2),
         )
@@ -79,7 +122,12 @@ internal fun Modifier.timeLineCenterWithStop(color: Color, strokeWidth: Dp, circ
  * @param circleRadius The radius of the circle.
  * @return A [Modifier] that draws the line and circle.
  */
-internal fun Modifier.timeLineBottom(color: Color, strokeWidth: Dp, circleRadius: Dp): Modifier {
+internal fun Modifier.timeLineBottom(
+    color: Color,
+    strokeWidth: Dp,
+    circleRadius: Dp,
+    circleColor: Color = color,
+): Modifier {
     return this.drawBehind {
         drawLine(
             color = color,
@@ -89,7 +137,7 @@ internal fun Modifier.timeLineBottom(color: Color, strokeWidth: Dp, circleRadius
             cap = StrokeCap.Round,
         )
         drawCircle(
-            color = color,
+            color = circleColor,
             radius = circleRadius.toPx(),
             center = Offset(0f, this.size.height / 2),
         )

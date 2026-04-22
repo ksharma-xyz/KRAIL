@@ -58,8 +58,10 @@ import kotlin.time.TimeSource
 fun JourneyMap(
     journeyMapState: JourneyMapUiState,
     modifier: Modifier = Modifier,
+    showFreshnessBadge: Boolean = true,
     onLocationButtonClick: (isLocationActive: Boolean) -> Unit = {},
     onPermissionSettingsClick: () -> Unit = {},
+    extraMapContent: @Composable () -> Unit = {},
 ) {
     when (journeyMapState) {
         // Defensive fallback - data transformation is instant, users never see this
@@ -73,8 +75,10 @@ fun JourneyMap(
         is JourneyMapUiState.Ready -> {
             JourneyMapContent(
                 mapState = journeyMapState,
+                showFreshnessBadge = showFreshnessBadge,
                 onLocationButtonClick = onLocationButtonClick,
                 onPermissionSettingsClick = onPermissionSettingsClick,
+                extraMapContent = extraMapContent,
                 modifier = modifier,
             )
         }
@@ -88,8 +92,10 @@ fun JourneyMap(
 private fun JourneyMapContent(
     mapState: JourneyMapUiState.Ready,
     modifier: Modifier = Modifier,
+    showFreshnessBadge: Boolean = true,
     onLocationButtonClick: (isLocationActive: Boolean) -> Unit = {},
     onPermissionSettingsClick: () -> Unit = {},
+    extraMapContent: @Composable () -> Unit = {},
 ) {
     // Track selected stop for details bottom sheet
     // Keyed to mapState so it resets when viewing a different journey
@@ -163,6 +169,7 @@ private fun JourneyMapContent(
                 userLocation = userLocation,
                 onStopSelect = { selectedStop = it },
             )
+            extraMapContent()
         }
 
         // User location button (bottom-end corner)
@@ -201,7 +208,7 @@ private fun JourneyMapContent(
         // Top overlays — permission banner (if shown) then freshness badge directly below it.
         // fillMaxWidth + horizontal padding here so both children get consistent 16dp screen
         // margins without each child needing to specify it individually.
-        if (showPermissionBanner || badgeText != null) {
+        if (showPermissionBanner || (showFreshnessBadge && badgeText != null)) {
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -217,7 +224,7 @@ private fun JourneyMapContent(
                         },
                     )
                 }
-                badgeText?.let { text ->
+                if (showFreshnessBadge) badgeText?.let { text ->
                     MapTimetableDataBadge(
                         text = text,
                         isStale = isStale,

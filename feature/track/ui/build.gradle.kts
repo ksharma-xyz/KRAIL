@@ -15,6 +15,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.feature.track.ui"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
 
     listOf(
@@ -41,6 +42,7 @@ kotlin {
                 implementation(libs.test.turbine)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.collections.immutable)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 

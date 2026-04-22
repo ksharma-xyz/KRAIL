@@ -4,6 +4,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -38,6 +39,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
+import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
@@ -399,11 +401,27 @@ class TimeTableViewModel(
         val journeyList = updateJourneyCardInfoTimeText(journeys.values.toList())
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
+
+        val deepLinkUrls = tripInfo?.let { trip ->
+            journeyList.mapNotNull { journey ->
+                val url = TripDeepLinkEncoder.encode(
+                    fromStopId = trip.fromStopId,
+                    fromStopName = trip.fromStopName,
+                    toStopId = trip.toStopId,
+                    toStopName = trip.toStopName,
+                    departureUtcDateTime = journey.originUtcDateTime,
+                    legs = journey.legs,
+                ) ?: return@mapNotNull null
+                journey.journeyId to url
+            }.toMap().toImmutableMap()
+        }
+
         updateUiState {
             copy(
                 isLoading = false,
                 journeyList = journeyList,
                 isError = false,
+                deepLinkUrls = deepLinkUrls ?: this.deepLinkUrls,
             )
         }
     }
@@ -640,7 +658,7 @@ class TimeTableViewModel(
             }
             shareManager.shareImage(bitmap = event.bitmap, text = event.shareText)
                 .onFailure { error ->
-                    logError("error while sharing image", error as? Throwable)
+                    logError("error while sharing image", error)
                 }
         }
     }

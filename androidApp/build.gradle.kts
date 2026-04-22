@@ -16,7 +16,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = findProperty("versionCode")?.toString()?.toInt() ?: 115
-        versionName = "1.19.0"
+        versionName = "1.20.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -95,6 +95,7 @@ kotlin {
 dependencies {
     // Depend on the KMP library
     implementation(project(":composeApp"))
+    implementation(project(":core:deeplink"))
 
     // Android-specific dependencies
     implementation(libs.activity.compose)

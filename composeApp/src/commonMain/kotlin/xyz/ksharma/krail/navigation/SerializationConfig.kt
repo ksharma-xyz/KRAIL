@@ -16,6 +16,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ServiceAlertRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
+import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
 
 /**
@@ -42,6 +43,9 @@ val krailNavSerializationConfig = SavedStateConfiguration {
             subclass(OurStoryRoute::class, OurStoryRoute.serializer())
             subclass(IntroRoute::class, IntroRoute.serializer())
             subclass(DiscoverRoute::class, DiscoverRoute.serializer())
+
+            // Track routes
+            subclass(TrackTripRoute::class, TrackTripRoute.serializer())
         }
     }
 }

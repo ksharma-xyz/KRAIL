@@ -52,6 +52,8 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
@@ -67,6 +69,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
     modifier: Modifier = Modifier,
+    trackedJourney: xyz.ksharma.krail.feature.track.TrackedJourney? = null,
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
     onReverseButtonClick: () -> Unit = {},
@@ -76,6 +79,8 @@ fun SavedTripsScreen(
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
     onInviteFriendsTileDisplay: () -> Unit = {},
+    onTrackingCardClick: () -> Unit = {},
+    onStopTracking: () -> Unit = {},
     departureBoardEntries: ImmutableList<StopDepartureBoardEntry> = persistentListOf(),
     expandedDepartureBoardStopId: String? = null,
     onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
@@ -227,8 +232,11 @@ fun SavedTripsScreen(
 
                         savedTripsContent(
                             savedTripsState = savedTripsState,
+                            trackedJourney = trackedJourney,
                             onEvent = onEvent,
                             onSavedTripCardClick = onSavedTripCardClick,
+                            onTrackingCardClick = onTrackingCardClick,
+                            onStopTracking = onStopTracking,
                             expandedMap = expandedMap,
                             departureBoardEntries = departureBoardEntries,
                             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
@@ -285,13 +293,34 @@ private fun LazyListScope.infoTiles(
 
 private fun LazyListScope.savedTripsContent(
     savedTripsState: SavedTripsState,
+    trackedJourney: xyz.ksharma.krail.feature.track.TrackedJourney?,
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
+    onTrackingCardClick: () -> Unit = {},
+    onStopTracking: () -> Unit = {},
     expandedMap: SnapshotStateMap<String, Boolean>,
     departureBoardEntries: ImmutableList<StopDepartureBoardEntry>,
     expandedDepartureBoardStopId: String?,
     onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
 ) {
+    if (trackedJourney != null) {
+        stickyHeader(key = "tracking_title") {
+            SavedTripsTitle {
+                Text(text = "Tracking Real Time")
+            }
+        }
+
+        item(key = "tracking_card") {
+            xyz.ksharma.krail.feature.track.ui.components.TrackingCard(
+                tracked = trackedJourney,
+                onCardClick = onTrackingCardClick,
+                onStopTracking = onStopTracking,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
             Text(text = "Saved Trips")

@@ -39,6 +39,8 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         val departureBoardEntries by departureBoardViewModel.entries.collectAsStateWithLifecycle()
         val expandedDepartureBoardStopId by departureBoardViewModel.expandedStopId.collectAsStateWithLifecycle()
 
+        val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
+
         LaunchedEffect(savedTripState.savedTrips) {
             departureBoardViewModel.setTrips(savedTripState.savedTrips)
         }
@@ -64,6 +66,9 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 
         SavedTripsScreen(
             savedTripsState = savedTripState,
+            trackedJourney = trackedJourney,
+            onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
+            onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
             fromButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)

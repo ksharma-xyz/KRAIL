@@ -99,6 +99,7 @@ fun JourneyCard(
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
+    deepLinkUrl: String? = null,
 ) {
     val isPast by remember(timeToDeparture) {
         mutableStateOf(
@@ -198,6 +199,7 @@ fun JourneyCard(
                                 legList = legList,
                                 destinationTime = destinationTime,
                                 totalTravelTime = totalTravelTime,
+                                deepLinkUrl = deepLinkUrl,
                             ),
                             isPast,
                         )
@@ -509,6 +511,7 @@ private fun buildShareText(
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
     destinationTime: String,
     totalTravelTime: String,
+    deepLinkUrl: String? = null,
 ): String {
     val lastStopName = legList
         .filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
@@ -522,7 +525,8 @@ private fun buildShareText(
     } else {
         "I'll arrive at $destinationTime — about $totalTravelTime away."
     }
-    return "Hey mate!\n\n$journeyLine\n\nPlan your trip on KRAIL!\nhttps://krail.app"
+    val link = deepLinkUrl ?: "https://krail.app"
+    return "Hey mate!\n\n$journeyLine\n\nTrack this trip live on KRAIL!\n$link"
 }
 
 // region Previews

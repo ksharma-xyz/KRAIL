@@ -37,4 +37,6 @@ sealed interface SavedTripUiEvent {
     // JSON-based events for navigation compatibility
     data class FromStopChanged(val fromJson: String) : SavedTripUiEvent
     data class ToStopChanged(val toJson: String) : SavedTripUiEvent
+
+    data object StopTracking : SavedTripUiEvent
 }

@@ -12,6 +12,8 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
+import xyz.ksharma.krail.trip.planner.network.api.model.departureDeviationMinutes
+import xyz.ksharma.krail.trip.planner.network.api.model.isWalkingLeg
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import kotlin.math.absoluteValue
@@ -202,6 +204,7 @@ private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
                             ?.let { formattedDuration -> toWalkInterchange(formattedDuration) }
                     },
                     tripId = transportation?.id + transportation?.properties?.realtimeTripId,
+                    transportationId = transportation?.id,
                 )
             } else {
                 logError(
@@ -293,9 +296,6 @@ private fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInf
 
 private fun String.fromUTCToDisplayTimeString() = this.utcToLocalDateTimeAEST().toHHMM()
 
-private fun TripResponse.Leg.isWalkingLeg(): Boolean =
-    transportation?.product?.productClass == 99L || transportation?.product?.productClass == 100L
-
 /**
  * Returns the scheduled (planned) origin time formatted for display, but only when the
  * real-time estimated departure differs from the planned time. Returns null otherwise,
@@ -303,31 +303,21 @@ private fun TripResponse.Leg.isWalkingLeg(): Boolean =
  */
 private fun TripResponse.Leg?.getScheduledOriginTime(): String? {
     val est = this?.origin?.departureTimeEstimated ?: return null
-    val planned = this?.origin?.departureTimePlanned ?: return null
+    val planned = this.origin?.departureTimePlanned ?: return null
     return if (est != planned) planned.fromUTCToDisplayTimeString() else null
 }
 
-@OptIn(ExperimentalTime::class)
 private fun TripResponse.Leg?.getDepartureDeviation(): TimeTableState.JourneyCardInfo.DepartureDeviation? {
-    val est = this?.origin?.departureTimeEstimated
-    val planned = this?.origin?.departureTimePlanned
-    if (est == null || planned == null) return null
-    val estInstant = Instant.parse(est)
-    val plannedInstant = Instant.parse(planned)
-    val diff = estInstant - plannedInstant
-    val mins = diff.inWholeMinutes
+    val mins = this.departureDeviationMinutes() ?: return null
     return when {
         mins == 0L -> TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime
         mins > 0L -> {
             val abs = mins.absoluteValue
-            val unit = if (abs == 1L) "min" else "mins"
-            TimeTableState.JourneyCardInfo.DepartureDeviation.Late("$abs $unit late")
+            TimeTableState.JourneyCardInfo.DepartureDeviation.Late("$abs ${if (abs == 1L) "min" else "mins"} late")
         }
-
         else -> {
             val abs = mins.absoluteValue
-            val unit = if (abs == 1L) "min" else "mins"
-            TimeTableState.JourneyCardInfo.DepartureDeviation.Early("$abs $unit early")
+            TimeTableState.JourneyCardInfo.DepartureDeviation.Early("$abs ${if (abs == 1L) "min" else "mins"} early")
         }
     }
 }

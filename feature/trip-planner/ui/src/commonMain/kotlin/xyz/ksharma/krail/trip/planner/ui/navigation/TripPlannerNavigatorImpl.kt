@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.core.navigation.NavigatorBase
+import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 
 /**
  * Implementation of TripPlannerNavigator for the trip planner feature module.
@@ -67,6 +68,10 @@ internal class TripPlannerNavigatorImpl(
 
     override fun navigateToIntro() {
         baseNavigator.goTo(IntroRoute)
+    }
+
+    override fun navigateToTrackTrip(encodedData: String?) {
+        baseNavigator.pushSingleInstance(TrackTripRoute(encodedData))
     }
 
     override fun goBack() {

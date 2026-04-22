@@ -114,7 +114,7 @@ class TripResponseMapperTest {
     }
 
     @Test
-    fun `resolveDurationSeconds returns null for zero-second duration (same timestamps)`() {
+    fun `resolveDurationSeconds returns null for zero-second duration with same timestamps`() {
         // Arrange: departure == arrival (e.g., instantaneous interchange stop)
         val leg = buildLeg(
             duration = null,
@@ -419,7 +419,7 @@ class TripResponseMapperTest {
      */
     private fun buildJourneyWithTransportLeg(
         productClass: Long,
-        destinationName: String? = null,
+        destinationName: String? = "Central",
         description: String? = null,
         transportationId: String = "nsw:020T1:W:H:sj2",
         realtimeTripId: String = "defaultRtId",

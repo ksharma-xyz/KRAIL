@@ -14,8 +14,14 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import xyz.ksharma.krail.core.festival.FestivalManager
 import xyz.ksharma.krail.core.festival.model.Festival
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
+import xyz.ksharma.krail.feature.track.LegTrackingInfo
+import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
 import xyz.ksharma.krail.feature.track.TrackingConfig
 import xyz.ksharma.krail.feature.track.TrackingManager
@@ -433,6 +439,8 @@ class TrackTripViewModelTest {
         trackingManager = trackingManager,
         ioDispatcher = testDispatcher,
         festivalManager = festivalManager,
+        gtfsRealtimeRepository = FakeGtfsRealtimeRepository(),
+        sandook = FakeSandook(),
     )
 
     private fun futureIso(duration: kotlin.time.Duration) =
@@ -542,4 +550,45 @@ private class ConfigurableFakeTripPlanningService : TripPlanningService {
 private class FakeLocalFestivalManager : FestivalManager {
     override fun festivalOnDate(date: LocalDate): Festival? = null
     override fun emojiForDate(date: LocalDate): String = "\uD83D\uDE86"
+}
+
+private class FakeGtfsRealtimeRepository : GtfsRealtimeRepository {
+    override suspend fun pollLiveTracking(
+        legs: List<LegTrackingInfo>,
+        originUtcDateTime: String,
+    ): LiveTrackingOverlay = LiveTrackingOverlay(
+        vehiclePositions = emptyMap(),
+        stopDelays = emptyMap(),
+        lastModified = null,
+    )
+    override fun clearCache() = Unit
+}
+
+private class FakeSandook : xyz.ksharma.krail.sandook.Sandook {
+    override fun insertOrReplaceTheme(productClass: Long) = Unit
+    override fun getProductClass(): Long? = null
+    override fun clearTheme() = Unit
+    override fun insertOrReplaceTrip(tripId: String, fromStopId: String, fromStopName: String, toStopId: String, toStopName: String) = Unit
+    override fun deleteTrip(tripId: String) = Unit
+    override fun selectAllTrips(): List<xyz.ksharma.krail.sandook.SavedTrip> = emptyList()
+    override fun observeAllTrips(): Flow<List<xyz.ksharma.krail.sandook.SavedTrip>> = flowOf(emptyList())
+    override fun selectTripById(tripId: String): xyz.ksharma.krail.sandook.SavedTrip? = null
+    override fun clearSavedTrips() = Unit
+    override fun getAlerts(journeyId: String): List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId> = emptyList()
+    override fun clearAlerts() = Unit
+    override fun insertAlerts(journeyId: String, alerts: List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId>) = Unit
+    override fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double, isParent: Boolean?) = Unit
+    override fun stopsCount(): Int = 0
+    override fun productClassCount(): Int = 0
+    override fun insertNswStopProductClass(stopId: String, productClass: Int) = Unit
+    override fun <R> insertTransaction(block: () -> R): R = block()
+    override fun clearNswStopsTable() = Unit
+    override fun clearNswProductClassTable() = Unit
+    override fun selectStops(stopName: String, excludeProductClassList: List<Int>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
+    override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> = emptyMap()
+    override fun insertOrReplaceRecentSearchStop(stopId: String) = Unit
+    override fun selectRecentSearchStops(): List<xyz.ksharma.krail.sandook.SelectRecentSearchStops> = emptyList()
+    override fun clearRecentSearchStops() = Unit
+    override fun cleanupOrphanedRecentSearchStops() = Unit
+    override fun cleanupOldRecentSearchStops() = Unit
 }

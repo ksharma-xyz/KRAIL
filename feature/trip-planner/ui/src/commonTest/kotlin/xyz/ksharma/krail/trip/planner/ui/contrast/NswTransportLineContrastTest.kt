@@ -84,8 +84,8 @@ class NswTransportLineContrastTest {
                     "on BOTH surfaces. Apply ensureMinimumContrast() at every usage site:\n" +
                     needsFix.joinToString("\n") { r ->
                         "  ${r.entry.label} (${r.entry.hexColor}): " +
-                            "light=${"%.2f".format(r.lightModeContrast)}:1  " +
-                            "dark=${"%.2f".format(r.darkModeContrast)}:1"
+                            "light=${r.lightModeContrast.to2Dp()}:1  " +
+                            "dark=${r.darkModeContrast.to2Dp()}:1"
                     },
             )
         }
@@ -194,4 +194,11 @@ class NswTransportLineContrastTest {
 
     private fun analyzeOne(line: NswTransportLine): ContrastResult =
         analyzer.analyze(listOf(ColorEntry(label = line.key, hexColor = line.hexColor))).first()
+}
+
+private fun Float.to2Dp(): String {
+    val scaled = (this * 100).toLong()
+    val intPart = scaled / 100
+    val fracPart = kotlin.math.abs(scaled % 100)
+    return "$intPart.${fracPart.toString().padStart(2, '0')}"
 }

@@ -31,6 +31,9 @@ object DateTimeHelper {
     // Beyond this duration an absolute time label is more useful than "in Xh".
     private val CONTEXTUAL_TIME_THRESHOLD = 4.hours
 
+    // Threshold for "X hours ago" label — below this minutes are shown instead.
+    private val PAST_HOURS_THRESHOLD = 2.hours
+
     /**
      * Converts a UTC ISO 8601 date-time string (e.g., "2025-06-13T06:48:13Z")
      * to a 12-hour time format string (e.g., "6:48 am").
@@ -101,7 +104,7 @@ object DateTimeHelper {
                 "$absDays ${if (absDays == 1L) "day" else "days"} ago"
             }
             // Hours in the past — only beyond 2 h so 60–90 min shows as "X mins ago"
-            this <= (-2).hours -> {
+            this <= -PAST_HOURS_THRESHOLD -> {
                 val absHours = (-this).inWholeHours
                 "$absHours ${if (absHours == 1L) "hour" else "hours"} ago"
             }

@@ -10,6 +10,7 @@ const val TRACK_DEEP_LINK_BASE_URL = "https://ksharma-xyz.github.io/trip"
 
 object TripDeepLinkEncoder {
 
+    @Suppress("LongParameterList")
     fun encode(
         fromStopId: String,
         fromStopName: String,

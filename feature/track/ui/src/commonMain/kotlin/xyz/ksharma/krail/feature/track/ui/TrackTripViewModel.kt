@@ -1,4 +1,10 @@
-@file:Suppress("LongMethod", "TooManyFunctions")
+@file:Suppress(
+    "LongMethod",
+    "TooManyFunctions",
+    "CyclomaticComplexMethod",
+    "LoopWithTooManyJumpStatements",
+    "ForbiddenComment",
+)
 
 package xyz.ksharma.krail.feature.track.ui
 
@@ -19,11 +25,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
-import xyz.ksharma.krail.feature.track.LegTrackingInfo
-import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
-import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
@@ -32,16 +33,20 @@ import xyz.ksharma.krail.core.festival.model.NoFestival
 import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
+import xyz.ksharma.krail.feature.track.LegTrackingInfo
+import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
-import xyz.ksharma.krail.feature.track.TrackingConfig
-import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.feature.track.TrackedJourneyDisplay
 import xyz.ksharma.krail.feature.track.TrackedLeg
+import xyz.ksharma.krail.feature.track.TrackingConfig
+import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.feature.track.TripDeepLinkDecoder
 import xyz.ksharma.krail.feature.track.ui.TripResponseMapper.findMatchingJourney
 import xyz.ksharma.krail.feature.track.ui.TripResponseMapper.toTrackedJourneyDisplay
-import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
+import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
@@ -50,6 +55,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+@Suppress("LongParameterList")
 @OptIn(ExperimentalTime::class)
 class TrackTripViewModel(
     private val encodedData: String?,
@@ -123,7 +129,6 @@ class TrackTripViewModel(
     private var pollingJob: Job? = null
     private var livePositionJob: Job? = null
 
-    /** stopId → (lat, lon) fetched once when journey starts. */
     private var cachedStopCoordinates: Map<String, LatLng> = emptyMap()
 
     private val _liveOverlay = MutableStateFlow<LiveTrackingOverlay?>(null)
@@ -162,27 +167,15 @@ class TrackTripViewModel(
             initialValue = emptyMap(),
         )
 
-    /**
-     * When the last successful API call was made. Used to avoid re-polling immediately when
-     * the UI re-subscribes (e.g. navigating back to this screen within the polling interval).
-     * Reset to null when a fresh trip starts so the first poll is always immediate.
-     */
     private var lastPollInstant: Instant? = null
 
-    /**
-     * One-way latch: once the countdown crosses into the negative (clock is past arrival),
-     * we never allow it to tick back to a positive value. A stale API response may briefly
-     * report a future arrival time, which would cause "Arrived just now" → "Arriving in 30s"
-     * regressions. The latch prevents that; the ViewModel's state machine handles the real
-     * transition to [TrackTripState.Arrived]. Reset when a new trip starts.
-     *
-     * TODO: Evaluate whether this should instead be driven by a "minimum shown departure deviation"
-     *  threshold — e.g. if real-time data says the train is > 2 min late AND we haven't started
-     *  yet, allow the countdown to reappear. For now the latch is the safest UX default.
-     */
+    // TODO: Evaluate whether this should instead be driven by a "minimum shown departure deviation"
+    //  threshold — e.g. if real-time data says the train is > 2 min late AND we haven't started
+    //  yet, allow the countdown to reappear. For now the latch is the safest UX default.
     private var hasPassedArrivalMoment = false
 
     init {
+        @Suppress("MagicNumber")
         log("TrackTrip: ViewModel created — encodedData=${encodedData?.take(20)?.plus("…")}")
         resolveInitialState()
     }
@@ -202,7 +195,10 @@ class TrackTripViewModel(
 
         // Expire any stale existing trip before evaluating the new deep link.
         if (existingTracked != null && isTripExpired(existingTracked.deepLink)) {
-            log("TrackTrip: existing trip expired (departure > ${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago) → ArrivedAndFinished")
+            log(
+                "TrackTrip: existing trip expired " +
+                    "(departure > ${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago) → ArrivedAndFinished",
+            )
             transitionToArrivedAndFinished()
             return
         }
@@ -430,17 +426,26 @@ class TrackTripViewModel(
             val arrivalFinishedAt = arrivalInstant + TrackingConfig.ARRIVAL_FINISHED_MINUTES.minutes
             when {
                 now > arrivalFinishedAt -> {
-                    log("TrackTrip: fetchAndUpdate — → ArrivedAndFinished (>${TrackingConfig.ARRIVAL_FINISHED_MINUTES}min past arrival)")
+                    log(
+                        "TrackTrip: fetchAndUpdate — ArrivedAndFinished " +
+                            "(>${TrackingConfig.ARRIVAL_FINISHED_MINUTES}min past arrival)",
+                    )
                     transitionToArrivedAndFinished()
                 }
                 now > arrivalInstant -> {
-                    log("TrackTrip: fetchAndUpdate — → Arrived (departs ${display.originTime}, arrives ${display.destinationTime})")
+                    log(
+                        "TrackTrip: fetchAndUpdate — Arrived " +
+                            "(departs ${display.originTime}, arrives ${display.destinationTime})",
+                    )
                     trackingManager.markArrived()
                     _uiState.value = TrackTripState.Arrived(display)
                     scheduleAutoRemoval(arrivalInstant)
                 }
                 else -> {
-                    log("TrackTrip: fetchAndUpdate — → Tracking (departs ${display.originTime}, arrives ${display.destinationTime})")
+                    log(
+                        "TrackTrip: fetchAndUpdate — Tracking " +
+                            "(departs ${display.originTime}, arrives ${display.destinationTime})",
+                    )
                     _uiState.value = TrackTripState.Tracking(journey = display)
                 }
             }
@@ -497,10 +502,11 @@ class TrackTripViewModel(
                     // Trip API hasn't returned yet — retry quickly so the first GTFS-RT poll
                     // fires immediately after trip data lands rather than waiting a full 30s cycle.
                     log("[LIVETRACK] tracked.display=null (trip API not yet returned), retrying in 2s")
-                    delay(2_000L)
+                    delay(GTFS_RT_RETRY_DELAY_MS)
                     continue
                 }
-                log("[LIVETRACK] pollLivePositions — legs=${display.legs.size}, transport legs=${display.legs.filterIsInstance<TrackedLeg.Transport>().size}")
+                val transportLegCount = display.legs.filterIsInstance<TrackedLeg.Transport>().size
+                log("[LIVETRACK] pollLivePositions — legs=${display.legs.size}, transport legs=$transportLegCount")
                 pollLivePositions(display)
                 log("[LIVETRACK] pollLivePositions complete — sleeping ${TrackingConfig.GTFS_RT_POLL_INTERVAL_MS}ms")
                 delay(TrackingConfig.GTFS_RT_POLL_INTERVAL_MS)
@@ -534,7 +540,10 @@ class TrackTripViewModel(
             legs = legInfos,
             originUtcDateTime = display.originUtcDateTime,
         )
-        log("[LIVETRACK] pollLivePositions done — positions=${overlay.vehiclePositions.size} delays=${overlay.stopDelays.size}")
+        log(
+            "[LIVETRACK] pollLivePositions done — " +
+                "positions=${overlay.vehiclePositions.size} delays=${overlay.stopDelays.size}",
+        )
         _liveOverlay.value = overlay
     }
 
@@ -587,13 +596,16 @@ class TrackTripViewModel(
         stopPolling()
     }
 
+    @Suppress("MagicNumber")
     private fun computeCountdown(journey: TrackedJourneyDisplay, now: Instant): Pair<String, String> {
         val originInstant = runCatching { Instant.parse(journey.originUtcDateTime) }.getOrNull()
             ?: return "" to ""
         // Use the last transport stop's utcTime as destination — identical source to what
         // TrackedLegView uses, so CountdownCard and the timeline always agree.
         val lastStopUtc = (journey.legs.lastOrNull { it is TrackedLeg.Transport } as? TrackedLeg.Transport)
-            ?.stops?.lastOrNull()?.utcTime
+            ?.stops
+            ?.lastOrNull()
+            ?.utcTime
         val destinationInstant = lastStopUtc
             ?.let { runCatching { Instant.parse(it) }.getOrNull() }
             ?: runCatching { Instant.parse(journey.destinationUtcDateTime) }.getOrNull()
@@ -601,15 +613,15 @@ class TrackTripViewModel(
         return if (now < originInstant) {
             val secs = (originInstant - now).inWholeSeconds
             val value = when {
-                secs < 60L -> "${secs}s"
-                secs < 3600L -> {
-                    val mins = secs / 60L
-                    val rem = secs % 60L
+                secs < SECONDS_PER_MINUTE -> "${secs}s"
+                secs < SECONDS_PER_HOUR -> {
+                    val mins = secs / SECONDS_PER_MINUTE
+                    val rem = secs % SECONDS_PER_MINUTE
                     if (rem > 0L) "${mins}m ${rem}s" else "${mins}m"
                 }
                 else -> (originInstant - now).toGenericFormattedTimeString()
             }
-            "Departing in" to value
+            LABEL_DEPARTING_IN to value
         } else {
             val duration = destinationInstant - now
             val totalSeconds = duration.inWholeSeconds
@@ -618,18 +630,27 @@ class TrackTripViewModel(
             if (totalSeconds <= 0L) hasPassedArrivalMoment = true
 
             when {
-                hasPassedArrivalMoment && totalSeconds > 0L -> "Arrived" to "just now"
-                totalSeconds <= -60L -> "Arrived" to duration.toGenericFormattedTimeString()
-                totalSeconds < 0L -> "Arrived" to "just now"
-                totalSeconds < 60L -> "Arriving in" to "${totalSeconds}s"
-                totalSeconds < 3600L -> {
-                    val mins = totalSeconds / 60L
-                    val secs = totalSeconds % 60L
-                    "Arriving in" to if (secs > 0L) "${mins}m ${secs}s" else "${mins}m"
+                hasPassedArrivalMoment && totalSeconds > 0L -> LABEL_ARRIVED to LABEL_JUST_NOW
+                totalSeconds <= -SECONDS_PER_MINUTE -> LABEL_ARRIVED to duration.toGenericFormattedTimeString()
+                totalSeconds < 0L -> LABEL_ARRIVED to LABEL_JUST_NOW
+                totalSeconds < SECONDS_PER_MINUTE -> LABEL_ARRIVING_IN to "${totalSeconds}s"
+                totalSeconds < SECONDS_PER_HOUR -> {
+                    val mins = totalSeconds / SECONDS_PER_MINUTE
+                    val secs = totalSeconds % SECONDS_PER_MINUTE
+                    LABEL_ARRIVING_IN to if (secs > 0L) "${mins}m ${secs}s" else "${mins}m"
                 }
-                else -> "Arriving in" to duration.toGenericFormattedTimeString()
+                else -> LABEL_ARRIVING_IN to duration.toGenericFormattedTimeString()
             }
         }
     }
 
+    companion object {
+        private const val SECONDS_PER_MINUTE = 60L
+        private const val SECONDS_PER_HOUR = 3600L
+        private const val LABEL_ARRIVED = "Arrived"
+        private const val LABEL_JUST_NOW = "just now"
+        private const val LABEL_ARRIVING_IN = "Arriving in"
+        private const val LABEL_DEPARTING_IN = "Departing in"
+        private const val GTFS_RT_RETRY_DELAY_MS = 2_000L
+    }
 }

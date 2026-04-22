@@ -11,6 +11,7 @@ import xyz.ksharma.krail.core.analytics.di.analyticsModule
 import xyz.ksharma.krail.core.appinfo.di.appInfoModule
 import xyz.ksharma.krail.core.appstart.di.appStartModule
 import xyz.ksharma.krail.core.appversion.di.appVersionModule
+import xyz.ksharma.krail.core.deeplink.di.deepLinkModule
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.core.di.coroutineDispatchersModule
 import xyz.ksharma.krail.core.festival.di.festivalModule
@@ -23,6 +24,9 @@ import xyz.ksharma.krail.core.share.di.shareModule
 import xyz.ksharma.krail.departures.network.api.di.departuresNetworkModule
 import xyz.ksharma.krail.departures.ui.di.departuresUiModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
+import xyz.ksharma.krail.feature.track.di.trackStateModule
+import xyz.ksharma.krail.feature.track.network.di.trackNetworkModule
+import xyz.ksharma.krail.feature.track.ui.di.trackUiModule
 import xyz.ksharma.krail.info.tile.network.real.di.infoTileModule
 import xyz.ksharma.krail.io.gtfs.di.gtfsModule
 import xyz.ksharma.krail.navigation.di.appNavigationModule
@@ -32,10 +36,6 @@ import xyz.ksharma.krail.sandook.di.sandookModule
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.trip.planner.network.api.di.tripPlannerNetworkModule
-import xyz.ksharma.krail.core.deeplink.di.deepLinkModule
-import xyz.ksharma.krail.feature.track.di.trackStateModule
-import xyz.ksharma.krail.feature.track.network.di.trackNetworkModule
-import xyz.ksharma.krail.feature.track.ui.di.trackUiModule
 import xyz.ksharma.krail.trip.planner.ui.di.tripPlannerNavigationModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 

@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import org.koin.compose.koinInject
+import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
 import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.navigation.SplashRoute
 import xyz.ksharma.krail.core.navigation.rememberNavigationState
 import xyz.ksharma.krail.core.navigation.toEntries
-import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.navigation.di.collectEntryProviders

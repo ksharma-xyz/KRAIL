@@ -7,6 +7,7 @@ private const val WALKING_LEG_PRODUCT_CLASS = 99L
 private const val INTERCHANGE_LEG_PRODUCT_CLASS = 100L
 
 /** Product classes 99 and 100 are footpath/walking legs in the NSW Transport API. */
+@Suppress("MagicNumber")
 fun TripResponse.Leg.isWalkingLeg(): Boolean =
     transportation?.product?.productClass == WALKING_LEG_PRODUCT_CLASS ||
         transportation?.product?.productClass == INTERCHANGE_LEG_PRODUCT_CLASS

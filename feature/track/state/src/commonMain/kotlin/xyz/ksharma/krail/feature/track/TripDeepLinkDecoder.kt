@@ -21,6 +21,7 @@ object TripDeepLinkDecoder {
 private const val BASE64_BLOCK_SIZE = 4
 
 @OptIn(ExperimentalEncodingApi::class)
+@Suppress("MagicNumber")
 internal fun String.decodeBase64Url(): String? = runCatching {
     val padded = this + "=".repeat((BASE64_BLOCK_SIZE - this.length % BASE64_BLOCK_SIZE) % BASE64_BLOCK_SIZE)
     Base64.UrlSafe.decode(padded).decodeToString()

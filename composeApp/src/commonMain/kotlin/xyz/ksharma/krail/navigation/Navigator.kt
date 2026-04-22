@@ -370,7 +370,8 @@ class Navigator(val state: NavigationState) : NavigatorBase {
 
         // Pop everything above the existing instance
         val itemsAbove = currentStack.size - 1 - existingIndex
-        log("Navigator - pushSingleInstance: found ${route::class.simpleName} at index $existingIndex, popping $itemsAbove entries above it")
+        val routeName = route::class.simpleName
+        log("Navigator - pushSingleInstance: found $routeName at index $existingIndex, popping $itemsAbove above")
         repeat(itemsAbove) { currentStack.removeLastOrNull() }
 
         // Replace the existing instance with the new route (handles param changes too)

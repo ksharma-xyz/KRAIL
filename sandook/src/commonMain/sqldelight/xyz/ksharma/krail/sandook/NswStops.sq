@@ -60,6 +60,13 @@ WHERE (
 )
 GROUP BY s.stopId;
 
+-- Batch coordinate lookup for live map stop rendering.
+-- Returns only rows that exist; missing stopIds are simply absent from the result.
+selectStopCoordinatesBatch:
+SELECT stopId, stopLat, stopLon
+FROM NswStops
+WHERE stopId IN :stopIds;
+
 -- Index for spatial queries (CRITICAL FOR PERFORMANCE)
 CREATE INDEX IF NOT EXISTS idx_stop_coordinates ON NswStops(stopLat, stopLon);
 

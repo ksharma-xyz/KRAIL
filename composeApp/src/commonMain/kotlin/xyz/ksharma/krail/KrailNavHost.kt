@@ -13,6 +13,7 @@ import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -21,11 +22,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
+import org.koin.compose.koinInject
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
 import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.navigation.SplashRoute
 import xyz.ksharma.krail.core.navigation.rememberNavigationState
 import xyz.ksharma.krail.core.navigation.toEntries
+import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
+import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.navigation.di.collectEntryProviders
 import xyz.ksharma.krail.navigation.krailNavSerializationConfig
@@ -63,6 +67,24 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     )
 
     val navigator = rememberNavigator(navigationState)
+
+    // React to hot deep-link intents (app already running, delivered via onNewIntent).
+    // This LaunchedEffect only runs after KrailNavHost is composed, guaranteeing the nav
+    // graph exists before we try to push a route onto it.
+    //
+    // Guard: if Splash is still active (cold-start race where a hot intent arrives within
+    // the 1-second splash window), skip — SplashEntry will call consumePending() instead.
+    val pendingDeepLinkManager: PendingDeepLinkManager = koinInject()
+    LaunchedEffect(Unit) {
+        pendingDeepLinkManager.hotEvents.collect { encodedData ->
+            val topRoute = navigationState.backStacks[navigationState.topLevelRoute]?.lastOrNull()
+            if (topRoute !is SplashRoute) {
+                pendingDeepLinkManager.consumePending()
+                navigator.pushSingleInstance(TrackTripRoute(encodedData))
+            }
+            // If splash is active: the payload is already in pending; SplashEntry handles it.
+        }
+    }
 
     // Get the singleton ResultEventBus instance for passing results between screens
     // Using singleton ensures the same instance is shared across list and detail panes

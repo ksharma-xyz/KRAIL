@@ -50,6 +50,8 @@ import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
+import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -76,6 +78,7 @@ class SavedTripsViewModel(
     private val infoTileManager: InfoTileManager,
     private val platformOps: PlatformOps,
     private val inviteFriendsTileManager: InviteFriendsTileManager,
+    private val trackingManager: TrackingManager,
 ) : ViewModel() {
 
     init {
@@ -105,6 +108,8 @@ class SavedTripsViewModel(
      * Will observe park ride facilities from the database.
      */
     private var observeParkRideFacilityFromDatabaseJob: Job? = null
+
+    val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
@@ -200,6 +205,8 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.FromStopChanged -> onFromStopChanged(event.fromJson)
 
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
+
+            SavedTripUiEvent.StopTracking -> trackingManager.stop()
         }
     }
 

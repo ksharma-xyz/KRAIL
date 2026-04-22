@@ -266,6 +266,7 @@ class Navigator(val state: NavigationState) : NavigatorBase {
      * @param route The destination route
      */
     override fun goTo(route: NavKey) {
+        log("Navigator - goTo: ${route::class.simpleName} | stack=${stackSummary()}")
         state.goTo(route)
     }
 
@@ -316,6 +317,8 @@ class Navigator(val state: NavigationState) : NavigatorBase {
      * - If in nested navigation → Remove current route from stack
      */
     override fun pop() {
+        val popped = runCatching { state.backStacks[state.topLevelRoute]?.lastOrNull() }.getOrNull()
+        log("Navigator - pop: removing ${popped?.let { it::class.simpleName }} | stack=${stackSummary()}")
         state.pop()
     }
 
@@ -328,6 +331,7 @@ class Navigator(val state: NavigationState) : NavigatorBase {
      * @param route The replacement route
      */
     override fun replaceCurrent(route: NavKey) {
+        log("Navigator - replaceCurrent: → ${route::class.simpleName} | stack=${stackSummary()}")
         state.replaceCurrent(route)
     }
 
@@ -341,34 +345,45 @@ class Navigator(val state: NavigationState) : NavigatorBase {
      * @param route The new root route
      */
     override fun resetRoot(route: NavKey) {
+        log("Navigator - resetRoot: → ${route::class.simpleName} | stack=${stackSummary()}")
         state.resetRoot(route)
     }
 
     override fun pushSingleInstance(route: NavKey) {
-        val currentTopRoute = runCatching {
-            state.backStacks[state.topLevelRoute]?.lastOrNull()
-        }.getOrElse { error ->
-            log("Navigator - unable to read current top route: $error")
-        }
-
-        // If identical object is already on top -> no-op
-        if (currentTopRoute == route) {
-            log("Navigator - pushSingleInstance ignored (same instance on top): $route")
+        val currentStack = state.backStacks[state.topLevelRoute]
+        if (currentStack == null) {
+            log("Navigator - pushSingleInstance: no stack found, falling back to goTo ${route::class.simpleName}")
+            state.goTo(route)
             return
         }
 
-        // If same route *type* (class) is on top -> replace it with new params
-        if (currentTopRoute != null && currentTopRoute::class == route::class) {
-            log("Navigator - pushSingleInstance replacing top route of same type: ${route::class.simpleName}")
-            state.replaceCurrent(route)
+        log("Navigator - pushSingleInstance: ${route::class.simpleName} | stack=${stackSummary()}")
+
+        // Scan entire stack for any existing instance of the same route type
+        val existingIndex = currentStack.indexOfLast { it::class == route::class }
+
+        if (existingIndex == -1) {
+            log("Navigator - pushSingleInstance: no existing ${route::class.simpleName} in stack, pushing new")
+            state.goTo(route)
             return
         }
 
-        // Default: push new route
-        log("Navigator - pushSingleInstance pushing new route: $route")
-        state.goTo(route)
+        // Pop everything above the existing instance
+        val itemsAbove = currentStack.size - 1 - existingIndex
+        log("Navigator - pushSingleInstance: found ${route::class.simpleName} at index $existingIndex, popping $itemsAbove entries above it")
+        repeat(itemsAbove) { currentStack.removeLastOrNull() }
+
+        // Replace the existing instance with the new route (handles param changes too)
+        currentStack.removeLastOrNull()
+        currentStack.add(route)
+        log("Navigator - pushSingleInstance: stack after=${stackSummary()}")
     }
 }
+
+private fun Navigator.stackSummary(): String =
+    state.backStacks[state.topLevelRoute]
+        ?.joinToString(" → ") { it::class.simpleName ?: "?" }
+        ?: "empty"
 
 // To be used for Previews
 @Composable

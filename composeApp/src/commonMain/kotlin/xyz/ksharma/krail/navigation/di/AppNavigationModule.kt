@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
@@ -15,6 +16,8 @@ import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.SplashRoute
+import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
+import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.splash.SplashScreen
 import xyz.ksharma.krail.splash.SplashUiEvent
@@ -63,6 +66,7 @@ private fun EntryProviderScope<NavKey>.SplashEntry(
         val viewModel: SplashViewModel = koinViewModel()
         val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
         val splashState by viewModel.uiState.collectAsStateWithLifecycle()
+        val pendingDeepLinkManager: PendingDeepLinkManager = koinInject()
 
         // Set theme in Navigator
         LaunchedEffect(splashState.themeStyle) {
@@ -74,6 +78,9 @@ private fun EntryProviderScope<NavKey>.SplashEntry(
             splashState.navigationDestination?.let { destination ->
                 log("Splash complete. Navigating to: $destination")
                 navigator.replaceCurrent(destination)
+                pendingDeepLinkManager.consumePending()?.let { encodedData ->
+                    navigator.goTo(TrackTripRoute(encodedData))
+                }
             }
         }
 

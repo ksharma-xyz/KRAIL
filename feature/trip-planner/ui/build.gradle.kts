@@ -83,6 +83,8 @@ kotlin {
                 implementation(projects.feature.departures.ui)
                 implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.parkRide.ui)
+                implementation(projects.feature.track.state)
+                implementation(projects.feature.track.ui)
                 implementation(projects.feature.tripPlanner.network)
                 implementation(projects.feature.tripPlanner.state)
                 implementation(projects.io.gtfs)

@@ -3,6 +3,9 @@ package xyz.ksharma.krail
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
+import org.koin.dsl.module
+import xyz.ksharma.krail.deeplink.AppDeepLinkHandler
+import xyz.ksharma.krail.deeplink.RealAppDeepLinkHandler
 import xyz.ksharma.krail.di.initKoin
 
 class KrailApplication : Application() {
@@ -17,6 +20,12 @@ class KrailApplication : Application() {
         initKoin {
             androidContext(this@KrailApplication)
             androidLogger()
+            modules(androidAppModule)
         }
     }
+}
+
+/** Android-platform bindings that can't live in the shared composeApp module. */
+private val androidAppModule = module {
+    single<AppDeepLinkHandler> { RealAppDeepLinkHandler(pendingDeepLinkManager = get()) }
 }

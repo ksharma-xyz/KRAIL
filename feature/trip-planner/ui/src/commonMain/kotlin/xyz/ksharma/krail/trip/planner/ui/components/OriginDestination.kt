@@ -28,6 +28,8 @@ internal fun OriginDestination(
     trip: Trip,
     timeLineColor: Color,
     modifier: Modifier = Modifier,
+    originSubtitle: String? = null,
+    destinationSubtitle: String? = null,
 ) {
     Column(
         modifier = modifier
@@ -42,34 +44,44 @@ internal fun OriginDestination(
                     circleRadius = 5.dp,
                 ),
         ) {
-            AnimatedContent(
-                targetState = trip.fromStopName,
-                transitionSpec = {
-                    (
-                        fadeIn(
-                            animationSpec = tween(200),
-                        ) + slideInVertically(
-                            initialOffsetY = { it / 2 },
-                            animationSpec = tween(500, easing = EaseOutBounce),
-                        )
-                        ) togetherWith (
-                        fadeOut(
-                            animationSpec = tween(200),
-                        ) + slideOutVertically(
-                            targetOffsetY = { -it / 2 },
-                            animationSpec = tween(500),
-                        )
-                        )
-                },
-                contentAlignment = Alignment.CenterStart,
-                label = "originStopName",
-            ) { targetText ->
-                Text(
-                    text = targetText,
-                    color = timeLineColor,
-                    style = KrailTheme.typography.titleLarge,
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp),
-                )
+            Column(modifier = Modifier.padding(start = 16.dp).fillMaxWidth()) {
+                AnimatedContent(
+                    targetState = trip.fromStopName,
+                    transitionSpec = {
+                        (
+                            fadeIn(
+                                animationSpec = tween(200),
+                            ) + slideInVertically(
+                                initialOffsetY = { it / 2 },
+                                animationSpec = tween(500, easing = EaseOutBounce),
+                            )
+                            ) togetherWith (
+                            fadeOut(
+                                animationSpec = tween(200),
+                            ) + slideOutVertically(
+                                targetOffsetY = { -it / 2 },
+                                animationSpec = tween(500),
+                            )
+                            )
+                    },
+                    contentAlignment = Alignment.CenterStart,
+                    label = "originStopName",
+                ) { targetText ->
+                    Text(
+                        text = targetText,
+                        color = timeLineColor,
+                        style = KrailTheme.typography.titleLarge,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                originSubtitle?.let {
+                    Text(
+                        text = it,
+                        color = timeLineColor.copy(alpha = 0.7f),
+                        style = KrailTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
+                    )
+                }
             }
         }
 
@@ -87,34 +99,44 @@ internal fun OriginDestination(
                     circleRadius = 5.dp,
                 ),
         ) {
-            AnimatedContent(
-                targetState = trip.toStopName,
-                transitionSpec = {
-                    (
-                        fadeIn(
-                            animationSpec = tween(200),
-                        ) + slideInVertically(
-                            initialOffsetY = { -it / 2 },
-                            animationSpec = tween(500, easing = EaseOutBounce),
-                        )
-                        ) togetherWith (
-                        fadeOut(
-                            animationSpec = tween(200),
-                        ) + slideOutVertically(
-                            targetOffsetY = { it / 2 },
-                            animationSpec = tween(500),
-                        )
-                        )
-                },
-                contentAlignment = Alignment.CenterStart,
-                label = "destinationStopName",
-            ) { targetText ->
-                Text(
-                    text = targetText,
-                    color = timeLineColor,
-                    style = KrailTheme.typography.titleLarge,
-                    modifier = Modifier.padding(start = 16.dp),
-                )
+            Column(modifier = Modifier.padding(start = 16.dp).fillMaxWidth()) {
+                AnimatedContent(
+                    targetState = trip.toStopName,
+                    transitionSpec = {
+                        (
+                            fadeIn(
+                                animationSpec = tween(200),
+                            ) + slideInVertically(
+                                initialOffsetY = { -it / 2 },
+                                animationSpec = tween(500, easing = EaseOutBounce),
+                            )
+                            ) togetherWith (
+                            fadeOut(
+                                animationSpec = tween(200),
+                            ) + slideOutVertically(
+                                targetOffsetY = { it / 2 },
+                                animationSpec = tween(500),
+                            )
+                            )
+                    },
+                    contentAlignment = Alignment.CenterStart,
+                    label = "destinationStopName",
+                ) { targetText ->
+                    Text(
+                        text = targetText,
+                        color = timeLineColor,
+                        style = KrailTheme.typography.titleLarge,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                destinationSubtitle?.let {
+                    Text(
+                        text = it,
+                        color = timeLineColor.copy(alpha = 0.7f),
+                        style = KrailTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
+                    )
+                }
             }
         }
     }

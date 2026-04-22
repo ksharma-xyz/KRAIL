@@ -2,8 +2,10 @@ package xyz.ksharma.krail.trip.planner.ui.state.timetable
 
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
@@ -24,6 +26,8 @@ data class TimeTableState(
     // It should load only once whether it is a festival or not.
     val loadingEmoji: LoadingEmoji? = null,
     val isMapsAvailable: Boolean = false,
+    /** journeyId → deep link URL. Populated by ViewModel when journey list is built. */
+    val deepLinkUrls: ImmutableMap<String, String> = persistentMapOf(),
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable
@@ -130,7 +134,11 @@ data class TimeTableState(
                 // Service Alerts for the leg.
                 val serviceAlertList: ImmutableList<ServiceAlert>? = null,
 
+                /** Unique per scheduled run (transportation.id + RealtimeTripId). Used for journeyId dedup. */
                 val tripId: String? = null,
+
+                /** Stable timetable identifier (transportation.id only). Used for trip tracking deep links. */
+                val transportationId: String? = null,
             ) : Leg()
         }
 

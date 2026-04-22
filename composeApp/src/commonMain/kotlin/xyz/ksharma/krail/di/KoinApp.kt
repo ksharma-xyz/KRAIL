@@ -32,6 +32,10 @@ import xyz.ksharma.krail.sandook.di.sandookModule
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.trip.planner.network.api.di.tripPlannerNetworkModule
+import xyz.ksharma.krail.core.deeplink.di.deepLinkModule
+import xyz.ksharma.krail.feature.track.di.trackStateModule
+import xyz.ksharma.krail.feature.track.network.di.trackNetworkModule
+import xyz.ksharma.krail.feature.track.ui.di.trackUiModule
 import xyz.ksharma.krail.trip.planner.ui.di.tripPlannerNavigationModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 
@@ -63,6 +67,10 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             discoverModule,
             infoTileModule,
             shareModule,
+            deepLinkModule,
+            trackStateModule,
+            trackNetworkModule,
+            trackUiModule,
             // Navigation modules
             appNavigationModule,
             tripPlannerNavigationModule,

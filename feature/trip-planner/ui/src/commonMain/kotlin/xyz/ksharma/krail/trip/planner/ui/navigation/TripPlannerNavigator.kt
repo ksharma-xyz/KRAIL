@@ -21,6 +21,7 @@ interface TripPlannerNavigator {
     fun navigateToDateTimeSelector(json: String?)
     fun navigateToOurStory()
     fun navigateToIntro()
+    fun navigateToTrackTrip(encodedData: String? = null)
     fun goBack()
 
     // Special operations

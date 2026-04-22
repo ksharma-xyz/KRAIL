@@ -10,7 +10,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
  * Aggregates all trip planner navigation entries.
  *
  * Each entry is now in its own file for better maintainability and scalability.
- * Uses only TripPlannerNavigator interface - no direct Navigator dependency!
+ * Uses only TripPlannerNavigator interface — no direct Navigator dependency!
  */
 @Composable
 fun EntryProviderScope<NavKey>.TripPlannerEntries(
@@ -25,4 +25,7 @@ fun EntryProviderScope<NavKey>.TripPlannerEntries(
     OurStoryEntry(tripPlannerNavigator)
     IntroEntry(tripPlannerNavigator)
     DiscoverEntry(tripPlannerNavigator)
+    TrackTripEntry(
+        onBack = { tripPlannerNavigator.goBack() },
+    )
 }

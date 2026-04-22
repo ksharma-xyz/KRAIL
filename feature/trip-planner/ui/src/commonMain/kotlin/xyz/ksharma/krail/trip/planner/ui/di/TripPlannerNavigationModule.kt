@@ -5,6 +5,7 @@ import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.NavigatorBase
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigatorImpl
+
 import xyz.ksharma.krail.trip.planner.ui.navigation.entries.TripPlannerEntries
 
 /**
@@ -24,9 +25,7 @@ val tripPlannerNavigationModule = module {
             builder = { navigator ->
                 // Cast to NavigatorBase (from core:navigation)
                 val baseNavigator = navigator as NavigatorBase
-                // Wrap in feature-specific implementation
                 val tripPlannerNavigator = TripPlannerNavigatorImpl(baseNavigator)
-                // Provide entries
                 TripPlannerEntries(tripPlannerNavigator)
             },
         )

@@ -380,6 +380,7 @@ fun TimeTableScreen(
                             .animateItem(),
                         departureDeviation = journey.departureDeviation,
                         scheduledOriginTime = journey.scheduledOriginTime,
+                        deepLinkUrl = timeTableState.deepLinkUrls[journey.journeyId],
                     )
                 }
             } else { // Journey list is empty or null
@@ -423,6 +424,7 @@ private fun JourneyCardItem(
     isMapsAvailable: Boolean = false,
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
+    deepLinkUrl: String? = null,
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -446,6 +448,7 @@ private fun JourneyCardItem(
             modifier = modifier,
             departureDeviation = departureDeviation,
             scheduledOriginTime = scheduledOriginTime,
+            deepLinkUrl = deepLinkUrl,
         )
     }
 }

@@ -70,6 +70,13 @@ interface Sandook {
         stopName: String,
         excludeProductClassList: List<Int>,
     ): List<SelectProductClassesForStop>
+
+    /**
+     * Batch coordinate lookup. Returns a map of stopId → (lat, lon) for all stopIds that
+     * exist in the DB. Missing stopIds are absent from the result — callers must handle null.
+     * Single query regardless of stop count.
+     */
+    fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>>
     // endregion
 
     // region RecentSearchStops

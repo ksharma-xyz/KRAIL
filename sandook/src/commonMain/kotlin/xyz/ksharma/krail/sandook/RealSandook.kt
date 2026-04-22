@@ -152,6 +152,13 @@ internal class RealSandook(
         ).executeAsList()
     }
 
+    override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> {
+        if (stopIds.isEmpty()) return emptyMap()
+        return nswStopsQueries.selectStopCoordinatesBatch(stopIds)
+            .executeAsList()
+            .associate { row -> row.stopId to (row.stopLat to row.stopLon) }
+    }
+
     // endregion NswStops
 
     // region RecentSearchStops

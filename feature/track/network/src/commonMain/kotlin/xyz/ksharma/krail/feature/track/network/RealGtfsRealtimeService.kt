@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.feature.track.network
 
+import com.google.transit.realtime.FeedMessage
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
@@ -7,7 +8,6 @@ import io.ktor.client.request.head
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import com.google.transit.realtime.FeedMessage
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
@@ -36,7 +36,8 @@ internal class RealGtfsRealtimeService(
                     return GtfsRealtimeResult.Unchanged
                 }
             }.onFailure { e ->
-                log("GtfsRT: HEAD $url failed (${e::class.simpleName}: ${e.message}) — skipping HEAD, proceeding with GET")
+                val reason = "${e::class.simpleName}: ${e.message}"
+                log("GtfsRT: HEAD $url failed ($reason) — skipping HEAD, proceeding with GET")
             }
         }
 
@@ -49,7 +50,7 @@ internal class RealGtfsRealtimeService(
         val contentType = response.headers["Content-Type"]
         log("GtfsRT: GET $url → HTTP $statusCode, Content-Type=$contentType, Last-Modified=$lastModified")
 
-        if (statusCode != 200) {
+        if (statusCode != HttpStatusCode.OK.value) {
             logError("GtfsRT: ❌ $feedName HTTP $statusCode — aborting parse")
             return GtfsRealtimeResult.Error(Exception("HTTP $statusCode for $feedName"))
         }
@@ -69,7 +70,7 @@ internal class RealGtfsRealtimeService(
         val alertCount = message.entity.count { it.alert != null }
         log(
             "GtfsRT: ✅ $feedName parsed — total=${message.entity.size} entities " +
-                "(vehiclePositions=$vehicleCount, tripUpdates=$tripUpdateCount, alerts=$alertCount)"
+                "(vehiclePositions=$vehicleCount, tripUpdates=$tripUpdateCount, alerts=$alertCount)",
         )
 
         GtfsRealtimeResult.Fresh(message, lastModified)

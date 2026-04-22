@@ -1,3 +1,5 @@
+@file:Suppress("ForbiddenComment")
+
 package xyz.ksharma.krail.feature.track
 
 object TrackingConfig {

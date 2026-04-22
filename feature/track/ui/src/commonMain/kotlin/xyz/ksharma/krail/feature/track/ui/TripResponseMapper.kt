@@ -1,11 +1,12 @@
 package xyz.ksharma.krail.feature.track.ui
 
 import kotlinx.collections.immutable.toImmutableList
-import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.calculateTimeDifference
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
+import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportLine
 import xyz.ksharma.krail.feature.track.DepartureDeviation
@@ -20,9 +21,10 @@ import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import xyz.ksharma.krail.core.log.log
 
 internal object TripResponseMapper {
+
+    private const val SECONDS_PER_MINUTE = 60L
 
     /**
      * Finds the journey in [TripResponse] that matches the deep link.
@@ -44,13 +46,14 @@ internal object TripResponseMapper {
      * (rather than restructuring it), this function returns null and the state transitions
      * to [xyz.ksharma.krail.feature.track.TrackTripState.NotFound].
      */
+    @Suppress("CyclomaticComplexMethod")
     @OptIn(ExperimentalTime::class)
     fun TripResponse.findMatchingJourney(deepLink: TripDeepLink): TripResponse.Journey? {
         val deepLinkInstant = runCatching { Instant.parse(deepLink.departureUtcDateTime) }.getOrNull()
         val count = journeys?.size ?: 0
         log(
             "TrackTrip: findMatchingJourney — $count journeys, " +
-                "seeking legs=${deepLink.legs.map { it.transportationId }}, dep=${deepLink.departureUtcDateTime}"
+                "seeking legs=${deepLink.legs.map { it.transportationId }}, dep=${deepLink.departureUtcDateTime}",
         )
 
         val match = journeys?.firstOrNull { journey ->
@@ -104,11 +107,16 @@ internal object TripResponseMapper {
             val timeMatch = if (deepLinkInstant != null && firstDep != null) {
                 val legInstant = runCatching { Instant.parse(firstDep) }.getOrNull()
                 legInstant != null && (legInstant - deepLinkInstant).absoluteValue < 60.seconds
-            } else false
+            } else {
+                false
+            }
 
             val destMatch = lastDestId == deepLink.toStopId
 
-            log("TrackTrip:   fallback journey firstDep=$firstDep lastDestId=$lastDestId → time=$timeMatch dest=$destMatch")
+            log(
+                "TrackTrip:   fallback journey firstDep=$firstDep " +
+                    "lastDestId=$lastDestId → time=$timeMatch dest=$destMatch",
+            )
             timeMatch && destMatch
         }
 
@@ -120,6 +128,7 @@ internal object TripResponseMapper {
         return fallback
     }
 
+    @Suppress("ReturnCount")
     fun TripResponse.Journey.toTrackedJourneyDisplay(deepLink: TripDeepLink): TrackedJourneyDisplay? {
         val publicLegs = legs?.filter { !it.isWalkingLeg() && it.transportation != null }
         val firstLeg = publicLegs?.firstOrNull() ?: return null
@@ -136,7 +145,9 @@ internal object TripResponseMapper {
             originEstimated != originPlanned
         ) {
             originPlanned.utcToDisplayTime()
-        } else null
+        } else {
+            null
+        }
 
         val trackedLegs = legs?.mapNotNull { leg ->
             if (leg.isWalkingLeg()) {
@@ -163,6 +174,7 @@ internal object TripResponseMapper {
         )
     }
 
+    @Suppress("CyclomaticComplexMethod")
     fun TripResponse.Leg.toTrackedTransportLeg(): TrackedLeg.Transport? {
         val productClass = transportation?.product?.productClass?.toInt() ?: return null
         val mode = NswTransportConfig.modeFromProductClass(productClass) ?: return null
@@ -226,7 +238,7 @@ internal object TripResponseMapper {
     fun String.utcToDisplayTime(): String = utcToLocalDateTimeAEST().toHHMM()
 
     fun Long.toFormattedSecondsString(): String {
-        val mins = this / 60
+        val mins = this / SECONDS_PER_MINUTE
         return "$mins ${if (mins == 1L) "min" else "mins"}"
     }
 }

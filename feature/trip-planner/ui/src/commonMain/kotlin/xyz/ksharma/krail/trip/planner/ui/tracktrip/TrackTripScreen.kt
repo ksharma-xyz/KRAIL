@@ -1,4 +1,4 @@
-@file:Suppress("LongMethod")
+@file:Suppress("LongMethod", "TooManyFunctions", "CyclomaticComplexMethod", "StringLiteralDuplication")
 
 package xyz.ksharma.krail.trip.planner.ui.tracktrip
 
@@ -38,14 +38,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.collections.immutable.persistentListOf
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -56,26 +57,26 @@ import xyz.ksharma.krail.feature.track.TrackTripState
 import xyz.ksharma.krail.feature.track.TrackedJourneyDisplay
 import xyz.ksharma.krail.feature.track.TrackedLeg
 import xyz.ksharma.krail.feature.track.TrackedStop
-import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.feature.track.TrackingConfig
+import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.feature.track.ui.TrackTripViewModel
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import kotlinx.collections.immutable.persistentListOf
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
-import xyz.ksharma.krail.taj.components.Divider
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.ActionData
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
@@ -83,7 +84,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.TrackedLegView
 import xyz.ksharma.krail.trip.planner.ui.components.WalkingLeg
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.LiveVehicleLayer
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.TrackedJourneyMapMapper.toJourneyMapState
@@ -153,10 +153,6 @@ fun TrackTripScreen(
                     onMapToggle = { mapExpanded = !mapExpanded },
                     stopCoordinates = stopCoordinates,
                     liveOverlay = liveOverlay,
-                    onStopTracking = {
-                        viewModel.onStopTracking()
-                        onBack()
-                    },
                 )
 
                 is TrackTripState.Arrived -> JourneyContent(
@@ -168,10 +164,6 @@ fun TrackTripScreen(
                     onMapToggle = { mapExpanded = !mapExpanded },
                     stopCoordinates = stopCoordinates,
                     liveOverlay = liveOverlay,
-                    onStopTracking = {
-                        viewModel.onStopTracking()
-                        onBack()
-                    },
                 )
 
                 TrackTripState.NotFound -> Column(
@@ -302,10 +294,12 @@ private fun AlreadyTrackingContent(
             title = "Already on another trip",
             message = "Currently tracking ${
                 currentDeepLink.fromStopName
-                    .split(" ").joinToString("\u00A0")
+                    .split(" ")
+                    .joinToString("\u00A0")
             } to\u00A0${
                 currentDeepLink.toStopName
-                    .split(" ").joinToString("\u00A0")
+                    .split(" ")
+                    .joinToString("\u00A0")
             }.",
             actionData = ActionData("Stop & Track New", onStopCurrentAndTrackNew),
             filledButton = true,
@@ -316,9 +310,9 @@ private fun AlreadyTrackingContent(
 
 @Composable
 private fun LoadingContent(
+    modifier: Modifier = Modifier,
     deepLink: TripDeepLink? = null,
     emoji: String = "\uD83D\uDE86",
-    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         deepLink?.let { dl ->
@@ -356,7 +350,6 @@ private fun JourneyContent(
     now: Instant,
     modifier: Modifier = Modifier,
     isArrived: Boolean = false,
-    onStopTracking: () -> Unit = {},
     mapExpanded: Boolean = false,
     onMapToggle: () -> Unit = {},
     stopCoordinates: Map<String, LatLng> = emptyMap(),
@@ -559,10 +552,10 @@ private fun FlipText(
                                 animationSpec = tween(250, easing = FastOutSlowInEasing),
                                 initialOffsetY = { it },
                             ) + fadeIn(tween(200)) togetherWith
-                                    slideOutVertically(
-                                        animationSpec = tween(250, easing = FastOutSlowInEasing),
-                                        targetOffsetY = { -it },
-                                    ) + fadeOut(tween(150))
+                                slideOutVertically(
+                                    animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                    targetOffsetY = { -it },
+                                ) + fadeOut(tween(150))
                         },
                         label = "digit_r$rightKey",
                     ) { c ->
@@ -605,7 +598,6 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                     journey = state.journey,
                     countdownDisplay = "Arriving in" to "12m 34s",
                     now = Instant.parse("2024-01-01T12:15:00Z"),
-                    onStopTracking = {},
                 )
 
                 is TrackTripState.Arrived -> JourneyContent(
@@ -613,7 +605,6 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                     countdownDisplay = "Arrived" to "just now",
                     now = Instant.parse("2024-01-01T12:35:00Z"),
                     isArrived = true,
-                    onStopTracking = {},
                 )
 
                 TrackTripState.NotFound -> Column(modifier = Modifier.fillMaxWidth()) {

@@ -1,16 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,11 +34,11 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+@Suppress("CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class)
 @Composable
 internal fun TrackedLegView(
@@ -89,8 +86,12 @@ internal fun TrackedLegView(
                     val total = (next - prev).inWholeMilliseconds.toFloat()
                     val elapsed = (now - prev).inWholeMilliseconds.toFloat()
                     if (total > 0f) (elapsed / total).coerceIn(0f, 1f) else null
-                } else null
-            } else null
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
         }
     }
 
@@ -196,7 +197,7 @@ internal fun TrackedLegView(
             } else {
                 Spacer(
                     modifier = Modifier.height(12.dp)
-                        .timeLineCenter(color = segmentColor(0), strokeWidth = strokeWidth)
+                        .timeLineCenter(color = segmentColor(0), strokeWidth = strokeWidth),
                 )
             }
 
@@ -242,15 +243,15 @@ internal fun TrackedLegView(
                                 lineColor,
                                 pendingColor,
                                 strokeWidth,
-                                currentSegmentFraction ?: 0f
+                                currentSegmentFraction ?: 0f,
                             ),
                     )
                 } else {
                     Spacer(
                         modifier = Modifier.height(16.dp).timeLineCenter(
                             color = segmentColor(stopIdx),
-                            strokeWidth = strokeWidth
-                        )
+                            strokeWidth = strokeWidth,
+                        ),
                     )
                 }
             }
@@ -292,9 +293,9 @@ private fun TrackedStopRow(
     isPast: Boolean,
     isApproaching: Boolean,
     lineColor: Color,
+    modifier: Modifier = Modifier,
     isArrived: Boolean = false,
     approachingTimeText: String? = null,
-    modifier: Modifier = Modifier,
     backgroundColor: Color = KrailTheme.colors.surface,
 ) {
     val onSurface = KrailTheme.colors.onSurface
@@ -324,7 +325,7 @@ private fun TrackedStopRow(
         ) {
             Row(
                 modifier = Modifier.padding(end = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(text = time, style = timeStyle, color = contentColor)
                 scheduledTime?.let {
@@ -352,7 +353,7 @@ private fun TrackedStopRow(
 @Composable
 private fun ApproachingTimeText(
     approachingTimeText: String?,
-    contentColor: Color
+    contentColor: Color,
 ) {
     approachingTimeText?.let { timeText ->
         Text(
@@ -425,7 +426,7 @@ private fun TrackedStopRowPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             TrackedStopRow(
                 time = "12:05 PM",

@@ -4,6 +4,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.log.logError
@@ -93,6 +94,16 @@ object DateTimeHelper {
         val partialMinutes = (this - hours.hours).inWholeMinutes
 
         return when {
+            // Days in the past — "X day(s) ago"
+            this <= (-24).hours -> {
+                val absDays = (-this).inWholeDays
+                "$absDays ${if (absDays == 1L) "day" else "days"} ago"
+            }
+            // Hours in the past — "X hour(s) ago"
+            this <= (-60).minutes -> {
+                val absHours = (-this).inWholeHours
+                "$absHours ${if (absHours == 1L) "hour" else "hours"} ago"
+            }
             // More than a full minute in the past — "X min(s) ago"
             this <= (-1).minutes -> {
                 val abs = totalMinutes.absoluteValue
@@ -177,8 +188,8 @@ object DateTimeHelper {
     fun Instant.toApiDateString(): String {
         val local = this.toLocalDateTime(TimeZone.of(AEST_TIMEZONE))
         return "${local.year}" +
-            local.monthNumber.toString().padStart(2, '0') +
-            local.dayOfMonth.toString().padStart(2, '0')
+                local.month.number.toString().padStart(2, '0') +
+                local.day.toString().padStart(2, '0')
     }
 
     /**

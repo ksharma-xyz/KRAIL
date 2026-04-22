@@ -40,6 +40,8 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
@@ -52,8 +54,6 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.feature.track.TrackedJourney
-import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard

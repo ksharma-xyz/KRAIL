@@ -224,14 +224,16 @@ private fun JourneyMapContent(
                         },
                     )
                 }
-                if (showFreshnessBadge) badgeText?.let { text ->
-                    MapTimetableDataBadge(
-                        text = text,
-                        isStale = isStale,
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(vertical = 8.dp),
-                    )
+                if (showFreshnessBadge) {
+                    badgeText?.let { text ->
+                        MapTimetableDataBadge(
+                            text = text,
+                            isStale = isStale,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(vertical = 8.dp),
+                        )
+                    }
                 }
             }
         }

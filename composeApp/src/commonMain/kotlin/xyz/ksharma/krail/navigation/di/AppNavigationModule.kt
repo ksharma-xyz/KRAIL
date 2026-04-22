@@ -11,12 +11,12 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.appversion.AppUpgradeScreen
 import xyz.ksharma.krail.core.appversion.AppUpgradeViewModel
+import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.SplashRoute
-import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.splash.SplashScreen

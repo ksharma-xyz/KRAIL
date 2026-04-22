@@ -32,7 +32,8 @@ object TrackedJourneyMapMapper {
         val legResults = transportLegs.mapIndexed { index, leg ->
             val lineColor = NswTransportLine.entries
                 .firstOrNull { it.key == leg.lineName }
-                ?.hexColor ?: leg.lineColorCode
+                ?.hexColor
+                ?: leg.lineColorCode
 
             val stopFeatures = leg.stops.mapIndexedNotNull { stopIndex, stop ->
                 val position = stopCoordinates[stop.stopId] ?: return@mapIndexedNotNull null

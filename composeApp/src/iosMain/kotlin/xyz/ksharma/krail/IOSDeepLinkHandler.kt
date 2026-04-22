@@ -34,15 +34,16 @@ class IOSDeepLinkHandler : KoinComponent {
     }
 
     private fun String.extractEncodedData(): String? {
-        if (!contains("ksharma-xyz.github.io")) return null
-        // Path must start with /trip
-        val pathStart = indexOf("ksharma-xyz.github.io") + "ksharma-xyz.github.io".length
-        val pathSection = substring(pathStart)
-        if (!pathSection.startsWith("/trip")) return null
-        // Extract `d` query parameter
-        val queryStart = indexOf('?').takeIf { it >= 0 }?.plus(1) ?: return null
-        val query = substring(queryStart)
-        return query.split("&")
+        val host = "ksharma-xyz.github.io"
+        // Resolve query start only when host is present and path starts with /trip
+        val queryStart = indexOf(host)
+            .takeIf { it >= 0 }
+            ?.let { hostIdx ->
+                val pathSection = substring(hostIdx + host.length)
+                indexOf('?').takeIf { pathSection.startsWith("/trip") && it >= 0 }?.plus(1)
+            }
+            ?: return null
+        return substring(queryStart).split("&")
             .firstOrNull { it.startsWith("d=") }
             ?.removePrefix("d=")
             ?.takeIf { it.isNotBlank() }

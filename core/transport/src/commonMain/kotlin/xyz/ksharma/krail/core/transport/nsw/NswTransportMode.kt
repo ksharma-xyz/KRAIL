@@ -36,18 +36,20 @@ object NswTransportMode {
      */
     @Suppress("MagicNumber")
     fun fromIconId(iconId: Long?): TransportMode? = when (iconId?.toInt()) {
-        1, 19        -> Train      // Sydney Trains + temporary trains
-        2, 3         -> Train      // Intercity + Regional Trains (NSW Trains feed)
-        24           -> Metro
-        13, 20, 21   -> LightRail // CBD & SE / temporary / Newcastle Light Rail
+        1, 19 -> Train // Sydney Trains + temporary trains
+        2, 3 -> Train // Intercity + Regional Trains (NSW Trains feed)
+        24 -> Metro
+        13, 20, 21 -> LightRail // CBD & SE / temporary / Newcastle Light Rail
         4, 5, 6, 9,
         14, 15, 23,
         31, 32, 33,
         34, 35, 36,
-        37, 38       -> Bus
+        37, 38,
+        -> Bus
         10, 11, 12,
-        18           -> Ferry
-        7, 22        -> Coach
-        else         -> null
+        18,
+        -> Ferry
+        7, 22 -> Coach
+        else -> null
     }
 }

@@ -20,7 +20,7 @@ object TrackingConfig {
 
     /**
      * Enable per-digit flip animation on the countdown card. Set false for plain InfoTile text.
-     * TODO: Remove flag and InfoTile fallback once flip animation is validated in production.
+     * Remove flag and InfoTile fallback once flip animation is validated in production.
      */
     const val USE_FLIP_COUNTDOWN = true
 }

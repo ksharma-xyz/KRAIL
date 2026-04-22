@@ -2,6 +2,7 @@ package xyz.ksharma.krail.feature.track
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -20,7 +21,7 @@ class TripDeepLinkEncoderDecoderTest {
     @Test
     fun `encodeBase64Url produces no padding characters`() {
         val encoded = "test".encodeBase64Url()
-        assert(!encoded.contains('=')) { "Encoded string should have no '=' padding" }
+        assertFalse(encoded.contains('='), "Encoded string should have no '=' padding")
     }
 
     @Test

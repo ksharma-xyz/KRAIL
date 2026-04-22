@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
@@ -31,6 +32,7 @@ fun ErrorMessage(
     modifier: Modifier = Modifier,
     emoji: String = "\uD83D\uDC36",
     actionData: ActionData? = null,
+    filledButton: Boolean = false,
 ) {
     val themeColor by LocalThemeColor.current
 
@@ -54,7 +56,7 @@ fun ErrorMessage(
         )
         Text(
             text = message,
-            style = KrailTheme.typography.bodyLarge,
+            style = KrailTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = KrailTheme.colors.onSurface,
             modifier = Modifier
@@ -64,18 +66,27 @@ fun ErrorMessage(
         )
 
         actionData?.let {
-            TextButton(
-                dimensions = ButtonDefaults.largeButtonSize(),
-                onClick = actionData.onActionClick,
-                modifier = Modifier
-                    .padding(vertical = 16.dp, horizontal = 16.dp),
-            ) {
-                Text(
-                    text = actionData.actionText,
-                    color = themeColor.hexToComposeColor(),
-                )
+            if (filledButton) {
+                Button(
+                    onClick = actionData.onActionClick,
+                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                ) {
+                    Text(text = actionData.actionText)
+                }
+            } else {
+                TextButton(
+                    dimensions = ButtonDefaults.largeButtonSize(),
+                    onClick = actionData.onActionClick,
+                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                ) {
+                    Text(
+                        text = actionData.actionText,
+                        color = themeColor.hexToComposeColor(),
+                    )
+                }
             }
         }
+
     }
 }
 

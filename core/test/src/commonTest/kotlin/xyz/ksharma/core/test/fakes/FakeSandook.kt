@@ -194,4 +194,15 @@ class FakeSandook : Sandook {
             recentSearchStops.addAll(toKeep)
         }
     }
+
+    override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> {
+        return stops
+            .filter { it.stopId in stopIds }
+            .mapNotNull { stop ->
+                val lat = stop.stopLat ?: return@mapNotNull null
+                val lon = stop.stopLon ?: return@mapNotNull null
+                stop.stopId to Pair(lat, lon)
+            }
+            .toMap()
+    }
 }

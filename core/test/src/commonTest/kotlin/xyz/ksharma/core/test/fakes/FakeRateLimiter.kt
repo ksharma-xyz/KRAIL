@@ -6,14 +6,19 @@ import xyz.ksharma.krail.trip.planner.network.api.ratelimit.RateLimiter
 
 class FakeRateLimiter : RateLimiter {
 
-    private var eventTriggered = false
+    var triggerCount: Int = 0
+        private set
 
     override fun <T> rateLimitFlow(block: suspend () -> T): Flow<T> {
         return flow { emit(block()) }
     }
 
     override fun triggerEvent(): Boolean {
-        eventTriggered = true
-        return eventTriggered
+        triggerCount++
+        return true
+    }
+
+    fun reset() {
+        triggerCount = 0
     }
 }

@@ -724,7 +724,9 @@ class TimeTableViewModel(
 
         @VisibleForTesting
         val REFRESH_TIME_TEXT_DURATION = 10.seconds
-        private val AUTO_REFRESH_TIME_TABLE_DURATION = 30.seconds
+
+        @VisibleForTesting
+        val AUTO_REFRESH_TIME_TABLE_DURATION = 30.seconds
         private val STOP_TIME_TEXT_UPDATES_THRESHOLD = 3.seconds
 
         /**

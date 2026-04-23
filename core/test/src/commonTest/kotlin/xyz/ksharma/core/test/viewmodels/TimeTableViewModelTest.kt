@@ -49,6 +49,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -760,6 +761,359 @@ class TimeTableViewModelTest {
 
             // THEN - called but returned failure, no exception propagated
             assertTrue(fakeShareManager.shareImageCalled)
+        }
+
+    // endregion
+
+    // region Test for initializeTrip
+
+    @Test
+    fun `GIVEN initialized route WHEN initializeTrip called with same route THEN re-initialization is skipped`() =
+        runTest {
+            val fromStopId = "stop_a"
+            val toStopId = "stop_b"
+            tripPlanningService.isSuccess = true
+            rateLimiter.reset()
+
+            viewModel.initializeTrip(fromStopId, "Stop A", toStopId, "Stop B")
+            advanceUntilIdle()
+            val triggerCountAfterFirst = rateLimiter.triggerCount
+
+            // Same route again — should be a no-op
+            viewModel.initializeTrip(fromStopId, "Stop A", toStopId, "Stop B")
+            advanceUntilIdle()
+
+            assertEquals(
+                triggerCountAfterFirst,
+                rateLimiter.triggerCount,
+                "Rate limiter should not be triggered again for the same route",
+            )
+        }
+
+    @Test
+    fun `GIVEN initialized route WHEN initializeTrip called with different route THEN new trip is loaded`() =
+        runTest {
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                skipItems(1) // initial state
+
+                viewModel.initializeTrip("stop_a", "Stop A", "stop_b", "Stop B")
+                awaitItem().run {
+                    assertEquals("stop_a", trip?.fromStopId)
+                    assertEquals("stop_b", trip?.toStopId)
+                }
+
+                // Different destination
+                viewModel.initializeTrip("stop_a", "Stop A", "stop_c", "Stop C")
+                awaitItem().run {
+                    assertEquals("stop_a", trip?.fromStopId)
+                    assertEquals("stop_c", trip?.toStopId)
+                    assertTrue(isLoading)
+                }
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    // endregion
+
+    // region Test for loading state transitions
+
+    @Test
+    fun `GIVEN trip info WHEN fetchTrip is called THEN silentLoading is true during fetch and false after`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "stop1",
+                fromStopName = "Stop 1",
+                toStopId = "stop2",
+                toStopName = "Stop 2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                skipItems(1) // initial state
+
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                viewModel.fetchTrip()
+
+                // emit 1: LoadTimeTable sets trip, isLoading=true, silentLoading still false
+                awaitItem().run {
+                    assertTrue(isLoading)
+                    assertFalse(silentLoading)
+                }
+
+                // emit 2: fetchTrip sets silentLoading=true
+                awaitItem().run { assertTrue(silentLoading) }
+
+                // emit 3: collectLatest clears silentLoading before final state
+                awaitItem().run { assertFalse(silentLoading) }
+
+                // emit 4: updateUiStateWithFilteredTrips sets isLoading=false + journeyList
+                awaitItem().run {
+                    assertFalse(isLoading)
+                    assertFalse(silentLoading)
+                    assertTrue(journeyList.isNotEmpty())
+                }
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN different trip WHEN onLoadTimeTable is called THEN isLoading is true and journey cache is cleared`() =
+        runTest {
+            val trip1 = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            val trip2 = Trip(fromStopId = "stop3", fromStopName = "S3", toStopId = "stop4", toStopName = "S4")
+            tripPlanningService.isSuccess = true
+
+            // Load first trip and populate journeys cache
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip1))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.journeys.isNotEmpty())
+
+            // Now switch to a different trip
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip2))
+            assertTrue(viewModel.journeys.isEmpty(), "Journey cache should be cleared on trip change")
+
+            viewModel.uiState.test {
+                awaitItem().run {
+                    assertTrue(isLoading)
+                    assertEquals("stop3", trip?.fromStopId)
+                }
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN same trip WHEN onLoadTimeTable is called THEN journey cache is preserved`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val cacheSize = viewModel.journeys.size
+            assertTrue(cacheSize > 0, "Expected journeys in cache after fetch")
+
+            // Re-load same trip (simulates nav back)
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            advanceUntilIdle()
+
+            assertEquals(cacheSize, viewModel.journeys.size, "Journey cache should be preserved for same trip")
+        }
+
+    // endregion
+
+    // region Test for journey cache lifecycle
+
+    @Test
+    fun `GIVEN loaded journeys WHEN DateTimeSelectionChanged THEN journey cache is cleared`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.journeys.isNotEmpty())
+
+            @OptIn(ExperimentalTime::class)
+            val newSelection = DateTimeSelectionItem(
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+                option = JourneyTimeOptions.LEAVE,
+                hour = 10,
+                minute = 30,
+            )
+
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(newSelection))
+            assertTrue(viewModel.journeys.isEmpty(), "Journey cache should be cleared when date/time changes")
+        }
+
+    @Test
+    fun `GIVEN loaded journeys WHEN ReverseTripButtonClicked THEN journey cache is cleared`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.journeys.isNotEmpty())
+
+            viewModel.onEvent(TimeTableUiEvent.ReverseTripButtonClicked)
+            assertTrue(viewModel.journeys.isEmpty(), "Journey cache should be cleared on reverse trip")
+        }
+
+    // endregion
+
+    // region Test for autoRefreshTimeTable
+
+    @Test
+    fun `GIVEN non-empty journey list WHEN AUTO_REFRESH_TIME_TABLE_DURATION passes THEN rate limiter is triggered`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
+
+            rateLimiter.reset()
+
+            viewModel.autoRefreshTimeTable.test {
+                skipItems(1) // initial value
+
+                advanceTimeBy(TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds)
+                assertTrue(rateLimiter.triggerCount > 0, "Rate limiter should be triggered after auto-refresh interval")
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN empty journey list WHEN AUTO_REFRESH_TIME_TABLE_DURATION passes THEN rate limiter is NOT triggered`() =
+        runTest {
+            // GIVEN empty journey list (no trips loaded)
+            rateLimiter.reset()
+
+            viewModel.autoRefreshTimeTable.test {
+                skipItems(1)
+
+                advanceTimeBy(TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds)
+                assertEquals(0, rateLimiter.triggerCount, "Rate limiter should not be triggered when journey list is empty")
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    // endregion
+
+    // region Test for isActive (time text updates)
+
+    @Test
+    fun `GIVEN non-empty journey list WHEN isActive ticker runs THEN journey list remains intact across ticks`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
+
+            // Subscribe to isActive to activate the time-text ticker, advance through two full
+            // intervals, then cancel — journey list must not be cleared by the ticker.
+            viewModel.isActive.test {
+                skipItems(1) // initial value
+                advanceTimeBy(REFRESH_TIME_TEXT_DURATION.inWholeMilliseconds * 2 + 100)
+                // Cancel BEFORE advanceUntilIdle to avoid infinite loop from the while(true) ticker.
+                cancelAndConsumeRemainingEvents()
+            }
+
+            assertTrue(
+                viewModel.uiState.value.journeyList.isNotEmpty(),
+                "Journey list must remain non-empty across time-text refresh ticks",
+            )
+        }
+
+    // endregion
+
+    // region Test for cleanupJobs
+
+    @Test
+    fun `WHEN cleanupJobs is called THEN alerts are cleared`() =
+        runTest {
+            val sandookCast = sandook as FakeSandook
+            sandookCast.insertAlerts(
+                journeyId = "j1",
+                alerts = listOf(
+                    xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId(
+                        journeyId = "j1",
+                        heading = "Test heading",
+                        message = "Test message",
+                    ),
+                ),
+            )
+            assertTrue(sandookCast.getAlerts("j1").isNotEmpty())
+
+            viewModel.cleanupJobs()
+            advanceUntilIdle()
+
+            assertTrue(
+                sandookCast.getAlerts("j1").isEmpty(),
+                "Alerts should be cleared after cleanupJobs()",
+            )
+        }
+
+    // endregion
+
+    // region Test for ModeClicked and BackClick analytics
+
+    @Test
+    fun `GIVEN mode click event WHEN ModeClicked is triggered THEN mode_click analytics event is tracked`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(TimeTableUiEvent.ModeClicked(displayModeSelectionRow = true))
+            assertTrue(analytics.isEventTracked("mode_click"))
+        }
+
+    @Test
+    fun `GIVEN back click event WHEN BackClick is triggered THEN back_click analytics event is tracked`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(TimeTableUiEvent.BackClick)
+            assertTrue(analytics.isEventTracked("back_click"))
+        }
+
+    // endregion
+
+    // region Test for trip API call arguments
+
+    @Test
+    fun `GIVEN mode filter WHEN ModeSelectionChanged THEN API is called with correct excludeProductClassSet`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+            val excludedModes = setOf(5, 7) // Bus, Coach
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(excludedModes))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            assertEquals(excludedModes, tripPlanningService.lastCalledExcludeProductClassSet)
+        }
+
+    @Test
+    fun `GIVEN date time selection WHEN fetchTrip is called THEN API receives correct date and time`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            @OptIn(ExperimentalTime::class)
+            val selection = DateTimeSelectionItem(
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+                option = JourneyTimeOptions.LEAVE,
+                hour = 9,
+                minute = 15,
+            )
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            assertEquals("0915", tripPlanningService.lastCalledTime)
+            assertNotNull(tripPlanningService.lastCalledDate)
         }
 
     // endregion

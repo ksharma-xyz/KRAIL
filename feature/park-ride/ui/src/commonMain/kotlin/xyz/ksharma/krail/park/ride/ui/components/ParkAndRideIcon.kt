@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import krail.feature.park_ride.ui.generated.resources.Res
 import krail.feature.park_ride.ui.generated.resources.ic_car
 import org.jetbrains.compose.resources.painterResource
@@ -29,19 +28,20 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 @Composable
 fun ParkAndRideIcon() {
+    val dim = KrailTheme.dimensions
     var themeColor by LocalThemeColor.current
 
     Box(
         modifier = Modifier
-            .size(height = 44.dp, width = 32.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .size(height = dim.iconXXL, width = dim.iconL)
+            .clip(RoundedCornerShape(dim.radiusXS))
             .background(color = Color.White),
     ) {
         Text(
             text = "P",
             style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold),
             color = themeColor.hexToComposeColor(),
-            modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+            modifier = Modifier.padding(start = dim.spacingXS, top = dim.spacingXS),
         )
 
         Image(
@@ -49,9 +49,9 @@ fun ParkAndRideIcon() {
             contentDescription = null,
             colorFilter = ColorFilter.tint(themeColor.hexToComposeColor()),
             modifier = Modifier
-                .size(24.dp)
+                .size(dim.iconM)
                 .align(Alignment.Center)
-                .padding(start = 8.dp, top = 8.dp),
+                .padding(start = dim.spacingM, top = dim.spacingM),
         )
     }
 }

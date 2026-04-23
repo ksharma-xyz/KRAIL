@@ -22,6 +22,8 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 
+private val ParkRideIconCornerRadius = 6.dp // no token equivalent (between RadiusXS=4 and RadiusS=8)
+
 @Composable
 internal fun ParkRideIcon(
     modifier: Modifier = Modifier,
@@ -54,10 +56,11 @@ internal fun ParkRideIconContainer(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
-            .size(width = 36.dp, height = 44.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .size(width = dim.iconXL, height = dim.savedTripIconButtonSize)
+            .clip(RoundedCornerShape(ParkRideIconCornerRadius))
             .background(color = backgroundColor)
             .clearAndSetSemantics {},
     ) {

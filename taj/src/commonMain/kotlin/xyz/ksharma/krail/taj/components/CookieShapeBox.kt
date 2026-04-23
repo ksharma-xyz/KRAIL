@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.BUMPS
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.SIZE
 import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.shapes.CookieShape
@@ -97,8 +98,8 @@ fun CookieShapeCanvas(
 
 object CookieShapeBoxDefaults {
     val SIZE = 180.dp
-    val SHADOW_RADIUS = 12.dp
-    val SHADOW_SPREAD = 4.dp
+    val SHADOW_RADIUS = SpacingTokens.L
+    val SHADOW_SPREAD = SpacingTokens.XS
 
     // closer to actual size; avoids over-stretch washout
     val SHADOW_GRADIENT_END = Offset(400f, 400f)

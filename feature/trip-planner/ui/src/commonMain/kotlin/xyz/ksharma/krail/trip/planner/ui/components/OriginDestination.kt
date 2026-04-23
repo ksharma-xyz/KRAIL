@@ -23,6 +23,8 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
+private val TIMELINE_CIRCLE_RADIUS = 5.dp
+
 @Composable
 internal fun OriginDestination(
     trip: Trip,
@@ -31,17 +33,18 @@ internal fun OriginDestination(
     originSubtitle: String? = null,
     destinationSubtitle: String? = null,
 ) {
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dim.spacingXL),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
                 .timeLineTop(
                     color = timeLineColor,
-                    strokeWidth = 3.dp,
-                    circleRadius = 5.dp,
+                    strokeWidth = dim.strokeMedium,
+                    circleRadius = TIMELINE_CIRCLE_RADIUS,
                 ),
         ) {
             Column(modifier = Modifier.padding(start = 16.dp).fillMaxWidth()) {

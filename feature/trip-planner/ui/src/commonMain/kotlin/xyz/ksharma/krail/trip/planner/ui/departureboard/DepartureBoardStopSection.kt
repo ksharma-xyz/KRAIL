@@ -71,7 +71,7 @@ fun LazyListScope.departureBoardAccordionSection(
                     },
                 )
             },
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = SECTION_HEADER_BOTTOM_PADDING),
         )
     }
 
@@ -114,18 +114,19 @@ internal fun DepartureBoardAccordionSectionHeader(
     onExpandChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     val arrowRotation by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
         animationSpec = tween(durationMillis = 300),
         label = "arrow-rotation",
     )
     val outerPadding by animateDpAsState(
-        targetValue = if (isExpanded) 0.dp else 16.dp,
+        targetValue = if (isExpanded) 0.dp else dim.spacingXL,
         animationSpec = tween(durationMillis = 300),
         label = "outer-padding",
     )
     val cornerRadius by animateDpAsState(
-        targetValue = if (isExpanded) 0.dp else 16.dp,
+        targetValue = if (isExpanded) 0.dp else dim.cardCornerRadius,
         animationSpec = tween(durationMillis = 300),
         label = "corner-radius",
     )
@@ -138,7 +139,7 @@ internal fun DepartureBoardAccordionSectionHeader(
             .background(color = KrailTheme.colors.surface, shape = animatedShape)
             .background(color = themeBackgroundColor(), shape = animatedShape)
             .klickable { onExpandChange(!isExpanded) }
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = dim.spacingXL, vertical = dim.spacingXL),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -150,12 +151,12 @@ internal fun DepartureBoardAccordionSectionHeader(
         )
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (isExpanded && entry.state.silentLoading) {
                 AnimatedDots(
-                    modifier = Modifier.size(width = 32.dp, height = 16.dp),
+                    modifier = Modifier.size(width = DOTS_WIDTH, height = DOTS_HEIGHT),
                     color = KrailTheme.colors.onSurface,
                 )
             }
@@ -164,7 +165,7 @@ internal fun DepartureBoardAccordionSectionHeader(
                 painter = painterResource(Res.drawable.ic_arrow_down),
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
                 colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                modifier = Modifier.size(18.dp).rotate(arrowRotation),
+                modifier = Modifier.size(ARROW_ICON_SIZE).rotate(arrowRotation),
             )
         }
     }
@@ -235,6 +236,11 @@ fun DepartureBoardAccordionSection(
 }
 
 // ── Previews ──────────────────────────────────────────────────────────────────
+
+private val SECTION_HEADER_BOTTOM_PADDING = 16.dp
+private val ARROW_ICON_SIZE = 18.dp
+private val DOTS_WIDTH = 32.dp
+private val DOTS_HEIGHT = 16.dp
 
 private const val TRANSPORT_MODE_TRAIN = "Train"
 private const val TRANSPORT_MODE_BUS = "Bus"

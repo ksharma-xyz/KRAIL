@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentAlpha
+
+private val BADGE_ICON_SIZE = 22.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -62,11 +64,12 @@ fun TransportModeLineBadge(
                 .background(lineColor),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val dim = KrailTheme.dimensions
             // Mode initial in a darkened overlay circle
             Box(
                 modifier = Modifier
-                    .padding(3.dp)
-                    .size(22.dp)
+                    .padding(dim.strokeMedium)
+                    .size(BADGE_ICON_SIZE)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.25f)),
                 contentAlignment = Alignment.Center,
@@ -82,7 +85,7 @@ fun TransportModeLineBadge(
                 text = lineNumber,
                 color = Color.White,
                 style = KrailTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 4.dp, end = 6.dp),
+                modifier = Modifier.padding(start = dim.spacingXS, end = dim.spacingS),
             )
         }
     }

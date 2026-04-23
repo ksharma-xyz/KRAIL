@@ -22,12 +22,13 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.tokens.IconSizeTokens
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 
 @Composable
 fun TitleBar(
@@ -40,9 +41,9 @@ fun TitleBar(
         modifier = modifier
             .statusBarsPadding()
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .padding(end = 16.dp, start = 8.dp)
-            .padding(vertical = 4.dp),
+            .heightIn(min = IconSizeTokens.FAB)
+            .padding(end = SpacingTokens.XL, start = SpacingTokens.M)
+            .padding(vertical = SpacingTokens.XS),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -57,7 +58,7 @@ fun TitleBar(
         Row(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 10.dp),
+                .padding(start = SpacingTokens.ML),
         ) {
             CompositionLocalProvider(
                 LocalTextColor provides KrailTheme.colors.onSurface,
@@ -68,8 +69,8 @@ fun TitleBar(
         }
         actions?.let {
             Row(
-                modifier = Modifier.padding(start = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(start = SpacingTokens.XL),
+                horizontalArrangement = Arrangement.spacedBy(SpacingTokens.M),
             ) {
                 CompositionLocalProvider(
                     LocalContainerColor provides KrailTheme.colors.onSurface,
@@ -98,7 +99,7 @@ fun NavActionButton(
 ) {
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(IconSizeTokens.XXXL)
             .clip(CircleShape)
             .klickable(onClick = onClick)
             .semantics(mergeDescendants = true) {
@@ -110,7 +111,7 @@ fun NavActionButton(
             imageVector = icon,
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(IconSizeTokens.M),
         )
     }
 }

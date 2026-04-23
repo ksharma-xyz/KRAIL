@@ -42,9 +42,14 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+
+private val SearchRowTopRadius = 36.dp // no token equivalent (between RadiusXL=24 and RadiusFull=50)
+private val SearchRowVerticalPadding = 20.dp // no token equivalent
+private val SearchFieldSpacing = 20.dp // no token equivalent — TODO token "SearchFieldSpacing"
 
 @Composable
 fun SearchStopRow(
@@ -56,6 +61,7 @@ fun SearchStopRow(
     onReverseButtonClick: () -> Unit = {},
     onSearchButtonClick: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     val themeColor by LocalThemeColor.current
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
 
@@ -64,22 +70,22 @@ fun SearchStopRow(
             .fillMaxWidth()
             .background(
                 color = themeColor.hexToComposeColor(),
-                shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
+                shape = RoundedCornerShape(topStart = SearchRowTopRadius, topEnd = SearchRowTopRadius),
             )
-            .padding(vertical = 20.dp, horizontal = 16.dp)
+            .padding(vertical = SearchRowVerticalPadding, horizontal = dim.pageHorizontalPadding)
             .padding(
                 bottom = with(LocalDensity.current) {
                     WindowInsets.navigationBars
                         .getBottom(this)
                         .toDp()
                 },
-                top = 8.dp,
+                top = dim.spacingM,
             ),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
         ) {
             TextFieldButton(onClick = fromButtonClick) {
                 AnimatedContent(
@@ -144,8 +150,8 @@ fun SearchStopRow(
 
         Column(
             modifier = Modifier
-                .padding(start = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp), // TODO - token "SearchFieldSpacing"
+                .padding(start = dim.spacingXL),
+            verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
         ) {
             val rotation by animateFloatAsState(
                 targetValue = if (isReverseButtonRotated) 180f else 0f,
@@ -158,7 +164,7 @@ fun SearchStopRow(
                         painter = painterResource(Res.drawable.ic_reverse),
                         contentDescription = "Reverse",
                         colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(dim.iconDefault),
                     )
                 },
                 onClick = {
@@ -176,7 +182,7 @@ fun SearchStopRow(
                         painter = painterResource(Res.drawable.ic_search),
                         contentDescription = "Search",
                         colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(dim.iconDefault),
                     )
                 },
                 onClick = onSearchButtonClick,

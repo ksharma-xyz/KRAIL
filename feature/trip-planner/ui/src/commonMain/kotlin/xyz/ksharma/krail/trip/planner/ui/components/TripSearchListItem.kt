@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.components.Button
@@ -72,13 +71,14 @@ fun TripSearchListItem(
             )
             .animateContentSize(), // Smooth expand/collapse animation
     ) {
+        val dim = KrailTheme.dimensions
         // Header - always visible, clickable to expand/collapse
         TripCardHeader(
             trip = trip,
             transportMode = transportMode,
             itemState = itemState,
             onClick = onCardClick,
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+            modifier = Modifier.padding(vertical = dim.spacingL, horizontal = dim.spacingXL),
         )
 
         // Expandable content - stops list
@@ -121,6 +121,7 @@ private fun TripCardHeader(
         label = "collapse_expand_arrow_rotation",
     )
 
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -130,7 +131,7 @@ private fun TripCardHeader(
         TransportModeBadge(
             badgeText = trip.routeShortName,
             backgroundColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
-            modifier = Modifier.padding(end = 6.dp),
+            modifier = Modifier.padding(end = dim.spacingS),
         )
 
         TransportModeIcon(
@@ -142,12 +143,12 @@ private fun TripCardHeader(
         Text(
             text = trip.headsign,
             style = KrailTheme.typography.titleLarge,
-            modifier = Modifier.weight(1f).padding(end = 12.dp, start = 8.dp),
+            modifier = Modifier.weight(1f).padding(end = dim.spacingL, start = dim.spacingM),
         )
 
         // Expand/Collapse icon with rotation animation
         Box(
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(dim.iconL)
                 .clip(CircleShape)
                 .background(color = KrailTheme.colors.onSurface),
             contentAlignment = Alignment.Center,
@@ -157,8 +158,8 @@ private fun TripCardHeader(
                 tint = KrailTheme.colors.surface,
                 contentDescription = if (itemState == TripSearchListItemState.EXPANDED) "Collapse" else "Expand",
                 modifier = Modifier
-                    .size(24.dp)
-                    .rotate(collapseIconRotationAngle), // Animated rotation
+                    .size(dim.iconM)
+                    .rotate(collapseIconRotationAngle),
             )
         }
     }
@@ -174,6 +175,7 @@ private fun CollapsedTripContent(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -181,8 +183,8 @@ private fun CollapsedTripContent(
                 onClick = onClick,
                 indication = null,
             )
-            .padding(bottom = 16.dp)
-            .padding(horizontal = 16.dp),
+            .padding(bottom = dim.spacingXL)
+            .padding(horizontal = dim.spacingXL),
     ) {
         Button(
             colors = ButtonColors(
@@ -210,10 +212,11 @@ private fun ExpandedTripContent(
     onStopClick: (StopItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(modifier = modifier.fillMaxWidth()) {
         // Display all stops
         stops.forEach { stop ->
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
             TripStopItem(
                 stopName = stop.stopName,
                 stopId = stop.stopId,
@@ -238,11 +241,12 @@ private fun TripStopItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier
             .fillMaxWidth()
             .klickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .padding(vertical = dim.spacingL, horizontal = dim.spacingXL),
         verticalAlignment = Alignment.Top,
     ) {
         // Stop name on the left
@@ -252,7 +256,7 @@ private fun TripStopItem(
             modifier = Modifier.weight(1f),
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(dim.spacingXL))
 
         // Stop ID on the right
         Text(

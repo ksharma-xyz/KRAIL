@@ -11,12 +11,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
 
@@ -50,7 +50,7 @@ fun TextFieldButton(
                 .clip(RoundedCornerShape(50))
                 .background(color = KrailTheme.colors.surface)
                 .klickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = SpacingTokens.XL, vertical = SpacingTokens.XS),
             contentAlignment = Alignment.CenterStart,
         ) {
             content()

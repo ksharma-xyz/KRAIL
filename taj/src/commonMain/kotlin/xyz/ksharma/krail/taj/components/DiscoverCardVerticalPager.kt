@@ -27,17 +27,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.tokens.RadiusTokens
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
+import xyz.ksharma.krail.taj.tokens.StrokeTokens
 import kotlin.math.absoluteValue
+
+private val CARD_HEIGHT_NORMAL = 500.dp
+private val CARD_HEIGHT_LARGE_FONT = 525.dp
+private val CARD_HEIGHT_XLARGE_FONT = 550.dp
 
 @Composable
 fun rememberCardHeight(): Dp {
     val density = LocalDensity.current
-    if (density.fontScale <= 1.3f) {
-        return 500.dp
+    return if (density.fontScale <= 1.3f) {
+        CARD_HEIGHT_NORMAL
     } else if (density.fontScale <= 1.7f) {
-        return 525.dp
+        CARD_HEIGHT_LARGE_FONT
     } else {
-        return 550.dp
+        CARD_HEIGHT_XLARGE_FONT
     }
 }
 
@@ -67,13 +74,13 @@ fun <T> DiscoverCardVerticalPager(
     BoxWithConstraints(
         modifier = modifier.fillMaxSize(),
     ) {
-        val maxCardWidth = maxWidth - 24.dp
+        val maxCardWidth = maxWidth - SpacingTokens.XXXL
         val screenHeight = maxHeight
         val topPadding = ((screenHeight - discoverCardHeight) / 2).coerceAtLeast(0.dp)
 
         VerticalPager(
             state = pagerState,
-            pageSpacing = 20.dp,
+            pageSpacing = SpacingTokens.XXL,
             pageSize = PageSize.Fixed(pageSize = discoverCardHeight),
             key = { page ->
                 // Add bounds check to prevent crashes
@@ -116,11 +123,11 @@ fun <T> DiscoverCardVerticalPager(
                     .then(
                         if (isCardSelected) {
                             Modifier.dropShadow(
-                                shape = RoundedCornerShape(16.dp),
+                                shape = RoundedCornerShape(RadiusTokens.L),
                                 shadow = Shadow(
-                                    radius = 24.dp,
+                                    radius = RadiusTokens.XL,
                                     color = themeColor(),
-                                    spread = 2.dp,
+                                    spread = StrokeTokens.Regular,
                                     alpha = animatedShadowAlpha,
                                 ),
                             )

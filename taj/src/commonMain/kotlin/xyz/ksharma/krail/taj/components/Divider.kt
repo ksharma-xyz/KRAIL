@@ -13,10 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.tokens.StrokeTokens
 
 @Composable
 fun Divider(
@@ -32,12 +32,12 @@ fun Divider(
                         DividerType.HORIZONTAL ->
                             Modifier
                                 .fillMaxWidth()
-                                .height(1.dp)
+                                .height(StrokeTokens.Thin)
 
                         DividerType.VERTICAL ->
                             Modifier
                                 .fillMaxHeight()
-                                .width(1.dp)
+                                .width(StrokeTokens.Thin)
                     },
                 )
                 .background(color = color ?: LocalContainerColor.current),

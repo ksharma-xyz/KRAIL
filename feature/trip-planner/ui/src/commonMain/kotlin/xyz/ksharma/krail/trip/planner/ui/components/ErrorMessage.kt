@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
@@ -30,20 +29,21 @@ fun ErrorMessage(
     title: String,
     message: String,
     modifier: Modifier = Modifier,
-    emoji: String = "\uD83D\uDC36",
+    emoji: String = "🐶",
     actionData: ActionData? = null,
     filledButton: Boolean = false,
 ) {
+    val dim = KrailTheme.dimensions
     val themeColor by LocalThemeColor.current
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(vertical = 32.dp),
+        modifier = modifier.padding(vertical = dim.spacingXXXXL),
     ) {
         Text(
             text = emoji,
             style = KrailTheme.typography.headlineLarge.copy(fontSize = 64.sp),
-            modifier = Modifier.padding(bottom = 24.dp),
+            modifier = Modifier.padding(bottom = dim.spacingXXXL),
         )
         Text(
             text = title,
@@ -52,7 +52,7 @@ fun ErrorMessage(
             color = KrailTheme.colors.onSurface,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = dim.pageHorizontalPadding),
         )
         Text(
             text = message,
@@ -61,15 +61,18 @@ fun ErrorMessage(
             color = KrailTheme.colors.onSurface,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp)
-                .padding(horizontal = 16.dp),
+                .padding(top = dim.spacingL)
+                .padding(horizontal = dim.pageHorizontalPadding),
         )
 
         actionData?.let {
             if (filledButton) {
                 Button(
                     onClick = actionData.onActionClick,
-                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                    modifier = Modifier.padding(
+                        vertical = dim.spacingXL,
+                        horizontal = dim.pageHorizontalPadding,
+                    ),
                 ) {
                     Text(text = actionData.actionText)
                 }
@@ -77,7 +80,10 @@ fun ErrorMessage(
                 TextButton(
                     dimensions = ButtonDefaults.largeButtonSize(),
                     onClick = actionData.onActionClick,
-                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                    modifier = Modifier.padding(
+                        vertical = dim.spacingXL,
+                        horizontal = dim.pageHorizontalPadding,
+                    ),
                 ) {
                     Text(
                         text = actionData.actionText,

@@ -65,6 +65,7 @@ private const val CONTAINER_ENTER_MS = 250 // badge container expand duration
 //   Badge Large → 7dp padding + 20dp text  + 7dp padding = 34dp  (grows to 38dp via heightIn)
 //   ModeIcon    → Medium icon (28dp) centred inside 38dp bounding box
 private val FILTER_ROW_ITEM_HEIGHT = 38.dp
+private val PILL_CIRCLE_PAD = 7.dp // equal to vertical pad so collapsed pill renders as circle
 
 /**
  * A single horizontally-scrollable row containing a collapsible filter button and mode groups.
@@ -96,6 +97,7 @@ internal fun LinesServedRow(
     onLineSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     val modeGroups = departures
         .distinctBy { it.lineNumber }
         .groupBy { it.transportModeName }
@@ -114,10 +116,10 @@ internal fun LinesServedRow(
 
     Row(
         modifier = modifier
-            .padding(vertical = 8.dp)
+            .padding(vertical = dim.spacingM)
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = dim.spacingXL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // ── Filter pill — shrinks to icon-only circle when closed, expands to pill ──
@@ -137,7 +139,7 @@ internal fun LinesServedRow(
             exit = shrinkHorizontally(tween(250), shrinkTowards = Alignment.Start) + fadeOut(tween(150)),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 modeGroups.forEach { (modeName, lines) ->
@@ -153,12 +155,12 @@ internal fun LinesServedRow(
                             // padding(start = 4.dp) adds extra breathing room before each mode icon
                             // without touching any AnimatedVisibility, so all animations are safe.
                             Row(
-                                modifier = Modifier.padding(start = 4.dp),
+                                modifier = Modifier.padding(start = dim.spacingXS),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 ModeIconButton(
                                     transportMode = transportMode,
-                                    modifier = Modifier.padding(start = 4.dp),
+                                    modifier = Modifier.padding(start = dim.spacingXS),
                                     onClick = {
                                         collapsedModes = if (isExpanded) {
                                             collapsedModes + modeName
@@ -190,8 +192,8 @@ internal fun LinesServedRow(
                                     ),
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(start = 12.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.padding(start = dim.spacingL),
+                                        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         lines.forEachIndexed { index, departure ->
@@ -249,10 +251,11 @@ private fun FilterPill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     val colors = ButtonDefaults.subtleButtonColors()
-    // Animate horizontal padding: 7 dp (equal to vertical → circle) ↔ 12 dp (wider → pill).
+    // Animate horizontal padding: PILL_CIRCLE_PAD (equal to vertical → circle) ↔ spacingL (wider → pill).
     val hPad by animateDpAsState(
-        targetValue = if (expanded) 12.dp else 7.dp,
+        targetValue = if (expanded) dim.spacingL else PILL_CIRCLE_PAD,
         animationSpec = tween(250),
         label = "filter-pill-hpad",
     )
@@ -261,19 +264,19 @@ private fun FilterPill(
             .clip(RoundedCornerShape(50))
             .background(colors.containerColor)
             .klickable { onClick() }
-            .padding(horizontal = hPad, vertical = 7.dp),
+            .padding(horizontal = hPad, vertical = PILL_CIRCLE_PAD),
         contentAlignment = Alignment.Center,
     ) {
         Row(
             modifier = Modifier.animateContentSize(tween(250)),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 painter = painterResource(Res.drawable.ic_filter),
                 contentDescription = if (expanded) "Hide line filter" else "Show line filter",
                 colorFilter = ColorFilter.tint(colors.contentColor),
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(dim.iconM),
             )
             if (expanded) {
                 Text(

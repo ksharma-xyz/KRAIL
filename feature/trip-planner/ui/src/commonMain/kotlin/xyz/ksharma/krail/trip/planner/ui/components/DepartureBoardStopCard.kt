@@ -49,6 +49,8 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 
+private val ArrowIconSize = 18.dp // no token equivalent
+
 /**
  * Expand/collapse card for a stop's live departure board.
  *
@@ -83,6 +85,7 @@ fun DepartureBoardStopCard(
     title: String = "Departure Board",
     maxItems: Int? = null,
 ) {
+    val dim = KrailTheme.dimensions
     var internalExpanded by rememberSaveable { mutableStateOf(false) }
     val expanded = isExpanded ?: internalExpanded
 
@@ -92,12 +95,12 @@ fun DepartureBoardStopCard(
         label = "arrow-rotation",
     )
     val outerPadding by animateDpAsState(
-        targetValue = if (expanded) 0.dp else 16.dp,
+        targetValue = if (expanded) 0.dp else dim.pageHorizontalPadding,
         animationSpec = tween(durationMillis = 300),
         label = "outer-padding",
     )
     val cornerRadius by animateDpAsState(
-        targetValue = if (expanded) 0.dp else 16.dp,
+        targetValue = if (expanded) 0.dp else dim.cardCornerRadius,
         animationSpec = tween(durationMillis = 300),
         label = "corner-radius",
     )
@@ -182,7 +185,7 @@ fun DepartureBoardStopCard(
                     onEvent(DeparturesUiEvent.TogglePreviousDepartures(stopId, show))
                 },
                 maxItems = maxItems,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = dim.spacingXS),
             )
         }
     }
@@ -196,6 +199,7 @@ private fun CardHeader(
     arrowRotation: Float,
     onClick: () -> Unit,
 ) {
+    val dim = KrailTheme.dimensions
     SubtleButton(
         onClick = onClick,
         dimensions = ButtonDefaults.largeButtonSize(),
@@ -211,12 +215,12 @@ private fun CardHeader(
                 modifier = Modifier.weight(1f),
             )
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (expanded && silentLoading) {
                     AnimatedDots(
-                        modifier = Modifier.size(width = 32.dp, height = 16.dp),
+                        modifier = Modifier.size(width = dim.spacingXXXXL, height = dim.spacingXL),
                         color = KrailTheme.colors.softLabel,
                     )
                 }
@@ -224,7 +228,7 @@ private fun CardHeader(
                     painter = painterResource(Res.drawable.ic_arrow_down),
                     contentDescription = if (expanded) "Collapse" else "Expand",
                     colorFilter = ColorFilter.tint(KrailTheme.colors.softLabel),
-                    modifier = Modifier.size(18.dp).rotate(arrowRotation),
+                    modifier = Modifier.size(ArrowIconSize).rotate(arrowRotation),
                 )
             }
         }

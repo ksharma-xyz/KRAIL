@@ -11,8 +11,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.theme.KrailTheme
 
 // TODO - Should be RoundIconButton
 @Composable
@@ -22,9 +22,10 @@ fun IconButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
-            .size(56.dp)
+            .size(dim.mapFabSize)
             .clip(CircleShape)
             .klickable { onClick() },
         contentAlignment = Alignment.Center,
@@ -33,7 +34,7 @@ fun IconButton(
             painter = painter,
             contentDescription = null,
             colorFilter = ColorFilter.tint(color),
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(dim.iconLarge),
         )
     }
 }

@@ -71,9 +71,10 @@ fun TransportModeIcon(
 @Composable
 private fun Modifier.borderIfEnabled(enabled: Boolean, color: Color): Modifier =
     if (enabled) {
+        val dim = KrailTheme.dimensions
         this.then(
             border(
-                width = 3.dp,
+                width = dim.strokeMedium,
                 color = color,
                 shape = CircleShape,
             ),
@@ -82,8 +83,13 @@ private fun Modifier.borderIfEnabled(enabled: Boolean, color: Color): Modifier =
         this
     }
 
+private val ICON_SIZE_XSMALL = 20.dp
+private val ICON_SIZE_SMALL = 22.dp
+private val ICON_SIZE_MEDIUM = 28.dp
+private val ICON_SIZE_LARGE = 32.dp
+
 enum class TransportModeIconSize(val dpSize: Dp) {
-    XSmall(20.dp), Small(22.dp), Medium(28.dp), Large(32.dp)
+    XSmall(ICON_SIZE_XSMALL), Small(ICON_SIZE_SMALL), Medium(ICON_SIZE_MEDIUM), Large(ICON_SIZE_LARGE)
 }
 
 // region Previews

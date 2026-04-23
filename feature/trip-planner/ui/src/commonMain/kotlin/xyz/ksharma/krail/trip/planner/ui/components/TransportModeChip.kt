@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -65,6 +64,7 @@ fun TransportModeChip(
     CompositionLocalProvider(
         LocalTextStyle provides KrailTheme.typography.titleMedium,
     ) {
+        val dim = KrailTheme.dimensions
         Row(
             modifier = modifier
                 .background(
@@ -72,7 +72,7 @@ fun TransportModeChip(
                     shape = RoundedCornerShape(50),
                 )
                 .border(
-                    width = 3.dp, // is token , should be 1.dp less than the horizontal padding.
+                    width = dim.strokeMedium,
                     color = borderColor,
                     shape = RoundedCornerShape(50),
                 )
@@ -80,12 +80,10 @@ fun TransportModeChip(
                     indication = null,
                     interactionSource = null,
                 ) { onClick() }
-                // horizontal padding value should be same as border width of
-                // TransportModeIcon
-                .padding(horizontal = 4.dp, vertical = 4.dp) // is token
-                .padding(end = 8.dp),
+                .padding(horizontal = dim.spacingXS, vertical = dim.spacingXS)
+                .padding(end = dim.spacingM),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         ) {
             // Make this a separate component - TransportModeIcon
             TransportModeIcon(

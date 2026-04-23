@@ -26,9 +26,9 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 
-private val chipShape = RoundedCornerShape(8.dp)
 private val chipMinHeight = 44.dp
 private val chipMinWidth = 44.dp
+private val chipShape = RoundedCornerShape(8.dp)
 
 /**
  * A tappable, selectable chip that displays a transport line number using [lineColorCode].
@@ -55,6 +55,7 @@ fun LineBadgeChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     val lineColor = remember(lineColorCode) { lineColorCode.hexToComposeColor() }
 
     val backgroundColor by animateColorAsState(
@@ -79,9 +80,9 @@ fun LineBadgeChip(
             .widthIn(min = chipMinWidth)
             .clip(chipShape)
             .background(backgroundColor)
-            .border(width = 2.dp, color = borderColor, shape = chipShape)
+            .border(width = dim.strokeRegular, color = borderColor, shape = chipShape)
             .clickable(indication = null, interactionSource = null, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
         contentAlignment = Alignment.Center,
     ) {
         Text(

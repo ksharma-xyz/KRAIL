@@ -9,11 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.tokens.IconSizeTokens
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 
 @Composable
 fun SheetTitleBar(
@@ -24,16 +25,16 @@ fun SheetTitleBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .padding(end = 16.dp, start = 8.dp)
-            .padding(vertical = 4.dp),
+            .heightIn(min = IconSizeTokens.FAB)
+            .padding(end = SpacingTokens.XL, start = SpacingTokens.M)
+            .padding(vertical = SpacingTokens.XS),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 10.dp),
+                .padding(start = SpacingTokens.ML),
         ) {
             CompositionLocalProvider(
                 LocalTextColor provides KrailTheme.colors.onSurface,
@@ -44,8 +45,8 @@ fun SheetTitleBar(
         }
         actions?.let {
             Row(
-                modifier = Modifier.padding(start = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(start = SpacingTokens.XL),
+                horizontalArrangement = Arrangement.spacedBy(SpacingTokens.M),
             ) {
                 CompositionLocalProvider(
                     LocalContainerColor provides KrailTheme.colors.onSurface,

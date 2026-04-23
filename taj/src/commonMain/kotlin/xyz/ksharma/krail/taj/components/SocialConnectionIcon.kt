@@ -8,8 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.tokens.IconSizeTokens
 
 @Composable
 fun SocialConnectionIcon(
@@ -19,7 +19,7 @@ fun SocialConnectionIcon(
 ) {
     Box(
         modifier = modifier
-            .size(44.dp)
+            .size(IconSizeTokens.XXL)
             .clip(CircleShape)
             .klickable(
                 onClick = onClick,

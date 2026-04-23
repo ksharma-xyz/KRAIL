@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -30,6 +29,7 @@ fun StopSearchListItem(
     modifier: Modifier = Modifier,
     onClick: (StopItem) -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -41,8 +41,8 @@ fun StopSearchListItem(
                     ),
                 )
             }
-            .padding(vertical = 8.dp, horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(vertical = dim.spacingM, horizontal = dim.spacingXXL),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
         Text(
             text = stopName,
@@ -50,7 +50,7 @@ fun StopSearchListItem(
             style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
         )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         ) {
             transportModeSet.forEach { mode ->
                 TransportModeIcon(transportMode = mode, size = TransportModeIconSize.Small)

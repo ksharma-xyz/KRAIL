@@ -33,7 +33,6 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
@@ -62,8 +61,9 @@ fun LegView(
     displayAllStops: Boolean = false,
     onClick: () -> Unit = {},
 ) {
-    val circleRadius = 8.dp
-    val strokeWidth = 4.dp
+    val dim = KrailTheme.dimensions
+    val circleRadius = dim.spacingM
+    val strokeWidth = dim.journeyLegStrokeWidth
     val timelineColor =
         remember(transportModeLine) { transportModeLine.lineColorCode.hexToComposeColor() }
 
@@ -76,7 +76,7 @@ fun LegView(
                 .animateContentSize()
                 .background(
                     color = transportModeBackgroundColor(transportMode = transportModeLine.transportMode),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(dim.cardCornerRadius),
                 )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -86,7 +86,7 @@ fun LegView(
                     },
                     role = Role.Button,
                 )
-                .padding(vertical = 12.dp, horizontal = 12.dp),
+                .padding(dim.spacingL),
         ) {
             RouteSummary(
                 routeText = routeText,
@@ -94,11 +94,11 @@ fun LegView(
                 badgeColor = transportModeLine.lineColorCode.hexToComposeColor(),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dim.spacingL))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 4.dp),
+                    .padding(start = dim.spacingXS),
             ) {
                 StopInfo(
                     time = stops.first().time,
@@ -111,12 +111,12 @@ fun LegView(
                             strokeWidth = strokeWidth,
                             circleRadius = circleRadius,
                         )
-                        .padding(start = 16.dp),
+                        .padding(start = dim.spacingXL),
                 )
 
                 Spacer(
                     modifier = Modifier
-                        .height(12.dp)
+                        .height(dim.spacingL)
                         .timeLineCenter(
                             color = timelineColor,
                             strokeWidth = strokeWidth,
@@ -129,7 +129,7 @@ fun LegView(
                             color = timelineColor,
                             strokeWidth = strokeWidth,
                         )
-                        .padding(start = 16.dp),
+                        .padding(start = dim.spacingXL),
                 ) {
                     val stopsCount by rememberSaveable(stops) { mutableIntStateOf(stops.size - 1) }
                     if (stopsCount > 1) {
@@ -152,7 +152,7 @@ fun LegView(
 
                         Spacer(
                             modifier = Modifier
-                                .height(12.dp)
+                                .height(dim.spacingL)
                                 .timeLineCenter(
                                     color = timelineColor,
                                     strokeWidth = strokeWidth,
@@ -175,14 +175,14 @@ fun LegView(
                                     strokeWidth = strokeWidth,
                                     circleRadius = circleRadius,
                                 )
-                                .padding(start = 16.dp),
+                                .padding(start = dim.spacingXL),
                         )
                     }
                 }
 
                 Spacer(
                     modifier = Modifier
-                        .height(12.dp)
+                        .height(dim.spacingL)
                         .timeLineCenter(
                             color = timelineColor,
                             strokeWidth = strokeWidth,
@@ -200,7 +200,7 @@ fun LegView(
                             strokeWidth = strokeWidth,
                             circleRadius = circleRadius,
                         )
-                        .padding(start = 16.dp),
+                        .padding(start = dim.spacingXL),
                 )
             }
         }
@@ -221,7 +221,7 @@ private fun RouteSummary(
         TransportModeBadge(
             backgroundColor = badgeColor,
             badgeText = badgeText,
-            modifier = Modifier.padding(end = 10.dp),
+            modifier = Modifier.padding(end = KrailTheme.dimensions.spacingML),
         )
 
         routeText?.let {
@@ -244,6 +244,7 @@ private fun StopInfo(
     isWheelchairAccessible: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(modifier = modifier) {
         Text(
             text = time,
@@ -251,8 +252,8 @@ private fun StopInfo(
             color = KrailTheme.colors.onSurface,
         )
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
         ) {
             val textStyle =
                 if (isProminent) KrailTheme.typography.titleSmall else KrailTheme.typography.bodySmall
@@ -313,9 +314,10 @@ private fun StopsRow(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val buttonContainerColor by remember {

@@ -22,6 +22,7 @@ import xyz.ksharma.krail.taj.shapes.CookieShape
 import xyz.ksharma.krail.taj.shapes.buildCookiePath
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 
 /**
  * A box with a cookie-shaped background and optional multi-color stroke.
@@ -97,8 +98,8 @@ fun CookieShapeCanvas(
 
 object CookieShapeBoxDefaults {
     val SIZE = 180.dp
-    val SHADOW_RADIUS = 12.dp
-    val SHADOW_SPREAD = 4.dp
+    val SHADOW_RADIUS = SpacingTokens.L
+    val SHADOW_SPREAD = SpacingTokens.XS
 
     // closer to actual size; avoids over-stretch washout
     val SHADOW_GRADIENT_END = Offset(400f, 400f)

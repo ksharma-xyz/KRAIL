@@ -26,6 +26,8 @@ import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 
+private val LOADING_DOTS_WIDTH = 64.dp
+
 /**
  * Shared departure board content area used by both [DepartureBoardStopCard] (bottom-sheet card)
  * and the accordion sections on the Saved Trips screen.
@@ -58,6 +60,7 @@ internal fun DepartureBoardBody(
     onShowPreviousToggle: ((show: Boolean) -> Unit)? = null,
     maxItems: Int? = null,
 ) {
+    val dim = KrailTheme.dimensions
     // Empty string = no filter. rememberSaveable round-trips safely as a String primitive.
     var selectedLineKey by rememberSaveable { mutableStateOf("") }
     val selectedLine: String? = selectedLineKey.ifEmpty { null }
@@ -115,7 +118,7 @@ internal fun DepartureBoardBody(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 12.dp),
+                        .padding(top = dim.spacingM, bottom = dim.spacingL),
                     contentAlignment = Alignment.Center,
                 ) {
                     TextButton(
@@ -159,7 +162,7 @@ internal fun DepartureBoardBody(
                             text = "No previous departures in the last ${state.previousWindowMinutes} minutes.",
                             style = KrailTheme.typography.bodyMedium,
                             color = KrailTheme.colors.softLabel,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingL),
                         )
                         when {
                             filteredDepartures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = true)
@@ -181,7 +184,7 @@ internal fun DepartureBoardBody(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(dim.spacingM))
     }
 }
 
@@ -189,14 +192,15 @@ internal fun DepartureBoardBody(
 
 @Composable
 private fun DepartureBoardLoadingContent() {
+    val dim = KrailTheme.dimensions
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 24.dp),
+            .padding(vertical = dim.spacingXXXL),
         contentAlignment = Alignment.Center,
     ) {
         AnimatedDots(
-            modifier = Modifier.size(width = 64.dp, height = 24.dp),
+            modifier = Modifier.size(width = LOADING_DOTS_WIDTH, height = dim.spacingXXXL),
             color = KrailTheme.colors.onSurface,
         )
     }
@@ -204,6 +208,7 @@ private fun DepartureBoardLoadingContent() {
 
 @Composable
 private fun DepartureBoardEmptyContent(hasActiveFilter: Boolean) {
+    val dim = KrailTheme.dimensions
     Text(
         text = if (hasActiveFilter) {
             "No departures match the selected line."
@@ -212,6 +217,6 @@ private fun DepartureBoardEmptyContent(hasActiveFilter: Boolean) {
         },
         style = KrailTheme.typography.bodyMedium,
         color = KrailTheme.colors.softLabel,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+        modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingXL),
     )
 }

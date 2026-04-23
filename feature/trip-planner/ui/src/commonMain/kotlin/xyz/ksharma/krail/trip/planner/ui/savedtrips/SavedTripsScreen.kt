@@ -65,6 +65,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
+private const val LAZY_COLUMN_BOTTOM_PADDING = 300
+
 @Composable
 fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
@@ -85,6 +87,7 @@ fun SavedTripsScreen(
     expandedDepartureBoardStopId: String? = null,
     onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     val emptyStateTip = remember {
         buildList {
             add("Tap ★ on a trip to save it here.")
@@ -120,7 +123,7 @@ fun SavedTripsScreen(
                             painter = painterResource(Res.drawable.ic_settings),
                             contentDescription = "Settings",
                             colorFilter = ColorFilter.tint(LocalContentColor.current),
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(dim.spacingXXXL),
                         )
                     }
                 },
@@ -129,7 +132,7 @@ fun SavedTripsScreen(
             val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
             LazyColumn(
-                contentPadding = PaddingValues(bottom = 300.dp),
+                contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
             ) {
                 when {
                     savedTripsState.isSavedTripsLoading -> Unit
@@ -156,7 +159,7 @@ fun SavedTripsScreen(
                                 title = "Let's Go! Sydney",
                                 message = emptyStateTip,
                                 modifier = Modifier
-                                    .padding(horizontal = 16.dp)
+                                    .padding(horizontal = dim.pageHorizontalPadding)
                                     .animateItem(),
                             )
                         }
@@ -223,8 +226,8 @@ fun SavedTripsScreen(
                                         onEvent(SavedTripUiEvent.InfoTileExpand(tileData.key))
                                     },
                                     modifier = Modifier.padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp,
+                                        horizontal = dim.pageHorizontalPadding,
+                                        vertical = dim.spacingM,
                                     ),
                                 )
                             }
@@ -277,6 +280,7 @@ private fun LazyListScope.infoTiles(
                 animationSpec = tween(300),
             ),
         ) {
+            val dim = KrailTheme.dimensions
             InfoTile(
                 infoTileData = tileData,
                 onCtaClick = onCtaClick,
@@ -285,7 +289,7 @@ private fun LazyListScope.infoTiles(
                 },
                 onTileExpand = onTileExpand,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingM),
             )
         }
     }
@@ -331,6 +335,7 @@ private fun LazyListScope.savedTripsContent(
         items = savedTripsState.savedTrips,
         key = { trip -> trip.tripId },
     ) { trip ->
+        val dim = KrailTheme.dimensions
         SavedTripCard(
             trip = trip,
             onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
@@ -348,10 +353,10 @@ private fun LazyListScope.savedTripsContent(
             },
             primaryTransportMode = null, // TODO
             modifier = Modifier
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = dim.pageHorizontalPadding),
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(dim.spacingXL))
     }
 
     if (savedTripsState.parkRideUiState.isNotEmpty()) {
@@ -365,11 +370,12 @@ private fun LazyListScope.savedTripsContent(
             items = savedTripsState.parkRideUiState,
             key = { parkRide -> parkRide.stopId },
         ) { parkRide ->
+            val dim = KrailTheme.dimensions
             val isExpanded = expandedMap[parkRide.stopId] ?: false
 
             ParkRideCard(
                 isExpanded = isExpanded,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                 onClick = {
                     val newExpanded = !isExpanded
                     expandedMap[parkRide.stopId] = newExpanded
@@ -383,7 +389,7 @@ private fun LazyListScope.savedTripsContent(
                 parkRideUiState = parkRide,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
         }
     }
 
@@ -403,7 +409,8 @@ private fun LazyListScope.savedTripsContent(
         }
 
         item(key = "departure_board_bottom_spacer") {
-            Spacer(modifier = Modifier.height(24.dp))
+            val dim = KrailTheme.dimensions
+            Spacer(modifier = Modifier.height(dim.pageSectionGap))
         }
     }
 }
@@ -413,12 +420,13 @@ private fun SavedTripsTitle(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier.fillMaxWidth()
             .background(color = KrailTheme.colors.surface)
-            .padding(vertical = 16.dp, horizontal = 16.dp),
+            .padding(vertical = dim.spacingXL, horizontal = dim.spacingXL),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.titleMedium) {
             content()

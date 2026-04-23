@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableList
@@ -45,10 +44,11 @@ fun ParkRideInfoCard(
     onNavigateToMapsClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
             ParkAndRideIcon()
 
             Column(modifier = Modifier.weight(1f)) {
@@ -60,14 +60,14 @@ fun ParkRideInfoCard(
                                 ParkRideFacilityItem(
                                     parkRideFacilityInfo = parkRideFacilityInfo,
                                     modifier = Modifier
-                                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                                        .padding(start = dim.spacingM, end = dim.spacingM, bottom = dim.spacingM)
                                         .align(Alignment.TopStart),
                                 )
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
-                                        .padding(end = 8.dp, bottom = 8.dp)
-                                        .size(24.dp)
+                                        .padding(end = dim.spacingM, bottom = dim.spacingM)
+                                        .size(dim.spacingXXXL)
                                         .clip(CircleShape)
                                         .background(color = Color.White)
                                         .klickable {
@@ -78,7 +78,7 @@ fun ParkRideInfoCard(
                                     Image(
                                         painter = painterResource(resource = Res.drawable.ic_arrow_up_right),
                                         contentDescription = "Navigate using maps",
-                                        modifier = Modifier.size(20.dp),
+                                        modifier = Modifier.size(dim.spacingXXL),
                                     )
                                 }
                             }
@@ -86,16 +86,16 @@ fun ParkRideInfoCard(
                             ParkRideFacilityItem(
                                 parkRideFacilityInfo = parkRideFacilityInfo,
                                 modifier = Modifier.padding(
-                                    start = 8.dp,
-                                    end = 8.dp,
-                                    bottom = 8.dp,
+                                    start = dim.spacingM,
+                                    end = dim.spacingM,
+                                    bottom = dim.spacingM,
                                 ),
                             )
                         }
                     }
 
                     if (index != parkRideInfo.size - 1) {
-                        Divider(modifier = Modifier.padding(vertical = 4.dp).padding(end = 16.dp))
+                        Divider(modifier = Modifier.padding(vertical = dim.spacingXS).padding(end = dim.spacingXL))
                     }
                 }
             }
@@ -108,12 +108,13 @@ fun ParkRideFacilityItem(
     parkRideFacilityInfo: ParkRideFacilityInfo,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
         ) {
             ParkRideInfoText(
                 number = parkRideFacilityInfo.availableSpots,
@@ -138,7 +139,8 @@ fun ParkRideInfoText(
     number: String,
     description: String,
 ) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    val dim = KrailTheme.dimensions
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXXS)) {
         Text(
             text = number,
             style = KrailTheme.typography.headlineMedium,

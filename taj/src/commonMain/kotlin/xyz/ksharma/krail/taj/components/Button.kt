@@ -27,7 +27,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentAlpha
@@ -44,8 +43,10 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.tokens.ComponentTokens
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.EnabledContentAlpha
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 
 @Composable
 fun Button(
@@ -309,29 +310,38 @@ object ButtonDefaults {
 
     fun extraSmallButtonSize(): ButtonDimensions {
         return ButtonDimensions(
-            height = 18.dp,
-            padding = PaddingValues(vertical = 2.dp, horizontal = 8.dp),
+            height = SpacingTokens.XXS + SpacingTokens.XL, // 18.dp — no single token
+            padding = PaddingValues(vertical = SpacingTokens.XXS, horizontal = SpacingTokens.M),
         )
     }
 
     fun smallButtonSize(): ButtonDimensions {
         return ButtonDimensions(
-            height = 20.dp,
-            padding = PaddingValues(vertical = 4.dp, horizontal = 10.dp),
+            height = ComponentTokens.ButtonSmallHeight,
+            padding = PaddingValues(
+                vertical = ComponentTokens.ButtonSmallVerticalPadding,
+                horizontal = ComponentTokens.ButtonSmallHorizontalPadding,
+            ),
         )
     }
 
     fun mediumButtonSize(): ButtonDimensions {
         return ButtonDimensions(
-            height = 32.dp,
-            padding = PaddingValues(vertical = 6.dp, horizontal = 12.dp),
+            height = ComponentTokens.ButtonMediumHeight,
+            padding = PaddingValues(
+                vertical = ComponentTokens.ButtonMediumVerticalPadding,
+                horizontal = ComponentTokens.ButtonMediumHorizontalPadding,
+            ),
         )
     }
 
     fun largeButtonSize(): ButtonDimensions {
         return ButtonDimensions(
-            height = 32.dp,
-            padding = PaddingValues(vertical = 10.dp, horizontal = 16.dp),
+            height = ComponentTokens.ButtonMediumHeight,
+            padding = PaddingValues(
+                vertical = ComponentTokens.ButtonLargeVerticalPadding,
+                horizontal = ComponentTokens.ButtonLargeHorizontalPadding,
+            ),
         )
     }
 }
@@ -375,12 +385,13 @@ private const val PREVIEW_TEXT_DISABLED = "Disabled"
 @PreviewComponent
 @Composable
 private fun PrimaryButtonShowcase() {
+    val dim = KrailTheme.dimensions
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         Column(
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(dim.pageHorizontalPadding),
+            verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
         ) {
             Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             Button(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
@@ -396,7 +407,7 @@ private fun PrimaryButtonShowcase() {
                 Text(PREVIEW_TEXT_LARGE)
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dim.spacingM))
             Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             Button(onClick = {}, enabled = true, dimensions = ButtonDefaults.mediumButtonSize()) {
                 Text(PREVIEW_TEXT_ENABLED)
@@ -415,12 +426,13 @@ private fun PrimaryButtonShowcase() {
 @PreviewComponent
 @Composable
 private fun SubtleButtonShowcase() {
+    val dim = KrailTheme.dimensions
     PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
         Column(
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(dim.pageHorizontalPadding),
+            verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
         ) {
             Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             SubtleButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
@@ -436,7 +448,7 @@ private fun SubtleButtonShowcase() {
                 Text(PREVIEW_TEXT_LARGE)
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dim.spacingM))
             Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             SubtleButton(
                 onClick = {},
@@ -463,12 +475,13 @@ private fun SubtleButtonShowcase() {
 @PreviewComponent
 @Composable
 private fun TextButtonShowcase() {
+    val dim = KrailTheme.dimensions
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         Column(
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(dim.pageHorizontalPadding),
+            verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
         ) {
             Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             TextButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
@@ -484,7 +497,7 @@ private fun TextButtonShowcase() {
                 Text(PREVIEW_TEXT_LARGE)
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dim.spacingM))
             Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             TextButton(
                 onClick = {},
@@ -511,12 +524,13 @@ private fun TextButtonShowcase() {
 @PreviewComponent
 @Composable
 private fun AlertButtonShowcase() {
+    val dim = KrailTheme.dimensions
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         Column(
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(dim.pageHorizontalPadding),
+            verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
         ) {
             Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
             AlertButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
@@ -532,7 +546,7 @@ private fun AlertButtonShowcase() {
                 Text(PREVIEW_TEXT_LARGE)
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dim.spacingM))
             Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
             AlertButton(
                 onClick = {},

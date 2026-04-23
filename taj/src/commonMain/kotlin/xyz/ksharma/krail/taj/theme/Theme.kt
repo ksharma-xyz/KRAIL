@@ -19,6 +19,7 @@ fun KrailTheme(
     CompositionLocalProvider(
         LocalKrailColors provides animatedColors,
         LocalKrailTypography provides krailTypography,
+        LocalKrailDimensions provides krailDimensions,
         LocalThemeController provides themeController,
         content = content,
     )
@@ -33,4 +34,8 @@ object KrailTheme {
     val typography: KrailTypography
         @Composable
         get() = LocalKrailTypography.current
+
+    val dimensions: KrailDimensions
+        @Composable
+        get() = LocalKrailDimensions.current
 }

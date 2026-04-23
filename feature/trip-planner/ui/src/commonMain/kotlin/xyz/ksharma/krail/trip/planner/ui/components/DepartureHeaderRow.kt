@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -61,6 +60,7 @@ internal fun DepartureHeaderRow(
     activePlatformColor: Color = KrailTheme.colors.label,
     modeContent: @Composable RowScope.() -> Unit,
 ) {
+    val dim = KrailTheme.dimensions
     val surface = KrailTheme.colors.surface
     val resolvedTimeColor = pastDepartureColor(
         isPast = isPast,
@@ -74,13 +74,13 @@ internal fun DepartureHeaderRow(
     FlowRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         itemVerticalAlignment = Alignment.CenterVertically,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         modifier = modifier.fillMaxWidth(),
     ) {
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
             itemVerticalAlignment = Alignment.CenterVertically,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         ) {
             if (relativeTimeText.isNotBlank()) {
                 Text(

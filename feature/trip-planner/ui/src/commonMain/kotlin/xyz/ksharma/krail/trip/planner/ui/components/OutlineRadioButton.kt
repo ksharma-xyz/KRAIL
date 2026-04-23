@@ -23,6 +23,8 @@ import xyz.ksharma.krail.taj.themeContentColor
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.EnabledContentAlpha
 
+private val SmallRadioButtonHeight = 32.dp // no token equivalent
+
 @Composable
 fun OutlineRadioButton(
     text: String,
@@ -39,6 +41,7 @@ fun OutlineRadioButton(
     CompositionLocalProvider(
         LocalContentAlpha provides contentAlphaProvider,
     ) {
+        val dim = KrailTheme.dimensions
         val contentAlpha = LocalContentAlpha.current
         val backgroundColor = remember(selected, themeColor, contentAlpha) {
             if (selected) themeColor.copy(alpha = contentAlpha) else Color.Transparent
@@ -50,25 +53,25 @@ fun OutlineRadioButton(
             modifier = modifier
                 .height(
                     when (type) {
-                        RadioButtonType.SMALL -> 32.dp
-                        RadioButtonType.DEFAULT -> 48.dp
+                        RadioButtonType.SMALL -> SmallRadioButtonHeight
+                        RadioButtonType.DEFAULT -> dim.buttonRoundSize
                     },
                 )
-                .clip(shape = RoundedCornerShape(8.dp))
+                .clip(shape = RoundedCornerShape(dim.radiusS))
                 .background(
                     color = backgroundColor,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(dim.radiusS),
                 )
                 .border(
-                    width = 2.dp,
+                    width = dim.strokeRegular,
                     color = borderColor,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(dim.radiusS),
                 )
                 .scalingKlickable(
                     onClick = onClick,
                     enabled = enabled,
                 )
-                .padding(vertical = 4.dp, horizontal = 12.dp),
+                .padding(vertical = dim.spacingXS, horizontal = dim.spacingL),
             contentAlignment = Alignment.Center,
         ) {
             Text(

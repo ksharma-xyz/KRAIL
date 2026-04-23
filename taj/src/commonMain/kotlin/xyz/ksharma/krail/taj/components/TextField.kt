@@ -47,6 +47,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextSelectionBackgroundOpacity
@@ -126,17 +127,17 @@ fun TextField(
                                 shape = RoundedCornerShape(TextFieldHeight.div(2)),
                                 color = KrailTheme.colors.surface,
                             )
-                            .padding(vertical = 4.dp)
+                            .padding(vertical = SpacingTokens.XS)
                             .padding(
-                                end = 16.dp,
-                                start = if (leadingIcon != null) 0.dp else 16.dp,
+                                end = SpacingTokens.XL,
+                                start = if (leadingIcon != null) 0.dp else SpacingTokens.XL,
                             ),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         leadingIcon?.let { icon ->
                             icon.invoke()
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(SpacingTokens.XS))
                         }
 
                         if (textFieldState.text.isEmpty() && isFocused) {
@@ -242,7 +243,7 @@ private fun TextFieldPlaceholder(
 private fun TextFieldEnabledPreviewLight() {
     PreviewTextFieldContent {
         TextField(placeholder = "Station", initialText = "Central")
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(SpacingTokens.M))
         TextField(placeholder = "Search here")
     }
 }
@@ -252,7 +253,7 @@ private fun TextFieldEnabledPreviewLight() {
 private fun TextFieldDisabledPreviewLight() {
     PreviewTextFieldContent {
         TextField(enabled = false, initialText = "Disabled TextField")
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(SpacingTokens.M))
         TextField(enabled = false, placeholder = "Disabled Placeholder")
     }
 }
@@ -262,7 +263,7 @@ private fun PreviewTextFieldContent(content: @Composable () -> Unit) {
     PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(SpacingTokens.XL)
                 .background(KrailTheme.colors.onSurface),
         ) {
             content()

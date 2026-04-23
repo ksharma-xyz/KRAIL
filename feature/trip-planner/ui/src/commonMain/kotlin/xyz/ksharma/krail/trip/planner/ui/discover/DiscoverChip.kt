@@ -40,6 +40,7 @@ fun DiscoverChip(
     horizontalPadding: Dp = DiscoverChipDefaults.ChipHorizontalPadding,
     verticalPadding: Dp = DiscoverChipDefaults.ChipVerticalPadding,
 ) {
+    val dim = KrailTheme.dimensions
     val textColor = if (selected) {
         getForegroundColor(
             backgroundColor = if (isAppInDarkMode()) themeColor().darken() else themeColor(),
@@ -94,11 +95,11 @@ fun DiscoverChip(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(dim.radiusFull))
             .border(
-                width = 1.dp,
+                width = dim.strokeThin,
                 color = if (selected) Color.Transparent else themeColor(),
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(dim.radiusFull),
             )
             .background(
                 color = if (selected) {
@@ -106,7 +107,7 @@ fun DiscoverChip(
                 } else {
                     KrailTheme.colors.discoverChipBackground
                 },
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(dim.radiusFull),
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -131,7 +132,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }
@@ -144,7 +145,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }
@@ -157,7 +158,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }
@@ -170,7 +171,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected_DarkMode() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }

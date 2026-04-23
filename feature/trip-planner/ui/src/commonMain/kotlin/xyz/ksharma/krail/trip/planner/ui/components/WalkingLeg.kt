@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
@@ -26,6 +25,7 @@ fun WalkingLeg(
     duration: String,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     val density = LocalDensity.current
     // todo can be reusable logic for consistent icon size
     val iconSize = with(density) { 18.sp.toDp() }
@@ -35,7 +35,7 @@ fun WalkingLeg(
             .fillMaxWidth()
             .background(color = KrailTheme.colors.surface),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         Image(
             painter = painterResource(Res.drawable.ic_walk),

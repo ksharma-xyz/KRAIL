@@ -221,7 +221,7 @@ private fun RouteSummary(
         TransportModeBadge(
             backgroundColor = badgeColor,
             badgeText = badgeText,
-            modifier = Modifier.padding(end = dim.spacingML),
+            modifier = Modifier.padding(end = KrailTheme.dimensions.spacingML),
         )
 
         routeText?.let {

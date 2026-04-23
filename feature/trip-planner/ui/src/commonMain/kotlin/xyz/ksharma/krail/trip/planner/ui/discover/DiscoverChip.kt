@@ -132,7 +132,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
-            modifier = Modifier.padding(dim.spacingM),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }
@@ -145,7 +145,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
-            modifier = Modifier.padding(dim.spacingM),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }
@@ -158,7 +158,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = true,
-            modifier = Modifier.padding(dim.spacingM),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }
@@ -171,7 +171,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected_DarkMode() {
         DiscoverChip(
             type = DiscoverCardType.Travel,
             selected = false,
-            modifier = Modifier.padding(dim.spacingM),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingM),
         )
     }
 }

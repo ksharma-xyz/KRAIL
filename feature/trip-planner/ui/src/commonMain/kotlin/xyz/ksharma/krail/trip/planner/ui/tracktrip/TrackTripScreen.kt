@@ -215,14 +215,7 @@ fun TrackTripScreen(
                     }
                 }
 
-                is TrackTripState.AlreadyTracking -> AlreadyTrackingContent(
-                    currentDeepLink = s.currentDeepLink,
-                    requestedDeepLink = s.requestedDeepLink,
-                    onStopCurrentAndTrackNew = {
-                        viewModel.onStopTracking()
-                        viewModel.onStartTracking(s.requestedDeepLink)
-                    },
-                )
+                is TrackTripState.AlreadyTracking -> Unit // unreachable — deep link tap clears old tracking
             }
         }
     }
@@ -264,47 +257,6 @@ private fun PromptContent(
                 Text("Start Tracking")
             }
         }
-    }
-}
-
-@Composable
-private fun AlreadyTrackingContent(
-    currentDeepLink: TripDeepLink,
-    requestedDeepLink: TripDeepLink,
-    onStopCurrentAndTrackNew: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxSize()) {
-        OriginDestination(
-            trip = Trip(
-                fromStopId = requestedDeepLink.fromStopId,
-                fromStopName = requestedDeepLink.fromStopName,
-                toStopId = requestedDeepLink.toStopId,
-                toStopName = requestedDeepLink.toStopName,
-            ),
-            timeLineColor = KrailTheme.colors.onSurface,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .background(color = KrailTheme.colors.surface),
-        )
-
-        ErrorMessage(
-            emoji = "\uD83D\uDEA6",
-            title = "Already on another trip",
-            message = "Currently tracking ${
-                currentDeepLink.fromStopName
-                    .split(" ")
-                    .joinToString("\u00A0")
-            } to\u00A0${
-                currentDeepLink.toStopName
-                    .split(" ")
-                    .joinToString("\u00A0")
-            }.",
-            actionData = ActionData("Stop & Track New", onStopCurrentAndTrackNew),
-            filledButton = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 
@@ -646,11 +598,7 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                     }
                 }
 
-                is TrackTripState.AlreadyTracking -> AlreadyTrackingContent(
-                    currentDeepLink = state.currentDeepLink,
-                    requestedDeepLink = state.requestedDeepLink,
-                    onStopCurrentAndTrackNew = {},
-                )
+                is TrackTripState.AlreadyTracking -> Unit // unreachable — deep link tap clears old tracking
 
                 TrackTripState.Initial -> LoadingContent(deepLink = null)
                 TrackTripState.ArrivedAndFinished -> Unit
@@ -821,17 +769,6 @@ private fun TrackTripScreenArrivedPreview() {
 @Composable
 private fun TrackTripScreenArrivedDelayedPreview() {
     TrackTripScreenPreview(state = TrackTripState.Arrived(sampleDelayedJourney))
-}
-
-@PreviewComponent
-@Composable
-private fun TrackTripScreenAlreadyTrackingPreview() {
-    TrackTripScreenPreview(
-        state = TrackTripState.AlreadyTracking(
-            currentDeepLink = sampleDeepLink,
-            requestedDeepLink = sampleDeepLink.copy(fromStopName = "Strathfield"),
-        ),
-    )
 }
 
 @OptIn(ExperimentalTime::class)

@@ -18,6 +18,7 @@ object TripDeepLinkEncoder {
         toStopName: String,
         departureUtcDateTime: String,
         legs: List<TimeTableState.JourneyCardInfo.Leg>,
+        excludedProductClasses: Set<Int> = emptySet(),
     ): String? {
         val deepLinkLegs = legs
             .filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
@@ -38,6 +39,7 @@ object TripDeepLinkEncoder {
             toStopName = toStopName,
             departureUtcDateTime = departureUtcDateTime,
             legs = deepLinkLegs,
+            excludedProductClasses = excludedProductClasses.toList(),
         )
 
         val json = Json.encodeToString(deepLink)

@@ -463,6 +463,7 @@ class TimeTableViewModel(
                     toStopName = trip.toStopName,
                     departureUtcDateTime = journey.originUtcDateTime,
                     legs = journey.legs,
+                    excludedProductClasses = unselectedModes,
                 ) ?: return@mapNotNull null
                 journey.journeyId to url
             }.toMap().toImmutableMap()

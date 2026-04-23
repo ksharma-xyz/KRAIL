@@ -19,7 +19,11 @@ internal fun EntryProviderScope<NavKey>.TrackTripEntry(
         metadata = ListDetailSceneStrategy.detailPane(),
     ) { route ->
         LaunchedEffect(route) {
-            log("Nav - TrackTripEntry: composed — encodedData=${route.encodedData?.take(20)?.plus("…")}")
+            log(
+                "[DEEPLINK] TrackTripEntry composed — " +
+                    "encodedData=${route.encodedData?.take(20)?.plus("…") ?: "null"}, " +
+                    "routeHash=${route.hashCode()}",
+            )
         }
         TrackTripScreen(
             encodedData = route.encodedData,

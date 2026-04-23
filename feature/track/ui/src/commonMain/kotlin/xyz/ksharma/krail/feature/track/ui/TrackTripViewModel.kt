@@ -108,6 +108,12 @@ class TrackTripViewModel(
             currentCoroutineContext().ensureActive()
             val current = _uiState.value
             val deepLink = trackingManager.tracked.value?.deepLink
+            log(
+                "TrackTrip: uiState.onStart — state=${current::class.simpleName}, " +
+                    "trackedTrip=${deepLink?.fromStopName ?: "none"} → ${deepLink?.toStopName ?: "none"}, " +
+                    "pollingActive=${pollingJob?.isActive}, " +
+                    "vmEncodedData=${encodedData?.take(20)?.plus("…") ?: "null"}",
+            )
             if (current is TrackTripState.Tracking && deepLink != null && pollingJob?.isActive != true) {
                 log("TrackTrip: uiState.onStart — resuming poll (WhileSubscribed)")
                 startPolling(deepLink)
@@ -176,7 +182,11 @@ class TrackTripViewModel(
 
     init {
         @Suppress("MagicNumber")
-        log("TrackTrip: ViewModel created — encodedData=${encodedData?.take(20)?.plus("…")}")
+        log(
+            "[TRACK_RESOLVE] ViewModel created — " +
+                "vmHash=${hashCode()}, " +
+                "encodedData=${encodedData?.take(20)?.plus("…") ?: "null"}",
+        )
         resolveInitialState()
     }
 
@@ -184,19 +194,32 @@ class TrackTripViewModel(
         val existingTracked = trackingManager.tracked.value
         val newDeepLink = encodedData?.let {
             TripDeepLinkDecoder.decode(it).also { decoded ->
-                log("TrackTrip: decoded deep link — ${decoded?.fromStopName} to ${decoded?.toStopName}")
+                if (decoded != null) {
+                    log(
+                        "[TRACK_RESOLVE] decoded deep link — ${decoded.fromStopName} → ${decoded.toStopName}, " +
+                            "depUtc=${decoded.departureUtcDateTime}, legs=${decoded.legs.size}",
+                    )
+                } else {
+                    logError("[TRACK_RESOLVE] failed to decode encodedData=${it.take(30)}…")
+                }
             }
         }
 
+        val isSameTrip = existingTracked != null && newDeepLink != null &&
+            existingTracked.deepLink == newDeepLink
         log(
-            "TrackTrip: resolveInitialState — existingTracked=${existingTracked?.deepLink?.fromStopName ?: "none"}, " +
-                "newDeepLink=${newDeepLink?.fromStopName ?: "none"}",
+            "[TRACK_RESOLVE] resolveInitialState — " +
+                "existingTracked=${existingTracked?.deepLink?.fromStopName ?: "none"} → ${existingTracked?.deepLink?.toStopName ?: "none"}, " +
+                "existingIsArrived=${existingTracked?.isArrived}, " +
+                "newDeepLink=${newDeepLink?.fromStopName ?: "none"} → ${newDeepLink?.toStopName ?: "none"}, " +
+                "isSameTrip=$isSameTrip, " +
+                "hasExistingDisplay=${existingTracked?.display != null}",
         )
 
         // Expire any stale existing trip before evaluating the new deep link.
         if (existingTracked != null && isTripExpired(existingTracked.deepLink)) {
             log(
-                "TrackTrip: existing trip expired " +
+                "[TRACK_RESOLVE] existing trip expired " +
                     "(departure > ${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago) → ArrivedAndFinished",
             )
             transitionToArrivedAndFinished()
@@ -206,7 +229,7 @@ class TrackTripViewModel(
         when {
             // New expired deep link → nothing to show, clean up and go back immediately
             newDeepLink != null && isTripExpired(newDeepLink) -> {
-                log("TrackTrip: new deep link expired → ArrivedAndFinished")
+                log("[TRACK_RESOLVE] new deep link expired → ArrivedAndFinished")
                 transitionToArrivedAndFinished()
             }
 
@@ -214,14 +237,18 @@ class TrackTripViewModel(
             // No need to ask the user; the old trip is done.
             newDeepLink != null && existingTracked != null &&
                 existingTracked.deepLink != newDeepLink && existingTracked.isArrived -> {
-                log("TrackTrip: existing trip already arrived, clearing → Prompt for new trip")
+                log("[TRACK_RESOLVE] existing trip already arrived, clearing → Prompt for new trip")
                 trackingManager.stop()
                 _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
 
             // New deep link + actively tracking a DIFFERENT trip → enforce MAX_TRACKED_TRIPS limit
             newDeepLink != null && existingTracked != null && existingTracked.deepLink != newDeepLink -> {
-                log("TrackTrip: → AlreadyTracking (max ${TrackingConfig.MAX_TRACKED_TRIPS} trip limit)")
+                log(
+                    "[TRACK_RESOLVE] → AlreadyTracking — " +
+                        "currently tracking ${existingTracked.deepLink.fromStopName} → ${existingTracked.deepLink.toStopName}, " +
+                        "new trip ${newDeepLink.fromStopName} → ${newDeepLink.toStopName}",
+                )
                 _uiState.value = TrackTripState.AlreadyTracking(existingTracked.deepLink, newDeepLink)
             }
 
@@ -229,15 +256,18 @@ class TrackTripViewModel(
             existingTracked != null -> {
                 existingTracked.display?.let { display ->
                     if (existingTracked.isArrived) {
-                        log("TrackTrip: → Arrived (restored from cache)")
+                        log("[TRACK_RESOLVE] → Arrived (restored from cache)")
                         _uiState.value = TrackTripState.Arrived(display)
                     } else {
-                        log("TrackTrip: → Tracking (resumed)")
+                        log(
+                            "[TRACK_RESOLVE] → Tracking (resumed) — " +
+                                "${existingTracked.deepLink.fromStopName} → ${existingTracked.deepLink.toStopName}",
+                        )
                         _uiState.value = TrackTripState.Tracking(display)
                         startPolling(existingTracked.deepLink)
                     }
                 } ?: run {
-                    log("TrackTrip: → Loading (deep link found but no display yet, starting poll)")
+                    log("[TRACK_RESOLVE] → Loading (no display yet, starting poll for ${existingTracked.deepLink.fromStopName})")
                     _uiState.value = TrackTripState.Loading(existingTracked.deepLink, loadingEmoji)
                     startPolling(existingTracked.deepLink)
                 }
@@ -245,12 +275,12 @@ class TrackTripViewModel(
 
             // New deep link, nothing tracked yet → show prompt
             newDeepLink != null -> {
-                log("TrackTrip: → Prompt (${newDeepLink.fromStopName})")
+                log("[TRACK_RESOLVE] → Prompt (${newDeepLink.fromStopName} → ${newDeepLink.toStopName})")
                 _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
 
             else -> {
-                logError("TrackTrip: → Error (no encodedData, no existing tracking)")
+                logError("[TRACK_RESOLVE] → Error (no encodedData, no existing tracking)")
                 _uiState.value = TrackTripState.Error
             }
         }
@@ -329,7 +359,10 @@ class TrackTripViewModel(
             return
         }
         startClock()
-        log("TrackTrip: startPolling — ${deepLink.fromStopName}, interval=${TrackingConfig.POLL_INTERVAL_MS}ms")
+        log(
+            "TrackTrip: startPolling — ${deepLink.fromStopName} → ${deepLink.toStopName}, " +
+                "interval=${TrackingConfig.POLL_INTERVAL_MS}ms, vmHash=${hashCode()}",
+        )
         pollingJob = viewModelScope.launch {
             while (isActive) {
                 // Guard before each API call — trip may expire between polls
@@ -398,7 +431,12 @@ class TrackTripViewModel(
                     excludeProductClassSet = emptySet(),
                 )
             }
-            log("TrackTrip: fetchAndUpdate — response received (${response.journeys?.size ?: 0} journeys)")
+            val journeyCount = response.journeys?.size ?: 0
+            val deepLinkLegIds = deepLink.legs.map { it.transportationId }
+            log(
+                "TrackTrip: fetchAndUpdate — response received — $journeyCount journeys, " +
+                    "seeking legs=$deepLinkLegIds",
+            )
 
             val matchedJourney = response.findMatchingJourney(deepLink)
             if (matchedJourney == null) {

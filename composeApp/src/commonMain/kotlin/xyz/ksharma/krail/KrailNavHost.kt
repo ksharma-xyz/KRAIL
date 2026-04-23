@@ -24,6 +24,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import org.koin.compose.koinInject
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
 import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.navigation.SplashRoute
@@ -78,11 +79,16 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) {
         pendingDeepLinkManager.hotEvents.collect { encodedData ->
             val topRoute = navigationState.backStacks[navigationState.topLevelRoute]?.lastOrNull()
+            val topRouteName = topRoute?.let { it::class.simpleName } ?: "null"
+            log("[DEEPLINK] hot event received — topRoute=$topRouteName, encodedData=${encodedData.take(20)}…")
             if (topRoute !is SplashRoute) {
                 pendingDeepLinkManager.consumePending()
+                log("[DEEPLINK] navigating to TrackTripRoute (not on Splash)")
                 navigator.pushSingleInstance(TrackTripRoute(encodedData))
+            } else {
+                // If splash is active: the payload is already in pending; SplashEntry handles it.
+                log("[DEEPLINK] Splash is active — deferring to SplashEntry via consumePending()")
             }
-            // If splash is active: the payload is already in pending; SplashEntry handles it.
         }
     }
 

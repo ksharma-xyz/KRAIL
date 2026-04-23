@@ -24,15 +24,19 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
+private val CONTENT_PADDING_BOTTOM = 48.dp
+private val BOTTOM_SPACER_HEIGHT = 64.dp
+
 @Composable
 fun ServiceAlertScreen(
     serviceAlerts: ImmutableSet<ServiceAlert>,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     var expandedAlertId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     LazyColumn(
-        contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
+        contentPadding = PaddingValues(top = dim.spacingXL, bottom = CONTENT_PADDING_BOTTOM),
         modifier = modifier.background(color = KrailTheme.colors.bottomSheetBackground),
     ) {
         item("title_bar") {
@@ -50,7 +54,7 @@ fun ServiceAlertScreen(
             CollapsibleAlert(
                 serviceAlert = alert,
                 index = index + 1,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingM),
                 collapsed = expandedAlertId != alert.hashCode(),
                 onClick = {
                     expandedAlertId = if (expandedAlertId == alert.hashCode()) {
@@ -63,7 +67,7 @@ fun ServiceAlertScreen(
         }
 
         item("bottom_spacing") {
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(BOTTOM_SPACER_HEIGHT))
         }
     }
 }

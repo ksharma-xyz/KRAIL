@@ -43,6 +43,7 @@ import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 enum class BadgeSize { Small, Large }
 
 private val badgeShape = RoundedCornerShape(percent = 20)
+private val BADGE_LARGE_VERTICAL_PADDING = 7.dp
 
 /**
  * Coloured pill badge showing a transport line number (e.g. "T1", "333", "F1").
@@ -64,9 +65,10 @@ fun TransportModeBadge(
     selected: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
+    val dim = KrailTheme.dimensions
     val paddingValues: PaddingValues = when (size) {
-        BadgeSize.Small -> PaddingValues(horizontal = 4.dp, vertical = 2.dp)
-        BadgeSize.Large -> PaddingValues(horizontal = 10.dp, vertical = 7.dp)
+        BadgeSize.Small -> PaddingValues(horizontal = dim.spacingXS, vertical = dim.spacingXXS)
+        BadgeSize.Large -> PaddingValues(horizontal = dim.spacingML, vertical = BADGE_LARGE_VERTICAL_PADDING)
     }
 
     // Scale: spring-bounced so selection "pops" with a satisfying physical feel.
@@ -86,7 +88,7 @@ fun TransportModeBadge(
     ) {
         Box(
             modifier = modifier
-                .then(if (size == BadgeSize.Large) Modifier.widthIn(min = 44.dp) else Modifier)
+                .then(if (size == BadgeSize.Large) Modifier.widthIn(min = dim.iconXXL) else Modifier)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale

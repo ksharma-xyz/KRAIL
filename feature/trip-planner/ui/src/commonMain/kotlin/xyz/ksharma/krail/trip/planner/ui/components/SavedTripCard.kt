@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
@@ -44,24 +43,25 @@ fun SavedTripCard(
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier
             .cardBackground()
             .klickable(onClick = onCardClick)
-            .padding(vertical = 16.dp, horizontal = 16.dp),
+            .padding(vertical = dim.spacingXL, horizontal = dim.spacingXL),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         primaryTransportMode?.let {
             TransportModeIcon(
                 transportMode = primaryTransportMode,
-                modifier = Modifier.padding(end = 12.dp),
+                modifier = Modifier.padding(end = dim.cardInternalSpacing),
             )
         }
 
         Column(
             modifier = Modifier
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
         ) {
             Text(text = trip.fromStopName, style = KrailTheme.typography.bodyMedium)
             Text(text = trip.toStopName, style = KrailTheme.typography.bodyMedium)
@@ -69,7 +69,7 @@ fun SavedTripCard(
 
         Box(
             modifier = Modifier
-                .size(44.dp)
+                .size(dim.savedTripIconButtonSize)
                 .clip(CircleShape)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -122,9 +122,10 @@ private fun SavedTripCardPreview() {
 @Composable
 private fun SavedTripCardListPreview() {
     PreviewTheme {
+        val dim = KrailTheme.dimensions
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(dim.spacingXL),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
         ) {
             SavedTripCard(
                 trip = Trip(

@@ -28,6 +28,8 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 
+private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
+
 @Composable
 fun ParkRideCard(
     parkRideUiState: ParkRideUiState,
@@ -35,6 +37,7 @@ fun ParkRideCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier.fillMaxWidth()
             .cardBackground()
@@ -42,10 +45,15 @@ fun ParkRideCard(
                 onClick()
             }
             .animateContentSize()
-            .padding(top = 20.dp, start = 16.dp, end = 12.dp, bottom = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(
+                top = ParkRideCardVerticalPadding,
+                start = dim.pageHorizontalPadding,
+                end = dim.spacingL,
+                bottom = ParkRideCardVerticalPadding,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
-        ParkRideIcon(modifier = Modifier.padding(top = 2.dp))
+        ParkRideIcon(modifier = Modifier.padding(top = dim.spacingXXS))
 
         Column(modifier = Modifier.fillMaxWidth()) {
             AnimatedVisibility(
@@ -54,10 +62,10 @@ fun ParkRideCard(
                 exit = shrinkVertically() + fadeOut(spring(stiffness = Spring.StiffnessVeryLow)),
             ) {
                 if (parkRideUiState.facilities.any { it.spotsAvailable >= 0 }) {
-                    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(ParkRideCardVerticalPadding)) {
                         parkRideUiState.facilities.forEach { facility ->
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
                             ) {
                                 // Facility Name
                                 Text(
@@ -67,10 +75,10 @@ fun ParkRideCard(
 
                                 // Spots Information
                                 FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
+                                    verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
                                 ) {
-                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
                                         Text(
                                             text = "${facility.spotsAvailable}",
                                             style = KrailTheme.typography.headlineMedium,
@@ -84,7 +92,7 @@ fun ParkRideCard(
                                     }
 
                                     FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                                     ) {
                                         Text(
                                             text = "${facility.percentageFull}%",

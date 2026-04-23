@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -46,6 +45,7 @@ fun CollapsibleAlert(
     modifier: Modifier = Modifier,
     collapsed: Boolean = true,
 ) {
+    val dim = KrailTheme.dimensions
     val backgroundColor = KrailTheme.colors.alert.copy(alpha = 0.7f)
 
     CompositionLocalProvider(
@@ -56,16 +56,16 @@ fun CollapsibleAlert(
                 .fillMaxWidth()
                 .background(
                     color = backgroundColor,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(dim.cardCornerRadius),
                 )
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
                     onClick = onClick,
                 )
-                .padding(vertical = 8.dp)
+                .padding(vertical = dim.spacingM)
                 .animateContentSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
         ) {
             CompositionLocalProvider(
                 LocalTextStyle provides KrailTheme.typography.titleMedium,
@@ -76,7 +76,7 @@ fun CollapsibleAlert(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(24.dp.toAdaptiveSize())
+                            .size(dim.iconM.toAdaptiveSize())
                             .clip(CircleShape)
                             .alignByBaseline(),
                         contentAlignment = Alignment.Center,
@@ -86,7 +86,7 @@ fun CollapsibleAlert(
 
                     Text(
                         text = serviceAlert.heading,
-                        modifier = Modifier.padding(horizontal = 12.dp).alignByBaseline(),
+                        modifier = Modifier.padding(horizontal = dim.spacingL).alignByBaseline(),
                     )
                 }
             }
@@ -103,13 +103,13 @@ fun CollapsibleAlert(
                         onClick = onClick,
                         color = getForegroundColor(backgroundColor),
                         urlColor = getForegroundColor(backgroundColor),
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(horizontal = dim.spacingXL),
                     )
                 } else {
                     Text(
                         text = serviceAlert.message,
                         style = KrailTheme.typography.body,
-                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+                        modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXL),
                     )
                 }
             } else if (serviceAlert.message.isNotBlank()) {
@@ -129,8 +129,8 @@ fun CollapsibleAlert(
                     onClick = onClick,
                     dimensions = ButtonDefaults.extraSmallButtonSize(),
                     modifier = Modifier.padding(
-                        start = 12.dp + 24.dp.toAdaptiveSize(),
-                        bottom = 8.dp,
+                        start = dim.spacingL + dim.iconM.toAdaptiveSize(),
+                        bottom = dim.spacingM,
                     ),
                 ) {
                     Text(text = "Read More")
@@ -155,7 +155,7 @@ private fun PreviewCollapsibleAlertCollapsed() {
                 ),
                 index = 1,
                 onClick = {},
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(KrailTheme.dimensions.spacingXL),
             )
         }
     }
@@ -175,7 +175,7 @@ private fun PreviewCollapsibleAlertExpanded() {
                 collapsed = false,
                 onClick = {},
                 index = 1,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(KrailTheme.dimensions.spacingXL),
             )
         }
     }

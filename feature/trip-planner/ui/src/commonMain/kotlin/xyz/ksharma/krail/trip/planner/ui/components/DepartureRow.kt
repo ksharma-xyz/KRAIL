@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
@@ -43,6 +42,7 @@ fun DepartureRow(
     departure: StopDeparture,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     val isPast = departure.timing == DepartureTiming.Previous
     val lineColor = remember(departure.lineColorCode) {
         departure.lineColorCode.hexToComposeColor()
@@ -82,8 +82,8 @@ fun DepartureRow(
                     Modifier
                 },
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingL),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
         // Line 1: relative time + mode icon + line badge (left) | platform text (right)
         DepartureHeaderRow(
@@ -103,7 +103,7 @@ fun DepartureRow(
             TransportModeBadge(
                 badgeText = departure.lineNumber,
                 backgroundColor = lineColor,
-                modifier = Modifier.padding(end = 8.dp),
+                modifier = Modifier.padding(end = dim.spacingM),
             )
         }
 
@@ -138,6 +138,7 @@ fun DepartureRowList(
     modifier: Modifier = Modifier,
     maxItems: Int? = null,
 ) {
+    val dim = KrailTheme.dimensions
     val displayDepartures = remember(departures, maxItems) {
         if (maxItems != null) departures.take(maxItems) else departures
     }
@@ -145,15 +146,15 @@ fun DepartureRowList(
         var lastDateLabel = ""
         displayDepartures.forEachIndexed { index, departure ->
             if (departure.dateLabel != lastDateLabel) {
-                if (index > 0) Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                if (index > 0) Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
                 Text(
                     text = departure.dateLabel,
                     style = KrailTheme.typography.titleMedium,
                     color = KrailTheme.colors.onSurface,
                     modifier = Modifier
                         .semantics { heading() }
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 16.dp, bottom = 8.dp),
+                        .padding(horizontal = dim.pageHorizontalPadding)
+                        .padding(top = dim.pageVerticalPadding, bottom = dim.spacingM),
                 )
                 lastDateLabel = departure.dateLabel
             }
@@ -161,7 +162,7 @@ fun DepartureRowList(
             DepartureRow(departure = departure)
 
             if (index < displayDepartures.lastIndex) {
-                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
             }
         }
     }

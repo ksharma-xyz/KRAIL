@@ -101,6 +101,7 @@ fun JourneyCard(
     scheduledOriginTime: String? = null,
     deepLinkUrl: String? = null,
 ) {
+    val dim = KrailTheme.dimensions
     val isPast by remember(timeToDeparture) {
         mutableStateOf(
             timeToDeparture.contains(other = "ago", ignoreCase = true),
@@ -134,8 +135,8 @@ fun JourneyCard(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             )
-            .padding(horizontal = 12.dp)
-            .padding(top = 8.dp)
+            .padding(horizontal = dim.journeyCardHorizontalPadding)
+            .padding(top = dim.journeyCardTopPadding)
             .animateContentSize(),
     ) {
         JourneyCardHeader(
@@ -156,7 +157,7 @@ fun JourneyCard(
                 scheduledOriginTime = scheduledOriginTime,
                 departureDeviation = departureDeviation,
                 isPast = isPast,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = dim.journeyCardLegSpacing),
             )
 
             // Destination time + travel time + walk time
@@ -214,7 +215,7 @@ fun JourneyCard(
             )
         }
 
-        Divider(modifier = Modifier.padding(top = 16.dp))
+        Divider(modifier = Modifier.padding(top = dim.spacingXL))
     }
 }
 
@@ -229,15 +230,16 @@ fun ExpandedJourneyCardContent(
     isMapsAvailable: Boolean = false,
     onShareClick: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Column(modifier = modifier) {
         // Buttons row - Alert always at start, Maps always next to it
         FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(vertical = dim.spacingM),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
             itemVerticalAlignment = Alignment.CenterVertically,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         ) {
             if (totalUniqueServiceAlerts > 0) {
                 AlertButton(
@@ -278,7 +280,7 @@ fun ExpandedJourneyCardContent(
                 ),
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val density = LocalDensity.current
@@ -298,7 +300,7 @@ fun ExpandedJourneyCardContent(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(4.dp),
+                .height(dim.spacingXS),
         )
 
         legList.forEachIndexed { index, leg ->
@@ -307,7 +309,7 @@ fun ExpandedJourneyCardContent(
                     WalkingLeg(
                         duration = leg.duration,
                         modifier = Modifier
-                            .padding(vertical = 8.dp, horizontal = 2.dp),
+                            .padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
                     )
                 }
 
@@ -316,7 +318,7 @@ fun ExpandedJourneyCardContent(
                         leg.walkInterchange?.duration?.let { duration ->
                             WalkingLeg(
                                 duration = duration,
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+                                modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
                             )
                         }
                     }
@@ -325,7 +327,7 @@ fun ExpandedJourneyCardContent(
                         leg.walkInterchange?.duration?.let { duration ->
                             WalkingLeg(
                                 duration = duration,
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+                                modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
                             )
                         }
                     } else {
@@ -355,7 +357,7 @@ fun ExpandedJourneyCardContent(
                         leg.walkInterchange?.duration?.let { duration ->
                             WalkingLeg(
                                 duration = duration,
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+                                modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
                             )
                         }
                     }
@@ -365,12 +367,14 @@ fun ExpandedJourneyCardContent(
     }
 }
 
+private val LEG_TOP_PADDING = 16.dp
+
 fun getPaddingValue(lastLeg: TimeTableState.JourneyCardInfo.Leg): Dp {
     return if (
         lastLeg is TimeTableState.JourneyCardInfo.Leg.TransportLeg &&
         lastLeg.walkInterchange?.position != TimeTableState.JourneyCardInfo.WalkPosition.AFTER
     ) {
-        16.dp
+        LEG_TOP_PADDING
     } else {
         0.dp
     }
@@ -383,8 +387,9 @@ private fun ResponsiveJourneyInfoRow(
     totalWalkTime: String?,
     isPast: Boolean = false,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -417,6 +422,7 @@ private fun TextWithIcon(
     textStyle: TextStyle = KrailTheme.typography.bodyMedium,
     color: Color = KrailTheme.colors.onSurface,
 ) {
+    val dim = KrailTheme.dimensions
     val density = LocalDensity.current
     val iconSize = with(density) { 14.sp.toDp() }
 
@@ -424,7 +430,7 @@ private fun TextWithIcon(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .semantics(mergeDescendants = true) { },
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
         Image(
             painter = painter,

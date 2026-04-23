@@ -13,7 +13,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -66,11 +65,12 @@ fun ScheduledTimeRow(
     deviationColor: Color = Color.Unspecified,
     onTimeTextStyle: TextStyle = KrailTheme.typography.titleMedium,
 ) {
+    val dim = KrailTheme.dimensions
     if (scheduledTimeText != null && deviationLabel != null) {
         // Deviation layout: strikethrough + label on first line, promoted actual time below
         Column(modifier = modifier) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(

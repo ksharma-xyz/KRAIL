@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -47,8 +46,9 @@ internal fun JourneyCardHeader(
         ?: KrailTheme.colors.onSurface
     val isAdaptive = displayAdaptiveTransportModeList(transportModeLineList, platformText)
 
+    val dim = KrailTheme.dimensions
     Column(
-        modifier = modifier.padding(bottom = 4.dp),
+        modifier = modifier.padding(bottom = dim.journeyCardLegSpacing),
     ) {
         DepartureHeaderRow(
             relativeTimeText = timeToDeparture,
@@ -73,7 +73,7 @@ internal fun JourneyCardHeader(
             TransportModesRow(
                 transportModeLineList = transportModeLineList,
                 showBadge = { it.transportMode is TransportMode.Bus },
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = dim.journeyCardLegSpacing),
             )
         }
     }
@@ -93,10 +93,11 @@ internal fun TransportModesRow(
     showBadge: (TransportModeLine) -> Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     FlowRow(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         transportModeLineList.forEachIndexed { index, line ->

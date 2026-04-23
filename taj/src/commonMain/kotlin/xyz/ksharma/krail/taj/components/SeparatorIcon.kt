@@ -9,19 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.toAdaptiveSize
+import xyz.ksharma.krail.taj.tokens.SpacingTokens
 
 @Composable
 fun SeparatorIcon(modifier: Modifier = Modifier, color: Color = KrailTheme.colors.onSurface) {
     Box(
         modifier = modifier
-            .size(4.dp.toAdaptiveSize())
+            .size(SpacingTokens.XS.toAdaptiveSize())
             .clip(CircleShape)
             .background(color = color)
-            .padding(end = 8.dp),
+            .padding(end = SpacingTokens.M),
     )
 }
 
@@ -33,7 +33,7 @@ private fun SeparatorIconPreview() {
         Box(
             modifier = Modifier
                 .background(KrailTheme.colors.surface)
-                .padding(10.dp),
+                .padding(SpacingTokens.ML),
         ) {
             SeparatorIcon()
         }

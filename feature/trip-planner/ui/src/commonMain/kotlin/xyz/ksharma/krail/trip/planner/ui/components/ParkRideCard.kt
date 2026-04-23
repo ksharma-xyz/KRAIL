@@ -45,7 +45,12 @@ fun ParkRideCard(
                 onClick()
             }
             .animateContentSize()
-            .padding(top = ParkRideCardVerticalPadding, start = dim.pageHorizontalPadding, end = dim.spacingL, bottom = ParkRideCardVerticalPadding),
+            .padding(
+                top = ParkRideCardVerticalPadding,
+                start = dim.pageHorizontalPadding,
+                end = dim.spacingL,
+                bottom = ParkRideCardVerticalPadding,
+            ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
         ParkRideIcon(modifier = Modifier.padding(top = dim.spacingXXS))

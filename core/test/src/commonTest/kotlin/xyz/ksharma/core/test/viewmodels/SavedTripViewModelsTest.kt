@@ -32,6 +32,7 @@ import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISMISSED_INFO_TILES
+import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
@@ -86,6 +87,7 @@ class SavedTripsViewModelTest {
             platformOps = fakePlatformOps,
             infoTileManager = fakeInfoTileManager,
             inviteFriendsTileManager = fakeInviteFriendsTileManager,
+            trackingManager = TrackingManager(),
         )
     }
 

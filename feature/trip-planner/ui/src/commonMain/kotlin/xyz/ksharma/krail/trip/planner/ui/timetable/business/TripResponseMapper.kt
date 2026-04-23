@@ -81,7 +81,11 @@ internal fun TripResponse.buildJourneyListWithRawData():
                 totalWalkTime = walkingDurationStr,
                 transportModeLines = transportModeLines,
                 legs = legsList,
-                totalUniqueServiceAlerts = legs.flatMap { leg -> leg.infos.orEmpty() }.toSet().size,
+                totalUniqueServiceAlerts = legsList
+                    .filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
+                    .flatMap { it.serviceAlertList.orEmpty() }
+                    .toSet()
+                    .size,
                 departureDeviation = firstPublicTransportLeg.getDepartureDeviation(),
                 scheduledOriginTime = firstPublicTransportLeg.getScheduledOriginTime(),
             ).also {

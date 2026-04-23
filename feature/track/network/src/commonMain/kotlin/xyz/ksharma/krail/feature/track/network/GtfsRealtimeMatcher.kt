@@ -4,6 +4,7 @@ package xyz.ksharma.krail.feature.track.network
 
 import com.google.transit.realtime.FeedEntity
 import com.google.transit.realtime.FeedMessage
+import com.google.transit.realtime.Position
 import com.google.transit.realtime.VehiclePosition
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.feature.track.LiveVehiclePosition
@@ -198,7 +199,7 @@ object GtfsRealtimeMatcher {
 
     // ── Diagnostic logging helpers ────────────────────────────────────────────
 
-    private fun logMatchedVehicle(vehicle: VehiclePosition, pos: VehiclePosition.Position) {
+    private fun logMatchedVehicle(vehicle: VehiclePosition, pos: Position) {
         log(
             "[LIVETRACK_MATCH] matched vehicle — " +
                 "vehicleId=${vehicle.vehicle?.id} label=${vehicle.vehicle?.label} | " +

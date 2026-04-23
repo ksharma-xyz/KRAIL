@@ -37,4 +37,10 @@ sealed interface TimeTableUiEvent {
         val journeyId: String,
         val isPastDeparture: Boolean,
     ) : TimeTableUiEvent
+
+    /** Load additional future trips after the last currently shown departure. */
+    data object LoadMoreTrips : TimeTableUiEvent
+
+    /** Load past trips before the earliest currently shown departure. */
+    data object LoadPreviousTrips : TimeTableUiEvent
 }

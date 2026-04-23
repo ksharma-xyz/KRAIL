@@ -451,7 +451,9 @@ class TimeTableViewModel(
                 previousJourneyList = previousJourneyList,
                 isError = false,
                 deepLinkUrls = deepLinkUrls ?: this.deepLinkUrls,
-                canLoadMore = journeyList.isNotEmpty() && loadMoreCount < MAX_LOAD_MORE_COUNT,
+                canLoadMore = PAGINATION_ENABLED && journeyList.isNotEmpty() &&
+                    loadMoreCount < MAX_LOAD_MORE_COUNT,
+                paginationEnabled = PAGINATION_ENABLED,
             )
         }
     }
@@ -894,6 +896,12 @@ class TimeTableViewModel(
         /** How many minutes before the first shown trip the "Show Previous" window covers. */
         @VisibleForTesting
         val PREVIOUS_TRIPS_WINDOW_MINUTES = 60L
+
+        /**
+         * Set to false to hide Show-Previous / Load-More UI globally.
+         * Replace with a remote flag lookup when ready.
+         */
+        const val PAGINATION_ENABLED = true
     }
 }
 

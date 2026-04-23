@@ -214,6 +214,7 @@ private fun RouteSummary(
     badgeColor: Color,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,

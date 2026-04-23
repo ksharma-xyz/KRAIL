@@ -96,6 +96,7 @@ dependencies {
     // Depend on the KMP library
     implementation(project(":composeApp"))
     implementation(project(":core:deeplink"))
+    implementation(project(":core:log"))
 
     // Android-specific dependencies
     implementation(libs.activity.compose)

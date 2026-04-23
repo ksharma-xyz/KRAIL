@@ -415,6 +415,7 @@ class TimeTableViewModel(
                 journey.journeyId to url
             }.toMap().toImmutableMap()
         }
+        log("[SHARE] deep link URLs computed — ${deepLinkUrls?.size ?: 0} journeys encoded for sharing")
 
         updateUiState {
             copy(
@@ -648,6 +649,17 @@ class TimeTableViewModel(
             journeys[event.journeyId]?.let { journey ->
                 val originInstant = Instant.parse(journey.originUtcDateTime)
                 val destinationInstant = Instant.parse(journey.destinationUtcDateTime)
+                val deepLinkUrl = uiState.value.deepLinkUrls[event.journeyId]
+                log(
+                    "[SHARE] journey share clicked — " +
+                        "journeyId=${event.journeyId}, " +
+                        "from=${tripInfo?.fromStopName} → to=${tripInfo?.toStopName}, " +
+                        "depUtc=${journey.originUtcDateTime}, " +
+                        "modes=${journey.transportModeLines.joinToString { it.lineName }}, " +
+                        "legs=${journey.legs.size}, " +
+                        "deepLinkUrl=${deepLinkUrl ?: "null (not yet encoded)"}, " +
+                        "shareText=${event.shareText.take(80)}…",
+                )
                 analytics.trackShareJourneyClickEvent(
                     transportModeLines = journey.transportModeLines,
                     legCount = journey.legs.size,
@@ -655,7 +667,7 @@ class TimeTableViewModel(
                     travelDuration = destinationInstant - originInstant,
                     isPastDeparture = event.isPastDeparture,
                 )
-            }
+            } ?: log("[SHARE] journey share clicked — journeyId=${event.journeyId} not found in cache")
             shareManager.shareImage(bitmap = event.bitmap, text = event.shareText)
                 .onFailure { error ->
                     logError("error while sharing image", error)

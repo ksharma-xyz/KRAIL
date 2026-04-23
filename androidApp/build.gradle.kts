@@ -94,9 +94,9 @@ kotlin {
 
 dependencies {
     // Depend on the KMP library
-    implementation(project(":composeApp"))
-    implementation(project(":core:deeplink"))
-    implementation(project(":core:log"))
+    implementation(projects.composeApp)
+    implementation(projects.core.deeplink)
+    implementation(projects.core.log)
 
     // Android-specific dependencies
     implementation(libs.activity.compose)

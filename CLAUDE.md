@@ -40,3 +40,22 @@ Suppression rules:
 ## Build
 
 Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.
+
+## Gradle Dependencies
+
+Always use **type-safe project accessors** — never the string form.
+
+```kotlin
+// ✅ correct
+implementation(projects.composeApp)
+implementation(projects.core.log)
+implementation(projects.core.deeplink)
+implementation(libs.androidx.appcompat)
+
+// ❌ wrong — do not use
+implementation(project(":composeApp"))
+implementation(project(":core:log"))
+```
+
+`enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")` is active in `settings.gradle.kts`.
+The accessor name mirrors the directory path with dots (`core/log` → `projects.core.log`).

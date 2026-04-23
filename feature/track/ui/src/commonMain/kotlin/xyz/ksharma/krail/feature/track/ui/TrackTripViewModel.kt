@@ -82,17 +82,18 @@ class TrackTripViewModel(
      * Countdown split into (label, value) so the UI can animate only the changing value.
      * e.g. ("Arriving in", "4m 32s"), ("Departed", "just now").
      */
-    val countdownDisplay: StateFlow<Pair<String, String>> = combine(_uiState, _clock) { state, now ->
-        when (state) {
-            is TrackTripState.Tracking -> computeCountdown(state.journey, now)
-            is TrackTripState.Arrived -> computeCountdown(state.journey, now)
-            else -> "" to ""
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = "" to "",
-    )
+    val countdownDisplay: StateFlow<Pair<String, String>> =
+        combine(_uiState, _clock) { state, now ->
+            when (state) {
+                is TrackTripState.Tracking -> computeCountdown(state.journey, now)
+                is TrackTripState.Arrived -> computeCountdown(state.journey, now)
+                else -> "" to ""
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = "" to "",
+        )
 
     /**
      * Polling and the countdown clock are tied to this flow's subscriber lifecycle:
@@ -190,6 +191,7 @@ class TrackTripViewModel(
         resolveInitialState()
     }
 
+    @Suppress("MagicNumber")
     private fun resolveInitialState() {
         val existingTracked = trackingManager.tracked.value
         val newDeepLink = encodedData?.let {
@@ -209,7 +211,8 @@ class TrackTripViewModel(
             existingTracked.deepLink == newDeepLink
         log(
             "[TRACK_RESOLVE] resolveInitialState — " +
-                "existingTracked=${existingTracked?.deepLink?.fromStopName ?: "none"} → ${existingTracked?.deepLink?.toStopName ?: "none"}, " +
+                "existingTracked=${existingTracked?.deepLink?.fromStopName ?: "none"} → " +
+                "${existingTracked?.deepLink?.toStopName ?: "none"}, " +
                 "existingIsArrived=${existingTracked?.isArrived}, " +
                 "newDeepLink=${newDeepLink?.fromStopName ?: "none"} → ${newDeepLink?.toStopName ?: "none"}, " +
                 "isSameTrip=$isSameTrip, " +
@@ -220,7 +223,8 @@ class TrackTripViewModel(
         if (existingTracked != null && isTripExpired(existingTracked.deepLink)) {
             log(
                 "[TRACK_RESOLVE] existing trip expired " +
-                    "(departure > ${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago) → ArrivedAndFinished",
+                    "(departure > ${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago) → " +
+                    "ArrivedAndFinished",
             )
             transitionToArrivedAndFinished()
             return
@@ -246,10 +250,14 @@ class TrackTripViewModel(
             newDeepLink != null && existingTracked != null && existingTracked.deepLink != newDeepLink -> {
                 log(
                     "[TRACK_RESOLVE] → AlreadyTracking — " +
-                        "currently tracking ${existingTracked.deepLink.fromStopName} → ${existingTracked.deepLink.toStopName}, " +
+                        "currently tracking ${existingTracked.deepLink.fromStopName} → " +
+                        "${existingTracked.deepLink.toStopName}, " +
                         "new trip ${newDeepLink.fromStopName} → ${newDeepLink.toStopName}",
                 )
-                _uiState.value = TrackTripState.AlreadyTracking(existingTracked.deepLink, newDeepLink)
+                _uiState.value = TrackTripState.AlreadyTracking(
+                    currentDeepLink = existingTracked.deepLink,
+                    requestedDeepLink = newDeepLink,
+                )
             }
 
             // Resume existing tracking (same trip or opened from SavedTrips card with no encoded data)
@@ -261,13 +269,17 @@ class TrackTripViewModel(
                     } else {
                         log(
                             "[TRACK_RESOLVE] → Tracking (resumed) — " +
-                                "${existingTracked.deepLink.fromStopName} → ${existingTracked.deepLink.toStopName}",
+                                "${existingTracked.deepLink.fromStopName} → " +
+                                "${existingTracked.deepLink.toStopName}",
                         )
                         _uiState.value = TrackTripState.Tracking(display)
                         startPolling(existingTracked.deepLink)
                     }
                 } ?: run {
-                    log("[TRACK_RESOLVE] → Loading (no display yet, starting poll for ${existingTracked.deepLink.fromStopName})")
+                    log(
+                        "[TRACK_RESOLVE] → Loading (no display yet, starting poll for " +
+                            "${existingTracked.deepLink.fromStopName})",
+                    )
                     _uiState.value = TrackTripState.Loading(existingTracked.deepLink, loadingEmoji)
                     startPolling(existingTracked.deepLink)
                 }
@@ -367,7 +379,10 @@ class TrackTripViewModel(
             while (isActive) {
                 // Guard before each API call — trip may expire between polls
                 if (isTripExpired(deepLink)) {
-                    log("TrackTrip: poll loop — departure expired (>${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago)")
+                    log(
+                        "TrackTrip: poll loop — departure expired " +
+                            "(>${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago)",
+                    )
                     transitionToArrivedAndFinished()
                     break
                 }
@@ -375,8 +390,11 @@ class TrackTripViewModel(
                 // Smart delay: if we polled recently (e.g. user returned to this screen),
                 // wait out the remaining interval instead of hitting the API immediately.
                 // lastPollInstant == null means first poll — go straight through.
-                val elapsedMs = lastPollInstant?.let { (Clock.System.now() - it).inWholeMilliseconds } ?: Long.MAX_VALUE
-                val remainingWaitMs = (TrackingConfig.POLL_INTERVAL_MS - elapsedMs).coerceAtLeast(0L)
+                val elapsedMs =
+                    lastPollInstant?.let { (Clock.System.now() - it).inWholeMilliseconds }
+                        ?: Long.MAX_VALUE
+                val remainingWaitMs =
+                    (TrackingConfig.POLL_INTERVAL_MS - elapsedMs).coerceAtLeast(0L)
                 if (remainingWaitMs > 0L) {
                     log("TrackTrip: poll — polled ${elapsedMs}ms ago, waiting ${remainingWaitMs}ms before next call")
                     delay(remainingWaitMs)
@@ -393,14 +411,17 @@ class TrackTripViewModel(
                         log("TrackTrip: poll loop exit — Arrived")
                         break
                     }
+
                     current is TrackTripState.ArrivedAndFinished -> {
                         log("TrackTrip: poll loop exit — ArrivedAndFinished")
                         break
                     }
+
                     current !is TrackTripState.Tracking -> {
                         log("TrackTrip: poll loop exit — state=${current::class.simpleName}")
                         break
                     }
+
                     else -> delay(TrackingConfig.POLL_INTERVAL_MS)
                 }
             }
@@ -470,6 +491,7 @@ class TrackTripViewModel(
                     )
                     transitionToArrivedAndFinished()
                 }
+
                 now > arrivalInstant -> {
                     log(
                         "TrackTrip: fetchAndUpdate — Arrived " +
@@ -479,6 +501,7 @@ class TrackTripViewModel(
                     _uiState.value = TrackTripState.Arrived(display)
                     scheduleAutoRemoval(arrivalInstant)
                 }
+
                 else -> {
                     log(
                         "TrackTrip: fetchAndUpdate — Tracking " +
@@ -635,15 +658,19 @@ class TrackTripViewModel(
     }
 
     @Suppress("MagicNumber")
-    private fun computeCountdown(journey: TrackedJourneyDisplay, now: Instant): Pair<String, String> {
+    private fun computeCountdown(
+        journey: TrackedJourneyDisplay,
+        now: Instant,
+    ): Pair<String, String> {
         val originInstant = runCatching { Instant.parse(journey.originUtcDateTime) }.getOrNull()
             ?: return "" to ""
         // Use the last transport stop's utcTime as destination — identical source to what
         // TrackedLegView uses, so CountdownCard and the timeline always agree.
-        val lastStopUtc = (journey.legs.lastOrNull { it is TrackedLeg.Transport } as? TrackedLeg.Transport)
-            ?.stops
-            ?.lastOrNull()
-            ?.utcTime
+        val lastStopUtc =
+            (journey.legs.lastOrNull { it is TrackedLeg.Transport } as? TrackedLeg.Transport)
+                ?.stops
+                ?.lastOrNull()
+                ?.utcTime
         val destinationInstant = lastStopUtc
             ?.let { runCatching { Instant.parse(it) }.getOrNull() }
             ?: runCatching { Instant.parse(journey.destinationUtcDateTime) }.getOrNull()
@@ -657,6 +684,7 @@ class TrackTripViewModel(
                     val rem = secs % SECONDS_PER_MINUTE
                     if (rem > 0L) "${mins}m ${rem}s" else "${mins}m"
                 }
+
                 else -> (originInstant - now).toGenericFormattedTimeString()
             }
             LABEL_DEPARTING_IN to value
@@ -677,6 +705,7 @@ class TrackTripViewModel(
                     val secs = totalSeconds % SECONDS_PER_MINUTE
                     LABEL_ARRIVING_IN to if (secs > 0L) "${mins}m ${secs}s" else "${mins}m"
                 }
+
                 else -> LABEL_ARRIVING_IN to duration.toGenericFormattedTimeString()
             }
         }

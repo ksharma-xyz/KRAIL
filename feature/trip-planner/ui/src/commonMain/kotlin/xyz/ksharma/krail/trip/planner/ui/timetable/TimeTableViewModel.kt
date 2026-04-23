@@ -643,6 +643,7 @@ class TimeTableViewModel(
         return alerts
     }
 
+    @Suppress("MagicNumber")
     @OptIn(ExperimentalTime::class)
     private fun onShareJourneyClicked(event: TimeTableUiEvent.ShareJourneyClicked) {
         viewModelScope.launch {

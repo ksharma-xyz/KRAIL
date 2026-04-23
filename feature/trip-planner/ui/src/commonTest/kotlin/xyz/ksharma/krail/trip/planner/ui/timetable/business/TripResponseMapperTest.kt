@@ -329,6 +329,130 @@ class TripResponseMapperTest {
 
     //endregion
 
+    //region totalUniqueServiceAlerts
+
+    @Test
+    fun `Given leg with no infos When buildJourneyList Then totalUniqueServiceAlerts is 0`() {
+        val response = TripResponse(
+            journeys = listOf(buildJourneyWithTransportLeg(productClass = 1L, infos = null)),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(0, journey?.totalUniqueServiceAlerts)
+    }
+
+    @Test
+    fun `Given leg with fully valid infos When buildJourneyList Then totalUniqueServiceAlerts matches`() {
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    infos = listOf(
+                        TripResponse.Info(subtitle = "Delays", content = "Train delayed", priority = "high"),
+                        TripResponse.Info(subtitle = "Works", content = "Track works", priority = "normal"),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(2, journey?.totalUniqueServiceAlerts)
+    }
+
+    @Test
+    fun `Given leg with info missing subtitle When buildJourneyList Then that info is not counted`() {
+        // Regression: before the fix, totalUniqueServiceAlerts counted raw infos regardless of
+        // whether toAlert() could parse them. An info with null subtitle is dropped by toAlert()
+        // but was still included in the badge count, so the alert bottom sheet never opened.
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    infos = listOf(
+                        TripResponse.Info(subtitle = null, content = "Some content", priority = "high"),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(0, journey?.totalUniqueServiceAlerts)
+    }
+
+    @Test
+    fun `Given leg with info missing content When buildJourneyList Then that info is not counted`() {
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    infos = listOf(
+                        TripResponse.Info(subtitle = "Delays", content = null, priority = "normal"),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(0, journey?.totalUniqueServiceAlerts)
+    }
+
+    @Test
+    fun `Given leg with info with unrecognised priority When buildJourneyList Then that info is not counted`() {
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    infos = listOf(
+                        TripResponse.Info(subtitle = "Notice", content = "Some notice", priority = "unknown"),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(0, journey?.totalUniqueServiceAlerts)
+    }
+
+    @Test
+    fun `Given mix of valid and invalid infos When buildJourneyList Then only valid ones are counted`() {
+        // Core regression: badge showed 3 alerts but serviceAlertList was empty (or fewer),
+        // so the bottom sheet guarded by alerts.isNotEmpty() never opened.
+        val response = TripResponse(
+            journeys = listOf(
+                buildJourneyWithTransportLeg(
+                    productClass = 1L,
+                    infos = listOf(
+                        TripResponse.Info(subtitle = "Delays", content = "Train delayed", priority = "high"),
+                        TripResponse.Info(subtitle = null, content = "Missing heading", priority = "normal"),
+                        TripResponse.Info(subtitle = "Works", content = null, priority = "low"),
+                        TripResponse.Info(subtitle = "Notice", content = "Info notice", priority = "unknown"),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+        val transportLeg = journey?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+
+        assertEquals(
+            1,
+            journey?.totalUniqueServiceAlerts,
+            "Badge count must match the number of alerts serviceAlertList actually contains",
+        )
+        assertEquals(
+            journey?.totalUniqueServiceAlerts,
+            transportLeg?.serviceAlertList?.size,
+            "totalUniqueServiceAlerts must equal serviceAlertList size so the bottom sheet opens",
+        )
+    }
+
+    //endregion
+
     //region displayText on TransportLeg
 
     @Test
@@ -425,10 +549,12 @@ class TripResponseMapperTest {
         realtimeTripId: String = "defaultRtId",
         depTime: String = "2026-04-18T22:00:00Z",
         arrTime: String = "2026-04-18T22:30:00Z",
+        infos: List<TripResponse.Info>? = null,
     ) = TripResponse.Journey(
         legs = listOf(
             TripResponse.Leg(
                 duration = 1800L,
+                infos = infos,
                 origin = TripResponse.StopSequence(
                     name = "Origin Station",
                     disassembledName = "Origin Station, Platform 1",

@@ -27,6 +27,8 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isBefore
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isFuture
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toHHMM
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
@@ -59,7 +61,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "LargeClass")
 class TimeTableViewModel(
     private val tripPlanningService: TripPlanningService,
     private val rateLimiter: RateLimiter,
@@ -160,6 +162,18 @@ class TimeTableViewModel(
     @VisibleForTesting
     val journeys: MutableMap<String, TimeTableState.JourneyCardInfo> = mutableMapOf()
 
+    /** Future trips fetched via "Load More". Survives auto-refresh; cleared on trip/time reset. */
+    @VisibleForTesting
+    val loadMoreJourneys: MutableMap<String, TimeTableState.JourneyCardInfo> = mutableMapOf()
+
+    /** Past trips fetched via "Show Previous". Survives auto-refresh; cleared on trip/time reset. */
+    @VisibleForTesting
+    val previousJourneysCache: MutableMap<String, TimeTableState.JourneyCardInfo> = mutableMapOf()
+
+    private var loadMoreCount: Int = 0
+    private var loadMoreFetchJob: Job? = null
+    private var loadPreviousFetchJob: Job? = null
+
     private val rawJourneyDataByJourneyId: MutableMap<String, TripResponse.Journey> = mutableMapOf()
 
     private val isMapsAvailable: Boolean by lazy {
@@ -252,6 +266,10 @@ class TimeTableViewModel(
             TimeTableUiEvent.BackClick -> trackBackClickEvent()
 
             is TimeTableUiEvent.ShareJourneyClicked -> onShareJourneyClicked(event)
+
+            TimeTableUiEvent.LoadMoreTrips -> onLoadMoreTrips()
+
+            TimeTableUiEvent.LoadPreviousTrips -> onLoadPreviousTrips()
         }
     }
 
@@ -306,6 +324,7 @@ class TimeTableViewModel(
             updateUiState { copy(isLoading = true) }
             dateTimeSelectionItem = item
             journeys.clear() // Clear cache trips when date time selection changed.
+            resetPaginationCaches()
             sandook.clearAlerts()
             rateLimiter.triggerEvent()
 
@@ -398,7 +417,15 @@ class TimeTableViewModel(
     }
 
     private fun updateUiStateWithFilteredTrips() {
-        val journeyList = updateJourneyCardInfoTimeText(journeys.values.toList())
+        // Main list = current-window journeys + load-more (future) journeys, sorted chronologically.
+        val mergedJourneys = (journeys.values + loadMoreJourneys.values)
+            .distinctBy { it.journeyId }
+        val journeyList = updateJourneyCardInfoTimeText(mergedJourneys)
+            .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
+            .toImmutableList()
+
+        // Previous list = past journeys fetched via "Show Previous".
+        val previousJourneyList = updateJourneyCardInfoTimeText(previousJourneysCache.values.toList())
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
@@ -421,8 +448,10 @@ class TimeTableViewModel(
             copy(
                 isLoading = false,
                 journeyList = journeyList,
+                previousJourneyList = previousJourneyList,
                 isError = false,
                 deepLinkUrls = deepLinkUrls ?: this.deepLinkUrls,
+                canLoadMore = journeyList.isNotEmpty() && loadMoreCount < MAX_LOAD_MORE_COUNT,
             )
         }
     }
@@ -450,6 +479,108 @@ class TimeTableViewModel(
         }.getOrElse { error ->
             Result.failure(error)
         }
+    }
+
+    /** Clears load-more and previous-trip caches and resets the pagination counter. */
+    private fun resetPaginationCaches() {
+        loadMoreJourneys.clear()
+        previousJourneysCache.clear()
+        loadMoreCount = 0
+        loadMoreFetchJob?.cancel()
+        loadPreviousFetchJob?.cancel()
+    }
+
+    /**
+     * Fetches the next page of future trips starting just after the last shown departure.
+     * Results are merged into [loadMoreJourneys] so auto-refresh cannot overwrite them.
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun onLoadMoreTrips() {
+        if (loadMoreCount >= MAX_LOAD_MORE_COUNT) return
+        val allJourneys = (journeys.values + loadMoreJourneys.values)
+        val lastInstant = allJourneys
+            .maxByOrNull { Instant.parse(it.originUtcDateTime) }
+            ?.let { Instant.parse(it.originUtcDateTime) }
+            ?: return
+
+        val fromInstant = lastInstant.plus(1.minutes)
+        val date = fromInstant.toApiDateString()
+        val time = fromInstant.toApiTimeString()
+
+        updateUiState { copy(isLoadingMore = true) }
+        loadMoreFetchJob?.cancel()
+        loadMoreFetchJob = viewModelScope.launch(ioDispatcher) {
+            loadTripAtTime(date = date, time = time).onSuccess { response ->
+                val (newJourneys, _) = response.buildJourneyListWithRawData()
+                newJourneys?.forEach { journey ->
+                    if (!loadMoreJourneys.containsKey(journey.journeyId) &&
+                        !journeys.containsKey(journey.journeyId)
+                    ) {
+                        loadMoreJourneys[journey.journeyId] = journey
+                    }
+                }
+                loadMoreCount++
+                updateUiStateWithFilteredTrips()
+            }.onFailure {
+                logError("Load more trips failed", it)
+            }
+            updateUiState { copy(isLoadingMore = false) }
+        }
+    }
+
+    /**
+     * Fetches past trips in the [PREVIOUS_TRIPS_WINDOW_MINUTES] window before the earliest
+     * currently shown departure. Results are stored in [previousJourneysCache].
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun onLoadPreviousTrips() {
+        val allJourneys = (previousJourneysCache.values + journeys.values + loadMoreJourneys.values)
+        val firstInstant = allJourneys
+            .minByOrNull { Instant.parse(it.originUtcDateTime) }
+            ?.let { Instant.parse(it.originUtcDateTime) }
+            ?: return
+
+        val windowStart = firstInstant.minus(PREVIOUS_TRIPS_WINDOW_MINUTES.minutes)
+        val date = windowStart.toApiDateString()
+        val time = windowStart.toApiTimeString()
+
+        updateUiState { copy(isLoadingPrevious = true) }
+        loadPreviousFetchJob?.cancel()
+        loadPreviousFetchJob = viewModelScope.launch(ioDispatcher) {
+            loadTripAtTime(date = date, time = time).onSuccess { response ->
+                val (newJourneys, _) = response.buildJourneyListWithRawData()
+                newJourneys
+                    ?.filter { Instant.parse(it.originUtcDateTime).isBefore(firstInstant) }
+                    ?.forEach { journey ->
+                        previousJourneysCache[journey.journeyId] = journey
+                    }
+                updateUiStateWithFilteredTrips()
+            }.onFailure {
+                logError("Load previous trips failed", it)
+            }
+            updateUiState { copy(isLoadingPrevious = false) }
+        }
+    }
+
+    /** Like [loadTrip] but uses explicit [date]/[time] params instead of [dateTimeSelectionItem]. */
+    private suspend fun loadTripAtTime(
+        date: String,
+        time: String,
+        depArr: DepArr = DepArr.DEP,
+    ): Result<TripResponse> = withContext(ioDispatcher) {
+        require(
+            tripInfo != null && tripInfo!!.fromStopId.isNotEmpty() && tripInfo!!.toStopId.isNotEmpty(),
+        ) { "Trip Info is null or empty" }
+        runCatching {
+            tripPlanningService.trip(
+                originStopId = tripInfo!!.fromStopId,
+                destinationStopId = tripInfo!!.toStopId,
+                date = date,
+                time = time,
+                depArr = depArr,
+                excludeProductClassSet = unselectedModes,
+            )
+        }.mapCatching { it }
     }
 
     private fun onSaveTripButtonClicked() {
@@ -518,6 +649,7 @@ class TimeTableViewModel(
             log("🗺️ onLoadTimeTable -- Different trip, clearing cache and fetching")
             dateTimeSelectionItem = null
             journeys.clear()
+            resetPaginationCaches()
             rawJourneyDataByJourneyId.clear()
 
             updateUiState {
@@ -555,6 +687,7 @@ class TimeTableViewModel(
         )
         tripInfo = reverseTrip
         journeys.clear() // Clear cache trips when reverse trip is clicked.
+        resetPaginationCaches()
         sandook.clearAlerts() // Clear alerts cache when reverse trip is clicked.
 
         analytics.track(
@@ -584,7 +717,15 @@ class TimeTableViewModel(
         val updatedJourneyList = withContext(ioDispatcher) {
             updateJourneyCardInfoTimeText(_uiState.value.journeyList).toImmutableList()
         }
-        updateUiState { copy(journeyList = updatedJourneyList) }
+        val updatedPreviousJourneyList = withContext(ioDispatcher) {
+            updateJourneyCardInfoTimeText(_uiState.value.previousJourneyList).toImmutableList()
+        }
+        updateUiState {
+            copy(
+                journeyList = updatedJourneyList,
+                previousJourneyList = updatedPreviousJourneyList,
+            )
+        }
     }
 
     /**
@@ -716,6 +857,10 @@ class TimeTableViewModel(
         sandook.clearAlerts()
         fetchTripJob?.cancel()
         fetchTripJob = null
+        loadMoreFetchJob?.cancel()
+        loadMoreFetchJob = null
+        loadPreviousFetchJob?.cancel()
+        loadPreviousFetchJob = null
         log("Cleanup jobs completed")
     }
 
@@ -741,6 +886,14 @@ class TimeTableViewModel(
          */
         @VisibleForTesting
         val JOURNEY_ENDED_CACHE_THRESHOLD_TIME = 10.minutes
+
+        /** How many "Load More" taps are allowed per session before the button is hidden. */
+        @VisibleForTesting
+        const val MAX_LOAD_MORE_COUNT = 3
+
+        /** How many minutes before the first shown trip the "Show Previous" window covers. */
+        @VisibleForTesting
+        val PREVIOUS_TRIPS_WINDOW_MINUTES = 60L
     }
 }
 

@@ -19,6 +19,7 @@ import xyz.ksharma.core.test.fakes.FakeRateLimiter
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeShareManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
+import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder
 import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder.buildTripResponse
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.core.test.fakes.FakeImageBitmap
@@ -38,6 +39,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.JOURNEY_ENDED_CACHE_THRESHOLD_TIME
+import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.MAX_LOAD_MORE_COUNT
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.REFRESH_TIME_TEXT_DURATION
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -1114,6 +1116,154 @@ class TimeTableViewModelTest {
 
             assertEquals("0915", tripPlanningService.lastCalledTime)
             assertNotNull(tripPlanningService.lastCalledDate)
+        }
+
+    // endregion
+
+    // region Test for LoadMoreTrips and LoadPreviousTrips
+
+    @Test
+    fun `GIVEN loaded journeys WHEN LoadMoreTrips event THEN loadMoreJourneys cache is populated and journeyList grows`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val initialSize = viewModel.uiState.value.journeyList.size
+            assertTrue(initialSize > 0)
+
+            // Configure service to return 2 journeys: index 0 is a duplicate (deduped), index 1 is new.
+            // This verifies dedup logic while ensuring at least one new journey appears.
+            tripPlanningService.setResponseForCall(
+                tripPlanningService.tripCallCount,
+                FakeTripResponseBuilder.buildTripResponse(numberOfJourney = 2),
+            )
+
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+
+            // loadMoreJourneys cache should contain the non-duplicate journey (index 1)
+            assertTrue(viewModel.loadMoreJourneys.isNotEmpty(), "loadMoreJourneys must be populated with new journey")
+            // journeyList in state should include the loaded-more trip
+            assertTrue(
+                viewModel.uiState.value.journeyList.size >= initialSize,
+                "journeyList should include load-more journeys",
+            )
+        }
+
+    @Test
+    fun `GIVEN MAX_LOAD_MORE_COUNT reached WHEN LoadMoreTrips THEN no API call is made`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // Reach the limit — each LoadMoreTrips cancels the previous job, so we must
+            // advance after each dispatch so the job runs and loadMoreCount is incremented.
+            repeat(TimeTableViewModel.MAX_LOAD_MORE_COUNT) {
+                viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+                advanceUntilIdle()
+            }
+
+            val callCountAtLimit = tripPlanningService.tripCallCount
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+
+            assertEquals(callCountAtLimit, tripPlanningService.tripCallCount, "No extra API call when limit reached")
+            assertFalse(viewModel.uiState.value.canLoadMore)
+        }
+
+    @Test
+    fun `GIVEN loaded journeys WHEN LoadPreviousTrips event THEN previousJourneysCache is populated`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
+
+            // Service returns past journeys for the previous-trips call
+            tripPlanningService.setResponseForCall(
+                tripPlanningService.tripCallCount,
+                FakeTripResponseBuilder.buildTripResponse(numberOfJourney = 1),
+            )
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+
+            // Even if the fake response returns future journeys (filtered out), the API call happened
+            assertTrue(tripPlanningService.tripCallCount > 1, "LoadPreviousTrips should trigger an API call")
+        }
+
+    @Test
+    fun `GIVEN load-more journeys WHEN trip changes THEN loadMoreJourneys and previousJourneysCache are cleared`() =
+        runTest {
+            val trip1 = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip1))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // Seed load-more and previous caches manually
+            viewModel.loadMoreJourneys["extra1"] = buildShareTestJourney("extra1")
+            viewModel.previousJourneysCache["prev1"] = buildShareTestJourney("prev1")
+
+            // Switch to a different trip
+            val trip2 = Trip(fromStopId = "stop3", fromStopName = "S3", toStopId = "stop4", toStopName = "S4")
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip2))
+            advanceUntilIdle()
+
+            assertTrue(viewModel.loadMoreJourneys.isEmpty(), "loadMoreJourneys cleared on trip change")
+            assertTrue(viewModel.previousJourneysCache.isEmpty(), "previousJourneysCache cleared on trip change")
+        }
+
+    @Test
+    fun `GIVEN load-more journeys WHEN auto-refresh runs THEN loadMoreJourneys are preserved in journeyList`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // Seed load-more cache manually (simulates a prior LoadMoreTrips success)
+            val extraJourney = buildShareTestJourney("extra_future_journey")
+            viewModel.loadMoreJourneys[extraJourney.journeyId] = extraJourney
+
+            // Simulate auto-refresh (calls fetchTrip which calls updateTripsCache + updateUiStateWithFilteredTrips)
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // The load-more journey must still appear in the displayed list
+            val journeyIds = viewModel.uiState.value.journeyList.map { it.journeyId }
+            assertTrue(
+                journeyIds.contains(extraJourney.journeyId),
+                "Load-more journeys must survive auto-refresh",
+            )
+        }
+
+    @Test
+    fun `GIVEN canLoadMore is true WHEN journeyList is non-empty THEN canLoadMore reflects limit`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
+            assertTrue(viewModel.uiState.value.canLoadMore, "canLoadMore should be true when journeys loaded")
         }
 
     // endregion

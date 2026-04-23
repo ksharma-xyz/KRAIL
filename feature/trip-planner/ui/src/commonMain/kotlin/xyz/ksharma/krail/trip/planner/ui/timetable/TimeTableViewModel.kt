@@ -414,6 +414,31 @@ class TimeTableViewModel(
                 }",
             )
         }
+
+        // Prune load-more cache: remove any entry whose departure time falls on or before
+        // the latest trip returned by this fresh auto-refresh. This guarantees that cancelled
+        // or rescheduled future trips eventually fall off rather than haunting the list.
+        // Trips still beyond the fresh window are untouched — they are genuinely future.
+        // See: feature/trip-planner/ui/docs/timetable_cache_architecture.md § Staleness Pruning
+        pruneStaleLoadMoreEntries()
+    }
+
+    @VisibleForTesting
+    fun pruneStaleLoadMoreEntries() {
+        val latestFreshInstant = journeys.values
+            .maxByOrNull { Instant.parse(it.originUtcDateTime) }
+            ?.let { Instant.parse(it.originUtcDateTime) }
+            ?: return
+
+        val staleKeys = loadMoreJourneys
+            .filterValues { Instant.parse(it.originUtcDateTime) <= latestFreshInstant }
+            .keys
+            .toList()
+
+        staleKeys.forEach {
+            log("TripsCache - Pruned stale load-more trip: $it")
+            loadMoreJourneys.remove(it)
+        }
     }
 
     private fun updateUiStateWithFilteredTrips() {

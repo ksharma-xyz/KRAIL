@@ -288,6 +288,12 @@ class TimeTableViewModel(
             this.unselectedModes.clear()
             this.unselectedModes.addAll(unselectedModes)
 
+            // Pagination caches were built under the old filter — discard them so journeys
+            // fetched for deselected modes do not bleed into the re-fetched list.
+            loadMoreJourneys.clear()
+            previousJourneysCache.clear()
+            loadMoreCount = 0
+
             // call api
             rateLimiter.triggerEvent()
             updateUiState {

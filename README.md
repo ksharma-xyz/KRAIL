@@ -99,6 +99,12 @@ maintainability across platforms. Key modules include:
 - **Run App**:  
   Use Android Studio or Xcode to deploy on simulators or real devices.
 
+- **Full quality checks** (`fullQualityChecks`):  
+  Compiles Android + iOS and runs Detekt in one command.
+  ```bash
+  ./scripts/fullQualityChecks.sh
+  ```
+
 ---
 
 ## Contributing

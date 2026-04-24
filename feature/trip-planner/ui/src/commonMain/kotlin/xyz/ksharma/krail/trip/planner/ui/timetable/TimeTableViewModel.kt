@@ -288,8 +288,12 @@ class TimeTableViewModel(
             this.unselectedModes.clear()
             this.unselectedModes.addAll(unselectedModes)
 
-            // Pagination caches were built under the old filter — discard them so journeys
-            // fetched for deselected modes do not bleed into the re-fetched list.
+            // All three caches were built under the old filter. Clear them so no
+            // old-mode journeys survive into the re-fetched list. journeys must also
+            // be cleared here (not just in updateTripsCache) because startedJourneyList
+            // is derived from journeys before the clear, and would re-introduce
+            // old-mode trips into the new results otherwise.
+            journeys.clear()
             loadMoreJourneys.clear()
             previousJourneysCache.clear()
             loadMoreCount = 0

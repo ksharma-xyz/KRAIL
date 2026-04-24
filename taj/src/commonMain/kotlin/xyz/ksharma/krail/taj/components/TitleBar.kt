@@ -71,6 +71,7 @@ fun TitleBar(
             Row(
                 modifier = Modifier.padding(start = SpacingTokens.XL),
                 horizontalArrangement = Arrangement.spacedBy(SpacingTokens.M),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 CompositionLocalProvider(
                     LocalContainerColor provides KrailTheme.colors.onSurface,

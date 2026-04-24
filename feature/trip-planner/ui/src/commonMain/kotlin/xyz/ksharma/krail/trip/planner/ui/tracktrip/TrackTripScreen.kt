@@ -185,8 +185,12 @@ fun TrackTripScreen(
                     triggerShare = triggerShare,
                     onShareCapture = { bitmap ->
                         triggerShare = false
-                        val text = "${s.journey.fromStopName} to ${s.journey.toStopName}," +
-                            " departs ${s.journey.originTime}"
+                        val deepLinkUrl = encodedData
+                            ?.let { "\nhttps://ksharma-xyz.github.io/trip?d=$it" }
+                            .orEmpty()
+                        val text = "${countdownDisplay.first} ${countdownDisplay.second}" +
+                            "\n${s.journey.fromStopName} to ${s.journey.toStopName}" +
+                            deepLinkUrl
                         viewModel.shareTrip(bitmap = bitmap, text = text)
                     },
                 )
@@ -202,8 +206,8 @@ fun TrackTripScreen(
                     triggerShare = triggerShare,
                     onShareCapture = { bitmap ->
                         triggerShare = false
-                        val text = "${s.journey.fromStopName} to ${s.journey.toStopName}," +
-                            " departs ${s.journey.originTime}"
+                        val text = "Arrived at ${s.journey.toStopName}" +
+                            "\n${s.journey.fromStopName} to ${s.journey.toStopName}"
                         viewModel.shareTrip(bitmap = bitmap, text = text)
                     },
                 )
@@ -425,13 +429,7 @@ private fun JourneyContent(
         }
     }
 
-    Column(
-        modifier = modifier.fillMaxSize()
-            .drawWithContent {
-                graphicsLayer.record { this@drawWithContent.drawContent() }
-                drawLayer(graphicsLayer)
-            },
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = mapExpanded,
             enter = expandVertically(tween(400)),
@@ -453,7 +451,11 @@ private fun JourneyContent(
 
         LazyColumn(
             contentPadding = PaddingValues(top = 24.dp, bottom = 80.dp),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize()
+                .drawWithContent {
+                    graphicsLayer.record { this@drawWithContent.drawContent() }
+                    drawLayer(graphicsLayer)
+                },
         ) {
             item(key = "origin-destination") {
                 OriginDestination(

@@ -72,6 +72,21 @@ We stack PRs. Break work into focused, layered branches and submit the full stac
 
 Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.
 
+## Full Quality Checks
+
+To verify a branch compiles on both platforms and passes static analysis, ask the user to run:
+
+```
+./scripts/fullQualityChecks.sh
+```
+
+This runs, in order:
+1. `compileDebugSources` — Android compile
+2. `compileKotlinIosSimulatorArm64` — iOS Simulator compile
+3. `detekt --continue` — static analysis (auto-corrects imports and trailing commas)
+
+Stops on first compile failure. Detekt continues on rule violations so all issues are reported at once.
+
 ## Gradle Dependencies
 
 Always use **type-safe project accessors** — never the string form.

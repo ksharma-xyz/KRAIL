@@ -145,9 +145,9 @@ class TrackTripViewModelTest {
         }
 
     @Test
-    fun `GIVEN new deep link AND different trip already tracking WHEN ViewModel created THEN state is AlreadyTracking`() =
+    fun `GIVEN new deep link AND different trip already tracking WHEN ViewModel created THEN old tracking cleared and state is Prompt`() =
         runTest {
-            // Enforces MAX_TRACKED_TRIPS = 1 limit
+            // Deep link tap is explicit user intent to switch trips — old tracking is cleared automatically.
             val existing = makeTripDeepLink(
                 transportationId = "existing-trip",
                 departureUtcDateTime = futureIso(30.minutes),
@@ -163,10 +163,11 @@ class TrackTripViewModelTest {
             vm.uiState.test {
                 skipItems(1)
                 val state = awaitItem()
-                assertIs<TrackTripState.AlreadyTracking>(state)
-                assertEquals(existing.fromStopName, state.currentDeepLink.fromStopName)
+                assertIs<TrackTripState.Prompt>(state)
+                assertEquals(requested.fromStopName, state.deepLink.fromStopName)
                 cancelAndIgnoreRemainingEvents()
             }
+            assertNull(trackingManager.tracked.value, "Old tracking should be cleared")
         }
 
     @Test

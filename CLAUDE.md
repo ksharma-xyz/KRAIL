@@ -58,6 +58,16 @@ Key rules:
 - When the same data appears twice in the same list (e.g. previous journeys + main journeys),
   prefix keys to keep them unique: `"prev_$journeyId"` vs plain `journeyId`
 
+## Pull Requests
+
+**Always use Graphite (`gt submit`) to raise PRs — never `gh pr create` directly.**
+
+We stack PRs. Break work into focused, layered branches and submit the full stack with `gt submit --stack --publish`.
+
+**Max 500 lines of change per PR.** If a branch exceeds this, split it before submitting:
+- Use `gt branch split --by-commit` or carve out a new child branch
+- Each PR should have a single clear concern (ViewModel logic, UI layer, bug fix, etc.)
+
 ## Build
 
 Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.

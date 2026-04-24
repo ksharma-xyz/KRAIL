@@ -19,6 +19,8 @@ data class TimeTableState(
     val silentLoading: Boolean = false, // Loading anim while still displaying TimeTable results.
     val isTripSaved: Boolean = false,
     val journeyList: ImmutableList<JourneyCardInfo> = persistentListOf(),
+    /** Journeys fetched via "Show Previous" — displayed above [journeyList]. */
+    val previousJourneyList: ImmutableList<JourneyCardInfo> = persistentListOf(),
     val trip: Trip? = null,
     val isError: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
@@ -28,6 +30,12 @@ data class TimeTableState(
     val isMapsAvailable: Boolean = false,
     /** journeyId → deep link URL. Populated by ViewModel when journey list is built. */
     val deepLinkUrls: ImmutableMap<String, String> = persistentMapOf(),
+    /** True while a "Load More" fetch is in flight — shows soft-loading indicator at the bottom. */
+    val isLoadingMore: Boolean = false,
+    /** True while a "Show Previous" fetch is in flight — shows soft-loading indicator at the top. */
+    val isLoadingPrevious: Boolean = false,
+    /** Whether a "Load More" action is available. False once the per-session limit is reached. */
+    val canLoadMore: Boolean = false,
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable

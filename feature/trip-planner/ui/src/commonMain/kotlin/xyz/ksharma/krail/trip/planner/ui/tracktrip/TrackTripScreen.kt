@@ -53,9 +53,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -103,6 +105,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.ActionButton
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import app.krail.taj.resources.Res as TajRes
 
 @OptIn(ExperimentalTime::class)
 @Composable

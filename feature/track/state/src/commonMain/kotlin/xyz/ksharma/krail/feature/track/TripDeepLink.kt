@@ -13,6 +13,14 @@ data class TripDeepLink(
     @SerialName("dep") val departureUtcDateTime: String,
     /** One entry per TransportLeg in the shared journey */
     @SerialName("legs") val legs: List<DeepLinkLeg>,
+    /**
+     * TfNSW product classes excluded when this journey was planned (e.g. [1] when the user
+     * filtered to bus-only). The TrackTrip API call must apply the same exclusion so it returns
+     * bus journeys instead of defaulting to trains.
+     *
+     * Absent from old deep links → decoded as [emptyList] (no exclusions applied).
+     */
+    @SerialName("excl") val excludedProductClasses: List<Int> = emptyList(),
 ) {
     @Serializable
     data class DeepLinkLeg(

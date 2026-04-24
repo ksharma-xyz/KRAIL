@@ -249,18 +249,16 @@ class TrackTripViewModel(
                 _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
 
-            // New deep link + actively tracking a DIFFERENT trip → enforce MAX_TRACKED_TRIPS limit
+            // New deep link + actively tracking a DIFFERENT trip → clear old and prompt for new.
+            // A deep link tap is explicit user intent to switch trips, so we don't need confirmation.
             newDeepLink != null && existingTracked != null && existingTracked.deepLink != newDeepLink -> {
                 log(
-                    "[TRACK_RESOLVE] → AlreadyTracking — " +
-                        "currently tracking ${existingTracked.deepLink.fromStopName} → " +
-                        "${existingTracked.deepLink.toStopName}, " +
+                    "[TRACK_RESOLVE] → Prompt (different trip requested, clearing previous: " +
+                        "${existingTracked.deepLink.fromStopName} → ${existingTracked.deepLink.toStopName}), " +
                         "new trip ${newDeepLink.fromStopName} → ${newDeepLink.toStopName}",
                 )
-                _uiState.value = TrackTripState.AlreadyTracking(
-                    currentDeepLink = existingTracked.deepLink,
-                    requestedDeepLink = newDeepLink,
-                )
+                trackingManager.stop()
+                _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
 
             // Resume existing tracking (same trip or opened from SavedTrips card with no encoded data)
@@ -459,7 +457,7 @@ class TrackTripViewModel(
                     destinationStopId = deepLink.toStopId,
                     date = date,
                     time = time,
-                    excludeProductClassSet = emptySet(),
+                    excludeProductClassSet = deepLink.excludedProductClasses.toSet(),
                 )
             }
             val journeyCount = response.journeys?.size ?: 0

@@ -16,6 +16,7 @@ val trackUiModule = module {
             festivalManager = get(),
             gtfsRealtimeRepository = get(),
             sandook = get(),
+            shareManager = get(),
         )
     }
 }

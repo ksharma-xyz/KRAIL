@@ -8,6 +8,7 @@
 
 package xyz.ksharma.krail.feature.track.ui
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,6 +35,7 @@ import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LegTrackingInfo
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
@@ -65,6 +67,7 @@ class TrackTripViewModel(
     private val festivalManager: FestivalManager,
     private val gtfsRealtimeRepository: GtfsRealtimeRepository,
     private val sandook: Sandook,
+    private val shareManager: ShareManager,
 ) : ViewModel() {
 
     private val loadingEmoji: String by lazy {
@@ -351,6 +354,13 @@ class TrackTripViewModel(
         lastPollInstant = null
         stopPolling()
         trackingManager.stop()
+    }
+
+    fun shareTrip(bitmap: ImageBitmap, text: String) {
+        viewModelScope.launch {
+            shareManager.shareImage(bitmap = bitmap, text = text)
+                .onFailure { error -> logError("error sharing track trip", error) }
+        }
     }
 
     private fun startClock() {

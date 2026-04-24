@@ -270,6 +270,7 @@ internal fun TrackedLegView(
                 isPast = currentStopIndex != null && lastIdx <= currentStopIndex,
                 isApproaching = isLastApproaching,
                 isArrived = isArrived,
+                isDestination = true,
                 lineColor = lineColor,
                 approachingTimeText = if (isLastApproaching) approachingText(lastStop) else null,
                 modifier = Modifier
@@ -295,6 +296,7 @@ private fun TrackedStopRow(
     lineColor: Color,
     modifier: Modifier = Modifier,
     isArrived: Boolean = false,
+    isDestination: Boolean = false,
     approachingTimeText: String? = null,
     backgroundColor: Color = KrailTheme.colors.surface,
 ) {
@@ -302,18 +304,16 @@ private fun TrackedStopRow(
     val softLabel = KrailTheme.colors.softLabel
 
     val contentColor = when {
+        isArrived && isDestination -> lineColor.ensureMinimumContrast(backgroundColor)
         isArrived -> softLabel
         isApproaching -> lineColor.ensureMinimumContrast(backgroundColor)
         isPast -> onSurface
         else -> onSurface
     }
-    val timeStyle = when {
-        isPast || isApproaching -> KrailTheme.typography.bodyMedium
-        else -> KrailTheme.typography.bodyMedium
-    }
+    val timeStyle = KrailTheme.typography.bodyMedium
     val stopNameStyle = when {
+        isArrived && isDestination -> KrailTheme.typography.titleMedium
         isApproaching -> KrailTheme.typography.titleMedium
-        isPast -> KrailTheme.typography.bodyMedium
         else -> KrailTheme.typography.bodyMedium
     }
 

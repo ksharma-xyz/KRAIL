@@ -62,6 +62,7 @@ kotlin {
                 implementation(projects.core.festival)
                 implementation(projects.core.log)
                 implementation(projects.core.navigation)
+                implementation(projects.core.share)
                 implementation(projects.core.transport)
                 implementation(projects.core.uiTooling)
                 implementation(projects.feature.track.state)

@@ -14,6 +14,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -41,15 +42,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.track.DepartureDeviation
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
@@ -68,10 +80,10 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.taj.components.Button
-import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
+import xyz.ksharma.krail.taj.icons.rememberShareIconPainter
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -89,8 +101,10 @@ import xyz.ksharma.krail.trip.planner.ui.journeymap.LiveVehicleLayer
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.TrackedJourneyMapMapper.toJourneyMapState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import xyz.ksharma.krail.trip.planner.ui.timetable.ActionButton
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import app.krail.taj.resources.Res as TajRes
 
 @OptIn(ExperimentalTime::class)
 @Composable
@@ -113,6 +127,8 @@ fun TrackTripScreen(
     }
 
     var mapExpanded by rememberSaveable { mutableStateOf(false) }
+    var triggerShare by remember { mutableStateOf(false) }
+    val isJourneyActive = state is TrackTripState.Tracking || state is TrackTripState.Arrived
 
     Box(
         modifier = modifier
@@ -130,6 +146,30 @@ fun TrackTripScreen(
                         exit = fadeOut(),
                     ) {
                         AnimatedDots(modifier = Modifier.size(48.dp, 16.dp))
+                    }
+                    if (isJourneyActive) {
+                        ActionButton(
+                            onClick = { mapExpanded = !mapExpanded },
+                            contentDescription = if (mapExpanded) "Hide Map" else "Show Map",
+                        ) {
+                            Image(
+                                painter = painterResource(TajRes.drawable.ic_location),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        ActionButton(
+                            onClick = { triggerShare = true },
+                            contentDescription = "Share journey",
+                        ) {
+                            Image(
+                                painter = rememberShareIconPainter(),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
                     }
                 },
             )
@@ -150,9 +190,15 @@ fun TrackTripScreen(
                     countdownDisplay = countdownDisplay,
                     now = now,
                     mapExpanded = mapExpanded,
-                    onMapToggle = { mapExpanded = !mapExpanded },
                     stopCoordinates = stopCoordinates,
                     liveOverlay = liveOverlay,
+                    triggerShare = triggerShare,
+                    onShareCapture = { bitmap ->
+                        triggerShare = false
+                        val text = "${s.journey.fromStopName} to ${s.journey.toStopName}," +
+                            " departs ${s.journey.originTime}"
+                        viewModel.shareTrip(bitmap = bitmap, text = text)
+                    },
                 )
 
                 is TrackTripState.Arrived -> JourneyContent(
@@ -161,9 +207,15 @@ fun TrackTripScreen(
                     now = now,
                     isArrived = true,
                     mapExpanded = mapExpanded,
-                    onMapToggle = { mapExpanded = !mapExpanded },
                     stopCoordinates = stopCoordinates,
                     liveOverlay = liveOverlay,
+                    triggerShare = triggerShare,
+                    onShareCapture = { bitmap ->
+                        triggerShare = false
+                        val text = "${s.journey.fromStopName} to ${s.journey.toStopName}," +
+                            " departs ${s.journey.originTime}"
+                        viewModel.shareTrip(bitmap = bitmap, text = text)
+                    },
                 )
 
                 TrackTripState.NotFound -> Column(
@@ -351,9 +403,10 @@ private fun JourneyContent(
     modifier: Modifier = Modifier,
     isArrived: Boolean = false,
     mapExpanded: Boolean = false,
-    onMapToggle: () -> Unit = {},
     stopCoordinates: Map<String, LatLng> = emptyMap(),
     liveOverlay: LiveTrackingOverlay? = null,
+    triggerShare: Boolean = false,
+    onShareCapture: (ImageBitmap) -> Unit = {},
 ) {
     val journeyMapState = remember(stopCoordinates) {
         if (stopCoordinates.isNotEmpty()) {
@@ -363,7 +416,32 @@ private fun JourneyContent(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    val graphicsLayer = rememberGraphicsLayer()
+    val cardBackground = KrailTheme.colors.surface
+    val onSurfaceColor = KrailTheme.colors.onSurface
+    val screenDensity = LocalDensity.current.density
+
+    LaunchedEffect(triggerShare) {
+        if (triggerShare) {
+            val raw = graphicsLayer.toImageBitmap()
+            val branded = withContext(Dispatchers.Default) {
+                raw.withBrandingHeader(
+                    backgroundColor = cardBackground,
+                    textColor = onSurfaceColor,
+                    density = screenDensity,
+                )
+            }
+            onShareCapture(branded)
+        }
+    }
+
+    Column(
+        modifier = modifier.fillMaxSize()
+            .drawWithContent {
+                graphicsLayer.record { this@drawWithContent.drawContent() }
+                drawLayer(graphicsLayer)
+            },
+    ) {
         AnimatedVisibility(
             visible = mapExpanded,
             enter = expandVertically(tween(400)),
@@ -401,26 +479,6 @@ private fun JourneyContent(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .background(color = KrailTheme.colors.surface),
                 )
-            }
-
-            item(key = "actions") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(
-                        onClick = onMapToggle,
-                        dimensions = ButtonDefaults.smallButtonSize(),
-                        colors = ButtonDefaults.buttonColors(
-                            customContainerColor = KrailTheme.colors.onSurface,
-                            customContentColor = KrailTheme.colors.surface,
-                        ),
-                    ) {
-                        Text(if (mapExpanded) "Hide Map" else "Map")
-                    }
-                }
             }
 
             stickyHeader(key = "arrival-info") {

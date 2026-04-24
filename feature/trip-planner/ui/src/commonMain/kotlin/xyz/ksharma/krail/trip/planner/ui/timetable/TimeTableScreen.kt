@@ -65,6 +65,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -348,6 +349,7 @@ fun TimeTableScreen(
                         onLegClick = onJourneyLegClick,
                         onMapClick = onMapClick,
                     ),
+                    onPlanTripClick = dateTimeSelectorClicked,
                 )
             } else { // Journey list is empty or null
                 item(key = "no-results") {
@@ -380,6 +382,7 @@ private fun LazyListScope.journeyListContent(
     expandedJourneyId: String?,
     themeColor: Color,
     callbacks: JourneyCallbacks,
+    onPlanTripClick: () -> Unit,
 ) {
     if (state.paginationEnabled) {
         paginationHeader(
@@ -413,6 +416,7 @@ private fun LazyListScope.journeyListContent(
             canLoadMore = state.canLoadMore,
             themeColor = themeColor,
             onEvent = callbacks.onEvent,
+            onPlanTripClick = onPlanTripClick,
         )
     }
 }
@@ -430,10 +434,7 @@ private fun LazyListScope.paginationHeader(
             if (isLoadingPrevious) {
                 AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = 8.dp))
             } else {
-                SubtleButton(
-                    onClick = { onEvent(TimeTableUiEvent.LoadPreviousTrips) },
-                    dimensions = ButtonDefaults.mediumButtonSize(),
-                ) {
+                TextButton(onClick = { onEvent(TimeTableUiEvent.LoadPreviousTrips) }) {
                     Text(text = "Show Previous Departures")
                 }
             }
@@ -446,6 +447,7 @@ private fun LazyListScope.paginationFooter(
     canLoadMore: Boolean,
     themeColor: Color,
     onEvent: (TimeTableUiEvent) -> Unit,
+    onPlanTripClick: () -> Unit,
 ) {
     if (isLoadingMore) {
         item(key = "loading-more") {
@@ -462,11 +464,19 @@ private fun LazyListScope.paginationFooter(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                SubtleButton(
-                    onClick = { onEvent(TimeTableUiEvent.LoadMoreTrips) },
-                    dimensions = ButtonDefaults.mediumButtonSize(),
-                ) {
+                TextButton(onClick = { onEvent(TimeTableUiEvent.LoadMoreTrips) }) {
                     Text(text = "Load More Departures")
+                }
+            }
+        }
+    } else {
+        item(key = "plan-trip-button") {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                TextButton(onClick = onPlanTripClick) {
+                    Text(text = "Plan your trip")
                 }
             }
         }

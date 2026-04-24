@@ -37,6 +37,27 @@ Suppression rules:
 - Extract constants instead of suppressing `MagicNumber` (unless truly no reuse value)
 - Only suppress `CyclomaticComplexMethod` / `LongMethod` when refactoring is genuinely not possible
 
+## LazyColumn / LazyRow item keys
+
+**Always provide an explicit `key` for every `item {}` call** — this is critical for correct
+recomposition, scroll-state preservation, and animation behaviour.
+
+```kotlin
+// ✅ correct — stable, unique key per item
+item(key = "origin-destination") { ... }
+item(key = "spacer-top") { ... }
+items(journeys, key = { it.journeyId }) { ... }
+
+// ❌ wrong — no key means Compose uses positional identity, which breaks on reorder/insert
+item { ... }
+```
+
+Key rules:
+- Static items use a descriptive string literal (`"spacer-top"`, `"load-more-button"`)
+- Dynamic items use a stable domain identifier (e.g. `journeyId`, `stopId`)
+- When the same data appears twice in the same list (e.g. previous journeys + main journeys),
+  prefix keys to keep them unique: `"prev_$journeyId"` vs plain `journeyId`
+
 ## Build
 
 Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.

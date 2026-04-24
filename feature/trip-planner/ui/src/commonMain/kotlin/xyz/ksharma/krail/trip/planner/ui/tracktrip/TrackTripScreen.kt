@@ -53,11 +53,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -82,6 +80,7 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.icons.rememberShareIconPainter
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -104,7 +103,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.ActionButton
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import app.krail.taj.resources.Res as TajRes
 
 @OptIn(ExperimentalTime::class)
 @Composable
@@ -148,16 +146,8 @@ fun TrackTripScreen(
                         AnimatedDots(modifier = Modifier.size(48.dp, 16.dp))
                     }
                     if (isJourneyActive) {
-                        ActionButton(
-                            onClick = { mapExpanded = !mapExpanded },
-                            contentDescription = if (mapExpanded) "Hide Map" else "Show Map",
-                        ) {
-                            Image(
-                                painter = painterResource(TajRes.drawable.ic_location),
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                modifier = Modifier.size(24.dp),
-                            )
+                        TextButton(onClick = { mapExpanded = !mapExpanded }) {
+                            Text(text = if (mapExpanded) "Hide Map" else "Map")
                         }
                         ActionButton(
                             onClick = { triggerShare = true },

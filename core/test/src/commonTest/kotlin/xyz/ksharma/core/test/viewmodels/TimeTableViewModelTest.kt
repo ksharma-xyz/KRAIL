@@ -1236,8 +1236,13 @@ class TimeTableViewModelTest {
             viewModel.fetchTrip()
             advanceUntilIdle()
 
-            // Seed load-more cache manually (simulates a prior LoadMoreTrips success)
-            val extraJourney = buildShareTestJourney("extra_future_journey")
+            // Seed load-more cache with a trip genuinely beyond the auto-refresh window.
+            // Using now+60m ensures pruning does not remove it (latestFreshInstant ≈ now).
+            val now = Clock.System.now()
+            val extraJourney = buildShareTestJourney("extra_future_journey").copy(
+                originUtcDateTime = now.plus(60.minutes).toString(),
+                destinationUtcDateTime = now.plus(90.minutes).toString(),
+            )
             viewModel.loadMoreJourneys[extraJourney.journeyId] = extraJourney
 
             // Simulate auto-refresh (calls fetchTrip which calls updateTripsCache + updateUiStateWithFilteredTrips)

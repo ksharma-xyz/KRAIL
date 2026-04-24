@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -60,6 +62,7 @@ import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -299,7 +302,7 @@ fun TimeTableScreen(
                 }
             }
 
-            item {
+            item(key = "spacer-top") {
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -335,54 +338,17 @@ fun TimeTableScreen(
                     }
                 }
             } else if (timeTableState.journeyList.isNotEmpty()) {
-                items(
-                    items = timeTableState.journeyList,
-                    key = { it.journeyId },
-                ) { journey ->
-                    JourneyCardItem(
-                        timeToDeparture = journey.timeText,
-                        platformNumber = journey.platformNumber,
-                        platformText = journey.platformText,
-                        originTime = journey.originTime,
-                        destinationTime = journey.destinationTime,
-                        durationText = journey.travelTime,
-                        totalWalkTime = journey.totalWalkTime,
-                        transportModeLineList = journey.transportModeLines,
-                        legList = journey.legs.toImmutableList(),
-                        cardState = if (expandedJourneyId == journey.journeyId) {
-                            JourneyCardState.EXPANDED
-                        } else {
-                            JourneyCardState.DEFAULT
-                        },
-                        onClick = {
-                            onEvent(TimeTableUiEvent.JourneyCardClicked(journey.journeyId))
-                        },
-                        totalUniqueServiceAlerts = journey.totalUniqueServiceAlerts,
-                        onAlertClick = {
-                            onAlertClick(journey.journeyId)
-                        },
+                journeyListContent(
+                    state = timeTableState,
+                    expandedJourneyId = expandedJourneyId,
+                    themeColor = themeColor,
+                    callbacks = JourneyCallbacks(
+                        onEvent = onEvent,
+                        onAlertClick = onAlertClick,
                         onLegClick = onJourneyLegClick,
-                        onMapClick = {
-                            onMapClick(journey.journeyId)
-                        },
-                        isMapsAvailable = timeTableState.isMapsAvailable,
-                        onShareJourney = { bitmap, shareText, isPastDeparture ->
-                            onEvent(
-                                TimeTableUiEvent.ShareJourneyClicked(
-                                    bitmap = bitmap,
-                                    shareText = shareText,
-                                    journeyId = journey.journeyId,
-                                    isPastDeparture = isPastDeparture,
-                                ),
-                            )
-                        },
-                        modifier = Modifier.padding(vertical = 8.dp)
-                            .animateItem(),
-                        departureDeviation = journey.departureDeviation,
-                        scheduledOriginTime = journey.scheduledOriginTime,
-                        deepLinkUrl = timeTableState.deepLinkUrls[journey.journeyId],
-                    )
-                }
+                        onMapClick = onMapClick,
+                    ),
+                )
             } else { // Journey list is empty or null
                 item(key = "no-results") {
                     ErrorMessage(
@@ -393,12 +359,167 @@ fun TimeTableScreen(
                 }
             }
 
-            item {
+            item(key = "spacer-bottom") {
                 Spacer(
                     modifier = Modifier.height(96.dp).systemBarsPadding(),
                 )
             }
         }
+    }
+}
+
+private data class JourneyCallbacks(
+    val onEvent: (TimeTableUiEvent) -> Unit,
+    val onAlertClick: (String) -> Unit,
+    val onLegClick: (Boolean) -> Unit,
+    val onMapClick: (String) -> Unit,
+)
+
+private fun LazyListScope.journeyListContent(
+    state: TimeTableState,
+    expandedJourneyId: String?,
+    themeColor: Color,
+    callbacks: JourneyCallbacks,
+) {
+    if (state.paginationEnabled) {
+        paginationHeader(
+            isLoadingPrevious = state.isLoadingPrevious,
+            themeColor = themeColor,
+            onEvent = callbacks.onEvent,
+        )
+        journeyCardItems(
+            journeys = state.previousJourneyList,
+            keyPrefix = "prev_",
+            expandedJourneyId = expandedJourneyId,
+            state = state,
+            callbacks = callbacks,
+        )
+        if (state.previousJourneyList.isNotEmpty()) {
+            item(key = "previous-divider") {
+                Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            }
+        }
+    }
+    journeyCardItems(
+        journeys = state.journeyList,
+        keyPrefix = "",
+        expandedJourneyId = expandedJourneyId,
+        state = state,
+        callbacks = callbacks,
+    )
+    if (state.paginationEnabled) {
+        paginationFooter(
+            isLoadingMore = state.isLoadingMore,
+            canLoadMore = state.canLoadMore,
+            themeColor = themeColor,
+            onEvent = callbacks.onEvent,
+        )
+    }
+}
+
+private fun LazyListScope.paginationHeader(
+    isLoadingPrevious: Boolean,
+    themeColor: Color,
+    onEvent: (TimeTableUiEvent) -> Unit,
+) {
+    item(key = "show-previous") {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (isLoadingPrevious) {
+                AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = 8.dp))
+            } else {
+                SubtleButton(
+                    onClick = { onEvent(TimeTableUiEvent.LoadPreviousTrips) },
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                ) {
+                    Text(text = "Show Previous Departures")
+                }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.paginationFooter(
+    isLoadingMore: Boolean,
+    canLoadMore: Boolean,
+    themeColor: Color,
+    onEvent: (TimeTableUiEvent) -> Unit,
+) {
+    if (isLoadingMore) {
+        item(key = "loading-more") {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = 8.dp))
+            }
+        }
+    } else if (canLoadMore) {
+        item(key = "load-more-button") {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                SubtleButton(
+                    onClick = { onEvent(TimeTableUiEvent.LoadMoreTrips) },
+                    dimensions = ButtonDefaults.mediumButtonSize(),
+                ) {
+                    Text(text = "Load More Departures")
+                }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.journeyCardItems(
+    journeys: ImmutableList<TimeTableState.JourneyCardInfo>,
+    keyPrefix: String,
+    expandedJourneyId: String?,
+    state: TimeTableState,
+    callbacks: JourneyCallbacks,
+) {
+    items(
+        items = journeys,
+        key = { "${keyPrefix}${it.journeyId}" },
+    ) { journey ->
+        JourneyCardItem(
+            timeToDeparture = journey.timeText,
+            platformNumber = journey.platformNumber,
+            platformText = journey.platformText,
+            originTime = journey.originTime,
+            destinationTime = journey.destinationTime,
+            durationText = journey.travelTime,
+            totalWalkTime = journey.totalWalkTime,
+            transportModeLineList = journey.transportModeLines,
+            legList = journey.legs.toImmutableList(),
+            cardState = if (expandedJourneyId == journey.journeyId) {
+                JourneyCardState.EXPANDED
+            } else {
+                JourneyCardState.DEFAULT
+            },
+            onClick = { callbacks.onEvent(TimeTableUiEvent.JourneyCardClicked(journey.journeyId)) },
+            totalUniqueServiceAlerts = journey.totalUniqueServiceAlerts,
+            onAlertClick = { callbacks.onAlertClick(journey.journeyId) },
+            onLegClick = callbacks.onLegClick,
+            onMapClick = { callbacks.onMapClick(journey.journeyId) },
+            isMapsAvailable = state.isMapsAvailable,
+            onShareJourney = { bitmap, shareText, isPastDeparture ->
+                callbacks.onEvent(
+                    TimeTableUiEvent.ShareJourneyClicked(
+                        bitmap = bitmap,
+                        shareText = shareText,
+                        journeyId = journey.journeyId,
+                        isPastDeparture = isPastDeparture,
+                    ),
+                )
+            },
+            modifier = Modifier.padding(vertical = 8.dp).animateItem(),
+            departureDeviation = journey.departureDeviation,
+            scheduledOriginTime = journey.scheduledOriginTime,
+            deepLinkUrl = state.deepLinkUrls[journey.journeyId],
+        )
     }
 }
 

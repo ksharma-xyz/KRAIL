@@ -36,6 +36,8 @@ data class TimeTableState(
     val isLoadingPrevious: Boolean = false,
     /** Whether a "Load More" action is available. False once the per-session limit is reached. */
     val canLoadMore: Boolean = false,
+    /** Whether the Show Previous / Load More pagination UI is enabled. */
+    val paginationEnabled: Boolean = true,
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable

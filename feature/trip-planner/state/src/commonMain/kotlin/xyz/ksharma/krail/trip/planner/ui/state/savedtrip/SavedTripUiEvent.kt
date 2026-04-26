@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.savedtrip
 
 import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 sealed interface SavedTripUiEvent {
@@ -39,4 +40,8 @@ sealed interface SavedTripUiEvent {
     data class ToStopChanged(val toJson: String) : SavedTripUiEvent
 
     data object StopTracking : SavedTripUiEvent
+
+    data class StopLabelPillTapped(val stopItem: StopItem) : SavedTripUiEvent
+
+    data object AddStopLabelTapped : SavedTripUiEvent
 }

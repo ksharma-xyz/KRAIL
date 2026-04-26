@@ -18,8 +18,8 @@ internal class TripPlannerNavigatorImpl(
     private val baseNavigator: NavigatorBase,
 ) : TripPlannerNavigator {
 
-    override fun navigateToSearchStop(fieldType: SearchStopFieldType) {
-        baseNavigator.goTo(SearchStopRoute(fieldType))
+    override fun navigateToSearchStop(fieldType: SearchStopFieldType, labelKey: String?) {
+        baseNavigator.goTo(SearchStopRoute(fieldType = fieldType, labelKey = labelKey))
     }
 
     override fun navigateToTimeTable(

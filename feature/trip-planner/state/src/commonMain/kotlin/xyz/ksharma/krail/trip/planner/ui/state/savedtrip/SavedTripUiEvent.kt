@@ -44,4 +44,6 @@ sealed interface SavedTripUiEvent {
     data class StopLabelPillTapped(val stopItem: StopItem) : SavedTripUiEvent
 
     data object AddStopLabelTapped : SavedTripUiEvent
+
+    data class StopLabelAssigned(val labelKey: String, val stopItem: StopItem) : SavedTripUiEvent
 }

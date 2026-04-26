@@ -11,7 +11,7 @@ import androidx.navigation3.runtime.NavKey
 @Suppress("ComplexInterface", "TooManyFunctions")
 interface TripPlannerNavigator {
 
-    fun navigateToSearchStop(fieldType: SearchStopFieldType)
+    fun navigateToSearchStop(fieldType: SearchStopFieldType, labelKey: String? = null)
     fun navigateToTimeTable(fromStopId: String, fromStopName: String, toStopId: String, toStopName: String)
     fun navigateToJourneyMap(journeyId: String)
     fun navigateToSettings()
@@ -36,4 +36,5 @@ data class StopSelectedResult(
     val fieldType: SearchStopFieldType,
     val stopId: String,
     val stopName: String,
+    val labelKey: String? = null,
 )

@@ -20,12 +20,14 @@ data object SavedTripsRoute : TripPlannerRoute
 @Serializable
 data class SearchStopRoute(
     val fieldType: SearchStopFieldType,
+    val labelKey: String? = null,
 ) : TripPlannerRoute
 
 @Serializable
 enum class SearchStopFieldType {
     FROM,
     TO,
+    LABEL,
 }
 
 /**

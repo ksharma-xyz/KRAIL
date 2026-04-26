@@ -214,6 +214,22 @@ class SavedTripsViewModel(
             }
 
             SavedTripUiEvent.AddStopLabelTapped -> Unit
+
+            is SavedTripUiEvent.StopLabelAssigned -> onStopLabelAssigned(event.labelKey, event.stopItem)
+        }
+    }
+
+    private fun onStopLabelAssigned(labelKey: String, stopItem: StopItem) {
+        updateUiState {
+            copy(
+                stopLabels = stopLabels.map { label ->
+                    if (label.label == labelKey) {
+                        label.copy(stopId = stopItem.stopId, stopName = stopItem.stopName)
+                    } else {
+                        label
+                    }
+                }.toImmutableList(),
+            )
         }
     }
 

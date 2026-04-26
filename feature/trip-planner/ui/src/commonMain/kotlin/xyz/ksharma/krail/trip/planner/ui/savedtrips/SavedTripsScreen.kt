@@ -77,7 +77,6 @@ fun SavedTripsScreen(
     trackedJourney: TrackedJourney? = null,
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
-    onReverseButtonClick: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},

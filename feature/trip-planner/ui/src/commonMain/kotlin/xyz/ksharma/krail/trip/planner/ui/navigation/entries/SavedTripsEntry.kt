@@ -77,9 +77,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
             },
-            onReverseButtonClick = {
-                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
-            },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {
                     viewModel.onEvent(

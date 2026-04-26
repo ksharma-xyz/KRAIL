@@ -1,9 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseOutBounce
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -11,16 +19,22 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,6 +46,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.animateFloatAsState
+import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
@@ -39,17 +55,19 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
-private val SearchRowTopRadius = 36.dp // no token equivalent (between RadiusXL=24 and RadiusFull=50)
-private val SearchRowVerticalPadding = 20.dp // no token equivalent
-private val SearchFieldSpacing = 20.dp // no token equivalent — TODO token "SearchFieldSpacing"
+private val SearchRowTopRadius = 36.dp
+private val SearchRowVerticalPadding = 20.dp
+private val SearchFieldSpacing = 20.dp
 
 @Composable
 fun SearchStopRow(
@@ -58,27 +76,165 @@ fun SearchStopRow(
     modifier: Modifier = Modifier,
     fromStopItem: StopItem? = null,
     toStopItem: StopItem? = null,
+    isExpanded: Boolean = false,
+    isFromHighlighted: Boolean = false,
+    onExpandRequest: () -> Unit = {},
     onReverseButtonClick: () -> Unit = {},
     onSearchButtonClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
-    val themeColor by LocalThemeColor.current
+    val themeColorHex by LocalThemeColor.current
+    val navBarPadding = with(LocalDensity.current) {
+        WindowInsets.navigationBars.getBottom(this).toDp()
+    }
+
+    // When launched from a label pill tap (isFromHighlighted=true), From field is initially
+    // hidden to let the "To is pre-filled" message land first, then animates in.
+    var showFromField by rememberSaveable(isExpanded, isFromHighlighted) {
+        mutableStateOf(isExpanded && !isFromHighlighted)
+    }
+
+    LaunchedEffect(isExpanded, isFromHighlighted) {
+        if (isExpanded && isFromHighlighted && !showFromField) {
+            delay(350)
+            showFromField = true
+        } else if (!isExpanded) {
+            showFromField = false
+        } else if (isExpanded && !isFromHighlighted) {
+            showFromField = true
+        }
+    }
+
+    AnimatedContent(
+        targetState = isExpanded,
+        transitionSpec = {
+            if (targetState) {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                ) + fadeIn(animationSpec = tween(200)) togetherWith
+                    fadeOut(animationSpec = tween(100))
+            } else {
+                fadeIn(animationSpec = tween(100)) togetherWith
+                    slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(250, easing = FastOutSlowInEasing),
+                    ) + fadeOut(animationSpec = tween(200))
+            }
+        },
+        modifier = modifier,
+        contentAlignment = Alignment.BottomCenter,
+        label = "SearchStopRowContent",
+    ) { expanded ->
+        if (expanded) {
+            ExpandedSearchRow(
+                fromStopItem = fromStopItem,
+                toStopItem = toStopItem,
+                themeColorHex = themeColorHex,
+                navBarPadding = navBarPadding.value,
+                showFromField = showFromField,
+                isFromHighlighted = isFromHighlighted,
+                fromButtonClick = fromButtonClick,
+                toButtonClick = toButtonClick,
+                onReverseButtonClick = onReverseButtonClick,
+                onSearchButtonClick = onSearchButtonClick,
+            )
+        } else {
+            CollapsedPill(
+                themeColorHex = themeColorHex,
+                navBarPadding = navBarPadding.value,
+                onClick = onExpandRequest,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CollapsedPill(
+    themeColorHex: String,
+    navBarPadding: Float,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    val shape = RoundedCornerShape(dim.radiusFull)
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                bottom = with(LocalDensity.current) { navBarPadding.dp } + dim.spacingXL,
+                start = dim.pageHorizontalPadding,
+                end = dim.pageHorizontalPadding,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier
+                .wrapContentWidth()
+                .background(color = themeColorHex.hexToComposeColor(), shape = shape)
+                .klickable(onClick = onClick)
+                .padding(
+                    horizontal = dim.buttonLargeHorizontalPadding,
+                    vertical = dim.spacingML,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "+ Plan a trip",
+                style = KrailTheme.typography.titleSmall,
+                color = KrailTheme.colors.surface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpandedSearchRow(
+    fromStopItem: StopItem?,
+    toStopItem: StopItem?,
+    themeColorHex: String,
+    navBarPadding: Float,
+    showFromField: Boolean,
+    isFromHighlighted: Boolean,
+    fromButtonClick: () -> Unit,
+    toButtonClick: () -> Unit,
+    onReverseButtonClick: () -> Unit,
+    onSearchButtonClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
+
+    // Pulsing border alpha for the highlighted From field
+    val infiniteTransition = rememberInfiniteTransition(label = "fromHighlight")
+    val borderAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec = InfiniteRepeatableSpec(
+            animation = tween(800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "fromBorderAlpha",
+    )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = themeColor.hexToComposeColor(),
-                shape = RoundedCornerShape(topStart = SearchRowTopRadius, topEnd = SearchRowTopRadius),
+                color = themeColorHex.hexToComposeColor(),
+                shape = RoundedCornerShape(
+                    topStart = SearchRowTopRadius,
+                    topEnd = SearchRowTopRadius,
+                ),
             )
             .padding(vertical = SearchRowVerticalPadding, horizontal = dim.pageHorizontalPadding)
             .padding(
-                bottom = with(LocalDensity.current) {
-                    WindowInsets.navigationBars
-                        .getBottom(this)
-                        .toDp()
-                },
+                bottom = with(LocalDensity.current) { navBarPadding.dp },
                 top = dim.spacingM,
             ),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -87,54 +243,73 @@ fun SearchStopRow(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
         ) {
-            TextFieldButton(onClick = fromButtonClick) {
-                AnimatedContent(
-                    targetState = fromStopItem?.stopName ?: "Starting from",
-                    transitionSpec = {
-                        (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { -it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
+            // From field — animates in when opened via a label pill tap
+            AnimatedVisibility(
+                visible = showFromField,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                ) + fadeIn(animationSpec = tween(200)),
+            ) {
+                val fromFieldShape = RoundedCornerShape(50)
+                TextFieldButton(
+                    onClick = fromButtonClick,
+                    modifier = if (isFromHighlighted) {
+                        Modifier.border(
+                            width = dim.strokeRegular,
+                            color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
+                            shape = fromFieldShape,
+                        )
+                    } else {
+                        Modifier
                     },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "startingFromText",
-                ) { targetText ->
-                    ThemeTextFieldPlaceholderText(
-                        text = targetText,
-                        isActive = fromStopItem != null,
-                    )
+                ) {
+                    AnimatedContent(
+                        targetState = fromStopItem?.stopName ?: "Starting from",
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(200)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 2 },
+                                    animationSpec = tween(500, easing = EaseOutBounce),
+                                ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                slideOutVertically(
+                                    targetOffsetY = { -it / 2 },
+                                    animationSpec = tween(500),
+                                )
+                        },
+                        contentAlignment = Alignment.CenterStart,
+                        label = "startingFromText",
+                    ) { targetText ->
+                        ThemeTextFieldPlaceholderText(
+                            text = targetText,
+                            isActive = fromStopItem != null,
+                        )
+                    }
                 }
             }
 
+            // A small spacer replaces the From field gap when From is hidden,
+            // so the To field doesn't jump when From animates in.
+            if (!showFromField) {
+                Spacer(modifier = Modifier.height(0.dp))
+            }
+
+            // To field — always visible when expanded
             TextFieldButton(onClick = toButtonClick) {
                 AnimatedContent(
                     targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
-                        (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
+                        fadeIn(animationSpec = tween(200)) +
+                            slideInVertically(
                                 initialOffsetY = { -it / 2 },
                                 animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
+                            ) togetherWith fadeOut(animationSpec = tween(200)) +
+                            slideOutVertically(
                                 targetOffsetY = { it / 2 },
                                 animationSpec = tween(500),
-                            )
                             )
                     },
                     contentAlignment = Alignment.CenterStart,
@@ -148,14 +323,15 @@ fun SearchStopRow(
             }
         }
 
+        // Action buttons (reverse + search)
         Column(
-            modifier = Modifier
-                .padding(start = dim.spacingXL),
+            modifier = Modifier.padding(start = dim.spacingXL),
             verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
         ) {
             val rotation by animateFloatAsState(
                 targetValue = if (isReverseButtonRotated) 180f else 0f,
                 animationSpec = tween(durationMillis = 300),
+                label = "reverseRotation",
             )
 
             RoundIconButton(
@@ -171,9 +347,7 @@ fun SearchStopRow(
                     isReverseButtonRotated = !isReverseButtonRotated
                     onReverseButtonClick()
                 },
-                modifier = Modifier.graphicsLayer {
-                    rotationZ = rotation
-                },
+                modifier = Modifier.graphicsLayer { rotationZ = rotation },
             )
 
             RoundIconButton(
@@ -193,24 +367,67 @@ fun SearchStopRow(
 
 // region Previews
 
-@Preview
+@Preview(name = "1. Collapsed pill — Train theme")
 @Composable
-private fun SearchStopColumnPreview() {
+private fun PreviewSearchStopRow_Collapsed_Train() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         SearchStopRow(
             fromButtonClick = {},
             toButtonClick = {},
+            isExpanded = false,
         )
     }
 }
 
-@Preview
+@Preview(name = "2. Expanded — both fields empty")
 @Composable
-private fun SearchStopColumnMetroPreview() {
+private fun PreviewSearchStopRow_Expanded_Empty() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        SearchStopRow(
+            fromButtonClick = {},
+            toButtonClick = {},
+            isExpanded = true,
+            isFromHighlighted = false,
+        )
+    }
+}
+
+@Preview(name = "3. Expanded — To pre-filled, From highlighted (label pill flow)")
+@Composable
+private fun PreviewSearchStopRow_Expanded_LabelPill() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
+        SearchStopRow(
+            fromButtonClick = {},
+            toButtonClick = {},
+            isExpanded = true,
+            isFromHighlighted = true,
+            toStopItem = StopItem(stopId = "2000001", stopName = "Central Station"),
+        )
+    }
+}
+
+@Preview(name = "4. Expanded — both stops set")
+@Composable
+private fun PreviewSearchStopRow_Expanded_BothSet() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         SearchStopRow(
             fromButtonClick = {},
             toButtonClick = {},
+            isExpanded = true,
+            fromStopItem = StopItem(stopId = "2000002", stopName = "Town Hall Station"),
+            toStopItem = StopItem(stopId = "2000001", stopName = "Central Station"),
+        )
+    }
+}
+
+@Preview(name = "5. Collapsed pill — Ferry theme")
+@Composable
+private fun PreviewSearchStopRow_Collapsed_Ferry() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
+        SearchStopRow(
+            fromButtonClick = {},
+            toButtonClick = {},
+            isExpanded = false,
         )
     }
 }

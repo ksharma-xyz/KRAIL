@@ -207,6 +207,13 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
 
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
+
+            is SavedTripUiEvent.StopLabelPillTapped -> {
+                stopResultsManager.setSelectedToStop(event.stopItem)
+                updateUiState { copy(toStop = event.stopItem) }
+            }
+
+            SavedTripUiEvent.AddStopLabelTapped -> Unit
         }
     }
 

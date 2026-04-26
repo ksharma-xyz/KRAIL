@@ -28,6 +28,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
@@ -43,6 +44,7 @@ class SearchStopViewModel(
     private val nearbyStopsManager: NearbyStopsManager,
     val flag: Flag,
     private val ioDispatcher: CoroutineDispatcher,
+    private val preferences: SandookPreferences,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -50,6 +52,12 @@ class SearchStopViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
             checkMapsAvailability()
+            val hasSeenOptions = preferences.getBoolean(
+                SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET,
+            ) == true
+            if (!hasSeenOptions) {
+                updateUiState { copy(showMapOptionsOnOpen = true) }
+            }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
     private val isMapsAvailable: Boolean by lazy {
@@ -128,6 +136,11 @@ class SearchStopViewModel(
 
             SearchStopUiEvent.MapOptionsClicked -> {
                 // No-op: Bottom sheet visibility is handled in UI layer
+            }
+
+            SearchStopUiEvent.MapOptionsFirstTimeShown -> {
+                preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET, true)
+                updateUiState { copy(showMapOptionsOnOpen = false) }
             }
 
             is SearchStopUiEvent.SearchRadiusChanged -> {

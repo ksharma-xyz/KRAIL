@@ -102,7 +102,7 @@ fun SearchStopScreen(
     // rememberSaveable so text survives rotation and dark/light mode config changes.
     var textFieldText: String by rememberSaveable { mutableStateOf(searchQuery) }
     // Hoisted here so it survives any config change regardless of which pane is active.
-    var showMap by rememberSaveable { mutableStateOf(false) }
+    var showMap by rememberSaveable { mutableStateOf(true) }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }
@@ -209,6 +209,13 @@ private fun SearchStopScreenSinglePane(
     val density = LocalDensity.current
     val topBarHeightDp by remember { derivedStateOf { with(density) { topBarHeightPx.toDp() } } }
 
+    MapAutoInitEffect(
+        showMap = showMap,
+        isMapsAvailable = searchStopState.isMapsAvailable,
+        mapUiState = searchStopState.mapUiState,
+        onEvent = onEvent,
+    )
+
     // Hide/show keyboard based on map toggle
     LaunchedEffect(showMap) {
         if (showMap) {
@@ -251,16 +258,17 @@ private fun SearchStopScreenSinglePane(
                 keyboard = keyboard,
                 focusRequester = focusRequester,
                 ornamentTopPadding = topBarHeightDp,
+                autoShowOptionsSheet = searchStopState.showMapOptionsOnOpen,
+                onShowOptionsSheet = { onEvent(SearchStopUiEvent.MapOptionsFirstTimeShown) },
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
             )
         }
 
-        // List — always appears instantly (EnterTransition.None) so there is no fade-in
-        // window during which the map (or surface background) would show through.
-        // The exit fadeOut is kept for the smooth list→map toggle animation.
+        // List — shows when: list mode is active, OR map is desired but not yet initialized
+        // (mapState == null). This prevents a blank screen while the map initializes.
         AnimatedVisibility(
-            visible = !showMap,
+            visible = !showMap || mapState == null,
             enter = EnterTransition.None,
             exit = fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)),
             modifier = Modifier.fillMaxSize(),
@@ -652,6 +660,20 @@ private fun LazyListScope.recentSearchStopsList(
             modifier = Modifier.fillMaxWidth(),
         )
         Divider()
+    }
+}
+
+@Composable
+private fun MapAutoInitEffect(
+    showMap: Boolean,
+    isMapsAvailable: Boolean,
+    mapUiState: MapUiState?,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    LaunchedEffect(isMapsAvailable) {
+        if (showMap && isMapsAvailable && mapUiState == null) {
+            onEvent(SearchStopUiEvent.InitializeMap)
+        }
     }
 }
 

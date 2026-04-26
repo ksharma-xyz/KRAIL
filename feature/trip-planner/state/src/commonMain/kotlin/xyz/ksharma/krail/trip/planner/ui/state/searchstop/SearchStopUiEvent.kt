@@ -70,6 +70,9 @@ sealed interface SearchStopUiEvent {
         val modesChanged: Boolean,
     ) : SearchStopUiEvent
 
+    /** Fired once when the map options sheet auto-pops for the first time. Marks it seen in prefs. */
+    data object MapOptionsFirstTimeShown : SearchStopUiEvent
+
     /** Fired when a stop is selected via the map's StopDetailsBottomSheet. Analytics-only. */
     data class TrackStopSelectedFromMap(
         val stopId: String,

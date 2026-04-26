@@ -68,6 +68,8 @@ fun SearchStopMap(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
+    autoShowOptionsSheet: Boolean = false,
+    onShowOptionsSheet: () -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
 ) {
@@ -85,6 +87,8 @@ fun SearchStopMap(
                     keyboard = keyboard,
                     focusRequester = focusRequester,
                     ornamentTopPadding = ornamentTopPadding,
+                    autoShowOptionsSheet = autoShowOptionsSheet,
+                    onShowOptionsSheet = onShowOptionsSheet,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                     modifier = Modifier.fillMaxSize(),
@@ -123,6 +127,8 @@ private fun MapContent(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
+    autoShowOptionsSheet: Boolean = false,
+    onShowOptionsSheet: () -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -131,6 +137,13 @@ private fun MapContent(
     )
 
     var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(autoShowOptionsSheet) {
+        if (autoShowOptionsSheet && !showOptionsBottomSheet) {
+            showOptionsBottomSheet = true
+            onShowOptionsSheet()
+        }
+    }
     var selectedStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
 
     // User location state

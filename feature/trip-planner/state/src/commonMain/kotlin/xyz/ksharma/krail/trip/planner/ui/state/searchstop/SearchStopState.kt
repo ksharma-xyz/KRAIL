@@ -43,6 +43,7 @@ data class SearchStopState(
     val searchQuery: String = "",
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
+    val showMapOptionsOnOpen: Boolean = false,
 ) {
     /**
      * Internal sealed classes describing results / recent items.

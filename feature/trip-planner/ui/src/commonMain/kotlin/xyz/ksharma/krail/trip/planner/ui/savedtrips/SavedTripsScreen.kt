@@ -77,6 +77,7 @@ fun SavedTripsScreen(
     trackedJourney: TrackedJourney? = null,
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
+    onUnsetLabelTap: (StopLabel) -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
@@ -150,10 +151,8 @@ fun SavedTripsScreen(
                                 isSearchExpanded = true
                                 isFromHighlighted = true
                             },
-                            onUnsetLabelClick = {
-                                // Unset pill: expand search row so user can set destination manually
-                                isSearchExpanded = true
-                                isFromHighlighted = false
+                            onUnsetLabelClick = { label ->
+                                onUnsetLabelTap(label)
                             },
                             onAddLabelClick = {
                                 onEvent(SavedTripUiEvent.AddStopLabelTapped)

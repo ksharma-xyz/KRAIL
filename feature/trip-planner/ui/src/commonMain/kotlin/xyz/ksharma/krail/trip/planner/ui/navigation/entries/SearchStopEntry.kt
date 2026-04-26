@@ -54,6 +54,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                     fieldType = key.fieldType,
                     stopId = stopItem.stopId,
                     stopName = stopItem.stopName,
+                    labelKey = key.labelKey,
                 )
 
                 resultEventBus.sendResult(result = result)

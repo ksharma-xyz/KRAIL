@@ -61,6 +61,11 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 SearchStopFieldType.TO -> {
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
                 }
+                SearchStopFieldType.LABEL -> {
+                    result.labelKey?.let { key ->
+                        viewModel.onEvent(SavedTripUiEvent.StopLabelAssigned(key, stopItem))
+                    }
+                }
             }
         }
 
@@ -76,6 +81,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
+            },
+            onUnsetLabelTap = { label ->
+                tripPlannerNavigator.navigateToSearchStop(
+                    fieldType = SearchStopFieldType.LABEL,
+                    labelKey = label.label,
+                )
             },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {

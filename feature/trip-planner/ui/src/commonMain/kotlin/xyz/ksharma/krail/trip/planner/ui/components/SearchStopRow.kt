@@ -2,15 +2,12 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.EaseOutBounce
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -111,18 +108,15 @@ fun SearchStopRow(
             if (targetState) {
                 slideInVertically(
                     initialOffsetY = { it },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                ) + fadeIn(animationSpec = tween(200)) togetherWith
-                    fadeOut(animationSpec = tween(100))
+                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+                ) + fadeIn(animationSpec = tween(400)) togetherWith
+                    fadeOut(animationSpec = tween(150))
             } else {
                 fadeIn(animationSpec = tween(100)) togetherWith
                     slideOutVertically(
                         targetOffsetY = { it },
-                        animationSpec = tween(250, easing = FastOutSlowInEasing),
-                    ) + fadeOut(animationSpec = tween(200))
+                        animationSpec = tween(350, easing = FastOutSlowInEasing),
+                    ) + fadeOut(animationSpec = tween(250))
             }
         },
         modifier = modifier,
@@ -248,11 +242,8 @@ private fun ExpandedSearchRow(
                 visible = showFromField,
                 enter = expandVertically(
                     expandFrom = Alignment.Top,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                ) + fadeIn(animationSpec = tween(200)),
+                    animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+                ) + fadeIn(animationSpec = tween(350)),
             ) {
                 val fromFieldShape = RoundedCornerShape(50)
                 TextFieldButton(
@@ -273,7 +264,7 @@ private fun ExpandedSearchRow(
                             fadeIn(animationSpec = tween(200)) +
                                 slideInVertically(
                                     initialOffsetY = { it / 2 },
-                                    animationSpec = tween(500, easing = EaseOutBounce),
+                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
                                 ) togetherWith fadeOut(animationSpec = tween(200)) +
                                 slideOutVertically(
                                     targetOffsetY = { -it / 2 },
@@ -305,7 +296,7 @@ private fun ExpandedSearchRow(
                         fadeIn(animationSpec = tween(200)) +
                             slideInVertically(
                                 initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
+                                animationSpec = tween(500, easing = FastOutSlowInEasing),
                             ) togetherWith fadeOut(animationSpec = tween(200)) +
                             slideOutVertically(
                                 targetOffsetY = { it / 2 },

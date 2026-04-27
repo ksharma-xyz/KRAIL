@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -28,7 +30,9 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
@@ -45,6 +49,7 @@ class SearchStopViewModel(
     val flag: Flag,
     private val ioDispatcher: CoroutineDispatcher,
     private val preferences: SandookPreferences,
+    private val sandook: Sandook,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -58,6 +63,7 @@ class SearchStopViewModel(
             if (!hasSeenOptions) {
                 updateUiState { copy(showMapOptionsOnOpen = true) }
             }
+            observeStopLabels()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
 
     private val isMapsAvailable: Boolean by lazy {
@@ -258,6 +264,25 @@ class SearchStopViewModel(
 
     private fun checkMapsAvailability() {
         updateUiState { copy(isMapsAvailable = this@SearchStopViewModel.isMapsAvailable) }
+    }
+
+    private fun observeStopLabels() {
+        viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+            sandook.observeStopLabels()
+                .distinctUntilChanged()
+                .collectLatest { rows ->
+                    if (rows.isEmpty()) {
+                        StopLabel.defaults.forEachIndexed { index, label ->
+                            sandook.upsertStopLabel(label.label, label.emoji, null, null, index.toLong())
+                        }
+                        return@collectLatest
+                    }
+                    val labels = rows.map { row ->
+                        StopLabel(emoji = row.emoji, label = row.label, stopId = row.stop_id, stopName = row.stop_name)
+                    }.toImmutableList()
+                    updateUiState { copy(stopLabels = labels) }
+                }
+        }
     }
 
     // endregion

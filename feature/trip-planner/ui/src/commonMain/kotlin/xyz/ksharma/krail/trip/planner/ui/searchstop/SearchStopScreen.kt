@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +24,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -49,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import app.krail.taj.resources.ic_location
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
@@ -75,12 +79,14 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -492,6 +498,17 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
+                val setLabels = searchStopState.stopLabels.filter { it.isSet }
+                if (setLabels.isNotEmpty()) {
+                    item(key = "label-shortcuts") {
+                        LabelShortcutsRow(
+                            labels = setLabels.toImmutableList(),
+                            onLabelClick = { stopItem -> onStopSelect(stopItem) },
+                        )
+                        Divider()
+                    }
+                }
+
                 if (isMapsAvailable) {
                     item(key = "select-on-map") {
                         SelectOnMapItem(onOpenMap = onOpenMap)
@@ -520,6 +537,17 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
+                val setLabels = searchStopState.stopLabels.filter { it.isSet }
+                if (setLabels.isNotEmpty()) {
+                    item(key = "label-shortcuts") {
+                        LabelShortcutsRow(
+                            labels = setLabels.toImmutableList(),
+                            onLabelClick = { stopItem -> onStopSelect(stopItem) },
+                        )
+                        Divider()
+                    }
+                }
+
                 if (isMapsAvailable) {
                     item(key = "select-on-map") {
                         SelectOnMapItem(onOpenMap = onOpenMap)
@@ -707,11 +735,51 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 @Composable
+private fun LabelShortcutsRow(
+    labels: ImmutableList<StopLabel>,
+    onLabelClick: (StopItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    LazyRow(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+    ) {
+        items(items = labels, key = { it.label }) { label ->
+            val shape = RoundedCornerShape(dim.radiusFull)
+            val themeColor = themeColor()
+            Row(
+                modifier = Modifier
+                    .clip(shape)
+                    .background(themeColor, shape)
+                    .klickable { label.toStopItem()?.let(onLabelClick) }
+                    .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(TajRes.drawable.ic_location),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                    modifier = Modifier.size(14.dp),
+                )
+                Text(
+                    text = label.label,
+                    style = KrailTheme.typography.labelLarge,
+                    color = KrailTheme.colors.surface,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun PublicTransportNote(modifier: Modifier = Modifier) {
     Text(
-        text = "Only public transport stops are shown.",
+        text = "You can only select public transport stops on KRAIL\u00A0App.",
         style = KrailTheme.typography.bodySmall,
-        color = KrailTheme.colors.onSurface.copy(alpha = 0.4f),
+        color = KrailTheme.colors.softLabel,
         modifier = modifier.padding(
             horizontal = KrailTheme.dimensions.spacingXXL,
             vertical = KrailTheme.dimensions.spacingM,
@@ -725,14 +793,12 @@ private fun SelectOnMapItem(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val themeColor by LocalThemeColor.current
-    val color = themeColor.hexToComposeColor()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .klickable { onOpenMap() }
-            .padding(vertical = dim.spacingM, horizontal = dim.spacingXXL),
+            .padding(vertical = dim.spacingL, horizontal = dim.spacingXXL),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,
     ) {

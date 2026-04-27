@@ -22,6 +22,4 @@ data class SavedTripsState(
     val fromStop: StopItem? = null,
     val toStop: StopItem? = null,
     val hasSeenInviteFriendsTile: Boolean = false,
-    val stopLabels: ImmutableList<StopLabel> = StopLabel.defaults,
-    val pendingNewLabel: PendingNewLabel? = null,
 )

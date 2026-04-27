@@ -119,7 +119,7 @@ private fun UnsetLabelPill(
             .clip(shape)
             .border(
                 width = dim.strokeThin,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.3f),
+                color = KrailTheme.colors.outlineSubtle,
                 shape = shape,
             )
             .klickable(onClick = onClick)
@@ -128,13 +128,13 @@ private fun UnsetLabelPill(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CompositionLocalProvider(
-            LocalContentColor provides KrailTheme.colors.onSurface.copy(alpha = 0.5f),
+            LocalContentColor provides KrailTheme.colors.softLabel,
             LocalTextStyle provides KrailTheme.typography.labelLarge,
         ) {
             Image(
                 painter = painterResource(Res.drawable.ic_location),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface.copy(alpha = 0.5f)),
+                colorFilter = ColorFilter.tint(KrailTheme.colors.softLabel),
                 modifier = Modifier.size(14.dp),
             )
             Text(text = label.label)
@@ -155,7 +155,7 @@ private fun AddLabelPill(
             .clip(shape)
             .border(
                 width = dim.strokeThin,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.3f),
+                color = KrailTheme.colors.outlineSubtle,
                 shape = shape,
             )
             .klickable(onClick = onClick)
@@ -164,7 +164,7 @@ private fun AddLabelPill(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CompositionLocalProvider(
-            LocalContentColor provides KrailTheme.colors.onSurface.copy(alpha = 0.5f),
+            LocalContentColor provides KrailTheme.colors.softLabel,
             LocalTextStyle provides KrailTheme.typography.labelLarge,
         ) {
             Text(text = "+ Add")

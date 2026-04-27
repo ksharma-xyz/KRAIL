@@ -25,7 +25,7 @@ fun Divider(
     type: DividerType = DividerType.HORIZONTAL,
     color: Color? = null,
 ) {
-    CompositionLocalProvider(LocalContainerColor provides KrailTheme.colors.onSurface.copy(alpha = 0.2f)) {
+    CompositionLocalProvider(LocalContainerColor provides KrailTheme.colors.outlineSubtle) {
         Box(
             modifier = modifier
                 .then(

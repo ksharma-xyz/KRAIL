@@ -239,14 +239,22 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.CreateLabel -> {
-                val sortOrder = _uiState.value.stopLabels.size.toLong()
-                updateUiState {
-                    val updated = (stopLabels + StopLabel(emoji = event.emoji, label = event.name))
-                        .toImmutableList()
-                    copy(stopLabels = updated)
+                // Dedupe — never append a duplicate, otherwise the LazyRow keyed by label.label
+                // crashes with "Key already used".
+                val alreadyExists = _uiState.value.stopLabels.any {
+                    it.label.equals(event.name, ignoreCase = true)
                 }
-                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
-                    sandook.upsertStopLabel(event.name, event.emoji, null, null, sortOrder)
+                if (!alreadyExists) {
+                    val sortOrder = _uiState.value.stopLabels.size.toLong()
+                    updateUiState {
+                        copy(
+                            stopLabels = (stopLabels + StopLabel(emoji = event.emoji, label = event.name))
+                                .toImmutableList(),
+                        )
+                    }
+                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                        sandook.upsertStopLabel(event.name, event.emoji, null, null, sortOrder)
+                    }
                 }
             }
 
@@ -273,6 +281,29 @@ class SearchStopViewModel(
                 }
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.deleteStopLabel(event.labelKey)
+                }
+            }
+
+            is SearchStopUiEvent.MoveLabelToIndex -> {
+                val current = _uiState.value.stopLabels.toMutableList()
+                val sourceIndex = current.indexOfFirst { it.label == event.labelKey }
+                if (sourceIndex == -1) return
+                val target = event.targetIndex.coerceIn(0, current.size - 1)
+                if (target == sourceIndex) return
+                val moved = current.removeAt(sourceIndex)
+                current.add(target, moved)
+                val reordered = current.toImmutableList()
+                updateUiState { copy(stopLabels = reordered) }
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    reordered.forEachIndexed { index, label ->
+                        sandook.upsertStopLabel(
+                            label.label,
+                            label.emoji,
+                            label.stopId,
+                            label.stopName,
+                            index.toLong(),
+                        )
+                    }
                 }
             }
         }

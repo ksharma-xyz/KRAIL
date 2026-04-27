@@ -89,7 +89,7 @@ fun SaveStopAsLabelSheet(
                 items(items = labels, key = { it.label }) { label ->
                     LabelChoiceChip(label = label, onClick = { onLabelChosen(label) })
                 }
-                items(items = listOf("new"), key = { it }) {
+                item(key = "__new_label__") {
                     NewLabelChip(onClick = onCreateNewLabel)
                 }
             }

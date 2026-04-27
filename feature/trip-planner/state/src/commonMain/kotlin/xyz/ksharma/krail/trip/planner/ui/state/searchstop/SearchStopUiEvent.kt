@@ -93,4 +93,7 @@ sealed interface SearchStopUiEvent {
 
     /** Deletes a label entirely. */
     data class DeleteLabel(val labelKey: String) : SearchStopUiEvent
+
+    /** Moves [labelKey] to [targetIndex]; sort orders for all labels are renumbered. */
+    data class MoveLabelToIndex(val labelKey: String, val targetIndex: Int) : SearchStopUiEvent
 }

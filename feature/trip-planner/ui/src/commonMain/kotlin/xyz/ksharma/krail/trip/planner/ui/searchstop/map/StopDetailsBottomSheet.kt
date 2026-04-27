@@ -26,7 +26,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
-import xyz.ksharma.krail.trip.planner.ui.components.map.StopActionButton
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet as SharedStopDetailsBottomSheet
 
@@ -38,8 +37,8 @@ import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet a
 fun StopDetailsBottomSheet(
     stop: NearbyStopFeature,
     onDismiss: () -> Unit,
-    onSelectStop: () -> Unit,
     modifier: Modifier = Modifier,
+    actionContent: @Composable () -> Unit = {},
 ) {
     val departuresViewModel = koinViewModel<DeparturesViewModel>()
     val departuresState by departuresViewModel.uiState.collectAsStateWithLifecycle()
@@ -60,7 +59,6 @@ fun StopDetailsBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Parking section (if available)
             if (stop.hasParkAndRide) {
                 ParkingInfoSection(modifier = Modifier.padding(horizontal = 16.dp))
 
@@ -72,12 +70,7 @@ fun StopDetailsBottomSheet(
             }
             Spacer(modifier = Modifier.height(16.dp))
         },
-        actionButton = {
-            StopActionButton(
-                text = "Select Stop",
-                onClick = onSelectStop,
-            )
-        },
+        actionButton = { actionContent() },
     )
 }
 
@@ -125,7 +118,7 @@ private fun PreviewStopDetailsBottomSheet() {
         StopDetailsBottomSheet(
             stop = stop,
             onDismiss = {},
-            onSelectStop = {},
+            actionContent = {},
         )
     }
 }
@@ -146,7 +139,7 @@ private fun PreviewStopDetailsBottomSheetSingleMode() {
         StopDetailsBottomSheet(
             stop = stop,
             onDismiss = {},
-            onSelectStop = {},
+            actionContent = {},
         )
     }
 }
@@ -167,7 +160,7 @@ private fun PreviewStopDetailsBottomSheetFerry() {
         StopDetailsBottomSheet(
             stop = stop,
             onDismiss = {},
-            onSelectStop = {},
+            actionContent = {},
         )
     }
 }

@@ -41,6 +41,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
@@ -49,8 +50,11 @@ import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -62,12 +66,13 @@ import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.components.StopLabelPillRow
-import xyz.ksharma.krail.trip.planner.ui.components.StopUseAsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionSection
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.StopDetailsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
@@ -305,19 +310,49 @@ fun SavedTripsScreen(
         )
 
         useAsSheetStop?.let { stop ->
-            StopUseAsBottomSheet(
-                stopItem = stop,
+            val dim = KrailTheme.dimensions
+            StopDetailsBottomSheet(
+                stop = NearbyStopFeature(
+                    stopId = stop.stopId,
+                    stopName = stop.stopName,
+                    position = LatLng(0.0, 0.0),
+                    transportModes = persistentListOf(),
+                ),
                 onDismiss = { useAsSheetStop = null },
-                onUseAsTo = { stopItem ->
-                    onEvent(SavedTripUiEvent.StopLabelPillTapped(stopItem))
-                    isSearchExpanded = true
-                    isFromHighlighted = false
-                    useAsSheetStop = null
-                },
-                onUseAsFrom = { stopItem ->
-                    onEvent(SavedTripUiEvent.StopLabelUsedAsFrom(stopItem))
-                    isSearchExpanded = true
-                    useAsSheetStop = null
+                actionContent = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = dim.pageHorizontalPadding)
+                            .padding(bottom = dim.spacingM),
+                        verticalArrangement = Arrangement.spacedBy(dim.spacingM),
+                    ) {
+                        Button(
+                            onClick = {
+                                onEvent(SavedTripUiEvent.StopLabelPillTapped(stop))
+                                isSearchExpanded = true
+                                isFromHighlighted = false
+                                useAsSheetStop = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Going here")
+                        }
+                        TextButton(
+                            onClick = {
+                                onEvent(SavedTripUiEvent.StopLabelUsedAsFrom(stop))
+                                isSearchExpanded = true
+                                useAsSheetStop = null
+                            },
+                            dimensions = ButtonDefaults.largeButtonSize(),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = "Starting from here",
+                                color = KrailTheme.colors.onSurface,
+                            )
+                        }
+                    }
                 },
             )
         }

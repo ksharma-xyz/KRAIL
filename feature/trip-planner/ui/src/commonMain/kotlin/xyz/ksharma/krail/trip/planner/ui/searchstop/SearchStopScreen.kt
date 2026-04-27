@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
+import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
@@ -78,6 +79,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
@@ -91,12 +93,19 @@ import app.krail.taj.resources.Res as TajRes
 fun SearchStopScreen(
     searchStopState: SearchStopState,
     modifier: Modifier = Modifier,
+    fieldType: SearchStopFieldType = SearchStopFieldType.FROM,
     searchQuery: String = "",
     goBack: () -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
 ) {
     SideEffect { log("[SEARCH_STOP_SCREEN] recomposed") }
+
+    val placeholderText = when (fieldType) {
+        SearchStopFieldType.FROM -> "Choose starting point"
+        SearchStopFieldType.TO -> "Choose destination"
+        SearchStopFieldType.LABEL -> "Choose a stop"
+    }
 
     val themeColor by LocalThemeColor.current
     // rememberSaveable so text survives rotation and dark/light mode config changes.
@@ -131,6 +140,7 @@ fun SearchStopScreen(
                 modifier = modifier,
                 searchStopState = searchStopState,
                 themeColor = themeColor,
+                placeholderText = placeholderText,
                 initialText = textFieldText,
                 showMap = showMap,
                 onShowMapChange = { showMap = it },
@@ -151,6 +161,7 @@ fun SearchStopScreen(
                 modifier = modifier,
                 searchStopState = searchStopState,
                 themeColor = themeColor,
+                placeholderText = placeholderText,
                 initialText = textFieldText,
                 focusRequester = focusRequester,
                 keyboard = keyboard,
@@ -174,6 +185,7 @@ fun SearchStopScreen(
 private fun SearchStopScreenSinglePane(
     searchStopState: SearchStopState,
     themeColor: String,
+    placeholderText: String,
     initialText: String,
     showMap: Boolean,
     onShowMapChange: (Boolean) -> Unit,
@@ -292,6 +304,14 @@ private fun SearchStopScreenSinglePane(
                     focusRequester = focusRequester,
                     onStopSelect = onStopSelect,
                     onEvent = onEvent,
+                    isMapsAvailable = searchStopState.isMapsAvailable,
+                    onOpenMap = {
+                        onShowMapChange(true)
+                        onEvent(SearchStopUiEvent.MapToggleClicked(true))
+                        if (searchStopState.mapUiState == null) {
+                            onEvent(SearchStopUiEvent.InitializeMap)
+                        }
+                    },
                     modifier = Modifier.padding(top = topBarHeightDp),
                 )
             }
@@ -299,12 +319,12 @@ private fun SearchStopScreenSinglePane(
 
         // TopBar always floats on top — transparent background now shows map beneath it
         SearchTopBar(
-            placeholderText = "Search here",
+            placeholderText = placeholderText,
             initialText = initialText,
             focusRequester = focusRequester,
             keyboard = keyboard,
             isMapSelected = showMap,
-            isMapAvailable = searchStopState.isMapsAvailable,
+            isMapAvailable = false, // map pill removed — "Select on map" button is in the list
             animateMapButton = animateMapButton,
             onMapToggle = { shouldShowMap ->
                 onShowMapChange(shouldShowMap)
@@ -341,6 +361,7 @@ private fun SearchStopScreenSinglePane(
 private fun SearchStopScreenDualPane(
     searchStopState: SearchStopState,
     themeColor: String,
+    placeholderText: String,
     initialText: String,
     focusRequester: FocusRequester,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
@@ -406,12 +427,12 @@ private fun SearchStopScreenDualPane(
             ) {
                 // Search top bar only spans the list width
                 SearchTopBar(
-                    placeholderText = "Search here",
+                    placeholderText = placeholderText,
                     initialText = initialText,
                     focusRequester = focusRequester,
                     keyboard = keyboard,
                     isMapSelected = false,
-                    isMapAvailable = false, // Hide map toggle in dual-pane mode
+                    isMapAvailable = false,
                     onMapToggle = { },
                     onBackClick = onBackClick,
                     onTextChange = onTextChange,
@@ -424,6 +445,8 @@ private fun SearchStopScreenDualPane(
                     focusRequester = focusRequester,
                     onStopSelect = onStopSelect,
                     onEvent = onEvent,
+                    isMapsAvailable = false, // map already visible in right pane
+                    onOpenMap = {},
                 )
             }
 
@@ -457,6 +480,8 @@ private fun SearchStopListContent(
     searchStopState: SearchStopState,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
+    isMapsAvailable: Boolean,
+    onOpenMap: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -467,7 +492,14 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
-                item {
+                if (isMapsAvailable) {
+                    item(key = "select-on-map") {
+                        SelectOnMapItem(onOpenMap = onOpenMap)
+                        Divider()
+                    }
+                }
+
+                item(key = "recent-header") {
                     SearchListHeader()
                 }
 
@@ -486,6 +518,13 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
+                if (isMapsAvailable) {
+                    item(key = "select-on-map") {
+                        SelectOnMapItem(onOpenMap = onOpenMap)
+                        Divider()
+                    }
+                }
+
                 item("searching_dots") {
                     SearchingDotsHeader(isLoading = listState.isLoading)
                 }
@@ -660,6 +699,37 @@ private fun LazyListScope.recentSearchStopsList(
             modifier = Modifier.fillMaxWidth(),
         )
         Divider()
+    }
+}
+
+@Composable
+private fun SelectOnMapItem(
+    onOpenMap: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    val themeColor by LocalThemeColor.current
+    val color = themeColor.hexToComposeColor()
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .klickable(onOpenMap)
+            .padding(vertical = dim.spacingM, horizontal = dim.spacingXXL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(TajRes.drawable.ic_location),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(color = color),
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = "Select on map",
+            color = color,
+            style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
+        )
     }
 }
 

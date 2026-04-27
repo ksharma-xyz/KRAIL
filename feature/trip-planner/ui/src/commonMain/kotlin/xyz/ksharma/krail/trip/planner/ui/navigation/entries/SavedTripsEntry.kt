@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -45,8 +45,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
 
-        // Stop waiting to be named — set when user picks a stop for a new label (no labelKey yet)
-        var pendingLabelStop by remember { mutableStateOf<StopItem?>(null) }
+        // Stop waiting to be named — persisted as JSON so screen rotation doesn't lose it.
+        // User shouldn't have to pick the stop again just because they rotated the device.
+        var pendingLabelStopJson by rememberSaveable { mutableStateOf<String?>(null) }
+        val pendingLabelStop: StopItem? = pendingLabelStopJson?.let { StopItem.fromJsonString(it) }
 
         LaunchedEffect(savedTripState.savedTrips) {
             departureBoardViewModel.setTrips(savedTripState.savedTrips)
@@ -75,7 +77,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                         viewModel.onEvent(SavedTripUiEvent.StopLabelAssigned(key, stopItem))
                     } else {
                         // New label — stop is chosen, now ask user to name it
-                        pendingLabelStop = stopItem
+                        pendingLabelStopJson = stopItem.toJsonString()
                     }
                 }
             }
@@ -86,7 +88,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         pendingLabelStop?.let { stop ->
             AddLabelBottomSheet(
                 stopName = stop.stopName,
-                onDismiss = { pendingLabelStop = null },
+                onDismiss = { pendingLabelStopJson = null },
                 onSave = { emoji, name ->
                     viewModel.onEvent(
                         SavedTripUiEvent.NewLabelCreated(
@@ -96,7 +98,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                             stopName = stop.stopName,
                         ),
                     )
-                    pendingLabelStop = null
+                    pendingLabelStopJson = null
                 },
             )
         }

@@ -82,9 +82,8 @@ fun AddLabelBottomSheet(
                 .imePadding()
                 .padding(bottom = dim.spacingXXL),
         ) {
-            // Question heading — context makes the action clear
             Text(
-                text = "What do you call",
+                text = "Give a nickname to",
                 style = KrailTheme.typography.headlineMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
@@ -92,40 +91,30 @@ fun AddLabelBottomSheet(
 
             Spacer(modifier = Modifier.height(dim.spacingXS))
 
-            // Stop name in a themed chip so it reads as "What do you call [stop name]?"
+            // Stop name in a themed chip completing the heading sentence
+            val stopChipShape = RoundedCornerShape(dim.radiusFull)
             Row(
-                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                modifier = Modifier
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .clip(stopChipShape)
+                    .background(themeColor(), stopChipShape)
+                    .padding(
+                        horizontal = dim.chipHorizontalPadding,
+                        vertical = dim.chipVerticalPadding,
+                    ),
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val shape = RoundedCornerShape(dim.radiusFull)
-                Row(
-                    modifier = Modifier
-                        .clip(shape)
-                        .background(themeColor(), shape)
-                        .padding(
-                            horizontal = dim.chipHorizontalPadding,
-                            vertical = dim.chipVerticalPadding,
-                        ),
-                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_location),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                        modifier = Modifier.size(12.dp),
-                    )
-                    Text(
-                        text = stopName,
-                        style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                        color = KrailTheme.colors.surface,
-                    )
-                }
+                Image(
+                    painter = painterResource(Res.drawable.ic_location),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                    modifier = Modifier.size(12.dp),
+                )
                 Text(
-                    text = "?",
-                    style = KrailTheme.typography.headlineMedium,
-                    color = KrailTheme.colors.onSurface,
+                    text = stopName,
+                    style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = KrailTheme.colors.surface,
                 )
             }
 

@@ -510,6 +510,8 @@ private fun SearchStopListContent(
                     onStopSelect = onStopSelect,
                     onEvent = onEvent,
                 )
+
+                item(key = "pt-note") { PublicTransportNote() }
             }
         }
 
@@ -537,6 +539,8 @@ private fun SearchStopListContent(
                     onEvent = onEvent,
                     searchQuery = searchStopState.searchQuery,
                 )
+
+                item(key = "pt-note") { PublicTransportNote() }
             }
         }
 
@@ -703,6 +707,19 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 @Composable
+private fun PublicTransportNote(modifier: Modifier = Modifier) {
+    Text(
+        text = "Only public transport stops are shown.",
+        style = KrailTheme.typography.bodySmall,
+        color = KrailTheme.colors.onSurface.copy(alpha = 0.4f),
+        modifier = modifier.padding(
+            horizontal = KrailTheme.dimensions.spacingXXL,
+            vertical = KrailTheme.dimensions.spacingM,
+        ),
+    )
+}
+
+@Composable
 private fun SelectOnMapItem(
     onOpenMap: () -> Unit,
     modifier: Modifier = Modifier,
@@ -722,7 +739,7 @@ private fun SelectOnMapItem(
         Image(
             painter = painterResource(TajRes.drawable.ic_location),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(color = color),
+            colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
             modifier = Modifier.size(20.dp),
         )
         Text(

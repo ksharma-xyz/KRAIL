@@ -353,40 +353,41 @@ private fun MapContent(
                 StopDetailsBottomSheet(
                     stop = stop,
                     onDismiss = { selectedStop = null },
-                    onSelectStop = {
-                        // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
-                        keyboard?.hide()
-                        focusRequester?.freeFocus()
+                    actionContent = {
+                        StopActionButton(
+                            text = "Select Stop",
+                            onClick = {
+                                // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
+                                keyboard?.hide()
+                                focusRequester?.freeFocus()
 
-                        // Convert NearbyStopFeature to StopItem and call onStopSelect
-                        val stopItem = StopItem(
-                            stopId = stop.stopId,
-                            stopName = stop.stopName,
+                                val stopItem = StopItem(
+                                    stopId = stop.stopId,
+                                    stopName = stop.stopName,
+                                )
+                                onStopSelect(stopItem)
+
+                                onEvent(
+                                    SearchStopUiEvent.TrackStopSelected(
+                                        stopItem = stopItem,
+                                        isRecentSearch = false,
+                                        searchQuery = null,
+                                    ),
+                                )
+
+                                onEvent(
+                                    SearchStopUiEvent.TrackStopSelectedFromMap(
+                                        stopId = stop.stopId,
+                                        searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
+                                        enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
+                                        nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
+                                        hadUserLocation = mapState.mapDisplay.userLocation != null,
+                                    ),
+                                )
+
+                                selectedStop = null
+                            },
                         )
-                        onStopSelect(stopItem)
-
-                        // Track the selection via list path (stopId + search context)
-                        onEvent(
-                            SearchStopUiEvent.TrackStopSelected(
-                                stopItem = stopItem,
-                                isRecentSearch = false,
-                                searchQuery = null,
-                            ),
-                        )
-
-                        // Track the map-specific context (radius, modes, stop count)
-                        // No coordinates captured — hadUserLocation is a boolean only
-                        onEvent(
-                            SearchStopUiEvent.TrackStopSelectedFromMap(
-                                stopId = stop.stopId,
-                                searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
-                                enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
-                                nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
-                                hadUserLocation = mapState.mapDisplay.userLocation != null,
-                            ),
-                        )
-
-                        selectedStop = null
                     },
                 )
             }

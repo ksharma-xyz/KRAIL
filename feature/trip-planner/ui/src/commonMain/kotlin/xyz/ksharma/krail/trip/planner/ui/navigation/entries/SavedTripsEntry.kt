@@ -5,11 +5,15 @@ import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.ResultEffect
+import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
@@ -41,6 +45,9 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
 
+        // Stop waiting to be named — set when user picks a stop for a new label (no labelKey yet)
+        var pendingLabelStop by remember { mutableStateOf<StopItem?>(null) }
+
         LaunchedEffect(savedTripState.savedTrips) {
             departureBoardViewModel.setTrips(savedTripState.savedTrips)
         }
@@ -62,11 +69,36 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
                 }
                 SearchStopFieldType.LABEL -> {
-                    result.labelKey?.let { key ->
+                    val key = result.labelKey
+                    if (key != null) {
+                        // Updating an existing label (e.g. Home, Work)
                         viewModel.onEvent(SavedTripUiEvent.StopLabelAssigned(key, stopItem))
+                    } else {
+                        // New label — stop is chosen, now ask user to name it
+                        pendingLabelStop = stopItem
                     }
                 }
             }
+        }
+
+        // Naming sheet — shown after a stop is selected for a brand new label.
+        // Dismissing without saving creates nothing (safeguard).
+        pendingLabelStop?.let { stop ->
+            AddLabelBottomSheet(
+                stopName = stop.stopName,
+                onDismiss = { pendingLabelStop = null },
+                onSave = { emoji, name ->
+                    viewModel.onEvent(
+                        SavedTripUiEvent.NewLabelCreated(
+                            emoji = emoji,
+                            name = name,
+                            stopId = stop.stopId,
+                            stopName = stop.stopName,
+                        ),
+                    )
+                    pendingLabelStop = null
+                },
+            )
         }
 
         SavedTripsScreen(
@@ -88,10 +120,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     labelKey = label.label,
                 )
             },
-            onAddLabelNavigate = { labelKey ->
+            onAddLabelNavigate = {
                 tripPlannerNavigator.navigateToSearchStop(
                     fieldType = SearchStopFieldType.LABEL,
-                    labelKey = labelKey,
+                    labelKey = null,
                 )
             },
             onSavedTripCardClick = { fromStop, toStop ->

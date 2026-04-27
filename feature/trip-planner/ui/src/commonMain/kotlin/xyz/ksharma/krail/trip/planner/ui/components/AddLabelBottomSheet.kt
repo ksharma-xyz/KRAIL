@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,8 +46,9 @@ private val suggestions = listOf(
 
 @Composable
 fun AddLabelBottomSheet(
+    stopName: String,
     onDismiss: () -> Unit,
-    onPickStop: (emoji: String, name: String) -> Unit,
+    onSave: (emoji: String, name: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -62,13 +64,23 @@ fun AddLabelBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .systemBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
                 .padding(bottom = dim.spacingXXL),
         ) {
             Text(
                 text = "Name this place",
                 style = KrailTheme.typography.headlineMedium,
                 color = KrailTheme.colors.onSurface,
+                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+            )
+
+            Spacer(modifier = Modifier.height(dim.spacingXS))
+
+            Text(
+                text = stopName,
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
             )
 
@@ -83,7 +95,6 @@ fun AddLabelBottomSheet(
 
             Spacer(modifier = Modifier.height(dim.spacingL))
 
-            // Suggestion chips
             LazyRow(
                 contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
@@ -133,7 +144,6 @@ fun AddLabelBottomSheet(
 
             Spacer(modifier = Modifier.height(dim.spacingL))
 
-            // Name text field
             TextField(
                 placeholder = "e.g. Home, Gym, School…",
                 initialText = name,
@@ -153,13 +163,13 @@ fun AddLabelBottomSheet(
             Spacer(modifier = Modifier.height(dim.spacingXL))
 
             Button(
-                onClick = { onPickStop(emoji, name.trim()) },
+                onClick = { onSave(emoji, name.trim()) },
                 enabled = name.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dim.pageHorizontalPadding),
             ) {
-                Text(text = "Pick a stop")
+                Text(text = "Save")
             }
         }
     }
@@ -172,8 +182,9 @@ fun AddLabelBottomSheet(
 private fun PreviewAddLabelBottomSheet_Empty() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         AddLabelBottomSheet(
+            stopName = "Central Station",
             onDismiss = {},
-            onPickStop = { _, _ -> },
+            onSave = { _, _ -> },
         )
     }
 }
@@ -183,8 +194,9 @@ private fun PreviewAddLabelBottomSheet_Empty() {
 private fun PreviewAddLabelBottomSheet_Selected() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         AddLabelBottomSheet(
+            stopName = "Town Hall Station",
             onDismiss = {},
-            onPickStop = { _, _ -> },
+            onSave = { _, _ -> },
         )
     }
 }

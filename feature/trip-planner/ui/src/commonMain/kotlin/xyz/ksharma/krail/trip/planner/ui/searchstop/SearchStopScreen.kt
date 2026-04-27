@@ -584,6 +584,9 @@ private fun SearchStopListContent(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val savedStopIds = remember(searchStopState.stopLabels) {
+        searchStopState.stopLabels.mapNotNull { it.stopId }.toSet()
+    }
     when (listState) {
         ListState.Recent -> {
             LazyColumn(
@@ -595,7 +598,11 @@ private fun SearchStopListContent(
                         LabelShortcutsRow(
                             labels = searchStopState.stopLabels,
                             assigningLabel = assigningLabel,
-                            onSetLabelClick = { stopItem -> onStopSelect(stopItem) },
+                            onSetLabelClick = { stopItem ->
+                                keyboard?.hide()
+                                focusRequester.freeFocus()
+                                onStopSelect(stopItem)
+                            },
                             onUnsetLabelClick = onUnsetLabelClick,
                             onLabelLongClick = onLabelLongClick,
                             onAddLabelClick = onAddLabelClick,
@@ -619,6 +626,7 @@ private fun SearchStopListContent(
                     recentStops = searchStopState.recentStops,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
+                    savedStopIds = savedStopIds,
                     onStopSelect = onStopSelect,
                     onSaveAsLabel = onSaveAsLabel,
                     onEvent = onEvent,
@@ -638,7 +646,11 @@ private fun SearchStopListContent(
                         LabelShortcutsRow(
                             labels = searchStopState.stopLabels,
                             assigningLabel = assigningLabel,
-                            onSetLabelClick = { stopItem -> onStopSelect(stopItem) },
+                            onSetLabelClick = { stopItem ->
+                                keyboard?.hide()
+                                focusRequester.freeFocus()
+                                onStopSelect(stopItem)
+                            },
                             onUnsetLabelClick = onUnsetLabelClick,
                             onLabelLongClick = onLabelLongClick,
                             onAddLabelClick = onAddLabelClick,
@@ -662,6 +674,7 @@ private fun SearchStopListContent(
                     searchResults = listState.results,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
+                    savedStopIds = savedStopIds,
                     onStopSelect = onStopSelect,
                     onSaveAsLabel = onSaveAsLabel,
                     onEvent = onEvent,
@@ -696,6 +709,7 @@ private fun LazyListScope.searchResultsList(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
     searchQuery: String,
+    savedStopIds: Set<String>,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
@@ -727,6 +741,7 @@ private fun LazyListScope.searchResultsList(
                             ),
                         )
                     },
+                    isSaved = result.stopId in savedStopIds,
                     onSaveAsLabel = onSaveAsLabel,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -771,6 +786,7 @@ private fun LazyListScope.recentSearchStopsList(
     recentStops: List<SearchStopState.StopResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
+    savedStopIds: Set<String>,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
@@ -831,6 +847,7 @@ private fun LazyListScope.recentSearchStopsList(
                     ),
                 )
             },
+            isSaved = stop.stopId in savedStopIds,
             onSaveAsLabel = onSaveAsLabel,
             modifier = Modifier.fillMaxWidth(),
         )

@@ -63,8 +63,13 @@ class SearchStopViewModel(
             if (!hasSeenOptions) {
                 updateUiState { copy(showMapOptionsOnOpen = true) }
             }
-            observeStopLabels()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
+
+    init {
+        // Single VM-lifetime observer so DB updates always reach the UI even if
+        // the screen briefly unsubscribes (e.g. across config changes).
+        observeStopLabels()
+    }
 
     private val isMapsAvailable: Boolean by lazy {
         flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
@@ -215,25 +220,57 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.AssignLabelStop -> {
+                // Optimistic: update state immediately so the pill row reflects the
+                // assignment before the IO write completes. The DB observer re-emits
+                // the same shape and the second update is a no-op.
+                updateUiState {
+                    val updated = stopLabels.map { label ->
+                        if (label.label == event.labelKey) {
+                            label.copy(stopId = event.stopItem.stopId, stopName = event.stopItem.stopName)
+                        } else {
+                            label
+                        }
+                    }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.updateStopLabelStop(event.labelKey, event.stopItem.stopId, event.stopItem.stopName)
                 }
             }
 
             is SearchStopUiEvent.CreateLabel -> {
+                val sortOrder = _uiState.value.stopLabels.size.toLong()
+                updateUiState {
+                    val updated = (stopLabels + StopLabel(emoji = event.emoji, label = event.name))
+                        .toImmutableList()
+                    copy(stopLabels = updated)
+                }
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
-                    val sortOrder = _uiState.value.stopLabels.size.toLong()
                     sandook.upsertStopLabel(event.name, event.emoji, null, null, sortOrder)
                 }
             }
 
             is SearchStopUiEvent.ClearLabelStop -> {
+                updateUiState {
+                    val updated = stopLabels.map { label ->
+                        if (label.label == event.labelKey) {
+                            label.copy(stopId = null, stopName = null)
+                        } else {
+                            label
+                        }
+                    }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.updateStopLabelStop(event.labelKey, null, null)
                 }
             }
 
             is SearchStopUiEvent.DeleteLabel -> {
+                updateUiState {
+                    val updated = stopLabels.filterNot { it.label == event.labelKey }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.deleteStopLabel(event.labelKey)
                 }

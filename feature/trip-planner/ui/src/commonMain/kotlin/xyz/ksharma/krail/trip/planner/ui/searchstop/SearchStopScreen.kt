@@ -16,7 +16,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +34,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -44,8 +43,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -59,13 +56,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
@@ -82,6 +76,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
@@ -153,11 +149,10 @@ fun SearchStopScreen(
     // Edit mode for the pill row — long-press a pill to enter; pills wiggle and can
     // be drag-reordered. Tap "Done" to exit.
     var editingLabels by remember { mutableStateOf(false) }
-    // Conflict surfaced when the user tries to assign a stop to a label, but that stop is
-    // already saved against a different label.
-    var pendingConflict by remember {
-        mutableStateOf<Triple<StopLabel, StopItem, StopLabel>?>(null)
-    }
+    // Conflict surfaced when assigning a stop to a label triggers either a stop-side
+    // (stop already on another label) or label-side (label already has a different stop)
+    // 1:1 invariant violation.
+    var pendingConflict by remember { mutableStateOf<LabelConflict?>(null) }
 
     // Wraps onStopSelect to persist the stop as a label assignment when in assigning mode.
     val effectiveOnStopSelect: (StopItem) -> Unit = { stopItem ->
@@ -208,9 +203,15 @@ fun SearchStopScreen(
                 editingLabels = editingLabels,
                 onStopSelect = effectiveOnStopSelect,
                 onSaveAsLabel = { stopItem -> stopBeingSaved = stopItem },
+                onUnsaveLabel = { stopItem ->
+                    val match = searchStopState.stopLabels.firstOrNull { it.stopId == stopItem.stopId }
+                    if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
+                },
                 onUnsetLabelClick = { label -> assigningLabel = label },
-                onLabelLongClick = { _ -> editingLabels = true },
-                onLabelTapInEditMode = { label -> labelBeingManaged = label },
+                onLabelLongClick = { label ->
+                    if (!editingLabels) labelBeingManaged = label
+                },
+                onCancelAssigning = { assigningLabel = null },
                 onMoveLabel = { labelKey, toIndex ->
                     onEvent(SearchStopUiEvent.MoveLabelToIndex(labelKey, toIndex))
                 },
@@ -238,9 +239,15 @@ fun SearchStopScreen(
                 editingLabels = editingLabels,
                 onStopSelect = effectiveOnStopSelect,
                 onSaveAsLabel = { stopItem -> stopBeingSaved = stopItem },
+                onUnsaveLabel = { stopItem ->
+                    val match = searchStopState.stopLabels.firstOrNull { it.stopId == stopItem.stopId }
+                    if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
+                },
                 onUnsetLabelClick = { label -> assigningLabel = label },
-                onLabelLongClick = { _ -> editingLabels = true },
-                onLabelTapInEditMode = { label -> labelBeingManaged = label },
+                onLabelLongClick = { label ->
+                    if (!editingLabels) labelBeingManaged = label
+                },
+                onCancelAssigning = { assigningLabel = null },
                 onMoveLabel = { labelKey, toIndex ->
                     onEvent(SearchStopUiEvent.MoveLabelToIndex(labelKey, toIndex))
                 },
@@ -254,10 +261,22 @@ fun SearchStopScreen(
     if (showAddLabelSheet) {
         AddLabelBottomSheet(
             stopName = null,
+            existingLabels = searchStopState.stopLabels,
             onDismiss = { showAddLabelSheet = false },
             onSave = { emoji, name ->
                 showAddLabelSheet = false
-                onEvent(SearchStopUiEvent.CreateLabel(name = name, emoji = emoji))
+                val cleaned = xyz.ksharma.krail.trip.planner.ui.components
+                    .normaliseLabelName(name)
+                if (cleaned.isNotBlank() &&
+                    searchStopState.stopLabels.none {
+                        xyz.ksharma.krail.trip.planner.ui.components
+                            .labelNamesMatch(it.label, cleaned)
+                    }
+                ) {
+                    onEvent(SearchStopUiEvent.CreateLabel(name = cleaned, emoji = emoji))
+                    // Drop into assigning mode so the user knows what to do next.
+                    assigningLabel = StopLabel(emoji = emoji, label = cleaned)
+                }
             },
         )
     }
@@ -267,15 +286,33 @@ fun SearchStopScreen(
             stopName = stop.stopName,
             labels = searchStopState.stopLabels,
             onLabelChosen = { label ->
-                val existing = searchStopState.stopLabels.firstOrNull { other ->
+                val stopOnAnotherLabel = searchStopState.stopLabels.firstOrNull { other ->
                     other.stopId == stop.stopId && other.label != label.label
                 }
-                if (existing != null) {
-                    pendingConflict = Triple(label, stop, existing)
-                    stopBeingSaved = null
-                } else {
-                    onEvent(SearchStopUiEvent.AssignLabelStop(label.label, stop))
-                    stopBeingSaved = null
+                val labelHasDifferentStop = label.takeIf {
+                    it.isSet && it.stopId != stop.stopId
+                }
+                when {
+                    stopOnAnotherLabel != null -> {
+                        pendingConflict = LabelConflict.StopAlreadyOnAnotherLabel(
+                            target = label,
+                            stop = stop,
+                            existingLabel = stopOnAnotherLabel,
+                        )
+                        stopBeingSaved = null
+                    }
+                    labelHasDifferentStop != null -> {
+                        pendingConflict = LabelConflict.LabelHasDifferentStop(
+                            target = label,
+                            stop = stop,
+                            existingStopName = labelHasDifferentStop.stopName.orEmpty(),
+                        )
+                        stopBeingSaved = null
+                    }
+                    else -> {
+                        onEvent(SearchStopUiEvent.AssignLabelStop(label.label, stop))
+                        stopBeingSaved = null
+                    }
                 }
             },
             onCreateNewLabel = {
@@ -286,18 +323,32 @@ fun SearchStopScreen(
         )
     }
 
-    pendingConflict?.let { (target, stop, existing) ->
-        LabelConflictSheet(
-            stopName = stop.stopName,
-            currentLabel = existing.label,
-            targetLabel = target.label,
-            onConfirm = {
-                onEvent(SearchStopUiEvent.ClearLabelStop(existing.label))
-                onEvent(SearchStopUiEvent.AssignLabelStop(target.label, stop))
-                pendingConflict = null
-            },
-            onCancel = { pendingConflict = null },
-        )
+    pendingConflict?.let { conflict ->
+        when (conflict) {
+            is LabelConflict.StopAlreadyOnAnotherLabel -> LabelConflictSheet(
+                title = "Already saved",
+                message = "${conflict.stop.stopName} is currently saved as " +
+                    "${conflict.existingLabel.label}. Move it to ${conflict.target.label}?",
+                confirmLabel = "Move",
+                onConfirm = {
+                    onEvent(SearchStopUiEvent.ClearLabelStop(conflict.existingLabel.label))
+                    onEvent(SearchStopUiEvent.AssignLabelStop(conflict.target.label, conflict.stop))
+                    pendingConflict = null
+                },
+                onCancel = { pendingConflict = null },
+            )
+            is LabelConflict.LabelHasDifferentStop -> LabelConflictSheet(
+                title = "Already in use",
+                message = "${conflict.target.label} is currently saved as " +
+                    "${conflict.existingStopName}. Replace with ${conflict.stop.stopName}?",
+                confirmLabel = "Replace",
+                onConfirm = {
+                    onEvent(SearchStopUiEvent.AssignLabelStop(conflict.target.label, conflict.stop))
+                    pendingConflict = null
+                },
+                onCancel = { pendingConflict = null },
+            )
+        }
     }
 
     labelBeingManaged?.let { label ->
@@ -308,6 +359,20 @@ fun SearchStopScreen(
             onDismiss = { labelBeingManaged = null },
         )
     }
+}
+
+private sealed interface LabelConflict {
+    data class StopAlreadyOnAnotherLabel(
+        val target: StopLabel,
+        val stop: StopItem,
+        val existingLabel: StopLabel,
+    ) : LabelConflict
+
+    data class LabelHasDifferentStop(
+        val target: StopLabel,
+        val stop: StopItem,
+        val existingStopName: String,
+    ) : LabelConflict
 }
 
 /**
@@ -330,9 +395,10 @@ private fun SearchStopScreenSinglePane(
     editingLabels: Boolean,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
+    onUnsaveLabel: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
     onLabelLongClick: (StopLabel) -> Unit,
-    onLabelTapInEditMode: (StopLabel) -> Unit,
+    onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -448,9 +514,10 @@ private fun SearchStopScreenSinglePane(
                     editingLabels = editingLabels,
                     onStopSelect = onStopSelect,
                     onSaveAsLabel = onSaveAsLabel,
+                    onUnsaveLabel = onUnsaveLabel,
                     onUnsetLabelClick = onUnsetLabelClick,
                     onLabelLongClick = onLabelLongClick,
-                    onLabelTapInEditMode = onLabelTapInEditMode,
+                    onCancelAssigning = onCancelAssigning,
                     onMoveLabel = onMoveLabel,
                     onAddLabelClick = onAddLabelClick,
                     onDoneEditing = onDoneEditing,
@@ -522,9 +589,10 @@ private fun SearchStopScreenDualPane(
     editingLabels: Boolean,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
+    onUnsaveLabel: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
     onLabelLongClick: (StopLabel) -> Unit,
-    onLabelTapInEditMode: (StopLabel) -> Unit,
+    onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -607,9 +675,10 @@ private fun SearchStopScreenDualPane(
                     editingLabels = editingLabels,
                     onStopSelect = onStopSelect,
                     onSaveAsLabel = onSaveAsLabel,
+                    onUnsaveLabel = onUnsaveLabel,
                     onUnsetLabelClick = onUnsetLabelClick,
                     onLabelLongClick = onLabelLongClick,
-                    onLabelTapInEditMode = onLabelTapInEditMode,
+                    onCancelAssigning = onCancelAssigning,
                     onMoveLabel = onMoveLabel,
                     onAddLabelClick = onAddLabelClick,
                     onDoneEditing = onDoneEditing,
@@ -655,9 +724,10 @@ private fun SearchStopListContent(
     onOpenMap: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
+    onUnsaveLabel: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
     onLabelLongClick: (StopLabel) -> Unit,
-    onLabelTapInEditMode: (StopLabel) -> Unit,
+    onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -686,12 +756,25 @@ private fun SearchStopListContent(
                             },
                             onUnsetLabelClick = onUnsetLabelClick,
                             onLabelLongClick = onLabelLongClick,
-                            onLabelTapInEditMode = onLabelTapInEditMode,
                             onMoveLabel = onMoveLabel,
                             onAddLabelClick = onAddLabelClick,
                             onDoneEditing = onDoneEditing,
                         )
-                        Divider()
+                    }
+                    if (assigningLabel != null) {
+                        item(key = "assigning-banner") {
+                            AssigningModeBanner(
+                                label = assigningLabel,
+                                onCancel = onCancelAssigning,
+                            )
+                        }
+                    }
+                    item(key = "label-divider") {
+                        Divider(
+                            modifier = Modifier.padding(
+                                horizontal = KrailTheme.dimensions.pageHorizontalPadding,
+                            ),
+                        )
                     }
                 }
 
@@ -713,6 +796,7 @@ private fun SearchStopListContent(
                     savedStopIds = savedStopIds,
                     onStopSelect = onStopSelect,
                     onSaveAsLabel = onSaveAsLabel,
+                    onUnsaveLabel = onUnsaveLabel,
                     onEvent = onEvent,
                 )
 
@@ -738,12 +822,25 @@ private fun SearchStopListContent(
                             },
                             onUnsetLabelClick = onUnsetLabelClick,
                             onLabelLongClick = onLabelLongClick,
-                            onLabelTapInEditMode = onLabelTapInEditMode,
                             onMoveLabel = onMoveLabel,
                             onAddLabelClick = onAddLabelClick,
                             onDoneEditing = onDoneEditing,
                         )
-                        Divider()
+                    }
+                    if (assigningLabel != null) {
+                        item(key = "assigning-banner") {
+                            AssigningModeBanner(
+                                label = assigningLabel,
+                                onCancel = onCancelAssigning,
+                            )
+                        }
+                    }
+                    item(key = "label-divider") {
+                        Divider(
+                            modifier = Modifier.padding(
+                                horizontal = KrailTheme.dimensions.pageHorizontalPadding,
+                            ),
+                        )
                     }
                 }
 
@@ -765,6 +862,7 @@ private fun SearchStopListContent(
                     savedStopIds = savedStopIds,
                     onStopSelect = onStopSelect,
                     onSaveAsLabel = onSaveAsLabel,
+                    onUnsaveLabel = onUnsaveLabel,
                     onEvent = onEvent,
                     searchQuery = searchStopState.searchQuery,
                 )
@@ -800,6 +898,7 @@ private fun LazyListScope.searchResultsList(
     savedStopIds: Set<String>,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
+    onUnsaveLabel: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     items(
@@ -813,6 +912,7 @@ private fun LazyListScope.searchResultsList(
     ) { result ->
         when (result) {
             is SearchStopState.SearchResult.Stop -> {
+                val isSaved = result.stopId in savedStopIds
                 StopSearchListItem(
                     stopId = result.stopId,
                     stopName = result.stopName,
@@ -829,11 +929,14 @@ private fun LazyListScope.searchResultsList(
                             ),
                         )
                     },
-                    isSaved = result.stopId in savedStopIds,
-                    onSaveAsLabel = onSaveAsLabel,
+                    isSaved = isSaved,
+                    onSaveAsLabel = if (!isSaved) onSaveAsLabel else null,
+                    onUnsaveLabel = if (isSaved) onUnsaveLabel else null,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Divider()
+                Divider(
+                    modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
+                )
             }
 
             is SearchStopState.SearchResult.Trip -> {
@@ -877,31 +980,36 @@ private fun LazyListScope.recentSearchStopsList(
     savedStopIds: Set<String>,
     onStopSelect: (StopItem) -> Unit,
     onSaveAsLabel: (StopItem) -> Unit,
+    onUnsaveLabel: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     if (recentStops.isNotEmpty()) {
         item("recent_stops_title") {
+            val dim = KrailTheme.dimensions
             Row(
-                modifier =
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 20.dp),
+                    .padding(
+                        start = dim.pageHorizontalPadding,
+                        end = dim.pageHorizontalPadding,
+                        top = dim.spacingS,
+                        bottom = dim.spacingS,
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Recent",
-                    style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
+                    style = KrailTheme.typography.titleMedium,
+                    color = KrailTheme.colors.softLabel,
                 )
 
                 Image(
                     painter = painterResource(TajRes.drawable.ic_close),
                     contentDescription = "Clear recent stops",
-                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-                    modifier =
-                    Modifier
-                        .size(24.dp)
+                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.softLabel),
+                    modifier = Modifier
+                        .size(36.dp)
                         .clip(CircleShape)
                         .klickable {
                             onEvent(
@@ -909,7 +1017,8 @@ private fun LazyListScope.recentSearchStopsList(
                                     recentSearchCount = recentStops.size,
                                 ),
                             )
-                        },
+                        }
+                        .padding(8.dp),
                 )
             }
         }
@@ -919,6 +1028,7 @@ private fun LazyListScope.recentSearchStopsList(
         items = recentStops,
         key = { it.stopId },
     ) { stop ->
+        val isSaved = stop.stopId in savedStopIds
         StopSearchListItem(
             stopId = stop.stopId,
             stopName = stop.stopName,
@@ -935,11 +1045,14 @@ private fun LazyListScope.recentSearchStopsList(
                     ),
                 )
             },
-            isSaved = stop.stopId in savedStopIds,
-            onSaveAsLabel = onSaveAsLabel,
+            isSaved = isSaved,
+            onSaveAsLabel = if (!isSaved) onSaveAsLabel else null,
+            onUnsaveLabel = if (isSaved) onUnsaveLabel else null,
             modifier = Modifier.fillMaxWidth(),
         )
-        Divider()
+        Divider(
+            modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
+        )
     }
 }
 
@@ -952,7 +1065,6 @@ private fun LabelShortcutsRow(
     onSetLabelClick: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
     onLabelLongClick: (StopLabel) -> Unit,
-    onLabelTapInEditMode: (StopLabel) -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -960,92 +1072,67 @@ private fun LabelShortcutsRow(
 ) {
     val dim = KrailTheme.dimensions
     val haptic = LocalHapticFeedback.current
-    var draggedKey by remember { mutableStateOf<String?>(null) }
-    var dragOffset by remember { mutableFloatStateOf(0f) }
-    val pillWidths = remember { mutableStateMapOf<String, Float>() }
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val key = from.key as? String ?: return@rememberReorderableLazyListState
+        onMoveLabel(key, to.index)
+    }
 
     LazyRow(
+        state = lazyListState,
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingL),
+        contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingS),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        itemsIndexed(items = labels, key = { _, label -> label.label }) { index, label ->
+        items(items = labels, key = { it.label }) { label ->
             val isAssigning = assigningLabel?.label == label.label
-            val isDragging = draggedKey == label.label
-            val rotation = rememberWiggleRotation(active = editing && !isDragging, seed = label.label.hashCode())
-
-            val gestureModifier = Modifier
-                .animateItem()
-                .zIndex(if (isDragging) 1f else 0f)
-                .graphicsLayer {
-                    rotationZ = rotation
-                    if (isDragging) {
-                        translationX = dragOffset
-                        scaleX = 1.05f
-                        scaleY = 1.05f
-                    }
-                }
-                .onSizeChanged { size -> pillWidths[label.label] = size.width.toFloat() }
-                .pointerInput(label.label, editing, index, labels.size) {
-                    if (editing) {
-                        detectDragGestures(
-                            onDragStart = {
-                                draggedKey = label.label
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            },
-                            onDragEnd = {
-                                draggedKey = null
-                                dragOffset = 0f
-                            },
-                            onDragCancel = {
-                                draggedKey = null
-                                dragOffset = 0f
-                            },
-                            onDrag = { change, drag ->
-                                change.consume()
-                                val newOffset = dragOffset + drag.x
-                                dragOffset = newOffset
-                                val width = pillWidths[label.label] ?: return@detectDragGestures
-                                val threshold = width * 0.6f
-                                when {
-                                    newOffset > threshold && index < labels.size - 1 -> {
-                                        onMoveLabel(label.label, index + 1)
-                                        dragOffset = newOffset - width
-                                    }
-                                    newOffset < -threshold && index > 0 -> {
-                                        onMoveLabel(label.label, index - 1)
-                                        dragOffset = newOffset + width
-                                    }
-                                }
-                            },
-                        )
-                    }
-                }
-                .combinedClickable(
-                    onClick = {
-                        if (editing) {
-                            onLabelTapInEditMode(label)
-                        } else if (label.isSet) {
-                            label.toStopItem()?.let(onSetLabelClick)
-                        } else {
-                            onUnsetLabelClick(label)
+            ReorderableItem(reorderState, key = label.label) { isDragging ->
+                val rotation = rememberWiggleRotation(
+                    active = editing && !isDragging,
+                    seed = label.label.hashCode(),
+                )
+                // graphicsLayer outer → clip inner so the rotation rotates the clipped pill;
+                // clip BEFORE clickable so the ripple is contained inside the rounded shape.
+                val pillModifier = Modifier
+                    .graphicsLayer {
+                        rotationZ = rotation
+                        if (isDragging) {
+                            scaleX = 1.05f
+                            scaleY = 1.05f
                         }
-                    },
-                    onLongClick = if (!editing) {
-                        { onLabelLongClick(label) }
-                    } else {
-                        null
-                    },
-                )
+                    }
+                    .clip(RoundedCornerShape(dim.radiusFull))
+                    .then(
+                        if (editing) {
+                            // In edit mode: drag immediately on touch; no tap action.
+                            Modifier.draggableHandle(
+                                onDragStarted = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                },
+                            )
+                        } else {
+                            Modifier.combinedClickable(
+                                onClick = {
+                                    if (label.isSet) {
+                                        label.toStopItem()?.let(onSetLabelClick)
+                                    } else {
+                                        onUnsetLabelClick(label)
+                                    }
+                                },
+                                onLongClick = { onLabelLongClick(label) },
+                            )
+                        },
+                    )
 
-            if (label.isSet) {
-                SetLabelPill(label = label, modifier = gestureModifier)
-            } else {
-                UnsetLabelPill(
-                    label = label,
-                    isAssigning = isAssigning,
-                    modifier = gestureModifier,
-                )
+                if (label.isSet) {
+                    SetLabelPill(label = label, modifier = pillModifier)
+                } else {
+                    UnsetLabelPill(
+                        label = label,
+                        isAssigning = isAssigning,
+                        modifier = pillModifier,
+                    )
+                }
             }
         }
         item(key = "trailing") {
@@ -1165,6 +1252,43 @@ private fun AddLabelPill(onClick: () -> Unit) {
             text = "+ Add",
             style = KrailTheme.typography.labelLarge,
             color = KrailTheme.colors.softLabel,
+        )
+    }
+}
+
+@Composable
+private fun AssigningModeBanner(
+    label: StopLabel,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                start = dim.pageHorizontalPadding,
+                end = dim.pageHorizontalPadding,
+                top = dim.spacingXS,
+                bottom = dim.spacingS,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
+    ) {
+        Text(
+            text = "Tap the ⭐ next to a stop to save it as ${label.label}",
+            style = KrailTheme.typography.bodySmall,
+            color = KrailTheme.colors.softLabel,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "Cancel",
+            style = KrailTheme.typography.labelLarge,
+            color = themeColor(),
+            modifier = Modifier
+                .clip(RoundedCornerShape(dim.radiusFull))
+                .klickable(onClick = onCancel)
+                .padding(horizontal = dim.spacingS, vertical = dim.spacingXS),
         )
     }
 }
@@ -1498,6 +1622,151 @@ private fun PreviewSearchStopScreen_Map() {
                     onEvent = {},
                 )
             }
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_FreshInstall() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                listState = ListState.Recent,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(),
+                stopLabels = StopLabel.defaults,
+            )
+            SearchStopScreen(
+                searchStopState = state,
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_LabelsOnly_NoRecents() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                listState = ListState.Recent,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(),
+                stopLabels = persistentListOf(
+                    StopLabel(emoji = "🏠", label = "Home", stopId = "1", stopName = "Central Station"),
+                    StopLabel(emoji = "💼", label = "Work", stopId = "2", stopName = "Town Hall"),
+                ),
+            )
+            SearchStopScreen(
+                searchStopState = state,
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_NoLabels_WithRecents() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                listState = ListState.Recent,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(
+                    SearchStopState.StopResult(
+                        "Central Station",
+                        "stop_1",
+                        persistentListOf(TransportMode.Train),
+                    ),
+                    SearchStopState.StopResult(
+                        "Town Hall",
+                        "stop_2",
+                        persistentListOf(TransportMode.Train, TransportMode.LightRail),
+                    ),
+                ),
+                stopLabels = persistentListOf(),
+            )
+            SearchStopScreen(
+                searchStopState = state,
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_AllLabels_AndRecents() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                listState = ListState.Recent,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(
+                    SearchStopState.StopResult(
+                        "Central Station",
+                        "stop_1",
+                        persistentListOf(TransportMode.Train),
+                    ),
+                    SearchStopState.StopResult(
+                        "Sydney Airport - International T1",
+                        "stop_3",
+                        persistentListOf(TransportMode.Train),
+                    ),
+                ),
+                stopLabels = persistentListOf(
+                    StopLabel(emoji = "🏠", label = "Home", stopId = "stop_1", stopName = "Central Station"),
+                    StopLabel(emoji = "💼", label = "Work"),
+                    StopLabel(emoji = "🏋", label = "Gym", stopId = "stop_4", stopName = "Bondi Junction"),
+                    StopLabel(emoji = "☕", label = "Cafe"),
+                    StopLabel(emoji = "🏖", label = "Beach"),
+                ),
+            )
+            SearchStopScreen(
+                searchStopState = state,
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_AssigningMode() {
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val state = SearchStopState(
+                listState = ListState.Recent,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                recentStops = persistentListOf(
+                    SearchStopState.StopResult(
+                        "Central Station",
+                        "stop_1",
+                        persistentListOf(TransportMode.Train),
+                    ),
+                ),
+                stopLabels = persistentListOf(
+                    StopLabel(emoji = "🏠", label = "Home"),
+                    StopLabel(emoji = "💼", label = "Work"),
+                ),
+            )
+            SearchStopScreen(
+                searchStopState = state,
+                onEvent = {},
+            )
         }
     }
 }

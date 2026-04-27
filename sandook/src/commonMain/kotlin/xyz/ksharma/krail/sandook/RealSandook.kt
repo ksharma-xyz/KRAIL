@@ -18,6 +18,8 @@ internal class RealSandook(
 
     private val recentSearchStopsQueries = sandook.recentSearchStopsQueries
 
+    private val stopLabelsQueries = sandook.stopLabelsQueries
+
     // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {
         query.insertOrReplaceProductClass(productClass)
@@ -182,6 +184,46 @@ internal class RealSandook(
 
     override fun cleanupOldRecentSearchStops() {
         recentSearchStopsQueries.cleanupOldRecentSearchStops()
+    }
+    // endregion
+
+    // region StopLabels
+    override fun observeStopLabels(): Flow<List<StopLabels>> {
+        return stopLabelsQueries.selectAllStopLabels()
+            .asFlow()
+            .mapToList(ioDispatcher)
+    }
+
+    override fun upsertStopLabel(
+        label: String,
+        emoji: String,
+        stopId: String?,
+        stopName: String?,
+        sortOrder: Long,
+    ) {
+        stopLabelsQueries.upsertStopLabel(
+            label = label,
+            emoji = emoji,
+            stop_id = stopId,
+            stop_name = stopName,
+            sort_order = sortOrder,
+        )
+    }
+
+    override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) {
+        stopLabelsQueries.updateStopLabelStop(
+            stop_id = stopId,
+            stop_name = stopName,
+            label = label,
+        )
+    }
+
+    override fun deleteStopLabel(label: String) {
+        stopLabelsQueries.deleteStopLabel(label)
+    }
+
+    override fun clearStopLabels() {
+        stopLabelsQueries.clearStopLabels()
     }
     // endregion
 }

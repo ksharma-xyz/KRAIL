@@ -727,7 +727,7 @@ private fun SelectOnMapItem(
         )
         Text(
             text = "Select on map",
-            color = color,
+            color = KrailTheme.colors.onSurface,
             style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
         )
     }

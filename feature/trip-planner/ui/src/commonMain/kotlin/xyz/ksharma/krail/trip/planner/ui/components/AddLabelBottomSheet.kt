@@ -1,5 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -12,11 +19,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,7 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import app.krail.taj.resources.Res
+import app.krail.taj.resources.ic_location
+import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
@@ -36,12 +51,12 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 
 private val suggestions = listOf(
-    "🏠" to "Home",
-    "💼" to "Work",
-    "🏋" to "Gym",
-    "🏫" to "School",
-    "☕" to "Cafe",
-    "❤️" to "Favourite",
+    "Home",
+    "Work",
+    "Gym",
+    "School",
+    "Cafe",
+    "Favourite",
 )
 
 @Composable
@@ -54,7 +69,6 @@ fun AddLabelBottomSheet(
     val dim = KrailTheme.dimensions
     var name by rememberSaveable { mutableStateOf("") }
     var selectedSuggestionIndex by rememberSaveable { mutableIntStateOf(-1) }
-    val emoji = if (selectedSuggestionIndex >= 0) suggestions[selectedSuggestionIndex].first else "📍"
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,8 +82,9 @@ fun AddLabelBottomSheet(
                 .imePadding()
                 .padding(bottom = dim.spacingXXL),
         ) {
+            // Question heading — context makes the action clear
             Text(
-                text = "Name this place",
+                text = "What do you call",
                 style = KrailTheme.typography.headlineMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
@@ -77,8 +92,100 @@ fun AddLabelBottomSheet(
 
             Spacer(modifier = Modifier.height(dim.spacingXS))
 
+            // Stop name in a themed chip so it reads as "What do you call [stop name]?"
+            Row(
+                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val shape = RoundedCornerShape(dim.radiusFull)
+                Row(
+                    modifier = Modifier
+                        .clip(shape)
+                        .background(themeColor(), shape)
+                        .padding(
+                            horizontal = dim.chipHorizontalPadding,
+                            vertical = dim.chipVerticalPadding,
+                        ),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.ic_location),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                        modifier = Modifier.size(12.dp),
+                    )
+                    Text(
+                        text = stopName,
+                        style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = KrailTheme.colors.surface,
+                    )
+                }
+                Text(
+                    text = "?",
+                    style = KrailTheme.typography.headlineMedium,
+                    color = KrailTheme.colors.onSurface,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(dim.spacingL))
+
+            // Live label preview — animates as user types
+            if (name.isNotBlank()) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = dim.pageHorizontalPadding)
+                        .padding(bottom = dim.spacingM),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Preview:",
+                        style = KrailTheme.typography.bodySmall,
+                        color = KrailTheme.colors.onSurface.copy(alpha = 0.5f),
+                    )
+                    AnimatedContent(
+                        targetState = name,
+                        transitionSpec = {
+                            fadeIn() + slideInVertically { -it / 2 } togetherWith
+                                fadeOut() + slideOutVertically { it / 2 }
+                        },
+                        label = "labelPreview",
+                    ) { previewName ->
+                        val previewShape = RoundedCornerShape(dim.radiusFull)
+                        Row(
+                            modifier = Modifier
+                                .clip(previewShape)
+                                .background(themeColor(), previewShape)
+                                .padding(
+                                    horizontal = dim.chipHorizontalPadding,
+                                    vertical = dim.chipVerticalPadding,
+                                ),
+                            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.ic_location),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                                modifier = Modifier.size(12.dp),
+                            )
+                            Text(
+                                text = previewName,
+                                style = KrailTheme.typography.labelLarge,
+                                color = KrailTheme.colors.surface,
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Reserve space so layout doesn't jump when preview appears
+                Spacer(modifier = Modifier.height(dim.spacingXXL))
+            }
+
             Text(
-                text = stopName,
+                text = "Pick a suggestion or type your own.",
                 style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
@@ -86,21 +193,13 @@ fun AddLabelBottomSheet(
 
             Spacer(modifier = Modifier.height(dim.spacingM))
 
-            Text(
-                text = "Pick a suggestion or type your own name.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            )
-
-            Spacer(modifier = Modifier.height(dim.spacingL))
-
+            // Suggestion chips — selecting one fills the text field
             LazyRow(
                 contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                itemsIndexed(suggestions, key = { _, pair -> pair.second }) { index, (chipEmoji, chipName) ->
+                itemsIndexed(suggestions, key = { _, s -> s }) { index, chipName ->
                     val isSelected = selectedSuggestionIndex == index
                     val shape = RoundedCornerShape(dim.radiusFull)
                     Row(
@@ -129,11 +228,6 @@ fun AddLabelBottomSheet(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = chipEmoji,
-                            style = KrailTheme.typography.labelLarge,
-                            color = if (isSelected) KrailTheme.colors.surface else KrailTheme.colors.onSurface,
-                        )
-                        Text(
                             text = chipName,
                             style = KrailTheme.typography.labelLarge,
                             color = if (isSelected) KrailTheme.colors.surface else KrailTheme.colors.onSurface,
@@ -144,26 +238,32 @@ fun AddLabelBottomSheet(
 
             Spacer(modifier = Modifier.height(dim.spacingL))
 
-            TextField(
-                placeholder = "e.g. Home, Gym, School…",
-                initialText = name,
-                onTextChange = { text ->
-                    name = text.toString()
-                    if (text.isNotBlank()) {
-                        val matchedIndex =
-                            suggestions.indexOfFirst { it.second.equals(text.toString(), ignoreCase = true) }
-                        selectedSuggestionIndex = matchedIndex
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dim.pageHorizontalPadding),
-            )
+            // key(selectedSuggestionIndex) forces TextField to recompose (and pick up
+            // the chip's name as initialText) when a suggestion is tapped.
+            key(selectedSuggestionIndex) {
+                TextField(
+                    placeholder = "e.g. Home, Gym, School…",
+                    initialText = name,
+                    onTextChange = { text ->
+                        name = text.toString()
+                        if (text.isNotBlank()) {
+                            val matchedIndex =
+                                suggestions.indexOfFirst { it.equals(text.toString(), ignoreCase = true) }
+                            selectedSuggestionIndex = matchedIndex
+                        } else {
+                            selectedSuggestionIndex = -1
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dim.pageHorizontalPadding),
+                )
+            }
 
             Spacer(modifier = Modifier.height(dim.spacingXL))
 
             Button(
-                onClick = { onSave(emoji, name.trim()) },
+                onClick = { onSave("📍", name.trim()) },
                 enabled = name.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()

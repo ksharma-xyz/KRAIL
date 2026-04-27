@@ -1,11 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,9 +16,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import app.krail.taj.resources.Res
+import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
@@ -87,7 +94,12 @@ private fun SetLabelPill(
             LocalContentColor provides KrailTheme.colors.surface,
             LocalTextStyle provides KrailTheme.typography.labelLarge,
         ) {
-            Text(text = label.emoji)
+            Image(
+                painter = painterResource(Res.drawable.ic_location),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                modifier = Modifier.size(14.dp),
+            )
             Text(text = label.label)
         }
     }
@@ -119,7 +131,12 @@ private fun UnsetLabelPill(
             LocalContentColor provides KrailTheme.colors.onSurface.copy(alpha = 0.5f),
             LocalTextStyle provides KrailTheme.typography.labelLarge,
         ) {
-            Text(text = label.emoji)
+            Image(
+                painter = painterResource(Res.drawable.ic_location),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface.copy(alpha = 0.5f)),
+                modifier = Modifier.size(14.dp),
+            )
             Text(text = label.label)
         }
     }

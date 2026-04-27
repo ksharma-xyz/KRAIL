@@ -52,8 +52,10 @@ import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PendingNewLabel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -208,28 +210,61 @@ class SavedTripsViewModel(
 
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
 
-            is SavedTripUiEvent.StopLabelPillTapped -> {
-                stopResultsManager.setSelectedToStop(event.stopItem)
-                updateUiState { copy(toStop = event.stopItem) }
-            }
+            is SavedTripUiEvent.StopLabelPillTapped -> onStopLabelPillTapped(event.stopItem)
 
             SavedTripUiEvent.AddStopLabelTapped -> Unit
 
             is SavedTripUiEvent.StopLabelAssigned -> onStopLabelAssigned(event.labelKey, event.stopItem)
+
+            is SavedTripUiEvent.StopLabelUsedAsFrom -> onStopLabelUsedAsFrom(event.stopItem)
+
+            is SavedTripUiEvent.SetPendingNewLabel -> onSetPendingNewLabel(event.emoji, event.name)
         }
     }
 
+    private fun onStopLabelPillTapped(stopItem: StopItem) {
+        stopResultsManager.setSelectedToStop(stopItem)
+        updateUiState { copy(toStop = stopItem) }
+    }
+
+    private fun onStopLabelUsedAsFrom(stopItem: StopItem) {
+        stopResultsManager.setSelectedFromStop(stopItem)
+        updateUiState { copy(fromStop = stopItem) }
+    }
+
+    private fun onSetPendingNewLabel(emoji: String, name: String) {
+        updateUiState { copy(pendingNewLabel = PendingNewLabel(emoji = emoji, name = name)) }
+    }
+
     private fun onStopLabelAssigned(labelKey: String, stopItem: StopItem) {
-        updateUiState {
-            copy(
-                stopLabels = stopLabels.map { label ->
-                    if (label.label == labelKey) {
-                        label.copy(stopId = stopItem.stopId, stopName = stopItem.stopName)
-                    } else {
-                        label
-                    }
-                }.toImmutableList(),
+        val current = _uiState.value
+        val exists = current.stopLabels.any { it.label == labelKey }
+        if (exists) {
+            updateUiState {
+                copy(
+                    stopLabels = stopLabels.map { label ->
+                        if (label.label == labelKey) {
+                            label.copy(stopId = stopItem.stopId, stopName = stopItem.stopName)
+                        } else {
+                            label
+                        }
+                    }.toImmutableList(),
+                )
+            }
+        } else {
+            val pending = current.pendingNewLabel ?: return
+            val newLabel = StopLabel(
+                emoji = pending.emoji,
+                label = labelKey,
+                stopId = stopItem.stopId,
+                stopName = stopItem.stopName,
             )
+            updateUiState {
+                copy(
+                    stopLabels = (stopLabels + newLabel).toImmutableList(),
+                    pendingNewLabel = null,
+                )
+            }
         }
     }
 

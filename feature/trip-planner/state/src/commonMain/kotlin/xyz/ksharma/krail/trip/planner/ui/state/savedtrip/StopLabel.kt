@@ -5,6 +5,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
+data class PendingNewLabel(val emoji: String, val name: String)
+
 @Stable
 data class StopLabel(
     val emoji: String,

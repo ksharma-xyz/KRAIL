@@ -55,12 +55,14 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.components.StopLabelPillRow
+import xyz.ksharma.krail.trip.planner.ui.components.StopUseAsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionSection
 import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -78,6 +80,7 @@ fun SavedTripsScreen(
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
     onUnsetLabelTap: (StopLabel) -> Unit = {},
+    onAddLabelNavigate: (labelKey: String) -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
@@ -102,6 +105,10 @@ fun SavedTripsScreen(
     // Search row expand / from-highlight state — rememberSaveable survives rotation.
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
     var isFromHighlighted by rememberSaveable { mutableStateOf(false) }
+
+    // Bottom sheet state for set-label "use as" sheet and add-label sheet.
+    var useAsSheetStop by remember { mutableStateOf<StopItem?>(null) }
+    var showAddLabelSheet by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -147,15 +154,13 @@ fun SavedTripsScreen(
                         StopLabelPillRow(
                             stopLabels = savedTripsState.stopLabels,
                             onLabelClick = { stopItem ->
-                                onEvent(SavedTripUiEvent.StopLabelPillTapped(stopItem))
-                                isSearchExpanded = true
-                                isFromHighlighted = true
+                                useAsSheetStop = stopItem
                             },
                             onUnsetLabelClick = { label ->
                                 onUnsetLabelTap(label)
                             },
                             onAddLabelClick = {
-                                onEvent(SavedTripUiEvent.AddStopLabelTapped)
+                                showAddLabelSheet = true
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -298,6 +303,35 @@ fun SavedTripsScreen(
             },
             onSearchButtonClick = { onSearchButtonClick() },
         )
+
+        useAsSheetStop?.let { stop ->
+            StopUseAsBottomSheet(
+                stopItem = stop,
+                onDismiss = { useAsSheetStop = null },
+                onUseAsTo = { stopItem ->
+                    onEvent(SavedTripUiEvent.StopLabelPillTapped(stopItem))
+                    isSearchExpanded = true
+                    isFromHighlighted = false
+                    useAsSheetStop = null
+                },
+                onUseAsFrom = { stopItem ->
+                    onEvent(SavedTripUiEvent.StopLabelUsedAsFrom(stopItem))
+                    isSearchExpanded = true
+                    useAsSheetStop = null
+                },
+            )
+        }
+
+        if (showAddLabelSheet) {
+            AddLabelBottomSheet(
+                onDismiss = { showAddLabelSheet = false },
+                onPickStop = { emoji, name ->
+                    onEvent(SavedTripUiEvent.SetPendingNewLabel(emoji, name))
+                    onAddLabelNavigate(name)
+                    showAddLabelSheet = false
+                },
+            )
+        }
     }
 }
 

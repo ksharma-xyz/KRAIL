@@ -714,7 +714,7 @@ private fun SelectOnMapItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .klickable(onOpenMap)
+            .klickable { onOpenMap() }
             .padding(vertical = dim.spacingM, horizontal = dim.spacingXXL),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,

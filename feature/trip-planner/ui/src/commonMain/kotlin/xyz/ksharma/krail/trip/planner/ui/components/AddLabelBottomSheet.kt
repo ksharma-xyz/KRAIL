@@ -50,18 +50,11 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 
-private val suggestions = listOf(
-    "Home",
-    "Work",
-    "Gym",
-    "School",
-    "Cafe",
-    "Favourite",
-)
+private val suggestions: List<String> = stopLabelSuggestions.map { it.first }
 
 @Composable
 fun AddLabelBottomSheet(
-    stopName: String,
+    stopName: String?,
     onDismiss: () -> Unit,
     onSave: (emoji: String, name: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -82,39 +75,48 @@ fun AddLabelBottomSheet(
                 .imePadding()
                 .padding(bottom = dim.spacingXXL),
         ) {
-            Text(
-                text = "Give a nickname to",
-                style = KrailTheme.typography.headlineMedium,
-                color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            )
-
-            Spacer(modifier = Modifier.height(dim.spacingXS))
-
-            // Stop name in a themed chip completing the heading sentence
-            val stopChipShape = RoundedCornerShape(dim.radiusFull)
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .clip(stopChipShape)
-                    .background(themeColor(), stopChipShape)
-                    .padding(
-                        horizontal = dim.chipHorizontalPadding,
-                        vertical = dim.chipVerticalPadding,
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_location),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                    modifier = Modifier.size(12.dp),
-                )
+            if (stopName != null) {
                 Text(
-                    text = stopName,
-                    style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = KrailTheme.colors.surface,
+                    text = "Give a nickname to",
+                    style = KrailTheme.typography.headlineMedium,
+                    color = KrailTheme.colors.onSurface,
+                    modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                )
+
+                Spacer(modifier = Modifier.height(dim.spacingXS))
+
+                // Stop name in a themed chip completing the heading sentence
+                val stopChipShape = RoundedCornerShape(dim.radiusFull)
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = dim.pageHorizontalPadding)
+                        .clip(stopChipShape)
+                        .background(themeColor(), stopChipShape)
+                        .padding(
+                            horizontal = dim.chipHorizontalPadding,
+                            vertical = dim.chipVerticalPadding,
+                        ),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.ic_location),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                        modifier = Modifier.size(12.dp),
+                    )
+                    Text(
+                        text = stopName,
+                        style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = KrailTheme.colors.surface,
+                    )
+                }
+            } else {
+                Text(
+                    text = "Add a label",
+                    style = KrailTheme.typography.headlineMedium,
+                    color = KrailTheme.colors.onSurface,
+                    modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                 )
             }
 
@@ -122,6 +124,7 @@ fun AddLabelBottomSheet(
 
             // Live label preview — animates as user types
             if (name.isNotBlank()) {
+                val previewShape = RoundedCornerShape(dim.radiusFull)
                 Row(
                     modifier = Modifier
                         .padding(horizontal = dim.pageHorizontalPadding)
@@ -134,37 +137,42 @@ fun AddLabelBottomSheet(
                         style = KrailTheme.typography.bodySmall,
                         color = KrailTheme.colors.softLabel,
                     )
-                    AnimatedContent(
-                        targetState = name,
-                        transitionSpec = {
-                            fadeIn() + slideInVertically { -it / 2 } togetherWith
-                                fadeOut() + slideOutVertically { it / 2 }
-                        },
-                        label = "labelPreview",
-                    ) { previewName ->
-                        val previewShape = RoundedCornerShape(dim.radiusFull)
-                        Row(
-                            modifier = Modifier
-                                .clip(previewShape)
-                                .background(themeColor(), previewShape)
-                                .padding(
-                                    horizontal = dim.chipHorizontalPadding,
-                                    vertical = dim.chipVerticalPadding,
-                                ),
-                            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Image(
-                                painter = painterResource(Res.drawable.ic_location),
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                                modifier = Modifier.size(12.dp),
-                            )
-                            Text(
-                                text = previewName,
-                                style = KrailTheme.typography.labelLarge,
-                                color = KrailTheme.colors.surface,
-                            )
+                    // Static pill — background never animates, only the icon+text inside.
+                    Row(
+                        modifier = Modifier
+                            .clip(previewShape)
+                            .background(themeColor(), previewShape)
+                            .padding(
+                                horizontal = dim.chipHorizontalPadding,
+                                vertical = dim.chipVerticalPadding,
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AnimatedContent(
+                            targetState = name,
+                            transitionSpec = {
+                                (fadeIn() + slideInVertically { -it / 2 }) togetherWith
+                                    (fadeOut() + slideOutVertically { it / 2 })
+                            },
+                            label = "labelPreview",
+                        ) { previewName ->
+                            val icon = stopLabelIcon(previewName) ?: Res.drawable.ic_location
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Image(
+                                    painter = painterResource(icon),
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                                    modifier = Modifier.size(14.dp),
+                                )
+                                Text(
+                                    text = previewName,
+                                    style = KrailTheme.typography.labelLarge,
+                                    color = KrailTheme.colors.surface,
+                                )
+                            }
                         }
                     }
                 }
@@ -188,9 +196,11 @@ fun AddLabelBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                itemsIndexed(suggestions, key = { _, s -> s }) { index, chipName ->
+                itemsIndexed(stopLabelSuggestions, key = { _, pair -> pair.first }) { index, (chipName, icon) ->
                     val isSelected = selectedSuggestionIndex == index
                     val shape = RoundedCornerShape(dim.radiusFull)
+                    val contentColor =
+                        if (isSelected) KrailTheme.colors.surface else KrailTheme.colors.onSurface
                     Row(
                         modifier = Modifier
                             .clip(shape)
@@ -216,10 +226,16 @@ fun AddLabelBottomSheet(
                         horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        Image(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(contentColor),
+                            modifier = Modifier.size(14.dp),
+                        )
                         Text(
                             text = chipName,
                             style = KrailTheme.typography.labelLarge,
-                            color = if (isSelected) KrailTheme.colors.surface else KrailTheme.colors.onSurface,
+                            color = contentColor,
                         )
                     }
                 }

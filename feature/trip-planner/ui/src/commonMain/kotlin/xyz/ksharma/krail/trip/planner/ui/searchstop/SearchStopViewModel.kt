@@ -213,6 +213,31 @@ class SearchStopViewModel(
                     ),
                 )
             }
+
+            is SearchStopUiEvent.AssignLabelStop -> {
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.updateStopLabelStop(event.labelKey, event.stopItem.stopId, event.stopItem.stopName)
+                }
+            }
+
+            is SearchStopUiEvent.CreateLabel -> {
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    val sortOrder = _uiState.value.stopLabels.size.toLong()
+                    sandook.upsertStopLabel(event.name, event.emoji, null, null, sortOrder)
+                }
+            }
+
+            is SearchStopUiEvent.ClearLabelStop -> {
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.updateStopLabelStop(event.labelKey, null, null)
+                }
+            }
+
+            is SearchStopUiEvent.DeleteLabel -> {
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.deleteStopLabel(event.labelKey)
+                }
+            }
         }
     }
 

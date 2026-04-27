@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,7 +81,11 @@ import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
+import xyz.ksharma.krail.trip.planner.ui.components.ManageLabelSheet
+import xyz.ksharma.krail.trip.planner.ui.components.SaveStopAsLabelSheet
+import xyz.ksharma.krail.trip.planner.ui.components.stopLabelIcon
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
@@ -122,6 +127,22 @@ fun SearchStopScreen(
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }
 
+    // Label assignment state: non-null when user is selecting a stop to assign to a label.
+    var assigningLabel by remember { mutableStateOf<StopLabel?>(null) }
+    var showAddLabelSheet by remember { mutableStateOf(false) }
+    var stopBeingSaved by remember { mutableStateOf<StopItem?>(null) }
+    var labelBeingManaged by remember { mutableStateOf<StopLabel?>(null) }
+
+    // Wraps onStopSelect to persist the stop as a label assignment when in assigning mode.
+    val effectiveOnStopSelect: (StopItem) -> Unit = { stopItem ->
+        val labeling = assigningLabel
+        if (labeling != null) {
+            assigningLabel = null
+            onEvent(SearchStopUiEvent.AssignLabelStop(labeling.label, stopItem))
+        }
+        onStopSelect(stopItem)
+    }
+
     LaunchedEffect(backClicked) {
         if (backClicked) {
             goBack()
@@ -157,7 +178,12 @@ fun SearchStopScreen(
                     log("value: $value")
                     textFieldText = value
                 },
-                onStopSelect = onStopSelect,
+                assigningLabel = assigningLabel,
+                onStopSelect = effectiveOnStopSelect,
+                onSaveAsLabel = { stopItem -> stopBeingSaved = stopItem },
+                onUnsetLabelClick = { label -> assigningLabel = label },
+                onLabelLongClick = { label -> labelBeingManaged = label },
+                onAddLabelClick = { showAddLabelSheet = true },
                 onEvent = onEvent,
             )
         },
@@ -176,11 +202,52 @@ fun SearchStopScreen(
                     log("value: $value")
                     textFieldText = value
                 },
-                onStopSelect = onStopSelect,
+                assigningLabel = assigningLabel,
+                onStopSelect = effectiveOnStopSelect,
+                onSaveAsLabel = { stopItem -> stopBeingSaved = stopItem },
+                onUnsetLabelClick = { label -> assigningLabel = label },
+                onLabelLongClick = { label -> labelBeingManaged = label },
+                onAddLabelClick = { showAddLabelSheet = true },
                 onEvent = onEvent,
             )
         },
     )
+
+    if (showAddLabelSheet) {
+        AddLabelBottomSheet(
+            stopName = null,
+            onDismiss = { showAddLabelSheet = false },
+            onSave = { emoji, name ->
+                showAddLabelSheet = false
+                onEvent(SearchStopUiEvent.CreateLabel(name = name, emoji = emoji))
+            },
+        )
+    }
+
+    stopBeingSaved?.let { stop ->
+        SaveStopAsLabelSheet(
+            stopName = stop.stopName,
+            labels = searchStopState.stopLabels,
+            onLabelChosen = { label ->
+                onEvent(SearchStopUiEvent.AssignLabelStop(label.label, stop))
+                stopBeingSaved = null
+            },
+            onCreateNewLabel = {
+                stopBeingSaved = null
+                showAddLabelSheet = true
+            },
+            onDismiss = { stopBeingSaved = null },
+        )
+    }
+
+    labelBeingManaged?.let { label ->
+        ManageLabelSheet(
+            label = label,
+            onClearStop = { onEvent(SearchStopUiEvent.ClearLabelStop(label.label)) },
+            onDeleteLabel = { onEvent(SearchStopUiEvent.DeleteLabel(label.label)) },
+            onDismiss = { labelBeingManaged = null },
+        )
+    }
 }
 
 /**
@@ -199,7 +266,12 @@ private fun SearchStopScreenSinglePane(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     onBackClick: () -> Unit,
     onTextChange: (String) -> Unit,
+    assigningLabel: StopLabel?,
     onStopSelect: (StopItem) -> Unit,
+    onSaveAsLabel: (StopItem) -> Unit,
+    onUnsetLabelClick: (StopLabel) -> Unit,
+    onLabelLongClick: (StopLabel) -> Unit,
+    onAddLabelClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -308,7 +380,12 @@ private fun SearchStopScreenSinglePane(
                     searchStopState = searchStopState,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
+                    assigningLabel = assigningLabel,
                     onStopSelect = onStopSelect,
+                    onSaveAsLabel = onSaveAsLabel,
+                    onUnsetLabelClick = onUnsetLabelClick,
+                    onLabelLongClick = onLabelLongClick,
+                    onAddLabelClick = onAddLabelClick,
                     onEvent = onEvent,
                     isMapsAvailable = searchStopState.isMapsAvailable,
                     onOpenMap = {
@@ -373,7 +450,12 @@ private fun SearchStopScreenDualPane(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     onBackClick: () -> Unit,
     onTextChange: (String) -> Unit,
+    assigningLabel: StopLabel?,
     onStopSelect: (StopItem) -> Unit,
+    onSaveAsLabel: (StopItem) -> Unit,
+    onUnsetLabelClick: (StopLabel) -> Unit,
+    onLabelLongClick: (StopLabel) -> Unit,
+    onAddLabelClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -449,7 +531,12 @@ private fun SearchStopScreenDualPane(
                     searchStopState = searchStopState,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
+                    assigningLabel = assigningLabel,
                     onStopSelect = onStopSelect,
+                    onSaveAsLabel = onSaveAsLabel,
+                    onUnsetLabelClick = onUnsetLabelClick,
+                    onLabelLongClick = onLabelLongClick,
+                    onAddLabelClick = onAddLabelClick,
                     onEvent = onEvent,
                     isMapsAvailable = false, // map already visible in right pane
                     onOpenMap = {},
@@ -486,9 +573,14 @@ private fun SearchStopListContent(
     searchStopState: SearchStopState,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
+    assigningLabel: StopLabel?,
     isMapsAvailable: Boolean,
     onOpenMap: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
+    onSaveAsLabel: (StopItem) -> Unit,
+    onUnsetLabelClick: (StopLabel) -> Unit,
+    onLabelLongClick: (StopLabel) -> Unit,
+    onAddLabelClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -498,12 +590,15 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
-                val setLabels = searchStopState.stopLabels.filter { it.isSet }
-                if (setLabels.isNotEmpty()) {
+                if (searchStopState.stopLabels.isNotEmpty()) {
                     item(key = "label-shortcuts") {
                         LabelShortcutsRow(
-                            labels = setLabels.toImmutableList(),
-                            onLabelClick = { stopItem -> onStopSelect(stopItem) },
+                            labels = searchStopState.stopLabels,
+                            assigningLabel = assigningLabel,
+                            onSetLabelClick = { stopItem -> onStopSelect(stopItem) },
+                            onUnsetLabelClick = onUnsetLabelClick,
+                            onLabelLongClick = onLabelLongClick,
+                            onAddLabelClick = onAddLabelClick,
                         )
                         Divider()
                     }
@@ -525,6 +620,7 @@ private fun SearchStopListContent(
                     keyboard = keyboard,
                     focusRequester = focusRequester,
                     onStopSelect = onStopSelect,
+                    onSaveAsLabel = onSaveAsLabel,
                     onEvent = onEvent,
                 )
 
@@ -537,12 +633,15 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
-                val setLabels = searchStopState.stopLabels.filter { it.isSet }
-                if (setLabels.isNotEmpty()) {
+                if (searchStopState.stopLabels.isNotEmpty()) {
                     item(key = "label-shortcuts") {
                         LabelShortcutsRow(
-                            labels = setLabels.toImmutableList(),
-                            onLabelClick = { stopItem -> onStopSelect(stopItem) },
+                            labels = searchStopState.stopLabels,
+                            assigningLabel = assigningLabel,
+                            onSetLabelClick = { stopItem -> onStopSelect(stopItem) },
+                            onUnsetLabelClick = onUnsetLabelClick,
+                            onLabelLongClick = onLabelLongClick,
+                            onAddLabelClick = onAddLabelClick,
                         )
                         Divider()
                     }
@@ -564,6 +663,7 @@ private fun SearchStopListContent(
                     keyboard = keyboard,
                     focusRequester = focusRequester,
                     onStopSelect = onStopSelect,
+                    onSaveAsLabel = onSaveAsLabel,
                     onEvent = onEvent,
                     searchQuery = searchStopState.searchQuery,
                 )
@@ -597,6 +697,7 @@ private fun LazyListScope.searchResultsList(
     focusRequester: FocusRequester,
     searchQuery: String,
     onStopSelect: (StopItem) -> Unit,
+    onSaveAsLabel: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     items(
@@ -626,6 +727,7 @@ private fun LazyListScope.searchResultsList(
                             ),
                         )
                     },
+                    onSaveAsLabel = onSaveAsLabel,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Divider()
@@ -670,6 +772,7 @@ private fun LazyListScope.recentSearchStopsList(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
     onStopSelect: (StopItem) -> Unit,
+    onSaveAsLabel: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     if (recentStops.isNotEmpty()) {
@@ -728,6 +831,7 @@ private fun LazyListScope.recentSearchStopsList(
                     ),
                 )
             },
+            onSaveAsLabel = onSaveAsLabel,
             modifier = Modifier.fillMaxWidth(),
         )
         Divider()
@@ -737,7 +841,11 @@ private fun LazyListScope.recentSearchStopsList(
 @Composable
 private fun LabelShortcutsRow(
     labels: ImmutableList<StopLabel>,
-    onLabelClick: (StopItem) -> Unit,
+    assigningLabel: StopLabel?,
+    onSetLabelClick: (StopItem) -> Unit,
+    onUnsetLabelClick: (StopLabel) -> Unit,
+    onLabelLongClick: (StopLabel) -> Unit,
+    onAddLabelClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -747,30 +855,119 @@ private fun LabelShortcutsRow(
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         items(items = labels, key = { it.label }) { label ->
-            val shape = RoundedCornerShape(dim.radiusFull)
-            val themeColor = themeColor()
-            Row(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(themeColor, shape)
-                    .klickable { label.toStopItem()?.let(onLabelClick) }
-                    .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(TajRes.drawable.ic_location),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                    modifier = Modifier.size(14.dp),
+            val isAssigning = assigningLabel?.label == label.label
+            when {
+                label.isSet -> SetLabelPill(
+                    label = label,
+                    onClick = { label.toStopItem()?.let(onSetLabelClick) },
+                    onLongClick = { onLabelLongClick(label) },
                 )
-                Text(
-                    text = label.label,
-                    style = KrailTheme.typography.labelLarge,
-                    color = KrailTheme.colors.surface,
+                else -> UnsetLabelPill(
+                    label = label,
+                    isAssigning = isAssigning,
+                    onClick = { onUnsetLabelClick(label) },
+                    onLongClick = { onLabelLongClick(label) },
                 )
             }
         }
+        item(key = "add-label") {
+            AddLabelPill(onClick = onAddLabelClick)
+        }
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun SetLabelPill(
+    label: StopLabel,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    val dim = KrailTheme.dimensions
+    val shape = RoundedCornerShape(dim.radiusFull)
+    val themeColor = themeColor()
+    val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .background(themeColor, shape)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = label.label,
+            style = KrailTheme.typography.labelLarge,
+            color = KrailTheme.colors.surface,
+        )
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun UnsetLabelPill(
+    label: StopLabel,
+    isAssigning: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    val dim = KrailTheme.dimensions
+    val shape = RoundedCornerShape(dim.radiusFull)
+    val themeColor = themeColor()
+    val borderColor = if (isAssigning) themeColor else KrailTheme.colors.outlineSubtle
+    val contentColor = if (isAssigning) themeColor else KrailTheme.colors.softLabel
+    val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .border(width = dim.strokeThin, color = borderColor, shape = shape)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(contentColor),
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = label.label,
+            style = KrailTheme.typography.labelLarge,
+            color = contentColor,
+        )
+    }
+}
+
+@Composable
+private fun AddLabelPill(onClick: () -> Unit) {
+    val dim = KrailTheme.dimensions
+    val shape = RoundedCornerShape(dim.radiusFull)
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .border(
+                width = dim.strokeThin,
+                color = KrailTheme.colors.outlineSubtle,
+                shape = shape,
+            )
+            .klickable(onClick = onClick)
+            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "+ Add",
+            style = KrailTheme.typography.labelLarge,
+            color = KrailTheme.colors.softLabel,
+        )
     }
 }
 

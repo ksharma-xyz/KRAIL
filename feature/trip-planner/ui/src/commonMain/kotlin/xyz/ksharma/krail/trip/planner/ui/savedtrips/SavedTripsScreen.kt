@@ -107,9 +107,17 @@ fun SavedTripsScreen(
         }.random()
     }
 
+    // Pill only shown when content is rich enough that a collapsed state adds value.
+    val showPill = savedTripsState.savedTrips.size >= 2 &&
+        savedTripsState.parkRideUiState.isNotEmpty() &&
+        departureBoardEntries.size >= 2
+
     // Search row expand / from-highlight state — rememberSaveable survives rotation.
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
     var isFromHighlighted by rememberSaveable { mutableStateOf(false) }
+
+    // When the pill condition isn't met, always show the expanded row.
+    val effectiveIsExpanded = if (showPill) isSearchExpanded else true
 
     // Bottom sheet state for set-label "use as" sheet and add-label sheet.
     var useAsSheetStop by remember { mutableStateOf<StopItem?>(null) }
@@ -292,7 +300,7 @@ fun SavedTripsScreen(
             modifier = Modifier.align(Alignment.BottomCenter),
             fromStopItem = savedTripsState.fromStop,
             toStopItem = savedTripsState.toStop,
-            isExpanded = isSearchExpanded,
+            isExpanded = effectiveIsExpanded,
             isFromHighlighted = isFromHighlighted,
             onExpandRequest = {
                 isSearchExpanded = true

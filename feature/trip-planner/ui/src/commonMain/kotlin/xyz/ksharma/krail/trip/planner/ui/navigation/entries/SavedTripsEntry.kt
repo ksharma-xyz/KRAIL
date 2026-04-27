@@ -88,6 +88,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     labelKey = label.label,
                 )
             },
+            onAddLabelNavigate = { labelKey ->
+                tripPlannerNavigator.navigateToSearchStop(
+                    fieldType = SearchStopFieldType.LABEL,
+                    labelKey = labelKey,
+                )
+            },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {
                     viewModel.onEvent(

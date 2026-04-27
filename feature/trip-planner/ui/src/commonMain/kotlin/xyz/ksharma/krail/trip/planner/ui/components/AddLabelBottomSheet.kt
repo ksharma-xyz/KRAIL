@@ -132,7 +132,7 @@ fun AddLabelBottomSheet(
                     Text(
                         text = "Preview:",
                         style = KrailTheme.typography.bodySmall,
-                        color = KrailTheme.colors.onSurface.copy(alpha = 0.5f),
+                        color = KrailTheme.colors.softLabel,
                     )
                     AnimatedContent(
                         targetState = name,
@@ -176,7 +176,7 @@ fun AddLabelBottomSheet(
             Text(
                 text = "Pick a suggestion or type your own.",
                 style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
+                color = KrailTheme.colors.softLabel,
                 modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
             )
 
@@ -200,7 +200,7 @@ fun AddLabelBottomSheet(
                                 } else {
                                     Modifier.border(
                                         dim.strokeThin,
-                                        KrailTheme.colors.onSurface.copy(alpha = 0.2f),
+                                        KrailTheme.colors.outlineSubtle,
                                         shape,
                                     )
                                 },

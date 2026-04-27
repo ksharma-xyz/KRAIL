@@ -33,6 +33,7 @@ val md_theme_light_theme_selection_background = Color(0xFFF5F5F5)
 val md_theme_light_modal_sheet_background = Color(0xFFF5F5F5)
 
 val md_theme_light_sheet_drag_handle = Color(0x66000000)
+val md_theme_light_outline_subtle = Color(0x33010101)
 
 // past departure row surface — subtle grey tint against the white #FFFFFF surface card
 // Used for past/previous departure rows and past journey cards.
@@ -69,6 +70,7 @@ val md_theme_dark_theme_selection_background = Color(0xFF292929)
 // bottom sheet
 val md_theme_dark_modal_sheet_background = Color(0xFF292929)
 val md_theme_dark_sheet_drag_handle = Color(0x66FFFFFF)
+val md_theme_dark_outline_subtle = Color(0x33FCF6F1)
 
 // past departure row surface — warm dark one step above the #292929 sheet (contrast ≈ 13:1 for onSurface #FCF6F1)
 // Used for past/previous departure rows and past journey cards.
@@ -141,6 +143,8 @@ data class KrailColors(
     val bottomSheetDragHandle: Color,
     /** Surface color for past/previous items — previous departure rows, past journey cards, etc. */
     val pastDepartureRowSurface: Color,
+    /** Subtle border/stroke color for chip outlines, dividers, and UI control tracks. */
+    val outlineSubtle: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -170,6 +174,7 @@ internal val KrailLightColors = KrailColors(
     bottomSheetBackground = md_theme_light_modal_sheet_background,
     bottomSheetDragHandle = md_theme_light_sheet_drag_handle,
     pastDepartureRowSurface = md_theme_light_past_departure_row_surface,
+    outlineSubtle = md_theme_light_outline_subtle,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -199,6 +204,7 @@ internal val KrailDarkColors = KrailColors(
     bottomSheetBackground = md_theme_dark_modal_sheet_background,
     bottomSheetDragHandle = md_theme_dark_sheet_drag_handle,
     pastDepartureRowSurface = md_theme_dark_past_departure_row_surface,
+    outlineSubtle = md_theme_dark_outline_subtle,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -229,5 +235,6 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         bottomSheetBackground = Color.Unspecified,
         bottomSheetDragHandle = Color.Unspecified,
         pastDepartureRowSurface = Color.Unspecified,
+        outlineSubtle = Color.Unspecified,
     )
 }

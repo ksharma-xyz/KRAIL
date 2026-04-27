@@ -149,7 +149,7 @@ fun MapOptionsBottomSheet(
             Text(
                 text = "Tap any stop on the map to select it — no typing needed.",
                 style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.onSurface.copy(alpha = 0.6f),
+                color = KrailTheme.colors.softLabel,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
 
@@ -345,7 +345,7 @@ private fun MapControlToggle(
                 checkedThumbColor = KrailTheme.colors.surface,
                 checkedTrackColor = themeColor,
                 uncheckedThumbColor = KrailTheme.colors.surface,
-                uncheckedTrackColor = KrailTheme.colors.onSurface.copy(alpha = 0.3f),
+                uncheckedTrackColor = KrailTheme.colors.outlineSubtle,
             ),
         )
     }

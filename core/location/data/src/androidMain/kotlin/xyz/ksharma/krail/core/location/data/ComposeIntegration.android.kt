@@ -5,6 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import xyz.ksharma.krail.core.location.Location
 
 /**
  * Android implementation of [rememberLocationTracker].
@@ -14,6 +18,22 @@ import androidx.compose.ui.platform.LocalContext
  */
 @Composable
 actual fun rememberLocationTracker(): LocationTracker {
+    if (LocalInspectionMode.current) {
+        return remember {
+            object : LocationTracker {
+                override suspend fun getCurrentLocation(timeoutMs: Long): Location =
+                    Location(latitude = 0.0, longitude = 0.0, timestamp = 0L)
+
+                override fun startTracking(config: xyz.ksharma.krail.core.location.LocationConfig): Flow<Location> =
+                    emptyFlow()
+
+                override fun stopTracking() {}
+
+                override suspend fun isLocationEnabled(): Boolean = true
+            }
+        }
+    }
+
     val context = LocalContext.current
     val activity = context as? ComponentActivity
         ?: error("LocationTracker requires ComponentActivity.")

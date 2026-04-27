@@ -123,6 +123,7 @@ val viewModelsModule = module {
             flag = get(),
             ioDispatcher = get(named(IODispatcher)),
             preferences = get(),
+            sandook = get(),
         )
     }
 }

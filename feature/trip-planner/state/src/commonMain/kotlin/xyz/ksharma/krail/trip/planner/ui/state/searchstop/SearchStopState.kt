@@ -4,6 +4,7 @@ package xyz.ksharma.krail.trip.planner.ui.state.searchstop
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
 /**
  * List states for the Search Stop screen:
@@ -44,6 +45,7 @@ data class SearchStopState(
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
     val showMapOptionsOnOpen: Boolean = false,
+    val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
 ) {
     /**
      * Internal sealed classes describing results / recent items.

@@ -1,5 +1,5 @@
 -- Stop Labels table — user-defined location shortcuts (e.g. Home, Work)
-CREATE TABLE StopLabels (
+CREATE TABLE IF NOT EXISTS StopLabels (
     label TEXT NOT NULL PRIMARY KEY,
     emoji TEXT NOT NULL,
     stop_id TEXT,

@@ -147,6 +147,7 @@ internal fun createLightDarkModeAnimatedColors(
         pastDepartureRowSurface = targetColors.pastDepartureRowSurface,
         walkingPath = targetColors.walkingPath,
         userLocationDot = targetColors.userLocationDot,
+        outlineSubtle = targetColors.outlineSubtle,
     )
 }
 

@@ -41,7 +41,6 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
@@ -50,11 +49,8 @@ import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
-import xyz.ksharma.krail.taj.components.Button
-import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -64,14 +60,10 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
-import xyz.ksharma.krail.trip.planner.ui.components.StopLabelPillRow
 import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionSection
-import xyz.ksharma.krail.trip.planner.ui.searchstop.map.StopDetailsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
@@ -83,8 +75,6 @@ fun SavedTripsScreen(
     trackedJourney: TrackedJourney? = null,
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
-    onUnsetLabelTap: (StopLabel) -> Unit = {},
-    onAddLabelNavigate: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
@@ -117,8 +107,6 @@ fun SavedTripsScreen(
 
     // When the pill condition isn't met, always show the expanded row.
     val effectiveIsExpanded = if (showPill) isSearchExpanded else true
-
-    var useAsSheetStop by remember { mutableStateOf<StopItem?>(null) }
 
     Box(
         modifier = modifier
@@ -158,27 +146,6 @@ fun SavedTripsScreen(
             LazyColumn(
                 contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
             ) {
-                // Label pills — always shown when labels exist
-                if (savedTripsState.stopLabels.isNotEmpty()) {
-                    item(key = "stop-label-pills") {
-                        StopLabelPillRow(
-                            stopLabels = savedTripsState.stopLabels,
-                            onLabelClick = { stopItem ->
-                                useAsSheetStop = stopItem
-                            },
-                            onUnsetLabelClick = { label ->
-                                onUnsetLabelTap(label)
-                            },
-                            onAddLabelClick = {
-                                onAddLabelNavigate()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = dim.spacingM),
-                        )
-                    }
-                }
-
                 when {
                     savedTripsState.isSavedTripsLoading -> Unit
 
@@ -314,53 +281,6 @@ fun SavedTripsScreen(
             onSearchButtonClick = { onSearchButtonClick() },
         )
 
-        useAsSheetStop?.let { stop ->
-            val dim = KrailTheme.dimensions
-            StopDetailsBottomSheet(
-                stop = NearbyStopFeature(
-                    stopId = stop.stopId,
-                    stopName = stop.stopName,
-                    position = LatLng(0.0, 0.0),
-                    transportModes = persistentListOf(),
-                ),
-                onDismiss = { useAsSheetStop = null },
-                actionContent = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dim.pageHorizontalPadding)
-                            .padding(bottom = dim.spacingM),
-                        verticalArrangement = Arrangement.spacedBy(dim.spacingM),
-                    ) {
-                        Button(
-                            onClick = {
-                                onEvent(SavedTripUiEvent.StopLabelPillTapped(stop))
-                                isSearchExpanded = true
-                                isFromHighlighted = false
-                                useAsSheetStop = null
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("Going here")
-                        }
-                        TextButton(
-                            onClick = {
-                                onEvent(SavedTripUiEvent.StopLabelUsedAsFrom(stop))
-                                isSearchExpanded = true
-                                useAsSheetStop = null
-                            },
-                            dimensions = ButtonDefaults.largeButtonSize(),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = "Starting from here",
-                                color = KrailTheme.colors.onSurface,
-                            )
-                        }
-                    }
-                },
-            )
-        }
     }
 }
 
@@ -546,13 +466,12 @@ private fun PreviewSavedTripsScreen_Empty() {
             savedTripsState = SavedTripsState(
                 isSavedTripsLoading = false,
                 isDiscoverAvailable = true,
-                stopLabels = StopLabel.defaults,
             ),
         )
     }
 }
 
-@Preview(name = "2. With saved trips + unset labels")
+@Preview(name = "2. With saved trips")
 @Composable
 private fun PreviewSavedTripsScreen_WithTrips() {
     PreviewTheme {
@@ -560,7 +479,6 @@ private fun PreviewSavedTripsScreen_WithTrips() {
             savedTripsState = SavedTripsState(
                 isSavedTripsLoading = false,
                 isDiscoverAvailable = false,
-                stopLabels = StopLabel.defaults,
             ),
         )
     }
@@ -573,15 +491,6 @@ private fun PreviewSavedTripsScreen_SearchExpanded() {
         SavedTripsScreen(
             savedTripsState = SavedTripsState(
                 isSavedTripsLoading = false,
-                stopLabels = persistentListOf(
-                    StopLabel(
-                        emoji = "🏠",
-                        label = "Home",
-                        stopId = "2000001",
-                        stopName = "Central Station",
-                    ),
-                    StopLabel(emoji = "💼", label = "Work"),
-                ),
                 toStop = StopItem(stopId = "2000001", stopName = "Central Station"),
             ),
         )

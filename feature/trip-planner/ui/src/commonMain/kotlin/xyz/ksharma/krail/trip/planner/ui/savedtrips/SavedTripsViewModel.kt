@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -52,7 +53,6 @@ import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PendingNewLabel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -111,8 +111,6 @@ class SavedTripsViewModel(
      */
     private var observeParkRideFacilityFromDatabaseJob: Job? = null
 
-    private var observeStopLabelsJob: Job? = null
-
     val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
@@ -120,7 +118,7 @@ class SavedTripsViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             observeSavedTrips()
-            observeStopLabels()
+            seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
             updateDiscoverState()
@@ -187,71 +185,6 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.FromStopChanged -> onFromStopChanged(event.fromJson)
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
-            is SavedTripUiEvent.StopLabelPillTapped -> onStopLabelPillTapped(event.stopItem)
-            SavedTripUiEvent.AddStopLabelTapped -> Unit
-            is SavedTripUiEvent.StopLabelAssigned -> onStopLabelAssigned(event.labelKey, event.stopItem)
-            is SavedTripUiEvent.StopLabelUsedAsFrom -> onStopLabelUsedAsFrom(event.stopItem)
-            is SavedTripUiEvent.SetPendingNewLabel -> onSetPendingNewLabel(event.emoji, event.name)
-            is SavedTripUiEvent.NewLabelCreated -> onNewLabelCreated(
-                emoji = event.emoji,
-                name = event.name,
-                stopId = event.stopId,
-                stopName = event.stopName,
-            )
-        }
-    }
-
-    private fun onStopLabelPillTapped(stopItem: StopItem) {
-        stopResultsManager.setSelectedToStop(stopItem)
-        updateUiState { copy(toStop = stopItem) }
-    }
-
-    private fun onStopLabelUsedAsFrom(stopItem: StopItem) {
-        stopResultsManager.setSelectedFromStop(stopItem)
-        updateUiState { copy(fromStop = stopItem) }
-    }
-
-    private fun onSetPendingNewLabel(emoji: String, name: String) {
-        updateUiState { copy(pendingNewLabel = PendingNewLabel(emoji = emoji, name = name)) }
-    }
-
-    private fun onNewLabelCreated(emoji: String, name: String, stopId: String, stopName: String) {
-        val sortOrder = _uiState.value.stopLabels.size.toLong()
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            sandook.upsertStopLabel(
-                label = name,
-                emoji = emoji,
-                stopId = stopId,
-                stopName = stopName,
-                sortOrder = sortOrder,
-            )
-        }
-    }
-
-    private fun onStopLabelAssigned(labelKey: String, stopItem: StopItem) {
-        val current = _uiState.value
-        val exists = current.stopLabels.any { it.label == labelKey }
-        if (exists) {
-            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                sandook.updateStopLabelStop(
-                    label = labelKey,
-                    stopId = stopItem.stopId,
-                    stopName = stopItem.stopName,
-                )
-            }
-        } else {
-            val pending = current.pendingNewLabel ?: return
-            val sortOrder = current.stopLabels.size.toLong()
-            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                sandook.upsertStopLabel(
-                    label = labelKey,
-                    emoji = pending.emoji,
-                    stopId = stopItem.stopId,
-                    stopName = stopItem.stopName,
-                    sortOrder = sortOrder,
-                )
-                updateUiState { copy(pendingNewLabel = null) }
-            }
         }
     }
 
@@ -339,39 +272,16 @@ class SavedTripsViewModel(
         }
     }
 
-    private fun observeStopLabels() {
-        log("onStart - observeStopLabels called")
-        observeStopLabelsJob?.cancel()
-        observeStopLabelsJob =
-            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                sandook.observeStopLabels()
-                    .distinctUntilChanged()
-                    .collectLatest { rows ->
-                        if (rows.isEmpty()) {
-                            // Seed defaults for fresh installs — migration handles upgraders
-                            StopLabel.defaults.forEachIndexed { index, label ->
-                                sandook.upsertStopLabel(
-                                    label = label.label,
-                                    emoji = label.emoji,
-                                    stopId = null,
-                                    stopName = null,
-                                    sortOrder = index.toLong(),
-                                )
-                            }
-                            return@collectLatest
-                        }
-                        val labels = rows.map { row ->
-                            StopLabel(
-                                emoji = row.emoji,
-                                label = row.label,
-                                stopId = row.stop_id,
-                                stopName = row.stop_name,
-                            )
-                        }.toImmutableList()
-                        log("Stop labels updated from DB: ${labels.size}")
-                        updateUiState { copy(stopLabels = labels) }
+    private fun seedDefaultLabelsIfEmpty() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            sandook.observeStopLabels().take(1).collect { labels ->
+                if (labels.isEmpty()) {
+                    StopLabel.defaults.forEachIndexed { index, label ->
+                        sandook.upsertStopLabel(label.label, label.emoji, null, null, index.toLong())
                     }
+                }
             }
+        }
     }
 
     private fun observeSavedTrips() {
@@ -800,8 +710,6 @@ class SavedTripsViewModel(
         observeSavedTripsJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob = null
-        observeStopLabelsJob?.cancel()
-        observeStopLabelsJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

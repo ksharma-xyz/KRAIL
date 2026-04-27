@@ -81,4 +81,16 @@ sealed interface SearchStopUiEvent {
         val nearbyStopsCount: Int,
         val hadUserLocation: Boolean,
     ) : SearchStopUiEvent
+
+    /** Saves [stopItem] as the stop for an existing label identified by [labelKey]. */
+    data class AssignLabelStop(val labelKey: String, val stopItem: StopItem) : SearchStopUiEvent
+
+    /** Creates a new label (with no stop yet). */
+    data class CreateLabel(val name: String, val emoji: String) : SearchStopUiEvent
+
+    /** Clears the stop on a label (label name kept, stop reset to null). */
+    data class ClearLabelStop(val labelKey: String) : SearchStopUiEvent
+
+    /** Deletes a label entirely. */
+    data class DeleteLabel(val labelKey: String) : SearchStopUiEvent
 }

@@ -111,6 +111,8 @@ class SavedTripsViewModel(
      */
     private var observeParkRideFacilityFromDatabaseJob: Job? = null
 
+    private var observeStopLabelsJob: Job? = null
+
     val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
@@ -118,6 +120,7 @@ class SavedTripsViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             observeSavedTrips()
+            observeStopLabels()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
             updateDiscoverState()
@@ -240,30 +243,25 @@ class SavedTripsViewModel(
         val current = _uiState.value
         val exists = current.stopLabels.any { it.label == labelKey }
         if (exists) {
-            updateUiState {
-                copy(
-                    stopLabels = stopLabels.map { label ->
-                        if (label.label == labelKey) {
-                            label.copy(stopId = stopItem.stopId, stopName = stopItem.stopName)
-                        } else {
-                            label
-                        }
-                    }.toImmutableList(),
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                sandook.updateStopLabelStop(
+                    label = labelKey,
+                    stopId = stopItem.stopId,
+                    stopName = stopItem.stopName,
                 )
             }
         } else {
             val pending = current.pendingNewLabel ?: return
-            val newLabel = StopLabel(
-                emoji = pending.emoji,
-                label = labelKey,
-                stopId = stopItem.stopId,
-                stopName = stopItem.stopName,
-            )
-            updateUiState {
-                copy(
-                    stopLabels = (stopLabels + newLabel).toImmutableList(),
-                    pendingNewLabel = null,
+            val sortOrder = current.stopLabels.size.toLong()
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                sandook.upsertStopLabel(
+                    label = labelKey,
+                    emoji = pending.emoji,
+                    stopId = stopItem.stopId,
+                    stopName = stopItem.stopName,
+                    sortOrder = sortOrder,
                 )
+                updateUiState { copy(pendingNewLabel = null) }
             }
         }
     }
@@ -350,6 +348,41 @@ class SavedTripsViewModel(
                 )
             }
         }
+    }
+
+    private fun observeStopLabels() {
+        log("onStart - observeStopLabels called")
+        observeStopLabelsJob?.cancel()
+        observeStopLabelsJob =
+            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+                sandook.observeStopLabels()
+                    .distinctUntilChanged()
+                    .collectLatest { rows ->
+                        if (rows.isEmpty()) {
+                            // Seed defaults for fresh installs — migration handles upgraders
+                            StopLabel.defaults.forEachIndexed { index, label ->
+                                sandook.upsertStopLabel(
+                                    label = label.label,
+                                    emoji = label.emoji,
+                                    stopId = null,
+                                    stopName = null,
+                                    sortOrder = index.toLong(),
+                                )
+                            }
+                            return@collectLatest
+                        }
+                        val labels = rows.map { row ->
+                            StopLabel(
+                                emoji = row.emoji,
+                                label = row.label,
+                                stopId = row.stop_id,
+                                stopName = row.stop_name,
+                            )
+                        }.toImmutableList()
+                        log("Stop labels updated from DB: ${labels.size}")
+                        updateUiState { copy(stopLabels = labels) }
+                    }
+            }
     }
 
     private fun observeSavedTrips() {
@@ -778,6 +811,8 @@ class SavedTripsViewModel(
         observeSavedTripsJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob = null
+        observeStopLabelsJob?.cancel()
+        observeStopLabelsJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

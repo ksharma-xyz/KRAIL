@@ -4,6 +4,18 @@ import kotlinx.coroutines.flow.Flow
 
 interface Sandook {
 
+    // region StopLabels
+    fun observeStopLabels(): Flow<List<StopLabels>>
+
+    fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long)
+
+    fun updateStopLabelStop(label: String, stopId: String?, stopName: String?)
+
+    fun deleteStopLabel(label: String)
+
+    fun clearStopLabels()
+    // endregion
+
     // region Theme
     fun insertOrReplaceTheme(productClass: Long)
     fun getProductClass(): Long?

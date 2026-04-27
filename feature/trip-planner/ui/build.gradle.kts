@@ -104,6 +104,7 @@ kotlin {
                 implementation(libs.compose.foundation)
                 implementation(libs.material.icons.core)
                 implementation(libs.compose.ui)
+                implementation(libs.reorderable)
 
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.collections.immutable)

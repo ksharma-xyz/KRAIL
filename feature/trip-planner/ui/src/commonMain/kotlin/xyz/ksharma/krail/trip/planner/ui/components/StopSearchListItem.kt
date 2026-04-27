@@ -45,6 +45,7 @@ fun StopSearchListItem(
     onClick: (StopItem) -> Unit = {},
     isSaved: Boolean = false,
     onSaveAsLabel: ((StopItem) -> Unit)? = null,
+    onUnsaveLabel: ((StopItem) -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     Row(
@@ -53,7 +54,7 @@ fun StopSearchListItem(
             .clickable(role = Role.Button) {
                 onClick(StopItem(stopId = stopId, stopName = stopName))
             }
-            .padding(vertical = dim.spacingM, horizontal = dim.spacingXXL),
+            .padding(vertical = dim.spacingM, horizontal = dim.pageHorizontalPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
@@ -83,9 +84,13 @@ fun StopSearchListItem(
                 }
             }
         }
-        if (onSaveAsLabel != null) {
-            SaveAsLabelStar(
-                isSaved = isSaved,
+        when {
+            isSaved && onUnsaveLabel != null -> SaveAsLabelStar(
+                isSaved = true,
+                onClick = { onUnsaveLabel(StopItem(stopId = stopId, stopName = stopName)) },
+            )
+            !isSaved && onSaveAsLabel != null -> SaveAsLabelStar(
+                isSaved = false,
                 onClick = { onSaveAsLabel(StopItem(stopId = stopId, stopName = stopName)) },
             )
         }
@@ -98,7 +103,7 @@ private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
     val tint = if (isSaved) themeColor() else KrailTheme.colors.softLabel
     Image(
         painter = painterResource(icon),
-        contentDescription = if (isSaved) "Saved as label" else "Save as label",
+        contentDescription = if (isSaved) "Remove from labels" else "Save as label",
         colorFilter = ColorFilter.tint(tint),
         modifier = Modifier
             .size(36.dp)

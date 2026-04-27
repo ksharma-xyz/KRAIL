@@ -1,11 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.Res
 import app.krail.taj.resources.ic_location
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
@@ -49,12 +46,12 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-
-private val suggestions: List<String> = stopLabelSuggestions.map { it.first }
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
 @Composable
 fun AddLabelBottomSheet(
     stopName: String?,
+    existingLabels: ImmutableList<StopLabel>,
     onDismiss: () -> Unit,
     onSave: (emoji: String, name: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -62,6 +59,18 @@ fun AddLabelBottomSheet(
     val dim = KrailTheme.dimensions
     var name by rememberSaveable { mutableStateOf("") }
     var selectedSuggestionIndex by rememberSaveable { mutableIntStateOf(-1) }
+
+    val availableSuggestions = remember(existingLabels) {
+        stopLabelSuggestions.filter { (suggestionName, _) ->
+            existingLabels.none { labelNamesMatch(it.label, suggestionName) }
+        }
+    }
+    val cleanedName = remember(name) { normaliseLabelName(name) }
+    val isDuplicate = remember(cleanedName, existingLabels) {
+        cleanedName.isNotBlank() &&
+            existingLabels.any { labelNamesMatch(it.label, cleanedName) }
+    }
+    val canSave = cleanedName.isNotBlank() && !isDuplicate
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -74,202 +83,136 @@ fun AddLabelBottomSheet(
                 .navigationBarsPadding()
                 .imePadding()
                 .padding(bottom = dim.spacingXXL),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingL),
         ) {
+            // ─── Title ────────────────────────────────────────────────────────
+            Text(
+                text = if (stopName != null) "Give a nickname to" else "Add a new label",
+                style = KrailTheme.typography.headlineMedium,
+                color = KrailTheme.colors.onSurface,
+                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+            )
+
             if (stopName != null) {
-                Text(
-                    text = "Give a nickname to",
-                    style = KrailTheme.typography.headlineMedium,
-                    color = KrailTheme.colors.onSurface,
-                    modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-                )
-
-                Spacer(modifier = Modifier.height(dim.spacingXS))
-
-                // Stop name in a themed chip completing the heading sentence
-                val stopChipShape = RoundedCornerShape(dim.radiusFull)
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = dim.pageHorizontalPadding)
-                        .clip(stopChipShape)
-                        .background(themeColor(), stopChipShape)
-                        .padding(
-                            horizontal = dim.chipHorizontalPadding,
-                            vertical = dim.chipVerticalPadding,
-                        ),
-                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_location),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                        modifier = Modifier.size(12.dp),
-                    )
-                    Text(
-                        text = stopName,
-                        style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                        color = KrailTheme.colors.surface,
-                    )
-                }
-            } else {
-                Text(
-                    text = "Add a label",
-                    style = KrailTheme.typography.headlineMedium,
-                    color = KrailTheme.colors.onSurface,
+                StopChip(
+                    stopName = stopName,
                     modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                 )
             }
 
-            Spacer(modifier = Modifier.height(dim.spacingL))
+            // ─── Preview ──────────────────────────────────────────────────────
+            Column(
+                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingS),
+            ) {
+                SectionHeading(text = "Preview")
+                LabelPreviewPill(name = cleanedName.ifBlank { "Your label" })
+            }
 
-            // Live label preview — animates as user types
-            if (name.isNotBlank()) {
-                val previewShape = RoundedCornerShape(dim.radiusFull)
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = dim.pageHorizontalPadding)
-                        .padding(bottom = dim.spacingM),
-                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                    verticalAlignment = Alignment.CenterVertically,
+            // ─── Suggestions ──────────────────────────────────────────────────
+            if (availableSuggestions.isNotEmpty()) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(dim.spacingS),
                 ) {
-                    Text(
-                        text = "Preview:",
-                        style = KrailTheme.typography.bodySmall,
-                        color = KrailTheme.colors.softLabel,
+                    SectionHeading(
+                        text = "Suggestions",
+                        modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                     )
-                    // Static pill — background never animates, only the icon+text inside.
-                    Row(
-                        modifier = Modifier
-                            .clip(previewShape)
-                            .background(themeColor(), previewShape)
-                            .padding(
-                                horizontal = dim.chipHorizontalPadding,
-                                vertical = dim.chipVerticalPadding,
-                            ),
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding),
+                        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AnimatedContent(
-                            targetState = name,
-                            transitionSpec = {
-                                (fadeIn() + slideInVertically { -it / 2 }) togetherWith
-                                    (fadeOut() + slideOutVertically { it / 2 })
-                            },
-                            label = "labelPreview",
-                        ) { previewName ->
-                            val icon = stopLabelIcon(previewName) ?: Res.drawable.ic_location
+                        itemsIndexed(
+                            availableSuggestions,
+                            key = { _, pair -> pair.first },
+                        ) { index, (chipName, icon) ->
+                            val isSelected = selectedSuggestionIndex == index
+                            val shape = RoundedCornerShape(dim.radiusFull)
+                            val contentColor = if (isSelected) {
+                                KrailTheme.colors.surface
+                            } else {
+                                KrailTheme.colors.onSurface
+                            }
                             Row(
+                                modifier = Modifier
+                                    .clip(shape)
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier.background(themeColor(), shape)
+                                        } else {
+                                            Modifier.border(
+                                                dim.strokeThin,
+                                                KrailTheme.colors.outlineSubtle,
+                                                shape,
+                                            )
+                                        },
+                                    )
+                                    .klickable {
+                                        selectedSuggestionIndex = index
+                                        name = chipName
+                                    }
+                                    .padding(
+                                        horizontal = dim.chipHorizontalPadding,
+                                        vertical = dim.chipVerticalPadding,
+                                    ),
                                 horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Image(
                                     painter = painterResource(icon),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                                    colorFilter = ColorFilter.tint(contentColor),
                                     modifier = Modifier.size(14.dp),
                                 )
                                 Text(
-                                    text = previewName,
+                                    text = chipName,
                                     style = KrailTheme.typography.labelLarge,
-                                    color = KrailTheme.colors.surface,
+                                    color = contentColor,
                                 )
                             }
                         }
                     }
                 }
-            } else {
-                // Reserve space so layout doesn't jump when preview appears
-                Spacer(modifier = Modifier.height(dim.spacingXXL))
             }
 
-            Text(
-                text = "Pick a suggestion or type your own.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
+            // ─── Name field ───────────────────────────────────────────────────
+            Column(
                 modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            )
-
-            Spacer(modifier = Modifier.height(dim.spacingM))
-
-            // Suggestion chips — selecting one fills the text field
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding),
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
             ) {
-                itemsIndexed(stopLabelSuggestions, key = { _, pair -> pair.first }) { index, (chipName, icon) ->
-                    val isSelected = selectedSuggestionIndex == index
-                    val shape = RoundedCornerShape(dim.radiusFull)
-                    val contentColor =
-                        if (isSelected) KrailTheme.colors.surface else KrailTheme.colors.onSurface
-                    Row(
-                        modifier = Modifier
-                            .clip(shape)
-                            .then(
-                                if (isSelected) {
-                                    Modifier.background(themeColor(), shape)
-                                } else {
-                                    Modifier.border(
-                                        dim.strokeThin,
-                                        KrailTheme.colors.outlineSubtle,
-                                        shape,
-                                    )
-                                },
-                            )
-                            .klickable {
-                                selectedSuggestionIndex = index
-                                name = chipName
+                SectionHeading(text = "Name")
+                key(selectedSuggestionIndex) {
+                    TextField(
+                        placeholder = "e.g. Home, Gym, School…",
+                        initialText = name,
+                        onTextChange = { text ->
+                            name = text.toString()
+                            val cleaned = normaliseLabelName(name)
+                            selectedSuggestionIndex = if (cleaned.isNotBlank()) {
+                                availableSuggestions.indexOfFirst {
+                                    labelNamesMatch(it.first, cleaned)
+                                }
+                            } else {
+                                -1
                             }
-                            .padding(
-                                horizontal = dim.chipHorizontalPadding,
-                                vertical = dim.chipVerticalPadding,
-                            ),
-                        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Image(
-                            painter = painterResource(icon),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(contentColor),
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Text(
-                            text = chipName,
-                            style = KrailTheme.typography.labelLarge,
-                            color = contentColor,
-                        )
-                    }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (isDuplicate) {
+                    Text(
+                        text = "\"$cleanedName\" is already a label.",
+                        style = KrailTheme.typography.bodySmall,
+                        color = KrailTheme.colors.error,
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(dim.spacingL))
-
-            // key(selectedSuggestionIndex) forces TextField to recompose (and pick up
-            // the chip's name as initialText) when a suggestion is tapped.
-            key(selectedSuggestionIndex) {
-                TextField(
-                    placeholder = "e.g. Home, Gym, School…",
-                    initialText = name,
-                    onTextChange = { text ->
-                        name = text.toString()
-                        if (text.isNotBlank()) {
-                            val matchedIndex =
-                                suggestions.indexOfFirst { it.equals(text.toString(), ignoreCase = true) }
-                            selectedSuggestionIndex = matchedIndex
-                        } else {
-                            selectedSuggestionIndex = -1
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = dim.pageHorizontalPadding),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(dim.spacingXL))
-
+            // ─── Save ─────────────────────────────────────────────────────────
             Button(
-                onClick = { onSave("📍", name.trim()) },
-                enabled = name.isNotBlank(),
+                onClick = { onSave("📍", cleanedName) },
+                enabled = canSave,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dim.pageHorizontalPadding),
@@ -280,26 +223,108 @@ fun AddLabelBottomSheet(
     }
 }
 
+@Composable
+private fun SectionHeading(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = KrailTheme.typography.titleSmall,
+        color = KrailTheme.colors.softLabel,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun StopChip(stopName: String, modifier: Modifier = Modifier) {
+    val dim = KrailTheme.dimensions
+    val shape = RoundedCornerShape(dim.radiusFull)
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(themeColor(), shape)
+            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.ic_location),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            modifier = Modifier.size(12.dp),
+        )
+        Text(
+            text = stopName,
+            style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+            color = KrailTheme.colors.surface,
+        )
+    }
+}
+
+@Composable
+private fun LabelPreviewPill(name: String) {
+    val dim = KrailTheme.dimensions
+    val shape = RoundedCornerShape(dim.radiusFull)
+    val icon = stopLabelIcon(name) ?: Res.drawable.ic_location
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .background(themeColor(), shape)
+            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = name,
+            style = KrailTheme.typography.labelLarge,
+            color = KrailTheme.colors.surface,
+        )
+    }
+}
+
 // region Previews
 
-@Preview(name = "1. Empty state")
+@Preview(name = "1. Empty")
 @Composable
 private fun PreviewAddLabelBottomSheet_Empty() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         AddLabelBottomSheet(
-            stopName = "Central Station",
+            stopName = null,
+            existingLabels = persistentListOf(),
             onDismiss = {},
             onSave = { _, _ -> },
         )
     }
 }
 
-@Preview(name = "2. Metro — suggestion selected")
+@Preview(name = "2. With existing labels filtered")
 @Composable
-private fun PreviewAddLabelBottomSheet_Selected() {
+private fun PreviewAddLabelBottomSheet_FilteredSuggestions() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         AddLabelBottomSheet(
-            stopName = "Town Hall Station",
+            stopName = null,
+            existingLabels = persistentListOf(
+                StopLabel(emoji = "🏠", label = "Home"),
+                StopLabel(emoji = "💼", label = "Work"),
+                StopLabel(emoji = "📍", label = "Gym"),
+            ),
+            onDismiss = {},
+            onSave = { _, _ -> },
+        )
+    }
+}
+
+@Preview(name = "3. With stop context")
+@Composable
+private fun PreviewAddLabelBottomSheet_WithStop() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
+        AddLabelBottomSheet(
+            stopName = "Central Station",
+            existingLabels = persistentListOf(),
             onDismiss = {},
             onSave = { _, _ -> },
         )

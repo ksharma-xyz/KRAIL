@@ -32,6 +32,7 @@ import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
@@ -239,21 +240,26 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.CreateLabel -> {
-                // Dedupe — never append a duplicate, otherwise the LazyRow keyed by label.label
-                // crashes with "Key already used".
-                val alreadyExists = _uiState.value.stopLabels.any {
-                    it.label.equals(event.name, ignoreCase = true)
-                }
-                if (!alreadyExists) {
-                    val sortOrder = _uiState.value.stopLabels.size.toLong()
-                    updateUiState {
-                        copy(
-                            stopLabels = (stopLabels + StopLabel(emoji = event.emoji, label = event.name))
-                                .toImmutableList(),
-                        )
+                // Strip emoji and whitespace from the typed name so `🏠 Home` and `Home`
+                // resolve to the same canonical label. Dedupe case-insensitively against
+                // existing labels — duplicates silently no-op (the UI blocks them earlier
+                // with an inline error).
+                val cleanedName = normaliseLabelName(event.name)
+                if (cleanedName.isNotBlank()) {
+                    val alreadyExists = _uiState.value.stopLabels.any {
+                        normaliseLabelName(it.label).equals(cleanedName, ignoreCase = true)
                     }
-                    viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
-                        sandook.upsertStopLabel(event.name, event.emoji, null, null, sortOrder)
+                    if (!alreadyExists) {
+                        val sortOrder = _uiState.value.stopLabels.size.toLong()
+                        updateUiState {
+                            copy(
+                                stopLabels = (stopLabels + StopLabel(emoji = event.emoji, label = cleanedName))
+                                    .toImmutableList(),
+                            )
+                        }
+                        viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                            sandook.upsertStopLabel(cleanedName, event.emoji, null, null, sortOrder)
+                        }
                     }
                 }
             }

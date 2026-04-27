@@ -19,15 +19,15 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 /**
- * Warning sheet shown when the user tries to save a stop as a label, but that stop is
- * already attached to a different label. Confirming moves the stop; cancelling does
- * nothing.
+ * Warning sheet for label assignment conflicts. The same component handles both
+ * directions of the 1:1 invariant: a stop already saved against another label, or a
+ * label already pointing at another stop.
  */
 @Composable
 fun LabelConflictSheet(
-    stopName: String,
-    currentLabel: String,
-    targetLabel: String,
+    title: String,
+    message: String,
+    confirmLabel: String,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -46,7 +46,7 @@ fun LabelConflictSheet(
                 .padding(bottom = dim.spacingXXL),
         ) {
             Text(
-                text = "Already saved",
+                text = title,
                 style = KrailTheme.typography.headlineMedium,
                 color = KrailTheme.colors.onSurface,
             )
@@ -54,8 +54,7 @@ fun LabelConflictSheet(
             Spacer(modifier = Modifier.height(dim.spacingS))
 
             Text(
-                text = "$stopName is currently saved as $currentLabel. " +
-                    "Move it to $targetLabel?",
+                text = message,
                 style = KrailTheme.typography.bodyMedium,
                 color = KrailTheme.colors.softLabel,
             )
@@ -71,7 +70,7 @@ fun LabelConflictSheet(
                     Text(text = "Cancel", color = KrailTheme.colors.onSurface)
                 }
                 TextButton(onClick = onConfirm) {
-                    Text(text = "Move", color = KrailTheme.colors.error)
+                    Text(text = confirmLabel, color = KrailTheme.colors.error)
                 }
             }
         }
@@ -80,14 +79,28 @@ fun LabelConflictSheet(
 
 // region Previews
 
-@Preview(name = "Label conflict warning")
+@Preview(name = "Stop already saved")
 @Composable
-private fun PreviewLabelConflictSheet() {
+private fun PreviewLabelConflictSheet_StopSide() {
     PreviewTheme {
         LabelConflictSheet(
-            stopName = "Central Station",
-            currentLabel = "Library",
-            targetLabel = "Hospital",
+            title = "Already saved",
+            message = "Central Station is currently saved as Library. Move it to Hospital?",
+            confirmLabel = "Move",
+            onConfirm = {},
+            onCancel = {},
+        )
+    }
+}
+
+@Preview(name = "Label already in use")
+@Composable
+private fun PreviewLabelConflictSheet_LabelSide() {
+    PreviewTheme {
+        LabelConflictSheet(
+            title = "Already in use",
+            message = "Hospital is currently saved as Town Hall. Replace with Central Station?",
+            confirmLabel = "Replace",
             onConfirm = {},
             onCancel = {},
         )

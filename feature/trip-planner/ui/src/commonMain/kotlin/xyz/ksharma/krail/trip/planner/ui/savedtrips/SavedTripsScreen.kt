@@ -59,7 +59,6 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
@@ -85,7 +84,7 @@ fun SavedTripsScreen(
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
     onUnsetLabelTap: (StopLabel) -> Unit = {},
-    onAddLabelNavigate: (labelKey: String) -> Unit = {},
+    onAddLabelNavigate: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
@@ -119,9 +118,7 @@ fun SavedTripsScreen(
     // When the pill condition isn't met, always show the expanded row.
     val effectiveIsExpanded = if (showPill) isSearchExpanded else true
 
-    // Bottom sheet state for set-label "use as" sheet and add-label sheet.
     var useAsSheetStop by remember { mutableStateOf<StopItem?>(null) }
-    var showAddLabelSheet by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -173,7 +170,7 @@ fun SavedTripsScreen(
                                 onUnsetLabelTap(label)
                             },
                             onAddLabelClick = {
-                                showAddLabelSheet = true
+                                onAddLabelNavigate()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -361,17 +358,6 @@ fun SavedTripsScreen(
                             )
                         }
                     }
-                },
-            )
-        }
-
-        if (showAddLabelSheet) {
-            AddLabelBottomSheet(
-                onDismiss = { showAddLabelSheet = false },
-                onPickStop = { emoji, name ->
-                    onEvent(SavedTripUiEvent.SetPendingNewLabel(emoji, name))
-                    onAddLabelNavigate(name)
-                    showAddLabelSheet = false
                 },
             )
         }

@@ -50,4 +50,11 @@ sealed interface SavedTripUiEvent {
     data class StopLabelUsedAsFrom(val stopItem: StopItem) : SavedTripUiEvent
 
     data class SetPendingNewLabel(val emoji: String, val name: String) : SavedTripUiEvent
+
+    data class NewLabelCreated(
+        val emoji: String,
+        val name: String,
+        val stopId: String,
+        val stopName: String,
+    ) : SavedTripUiEvent
 }

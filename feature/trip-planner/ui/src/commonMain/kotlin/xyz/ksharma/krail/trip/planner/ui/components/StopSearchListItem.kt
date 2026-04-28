@@ -137,7 +137,10 @@ private fun SaveAsLabelStar(state: StarState, onClick: () -> Unit) {
     }
 
     // Spin the star a full 360° when it actually transitions between saved and
-    // unsaved (matches the intro-screen save-trip animation). Skipped on first
+    // unsaved. Direction depends on the new state — saving spins clockwise, removing
+    // spins counter-clockwise — so the gesture reads like "winding it in" vs
+    // "letting it go". Duration matches the intro screen's save-trip animation
+    // (500 ms) so the two surfaces feel like the same affordance. Skipped on first
     // composition so the star doesn't pirouette every time the row scrolls into
     // view; only fires on real state changes.
     val rotation = remember { Animatable(0f) }
@@ -147,9 +150,13 @@ private fun SaveAsLabelStar(state: StarState, onClick: () -> Unit) {
             hasInitialised = true
             return@LaunchedEffect
         }
+        val direction = when (state) {
+            StarState.Saved -> 1f
+            StarState.Unsaved -> -1f
+        }
         rotation.animateTo(
-            targetValue = rotation.value + 360f,
-            animationSpec = tween(durationMillis = 400),
+            targetValue = rotation.value + 360f * direction,
+            animationSpec = tween(durationMillis = 500),
         )
     }
 

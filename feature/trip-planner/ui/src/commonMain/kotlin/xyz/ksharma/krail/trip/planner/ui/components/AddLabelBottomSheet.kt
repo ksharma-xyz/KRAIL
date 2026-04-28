@@ -52,6 +52,12 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
+@Suppress("LongMethod")
+// The sheet is one continuous flow (title → optional stop chip → preview pill →
+// suggestion chips → text field → save) so users see the whole "give me a name"
+// surface at once. Each section is small but they share the parent Column's
+// vertical rhythm; extracting per-section composables would push the spacing
+// owner state up here and add boilerplate without payoff.
 @Composable
 fun AddLabelBottomSheet(
     stopName: String?,

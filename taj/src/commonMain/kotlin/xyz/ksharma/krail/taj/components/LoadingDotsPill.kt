@@ -67,8 +67,8 @@ fun LoadingDotsPill(
     val dim = KrailTheme.dimensions
     AnimatedVisibility(
         visible = internalVisibleState.value,
-        enter = fadeIn() + scaleIn(initialScale = 0.85f),
-        exit = fadeOut() + scaleOut(targetScale = 0.85f),
+        enter = fadeIn() + scaleIn(initialScale = ENTER_EXIT_SCALE),
+        exit = fadeOut() + scaleOut(targetScale = ENTER_EXIT_SCALE),
         modifier = modifier,
     ) {
         Box(
@@ -93,6 +93,10 @@ fun LoadingDotsPill(
 
 private val DotsCanvasWidth = 44.dp
 private val DotsCanvasHeight = 32.dp
+
+// Scale-in/out target keeps the pill from popping at full size on appear; 0.85 is
+// large enough to feel intentional, small enough to read as "growing in".
+private const val ENTER_EXIT_SCALE = 0.85f
 
 // region Previews
 

@@ -27,7 +27,7 @@ actual fun rememberLocationTracker(): LocationTracker {
                 override fun startTracking(config: xyz.ksharma.krail.core.location.LocationConfig): Flow<Location> =
                     emptyFlow()
 
-                override fun stopTracking() {}
+                override fun stopTracking() = Unit
 
                 override suspend fun isLocationEnabled(): Boolean = true
             }

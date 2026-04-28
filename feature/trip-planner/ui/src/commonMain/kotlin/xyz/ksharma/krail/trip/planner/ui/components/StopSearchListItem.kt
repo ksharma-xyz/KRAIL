@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,9 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
@@ -102,6 +110,24 @@ private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
     // colour stays consistent with surrounding text and doesn't fade out against any
     // background.
     val icon = if (isSaved) Res.drawable.ic_star_filled else Res.drawable.ic_star
+
+    // Spin the star a full 360° when it actually transitions between saved and
+    // unsaved (matches the intro-screen save-trip animation). Skipped on first
+    // composition so the star doesn't pirouette every time the row scrolls into
+    // view; only fires on real state changes.
+    val rotation = remember { Animatable(0f) }
+    var hasInitialised by remember { mutableStateOf(false) }
+    LaunchedEffect(isSaved) {
+        if (!hasInitialised) {
+            hasInitialised = true
+            return@LaunchedEffect
+        }
+        rotation.animateTo(
+            targetValue = rotation.value + 360f,
+            animationSpec = tween(durationMillis = 400),
+        )
+    }
+
     Image(
         painter = painterResource(icon),
         contentDescription = if (isSaved) "Remove from labels" else "Save as label",
@@ -110,7 +136,8 @@ private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
             .size(36.dp)
             .clip(CircleShape)
             .klickable(onClick = onClick)
-            .padding(6.dp),
+            .padding(6.dp)
+            .rotate(rotation.value),
     )
 }
 

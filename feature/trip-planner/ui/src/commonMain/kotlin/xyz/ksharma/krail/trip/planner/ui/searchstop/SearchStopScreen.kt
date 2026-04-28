@@ -165,6 +165,13 @@ fun SearchStopScreen(
     var pendingConflict by rememberSaveable(stateSaver = LabelConflictSaver) {
         mutableStateOf<LabelConflict?>(null)
     }
+    // Set when the user enters AddLabelBottomSheet from the "+ New label" chip in
+    // SaveStopAsLabelSheet. Holds the stop they wanted to save, so once the new
+    // label is created we can auto-assign the stop to it instead of dropping the
+    // user back at square one.
+    var pendingStopForNewLabel by rememberSaveable(stateSaver = StopItemSaver) {
+        mutableStateOf<StopItem?>(null)
+    }
 
     // Wraps onStopSelect to persist the stop as a label assignment when in assigning mode.
     val effectiveOnStopSelect: (StopItem) -> Unit = { stopItem ->
@@ -293,7 +300,13 @@ fun SearchStopScreen(
         AddLabelBottomSheet(
             stopName = null,
             existingLabels = searchStopState.stopLabels,
-            onDismiss = { showAddLabelSheet = false },
+            onDismiss = {
+                showAddLabelSheet = false
+                // If the user backed out without saving, hand the stop back to the
+                // save-sheet flow so they're not stranded.
+                stopBeingSaved = pendingStopForNewLabel
+                pendingStopForNewLabel = null
+            },
             onSave = { emoji, name ->
                 showAddLabelSheet = false
                 val cleaned = xyz.ksharma.krail.trip.planner.ui.components
@@ -305,8 +318,24 @@ fun SearchStopScreen(
                     }
                 ) {
                     onEvent(SearchStopUiEvent.CreateLabel(name = cleaned, emoji = emoji))
-                    // Drop into assigning mode so the user knows what to do next.
-                    assigningLabel = StopLabel(emoji = emoji, label = cleaned)
+                    val pending = pendingStopForNewLabel
+                    pendingStopForNewLabel = null
+                    if (pending != null) {
+                        // Came from "+ New label" inside SaveStopAsLabelSheet —
+                        // auto-attach the stop to the freshly created label so the
+                        // user's original intent ("save this stop as a new label")
+                        // completes in one go.
+                        onEvent(SearchStopUiEvent.AssignLabelStop(cleaned, pending))
+                    } else {
+                        // Came from the standalone "+ Add" pill — drop into assigning
+                        // mode so the user knows what to do next.
+                        assigningLabel = StopLabel(emoji = emoji, label = cleaned)
+                    }
+                } else {
+                    // Save was blocked (blank or duplicate). Restore the save-sheet
+                    // flow so the user can pick a different option.
+                    stopBeingSaved = pendingStopForNewLabel
+                    pendingStopForNewLabel = null
                 }
             },
         )
@@ -347,6 +376,10 @@ fun SearchStopScreen(
                 }
             },
             onCreateNewLabel = {
+                // Carry the stop into the AddLabel flow so that creating the label
+                // can auto-assign it on save, instead of dropping the user back at
+                // step one.
+                pendingStopForNewLabel = stop
                 stopBeingSaved = null
                 showAddLabelSheet = true
             },
@@ -355,6 +388,12 @@ fun SearchStopScreen(
     }
 
     pendingConflict?.let { conflict ->
+        // Cancelling a conflict warning hands the stop back to SaveStopAsLabelSheet so
+        // the user can pick a different label instead of being stranded on the screen.
+        val onConflictCancel = {
+            stopBeingSaved = conflict.stop
+            pendingConflict = null
+        }
         when (conflict) {
             is LabelConflict.StopAlreadyOnAnotherLabel -> LabelConflictSheet(
                 title = "Already saved",
@@ -366,7 +405,7 @@ fun SearchStopScreen(
                     onEvent(SearchStopUiEvent.AssignLabelStop(conflict.target.label, conflict.stop))
                     pendingConflict = null
                 },
-                onCancel = { pendingConflict = null },
+                onCancel = onConflictCancel,
             )
             is LabelConflict.LabelHasDifferentStop -> LabelConflictSheet(
                 title = "Already in use",
@@ -377,7 +416,7 @@ fun SearchStopScreen(
                     onEvent(SearchStopUiEvent.AssignLabelStop(conflict.target.label, conflict.stop))
                     pendingConflict = null
                 },
-                onCancel = { pendingConflict = null },
+                onCancel = onConflictCancel,
             )
         }
     }

@@ -121,15 +121,44 @@ A `LaunchedEffect` watching `(assigningLabel, stopLabels)` clears `assigningLabe
 
 Tracked here so we can crank through the gaps without losing them.
 
-### Compose UI tests (separate branch)
-- `longPressOnPill_entersEditMode`
-- `tappingHomeWhenSet_navigatesBackWithStop`
-- `tappingFilledStarOnStop_clearsLabel`
-- `assigningLabel_clearsAfterStopSelected`
-- `home_pill_has_no_delete_overlay_in_edit_mode`
-- `addingDuplicateLabel_isBlockedWithInlineError`
-- `tappingUnsetPillTwice_togglesAssigningMode`
-- `dragging_pill_in_edit_mode_fires_MoveLabelToIndex`
+### Compose UI tests
+Covered on `test/search-stop-compose-ui-tests`:
+- ✅ `pillRow_isHidden_onFreshInstallWithNoRecents`
+- ✅ `pillRow_isShown_whenAtLeastOneRecentExists`
+- ✅ `recentHeader_isHidden_onFreshInstall`
+- ✅ `savedStop_showsRemoveFromLabelsStar`
+- ✅ `tappingFilledStar_firesClearLabelStopWithMatchingLabel`
+- ✅ `tappingSetPill_invokesOnStopSelectWithUnderlyingStop`
+- ✅ `tappingUnsetPill_showsAssigningBanner`
+- ✅ `tappingUnsetPillTwice_togglesAssigningModeOff`
+- ✅ `tappingUnsetPill_doesNotInvokeOnStopSelect`
+- ✅ `addLabelPill_isVisible_inIdleMode`
+- ✅ `clearAllButton_firesClearRecentSearchStopsEventWithCount`
+- ✅ `recentHeader_showsRecentAndClearAllLabelsWhenRecentsExist`
+
+Outstanding (gesture-heavy or sheet-based — held back to keep CI deterministic):
+- `longPressOnPill_entersEditMode` — long-press timing is flaky in Robolectric.
+- `dragging_pill_in_edit_mode_fires_MoveLabelToIndex` — drag gesture racing with
+  the reorderable lib's longPressDraggableHandle is not portable to Robolectric.
+- `home_pill_has_no_delete_overlay_in_edit_mode` — gated on entering edit mode
+  programmatically; would need a hoisted-state test surface.
+- `addingDuplicateLabel_isBlockedWithInlineError` — needs ModalBottomSheet to
+  open in test, which requires advancing the animation clock through to settle.
+- `assigningLabel_clearsAfterStopSelected` — needs mutable searchStopState so
+  the AssignLabelStop emission can flow back. Pure-rule version is covered in
+  `pillRowBannerText` ("banner clears once the assigning label has been satisfied").
+
+### ViewModel tests
+Covered on `test/search-stop-vm-label-handlers`
+(`SearchStopViewModelLabelHandlersTest`):
+- AssignLabelStop: state + sandook + recents pinning.
+- CreateLabel: append, case-insensitive duplicate skip, blank skip, surrounding-emoji
+  normalisation.
+- ClearLabelStop: detaches in state and DB.
+- DeleteLabel: removes non-protected, preserves Home (incl. mixed case).
+- MoveLabelToIndex: reorders + re-numbers sort_order; same-slot and unknown-key
+  no-ops.
+- observeStopLabels: empty-DB seeds defaults; populated DB mirrors into state.
 
 ### Snapshot coverage
 Add `@PreviewScreen` for states we don't render today:

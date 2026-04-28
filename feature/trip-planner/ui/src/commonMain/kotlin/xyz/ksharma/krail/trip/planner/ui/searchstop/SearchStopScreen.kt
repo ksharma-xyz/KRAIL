@@ -66,7 +66,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.ImmutableList
@@ -868,12 +867,22 @@ private fun SearchStopListContent(
     val savedStopIds = remember(searchStopState.stopLabels) {
         searchStopState.stopLabels.mapNotNull { it.stopId }.toSet()
     }
+    // First item is always the search-status header so the pill row stays in the same
+    // position whether we're in Recent (idle) or Results (loading/loaded).
+    val isLoading = listState is ListState.Results && listState.isLoading
     when (listState) {
         ListState.Recent -> {
             LazyColumn(
                 modifier = modifier,
-                contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+                contentPadding = PaddingValues(
+                    top = KrailTheme.dimensions.spacingNone,
+                    bottom = KrailTheme.dimensions.spacingXXXXL,
+                ),
             ) {
+                item(key = "search-status") {
+                    SearchingDotsHeader(isLoading = isLoading)
+                }
+
                 if (searchStopState.stopLabels.isNotEmpty()) {
                     item(key = "label-shortcuts") {
                         LabelShortcutsRow(
@@ -901,13 +910,6 @@ private fun SearchStopListContent(
                             )
                         }
                     }
-                    item(key = "label-divider") {
-                        Divider(
-                            modifier = Modifier.padding(
-                                horizontal = KrailTheme.dimensions.pageHorizontalPadding,
-                            ),
-                        )
-                    }
                 }
 
                 if (isMapsAvailable) {
@@ -934,10 +936,12 @@ private fun SearchStopListContent(
         is ListState.Results -> {
             LazyColumn(
                 modifier = modifier,
-                contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
+                contentPadding = PaddingValues(
+                    top = KrailTheme.dimensions.spacingNone,
+                    bottom = KrailTheme.dimensions.spacingXXXXL,
+                ),
             ) {
-
-                item("searching_dots") {
+                item(key = "search-status") {
                     SearchingDotsHeader(isLoading = listState.isLoading)
                 }
 
@@ -967,13 +971,6 @@ private fun SearchStopListContent(
                                 onCancel = onCancelAssigning,
                             )
                         }
-                    }
-                    item(key = "label-divider") {
-                        Divider(
-                            modifier = Modifier.padding(
-                                horizontal = KrailTheme.dimensions.pageHorizontalPadding,
-                            ),
-                        )
                     }
                 }
 
@@ -1090,11 +1087,10 @@ private fun LazyListScope.searchResultsList(
                         onStopSelect(stopItem)
                         onEvent(SearchStopUiEvent.TrackStopSelected(stopItem = stopItem))
                     },
-                    modifier =
-                    Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 12.dp),
+                        .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
+                        .padding(bottom = KrailTheme.dimensions.spacingL),
                 )
             }
         }
@@ -1130,13 +1126,13 @@ private fun LazyListScope.recentSearchStopsList(
                 Text(
                     text = "Recent",
                     style = KrailTheme.typography.titleMedium,
-                    color = KrailTheme.colors.softLabel,
+                    color = KrailTheme.colors.label,
                 )
 
                 Text(
                     text = "Clear all",
                     style = KrailTheme.typography.labelLarge,
-                    color = KrailTheme.colors.softLabel,
+                    color = KrailTheme.colors.label,
                     modifier = Modifier
                         .clip(RoundedCornerShape(dim.radiusFull))
                         .klickable {
@@ -1210,11 +1206,11 @@ private fun LabelShortcutsRow(
     LazyRow(
         state = lazyListState,
         modifier = modifier,
-        // Extra top padding leaves room for the floating ✕ delete chip while editing.
+        // Just enough top padding for the floating ✕ delete chip not to clip.
         contentPadding = PaddingValues(
             start = dim.pageHorizontalPadding,
             end = dim.pageHorizontalPadding,
-            top = dim.spacingM,
+            top = dim.spacingS,
             bottom = dim.spacingS,
         ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
@@ -1305,7 +1301,10 @@ private fun LabelShortcutsRow(
         }
         item(key = "trailing") {
             if (editing) {
-                DonePill(onClick = onDoneEditing)
+                // Extra leading gap so Done reads as a separate action, not the next pill.
+                Box(modifier = Modifier.padding(start = dim.spacingL)) {
+                    DonePill(onClick = onDoneEditing)
+                }
             } else {
                 AddLabelPill(onClick = onAddLabelClick)
             }
@@ -1318,10 +1317,11 @@ private fun DeleteOverlay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
-            .offset(x = 6.dp, y = (-6).dp)
-            .size(20.dp)
+            .offset(x = dim.spacingS, y = -dim.spacingS)
+            .size(dim.spacingXXL)
             .clip(CircleShape)
             .background(KrailTheme.colors.onSurface, CircleShape)
             .klickable(onClick = onClick),
@@ -1331,7 +1331,7 @@ private fun DeleteOverlay(
             painter = painterResource(TajRes.drawable.ic_close),
             contentDescription = "Delete label",
             colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-            modifier = Modifier.size(12.dp),
+            modifier = Modifier.size(dim.spacingL),
         )
     }
 }
@@ -1379,7 +1379,7 @@ private fun SetLabelPill(
             painter = painterResource(icon),
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.size(dim.spacingXL),
         )
         Text(
             text = label.label,
@@ -1413,7 +1413,7 @@ private fun UnsetLabelPill(
             painter = painterResource(icon),
             contentDescription = null,
             colorFilter = ColorFilter.tint(contentColor),
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.size(dim.spacingXL),
         )
         Text(
             text = label.label,
@@ -1432,7 +1432,7 @@ private fun AddLabelPill(onClick: () -> Unit) {
             .clip(shape)
             .border(
                 width = dim.strokeThin,
-                color = KrailTheme.colors.outlineSubtle,
+                color = KrailTheme.colors.label,
                 shape = shape,
             )
             .klickable(onClick = onClick)
@@ -1442,7 +1442,7 @@ private fun AddLabelPill(onClick: () -> Unit) {
         Text(
             text = "+ Add",
             style = KrailTheme.typography.labelLarge,
-            color = KrailTheme.colors.softLabel,
+            color = KrailTheme.colors.label,
         )
     }
 }
@@ -1484,15 +1484,18 @@ private fun AssigningModeBanner(
     }
 }
 
+/**
+ * Visually distinct from label pills — uses inverse onSurface/surface so "Done" reads
+ * as an action button (like the journey-card map button), not as another pill.
+ */
 @Composable
 private fun DonePill(onClick: () -> Unit) {
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
-    val themeColor = themeColor()
     Row(
         modifier = Modifier
             .clip(shape)
-            .background(themeColor, shape)
+            .background(KrailTheme.colors.onSurface, shape)
             .klickable(onClick = onClick)
             .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
         verticalAlignment = Alignment.CenterVertically,
@@ -1537,7 +1540,7 @@ private fun SelectOnMapItem(
             painter = painterResource(TajRes.drawable.ic_location),
             contentDescription = null,
             colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(KrailTheme.dimensions.spacingXXL),
         )
         Text(
             text = "Select on map",
@@ -1561,151 +1564,72 @@ private fun MapAutoInitEffect(
     }
 }
 
-// region Previews
+// region Previews — every realistic scenario has the seeded Home/Work labels at minimum,
+// since defaults are seeded on first install and Home can't be deleted.
+
+private val previewRecentStops: List<SearchStopState.StopResult> = listOf(
+    SearchStopState.StopResult(
+        "Central Station",
+        "stop_central",
+        persistentListOf(TransportMode.Train),
+    ),
+    SearchStopState.StopResult(
+        "Town Hall",
+        "stop_town_hall",
+        persistentListOf(TransportMode.Train, TransportMode.LightRail),
+    ),
+    SearchStopState.StopResult(
+        "Wynyard",
+        "stop_wynyard",
+        persistentListOf(TransportMode.Train),
+    ),
+)
+
+private val previewLabelsTypical = persistentListOf(
+    StopLabel(
+        emoji = "🏠",
+        label = "Home",
+        stopId = "stop_central",
+        stopName = "Central Station",
+    ),
+    StopLabel(emoji = "💼", label = "Work"),
+)
+
+private val previewLabelsRich = persistentListOf(
+    StopLabel(
+        emoji = "🏠",
+        label = "Home",
+        stopId = "stop_central",
+        stopName = "Central Station",
+    ),
+    StopLabel(
+        emoji = "💼",
+        label = "Work",
+        stopId = "stop_town_hall",
+        stopName = "Town Hall",
+    ),
+    StopLabel(
+        emoji = "🏋",
+        label = "Gym",
+        stopId = "stop_bondi",
+        stopName = "Bondi Junction",
+    ),
+    StopLabel(emoji = "☕", label = "Cafe"),
+    StopLabel(emoji = "🏖", label = "Beach"),
+)
 
 @PreviewScreen
 @Composable
-private fun PreviewSearchStopScreen_ListLoading() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Results(
-                    results = persistentListOf(),
-                    isLoading = true,
-                ),
-                searchQuery = "Search Query",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(),
-                isMapsAvailable = true,
-                mapUiState = MapUiState.Ready(),
-            )
-            SearchStopScreen(
-                searchQuery = "Search Query",
-                searchStopState = state,
-                onEvent = {},
-            )
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_ListResults_Maps() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val stopResult = SearchStopState.SearchResult.Stop(
-                stopName = "Central",
-                stopId = "stop_1",
-                transportModeType = persistentListOf(TransportMode.Train),
-            )
-            val trip = SearchStopState.SearchResult.Trip(
-                tripId = "trip_1",
-                routeShortName = "T1",
-                headsign = "To Town Hall",
-                stops = persistentListOf(
-                    SearchStopState.TripStop(
-                        stopId = "stop_1",
-                        stopName = "Central",
-                        stopSequence = 1,
-                        transportModeType = persistentListOf(TransportMode.Train),
-                    ),
-                    SearchStopState.TripStop(
-                        stopId = "stop_2",
-                        stopName = "Town Hall",
-                        stopSequence = 2,
-                        transportModeType = persistentListOf(TransportMode.Train),
-                    ),
-                ),
-                transportMode = TransportMode.Train,
-            )
-
-            val state = SearchStopState(
-                listState = ListState.Results(
-                    results = persistentListOf(
-                        stopResult,
-                        trip,
-                    ),
-                    isLoading = false,
-                ),
-                searchQuery = "Central",
-                searchResults = persistentListOf(stopResult, trip),
-                recentStops = persistentListOf(
-                    SearchStopState.StopResult(
-                        "Central",
-                        "stop_1",
-                        persistentListOf(TransportMode.Train),
-                    ),
-                ),
-                isMapsAvailable = true,
-                mapUiState = MapUiState.Ready(),
-            )
-
-            SearchStopScreen(
-                searchQuery = "Central",
-                searchStopState = state,
-                onEvent = {},
-            )
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_ListResults_NoMaps() {
+private fun PreviewSearchStopScreen_FreshInstall() {
+    // Day 1: defaults seeded, nothing else.
     PreviewTheme {
         val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val stopResult = SearchStopState.SearchResult.Stop(
-                stopName = "Central",
-                stopId = "stop_1",
-                transportModeType = persistentListOf(TransportMode.Train),
-            )
-            val trip = SearchStopState.SearchResult.Trip(
-                tripId = "trip_1",
-                routeShortName = "T1",
-                headsign = "To Town Hall",
-                stops = persistentListOf(
-                    SearchStopState.TripStop(
-                        stopId = "stop_1",
-                        stopName = "Central",
-                        stopSequence = 1,
-                        transportModeType = persistentListOf(TransportMode.Train),
-                    ),
-                    SearchStopState.TripStop(
-                        stopId = "stop_2",
-                        stopName = "Town Hall",
-                        stopSequence = 2,
-                        transportModeType = persistentListOf(TransportMode.Train),
-                    ),
-                ),
-                transportMode = TransportMode.Train,
-            )
-
-            val state = SearchStopState(
-                listState = ListState.Results(
-                    results = persistentListOf(
-                        stopResult,
-                        trip,
-                    ),
-                    isLoading = false,
-                ),
-                searchQuery = "Central",
-                searchResults = persistentListOf(stopResult, trip),
-                recentStops = persistentListOf(
-                    SearchStopState.StopResult(
-                        "Central",
-                        "stop_1",
-                        persistentListOf(TransportMode.Train),
-                    ),
-                ),
-                isMapsAvailable = false,
-            )
-
             SearchStopScreen(
-                searchQuery = "Central",
-                searchStopState = state,
+                searchStopState = SearchStopState(
+                    listState = ListState.Recent,
+                    stopLabels = StopLabel.defaults,
+                ),
                 onEvent = {},
             )
         }
@@ -1715,37 +1639,139 @@ private fun PreviewSearchStopScreen_ListResults_NoMaps() {
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Recent() {
+    // Typical idle state: Home set, Work unset, three recent searches below.
     PreviewTheme {
         val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val recent = listOf(
-                SearchStopState.StopResult(
-                    "Central",
-                    "stop_1",
-                    persistentListOf(TransportMode.Train),
+            SearchStopScreen(
+                searchStopState = SearchStopState(
+                    listState = ListState.Recent,
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsTypical,
+                    isMapsAvailable = true,
+                    mapUiState = MapUiState.Ready(),
                 ),
-                SearchStopState.StopResult(
-                    "Town Hall",
-                    "stop_2",
-                    persistentListOf(TransportMode.Train),
-                ),
-                SearchStopState.StopResult(
-                    "Wynyard",
-                    "stop_3",
-                    persistentListOf(TransportMode.Train),
-                ),
+                onEvent = {},
             )
-            val state = SearchStopState(
-                listState = ListState.Recent,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = recent.toImmutableList(),
-                isMapsAvailable = true,
-                mapUiState = MapUiState.Ready(),
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_RichLabels() {
+    // Power user with several saved labels and recents.
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            SearchStopScreen(
+                searchStopState = SearchStopState(
+                    listState = ListState.Recent,
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsRich,
+                ),
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_AssigningMode() {
+    // After tapping unset Work pill — banner visible, Work outline highlighted.
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            SearchStopScreen(
+                searchStopState = SearchStopState(
+                    listState = ListState.Recent,
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsTypical,
+                ),
+                onEvent = {},
+            )
+            // Note: actual assigningLabel banner only renders when the user enters
+            // assigning mode at runtime; static preview shows the rest of the layout.
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_SearchLoading() {
+    // User typed a query, results loading. Pill row, recents stay visually anchored.
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            SearchStopScreen(
+                searchQuery = "Centra",
+                searchStopState = SearchStopState(
+                    listState = ListState.Results(
+                        results = persistentListOf(),
+                        isLoading = true,
+                    ),
+                    searchQuery = "Centra",
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsTypical,
+                    isMapsAvailable = true,
+                    mapUiState = MapUiState.Ready(),
+                ),
+                onEvent = {},
+            )
+        }
+    }
+}
+
+@PreviewScreen
+@Composable
+private fun PreviewSearchStopScreen_SearchResults() {
+    // Stops + a trip route returned for "Central". Pills + recents above the results.
+    PreviewTheme {
+        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
+        CompositionLocalProvider(LocalThemeColor provides themeColor) {
+            val stopResult = SearchStopState.SearchResult.Stop(
+                stopName = "Central Station",
+                stopId = "stop_central",
+                transportModeType = persistentListOf(TransportMode.Train),
+            )
+            val airportResult = SearchStopState.SearchResult.Stop(
+                stopName = "Sydney Airport - International T1",
+                stopId = "stop_airport",
+                transportModeType = persistentListOf(TransportMode.Train),
+            )
+            val trip = SearchStopState.SearchResult.Trip(
+                tripId = "trip_T1",
+                routeShortName = "T1",
+                headsign = "To Town Hall",
+                stops = persistentListOf(
+                    SearchStopState.TripStop(
+                        stopId = "stop_central",
+                        stopName = "Central",
+                        stopSequence = 1,
+                        transportModeType = persistentListOf(TransportMode.Train),
+                    ),
+                    SearchStopState.TripStop(
+                        stopId = "stop_town_hall",
+                        stopName = "Town Hall",
+                        stopSequence = 2,
+                        transportModeType = persistentListOf(TransportMode.Train),
+                    ),
+                ),
+                transportMode = TransportMode.Train,
             )
             SearchStopScreen(
-                searchQuery = "",
-                searchStopState = state,
+                searchQuery = "Central",
+                searchStopState = SearchStopState(
+                    listState = ListState.Results(
+                        results = persistentListOf(stopResult, airportResult, trip),
+                        isLoading = false,
+                    ),
+                    searchQuery = "Central",
+                    searchResults = persistentListOf(stopResult, airportResult, trip),
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsTypical,
+                ),
                 onEvent = {},
             )
         }
@@ -1758,15 +1784,14 @@ private fun PreviewSearchStopScreen_NoMatch() {
     PreviewTheme {
         val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.NoMatch,
-                searchQuery = "UnknownStop",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(),
-            )
             SearchStopScreen(
                 searchQuery = "UnknownStop",
-                searchStopState = state,
+                searchStopState = SearchStopState(
+                    listState = ListState.NoMatch,
+                    searchQuery = "UnknownStop",
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsTypical,
+                ),
                 onEvent = {},
             )
         }
@@ -1779,15 +1804,14 @@ private fun PreviewSearchStopScreen_Error() {
     PreviewTheme {
         val themeColor = remember { mutableStateOf(NswTransportMode.Ferry.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Error,
-                searchQuery = "Query",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(),
-            )
             SearchStopScreen(
                 searchQuery = "Query",
-                searchStopState = state,
+                searchStopState = SearchStopState(
+                    listState = ListState.Error,
+                    searchQuery = "Query",
+                    recentStops = previewRecentStops.toImmutableList(),
+                    stopLabels = previewLabelsTypical,
+                ),
                 onEvent = {},
             )
         }
@@ -1797,165 +1821,15 @@ private fun PreviewSearchStopScreen_Error() {
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Map() {
+    // Single-pane map view; pills hidden behind map.
     PreviewTheme {
         val themeColor = remember { mutableStateOf(NswTransportMode.LightRail.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                mapUiState = MapUiState.Ready(),
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(),
-            )
-            Column {
-                SearchStopScreen(
-                    searchQuery = "",
-                    searchStopState = state,
-                    onEvent = {},
-                )
-            }
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_FreshInstall() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Recent,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(),
-                stopLabels = StopLabel.defaults,
-            )
             SearchStopScreen(
-                searchStopState = state,
-                onEvent = {},
-            )
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_LabelsOnly_NoRecents() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Recent,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(),
-                stopLabels = persistentListOf(
-                    StopLabel(emoji = "🏠", label = "Home", stopId = "1", stopName = "Central Station"),
-                    StopLabel(emoji = "💼", label = "Work", stopId = "2", stopName = "Town Hall"),
+                searchStopState = SearchStopState(
+                    mapUiState = MapUiState.Ready(),
+                    stopLabels = previewLabelsTypical,
                 ),
-            )
-            SearchStopScreen(
-                searchStopState = state,
-                onEvent = {},
-            )
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_NoLabels_WithRecents() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Recent,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(
-                    SearchStopState.StopResult(
-                        "Central Station",
-                        "stop_1",
-                        persistentListOf(TransportMode.Train),
-                    ),
-                    SearchStopState.StopResult(
-                        "Town Hall",
-                        "stop_2",
-                        persistentListOf(TransportMode.Train, TransportMode.LightRail),
-                    ),
-                ),
-                stopLabels = persistentListOf(),
-            )
-            SearchStopScreen(
-                searchStopState = state,
-                onEvent = {},
-            )
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_AllLabels_AndRecents() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Recent,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(
-                    SearchStopState.StopResult(
-                        "Central Station",
-                        "stop_1",
-                        persistentListOf(TransportMode.Train),
-                    ),
-                    SearchStopState.StopResult(
-                        "Sydney Airport - International T1",
-                        "stop_3",
-                        persistentListOf(TransportMode.Train),
-                    ),
-                ),
-                stopLabels = persistentListOf(
-                    StopLabel(emoji = "🏠", label = "Home", stopId = "stop_1", stopName = "Central Station"),
-                    StopLabel(emoji = "💼", label = "Work"),
-                    StopLabel(emoji = "🏋", label = "Gym", stopId = "stop_4", stopName = "Bondi Junction"),
-                    StopLabel(emoji = "☕", label = "Cafe"),
-                    StopLabel(emoji = "🏖", label = "Beach"),
-                ),
-            )
-            SearchStopScreen(
-                searchStopState = state,
-                onEvent = {},
-            )
-        }
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_AssigningMode() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val state = SearchStopState(
-                listState = ListState.Recent,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                recentStops = persistentListOf(
-                    SearchStopState.StopResult(
-                        "Central Station",
-                        "stop_1",
-                        persistentListOf(TransportMode.Train),
-                    ),
-                ),
-                stopLabels = persistentListOf(
-                    StopLabel(emoji = "🏠", label = "Home"),
-                    StopLabel(emoji = "💼", label = "Work"),
-                ),
-            )
-            SearchStopScreen(
-                searchStopState = state,
                 onEvent = {},
             )
         }

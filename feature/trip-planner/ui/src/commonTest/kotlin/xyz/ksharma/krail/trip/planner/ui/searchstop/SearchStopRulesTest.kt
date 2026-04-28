@@ -1,9 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -169,6 +174,53 @@ class SearchStopRulesTest {
             conflict is AssignConflict.StopAlreadyOnAnotherLabel,
             "expected stop-side conflict, got $conflict",
         )
+    }
+
+    // endregion
+
+    // region shouldShowPillRow
+
+    private val centralRecent = SearchStopState.StopResult(
+        "Central",
+        "stop_central",
+        persistentListOf(TransportMode.Train),
+    )
+    private val centralResult = SearchStopState.SearchResult.Stop(
+        stopName = "Central",
+        stopId = "stop_central",
+        transportModeType = persistentListOf(TransportMode.Train),
+    )
+
+    @Test
+    fun `pill row hidden on fresh Recent state with no recents`() {
+        assertFalse(shouldShowPillRow(ListState.Recent, recentStops = emptyList()))
+    }
+
+    @Test
+    fun `pill row visible in Recent state once at least one recent exists`() {
+        assertTrue(shouldShowPillRow(ListState.Recent, recentStops = listOf(centralRecent)))
+    }
+
+    @Test
+    fun `pill row hidden during Results loading with no results yet`() {
+        val state = ListState.Results(results = persistentListOf(), isLoading = true)
+        assertFalse(shouldShowPillRow(state, recentStops = listOf(centralRecent)))
+    }
+
+    @Test
+    fun `pill row visible when Results state has at least one result`() {
+        val state = ListState.Results(results = persistentListOf(centralResult), isLoading = false)
+        assertTrue(shouldShowPillRow(state, recentStops = emptyList()))
+    }
+
+    @Test
+    fun `pill row hidden in NoMatch state`() {
+        assertFalse(shouldShowPillRow(ListState.NoMatch, recentStops = listOf(centralRecent)))
+    }
+
+    @Test
+    fun `pill row hidden in Error state`() {
+        assertFalse(shouldShowPillRow(ListState.Error, recentStops = listOf(centralRecent)))
     }
 
     // endregion

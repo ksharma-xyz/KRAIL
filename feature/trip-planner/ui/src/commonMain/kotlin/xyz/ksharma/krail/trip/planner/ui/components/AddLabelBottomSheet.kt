@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -7,13 +8,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,6 +36,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.Res
 import app.krail.taj.resources.ic_location
+import krail.feature.trip_planner.ui.generated.resources.ic_info
+import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.compose.resources.painterResource
@@ -69,6 +75,7 @@ fun AddLabelBottomSheet(
             existingLabels.any { labelNamesMatch(it.label, cleanedName) }
     }
     val canSave = cleanedName.isNotBlank() && !isDuplicate
+    var showInfoText by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -83,31 +90,61 @@ fun AddLabelBottomSheet(
                 .padding(bottom = dim.spacingXXL),
             verticalArrangement = Arrangement.spacedBy(dim.spacingL),
         ) {
-            // ─── Title ────────────────────────────────────────────────────────
-            Text(
-                text = if (stopName != null) "Give a nickname to" else "Add a new label",
-                style = KrailTheme.typography.headlineMedium,
-                color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            )
-
+            // ─── Title (with info-toggle when no stop is attached) ───────────
             if (stopName != null) {
+                Text(
+                    text = "Give a nickname to",
+                    style = KrailTheme.typography.headlineMedium,
+                    color = KrailTheme.colors.onSurface,
+                    modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                )
                 StopChip(
                     stopName = stopName,
                     modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                 )
             } else {
-                // TODO -  dispaly a info icon and then when the icon is tapped then show this text label.
-                // info icon can be added next to add  new label title.
-                Text(
-                    text = "Labels are quick shortcuts to your favourite stops like " +
-                        "Home, Work, or Gym, anywhere you ride to often.\n\nPick a name " +
-                        "now, then tap the ⭐ next to a stop in your search results " +
-                        "to attach it.",
-                    style = KrailTheme.typography.bodySmall,
-                    color = KrailTheme.colors.label,
+                Row(
                     modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
+                ) {
+                    Text(
+                        text = "Add a new label",
+                        style = KrailTheme.typography.headlineMedium,
+                        color = KrailTheme.colors.onSurface,
+                    )
+                    Image(
+                        painter = painterResource(TripPlannerRes.drawable.ic_info),
+                        contentDescription = if (showInfoText) {
+                            "Hide label help"
+                        } else {
+                            "Show label help"
+                        },
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.label),
+                        modifier = Modifier
+                            .size(dim.spacingXXL)
+                            .clip(CircleShape)
+                            .klickable { showInfoText = !showInfoText }
+                            .padding(dim.spacingXS),
+                    )
+                }
+
+                // animateContentSize keeps the height collapse smooth when the
+                // user toggles the help text on/off.
+                Column(modifier = Modifier.animateContentSize()) {
+                    if (showInfoText) {
+                        Spacer(modifier = Modifier.height(dim.spacingS))
+                        Text(
+                            text = "Labels are quick shortcuts to your favourite stops " +
+                                "like Home, Work, or Gym, anywhere you ride to often." +
+                                "\n\nPick a name now, then tap the ⭐ next to a stop " +
+                                "in your search results to attach it.",
+                            style = KrailTheme.typography.bodySmall,
+                            color = KrailTheme.colors.label,
+                            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                        )
+                    }
+                }
             }
 
             // ─── Preview ──────────────────────────────────────────────────────

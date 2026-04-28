@@ -28,7 +28,35 @@ The screen is built around three ideas: **search for a stop**, **save stops as l
 
 ---
 
+### Pill row visibility (`shouldShowPillRow`)
+
+The whole pill row + assigning banner only render when there's something below for
+the user to act on:
+
+| List state | Pill row |
+|---|---|
+| Recent, no recents yet | hidden |
+| Recent, ≥ 1 recent stop | visible |
+| Results loading (no results yet) | hidden |
+| Results with ≥ 1 result | visible |
+| NoMatch | hidden |
+| Error | hidden |
+
+Reasoning: tapping an unset Home pill enters assigning mode, which expects at least
+one stop with a star button below. Showing pills against an empty canvas would let
+users tap into a dead-end state.
+
+---
+
 ## Stops & saving
+
+### Saving auto-pins to recents
+When a stop is attached to a label (via the save sheet or the "Set as From/To then
+assign" flow), the same stop is also written to the recent search stops table —
+that way the saved stop shows up in Recents next time the screen opens, so users
+can reach it again quickly even if they remove the label later.
+
+
 
 ### Star button (StopSearchListItem)
 - Outlined `ic_star` when the stop isn't saved against any label. Tap → opens `SaveStopAsLabelSheet`.

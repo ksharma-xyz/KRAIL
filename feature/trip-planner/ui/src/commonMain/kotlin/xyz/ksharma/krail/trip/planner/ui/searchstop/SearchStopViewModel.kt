@@ -236,6 +236,10 @@ class SearchStopViewModel(
                 }
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.updateStopLabelStop(event.labelKey, event.stopItem.stopId, event.stopItem.stopName)
+                    // Stops the user pins to a label are also stops they "interacted
+                    // with", so surface them in Recents next time the screen opens.
+                    sandook.insertOrReplaceRecentSearchStop(stopId = event.stopItem.stopId)
+                    fetchRecentStops()
                 }
             }
 

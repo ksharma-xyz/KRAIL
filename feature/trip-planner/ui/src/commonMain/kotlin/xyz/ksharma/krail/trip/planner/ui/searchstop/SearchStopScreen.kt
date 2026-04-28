@@ -909,6 +909,7 @@ private fun SearchStopListContent(
                                 onMoveLabel = onMoveLabel,
                                 onAddLabelClick = onAddLabelClick,
                                 onDoneEditing = onDoneEditing,
+                                modifier = Modifier,
                             )
                         }
                         item(key = "assigning-banner") {
@@ -929,9 +930,7 @@ private fun SearchStopListContent(
 
                     if (isMapsAvailable) {
                         item(key = "select-on-map") {
-                            DividerInset()
                             SelectOnMapItem(onOpenMap = onOpenMap)
-                            DividerInset()
                         }
                     }
 
@@ -1001,9 +1000,7 @@ private fun SearchStopListContent(
 
                     if (isMapsAvailable) {
                         item(key = "select-on-map") {
-                            DividerInset()
                             SelectOnMapItem(onOpenMap = onOpenMap)
-                            DividerInset()
                         }
                     }
 
@@ -1533,7 +1530,7 @@ private fun PublicTransportNote(modifier: Modifier = Modifier) {
         color = KrailTheme.colors.label,
         modifier = modifier.padding(
             horizontal = KrailTheme.dimensions.pageHorizontalPadding,
-            vertical = KrailTheme.dimensions.spacingM,
+            vertical = KrailTheme.dimensions.spacingL,
         ),
     )
 }
@@ -1559,7 +1556,7 @@ private fun SelectOnMapItem(
         modifier = modifier
             .fillMaxWidth()
             .klickable { onOpenMap() }
-            .padding(vertical = dim.spacingM, horizontal = dim.pageHorizontalPadding),
+            .padding(vertical = dim.spacingL, horizontal = dim.pageHorizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -97,9 +97,11 @@ fun AddLabelBottomSheet(
                     modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                 )
             } else {
+                // TODO -  dispaly a info icon and then when the icon is tapped then show this text label.
+                // info icon can be added next to add  new label title.
                 Text(
                     text = "Labels are quick shortcuts to your favourite stops like " +
-                        "Home, Work, or Gym, anywhere you ride to often. Pick a name " +
+                        "Home, Work, or Gym, anywhere you ride to often.\n\nPick a name " +
                         "now, then tap the ⭐ next to a stop in your search results " +
                         "to attach it.",
                     style = KrailTheme.typography.bodySmall,

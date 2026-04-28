@@ -127,9 +127,10 @@ class SearchStopViewModelLabelHandlersTest {
                 // also lights up that stop in Recents next time the screen opens, so
                 // the user can still get to it after removing the label.
                 val recents = fakeSandook.selectRecentSearchStops()
-                assertTrue(recents.any { it.stopId == "stop_central" }) {
-                    "expected stop_central in recents, got ${recents.map { it.stopId }}"
-                }
+                assertTrue(
+                    recents.any { it.stopId == "stop_central" },
+                    "expected stop_central in recents, got ${recents.map { it.stopId }}",
+                )
             }
         }
 

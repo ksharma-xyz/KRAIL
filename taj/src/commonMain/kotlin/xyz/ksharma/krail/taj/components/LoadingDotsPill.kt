@@ -75,12 +75,14 @@ fun LoadingDotsPill(
             modifier = Modifier
                 .clip(RoundedCornerShape(dim.radiusFull))
                 .background(backgroundColor)
-                .padding(horizontal = dim.spacingL, vertical = dim.spacingS),
+                .padding(horizontal = dim.spacingM, vertical = dim.spacingS),
             contentAlignment = Alignment.Center,
         ) {
-            // AnimatedDots' Canvas uses raw pixel offsets (radius 10, spacing 40, peak
-            // offset 30) so we lock the canvas size in dp; otherwise it would render at
-            // 0×0 (Canvas has no intrinsic size) and the dots would never appear.
+            // Canvas is sized for AnimatedDots' default geometry: width ≥ 2*spacing
+            // + 2*radius (= 36 dp) and height ≥ 2*(radius + bounceHeight) (= 28 dp),
+            // with a couple of dp of margin so the bounce never touches the pill
+            // border. Canvas has no intrinsic size, so this dp lock is required for
+            // the dots to render.
             AnimatedDots(
                 color = dotsColor,
                 modifier = Modifier.size(width = DotsCanvasWidth, height = DotsCanvasHeight),
@@ -89,8 +91,8 @@ fun LoadingDotsPill(
     }
 }
 
-private val DotsCanvasWidth = 48.dp
-private val DotsCanvasHeight = 24.dp
+private val DotsCanvasWidth = 44.dp
+private val DotsCanvasHeight = 32.dp
 
 // region Previews
 

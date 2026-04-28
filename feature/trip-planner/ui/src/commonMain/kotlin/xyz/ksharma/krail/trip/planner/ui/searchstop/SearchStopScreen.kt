@@ -49,7 +49,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -384,42 +383,58 @@ private sealed interface LabelConflict {
 }
 
 // region Savers — keep UI orchestration state alive across rotation / process death.
+//
+// Saver<T?, Any> shape (rather than mapSaver which requires `Original : Any`) so we can
+// hold nullable MutableState backed by a Saver. Returning null from save tells the
+// framework "nothing to persist"; restore is only called when there IS something saved.
 
-private val StopLabelSaver: Saver<StopLabel, Any> = mapSaver(
+private val StopLabelSaver: Saver<StopLabel?, Any> = Saver(
     save = { label ->
-        mapOf(
-            "emoji" to label.emoji,
-            "label" to label.label,
-            "stopId" to label.stopId,
-            "stopName" to label.stopName,
-        )
+        label?.let {
+            mapOf<String, Any?>(
+                "emoji" to it.emoji,
+                "label" to it.label,
+                "stopId" to it.stopId,
+                "stopName" to it.stopName,
+            )
+        }
     },
-    restore = {
+    restore = { saved ->
+        @Suppress("UNCHECKED_CAST")
+        val map = saved as Map<String, Any?>
         StopLabel(
-            emoji = it["emoji"] as String,
-            label = it["label"] as String,
-            stopId = it["stopId"] as String?,
-            stopName = it["stopName"] as String?,
+            emoji = map["emoji"] as String,
+            label = map["label"] as String,
+            stopId = map["stopId"] as String?,
+            stopName = map["stopName"] as String?,
         )
     },
 )
 
-private val StopItemSaver: Saver<StopItem, Any> = mapSaver(
+private val StopItemSaver: Saver<StopItem?, Any> = Saver(
     save = { item ->
-        mapOf("stopId" to item.stopId, "stopName" to item.stopName)
+        item?.let {
+            mapOf<String, Any?>(
+                "stopId" to it.stopId,
+                "stopName" to it.stopName,
+            )
+        }
     },
-    restore = {
+    restore = { saved ->
+        @Suppress("UNCHECKED_CAST")
+        val map = saved as Map<String, Any?>
         StopItem(
-            stopId = it["stopId"] as String,
-            stopName = it["stopName"] as String,
+            stopId = map["stopId"] as String,
+            stopName = map["stopName"] as String,
         )
     },
 )
 
-private val LabelConflictSaver: Saver<LabelConflict, Any> = mapSaver(
+private val LabelConflictSaver: Saver<LabelConflict?, Any> = Saver(
     save = { conflict ->
         when (conflict) {
-            is LabelConflict.StopAlreadyOnAnotherLabel -> mapOf(
+            null -> null
+            is LabelConflict.StopAlreadyOnAnotherLabel -> mapOf<String, Any?>(
                 "kind" to "stop",
                 "targetEmoji" to conflict.target.emoji,
                 "targetLabel" to conflict.target.label,
@@ -432,7 +447,7 @@ private val LabelConflictSaver: Saver<LabelConflict, Any> = mapSaver(
                 "existingStopId" to conflict.existingLabel.stopId,
                 "existingStopName" to conflict.existingLabel.stopName,
             )
-            is LabelConflict.LabelHasDifferentStop -> mapOf(
+            is LabelConflict.LabelHasDifferentStop -> mapOf<String, Any?>(
                 "kind" to "label",
                 "targetEmoji" to conflict.target.emoji,
                 "targetLabel" to conflict.target.label,
@@ -444,7 +459,9 @@ private val LabelConflictSaver: Saver<LabelConflict, Any> = mapSaver(
             )
         }
     },
-    restore = { map ->
+    restore = { saved ->
+        @Suppress("UNCHECKED_CAST")
+        val map = saved as Map<String, Any?>
         when (map["kind"] as String) {
             "stop" -> LabelConflict.StopAlreadyOnAnotherLabel(
                 target = StopLabel(

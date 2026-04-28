@@ -929,7 +929,9 @@ private fun SearchStopListContent(
 
                     if (isMapsAvailable) {
                         item(key = "select-on-map") {
+                            DividerInset()
                             SelectOnMapItem(onOpenMap = onOpenMap)
+                            DividerInset()
                         }
                     }
 
@@ -999,7 +1001,9 @@ private fun SearchStopListContent(
 
                     if (isMapsAvailable) {
                         item(key = "select-on-map") {
+                            DividerInset()
                             SelectOnMapItem(onOpenMap = onOpenMap)
+                            DividerInset()
                         }
                     }
 
@@ -1146,7 +1150,7 @@ private fun LazyListScope.recentSearchStopsList(
                     .padding(
                         start = dim.pageHorizontalPadding,
                         end = dim.pageHorizontalPadding,
-                        top = dim.spacingM,
+                        top = dim.spacingXL,
                         bottom = dim.spacingS,
                     ),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1531,6 +1535,14 @@ private fun PublicTransportNote(modifier: Modifier = Modifier) {
             horizontal = KrailTheme.dimensions.pageHorizontalPadding,
             vertical = KrailTheme.dimensions.spacingM,
         ),
+    )
+}
+
+/** Divider inset to match stop-row horizontal padding. */
+@Composable
+private fun DividerInset() {
+    Divider(
+        modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
     )
 }
 

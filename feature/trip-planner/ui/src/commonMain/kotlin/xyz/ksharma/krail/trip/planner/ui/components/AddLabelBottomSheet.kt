@@ -96,6 +96,16 @@ fun AddLabelBottomSheet(
                     stopName = stopName,
                     modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
                 )
+            } else {
+                Text(
+                    text = "Labels are quick shortcuts to your favourite stops like " +
+                        "Home, Work, or Gym, anywhere you ride to often. Pick a name " +
+                        "now, then tap the ⭐ next to a stop in your search results " +
+                        "to attach it.",
+                    style = KrailTheme.typography.bodySmall,
+                    color = KrailTheme.colors.label,
+                    modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+                )
             }
 
             // ─── Preview ──────────────────────────────────────────────────────

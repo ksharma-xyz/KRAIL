@@ -31,7 +31,7 @@ internal fun pillRowBannerText(
     assigningLabel: StopLabel?,
     stopLabels: List<StopLabel>,
 ): String? = when {
-    editing -> "Drag a pill to reorder. Tap ✕ to delete."
+    editing -> "Long press and then drag the pill to reorder and select Done to save."
     assigningLabel != null -> {
         val current = stopLabels.firstOrNull { it.label == assigningLabel.label }
         if (current?.isSet == true) {

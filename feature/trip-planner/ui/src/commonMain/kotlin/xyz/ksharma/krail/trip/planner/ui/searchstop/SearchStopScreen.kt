@@ -1094,16 +1094,14 @@ private fun LazyListScope.pillRowSection(
     }
 }
 
-/** Inset dividers above + below a tappable "Select on map" row. */
+/** Tappable "Select on map" row — surrounding spacing comes from neighbours. */
 private fun LazyListScope.selectOnMapItem(
     isMapsAvailable: Boolean,
     onOpenMap: () -> Unit,
 ) {
     if (!isMapsAvailable) return
     item(key = "select-on-map") {
-        DividerInset()
         SelectOnMapItem(onOpenMap = onOpenMap)
-        DividerInset()
     }
 }
 
@@ -1612,14 +1610,6 @@ private fun PublicTransportNote(modifier: Modifier = Modifier) {
             horizontal = KrailTheme.dimensions.pageHorizontalPadding,
             vertical = KrailTheme.dimensions.spacingL,
         ),
-    )
-}
-
-/** Divider inset to match stop-row horizontal padding. */
-@Composable
-private fun DividerInset() {
-    Divider(
-        modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
     )
 }
 

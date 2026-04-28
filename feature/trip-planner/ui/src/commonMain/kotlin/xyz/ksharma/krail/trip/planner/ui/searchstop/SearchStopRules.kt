@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
@@ -82,6 +84,26 @@ internal fun conflictForAssign(
         )
     }
     return null
+}
+
+/**
+ * Whether the pill row (label shortcuts + assigning banner) should render.
+ *
+ * Hide it on a fresh-install / empty-search canvas where there are no stops below
+ * with stars to tap — otherwise tapping an unset Home pill enters assigning mode
+ * with nothing to act on, which feels broken to the user.
+ *
+ * - In Recent mode: show iff the user has at least one recent stop.
+ * - In Results mode: show iff the search returned at least one result. Loading,
+ *   NoMatch and Error states all hide the row.
+ */
+internal fun shouldShowPillRow(
+    listState: ListState,
+    recentStops: List<SearchStopState.StopResult>,
+): Boolean = when (listState) {
+    ListState.Recent -> recentStops.isNotEmpty()
+    is ListState.Results -> listState.results.isNotEmpty()
+    ListState.NoMatch, ListState.Error -> false
 }
 
 internal sealed interface AssignConflict {

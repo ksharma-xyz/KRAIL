@@ -880,6 +880,9 @@ private fun SearchStopListContent(
         searchStopState.stopLabels.mapNotNull { it.stopId }.toSet()
     }
     val isLoading = listState is ListState.Results && listState.isLoading
+    val showPillRow = remember(listState, searchStopState.recentStops) {
+        shouldShowPillRow(listState, searchStopState.recentStops)
+    }
     when (listState) {
         ListState.Recent -> {
             // Box wrapper lets the floating "searching..." pill sit on the z-axis above
@@ -892,48 +895,24 @@ private fun SearchStopListContent(
                         bottom = KrailTheme.dimensions.spacingXXXXL,
                     ),
                 ) {
-                    if (searchStopState.stopLabels.isNotEmpty()) {
-                        item(key = "label-shortcuts") {
-                            LabelShortcutsRow(
-                                labels = searchStopState.stopLabels,
-                                assigningLabel = assigningLabel,
-                                editing = editingLabels,
-                                onSetLabelClick = { stopItem ->
-                                    keyboard?.hide()
-                                    focusRequester.freeFocus()
-                                    onStopSelect(stopItem)
-                                },
-                                onUnsetLabelClick = onUnsetLabelClick,
-                                onEnterEditing = onEnterEditing,
-                                onDeleteLabel = onDeleteLabel,
-                                onMoveLabel = onMoveLabel,
-                                onAddLabelClick = onAddLabelClick,
-                                onDoneEditing = onDoneEditing,
-                                modifier = Modifier,
-                            )
-                        }
-                        item(key = "assigning-banner") {
-                            // animateContentSize gives a smooth height collapse/expand
-                            // when the contextual banner appears or disappears.
-                            val bannerText = pillRowBannerText(
-                                editing = editingLabels,
-                                assigningLabel = assigningLabel,
-                                stopLabels = searchStopState.stopLabels,
-                            )
-                            Box(modifier = Modifier.animateContentSize()) {
-                                if (bannerText != null) {
-                                    PillRowInfoBanner(text = bannerText)
-                                }
-                            }
-                        }
-                    }
-
-                    if (isMapsAvailable) {
-                        item(key = "select-on-map") {
-                            SelectOnMapItem(onOpenMap = onOpenMap)
-                        }
-                    }
-
+                    pillRowSection(
+                        showPillRow = showPillRow,
+                        stopLabels = searchStopState.stopLabels,
+                        assigningLabel = assigningLabel,
+                        editingLabels = editingLabels,
+                        onSetLabelClick = { stopItem ->
+                            keyboard?.hide()
+                            focusRequester.freeFocus()
+                            onStopSelect(stopItem)
+                        },
+                        onUnsetLabelClick = onUnsetLabelClick,
+                        onEnterEditing = onEnterEditing,
+                        onDeleteLabel = onDeleteLabel,
+                        onMoveLabel = onMoveLabel,
+                        onAddLabelClick = onAddLabelClick,
+                        onDoneEditing = onDoneEditing,
+                    )
+                    selectOnMapItem(isMapsAvailable = isMapsAvailable, onOpenMap = onOpenMap)
                     recentSearchStopsList(
                         recentStops = searchStopState.recentStops,
                         keyboard = keyboard,
@@ -944,8 +923,7 @@ private fun SearchStopListContent(
                         onUnsaveLabel = onUnsaveLabel,
                         onEvent = onEvent,
                     )
-
-                    item(key = "pt-note") { PublicTransportNote() }
+                    publicTransportNoteItem()
                 }
                 SearchingDotsHeader(
                     isLoading = isLoading,
@@ -965,45 +943,24 @@ private fun SearchStopListContent(
                         bottom = KrailTheme.dimensions.spacingXXXXL,
                     ),
                 ) {
-                    if (searchStopState.stopLabels.isNotEmpty()) {
-                        item(key = "label-shortcuts") {
-                            LabelShortcutsRow(
-                                labels = searchStopState.stopLabels,
-                                assigningLabel = assigningLabel,
-                                editing = editingLabels,
-                                onSetLabelClick = { stopItem ->
-                                    keyboard?.hide()
-                                    focusRequester.freeFocus()
-                                    onStopSelect(stopItem)
-                                },
-                                onUnsetLabelClick = onUnsetLabelClick,
-                                onEnterEditing = onEnterEditing,
-                                onDeleteLabel = onDeleteLabel,
-                                onMoveLabel = onMoveLabel,
-                                onAddLabelClick = onAddLabelClick,
-                                onDoneEditing = onDoneEditing,
-                            )
-                        }
-                        item(key = "assigning-banner") {
-                            val bannerText = pillRowBannerText(
-                                editing = editingLabels,
-                                assigningLabel = assigningLabel,
-                                stopLabels = searchStopState.stopLabels,
-                            )
-                            Box(modifier = Modifier.animateContentSize()) {
-                                if (bannerText != null) {
-                                    PillRowInfoBanner(text = bannerText)
-                                }
-                            }
-                        }
-                    }
-
-                    if (isMapsAvailable) {
-                        item(key = "select-on-map") {
-                            SelectOnMapItem(onOpenMap = onOpenMap)
-                        }
-                    }
-
+                    pillRowSection(
+                        showPillRow = showPillRow,
+                        stopLabels = searchStopState.stopLabels,
+                        assigningLabel = assigningLabel,
+                        editingLabels = editingLabels,
+                        onSetLabelClick = { stopItem ->
+                            keyboard?.hide()
+                            focusRequester.freeFocus()
+                            onStopSelect(stopItem)
+                        },
+                        onUnsetLabelClick = onUnsetLabelClick,
+                        onEnterEditing = onEnterEditing,
+                        onDeleteLabel = onDeleteLabel,
+                        onMoveLabel = onMoveLabel,
+                        onAddLabelClick = onAddLabelClick,
+                        onDoneEditing = onDoneEditing,
+                    )
+                    selectOnMapItem(isMapsAvailable = isMapsAvailable, onOpenMap = onOpenMap)
                     searchResultsList(
                         searchResults = listState.results,
                         keyboard = keyboard,
@@ -1015,8 +972,7 @@ private fun SearchStopListContent(
                         onEvent = onEvent,
                         searchQuery = searchStopState.searchQuery,
                     )
-
-                    item(key = "pt-note") { PublicTransportNote() }
+                    publicTransportNoteItem()
                 }
                 SearchingDotsHeader(
                     isLoading = listState.isLoading,
@@ -1043,6 +999,74 @@ private fun SearchStopListContent(
             )
         }
     }
+}
+
+/**
+ * Pill row, contextual hint banner. Keyed identically across every list state so the
+ * row stays mounted (and its drag state survives) when the user transitions between
+ * Recent, Loading and Results.
+ */
+@Suppress("LongParameterList")
+private fun LazyListScope.pillRowSection(
+    showPillRow: Boolean,
+    stopLabels: kotlinx.collections.immutable.ImmutableList<StopLabel>,
+    assigningLabel: StopLabel?,
+    editingLabels: Boolean,
+    onSetLabelClick: (StopItem) -> Unit,
+    onUnsetLabelClick: (StopLabel) -> Unit,
+    onEnterEditing: () -> Unit,
+    onDeleteLabel: (StopLabel) -> Unit,
+    onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
+    onAddLabelClick: () -> Unit,
+    onDoneEditing: () -> Unit,
+) {
+    if (!showPillRow || stopLabels.isEmpty()) return
+    item(key = "label-shortcuts") {
+        LabelShortcutsRow(
+            labels = stopLabels,
+            assigningLabel = assigningLabel,
+            editing = editingLabels,
+            onSetLabelClick = onSetLabelClick,
+            onUnsetLabelClick = onUnsetLabelClick,
+            onEnterEditing = onEnterEditing,
+            onDeleteLabel = onDeleteLabel,
+            onMoveLabel = onMoveLabel,
+            onAddLabelClick = onAddLabelClick,
+            onDoneEditing = onDoneEditing,
+        )
+    }
+    item(key = "assigning-banner") {
+        // animateContentSize gives a smooth height collapse/expand when the
+        // contextual banner appears or disappears.
+        val bannerText = pillRowBannerText(
+            editing = editingLabels,
+            assigningLabel = assigningLabel,
+            stopLabels = stopLabels,
+        )
+        Box(modifier = Modifier.animateContentSize()) {
+            if (bannerText != null) {
+                PillRowInfoBanner(text = bannerText)
+            }
+        }
+    }
+}
+
+/** Inset dividers above + below a tappable "Select on map" row. */
+private fun LazyListScope.selectOnMapItem(
+    isMapsAvailable: Boolean,
+    onOpenMap: () -> Unit,
+) {
+    if (!isMapsAvailable) return
+    item(key = "select-on-map") {
+        DividerInset()
+        SelectOnMapItem(onOpenMap = onOpenMap)
+        DividerInset()
+    }
+}
+
+/** Trailing PT-only-stops disclaimer at the bottom of the list. */
+private fun LazyListScope.publicTransportNoteItem() {
+    item(key = "pt-note") { PublicTransportNote() }
 }
 
 @Suppress("LongMethod", "LongParameterList")
@@ -1155,13 +1179,13 @@ private fun LazyListScope.recentSearchStopsList(
             ) {
                 Text(
                     text = "Recent",
-                    style = KrailTheme.typography.titleMedium,
+                    style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
                     color = KrailTheme.colors.label,
                 )
 
                 Text(
                     text = "Clear all",
-                    style = KrailTheme.typography.labelLarge,
+                    style = KrailTheme.typography.bodyMedium,
                     color = KrailTheme.colors.label,
                     modifier = Modifier
                         .clip(RoundedCornerShape(dim.radiusFull))

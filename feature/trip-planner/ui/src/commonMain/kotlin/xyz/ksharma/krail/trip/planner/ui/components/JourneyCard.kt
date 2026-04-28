@@ -466,14 +466,14 @@ private fun JourneyOriginTimeRow(
         )
 
     val deviationLabel: String? = if (showDeviation) {
-        // showDeviation is only true when departureDeviation is Late or Early, so the
-        // compiler smart-casts the type and the when is exhaustive without an `else`.
         when (departureDeviation) {
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Late ->
                 "Delayed ${departureDeviation.text.removeSuffix(" late")}"
 
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
                 "Early ${departureDeviation.text.removeSuffix(" early")}"
+
+            else -> null
         }
     } else {
         null

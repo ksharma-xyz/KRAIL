@@ -38,7 +38,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
-import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
+import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.StopDepartureBoardEntry
 import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 

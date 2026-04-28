@@ -1,4 +1,4 @@
-package xyz.ksharma.krail.trip.planner.ui.components.loading
+package xyz.ksharma.krail.taj.components
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -14,11 +14,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
+/**
+ * Three dots that bob up and down in sequence — used as a generic loading indicator.
+ *
+ * The dots are drawn into a Canvas, so size is governed by the [modifier] you pass.
+ * For consistent visuals across screens prefer wrapping with [LoadingDotsPill].
+ */
 @Composable
-fun AnimatedDots(modifier: Modifier = Modifier, color: Color = KrailTheme.colors.onSurface) {
+fun AnimatedDots(
+    modifier: Modifier = Modifier,
+    color: Color = KrailTheme.colors.onSurface,
+) {
     val infiniteTransition = rememberInfiniteTransition()
 
-    // Animating the offset for each dot
     val dot1Offset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = -30f,
@@ -50,7 +58,6 @@ fun AnimatedDots(modifier: Modifier = Modifier, color: Color = KrailTheme.colors
         val centerX = size.width / 2
         val spacing = 40f
 
-        // Draw the three dots with their animated offsets
         drawCircle(
             color = color,
             radius = dotRadius,

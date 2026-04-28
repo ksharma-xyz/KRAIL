@@ -182,6 +182,17 @@ fun SearchStopScreen(
         }
     }
 
+    // When the label being assigned is itself satisfied (a stop got attached either via
+    // tapping a row or via the save sheet), clear assigningLabel so the contextual hint
+    // banner collapses and the row goes back to its idle visuals.
+    LaunchedEffect(assigningLabel, searchStopState.stopLabels) {
+        val current = assigningLabel ?: return@LaunchedEffect
+        val updated = searchStopState.stopLabels.firstOrNull { it.label == current.label }
+        if (updated?.isSet == true) {
+            assigningLabel = null
+        }
+    }
+
     LaunchedEffect(textFieldText) {
         snapshotFlow { textFieldText.trim() }
             .distinctUntilChanged()
@@ -371,6 +382,32 @@ fun SearchStopScreen(
         }
     }
 
+}
+
+/**
+ * Pure decision logic for the contextual hint shown below the pill row. Returns null
+ * when no banner should render. Pure + side-effect-free so it's straightforward to
+ * unit-test (see PillRowBannerTextTest).
+ */
+internal fun pillRowBannerText(
+    editing: Boolean,
+    assigningLabel: StopLabel?,
+    stopLabels: List<StopLabel>,
+): String? {
+    return when {
+        editing -> "Drag a pill to reorder. Tap ✕ to delete."
+        assigningLabel != null -> {
+            // If the label is now set in the source-of-truth list, the user already
+            // assigned a stop while in assigning mode — no need to keep nagging.
+            val current = stopLabels.firstOrNull { it.label == assigningLabel.label }
+            if (current?.isSet == true) {
+                null
+            } else {
+                "Tap the ⭐ next to a stop to save it as ${assigningLabel.label}"
+            }
+        }
+        else -> null
+    }
 }
 
 private sealed interface LabelConflict {
@@ -902,10 +939,15 @@ private fun SearchStopListContent(
                         }
                         item(key = "assigning-banner") {
                             // animateContentSize gives a smooth height collapse/expand
-                            // when the user toggles assigning mode by re-tapping the pill.
+                            // when the contextual banner appears or disappears.
+                            val bannerText = pillRowBannerText(
+                                editing = editingLabels,
+                                assigningLabel = assigningLabel,
+                                stopLabels = searchStopState.stopLabels,
+                            )
                             Box(modifier = Modifier.animateContentSize()) {
-                                if (assigningLabel != null) {
-                                    AssigningModeBanner(label = assigningLabel)
+                                if (bannerText != null) {
+                                    PillRowInfoBanner(text = bannerText)
                                 }
                             }
                         }
@@ -968,9 +1010,14 @@ private fun SearchStopListContent(
                             )
                         }
                         item(key = "assigning-banner") {
+                            val bannerText = pillRowBannerText(
+                                editing = editingLabels,
+                                assigningLabel = assigningLabel,
+                                stopLabels = searchStopState.stopLabels,
+                            )
                             Box(modifier = Modifier.animateContentSize()) {
-                                if (assigningLabel != null) {
-                                    AssigningModeBanner(label = assigningLabel)
+                                if (bannerText != null) {
+                                    PillRowInfoBanner(text = bannerText)
                                 }
                             }
                         }
@@ -1456,13 +1503,13 @@ private fun AddLabelPill(onClick: () -> Unit) {
 }
 
 @Composable
-private fun AssigningModeBanner(
-    label: StopLabel,
+private fun PillRowInfoBanner(
+    text: String,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
     Text(
-        text = "Tap the ⭐ next to a stop to save it as ${label.label}",
+        text = text,
         style = KrailTheme.typography.bodySmall,
         color = KrailTheme.colors.label,
         modifier = modifier
@@ -1520,19 +1567,21 @@ private fun SelectOnMapItem(
 ) {
     val dim = KrailTheme.dimensions
 
+    // Padding matches StopSearchListItem so the icon + text leading edge line up with
+    // stop rows below. Title uses titleLarge (same as stop names) for the same reason.
     Row(
         modifier = modifier
             .fillMaxWidth()
             .klickable { onOpenMap() }
-            .padding(vertical = dim.spacingXL, horizontal = dim.spacingXXL),
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
+            .padding(vertical = dim.spacingM, horizontal = dim.pageHorizontalPadding),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
             painter = painterResource(TajRes.drawable.ic_location),
             contentDescription = null,
             colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
-            modifier = Modifier.size(KrailTheme.dimensions.spacingXXL),
+            modifier = Modifier.size(dim.spacingXXL),
         )
         Text(
             text = "Select on map",

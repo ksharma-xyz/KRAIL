@@ -24,7 +24,7 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
+import xyz.ksharma.krail.taj.components.AnimatedDots
 
 private val LOADING_DOTS_WIDTH = 64.dp
 

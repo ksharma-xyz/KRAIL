@@ -93,7 +93,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TrackedLegView
 import xyz.ksharma.krail.trip.planner.ui.components.WalkingLeg
-import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
+import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.LiveVehicleLayer

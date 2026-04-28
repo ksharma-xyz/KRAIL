@@ -47,7 +47,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
+import xyz.ksharma.krail.taj.components.AnimatedDots
 
 private val ArrowIconSize = 18.dp // no token equivalent
 

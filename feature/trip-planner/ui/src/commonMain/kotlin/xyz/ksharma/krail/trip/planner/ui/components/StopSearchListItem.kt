@@ -139,10 +139,10 @@ private fun SaveAsLabelStar(state: StarState, onClick: () -> Unit) {
     // Spin the star a full 360° when it actually transitions between saved and
     // unsaved. Direction depends on the new state — saving spins clockwise, removing
     // spins counter-clockwise — so the gesture reads like "winding it in" vs
-    // "letting it go". Duration matches the intro screen's save-trip animation
-    // (500 ms) so the two surfaces feel like the same affordance. Skipped on first
-    // composition so the star doesn't pirouette every time the row scrolls into
-    // view; only fires on real state changes.
+    // "letting it go". Duration matches the intro screen's save-trip animation so
+    // the two surfaces feel like the same affordance. Skipped on first composition
+    // so the star doesn't pirouette every time the row scrolls into view; only
+    // fires on real state changes.
     val rotation = remember { Animatable(0f) }
     var hasInitialised by remember { mutableStateOf(false) }
     LaunchedEffect(state) {
@@ -151,12 +151,12 @@ private fun SaveAsLabelStar(state: StarState, onClick: () -> Unit) {
             return@LaunchedEffect
         }
         val direction = when (state) {
-            StarState.Saved -> 1f
-            StarState.Unsaved -> -1f
+            StarState.Saved -> SAVE_ROTATION_DIRECTION
+            StarState.Unsaved -> UNSAVE_ROTATION_DIRECTION
         }
         rotation.animateTo(
-            targetValue = rotation.value + 360f * direction,
-            animationSpec = tween(durationMillis = 500),
+            targetValue = rotation.value + STAR_ROTATION_DEGREES * direction,
+            animationSpec = tween(durationMillis = STAR_ROTATION_DURATION_MS),
         )
     }
 
@@ -165,13 +165,28 @@ private fun SaveAsLabelStar(state: StarState, onClick: () -> Unit) {
         contentDescription = description,
         colorFilter = ColorFilter.tint(KrailTheme.colors.label),
         modifier = Modifier
-            .size(36.dp)
+            .size(STAR_TAP_TARGET_SIZE)
             .clip(CircleShape)
             .klickable(onClick = onClick)
-            .padding(6.dp)
+            .padding(STAR_INNER_PADDING)
             .rotate(rotation.value),
     )
 }
+
+// Star tap target + visual padding picked to match KrailTheme touch-target guidance
+// (≥ 48dp tap target with the visible icon centred at ~24dp). Matched at the call
+// site instead of dim tokens because these values are component-specific and never
+// reused elsewhere.
+private val STAR_TAP_TARGET_SIZE = 36.dp
+private val STAR_INNER_PADDING = 6.dp
+
+// Rotation animation matches IntroContentSaveTrips so the two surfaces feel the
+// same. Direction is signed: clockwise (+) when saving, counter-clockwise (−) when
+// removing, so the visual reads like the action's intent.
+private const val STAR_ROTATION_DEGREES = 360f
+private const val STAR_ROTATION_DURATION_MS = 500
+private const val SAVE_ROTATION_DIRECTION = 1f
+private const val UNSAVE_ROTATION_DIRECTION = -1f
 
 // region Preview
 

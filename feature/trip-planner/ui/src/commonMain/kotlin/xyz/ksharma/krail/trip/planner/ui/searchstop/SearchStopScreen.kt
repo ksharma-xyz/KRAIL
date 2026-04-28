@@ -119,6 +119,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+@Suppress("LongMethod")
+// Length is dominated by orchestration state for the screen (assigning mode, edit
+// mode, three save-flow sheets, pending conflict, plus their saver wiring). Pulling
+// them apart hurts readability — every state piece is plumbed back into the same
+// single AdaptiveScreenContent below.
 @Composable
 fun SearchStopScreen(
     searchStopState: SearchStopState,
@@ -1276,6 +1281,12 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Suppress("LongMethod", "LongParameterList")
+// All callbacks below are forwarded from SearchStopScreen, and the body is one
+// LazyRow whose items each carry a fair amount of gesture wiring (longPressDraggable
+// + custom awaitEachGesture for tap/long-press/drag distinction + DeleteOverlay).
+// Extracting either further fragments the row's gesture state across composables,
+// which previously led to subtle bugs (see the rotation/SaveAsLabelStar fix).
 @Composable
 private fun LabelShortcutsRow(
     labels: ImmutableList<StopLabel>,
@@ -1332,9 +1343,9 @@ private fun LabelShortcutsRow(
                 // here because the screen background is already themeColor and a
                 // colour change would blend the pill in.
                 val targetScale = when {
-                    isDragging -> 1.05f
-                    isAssigning -> 1.10f
-                    else -> 1f
+                    isDragging -> PILL_DRAG_SCALE
+                    isAssigning -> PILL_ASSIGNING_SCALE
+                    else -> PILL_RESTING_SCALE
                 }
                 val scale by animateFloatAsState(
                     targetValue = targetScale,
@@ -1458,17 +1469,19 @@ private fun DeleteOverlay(
 @Composable
 private fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
     val transition = rememberInfiniteTransition(label = "wiggle")
+    val seedAbs = kotlin.math.abs(seed)
     val angle by transition.animateFloat(
-        initialValue = -1.5f,
-        targetValue = 1.5f,
+        initialValue = -WIGGLE_ANGLE_DEGREES,
+        targetValue = WIGGLE_ANGLE_DEGREES,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 150 + (kotlin.math.abs(seed) % 4) * 30,
+                durationMillis = WIGGLE_BASE_DURATION_MS +
+                    (seedAbs % WIGGLE_DURATION_VARIANCE_BUCKETS) * WIGGLE_DURATION_VARIANCE_STEP_MS,
                 easing = LinearEasing,
             ),
             repeatMode = RepeatMode.Reverse,
             initialStartOffset = StartOffset(
-                offsetMillis = (kotlin.math.abs(seed) * 47) % 200,
+                offsetMillis = (seedAbs * WIGGLE_OFFSET_MULTIPLIER) % WIGGLE_OFFSET_MAX_MS,
                 offsetType = StartOffsetType.Delay,
             ),
         ),
@@ -1670,6 +1683,22 @@ private fun MapAutoInitEffect(
         }
     }
 }
+
+// Pill scale factors used by LabelShortcutsRow's graphicsLayer transform — extracted
+// here so the call site reads as intent, not magic numbers.
+private const val PILL_RESTING_SCALE = 1f
+private const val PILL_DRAG_SCALE = 1.05f
+private const val PILL_ASSIGNING_SCALE = 1.10f
+
+// Wiggle animation in edit mode. Per-pill randomisation prevents the row from
+// looking mechanically synchronised — every pill has its own duration bucket and
+// initial offset derived from its label hash.
+private const val WIGGLE_ANGLE_DEGREES = 1.5f
+private const val WIGGLE_BASE_DURATION_MS = 150
+private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
+private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 30
+private const val WIGGLE_OFFSET_MULTIPLIER = 47
+private const val WIGGLE_OFFSET_MAX_MS = 200
 
 // region Previews — every realistic scenario has the seeded Home/Work labels at minimum,
 // since defaults are seeded on first install and Home can't be deleted.

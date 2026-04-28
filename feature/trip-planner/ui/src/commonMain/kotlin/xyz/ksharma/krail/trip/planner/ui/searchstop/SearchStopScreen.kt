@@ -1310,6 +1310,16 @@ private fun LabelShortcutsRow(
         ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
+        // Done sits at the FRONT of the row while editing so it's reachable without
+        // scrolling past the user's pills, and so the action that exits edit mode is
+        // the most visually prominent thing on the row.
+        if (editing) {
+            item(key = "leading-done") {
+                Box(modifier = Modifier.padding(end = dim.spacingS)) {
+                    DonePill(onClick = onDoneEditing)
+                }
+            }
+        }
         items(items = labels, key = { it.label }) { label ->
             val isAssigning = assigningLabel?.label == label.label
             ReorderableItem(reorderState, key = label.label) { isDragging ->
@@ -1362,10 +1372,16 @@ private fun LabelShortcutsRow(
                                 when (tappedQuickly) {
                                     true -> {
                                         // Released within the long-press window → tap.
-                                        if (label.isSet) {
-                                            label.toStopItem()?.let(onSetLabelClick)
-                                        } else {
-                                            onUnsetLabelClick(label)
+                                        // In edit mode, taps are suppressed entirely so an
+                                        // accidental brush against a pill mid-reorder can't
+                                        // navigate away or enter assigning mode. Only drag
+                                        // and the ✕ delete chip work while editing.
+                                        if (!editing) {
+                                            if (label.isSet) {
+                                                label.toStopItem()?.let(onSetLabelClick)
+                                            } else {
+                                                onUnsetLabelClick(label)
+                                            }
                                         }
                                     }
                                     null -> {
@@ -1405,13 +1421,10 @@ private fun LabelShortcutsRow(
                 }
             }
         }
-        item(key = "trailing") {
-            if (editing) {
-                // Extra leading gap so Done reads as a separate action, not the next pill.
-                Box(modifier = Modifier.padding(start = dim.spacingL)) {
-                    DonePill(onClick = onDoneEditing)
-                }
-            } else {
+        // "+ Add" remains trailing in idle mode; while editing the trailing slot is
+        // empty (Done lives at the front).
+        if (!editing) {
+            item(key = "trailing-add") {
                 AddLabelPill(onClick = onAddLabelClick)
             }
         }

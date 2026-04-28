@@ -91,25 +91,50 @@ fun StopSearchListItem(
                 }
             }
         }
-        when {
-            isSaved && onUnsaveLabel != null -> SaveAsLabelStar(
-                isSaved = true,
-                onClick = { onUnsaveLabel(StopItem(stopId = stopId, stopName = stopName)) },
-            )
-            !isSaved && onSaveAsLabel != null -> SaveAsLabelStar(
-                isSaved = false,
-                onClick = { onSaveAsLabel(StopItem(stopId = stopId, stopName = stopName)) },
+        // Single SaveAsLabelStar call — Compose keys composable state by source
+        // position, so branching into two different SaveAsLabelStar(...) calls would
+        // reset the rotation Animatable + hasInitialised flag every time isSaved
+        // flips (which is exactly when we want the rotation to play). Computing the
+        // handler conditionally and passing the same composable preserves state.
+        val starHandler: (() -> Unit)? = when {
+            isSaved && onUnsaveLabel != null ->
+                ({ onUnsaveLabel(StopItem(stopId = stopId, stopName = stopName)) })
+            !isSaved && onSaveAsLabel != null ->
+                ({ onSaveAsLabel(StopItem(stopId = stopId, stopName = stopName)) })
+            else -> null
+        }
+        if (starHandler != null) {
+            SaveAsLabelStar(
+                state = if (isSaved) StarState.Saved else StarState.Unsaved,
+                onClick = starHandler,
             )
         }
     }
 }
 
+/**
+ * Two-state machine for the save-as-label star. Splitting "saved" and "unsaved" into
+ * an enum (rather than a raw boolean) keeps the call sites readable and gives us a
+ * single key for [LaunchedEffect] to drive the transition rotation off of.
+ */
+private enum class StarState {
+    Unsaved,
+    Saved,
+}
+
 @Composable
-private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
+private fun SaveAsLabelStar(state: StarState, onClick: () -> Unit) {
     // Same tint for filled and outlined — only the silhouette changes — so the star's
     // colour stays consistent with surrounding text and doesn't fade out against any
     // background.
-    val icon = if (isSaved) Res.drawable.ic_star_filled else Res.drawable.ic_star
+    val icon = when (state) {
+        StarState.Saved -> Res.drawable.ic_star_filled
+        StarState.Unsaved -> Res.drawable.ic_star
+    }
+    val description = when (state) {
+        StarState.Saved -> "Remove from labels"
+        StarState.Unsaved -> "Save as label"
+    }
 
     // Spin the star a full 360° when it actually transitions between saved and
     // unsaved (matches the intro-screen save-trip animation). Skipped on first
@@ -117,7 +142,7 @@ private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
     // view; only fires on real state changes.
     val rotation = remember { Animatable(0f) }
     var hasInitialised by remember { mutableStateOf(false) }
-    LaunchedEffect(isSaved) {
+    LaunchedEffect(state) {
         if (!hasInitialised) {
             hasInitialised = true
             return@LaunchedEffect
@@ -130,7 +155,7 @@ private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
 
     Image(
         painter = painterResource(icon),
-        contentDescription = if (isSaved) "Remove from labels" else "Save as label",
+        contentDescription = description,
         colorFilter = ColorFilter.tint(KrailTheme.colors.label),
         modifier = Modifier
             .size(36.dp)

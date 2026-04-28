@@ -41,7 +41,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -88,7 +87,6 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Divider
@@ -97,6 +95,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
@@ -1398,8 +1397,8 @@ private fun UnsetLabelPill(
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
     val themeColor = themeColor()
-    val borderColor = if (isAssigning) themeColor else KrailTheme.colors.outlineSubtle
-    val contentColor = if (isAssigning) themeColor else KrailTheme.colors.softLabel
+    val borderColor = if (isAssigning) themeColor else KrailTheme.colors.label
+    val contentColor = if (isAssigning) themeColor else KrailTheme.colors.label
     val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
     Row(
         modifier = modifier
@@ -1469,7 +1468,7 @@ private fun AssigningModeBanner(
         Text(
             text = "Tap the ⭐ next to a stop to save it as ${label.label}",
             style = KrailTheme.typography.bodySmall,
-            color = KrailTheme.colors.softLabel,
+            color = KrailTheme.colors.label,
             modifier = Modifier.weight(1f),
         )
         Text(
@@ -1513,9 +1512,9 @@ private fun PublicTransportNote(modifier: Modifier = Modifier) {
     Text(
         text = "You can only select public transport stops on KRAIL\u00A0App.",
         style = KrailTheme.typography.bodySmall,
-        color = KrailTheme.colors.softLabel,
+        color = KrailTheme.colors.label,
         modifier = modifier.padding(
-            horizontal = KrailTheme.dimensions.spacingXXL,
+            horizontal = KrailTheme.dimensions.pageHorizontalPadding,
             vertical = KrailTheme.dimensions.spacingM,
         ),
     )
@@ -1621,218 +1620,202 @@ private val previewLabelsRich = persistentListOf(
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_FreshInstall() {
-    // Day 1: defaults seeded, nothing else.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
-                searchStopState = SearchStopState(
-                    listState = ListState.Recent,
-                    stopLabels = StopLabel.defaults,
-                ),
-                onEvent = {},
-            )
-        }
+    // Day 1: defaults seeded, nothing else. Train style.
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        SearchStopScreen(
+            searchStopState = SearchStopState(
+                listState = ListState.Recent,
+                stopLabels = StopLabel.defaults,
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Recent() {
-    // Typical idle state: Home set, Work unset, three recent searches below.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
-                searchStopState = SearchStopState(
-                    listState = ListState.Recent,
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsTypical,
-                    isMapsAvailable = true,
-                    mapUiState = MapUiState.Ready(),
-                ),
-                onEvent = {},
-            )
-        }
+    // Typical idle: Home set, Work unset, recents + Select-on-map. Bus style.
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
+        SearchStopScreen(
+            searchStopState = SearchStopState(
+                listState = ListState.Recent,
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsTypical,
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_RichLabels() {
-    // Power user with several saved labels and recents.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
-                searchStopState = SearchStopState(
-                    listState = ListState.Recent,
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsRich,
-                ),
-                onEvent = {},
-            )
-        }
+    // Power user with several saved labels and recents. Metro style.
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        SearchStopScreen(
+            searchStopState = SearchStopState(
+                listState = ListState.Recent,
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsRich,
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_AssigningMode() {
-    // After tapping unset Work pill — banner visible, Work outline highlighted.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Bus.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
-                searchStopState = SearchStopState(
-                    listState = ListState.Recent,
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsTypical,
-                ),
-                onEvent = {},
-            )
-            // Note: actual assigningLabel banner only renders when the user enters
-            // assigning mode at runtime; static preview shows the rest of the layout.
-        }
+    // After tapping unset Work pill — Work outline highlighted. BarbiePink style.
+    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink) {
+        SearchStopScreen(
+            searchStopState = SearchStopState(
+                listState = ListState.Recent,
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsTypical,
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            ),
+            onEvent = {},
+        )
+        // Note: actual assigningLabel banner renders only when assigning mode is active
+        // at runtime; static preview shows the resting layout.
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_SearchLoading() {
-    // User typed a query, results loading. Pill row, recents stay visually anchored.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
-                searchQuery = "Centra",
-                searchStopState = SearchStopState(
-                    listState = ListState.Results(
-                        results = persistentListOf(),
-                        isLoading = true,
-                    ),
-                    searchQuery = "Centra",
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsTypical,
-                    isMapsAvailable = true,
-                    mapUiState = MapUiState.Ready(),
+    // User typed a query, dots animating. Pill row stays visually anchored. Ferry style.
+    PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
+        SearchStopScreen(
+            searchQuery = "Centra",
+            searchStopState = SearchStopState(
+                listState = ListState.Results(
+                    results = persistentListOf(),
+                    isLoading = true,
                 ),
-                onEvent = {},
-            )
-        }
+                searchQuery = "Centra",
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsTypical,
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_SearchResults() {
-    // Stops + a trip route returned for "Central". Pills + recents above the results.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            val stopResult = SearchStopState.SearchResult.Stop(
-                stopName = "Central Station",
-                stopId = "stop_central",
-                transportModeType = persistentListOf(TransportMode.Train),
-            )
-            val airportResult = SearchStopState.SearchResult.Stop(
-                stopName = "Sydney Airport - International T1",
-                stopId = "stop_airport",
-                transportModeType = persistentListOf(TransportMode.Train),
-            )
-            val trip = SearchStopState.SearchResult.Trip(
-                tripId = "trip_T1",
-                routeShortName = "T1",
-                headsign = "To Town Hall",
-                stops = persistentListOf(
-                    SearchStopState.TripStop(
-                        stopId = "stop_central",
-                        stopName = "Central",
-                        stopSequence = 1,
-                        transportModeType = persistentListOf(TransportMode.Train),
-                    ),
-                    SearchStopState.TripStop(
-                        stopId = "stop_town_hall",
-                        stopName = "Town Hall",
-                        stopSequence = 2,
-                        transportModeType = persistentListOf(TransportMode.Train),
-                    ),
+    // Stops + a trip route returned for "Central". Train style.
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        val stopResult = SearchStopState.SearchResult.Stop(
+            stopName = "Central Station",
+            stopId = "stop_central",
+            transportModeType = persistentListOf(TransportMode.Train),
+        )
+        val airportResult = SearchStopState.SearchResult.Stop(
+            stopName = "Sydney Airport - International T1",
+            stopId = "stop_airport",
+            transportModeType = persistentListOf(TransportMode.Train),
+        )
+        val trip = SearchStopState.SearchResult.Trip(
+            tripId = "trip_T1",
+            routeShortName = "T1",
+            headsign = "To Town Hall",
+            stops = persistentListOf(
+                SearchStopState.TripStop(
+                    stopId = "stop_central",
+                    stopName = "Central",
+                    stopSequence = 1,
+                    transportModeType = persistentListOf(TransportMode.Train),
                 ),
-                transportMode = TransportMode.Train,
-            )
-            SearchStopScreen(
+                SearchStopState.TripStop(
+                    stopId = "stop_town_hall",
+                    stopName = "Town Hall",
+                    stopSequence = 2,
+                    transportModeType = persistentListOf(TransportMode.Train),
+                ),
+            ),
+            transportMode = TransportMode.Train,
+        )
+        SearchStopScreen(
+            searchQuery = "Central",
+            searchStopState = SearchStopState(
+                listState = ListState.Results(
+                    results = persistentListOf(stopResult, airportResult, trip),
+                    isLoading = false,
+                ),
                 searchQuery = "Central",
-                searchStopState = SearchStopState(
-                    listState = ListState.Results(
-                        results = persistentListOf(stopResult, airportResult, trip),
-                        isLoading = false,
-                    ),
-                    searchQuery = "Central",
-                    searchResults = persistentListOf(stopResult, airportResult, trip),
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsTypical,
-                ),
-                onEvent = {},
-            )
-        }
+                searchResults = persistentListOf(stopResult, airportResult, trip),
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsTypical,
+                isMapsAvailable = true,
+                mapUiState = MapUiState.Ready(),
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_NoMatch() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Metro.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
+    // Metro style.
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        SearchStopScreen(
+            searchQuery = "UnknownStop",
+            searchStopState = SearchStopState(
+                listState = ListState.NoMatch,
                 searchQuery = "UnknownStop",
-                searchStopState = SearchStopState(
-                    listState = ListState.NoMatch,
-                    searchQuery = "UnknownStop",
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsTypical,
-                ),
-                onEvent = {},
-            )
-        }
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsTypical,
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Error() {
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.Ferry.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
+    // PurpleDrip style.
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip) {
+        SearchStopScreen(
+            searchQuery = "Query",
+            searchStopState = SearchStopState(
+                listState = ListState.Error,
                 searchQuery = "Query",
-                searchStopState = SearchStopState(
-                    listState = ListState.Error,
-                    searchQuery = "Query",
-                    recentStops = previewRecentStops.toImmutableList(),
-                    stopLabels = previewLabelsTypical,
-                ),
-                onEvent = {},
-            )
-        }
+                recentStops = previewRecentStops.toImmutableList(),
+                stopLabels = previewLabelsTypical,
+            ),
+            onEvent = {},
+        )
     }
 }
 
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Map() {
-    // Single-pane map view; pills hidden behind map.
-    PreviewTheme {
-        val themeColor = remember { mutableStateOf(NswTransportMode.LightRail.colorCode) }
-        CompositionLocalProvider(LocalThemeColor provides themeColor) {
-            SearchStopScreen(
-                searchStopState = SearchStopState(
-                    mapUiState = MapUiState.Ready(),
-                    stopLabels = previewLabelsTypical,
-                ),
-                onEvent = {},
-            )
-        }
+    // Single-pane map. PurpleDrip style.
+    PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip) {
+        SearchStopScreen(
+            searchStopState = SearchStopState(
+                mapUiState = MapUiState.Ready(),
+                stopLabels = previewLabelsTypical,
+                isMapsAvailable = true,
+            ),
+            onEvent = {},
+        )
     }
 }
 

@@ -9,6 +9,7 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -424,15 +425,18 @@ fun SearchStopScreen(
 }
 
 private sealed interface LabelConflict {
+    val target: StopLabel
+    val stop: StopItem
+
     data class StopAlreadyOnAnotherLabel(
-        val target: StopLabel,
-        val stop: StopItem,
+        override val target: StopLabel,
+        override val stop: StopItem,
         val existingLabel: StopLabel,
     ) : LabelConflict
 
     data class LabelHasDifferentStop(
-        val target: StopLabel,
-        val stop: StopItem,
+        override val target: StopLabel,
+        override val stop: StopItem,
         val existingStopName: String,
     ) : LabelConflict
 }
@@ -1315,13 +1319,24 @@ private fun LabelShortcutsRow(
                     active = editing && !isDragging,
                     seed = label.label.hashCode(),
                 )
+                // Scale up the pill when it's the assigning target — same visual
+                // language as the departure-board chips. We don't tint the pill
+                // here because the screen background is already themeColor and a
+                // colour change would blend the pill in.
+                val targetScale = when {
+                    isDragging -> 1.05f
+                    isAssigning -> 1.10f
+                    else -> 1f
+                }
+                val scale by animateFloatAsState(
+                    targetValue = targetScale,
+                    label = "pill-scale",
+                )
                 Box(
                     modifier = Modifier.graphicsLayer {
                         rotationZ = rotation
-                        if (isDragging) {
-                            scaleX = 1.05f
-                            scaleY = 1.05f
-                        }
+                        scaleX = scale
+                        scaleY = scale
                     },
                 ) {
                     // clip BEFORE the gesture detector so the ripple is contained inside
@@ -1485,14 +1500,16 @@ private fun SetLabelPill(
 @Composable
 private fun UnsetLabelPill(
     label: StopLabel,
-    isAssigning: Boolean,
+    @Suppress("UNUSED_PARAMETER") isAssigning: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
-    val themeColor = themeColor()
-    val borderColor = if (isAssigning) themeColor else KrailTheme.colors.label
-    val contentColor = if (isAssigning) themeColor else KrailTheme.colors.label
+    // Visual feedback for assigning mode is the scale-up animation on the parent Box;
+    // the pill's own colours stay constant so it doesn't blend into the themed
+    // background gradient.
+    val borderColor = KrailTheme.colors.label
+    val contentColor = KrailTheme.colors.label
     val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
     Row(
         modifier = modifier

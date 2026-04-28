@@ -45,7 +45,10 @@ class SearchStopRulesTest {
             assigningLabel = home,
             stopLabels = listOf(home),
         )
-        assertEquals("Drag a pill to reorder. Tap ✕ to delete.", text)
+        assertEquals(
+            "Long press and then drag the pill to reorder and select Done to save.",
+            text,
+        )
     }
 
     @Test

@@ -206,6 +206,111 @@ class SearchStopScreenInteractionTest {
         }
     }
 
+    @Test
+    fun recentHeader_isHidden_onFreshInstall() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.freshInstall(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // No recents -> no Recent / Clear all header. The whole list is empty so the
+        // user falls through to "Select on map" / public-transport note.
+        composeRule.onNodeWithText("Recent").assertDoesNotExist()
+        composeRule.onNodeWithText("Clear all").assertDoesNotExist()
+    }
+
+    // endregion
+
+    // region Assigning mode banner
+
+    @Test
+    fun tappingUnsetPill_showsAssigningBanner() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // Both Home and Work are unset. Tapping Home should flip the screen into
+        // assigning mode and the banner copy from `pillRowBannerText` should appear.
+        composeRule.onNodeWithText("Home").performClick()
+
+        composeRule
+            .onNodeWithText("Tap the ⭐ next to a stop to save it as Home")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun tappingUnsetPillTwice_togglesAssigningModeOff() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // First tap -> assigning. Second tap on the same pill -> idle. The banner
+        // should disappear once we toggle out, otherwise users can't dismiss
+        // assigning mode without picking a stop.
+        composeRule.onNodeWithText("Home").performClick()
+        composeRule.onNodeWithText("Home").performClick()
+
+        composeRule
+            .onNodeWithText("Tap the ⭐ next to a stop to save it as Home")
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingUnsetPill_doesNotInvokeOnStopSelect() {
+        var selected: StopItem? = null
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    onStopSelect = { selected = it },
+                    onEvent = {},
+                )
+            }
+        }
+
+        // Tapping an unset pill enters assigning mode — it must NOT navigate the
+        // search field back with a stop, because there is no stop attached yet.
+        composeRule.onNodeWithText("Home").performClick()
+
+        assert(selected == null) {
+            "expected onStopSelect not to fire for an unset pill, got $selected"
+        }
+    }
+
+    // endregion
+
+    // region Add label affordance
+
+    @Test
+    fun addLabelPill_isVisible_inIdleMode() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // The "+ Add" trailing chip is the entry point to AddLabelBottomSheet. It
+        // must be present whenever the pill row renders and we're not editing.
+        composeRule.onNodeWithText("+ Add").assertIsDisplayed()
+    }
+
     // endregion
 }
 

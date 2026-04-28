@@ -384,32 +384,6 @@ fun SearchStopScreen(
 
 }
 
-/**
- * Pure decision logic for the contextual hint shown below the pill row. Returns null
- * when no banner should render. Pure + side-effect-free so it's straightforward to
- * unit-test (see PillRowBannerTextTest).
- */
-internal fun pillRowBannerText(
-    editing: Boolean,
-    assigningLabel: StopLabel?,
-    stopLabels: List<StopLabel>,
-): String? {
-    return when {
-        editing -> "Drag a pill to reorder. Tap ✕ to delete."
-        assigningLabel != null -> {
-            // If the label is now set in the source-of-truth list, the user already
-            // assigned a stop while in assigning mode — no need to keep nagging.
-            val current = stopLabels.firstOrNull { it.label == assigningLabel.label }
-            if (current?.isSet == true) {
-                null
-            } else {
-                "Tap the ⭐ next to a stop to save it as ${assigningLabel.label}"
-            }
-        }
-        else -> null
-    }
-}
-
 private sealed interface LabelConflict {
     data class StopAlreadyOnAnotherLabel(
         val target: StopLabel,

@@ -106,11 +106,21 @@ private fun LabelChoiceChip(
     val shape = RoundedCornerShape(dim.radiusFull)
     val themeColor = themeColor()
     val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location
+    // Solid chip when the label already has a stop; outlined when it doesn't, since
+    // tapping an outlined chip is what attaches this stop to that empty label.
+    val isSet = label.isSet
+    val contentColor = if (isSet) KrailTheme.colors.surface else themeColor
 
     Row(
         modifier = Modifier
             .clip(shape)
-            .background(themeColor, shape)
+            .then(
+                if (isSet) {
+                    Modifier.background(themeColor, shape)
+                } else {
+                    Modifier.border(width = dim.strokeThin, color = themeColor, shape = shape)
+                },
+            )
             .klickable(onClick = onClick)
             .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
@@ -119,13 +129,13 @@ private fun LabelChoiceChip(
         Image(
             painter = painterResource(icon),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            colorFilter = ColorFilter.tint(contentColor),
             modifier = Modifier.size(14.dp),
         )
         Text(
             text = label.label,
             style = KrailTheme.typography.labelLarge,
-            color = KrailTheme.colors.surface,
+            color = contentColor,
         )
     }
 }

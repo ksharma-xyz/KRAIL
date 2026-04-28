@@ -281,6 +281,11 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.DeleteLabel -> {
+                // Home is non-deletable. Defence in depth: the UI also hides the ✕ on
+                // protected pills.
+                if (event.labelKey.equals(StopLabel.PROTECTED_LABEL, ignoreCase = true)) {
+                    return
+                }
                 updateUiState {
                     val updated = stopLabels.filterNot { it.label == event.labelKey }.toImmutableList()
                     copy(stopLabels = updated)

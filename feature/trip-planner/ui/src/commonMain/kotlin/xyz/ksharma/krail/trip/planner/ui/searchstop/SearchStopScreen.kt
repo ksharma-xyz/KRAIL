@@ -15,7 +15,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +48,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -57,6 +61,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -76,6 +81,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -142,17 +148,25 @@ fun SearchStopScreen(
     var backClicked by rememberSaveable { mutableStateOf(false) }
 
     // Label assignment state: non-null when user is selecting a stop to assign to a label.
-    var assigningLabel by remember { mutableStateOf<StopLabel?>(null) }
-    var showAddLabelSheet by remember { mutableStateOf(false) }
-    var stopBeingSaved by remember { mutableStateOf<StopItem?>(null) }
+    // All four pieces of UI orchestration state below use rememberSaveable so rotation,
+    // dark-mode toggles and process death don't drop sheets/edit mode/in-flight conflicts.
+    var assigningLabel by rememberSaveable(stateSaver = StopLabelSaver) {
+        mutableStateOf<StopLabel?>(null)
+    }
+    var showAddLabelSheet by rememberSaveable { mutableStateOf(false) }
+    var stopBeingSaved by rememberSaveable(stateSaver = StopItemSaver) {
+        mutableStateOf<StopItem?>(null)
+    }
     // Edit mode for the pill row — long-press a pill to enter; pills wiggle and can
     // be drag-reordered (via longPressDraggableHandle). The ✕ overlay lets you delete
     // a label inline. Tap "Done" to exit.
-    var editingLabels by remember { mutableStateOf(false) }
+    var editingLabels by rememberSaveable { mutableStateOf(false) }
     // Conflict surfaced when assigning a stop to a label triggers either a stop-side
     // (stop already on another label) or label-side (label already has a different stop)
     // 1:1 invariant violation.
-    var pendingConflict by remember { mutableStateOf<LabelConflict?>(null) }
+    var pendingConflict by rememberSaveable(stateSaver = LabelConflictSaver) {
+        mutableStateOf<LabelConflict?>(null)
+    }
 
     // Wraps onStopSelect to persist the stop as a label assignment when in assigning mode.
     val effectiveOnStopSelect: (StopItem) -> Unit = { stopItem ->
@@ -368,6 +382,107 @@ private sealed interface LabelConflict {
         val existingStopName: String,
     ) : LabelConflict
 }
+
+// region Savers — keep UI orchestration state alive across rotation / process death.
+
+private val StopLabelSaver: Saver<StopLabel, Any> = mapSaver(
+    save = { label ->
+        mapOf(
+            "emoji" to label.emoji,
+            "label" to label.label,
+            "stopId" to label.stopId,
+            "stopName" to label.stopName,
+        )
+    },
+    restore = {
+        StopLabel(
+            emoji = it["emoji"] as String,
+            label = it["label"] as String,
+            stopId = it["stopId"] as String?,
+            stopName = it["stopName"] as String?,
+        )
+    },
+)
+
+private val StopItemSaver: Saver<StopItem, Any> = mapSaver(
+    save = { item ->
+        mapOf("stopId" to item.stopId, "stopName" to item.stopName)
+    },
+    restore = {
+        StopItem(
+            stopId = it["stopId"] as String,
+            stopName = it["stopName"] as String,
+        )
+    },
+)
+
+private val LabelConflictSaver: Saver<LabelConflict, Any> = mapSaver(
+    save = { conflict ->
+        when (conflict) {
+            is LabelConflict.StopAlreadyOnAnotherLabel -> mapOf(
+                "kind" to "stop",
+                "targetEmoji" to conflict.target.emoji,
+                "targetLabel" to conflict.target.label,
+                "targetStopId" to conflict.target.stopId,
+                "targetStopName" to conflict.target.stopName,
+                "stopId" to conflict.stop.stopId,
+                "stopName" to conflict.stop.stopName,
+                "existingEmoji" to conflict.existingLabel.emoji,
+                "existingLabel" to conflict.existingLabel.label,
+                "existingStopId" to conflict.existingLabel.stopId,
+                "existingStopName" to conflict.existingLabel.stopName,
+            )
+            is LabelConflict.LabelHasDifferentStop -> mapOf(
+                "kind" to "label",
+                "targetEmoji" to conflict.target.emoji,
+                "targetLabel" to conflict.target.label,
+                "targetStopId" to conflict.target.stopId,
+                "targetStopName" to conflict.target.stopName,
+                "stopId" to conflict.stop.stopId,
+                "stopName" to conflict.stop.stopName,
+                "existingStopName" to conflict.existingStopName,
+            )
+        }
+    },
+    restore = { map ->
+        when (map["kind"] as String) {
+            "stop" -> LabelConflict.StopAlreadyOnAnotherLabel(
+                target = StopLabel(
+                    emoji = map["targetEmoji"] as String,
+                    label = map["targetLabel"] as String,
+                    stopId = map["targetStopId"] as String?,
+                    stopName = map["targetStopName"] as String?,
+                ),
+                stop = StopItem(
+                    stopId = map["stopId"] as String,
+                    stopName = map["stopName"] as String,
+                ),
+                existingLabel = StopLabel(
+                    emoji = map["existingEmoji"] as String,
+                    label = map["existingLabel"] as String,
+                    stopId = map["existingStopId"] as String?,
+                    stopName = map["existingStopName"] as String?,
+                ),
+            )
+            "label" -> LabelConflict.LabelHasDifferentStop(
+                target = StopLabel(
+                    emoji = map["targetEmoji"] as String,
+                    label = map["targetLabel"] as String,
+                    stopId = map["targetStopId"] as String?,
+                    stopName = map["targetStopName"] as String?,
+                ),
+                stop = StopItem(
+                    stopId = map["stopId"] as String,
+                    stopName = map["stopName"] as String,
+                ),
+                existingStopName = map["existingStopName"] as String,
+            )
+            else -> null
+        }
+    },
+)
+
+// endregion
 
 /**
  * Single-pane layout for phones.
@@ -1103,11 +1218,12 @@ private fun LabelShortcutsRow(
                         }
                     },
                 ) {
-                    // clip BEFORE clickable so the long-press ripple is contained inside
+                    // clip BEFORE the gesture detector so the ripple is contained inside
                     // the rounded shape. longPressDraggableHandle (active only while
-                    // editing) handles long-press + drag for reordering. combinedClickable
-                    // gives tap-to-select on every pill, plus long-press-to-enter-edit-mode
-                    // when not yet editing.
+                    // editing) handles long-press + drag for reordering. The custom
+                    // awaitEachGesture below distinguishes tap (release inside long-press
+                    // timeout) from long-press (timeout reached) without competing with
+                    // the drag handle for events the way combinedClickable did.
                     val pillModifier = Modifier
                         .clip(RoundedCornerShape(dim.radiusFull))
                         .longPressDraggableHandle(
@@ -1116,23 +1232,40 @@ private fun LabelShortcutsRow(
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             },
                         )
-                        .combinedClickable(
-                            onClick = {
-                                if (label.isSet) {
-                                    label.toStopItem()?.let(onSetLabelClick)
-                                } else {
-                                    onUnsetLabelClick(label)
+                        .pointerInput(label.label, editing) {
+                            awaitEachGesture {
+                                awaitFirstDown(requireUnconsumed = false)
+                                val tappedQuickly = withTimeoutOrNull(
+                                    viewConfiguration.longPressTimeoutMillis,
+                                ) {
+                                    waitForUpOrCancellation() != null
                                 }
-                            },
-                            // Always non-null so combinedClickable consumes the long-press
-                            // (otherwise onClick would fire on release after a long hold).
-                            onLongClick = {
-                                if (!editing) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onEnterEditing()
+                                when (tappedQuickly) {
+                                    true -> {
+                                        // Released within the long-press window → tap.
+                                        if (label.isSet) {
+                                            label.toStopItem()?.let(onSetLabelClick)
+                                        } else {
+                                            onUnsetLabelClick(label)
+                                        }
+                                    }
+                                    null -> {
+                                        // Long-press timeout reached without release.
+                                        if (!editing) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onEnterEditing()
+                                        }
+                                        // Wait for release; null return means another
+                                        // detector (the drag handle) took over.
+                                        waitForUpOrCancellation()
+                                    }
+                                    false -> {
+                                        // Cancellation inside timeout (e.g. drag detector
+                                        // consumed the events) — let the drag handle run.
+                                    }
                                 }
-                            },
-                        )
+                            }
+                        }
 
                     if (label.isSet) {
                         SetLabelPill(label = label, modifier = pillModifier)
@@ -1144,7 +1277,7 @@ private fun LabelShortcutsRow(
                         )
                     }
 
-                    if (editing) {
+                    if (editing && !label.isProtected) {
                         DeleteOverlay(
                             onClick = { onDeleteLabel(label) },
                             modifier = Modifier.align(Alignment.TopEnd),

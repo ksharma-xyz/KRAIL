@@ -280,7 +280,6 @@ fun SavedTripsScreen(
             },
             onSearchButtonClick = { onSearchButtonClick() },
         )
-
     }
 }
 

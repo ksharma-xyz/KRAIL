@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -35,8 +36,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -97,12 +98,11 @@ import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.LabelConflictSheet
-import xyz.ksharma.krail.trip.planner.ui.components.ManageLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.SaveStopAsLabelSheet
-import xyz.ksharma.krail.trip.planner.ui.components.stopLabelIcon
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
+import xyz.ksharma.krail.trip.planner.ui.components.stopLabelIcon
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -145,9 +145,9 @@ fun SearchStopScreen(
     var assigningLabel by remember { mutableStateOf<StopLabel?>(null) }
     var showAddLabelSheet by remember { mutableStateOf(false) }
     var stopBeingSaved by remember { mutableStateOf<StopItem?>(null) }
-    var labelBeingManaged by remember { mutableStateOf<StopLabel?>(null) }
     // Edit mode for the pill row — long-press a pill to enter; pills wiggle and can
-    // be drag-reordered. Tap "Done" to exit.
+    // be drag-reordered (via longPressDraggableHandle). The ✕ overlay lets you delete
+    // a label inline. Tap "Done" to exit.
     var editingLabels by remember { mutableStateOf(false) }
     // Conflict surfaced when assigning a stop to a label triggers either a stop-side
     // (stop already on another label) or label-side (label already has a different stop)
@@ -208,8 +208,9 @@ fun SearchStopScreen(
                     if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
                 },
                 onUnsetLabelClick = { label -> assigningLabel = label },
-                onLabelLongClick = { label ->
-                    if (!editingLabels) labelBeingManaged = label
+                onEnterEditing = { editingLabels = true },
+                onDeleteLabel = { label ->
+                    onEvent(SearchStopUiEvent.DeleteLabel(label.label))
                 },
                 onCancelAssigning = { assigningLabel = null },
                 onMoveLabel = { labelKey, toIndex ->
@@ -244,8 +245,9 @@ fun SearchStopScreen(
                     if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
                 },
                 onUnsetLabelClick = { label -> assigningLabel = label },
-                onLabelLongClick = { label ->
-                    if (!editingLabels) labelBeingManaged = label
+                onEnterEditing = { editingLabels = true },
+                onDeleteLabel = { label ->
+                    onEvent(SearchStopUiEvent.DeleteLabel(label.label))
                 },
                 onCancelAssigning = { assigningLabel = null },
                 onMoveLabel = { labelKey, toIndex ->
@@ -351,14 +353,6 @@ fun SearchStopScreen(
         }
     }
 
-    labelBeingManaged?.let { label ->
-        ManageLabelSheet(
-            label = label,
-            onClearStop = { onEvent(SearchStopUiEvent.ClearLabelStop(label.label)) },
-            onDeleteLabel = { onEvent(SearchStopUiEvent.DeleteLabel(label.label)) },
-            onDismiss = { labelBeingManaged = null },
-        )
-    }
 }
 
 private sealed interface LabelConflict {
@@ -397,7 +391,8 @@ private fun SearchStopScreenSinglePane(
     onSaveAsLabel: (StopItem) -> Unit,
     onUnsaveLabel: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
-    onLabelLongClick: (StopLabel) -> Unit,
+    onEnterEditing: () -> Unit,
+    onDeleteLabel: (StopLabel) -> Unit,
     onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
@@ -516,7 +511,8 @@ private fun SearchStopScreenSinglePane(
                     onSaveAsLabel = onSaveAsLabel,
                     onUnsaveLabel = onUnsaveLabel,
                     onUnsetLabelClick = onUnsetLabelClick,
-                    onLabelLongClick = onLabelLongClick,
+                    onEnterEditing = onEnterEditing,
+                    onDeleteLabel = onDeleteLabel,
                     onCancelAssigning = onCancelAssigning,
                     onMoveLabel = onMoveLabel,
                     onAddLabelClick = onAddLabelClick,
@@ -591,7 +587,8 @@ private fun SearchStopScreenDualPane(
     onSaveAsLabel: (StopItem) -> Unit,
     onUnsaveLabel: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
-    onLabelLongClick: (StopLabel) -> Unit,
+    onEnterEditing: () -> Unit,
+    onDeleteLabel: (StopLabel) -> Unit,
     onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
@@ -677,7 +674,8 @@ private fun SearchStopScreenDualPane(
                     onSaveAsLabel = onSaveAsLabel,
                     onUnsaveLabel = onUnsaveLabel,
                     onUnsetLabelClick = onUnsetLabelClick,
-                    onLabelLongClick = onLabelLongClick,
+                    onEnterEditing = onEnterEditing,
+                    onDeleteLabel = onDeleteLabel,
                     onCancelAssigning = onCancelAssigning,
                     onMoveLabel = onMoveLabel,
                     onAddLabelClick = onAddLabelClick,
@@ -726,7 +724,8 @@ private fun SearchStopListContent(
     onSaveAsLabel: (StopItem) -> Unit,
     onUnsaveLabel: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
-    onLabelLongClick: (StopLabel) -> Unit,
+    onEnterEditing: () -> Unit,
+    onDeleteLabel: (StopLabel) -> Unit,
     onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
@@ -755,7 +754,8 @@ private fun SearchStopListContent(
                                 onStopSelect(stopItem)
                             },
                             onUnsetLabelClick = onUnsetLabelClick,
-                            onLabelLongClick = onLabelLongClick,
+                            onEnterEditing = onEnterEditing,
+                            onDeleteLabel = onDeleteLabel,
                             onMoveLabel = onMoveLabel,
                             onAddLabelClick = onAddLabelClick,
                             onDoneEditing = onDoneEditing,
@@ -781,12 +781,7 @@ private fun SearchStopListContent(
                 if (isMapsAvailable) {
                     item(key = "select-on-map") {
                         SelectOnMapItem(onOpenMap = onOpenMap)
-                        Divider()
                     }
-                }
-
-                item(key = "recent-header") {
-                    SearchListHeader()
                 }
 
                 recentSearchStopsList(
@@ -809,6 +804,11 @@ private fun SearchStopListContent(
                 modifier = modifier,
                 contentPadding = PaddingValues(top = 0.dp, bottom = 48.dp),
             ) {
+
+                item("searching_dots") {
+                    SearchingDotsHeader(isLoading = listState.isLoading)
+                }
+
                 if (searchStopState.stopLabels.isNotEmpty()) {
                     item(key = "label-shortcuts") {
                         LabelShortcutsRow(
@@ -821,7 +821,8 @@ private fun SearchStopListContent(
                                 onStopSelect(stopItem)
                             },
                             onUnsetLabelClick = onUnsetLabelClick,
-                            onLabelLongClick = onLabelLongClick,
+                            onEnterEditing = onEnterEditing,
+                            onDeleteLabel = onDeleteLabel,
                             onMoveLabel = onMoveLabel,
                             onAddLabelClick = onAddLabelClick,
                             onDoneEditing = onDoneEditing,
@@ -849,10 +850,6 @@ private fun SearchStopListContent(
                         SelectOnMapItem(onOpenMap = onOpenMap)
                         Divider()
                     }
-                }
-
-                item("searching_dots") {
-                    SearchingDotsHeader(isLoading = listState.isLoading)
                 }
 
                 searchResultsList(
@@ -992,7 +989,7 @@ private fun LazyListScope.recentSearchStopsList(
                     .padding(
                         start = dim.pageHorizontalPadding,
                         end = dim.pageHorizontalPadding,
-                        top = dim.spacingS,
+                        top = dim.spacingM,
                         bottom = dim.spacingS,
                     ),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1004,13 +1001,12 @@ private fun LazyListScope.recentSearchStopsList(
                     color = KrailTheme.colors.softLabel,
                 )
 
-                Image(
-                    painter = painterResource(TajRes.drawable.ic_close),
-                    contentDescription = "Clear recent stops",
-                    colorFilter = ColorFilter.tint(color = KrailTheme.colors.softLabel),
+                Text(
+                    text = "Clear all",
+                    style = KrailTheme.typography.labelLarge,
+                    color = KrailTheme.colors.softLabel,
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
+                        .clip(RoundedCornerShape(dim.radiusFull))
                         .klickable {
                             onEvent(
                                 SearchStopUiEvent.ClearRecentSearchStops(
@@ -1018,7 +1014,7 @@ private fun LazyListScope.recentSearchStopsList(
                                 ),
                             )
                         }
-                        .padding(8.dp),
+                        .padding(horizontal = dim.spacingS, vertical = dim.spacingXS),
                 )
             }
         }
@@ -1064,7 +1060,8 @@ private fun LabelShortcutsRow(
     editing: Boolean,
     onSetLabelClick: (StopItem) -> Unit,
     onUnsetLabelClick: (StopLabel) -> Unit,
-    onLabelLongClick: (StopLabel) -> Unit,
+    onEnterEditing: () -> Unit,
+    onDeleteLabel: (StopLabel) -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -1081,7 +1078,13 @@ private fun LabelShortcutsRow(
     LazyRow(
         state = lazyListState,
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingS),
+        // Extra top padding leaves room for the floating ✕ delete chip while editing.
+        contentPadding = PaddingValues(
+            start = dim.pageHorizontalPadding,
+            end = dim.pageHorizontalPadding,
+            top = dim.spacingM,
+            bottom = dim.spacingS,
+        ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         items(items = labels, key = { it.label }) { label ->
@@ -1091,47 +1094,62 @@ private fun LabelShortcutsRow(
                     active = editing && !isDragging,
                     seed = label.label.hashCode(),
                 )
-                // graphicsLayer outer → clip inner so the rotation rotates the clipped pill;
-                // clip BEFORE clickable so the ripple is contained inside the rounded shape.
-                val pillModifier = Modifier
-                    .graphicsLayer {
+                Box(
+                    modifier = Modifier.graphicsLayer {
                         rotationZ = rotation
                         if (isDragging) {
                             scaleX = 1.05f
                             scaleY = 1.05f
                         }
-                    }
-                    .clip(RoundedCornerShape(dim.radiusFull))
-                    .then(
-                        if (editing) {
-                            // In edit mode: drag immediately on touch; no tap action.
-                            Modifier.draggableHandle(
-                                onDragStarted = {
+                    },
+                ) {
+                    // clip BEFORE clickable so the long-press ripple is contained inside
+                    // the rounded shape. longPressDraggableHandle (active only while
+                    // editing) handles long-press + drag for reordering. combinedClickable
+                    // gives tap-to-select on every pill, plus long-press-to-enter-edit-mode
+                    // when not yet editing.
+                    val pillModifier = Modifier
+                        .clip(RoundedCornerShape(dim.radiusFull))
+                        .longPressDraggableHandle(
+                            enabled = editing,
+                            onDragStarted = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                        )
+                        .combinedClickable(
+                            onClick = {
+                                if (label.isSet) {
+                                    label.toStopItem()?.let(onSetLabelClick)
+                                } else {
+                                    onUnsetLabelClick(label)
+                                }
+                            },
+                            // Always non-null so combinedClickable consumes the long-press
+                            // (otherwise onClick would fire on release after a long hold).
+                            onLongClick = {
+                                if (!editing) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                },
-                            )
-                        } else {
-                            Modifier.combinedClickable(
-                                onClick = {
-                                    if (label.isSet) {
-                                        label.toStopItem()?.let(onSetLabelClick)
-                                    } else {
-                                        onUnsetLabelClick(label)
-                                    }
-                                },
-                                onLongClick = { onLabelLongClick(label) },
-                            )
-                        },
-                    )
+                                    onEnterEditing()
+                                }
+                            },
+                        )
 
-                if (label.isSet) {
-                    SetLabelPill(label = label, modifier = pillModifier)
-                } else {
-                    UnsetLabelPill(
-                        label = label,
-                        isAssigning = isAssigning,
-                        modifier = pillModifier,
-                    )
+                    if (label.isSet) {
+                        SetLabelPill(label = label, modifier = pillModifier)
+                    } else {
+                        UnsetLabelPill(
+                            label = label,
+                            isAssigning = isAssigning,
+                            modifier = pillModifier,
+                        )
+                    }
+
+                    if (editing) {
+                        DeleteOverlay(
+                            onClick = { onDeleteLabel(label) },
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        )
+                    }
                 }
             }
         }
@@ -1142,6 +1160,29 @@ private fun LabelShortcutsRow(
                 AddLabelPill(onClick = onAddLabelClick)
             }
         }
+    }
+}
+
+@Composable
+private fun DeleteOverlay(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .offset(x = 6.dp, y = (-6).dp)
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(KrailTheme.colors.onSurface, CircleShape)
+            .klickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(TajRes.drawable.ic_close),
+            contentDescription = "Delete label",
+            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            modifier = Modifier.size(12.dp),
+        )
     }
 }
 
@@ -1338,8 +1379,8 @@ private fun SelectOnMapItem(
         modifier = modifier
             .fillMaxWidth()
             .klickable { onOpenMap() }
-            .padding(vertical = dim.spacingL, horizontal = dim.spacingXXL),
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+            .padding(vertical = dim.spacingXL, horizontal = dim.spacingXXL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(

@@ -13,7 +13,7 @@ VALUES (?, ?, ?, ?, ?);
 
 selectAllStopLabels:
 SELECT * FROM StopLabels
-ORDER BY sort_order ASC, label ASC;
+ORDER BY (stop_id IS NULL) ASC, sort_order ASC, label ASC;
 
 updateStopLabelStop:
 UPDATE StopLabels SET stop_id = ?, stop_name = ? WHERE label = ?;

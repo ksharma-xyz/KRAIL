@@ -90,7 +90,7 @@ Decided by `pillRowBannerText(editing, assigningLabel, stopLabels)` in `SearchSt
 
 | State | Banner |
 |---|---|
-| Editing | `Drag a pill to reorder. Tap ✕ to delete.` |
+| Editing | `Long press and then drag the pill to reorder and select Done to save.` |
 | Assigning, label still unset | `Tap the ⭐ next to a stop to save it as <name>` |
 | Assigning, label became set | (collapsed — banner clears automatically) |
 | Idle | (collapsed) |

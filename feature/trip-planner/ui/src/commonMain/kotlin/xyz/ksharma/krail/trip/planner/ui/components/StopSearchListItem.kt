@@ -31,7 +31,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
@@ -99,12 +98,14 @@ fun StopSearchListItem(
 
 @Composable
 private fun SaveAsLabelStar(isSaved: Boolean, onClick: () -> Unit) {
+    // Same tint for filled and outlined — only the silhouette changes — so the star's
+    // colour stays consistent with surrounding text and doesn't fade out against any
+    // background.
     val icon = if (isSaved) Res.drawable.ic_star_filled else Res.drawable.ic_star
-    val tint = if (isSaved) themeColor() else KrailTheme.colors.softLabel
     Image(
         painter = painterResource(icon),
         contentDescription = if (isSaved) "Remove from labels" else "Save as label",
-        colorFilter = ColorFilter.tint(tint),
+        colorFilter = ColorFilter.tint(KrailTheme.colors.label),
         modifier = Modifier
             .size(36.dp)
             .clip(CircleShape)

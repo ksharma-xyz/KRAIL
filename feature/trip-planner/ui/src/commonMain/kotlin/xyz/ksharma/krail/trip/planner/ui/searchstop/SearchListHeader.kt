@@ -3,9 +3,12 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
@@ -13,85 +16,60 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
 import kotlinx.coroutines.delay
+import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * Generic fixed-height header that always occupies `height` space and centers its content.
- * - `content` can be empty (acts as a spacer) or show any composable (e.g. loading dots).
- * - `visibleControl` is a helper boolean you pass (e.g. isLoading). Internally this composable
- *   ensures the content is visible for at least [minVisibleMillis] to avoid flicker.
+ * Compact "searching…" indicator. Renders as a small floating pill (onSurface
+ * background, themeColor dots) so callers can stack it on the z-axis over their list
+ * without the dots claiming a chunk of vertical layout space.
+ *
+ * Pass [isLoading] from your list state. The pill stays visible at least
+ * [minVisibleMillis] to avoid flickering when searches return instantly.
  */
 @OptIn(ExperimentalTime::class)
-@Composable
-fun SearchListHeader(
-    modifier: Modifier = Modifier,
-    height: Dp = 32.dp,
-    visibleControl: Boolean = false,
-    minVisibleMillis: Long = 600L,
-    content: @Composable () -> Unit = {},
-) {
-    // internalVisible enforces "min visible time" behaviour
-    val internalVisibleState = remember { mutableStateOf(false) }
-    val lastShownAt = remember { mutableLongStateOf(0L) }
-
-    LaunchedEffect(visibleControl) {
-        val now = Clock.System.now().toEpochMilliseconds()
-        if (visibleControl) {
-            internalVisibleState.value = true
-            lastShownAt.value = now
-        } else {
-            // If we were shown, ensure we remain visible for at least minVisibleMillis
-            if (internalVisibleState.value) {
-                val elapsed = Clock.System.now().toEpochMilliseconds() - lastShownAt.value
-                val remaining = minVisibleMillis - elapsed
-                if (remaining > 0) delay(remaining)
-                internalVisibleState.value = false
-            } else {
-                internalVisibleState.value = false
-            }
-        }
-    }
-
-    Box(
-        modifier = modifier.height(height),
-        contentAlignment = Alignment.Center,
-    ) {
-        // center the provided content both vertically and horizontally
-        AnimatedVisibility(
-            visible = internalVisibleState.value,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                content()
-            }
-        }
-    }
-}
-
-/**
- * Small convenience wrapper to show the animated dots inside the fixed header.
- * - Pass `isLoading` from your list state.
- * - Will ensure minVisibleMillis to avoid flicker when searches are fast.
- */
 @Composable
 fun SearchingDotsHeader(
     isLoading: Boolean,
     modifier: Modifier = Modifier,
-    height: Dp = 32.dp,
     minVisibleMillis: Long = 600L,
 ) {
-    SearchListHeader(
-        height = height,
+    val internalVisibleState = remember { mutableStateOf(false) }
+    val lastShownAt = remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(isLoading) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        if (isLoading) {
+            internalVisibleState.value = true
+            lastShownAt.value = now
+        } else if (internalVisibleState.value) {
+            val elapsed = Clock.System.now().toEpochMilliseconds() - lastShownAt.value
+            val remaining = minVisibleMillis - elapsed
+            if (remaining > 0) delay(remaining)
+            internalVisibleState.value = false
+        }
+    }
+
+    val dim = KrailTheme.dimensions
+    AnimatedVisibility(
+        visible = internalVisibleState.value,
+        enter = fadeIn() + scaleIn(initialScale = 0.85f),
+        exit = fadeOut() + scaleOut(targetScale = 0.85f),
         modifier = modifier,
-        visibleControl = isLoading,
-        minVisibleMillis = minVisibleMillis,
     ) {
-        AnimatedDots(modifier = Modifier.fillMaxWidth())
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(dim.radiusFull))
+                .background(KrailTheme.colors.onSurface)
+                .padding(horizontal = dim.spacingL, vertical = dim.spacingS),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedDots(color = themeColor())
+        }
     }
 }

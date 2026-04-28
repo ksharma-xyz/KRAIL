@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -218,12 +219,15 @@ fun SearchStopScreen(
                     val match = searchStopState.stopLabels.firstOrNull { it.stopId == stopItem.stopId }
                     if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
                 },
-                onUnsetLabelClick = { label -> assigningLabel = label },
+                onUnsetLabelClick = { label ->
+                    // Toggle: tap an unset pill to enter assigning mode, tap the same
+                    // (or another unset) pill again to exit / switch.
+                    assigningLabel = if (assigningLabel?.label == label.label) null else label
+                },
                 onEnterEditing = { editingLabels = true },
                 onDeleteLabel = { label ->
                     onEvent(SearchStopUiEvent.DeleteLabel(label.label))
                 },
-                onCancelAssigning = { assigningLabel = null },
                 onMoveLabel = { labelKey, toIndex ->
                     onEvent(SearchStopUiEvent.MoveLabelToIndex(labelKey, toIndex))
                 },
@@ -255,12 +259,15 @@ fun SearchStopScreen(
                     val match = searchStopState.stopLabels.firstOrNull { it.stopId == stopItem.stopId }
                     if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
                 },
-                onUnsetLabelClick = { label -> assigningLabel = label },
+                onUnsetLabelClick = { label ->
+                    // Toggle: tap an unset pill to enter assigning mode, tap the same
+                    // (or another unset) pill again to exit / switch.
+                    assigningLabel = if (assigningLabel?.label == label.label) null else label
+                },
                 onEnterEditing = { editingLabels = true },
                 onDeleteLabel = { label ->
                     onEvent(SearchStopUiEvent.DeleteLabel(label.label))
                 },
-                onCancelAssigning = { assigningLabel = null },
                 onMoveLabel = { labelKey, toIndex ->
                     onEvent(SearchStopUiEvent.MoveLabelToIndex(labelKey, toIndex))
                 },
@@ -523,7 +530,6 @@ private fun SearchStopScreenSinglePane(
     onUnsetLabelClick: (StopLabel) -> Unit,
     onEnterEditing: () -> Unit,
     onDeleteLabel: (StopLabel) -> Unit,
-    onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -643,7 +649,6 @@ private fun SearchStopScreenSinglePane(
                     onUnsetLabelClick = onUnsetLabelClick,
                     onEnterEditing = onEnterEditing,
                     onDeleteLabel = onDeleteLabel,
-                    onCancelAssigning = onCancelAssigning,
                     onMoveLabel = onMoveLabel,
                     onAddLabelClick = onAddLabelClick,
                     onDoneEditing = onDoneEditing,
@@ -719,7 +724,6 @@ private fun SearchStopScreenDualPane(
     onUnsetLabelClick: (StopLabel) -> Unit,
     onEnterEditing: () -> Unit,
     onDeleteLabel: (StopLabel) -> Unit,
-    onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -806,7 +810,6 @@ private fun SearchStopScreenDualPane(
                     onUnsetLabelClick = onUnsetLabelClick,
                     onEnterEditing = onEnterEditing,
                     onDeleteLabel = onDeleteLabel,
-                    onCancelAssigning = onCancelAssigning,
                     onMoveLabel = onMoveLabel,
                     onAddLabelClick = onAddLabelClick,
                     onDoneEditing = onDoneEditing,
@@ -856,7 +859,6 @@ private fun SearchStopListContent(
     onUnsetLabelClick: (StopLabel) -> Unit,
     onEnterEditing: () -> Unit,
     onDeleteLabel: (StopLabel) -> Unit,
-    onCancelAssigning: () -> Unit,
     onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
     onAddLabelClick: () -> Unit,
     onDoneEditing: () -> Unit,
@@ -866,133 +868,140 @@ private fun SearchStopListContent(
     val savedStopIds = remember(searchStopState.stopLabels) {
         searchStopState.stopLabels.mapNotNull { it.stopId }.toSet()
     }
-    // First item is always the search-status header so the pill row stays in the same
-    // position whether we're in Recent (idle) or Results (loading/loaded).
     val isLoading = listState is ListState.Results && listState.isLoading
     when (listState) {
         ListState.Recent -> {
-            LazyColumn(
-                modifier = modifier,
-                contentPadding = PaddingValues(
-                    top = KrailTheme.dimensions.spacingNone,
-                    bottom = KrailTheme.dimensions.spacingXXXXL,
-                ),
-            ) {
-                item(key = "search-status") {
-                    SearchingDotsHeader(isLoading = isLoading)
-                }
-
-                if (searchStopState.stopLabels.isNotEmpty()) {
-                    item(key = "label-shortcuts") {
-                        LabelShortcutsRow(
-                            labels = searchStopState.stopLabels,
-                            assigningLabel = assigningLabel,
-                            editing = editingLabels,
-                            onSetLabelClick = { stopItem ->
-                                keyboard?.hide()
-                                focusRequester.freeFocus()
-                                onStopSelect(stopItem)
-                            },
-                            onUnsetLabelClick = onUnsetLabelClick,
-                            onEnterEditing = onEnterEditing,
-                            onDeleteLabel = onDeleteLabel,
-                            onMoveLabel = onMoveLabel,
-                            onAddLabelClick = onAddLabelClick,
-                            onDoneEditing = onDoneEditing,
-                        )
-                    }
-                    if (assigningLabel != null) {
-                        item(key = "assigning-banner") {
-                            AssigningModeBanner(
-                                label = assigningLabel,
-                                onCancel = onCancelAssigning,
+            // Box wrapper lets the floating "searching..." pill sit on the z-axis above
+            // the LazyColumn so the loading state doesn't claim a chunk of vertical space.
+            Box(modifier = modifier) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = KrailTheme.dimensions.spacingNone,
+                        bottom = KrailTheme.dimensions.spacingXXXXL,
+                    ),
+                ) {
+                    if (searchStopState.stopLabels.isNotEmpty()) {
+                        item(key = "label-shortcuts") {
+                            LabelShortcutsRow(
+                                labels = searchStopState.stopLabels,
+                                assigningLabel = assigningLabel,
+                                editing = editingLabels,
+                                onSetLabelClick = { stopItem ->
+                                    keyboard?.hide()
+                                    focusRequester.freeFocus()
+                                    onStopSelect(stopItem)
+                                },
+                                onUnsetLabelClick = onUnsetLabelClick,
+                                onEnterEditing = onEnterEditing,
+                                onDeleteLabel = onDeleteLabel,
+                                onMoveLabel = onMoveLabel,
+                                onAddLabelClick = onAddLabelClick,
+                                onDoneEditing = onDoneEditing,
                             )
                         }
+                        item(key = "assigning-banner") {
+                            // animateContentSize gives a smooth height collapse/expand
+                            // when the user toggles assigning mode by re-tapping the pill.
+                            Box(modifier = Modifier.animateContentSize()) {
+                                if (assigningLabel != null) {
+                                    AssigningModeBanner(label = assigningLabel)
+                                }
+                            }
+                        }
                     }
-                }
 
-                if (isMapsAvailable) {
-                    item(key = "select-on-map") {
-                        SelectOnMapItem(onOpenMap = onOpenMap)
+                    if (isMapsAvailable) {
+                        item(key = "select-on-map") {
+                            SelectOnMapItem(onOpenMap = onOpenMap)
+                        }
                     }
-                }
 
-                recentSearchStopsList(
-                    recentStops = searchStopState.recentStops,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    savedStopIds = savedStopIds,
-                    onStopSelect = onStopSelect,
-                    onSaveAsLabel = onSaveAsLabel,
-                    onUnsaveLabel = onUnsaveLabel,
-                    onEvent = onEvent,
+                    recentSearchStopsList(
+                        recentStops = searchStopState.recentStops,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        savedStopIds = savedStopIds,
+                        onStopSelect = onStopSelect,
+                        onSaveAsLabel = onSaveAsLabel,
+                        onUnsaveLabel = onUnsaveLabel,
+                        onEvent = onEvent,
+                    )
+
+                    item(key = "pt-note") { PublicTransportNote() }
+                }
+                SearchingDotsHeader(
+                    isLoading = isLoading,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = KrailTheme.dimensions.spacingS),
                 )
-
-                item(key = "pt-note") { PublicTransportNote() }
             }
         }
 
         is ListState.Results -> {
-            LazyColumn(
-                modifier = modifier,
-                contentPadding = PaddingValues(
-                    top = KrailTheme.dimensions.spacingNone,
-                    bottom = KrailTheme.dimensions.spacingXXXXL,
-                ),
-            ) {
-                item(key = "search-status") {
-                    SearchingDotsHeader(isLoading = listState.isLoading)
-                }
-
-                if (searchStopState.stopLabels.isNotEmpty()) {
-                    item(key = "label-shortcuts") {
-                        LabelShortcutsRow(
-                            labels = searchStopState.stopLabels,
-                            assigningLabel = assigningLabel,
-                            editing = editingLabels,
-                            onSetLabelClick = { stopItem ->
-                                keyboard?.hide()
-                                focusRequester.freeFocus()
-                                onStopSelect(stopItem)
-                            },
-                            onUnsetLabelClick = onUnsetLabelClick,
-                            onEnterEditing = onEnterEditing,
-                            onDeleteLabel = onDeleteLabel,
-                            onMoveLabel = onMoveLabel,
-                            onAddLabelClick = onAddLabelClick,
-                            onDoneEditing = onDoneEditing,
-                        )
-                    }
-                    if (assigningLabel != null) {
-                        item(key = "assigning-banner") {
-                            AssigningModeBanner(
-                                label = assigningLabel,
-                                onCancel = onCancelAssigning,
+            Box(modifier = modifier) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = KrailTheme.dimensions.spacingNone,
+                        bottom = KrailTheme.dimensions.spacingXXXXL,
+                    ),
+                ) {
+                    if (searchStopState.stopLabels.isNotEmpty()) {
+                        item(key = "label-shortcuts") {
+                            LabelShortcutsRow(
+                                labels = searchStopState.stopLabels,
+                                assigningLabel = assigningLabel,
+                                editing = editingLabels,
+                                onSetLabelClick = { stopItem ->
+                                    keyboard?.hide()
+                                    focusRequester.freeFocus()
+                                    onStopSelect(stopItem)
+                                },
+                                onUnsetLabelClick = onUnsetLabelClick,
+                                onEnterEditing = onEnterEditing,
+                                onDeleteLabel = onDeleteLabel,
+                                onMoveLabel = onMoveLabel,
+                                onAddLabelClick = onAddLabelClick,
+                                onDoneEditing = onDoneEditing,
                             )
                         }
+                        item(key = "assigning-banner") {
+                            Box(modifier = Modifier.animateContentSize()) {
+                                if (assigningLabel != null) {
+                                    AssigningModeBanner(label = assigningLabel)
+                                }
+                            }
+                        }
                     }
-                }
 
-                if (isMapsAvailable) {
-                    item(key = "select-on-map") {
-                        SelectOnMapItem(onOpenMap = onOpenMap)
-                        Divider()
+                    if (isMapsAvailable) {
+                        item(key = "select-on-map") {
+                            SelectOnMapItem(onOpenMap = onOpenMap)
+                        }
                     }
-                }
 
-                searchResultsList(
-                    searchResults = listState.results,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    savedStopIds = savedStopIds,
-                    onStopSelect = onStopSelect,
-                    onSaveAsLabel = onSaveAsLabel,
-                    onUnsaveLabel = onUnsaveLabel,
-                    onEvent = onEvent,
-                    searchQuery = searchStopState.searchQuery,
+                    searchResultsList(
+                        searchResults = listState.results,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        savedStopIds = savedStopIds,
+                        onStopSelect = onStopSelect,
+                        onSaveAsLabel = onSaveAsLabel,
+                        onUnsaveLabel = onUnsaveLabel,
+                        onEvent = onEvent,
+                        searchQuery = searchStopState.searchQuery,
+                    )
+
+                    item(key = "pt-note") { PublicTransportNote() }
+                }
+                SearchingDotsHeader(
+                    isLoading = listState.isLoading,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = KrailTheme.dimensions.spacingS),
                 )
-
-                item(key = "pt-note") { PublicTransportNote() }
             }
         }
 
@@ -1449,11 +1458,13 @@ private fun AddLabelPill(onClick: () -> Unit) {
 @Composable
 private fun AssigningModeBanner(
     label: StopLabel,
-    onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    Row(
+    Text(
+        text = "Tap the ⭐ next to a stop to save it as ${label.label}",
+        style = KrailTheme.typography.bodySmall,
+        color = KrailTheme.colors.label,
         modifier = modifier
             .fillMaxWidth()
             .padding(
@@ -1462,25 +1473,7 @@ private fun AssigningModeBanner(
                 top = dim.spacingXS,
                 bottom = dim.spacingS,
             ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
-    ) {
-        Text(
-            text = "Tap the ⭐ next to a stop to save it as ${label.label}",
-            style = KrailTheme.typography.bodySmall,
-            color = KrailTheme.colors.label,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = "Cancel",
-            style = KrailTheme.typography.labelLarge,
-            color = themeColor(),
-            modifier = Modifier
-                .clip(RoundedCornerShape(dim.radiusFull))
-                .klickable(onClick = onCancel)
-                .padding(horizontal = dim.spacingS, vertical = dim.spacingXS),
-        )
-    }
+    )
 }
 
 /**

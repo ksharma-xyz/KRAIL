@@ -87,7 +87,6 @@ fun SearchTopBar(
             .statusBarsPadding()
             .windowInsetsPadding(WindowInsets.ime)
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .padding(bottom = 8.dp)
             .background(color = Color.Transparent, RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
             .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)),
     ) {

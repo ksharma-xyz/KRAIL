@@ -33,9 +33,9 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature

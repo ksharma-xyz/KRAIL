@@ -9,6 +9,7 @@ import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
+import xyz.ksharma.krail.sandook.StopLabels
 
 class FakeSandook : Sandook {
 
@@ -18,6 +19,51 @@ class FakeSandook : Sandook {
     private val stops = mutableListOf<NswStops>()
     private val stopProductClasses = mutableMapOf<String, MutableList<Int>>()
     private val recentSearchStops = mutableListOf<SelectRecentSearchStops>()
+    private val stopLabelsFlow = MutableStateFlow<List<StopLabels>>(emptyList())
+
+    // region StopLabels
+    override fun observeStopLabels(): Flow<List<StopLabels>> = stopLabelsFlow.asStateFlow()
+
+    override fun upsertStopLabel(
+        label: String,
+        emoji: String,
+        stopId: String?,
+        stopName: String?,
+        sortOrder: Long,
+    ) {
+        val updated = stopLabelsFlow.value.toMutableList()
+        updated.removeAll { it.label == label }
+        updated.add(
+            StopLabels(
+                label = label,
+                emoji = emoji,
+                stop_id = stopId,
+                stop_name = stopName,
+                sort_order = sortOrder,
+            ),
+        )
+        stopLabelsFlow.value = updated.sortedWith(
+            compareBy({ it.stop_id == null }, { it.sort_order }, { it.label }),
+        )
+    }
+
+    override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) {
+        val updated = stopLabelsFlow.value.map { row ->
+            if (row.label == label) row.copy(stop_id = stopId, stop_name = stopName) else row
+        }
+        stopLabelsFlow.value = updated.sortedWith(
+            compareBy({ it.stop_id == null }, { it.sort_order }, { it.label }),
+        )
+    }
+
+    override fun deleteStopLabel(label: String) {
+        stopLabelsFlow.value = stopLabelsFlow.value.filterNot { it.label == label }
+    }
+
+    override fun clearStopLabels() {
+        stopLabelsFlow.value = emptyList()
+    }
+    // endregion
 
     // region Theme
     override fun insertOrReplaceTheme(productClass: Long) {

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 
 /**
  * Android implementation of [rememberLocationTracker].
@@ -14,6 +15,10 @@ import androidx.compose.ui.platform.LocalContext
  */
 @Composable
 actual fun rememberLocationTracker(): LocationTracker {
+    if (LocalInspectionMode.current) {
+        return PreviewLocationTracker
+    }
+
     val context = LocalContext.current
     val activity = context as? ComponentActivity
         ?: error("LocationTracker requires ComponentActivity.")

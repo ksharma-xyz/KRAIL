@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import org.koin.compose.koinInject
 import xyz.ksharma.krail.sandook.SandookPreferences
 
@@ -23,6 +24,10 @@ import xyz.ksharma.krail.sandook.SandookPreferences
  */
 @Composable
 actual fun rememberPermissionController(): PermissionController {
+    if (LocalInspectionMode.current) {
+        return PreviewPermissionController
+    }
+
     val context = LocalContext.current
     val activity = context as? ComponentActivity
         ?: error("PermissionController requires ComponentActivity.")

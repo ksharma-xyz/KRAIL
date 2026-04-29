@@ -77,6 +77,7 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
+import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -93,7 +94,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TrackedLegView
 import xyz.ksharma.krail.trip.planner.ui.components.WalkingLeg
-import xyz.ksharma.krail.trip.planner.ui.components.loading.AnimatedDots
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.LiveVehicleLayer

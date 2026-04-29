@@ -270,7 +270,7 @@ private fun ThemeOptionLabel(
     val textColor by animateColorAsState(
         targetValue = when {
             isSelected -> KrailTheme.colors.onSurface // Use onSurface for contrast against surface-colored handle
-            else -> KrailTheme.colors.onSurface.copy(alpha = 0.7f)
+            else -> KrailTheme.colors.softLabel
         },
         animationSpec = tween(ThemeTransitionTiming.TEXT_DURATION_MS),
         label = "textColor",

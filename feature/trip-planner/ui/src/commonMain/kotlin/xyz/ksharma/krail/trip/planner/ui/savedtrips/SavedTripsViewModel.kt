@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -54,6 +55,7 @@ import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferTex
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -116,6 +118,7 @@ class SavedTripsViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             observeSavedTrips()
+            seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
             updateDiscoverState()
@@ -147,14 +150,8 @@ class SavedTripsViewModel(
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
-
-            is SavedTripUiEvent.AnalyticsSavedTripCardClick -> {
-                analytics.trackSavedTripCardClick(
-                    fromStopId = event.fromStopId,
-                    toStopId = event.toStopId,
-                )
-            }
-
+            is SavedTripUiEvent.AnalyticsSavedTripCardClick ->
+                analytics.trackSavedTripCardClick(event.fromStopId, event.toStopId)
             SavedTripUiEvent.ReverseStopClick -> {
                 stopResultsManager.reverseSelectedStops()
                 updateUiState {
@@ -165,47 +162,28 @@ class SavedTripsViewModel(
                 }
                 analytics.track(AnalyticsEvent.ReverseStopClickEvent)
             }
-
-            is SavedTripUiEvent.AnalyticsLoadTimeTableClick -> {
-                analytics.trackLoadTimeTableClick(
-                    fromStopId = event.fromStopId,
-                    toStopId = event.toStopId,
-                )
-            }
-
-            SavedTripUiEvent.AnalyticsSettingsButtonClick -> {
+            is SavedTripUiEvent.AnalyticsLoadTimeTableClick ->
+                analytics.trackLoadTimeTableClick(event.fromStopId, event.toStopId)
+            SavedTripUiEvent.AnalyticsSettingsButtonClick ->
                 analytics.track(AnalyticsEvent.SettingsClickEvent)
-            }
-
-            SavedTripUiEvent.AnalyticsFromButtonClick -> {
+            SavedTripUiEvent.AnalyticsFromButtonClick ->
                 analytics.track(AnalyticsEvent.FromFieldClickEvent)
-            }
-
-            SavedTripUiEvent.AnalyticsToButtonClick -> {
+            SavedTripUiEvent.AnalyticsToButtonClick ->
                 analytics.track(AnalyticsEvent.ToFieldClickEvent)
-            }
-
             is SavedTripUiEvent.ParkRideCardClick -> onParkRideCardClick(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded,
             )
-
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
                 analytics.track(AnalyticsEvent.DiscoverButtonClick)
                 preferences.markDiscoverAsClicked()
                 updateUiState { copy(displayDiscoverBadge = false) }
             }
-
             is SavedTripUiEvent.DismissInfoTile -> onDismissInfoTile(event.infoTile)
-
             is SavedTripUiEvent.InfoTileCtaClick -> onInfoTileCtaClick(event.infoTile)
-
             is SavedTripUiEvent.InfoTileExpand -> onInfoTileExpand(key = event.key)
-
             is SavedTripUiEvent.FromStopChanged -> onFromStopChanged(event.fromJson)
-
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
-
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
         }
     }
@@ -290,6 +268,18 @@ class SavedTripsViewModel(
                         }
                     }.toImmutableList(),
                 )
+            }
+        }
+    }
+
+    private fun seedDefaultLabelsIfEmpty() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            sandook.observeStopLabels().take(1).collect { labels ->
+                if (labels.isEmpty()) {
+                    StopLabel.defaults.forEachIndexed { index, label ->
+                        sandook.upsertStopLabel(label.label, label.emoji, null, null, index.toLong())
+                    }
+                }
             }
         }
     }

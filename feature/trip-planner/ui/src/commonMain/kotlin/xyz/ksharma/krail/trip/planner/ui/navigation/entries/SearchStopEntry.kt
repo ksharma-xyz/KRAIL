@@ -48,12 +48,14 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
 
         SearchStopScreen(
             searchStopState = searchStopState,
+            fieldType = key.fieldType,
             onStopSelect = { stopItem ->
                 // Send result using captured bus reference
                 val result = StopSelectedResult(
                     fieldType = key.fieldType,
                     stopId = stopItem.stopId,
                     stopName = stopItem.stopName,
+                    labelKey = key.labelKey,
                 )
 
                 resultEventBus.sendResult(result = result)

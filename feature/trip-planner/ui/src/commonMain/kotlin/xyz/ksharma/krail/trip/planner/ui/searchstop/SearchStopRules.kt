@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
@@ -61,6 +61,7 @@ internal fun savedStopIds(labels: List<StopLabel>): Set<String> =
  *   Confirming overwrites the existing stop on that label.
  * - **null** — no conflict; the assignment can proceed silently.
  */
+@Suppress("ReturnCount")
 internal fun conflictForAssign(
     target: StopLabel,
     stop: StopItem,

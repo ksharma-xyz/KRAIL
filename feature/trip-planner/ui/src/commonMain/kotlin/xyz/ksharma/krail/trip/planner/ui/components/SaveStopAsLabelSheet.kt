@@ -45,7 +45,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 fun SaveStopAsLabelSheet(
     stopName: String,
     labels: ImmutableList<StopLabel>,
-    onLabelChosen: (StopLabel) -> Unit,
+    onLabelClick: (StopLabel) -> Unit,
     onCreateNewLabel: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -87,7 +87,7 @@ fun SaveStopAsLabelSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items(items = labels, key = { it.label }) { label ->
-                    LabelChoiceChip(label = label, onClick = { onLabelChosen(label) })
+                    LabelChoiceChip(label = label, onClick = { onLabelClick(label) })
                 }
                 item(key = "__new_label__") {
                     NewLabelChip(onClick = onCreateNewLabel)
@@ -177,7 +177,7 @@ private fun PreviewSaveStopAsLabelSheet() {
                 StopLabel(emoji = "💼", label = "Work", stopId = "1", stopName = "Town Hall"),
                 StopLabel(emoji = "🏋", label = "Gym"),
             ),
-            onLabelChosen = {},
+            onLabelClick = {},
             onCreateNewLabel = {},
             onDismiss = {},
         )

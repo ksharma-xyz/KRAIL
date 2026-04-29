@@ -6,6 +6,8 @@ import app.krail.taj.resources.ic_stop_label_cafe
 import app.krail.taj.resources.ic_stop_label_gym
 import app.krail.taj.resources.ic_stop_label_home
 import app.krail.taj.resources.ic_stop_label_hospital
+import app.krail.taj.resources.ic_stop_label_library
+import app.krail.taj.resources.ic_stop_label_university
 import app.krail.taj.resources.ic_stop_label_work
 import org.jetbrains.compose.resources.DrawableResource
 
@@ -20,6 +22,8 @@ internal val stopLabelSuggestions: List<Pair<String, DrawableResource>> = listOf
     "Cafe" to Res.drawable.ic_stop_label_cafe,
     "Beach" to Res.drawable.ic_stop_label_beach,
     "Hospital" to Res.drawable.ic_stop_label_hospital,
+    "Library" to Res.drawable.ic_stop_label_library,
+    "University" to Res.drawable.ic_stop_label_university,
 )
 
 /** Returns the icon for [labelName] (case-insensitive), or null if no match. */

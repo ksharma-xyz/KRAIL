@@ -36,10 +36,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.Res
 import app.krail.taj.resources.ic_location
-import krail.feature.trip_planner.ui.generated.resources.ic_info
-import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import krail.feature.trip_planner.ui.generated.resources.ic_info
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
@@ -51,6 +50,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 
 @Suppress("LongMethod")
 // The sheet is one continuous flow (title → optional stop chip → preview pill →

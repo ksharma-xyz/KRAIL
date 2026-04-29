@@ -1,3 +1,5 @@
+@file:Suppress("StringLiteralDuplication")
+
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.animation.AnimatedVisibility
@@ -119,11 +121,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-@Suppress("LongMethod")
-// Length is dominated by orchestration state for the screen (assigning mode, edit
-// mode, three save-flow sheets, pending conflict, plus their saver wiring). Pulling
-// them apart hurts readability — every state piece is plumbed back into the same
-// single AdaptiveScreenContent below.
+@Suppress("LongMethod", "CyclomaticComplexMethod")
+// Length and branching are dominated by orchestration state for the screen
+// (assigning mode, edit mode, three save-flow sheets, pending conflict, plus their
+// saver wiring + LaunchedEffect chains). Pulling them apart hurts readability —
+// every state piece is plumbed back into the same single AdaptiveScreenContent.
 @Composable
 fun SearchStopScreen(
     searchStopState: SearchStopState,
@@ -351,7 +353,7 @@ fun SearchStopScreen(
         SaveStopAsLabelSheet(
             stopName = stop.stopName,
             labels = searchStopState.stopLabels,
-            onLabelChosen = { label ->
+            onLabelClick = { label ->
                 val stopOnAnotherLabel = searchStopState.stopLabels.firstOrNull { other ->
                     other.stopId == stop.stopId && other.label != label.label
                 }
@@ -426,7 +428,6 @@ fun SearchStopScreen(
             )
         }
     }
-
 }
 
 private sealed interface LabelConflict {
@@ -1197,7 +1198,7 @@ private fun LazyListScope.searchResultsList(
     }
 }
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList")
 private fun LazyListScope.recentSearchStopsList(
     recentStops: List<SearchStopState.StopResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
@@ -1281,7 +1282,7 @@ private fun LazyListScope.recentSearchStopsList(
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Suppress("LongMethod", "LongParameterList")
+@Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
 // All callbacks below are forwarded from SearchStopScreen, and the body is one
 // LazyRow whose items each carry a fair amount of gesture wiring (longPressDraggable
 // + custom awaitEachGesture for tap/long-press/drag distinction + DeleteOverlay).

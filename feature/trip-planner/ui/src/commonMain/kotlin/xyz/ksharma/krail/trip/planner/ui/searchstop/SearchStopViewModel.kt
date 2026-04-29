@@ -42,7 +42,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class SearchStopViewModel(
     private val analytics: Analytics,
     private val stopResultsManager: StopResultsManager,
@@ -80,7 +80,7 @@ class SearchStopViewModel(
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
 
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "ReturnCount")
     fun onEvent(event: SearchStopUiEvent) {
         when (event) {
             is SearchStopUiEvent.SearchTextChanged -> onSearchTextChanged(event.query)

@@ -12,9 +12,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import org.koin.compose.koinInject
-import xyz.ksharma.krail.core.permission.AppPermission
-import xyz.ksharma.krail.core.permission.PermissionResult
-import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.sandook.SandookPreferences
 
 /**
@@ -28,19 +25,7 @@ import xyz.ksharma.krail.sandook.SandookPreferences
 @Composable
 actual fun rememberPermissionController(): PermissionController {
     if (LocalInspectionMode.current) {
-        return remember {
-            object : PermissionController {
-                override suspend fun requestPermission(permission: AppPermission): PermissionResult =
-                    PermissionResult.Granted
-
-                override suspend fun checkPermissionStatus(permission: AppPermission): PermissionStatus =
-                    PermissionStatus.Granted
-
-                override fun wasPermissionRequested(permission: AppPermission): Boolean = true
-
-                override fun openAppSettings() {}
-            }
-        }
+        return PreviewPermissionController
     }
 
     val context = LocalContext.current

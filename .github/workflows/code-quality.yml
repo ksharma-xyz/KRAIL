@@ -39,6 +39,19 @@ jobs:
           GITHUB_ACTIONS: true
         run: ./gradlew detekt
 
+      # Run all KMP host tests (Compose UI tests via Robolectric live in
+      # androidUnitTest, so this also exercises them). --continue surfaces every
+      # failing module in one CI run instead of stopping at the first.
+      - name: Run host tests
+        id: tests
+        if: always() && steps.detekt.conclusion != 'cancelled'
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          CI: true
+          GITHUB_ACTIONS: true
+        run: ./gradlew testAndroidHostTest --continue
+
       - name: Upload Detekt reports
         if: always() && steps.detekt.conclusion != 'skipped'
         uses: actions/upload-artifact@v7
@@ -50,5 +63,16 @@ jobs:
             **/build/reports/detekt/detekt.md
             **/build/reports/detekt/detekt.txt
             build/reports/problems/problems-report.html
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload test reports
+        if: always() && steps.tests.conclusion != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-${{ github.run_id }}
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
           if-no-files-found: ignore
           retention-days: 7

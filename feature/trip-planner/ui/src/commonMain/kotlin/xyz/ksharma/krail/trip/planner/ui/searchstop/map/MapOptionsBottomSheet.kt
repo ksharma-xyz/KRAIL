@@ -146,6 +146,19 @@ fun MapOptionsBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Text(
+                text = "Tap any stop on the map to select it — no typing needed.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Search Radius Section
             Text(
                 text = "Search Distance",
@@ -332,7 +345,7 @@ private fun MapControlToggle(
                 checkedThumbColor = KrailTheme.colors.surface,
                 checkedTrackColor = themeColor,
                 uncheckedThumbColor = KrailTheme.colors.surface,
-                uncheckedTrackColor = KrailTheme.colors.onSurface.copy(alpha = 0.3f),
+                uncheckedTrackColor = KrailTheme.colors.outlineSubtle,
             ),
         )
     }

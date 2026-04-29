@@ -53,14 +53,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 stopId = result.stopId,
                 stopName = result.stopName,
             )
-
             when (result.fieldType) {
-                SearchStopFieldType.FROM -> {
+                SearchStopFieldType.FROM ->
                     viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
-                }
-                SearchStopFieldType.TO -> {
+                SearchStopFieldType.TO ->
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
-                }
+                SearchStopFieldType.LABEL -> Unit
             }
         }
 
@@ -76,9 +74,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
-            },
-            onReverseButtonClick = {
-                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
             },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {

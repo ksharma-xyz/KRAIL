@@ -70,6 +70,9 @@ sealed interface SearchStopUiEvent {
         val modesChanged: Boolean,
     ) : SearchStopUiEvent
 
+    /** Fired once when the map options sheet auto-pops for the first time. Marks it seen in prefs. */
+    data object MapOptionsFirstTimeShown : SearchStopUiEvent
+
     /** Fired when a stop is selected via the map's StopDetailsBottomSheet. Analytics-only. */
     data class TrackStopSelectedFromMap(
         val stopId: String,
@@ -78,4 +81,19 @@ sealed interface SearchStopUiEvent {
         val nearbyStopsCount: Int,
         val hadUserLocation: Boolean,
     ) : SearchStopUiEvent
+
+    /** Saves [stopItem] as the stop for an existing label identified by [labelKey]. */
+    data class AssignLabelStop(val labelKey: String, val stopItem: StopItem) : SearchStopUiEvent
+
+    /** Creates a new label (with no stop yet). */
+    data class CreateLabel(val name: String, val emoji: String) : SearchStopUiEvent
+
+    /** Clears the stop on a label (label name kept, stop reset to null). */
+    data class ClearLabelStop(val labelKey: String) : SearchStopUiEvent
+
+    /** Deletes a label entirely. */
+    data class DeleteLabel(val labelKey: String) : SearchStopUiEvent
+
+    /** Moves [labelKey] to [targetIndex]; sort orders for all labels are renumbered. */
+    data class MoveLabelToIndex(val labelKey: String, val targetIndex: Int) : SearchStopUiEvent
 }

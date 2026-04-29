@@ -122,6 +122,8 @@ val viewModelsModule = module {
             nearbyStopsManager = get(),
             flag = get(),
             ioDispatcher = get(named(IODispatcher)),
+            preferences = get(),
+            sandook = get(),
         )
     }
 }

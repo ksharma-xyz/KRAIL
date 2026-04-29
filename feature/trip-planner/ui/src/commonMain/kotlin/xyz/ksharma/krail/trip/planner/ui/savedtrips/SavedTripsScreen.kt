@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -71,10 +72,9 @@ private const val LAZY_COLUMN_BOTTOM_PADDING = 300
 fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
     modifier: Modifier = Modifier,
-    trackedJourney: xyz.ksharma.krail.feature.track.TrackedJourney? = null,
+    trackedJourney: TrackedJourney? = null,
     fromButtonClick: () -> Unit = {},
     toButtonClick: () -> Unit = {},
-    onReverseButtonClick: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
@@ -95,6 +95,18 @@ fun SavedTripsScreen(
             add("Find nearby stops on the map.")
         }.random()
     }
+
+    // Pill only shown when content is rich enough that a collapsed state adds value.
+    val showPill = savedTripsState.savedTrips.size >= 2 &&
+        savedTripsState.parkRideUiState.isNotEmpty() &&
+        departureBoardEntries.size >= 2
+
+    // Search row expand / from-highlight state — rememberSaveable survives rotation.
+    var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
+    var isFromHighlighted by rememberSaveable { mutableStateOf(false) }
+
+    // When the pill condition isn't met, always show the expanded row.
+    val effectiveIsExpanded = if (showPill) isSearchExpanded else true
 
     Box(
         modifier = modifier
@@ -181,7 +193,6 @@ fun SavedTripsScreen(
                             )
                         }
 
-                        // Show invite friends tile only if user has 2+ saved trips and it's not in remote config
                         val hasInviteFriendsInRemoteConfig =
                             savedTripsState.infoTiles?.any { tile ->
                                 tile.key.startsWith("invite_friends", ignoreCase = true) ||
@@ -193,7 +204,6 @@ fun SavedTripsScreen(
 
                         if (shouldShowInviteFriends) {
                             item(key = "invite_friends_tile_hardcoded") {
-                                // Mark tile as seen when displayed (only if not already seen)
                                 LaunchedEffect(!savedTripsState.hasSeenInviteFriendsTile) {
                                     if (!savedTripsState.hasSeenInviteFriendsTile) {
                                         onInviteFriendsTileDisplay()
@@ -254,9 +264,20 @@ fun SavedTripsScreen(
             modifier = Modifier.align(Alignment.BottomCenter),
             fromStopItem = savedTripsState.fromStop,
             toStopItem = savedTripsState.toStop,
-            fromButtonClick = fromButtonClick,
+            isExpanded = effectiveIsExpanded,
+            isFromHighlighted = isFromHighlighted,
+            onExpandRequest = {
+                isSearchExpanded = true
+                isFromHighlighted = false
+            },
+            fromButtonClick = {
+                isFromHighlighted = false
+                fromButtonClick()
+            },
             toButtonClick = toButtonClick,
-            onReverseButtonClick = onReverseButtonClick,
+            onReverseButtonClick = {
+                onEvent(SavedTripUiEvent.ReverseStopClick)
+            },
             onSearchButtonClick = { onSearchButtonClick() },
         )
     }
@@ -297,7 +318,7 @@ private fun LazyListScope.infoTiles(
 
 private fun LazyListScope.savedTripsContent(
     savedTripsState: SavedTripsState,
-    trackedJourney: xyz.ksharma.krail.feature.track.TrackedJourney?,
+    trackedJourney: TrackedJourney?,
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onTrackingCardClick: () -> Unit = {},
@@ -315,7 +336,7 @@ private fun LazyListScope.savedTripsContent(
         }
 
         item(key = "tracking_card") {
-            xyz.ksharma.krail.feature.track.ui.components.TrackingCard(
+            TrackingCard(
                 tracked = trackedJourney,
                 onCardClick = onTrackingCardClick,
                 onStopTracking = onStopTracking,
@@ -436,11 +457,42 @@ private fun SavedTripsTitle(
 
 // region Previews
 
-@Preview
+@Preview(name = "1. Empty — no saved trips")
 @Composable
-private fun SavedTripsScreenPreview() {
+private fun PreviewSavedTripsScreen_Empty() {
     PreviewTheme {
-        SavedTripsScreen(savedTripsState = SavedTripsState(isDiscoverAvailable = true))
+        SavedTripsScreen(
+            savedTripsState = SavedTripsState(
+                isSavedTripsLoading = false,
+                isDiscoverAvailable = true,
+            ),
+        )
+    }
+}
+
+@Preview(name = "2. With saved trips")
+@Composable
+private fun PreviewSavedTripsScreen_WithTrips() {
+    PreviewTheme {
+        SavedTripsScreen(
+            savedTripsState = SavedTripsState(
+                isSavedTripsLoading = false,
+                isDiscoverAvailable = false,
+            ),
+        )
+    }
+}
+
+@Preview(name = "3. Search row expanded")
+@Composable
+private fun PreviewSavedTripsScreen_SearchExpanded() {
+    PreviewTheme {
+        SavedTripsScreen(
+            savedTripsState = SavedTripsState(
+                isSavedTripsLoading = false,
+                toStop = StopItem(stopId = "2000001", stopName = "Central Station"),
+            ),
+        )
     }
 }
 

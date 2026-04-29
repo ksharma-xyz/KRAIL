@@ -105,3 +105,12 @@ implementation(project(":core:log"))
 
 `enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")` is active in `settings.gradle.kts`.
 The accessor name mirrors the directory path with dots (`core/log` → `projects.core.log`).
+
+## Per-feature UX rule docs
+
+Some features have a markdown file capturing their UX invariants and outstanding test
+coverage gaps. Read these before changing the relevant screen — anything you alter
+that contradicts the doc should also update the doc in the same change.
+
+- `feature/trip-planner/ui/SEARCH_STOP_UX.md` — SearchStopScreen (labels, save sheet,
+  edit mode, conflict warnings, contextual banner, state persistence).

@@ -12,6 +12,8 @@ import kotlinx.coroutines.test.setMain
 import xyz.ksharma.core.test.fakes.FakeAnalytics
 import xyz.ksharma.core.test.fakes.FakeFlag
 import xyz.ksharma.core.test.fakes.FakeNearbyStopsManagerForMap
+import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
 import xyz.ksharma.core.test.fakes.FakeTripPlanningService
 import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
@@ -42,6 +44,8 @@ class SearchStopViewModelTest {
     private val fakeStopResultsManager = FakeStopResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
+    private val fakePreferences = FakeSandookPreferences()
+    private val fakeSandook = FakeSandook()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -54,6 +58,8 @@ class SearchStopViewModelTest {
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
+            preferences = fakePreferences,
+            sandook = fakeSandook,
         )
     }
 
@@ -286,6 +292,8 @@ class SearchStopViewModelTest {
                 flag = fakeFlag,
                 nearbyStopsManager = fakeNearbyStopsManager,
                 ioDispatcher = testDispatcher,
+                preferences = fakePreferences,
+                sandook = fakeSandook,
             )
 
             // THEN - Initial state should not include recents (screen triggers refresh)

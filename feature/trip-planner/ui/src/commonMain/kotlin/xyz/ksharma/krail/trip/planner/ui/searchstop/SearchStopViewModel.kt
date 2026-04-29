@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -28,21 +30,27 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class SearchStopViewModel(
     private val analytics: Analytics,
     private val stopResultsManager: StopResultsManager,
     private val nearbyStopsManager: NearbyStopsManager,
     val flag: Flag,
     private val ioDispatcher: CoroutineDispatcher,
+    private val preferences: SandookPreferences,
+    private val sandook: Sandook,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -50,7 +58,19 @@ class SearchStopViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
             checkMapsAvailability()
+            val hasSeenOptions = preferences.getBoolean(
+                SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET,
+            ) == true
+            if (!hasSeenOptions) {
+                updateUiState { copy(showMapOptionsOnOpen = true) }
+            }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
+
+    init {
+        // Single VM-lifetime observer so DB updates always reach the UI even if
+        // the screen briefly unsubscribes (e.g. across config changes).
+        observeStopLabels()
+    }
 
     private val isMapsAvailable: Boolean by lazy {
         flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
@@ -60,7 +80,7 @@ class SearchStopViewModel(
     private var searchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
 
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "ReturnCount")
     fun onEvent(event: SearchStopUiEvent) {
         when (event) {
             is SearchStopUiEvent.SearchTextChanged -> onSearchTextChanged(event.query)
@@ -130,6 +150,11 @@ class SearchStopViewModel(
                 // No-op: Bottom sheet visibility is handled in UI layer
             }
 
+            SearchStopUiEvent.MapOptionsFirstTimeShown -> {
+                preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET, true)
+                updateUiState { copy(showMapOptionsOnOpen = false) }
+            }
+
             is SearchStopUiEvent.SearchRadiusChanged -> {
                 log("[NEARBY_STOPS] SearchRadiusChanged: ${event.radiusKm}km")
                 onSearchRadiusChanged(event.radiusKm)
@@ -194,6 +219,108 @@ class SearchStopViewModel(
                     ),
                 )
             }
+
+            is SearchStopUiEvent.AssignLabelStop -> {
+                // Optimistic: update state immediately so the pill row reflects the
+                // assignment before the IO write completes. The DB observer re-emits
+                // the same shape and the second update is a no-op.
+                updateUiState {
+                    val updated = stopLabels.map { label ->
+                        if (label.label == event.labelKey) {
+                            label.copy(stopId = event.stopItem.stopId, stopName = event.stopItem.stopName)
+                        } else {
+                            label
+                        }
+                    }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.updateStopLabelStop(event.labelKey, event.stopItem.stopId, event.stopItem.stopName)
+                    // Stops the user pins to a label are also stops they "interacted
+                    // with", so surface them in Recents next time the screen opens.
+                    sandook.insertOrReplaceRecentSearchStop(stopId = event.stopItem.stopId)
+                    fetchRecentStops()
+                }
+            }
+
+            is SearchStopUiEvent.CreateLabel -> {
+                // Strip emoji and whitespace from the typed name so `🏠 Home` and `Home`
+                // resolve to the same canonical label. Dedupe case-insensitively against
+                // existing labels — duplicates silently no-op (the UI blocks them earlier
+                // with an inline error).
+                val cleanedName = normaliseLabelName(event.name)
+                if (cleanedName.isNotBlank()) {
+                    val alreadyExists = _uiState.value.stopLabels.any {
+                        normaliseLabelName(it.label).equals(cleanedName, ignoreCase = true)
+                    }
+                    if (!alreadyExists) {
+                        val sortOrder = _uiState.value.stopLabels.size.toLong()
+                        updateUiState {
+                            copy(
+                                stopLabels = (stopLabels + StopLabel(emoji = event.emoji, label = cleanedName))
+                                    .toImmutableList(),
+                            )
+                        }
+                        viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                            sandook.upsertStopLabel(cleanedName, event.emoji, null, null, sortOrder)
+                        }
+                    }
+                }
+            }
+
+            is SearchStopUiEvent.ClearLabelStop -> {
+                updateUiState {
+                    val updated = stopLabels.map { label ->
+                        if (label.label == event.labelKey) {
+                            label.copy(stopId = null, stopName = null)
+                        } else {
+                            label
+                        }
+                    }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.updateStopLabelStop(event.labelKey, null, null)
+                }
+            }
+
+            is SearchStopUiEvent.DeleteLabel -> {
+                // Home is non-deletable. Defence in depth: the UI also hides the ✕ on
+                // protected pills.
+                if (event.labelKey.equals(StopLabel.PROTECTED_LABEL, ignoreCase = true)) {
+                    return
+                }
+                updateUiState {
+                    val updated = stopLabels.filterNot { it.label == event.labelKey }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.deleteStopLabel(event.labelKey)
+                }
+            }
+
+            is SearchStopUiEvent.MoveLabelToIndex -> {
+                val current = _uiState.value.stopLabels.toMutableList()
+                val sourceIndex = current.indexOfFirst { it.label == event.labelKey }
+                if (sourceIndex == -1) return
+                val target = event.targetIndex.coerceIn(0, current.size - 1)
+                if (target == sourceIndex) return
+                val moved = current.removeAt(sourceIndex)
+                current.add(target, moved)
+                val reordered = current.toImmutableList()
+                updateUiState { copy(stopLabels = reordered) }
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    reordered.forEachIndexed { index, label ->
+                        sandook.upsertStopLabel(
+                            label.label,
+                            label.emoji,
+                            label.stopId,
+                            label.stopName,
+                            index.toLong(),
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -245,6 +372,25 @@ class SearchStopViewModel(
 
     private fun checkMapsAvailability() {
         updateUiState { copy(isMapsAvailable = this@SearchStopViewModel.isMapsAvailable) }
+    }
+
+    private fun observeStopLabels() {
+        viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+            sandook.observeStopLabels()
+                .distinctUntilChanged()
+                .collectLatest { rows ->
+                    if (rows.isEmpty()) {
+                        StopLabel.defaults.forEachIndexed { index, label ->
+                            sandook.upsertStopLabel(label.label, label.emoji, null, null, index.toLong())
+                        }
+                        return@collectLatest
+                    }
+                    val labels = rows.map { row ->
+                        StopLabel(emoji = row.emoji, label = row.label, stopId = row.stop_id, stopName = row.stop_name)
+                    }.toImmutableList()
+                    updateUiState { copy(stopLabels = labels) }
+                }
+        }
     }
 
     // endregion

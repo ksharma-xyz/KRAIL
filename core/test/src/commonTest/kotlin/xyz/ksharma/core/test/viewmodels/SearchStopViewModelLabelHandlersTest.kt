@@ -1,0 +1,395 @@
+package xyz.ksharma.core.test.viewmodels
+
+import app.cash.turbine.test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import xyz.ksharma.core.test.fakes.FakeAnalytics
+import xyz.ksharma.core.test.fakes.FakeFlag
+import xyz.ksharma.core.test.fakes.FakeNearbyStopsManagerForMap
+import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.core.test.fakes.FakeSandookPreferences
+import xyz.ksharma.core.test.fakes.FakeStopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * Tests for the label-event handlers on [SearchStopViewModel] — the slice of `onEvent`
+ * that mutates `stopLabels` (assign, create, clear, delete, reorder) plus the lifetime
+ * `observeStopLabels` flow.
+ *
+ * These complement the pure-function tests in `SearchStopRulesTest` (which lock down
+ * "what should the UI render?") and the Compose tests in
+ * `SearchStopScreenInteractionTest` (which lock down "did the rules actually drive
+ * what got rendered?"). The VM tests here lock down "did the handler write the right
+ * thing to state and to the DB?".
+ *
+ * Each handler is asserted on three axes where applicable:
+ * - **Optimistic state update** — `_uiState` reflects the change before any IO.
+ * - **DB persistence** — the right rows land in [FakeSandook] so a process restart
+ *   would replay the same UI state.
+ * - **Side effects** — recents pinning for AssignLabelStop, no-op guards on protected
+ *   labels for DeleteLabel.
+ *
+ * Pattern: each test subscribes to `uiState` via Turbine so the underlying
+ * `WhileSubscribed` flow stays hot, fires the event, advances the virtual clock so
+ * background coroutines settle, then asserts on `expectMostRecentItem()`.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class SearchStopViewModelLabelHandlersTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private val fakeAnalytics = FakeAnalytics()
+    private val fakeStopResultsManager = FakeStopResultsManager()
+    private val fakeFlag = FakeFlag()
+    private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
+    private val fakePreferences = FakeSandookPreferences()
+    private val fakeSandook = FakeSandook()
+
+    private lateinit var viewModel: SearchStopViewModel
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+        // Pre-seed Home + Work into the fake DB. Without this, the VM's
+        // observeStopLabels() empty-rows branch would seed defaults on its own
+        // schedule and tests would race against that initial write.
+        fakeSandook.upsertStopLabel("Home", "🏠", null, null, 0L)
+        fakeSandook.upsertStopLabel("Work", "💼", null, null, 1L)
+
+        viewModel = SearchStopViewModel(
+            analytics = fakeAnalytics,
+            stopResultsManager = fakeStopResultsManager,
+            flag = fakeFlag,
+            nearbyStopsManager = fakeNearbyStopsManager,
+            ioDispatcher = testDispatcher,
+            preferences = fakePreferences,
+            sandook = fakeSandook,
+        )
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    // region AssignLabelStop
+
+    @Test
+    fun `Given unset label When AssignLabelStop fires Then state and sandook reflect attached stop`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                val home = state.stopLabels.first { it.label == "Home" }
+                assertEquals("stop_central", home.stopId)
+                assertEquals("Central Station", home.stopName)
+
+                // DB was also written — a fresh VM with the same fakeSandook would
+                // recover the same state.
+                val rows = fakeSandook.observeStopLabels().first()
+                val dbHome = rows.first { it.label == "Home" }
+                assertEquals("stop_central", dbHome.stop_id)
+                assertEquals("Central Station", dbHome.stop_name)
+            }
+        }
+
+    @Test
+    fun `Given AssignLabelStop When handler runs Then stop is also pinned to recents`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                advanceUntilIdle()
+
+                // Pinning to recents is the contract that means tapping a saved pill
+                // also lights up that stop in Recents next time the screen opens, so
+                // the user can still get to it after removing the label.
+                val recents = fakeSandook.selectRecentSearchStops()
+                assertTrue(
+                    recents.any { it.stopId == "stop_central" },
+                    "expected stop_central in recents, got ${recents.map { it.stopId }}",
+                )
+            }
+        }
+
+    // endregion
+
+    // region CreateLabel
+
+    @Test
+    fun `Given new label name When CreateLabel fires Then label is appended in state and DB`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋"))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                val gym = state.stopLabels.first { it.label == "Gym" }
+                assertEquals("🏋", gym.emoji)
+                assertNull(gym.stopId)
+                assertNull(gym.stopName)
+
+                val rows = fakeSandook.observeStopLabels().first()
+                assertTrue(rows.any { it.label == "Gym" })
+            }
+        }
+
+    @Test
+    fun `Given duplicate name with different case When CreateLabel fires Then label is not added`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                // "home" should match seeded "Home" case-insensitively after
+                // normaliseLabelName — duplicate must silently no-op.
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠"))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                val homes = state.stopLabels.count { it.label.equals("home", ignoreCase = true) }
+                assertEquals(1, homes, "expected exactly one Home label, got $homes")
+            }
+        }
+
+    @Test
+    fun `Given blank name When CreateLabel fires Then nothing changes`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            val before = expectMostRecentItem().stopLabels.size
+
+            viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀"))
+            advanceUntilIdle()
+
+            // Blank input is treated like no input — count is unchanged.
+            assertEquals(before, expectMostRecentItem().stopLabels.size)
+        }
+    }
+
+    @Test
+    fun `Given name with surrounding emoji When CreateLabel fires Then name is normalised`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                // The save-sheet text field allows free typing; the VM is the
+                // canonicaliser. "🚗 Garage 🚗" should land as "Garage" in the DB.
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "🚗 Garage 🚗", emoji = "🚗"))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                assertNotNull(state.stopLabels.firstOrNull { it.label == "Garage" })
+            }
+        }
+
+    // endregion
+
+    // region ClearLabelStop
+
+    @Test
+    fun `Given label with stop When ClearLabelStop fires Then stop is detached`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            // Set Home first so there's something to clear.
+            val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+            viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+            advanceUntilIdle()
+
+            viewModel.onEvent(SearchStopUiEvent.ClearLabelStop("Home"))
+            advanceUntilIdle()
+
+            val state = expectMostRecentItem()
+            val home = state.stopLabels.first { it.label == "Home" }
+            assertNull(home.stopId)
+            assertNull(home.stopName)
+
+            // DB was also cleared.
+            val rows = fakeSandook.observeStopLabels().first()
+            val dbHome = rows.first { it.label == "Home" }
+            assertNull(dbHome.stop_id)
+            assertNull(dbHome.stop_name)
+        }
+    }
+
+    // endregion
+
+    // region DeleteLabel
+
+    @Test
+    fun `Given non-protected label When DeleteLabel fires Then label is removed`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            viewModel.onEvent(SearchStopUiEvent.DeleteLabel("Work"))
+            advanceUntilIdle()
+
+            val state = expectMostRecentItem()
+            assertTrue(state.stopLabels.none { it.label == "Work" })
+
+            // DB row was deleted too.
+            val rows = fakeSandook.observeStopLabels().first()
+            assertTrue(rows.none { it.label == "Work" })
+        }
+    }
+
+    @Test
+    fun `Given protected Home label When DeleteLabel fires Then label is preserved`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            viewModel.onEvent(SearchStopUiEvent.DeleteLabel(StopLabel.PROTECTED_LABEL))
+            advanceUntilIdle()
+
+            // Handler early-returns; existing state still contains Home. Defence in
+            // depth — the UI also hides ✕ on Home.
+            val state = expectMostRecentItem()
+            assertTrue(state.stopLabels.any { it.label == "Home" })
+
+            // DB row also preserved.
+            val rows = fakeSandook.observeStopLabels().first()
+            assertTrue(rows.any { it.label == "Home" })
+        }
+    }
+
+    @Test
+    fun `Given home key with mixed case When DeleteLabel fires Then label is preserved`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            // Defensive: the UI should never send "home" (lowercase) because the label
+            // value is fixed, but the handler must still treat it as protected.
+            viewModel.onEvent(SearchStopUiEvent.DeleteLabel("home"))
+            advanceUntilIdle()
+
+            assertTrue(expectMostRecentItem().stopLabels.any { it.label == "Home" })
+        }
+    }
+
+    // endregion
+
+    // region MoveLabelToIndex
+
+    @Test
+    fun `Given two labels When MoveLabelToIndex moves Home to position 1 Then Work comes first`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 1))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                assertEquals("Work", state.stopLabels[0].label)
+                assertEquals("Home", state.stopLabels[1].label)
+
+                // The handler also re-numbers sort_order across the whole list. Walk
+                // the DB rows by label and assert the new order is reflected there
+                // too — otherwise next process start would reset to the old order.
+                val rows = fakeSandook.observeStopLabels().first()
+                val byLabel = rows.associateBy { it.label }
+                val workOrder = byLabel["Work"]?.sort_order ?: error("Work missing")
+                val homeOrder = byLabel["Home"]?.sort_order ?: error("Home missing")
+                assertTrue(workOrder < homeOrder, "expected Work($workOrder) before Home($homeOrder)")
+            }
+        }
+
+    @Test
+    fun `Given target equal to source When MoveLabelToIndex fires Then order is unchanged`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            // No-op path: dragging onto the same slot should not re-emit or re-write.
+            viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 0))
+            advanceUntilIdle()
+
+            assertEquals("Home", expectMostRecentItem().stopLabels[0].label)
+        }
+    }
+
+    @Test
+    fun `Given unknown label key When MoveLabelToIndex fires Then order is unchanged`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            // Defensive: a stale label key (e.g. one deleted between the drag start
+            // and drag end) should be a no-op rather than crash.
+            viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("DoesNotExist", 0))
+            advanceUntilIdle()
+
+            val state = expectMostRecentItem()
+            assertEquals("Home", state.stopLabels[0].label)
+            assertEquals("Work", state.stopLabels[1].label)
+        }
+    }
+
+    // endregion
+
+    // region observeStopLabels
+
+    @Test
+    fun `Given empty DB When VM is created Then defaults are seeded into sandook`() = runTest {
+        // Brand new sandook so observeStopLabels' empty-rows branch fires.
+        val freshSandook = FakeSandook()
+        val freshVm = SearchStopViewModel(
+            analytics = FakeAnalytics(),
+            stopResultsManager = FakeStopResultsManager(),
+            flag = FakeFlag(),
+            nearbyStopsManager = FakeNearbyStopsManagerForMap(),
+            ioDispatcher = testDispatcher,
+            preferences = FakeSandookPreferences(),
+            sandook = freshSandook,
+        )
+        // Subscribe so the VM scope's observer collects.
+        freshVm.uiState.test {
+            advanceUntilIdle()
+
+            val rows = freshSandook.observeStopLabels().first()
+            val labels = rows.map { it.label }.toSet()
+            // Defaults from StopLabel.defaults: Home + Work, no other rows.
+            assertEquals(StopLabel.defaults.map { it.label }.toSet(), labels)
+        }
+    }
+
+    @Test
+    fun `Given labels in DB When sandook emits Then state mirrors DB rows`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+
+            // Externally update the DB (simulating another VM or a process-level
+            // change) and assert the VM reflects the new shape on the next
+            // observer tick.
+            fakeSandook.upsertStopLabel("Gym", "🏋", null, null, 5L)
+            advanceUntilIdle()
+
+            val state = expectMostRecentItem()
+            assertEquals(3, state.stopLabels.size)
+            assertTrue(state.stopLabels.any { it.label == "Gym" })
+        }
+    }
+
+    // endregion
+}

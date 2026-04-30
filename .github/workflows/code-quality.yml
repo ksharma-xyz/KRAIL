@@ -30,6 +30,9 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
+      # -PciQuality=true tells core/network/build.gradle.kts to skip the
+      # API-key requirement and use placeholders instead — neither detekt nor
+      # the host tests hit the network so real keys aren't needed.
       - name: Run Detekt
         id: detekt
         env:
@@ -37,7 +40,7 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           CI: true
           GITHUB_ACTIONS: true
-        run: ./gradlew detekt
+        run: ./gradlew detekt -PciQuality=true
 
       # Run all KMP host tests (Compose UI tests via Robolectric live in
       # androidUnitTest, so this also exercises them). --continue surfaces every
@@ -50,7 +53,7 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           CI: true
           GITHUB_ACTIONS: true
-        run: ./gradlew testAndroidHostTest --continue
+        run: ./gradlew testAndroidHostTest --continue -PciQuality=true
 
       - name: Upload Detekt reports
         if: always() && steps.detekt.conclusion != 'skipped'

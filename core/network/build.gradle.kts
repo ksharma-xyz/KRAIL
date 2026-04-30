@@ -67,13 +67,18 @@ kotlin {
 // READ API KEY
 val localProperties = gradleLocalProperties(rootProject.rootDir, providers)
 
-// Detekt and host tests don't actually need real API keys — detekt is static
-// analysis, and host tests use Fake* services, never the network. So bypass the
-// required-key check when CI is running either of them.
-val isCIQualityCheck = gradle.startParameter.taskNames.any { taskName ->
-    taskName.contains("detekt", ignoreCase = true) ||
-        taskName.contains("testAndroidHostTest", ignoreCase = true)
-}
+// CI opts into the API-key bypass via `-PciQuality=true` (passed by
+// code-quality.yml). Detekt is static analysis and host tests use Fake* services
+// that never hit the network, so neither needs real keys; placeholder values
+// further down satisfy buildkonfig's codegen.
+//
+// Replaces an earlier `gradle.startParameter.taskNames.contains(...)` heuristic
+// that silently broke whenever a task got renamed or a new no-network task was
+// added — explicit property is the contract.
+val isCIQualityCheck = providers.gradleProperty("ciQuality")
+    .orElse(providers.environmentVariable("KRAIL_CI_QUALITY"))
+    .map { it.toBoolean() }
+    .getOrElse(false)
 val isCIEnvironment = System.getenv("CI") == "true" || System.getenv("GITHUB_ACTIONS") == "true"
 
 val androidNswTransportApiKey: String = localProperties.getProperty("ANDROID_NSW_TRANSPORT_API_KEY")

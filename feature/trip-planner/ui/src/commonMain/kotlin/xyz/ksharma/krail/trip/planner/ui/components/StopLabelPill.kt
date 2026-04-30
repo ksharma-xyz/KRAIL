@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import app.krail.taj.resources.Res as TajRes
-import app.krail.taj.resources.ic_location
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -49,7 +49,7 @@ internal fun SetLabelPill(
         LocalTextColor provides contentColor,
         LocalContentColor provides contentColor,
     ) {
-        val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
+        val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location_on
         Row(
             modifier = modifier
                 .clip(shape)
@@ -96,7 +96,7 @@ internal fun UnsetLabelPill(
         LocalTextColor provides contentColor,
         LocalContentColor provides contentColor,
     ) {
-        val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
+        val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location_on
         Row(
             modifier = modifier
                 .clip(shape)

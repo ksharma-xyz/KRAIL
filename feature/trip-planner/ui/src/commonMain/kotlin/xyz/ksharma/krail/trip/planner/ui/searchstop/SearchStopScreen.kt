@@ -69,7 +69,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import app.krail.taj.resources.ic_close
-import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -122,6 +121,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
+import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
+import krail.feature.trip_planner.ui.generated.resources.ic_map
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -1432,9 +1433,15 @@ private fun LabelShortcutsRow(
         // reorderable library's drop-target calculations.
         if (editing) {
             item(key = "trailing-done") {
+                // Done sits next to the always-dark stopLabelSurface pills, so its
+                // container must be light in both modes — monochromeButtonColors flips
+                // to onSurface (dark in light mode), which would blend into the pills.
                 Button(
                     onClick = onDoneEditing,
-                    colors = ButtonDefaults.monochromeButtonColors(),
+                    colors = ButtonDefaults.buttonColors(
+                        customContainerColor = KrailTheme.colors.onStopLabelSurface,
+                        customContentColor = KrailTheme.colors.stopLabelSurface,
+                    ),
                     dimensions = ButtonDefaults.chipButtonSize(),
                 ) {
                     Text(text = "Done")
@@ -1459,19 +1466,22 @@ private fun DeleteOverlay(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
+    // Pill background is always dark (stopLabelSurface), so the overlay must use the
+    // paired light token in both modes — using onSurface here would flip to dark in
+    // light mode and disappear into the pill.
     Box(
         modifier = modifier
             .offset(x = dim.spacingS, y = -dim.spacingS)
             .size(dim.spacingXXL)
             .clip(CircleShape)
-            .background(KrailTheme.colors.onSurface, CircleShape)
+            .background(KrailTheme.colors.onStopLabelSurface, CircleShape)
             .klickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(
             painter = painterResource(TajRes.drawable.ic_close),
             contentDescription = "Delete label",
-            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            colorFilter = ColorFilter.tint(KrailTheme.colors.stopLabelSurface),
             modifier = Modifier.size(dim.spacingL),
         )
     }
@@ -1553,7 +1563,7 @@ private fun SelectOnMapItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(TajRes.drawable.ic_location),
+            painter = painterResource(TripPlannerRes.drawable.ic_map),
             contentDescription = null,
             colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
             modifier = Modifier.size(dim.spacingXXL),

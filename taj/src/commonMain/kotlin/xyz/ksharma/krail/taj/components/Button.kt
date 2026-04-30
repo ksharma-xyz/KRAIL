@@ -284,6 +284,7 @@ private fun buttonTextStyle(dimensions: ButtonDimensions) =
         else -> KrailTheme.typography.titleSmall
     }
 
+@Suppress("TooManyFunctions")
 object ButtonDefaults {
 
     @Composable

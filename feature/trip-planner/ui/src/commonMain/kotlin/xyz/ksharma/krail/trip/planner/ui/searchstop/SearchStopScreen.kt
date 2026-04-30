@@ -93,7 +93,9 @@ import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
+import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -1560,25 +1562,11 @@ private fun UnsetLabelPill(
 
 @Composable
 private fun AddLabelPill(onClick: () -> Unit) {
-    val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
-    Row(
-        modifier = Modifier
-            .clip(shape)
-            .border(
-                width = dim.strokeThin,
-                color = KrailTheme.colors.label,
-                shape = shape,
-            )
-            .klickable(onClick = onClick)
-            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
-        verticalAlignment = Alignment.CenterVertically,
+    OutlinedButton(
+        onClick = onClick,
+        dimensions = ButtonDefaults.smallButtonSize(),
     ) {
-        Text(
-            text = "+ Add",
-            style = KrailTheme.typography.labelLarge,
-            color = KrailTheme.colors.label,
-        )
+        Text(text = "+ Add", style = KrailTheme.typography.labelLarge)
     }
 }
 

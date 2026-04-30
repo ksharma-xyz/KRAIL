@@ -2,10 +2,14 @@
 
 package xyz.ksharma.krail.feature.track.ui
 
+import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestResult
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -55,6 +59,7 @@ class TrackTripViewModelTest {
     private lateinit var tripService: ConfigurableFakeTripPlanningService
     private lateinit var trackingManager: TrackingManager
     private lateinit var festivalManager: FakeLocalFestivalManager
+    private var currentVm: TrackTripViewModel? = null
 
     @BeforeTest
     fun setUp() {
@@ -69,11 +74,30 @@ class TrackTripViewModelTest {
         Dispatchers.resetMain()
     }
 
+    /**
+     * Wraps [runTest] with a finally that cancels the ViewModel's [viewModelScope]
+     * before the test body returns. Required because [TrackTripViewModel] launches
+     * three `while (isActive)` loops (poll job, GTFS-RT live-positions job, clock job)
+     * that only exit on Arrived/Error/etc. transitions. After the body completes,
+     * `runTest` calls `advanceUntilIdle()` to drain pending tasks — without this
+     * cancellation, those infinite loops keep re-scheduling delays and the drain
+     * runs until the 60s real-time test timeout, spamming logs the entire time.
+     */
+    private fun runTrackingTest(
+        body: suspend TestScope.() -> Unit,
+    ): TestResult = runTest {
+        try {
+            body()
+        } finally {
+            currentVm?.viewModelScope?.cancel()
+        }
+    }
+
     // region ── Initial state resolution ─────────────────────────────────────
 
     @Test
     fun `GIVEN no encodedData and nothing tracked WHEN ViewModel created THEN state is Error`() =
-        runTest {
+        runTrackingTest {
             // Nothing in TrackingManager, no encoded deep link → unrecoverable
             val vm = makeViewModel(encodedData = null)
 
@@ -86,7 +110,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN valid encodedData and nothing tracked WHEN ViewModel created THEN state is Prompt`() =
-        runTest {
+        runTrackingTest {
             // A fresh deep link with no existing tracking → show confirm-tracking prompt
             val deepLink = makeTripDeepLink(departureUtcDateTime = futureIso(1.hours))
             val vm = makeViewModel(encodedData = deepLink.toEncodedData())
@@ -102,7 +126,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN active trip in TrackingManager with display WHEN ViewModel created THEN state is Tracking and polling starts`() =
-        runTest {
+        runTrackingTest {
             // Simulates re-opening the screen for an already-tracking trip
             val deepLink = makeTripDeepLink(departureUtcDateTime = Clock.System.now().toString())
             val display = makeDisplay(deepLink, arrivalUtcDateTime = futureIso(30.minutes))
@@ -123,7 +147,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN arrived trip in TrackingManager WHEN ViewModel created THEN state is Arrived and zero API calls are made`() =
-        runTest {
+        runTrackingTest {
             // This is the key "no extra API call for arrived trip" scenario.
             // The ViewModel should restore Arrived state directly without polling.
             val deepLink = makeTripDeepLink(departureUtcDateTime = pastIso(1.hours))
@@ -146,7 +170,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN new deep link AND different trip already tracking WHEN ViewModel created THEN old tracking cleared and state is Prompt`() =
-        runTest {
+        runTrackingTest {
             // Deep link tap is explicit user intent to switch trips — old tracking is cleared automatically.
             val existing = makeTripDeepLink(
                 transportationId = "existing-trip",
@@ -172,7 +196,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN existing trip with departure more than 2h ago WHEN ViewModel created THEN state is ArrivedAndFinished`() =
-        runTest {
+        runTrackingTest {
             // Stale trip that far exceeds DEPARTURE_EXPIRED_HOURS — should be cleaned up immediately
             val expiredDeepLink = makeTripDeepLink(departureUtcDateTime = pastIso(3.hours))
             trackingManager.start(expiredDeepLink)
@@ -188,7 +212,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN new deep link with departure more than 2h ago WHEN ViewModel created THEN state is ArrivedAndFinished`() =
-        runTest {
+        runTrackingTest {
             // Opening a shared link for a trip that already expired — nothing to show
             val expiredDeepLink = makeTripDeepLink(departureUtcDateTime = pastIso(3.hours))
             val vm = makeViewModel(encodedData = expiredDeepLink.toEncodedData())
@@ -206,7 +230,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Prompt state WHEN onStartTracking called AND API returns future arrival THEN transitions Loading to Tracking`() =
-        runTest {
+        runTrackingTest {
             val deepLink = makeTripDeepLink(departureUtcDateTime = futureIso(5.minutes))
             tripService.responseProvider = { buildMatchingResponse(deepLink, arrivalUtcDateTime = futureIso(30.minutes)) }
             val vm = makeViewModel(encodedData = deepLink.toEncodedData())
@@ -226,7 +250,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking WHEN API returns journey with arrival in past within 30min THEN state becomes Arrived`() =
-        runTest {
+        runTrackingTest {
             // Arrival was 10 minutes ago — inside ARRIVAL_FINISHED_MINUTES window → Arrived (not finished)
             val deepLink = makeTripDeepLink(departureUtcDateTime = pastIso(40.minutes))
             tripService.responseProvider = { buildMatchingResponse(deepLink, arrivalUtcDateTime = pastIso(10.minutes)) }
@@ -247,7 +271,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking WHEN API returns journey with arrival more than 30min ago THEN state becomes ArrivedAndFinished`() =
-        runTest {
+        runTrackingTest {
             // Arrival was 40 minutes ago — exceeds ARRIVAL_FINISHED_MINUTES (30) → go straight to finished
             val deepLink = makeTripDeepLink(departureUtcDateTime = pastIso(2.hours))
             tripService.responseProvider = { buildMatchingResponse(deepLink, arrivalUtcDateTime = pastIso(40.minutes)) }
@@ -266,7 +290,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking WHEN API throws exception with no cached display THEN state becomes Error`() =
-        runTest {
+        runTrackingTest {
             // No existing cached display + network failure → can't recover, show error
             val deepLink = makeTripDeepLink(departureUtcDateTime = futureIso(30.minutes))
             tripService.shouldThrow = true
@@ -285,7 +309,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking with cached display WHEN API throws exception THEN stays Tracking with cached data`() =
-        runTest {
+        runTrackingTest {
             // TrackingManager already has a display — fall back to cache on network failure
             val deepLink = makeTripDeepLink(departureUtcDateTime = futureIso(30.minutes))
             val display = makeDisplay(deepLink, arrivalUtcDateTime = futureIso(1.hours))
@@ -306,7 +330,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking WHEN API response contains no matching journey THEN state becomes NotFound`() =
-        runTest {
+        runTrackingTest {
             // The response has no journey whose transportation.id matches the deep link
             val deepLink = makeTripDeepLink(transportationId = "expected-id", departureUtcDateTime = futureIso(30.minutes))
             tripService.responseProvider = {
@@ -334,7 +358,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking WHEN user leaves and returns within poll interval THEN no extra API call is made`() =
-        runTest {
+        runTrackingTest {
             // Simulates navigating away and back: WhileSubscribed timeout fires (5s),
             // then a new subscriber arrives. Since we just polled, the smart-delay should
             // prevent an immediate second API call.
@@ -371,39 +395,12 @@ class TrackTripViewModelTest {
             )
         }
 
-    @Test
-    fun `GIVEN Tracking WHEN user leaves and returns after poll interval expires THEN API call is made on return`() =
-        runTest {
-            // After being away longer than POLL_INTERVAL_MS, the smart-delay is zero
-            // and the API should be called immediately on screen return.
-            val deepLink = makeTripDeepLink(departureUtcDateTime = futureIso(30.minutes))
-            tripService.responseProvider = { buildMatchingResponse(deepLink, arrivalUtcDateTime = futureIso(1.hours)) }
-            val vm = makeViewModel(encodedData = deepLink.toEncodedData())
-
-            vm.onStartTracking(deepLink)
-            vm.uiState.test {
-                skipItems(1)
-                runCurrent()
-                cancelAndIgnoreRemainingEvents()
-            }
-            val callsAfterFirstPoll = tripService.callCount
-
-            // Simulate being away for longer than one full poll interval
-            advanceTimeBy(6_000) // WhileSubscribed stop timeout
-            advanceTimeBy(TrackingConfig.POLL_INTERVAL_MS + 1_000) // exceed the interval
-
-            // Screen returns
-            vm.uiState.test {
-                skipItems(1)
-                runCurrent()
-                cancelAndIgnoreRemainingEvents()
-            }
-
-            assertTrue(
-                tripService.callCount > callsAfterFirstPoll,
-                "Expected an API call after returning past poll interval",
-            )
-        }
+    // The companion "after poll interval expires THEN API call is made on return" test
+    // is intentionally absent: the smart-delay reads `Clock.System.now()` (real wall-clock),
+    // not the test scheduler's virtual time. `advanceTimeBy(POLL_INTERVAL_MS)` only moves
+    // virtual time, so `Clock.System.now() - lastPollInstant` stays at ~10 ms and the
+    // smart-delay never expires under runTest. Verifying the "expires" branch needs a
+    // testable clock injected into TrackTripViewModel — out of scope for this test.
 
     // endregion
 
@@ -411,7 +408,7 @@ class TrackTripViewModelTest {
 
     @Test
     fun `GIVEN Tracking WHEN onStopTracking called THEN tracking is cleared and no more polls fire`() =
-        runTest {
+        runTrackingTest {
             // User explicitly stops tracking — TrackingManager cleared, no further API calls
             val deepLink = makeTripDeepLink(departureUtcDateTime = futureIso(30.minutes))
             tripService.responseProvider = { buildMatchingResponse(deepLink, arrivalUtcDateTime = futureIso(1.hours)) }
@@ -443,7 +440,7 @@ class TrackTripViewModelTest {
         gtfsRealtimeRepository = FakeGtfsRealtimeRepository(),
         sandook = FakeSandook(),
         shareManager = NoopShareManager,
-    )
+    ).also { currentVm = it }
 
     private fun futureIso(duration: kotlin.time.Duration) =
         (Clock.System.now() + duration).toString()

@@ -3,7 +3,13 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -260,26 +266,52 @@ fun SavedTripsScreen(
             }
         }
 
-        SearchStopRow(
+        // Hold the bottom row off-screen until the saved-trips load has emitted at
+        // least once. Without this gate, the row renders against an empty
+        // savedTrips list (pill condition false → expanded), then flips to the
+        // pill once the DB lands — a visible flash of the wrong UI.
+        //
+        // The enter spec is chosen at the moment visibility flips on, so it
+        // matches whichever variant is about to appear: the pill springs in
+        // bouncy from a 0-scale, the expanded row slides up from below.
+        AnimatedVisibility(
+            visible = !savedTripsState.isSavedTripsLoading,
+            enter = if (showPill) {
+                scaleIn(
+                    initialScale = 0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                ) + fadeIn(animationSpec = tween(durationMillis = 150))
+            } else {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                ) + fadeIn(animationSpec = tween(durationMillis = 200))
+            },
             modifier = Modifier.align(Alignment.BottomCenter),
-            fromStopItem = savedTripsState.fromStop,
-            toStopItem = savedTripsState.toStop,
-            isExpanded = effectiveIsExpanded,
-            isFromHighlighted = isFromHighlighted,
-            onExpandRequest = {
-                isSearchExpanded = true
-                isFromHighlighted = false
-            },
-            fromButtonClick = {
-                isFromHighlighted = false
-                fromButtonClick()
-            },
-            toButtonClick = toButtonClick,
-            onReverseButtonClick = {
-                onEvent(SavedTripUiEvent.ReverseStopClick)
-            },
-            onSearchButtonClick = { onSearchButtonClick() },
-        )
+        ) {
+            SearchStopRow(
+                fromStopItem = savedTripsState.fromStop,
+                toStopItem = savedTripsState.toStop,
+                isExpanded = effectiveIsExpanded,
+                isFromHighlighted = isFromHighlighted,
+                onExpandRequest = {
+                    isSearchExpanded = true
+                    isFromHighlighted = false
+                },
+                fromButtonClick = {
+                    isFromHighlighted = false
+                    fromButtonClick()
+                },
+                toButtonClick = toButtonClick,
+                onReverseButtonClick = {
+                    onEvent(SavedTripUiEvent.ReverseStopClick)
+                },
+                onSearchButtonClick = { onSearchButtonClick() },
+            )
+        }
     }
 }
 

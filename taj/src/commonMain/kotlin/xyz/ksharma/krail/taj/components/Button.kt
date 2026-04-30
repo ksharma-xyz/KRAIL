@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentAlpha
@@ -382,6 +383,23 @@ object ButtonDefaults {
         return ButtonDimensions(
             height = SpacingTokens.XXS + SpacingTokens.XL, // 18.dp — no single token
             padding = PaddingValues(vertical = SpacingTokens.XXS, horizontal = SpacingTokens.M),
+        )
+    }
+
+    /**
+     * Chip-sized buttons match the existing pill geometry on SearchStopScreen
+     * (Home / Work / set + unset label pills, Done). Height is unconstrained so
+     * the button sizes purely to its content + padding — chips on the same row
+     * stay aligned regardless of which one came from a hand-rolled Row vs a
+     * [Button] / [OutlinedButton].
+     */
+    fun chipButtonSize(): ButtonDimensions {
+        return ButtonDimensions(
+            height = 0.dp,
+            padding = PaddingValues(
+                vertical = ComponentTokens.ChipVerticalPadding,
+                horizontal = ComponentTokens.ChipHorizontalPadding,
+            ),
         )
     }
 

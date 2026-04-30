@@ -1562,9 +1562,13 @@ private fun UnsetLabelPill(
 
 @Composable
 private fun AddLabelPill(onClick: () -> Unit) {
+    // chipButtonSize matches the hand-rolled Set/Unset/Done pill geometry
+    // (chipHorizontal/Vertical padding, no min-height) so the row stays
+    // visually aligned. smallButtonSize was making "+ Add" noticeably shorter
+    // and narrower than its neighbours.
     OutlinedButton(
         onClick = onClick,
-        dimensions = ButtonDefaults.smallButtonSize(),
+        dimensions = ButtonDefaults.chipButtonSize(),
     ) {
         Text(text = "+ Add", style = KrailTheme.typography.labelLarge)
     }

@@ -7,8 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
@@ -133,7 +133,7 @@ class TrackTripViewModelTest {
             trackingManager.markArrived()
 
             val vm = makeViewModel(encodedData = null)
-            advanceUntilIdle()
+            runCurrent()
 
             vm.uiState.test {
                 skipItems(1)
@@ -218,7 +218,7 @@ class TrackTripViewModelTest {
                 vm.onStartTracking(deepLink)
 
                 assertIs<TrackTripState.Loading>(awaitItem())
-                advanceUntilIdle()
+                runCurrent()
                 assertIs<TrackTripState.Tracking>(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
@@ -236,7 +236,7 @@ class TrackTripViewModelTest {
 
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 // Consume intermediate Loading / Tracking states and wait for Arrived
                 val finalState = generateSequence { runCatching { expectMostRecentItem() }.getOrNull() }
                     .firstOrNull { it is TrackTripState.Arrived } ?: awaitItem()
@@ -257,7 +257,7 @@ class TrackTripViewModelTest {
 
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 val state = expectMostRecentItem()
                 assertIs<TrackTripState.ArrivedAndFinished>(state)
                 cancelAndIgnoreRemainingEvents()
@@ -276,7 +276,7 @@ class TrackTripViewModelTest {
 
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 val state = expectMostRecentItem()
                 assertIs<TrackTripState.Error>(state)
                 cancelAndIgnoreRemainingEvents()
@@ -297,7 +297,7 @@ class TrackTripViewModelTest {
 
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 val state = expectMostRecentItem()
                 assertIs<TrackTripState.Tracking>(state)
                 cancelAndIgnoreRemainingEvents()
@@ -321,7 +321,7 @@ class TrackTripViewModelTest {
 
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 val state = expectMostRecentItem()
                 assertIs<TrackTripState.NotFound>(state)
                 cancelAndIgnoreRemainingEvents()
@@ -346,7 +346,7 @@ class TrackTripViewModelTest {
             // First poll fires immediately
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 cancelAndIgnoreRemainingEvents()
             }
             val callsAfterFirstPoll = tripService.callCount
@@ -383,7 +383,7 @@ class TrackTripViewModelTest {
             vm.onStartTracking(deepLink)
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 cancelAndIgnoreRemainingEvents()
             }
             val callsAfterFirstPoll = tripService.callCount
@@ -395,7 +395,7 @@ class TrackTripViewModelTest {
             // Screen returns
             vm.uiState.test {
                 skipItems(1)
-                advanceUntilIdle()
+                runCurrent()
                 cancelAndIgnoreRemainingEvents()
             }
 
@@ -418,10 +418,10 @@ class TrackTripViewModelTest {
             val vm = makeViewModel(encodedData = deepLink.toEncodedData())
 
             vm.onStartTracking(deepLink)
-            advanceUntilIdle()
+            runCurrent()
 
             vm.onStopTracking()
-            advanceUntilIdle()
+            runCurrent()
 
             assertNull(trackingManager.tracked.value, "TrackingManager should be empty after stop")
 

@@ -11,6 +11,10 @@ jobs:
   detekt:
     runs-on: ubuntu-latest
     environment: Firebase
+    # Hard cap so a hung test (e.g. an unbounded `advanceUntilIdle()` against a
+    # `while (isActive)` polling loop) can't sit on a runner for 6h. Detekt is
+    # ~3min, host tests ~10min on a cold cache, so 20min is generous head-room.
+    timeout-minutes: 20
     outputs:
       passed: ${{ steps.detekt.outcome == 'success' }}
     steps:

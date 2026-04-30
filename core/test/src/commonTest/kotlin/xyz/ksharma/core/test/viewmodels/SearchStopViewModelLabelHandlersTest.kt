@@ -116,6 +116,17 @@ class SearchStopViewModelLabelHandlersTest {
     @Test
     fun `Given AssignLabelStop When handler runs Then stop is also pinned to recents`() =
         runTest {
+            // selectRecentSearchStops in the real schema INNER JOINs NswStops, so a recent
+            // entry only surfaces if the stop exists in NswStops. FakeSandook mirrors that
+            // shape — seed the stop here so the recents pin is visible to the assertion.
+            fakeSandook.insertNswStop(
+                stopId = "stop_central",
+                stopName = "Central Station",
+                stopLat = 0.0,
+                stopLon = 0.0,
+                isParent = null,
+            )
+
             viewModel.uiState.test {
                 advanceUntilIdle()
 
@@ -131,6 +142,7 @@ class SearchStopViewModelLabelHandlersTest {
                     recents.any { it.stopId == "stop_central" },
                     "expected stop_central in recents, got ${recents.map { it.stopId }}",
                 )
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
@@ -184,8 +196,12 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀"))
             advanceUntilIdle()
 
-            // Blank input is treated like no input — count is unchanged.
-            assertEquals(before, expectMostRecentItem().stopLabels.size)
+            // Blank input is treated like no input — no new emission. expectNoEvents()
+            // asserts that, then we read the StateFlow value directly (which is the
+            // unchanged state, since nothing wrote to it).
+            expectNoEvents()
+            assertEquals(before, viewModel.uiState.value.stopLabels.size)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -371,6 +387,7 @@ class SearchStopViewModelLabelHandlersTest {
             val labels = rows.map { it.label }.toSet()
             // Defaults from StopLabel.defaults: Home + Work, no other rows.
             assertEquals(StopLabel.defaults.map { it.label }.toSet(), labels)
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

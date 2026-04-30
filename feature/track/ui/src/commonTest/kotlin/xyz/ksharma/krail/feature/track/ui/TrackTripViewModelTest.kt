@@ -76,12 +76,13 @@ class TrackTripViewModelTest {
 
     /**
      * Wraps [runTest] with a finally that cancels the ViewModel's [viewModelScope]
-     * before the test body returns. Required because [TrackTripViewModel] launches
-     * three `while (isActive)` loops (poll job, GTFS-RT live-positions job, clock job)
-     * that only exit on Arrived/Error/etc. transitions. After the body completes,
-     * `runTest` calls `advanceUntilIdle()` to drain pending tasks — without this
-     * cancellation, those infinite loops keep re-scheduling delays and the drain
-     * runs until the 60s real-time test timeout, spamming logs the entire time.
+     * before the test body returns. The poll/live-positions/clock loops live in
+     * [TripPoller] but the poller is constructed with `viewModelScope` here, so the
+     * three `while (isActive)` loops still run on the test scheduler and never exit
+     * naturally in Tracking state. Without this cancellation, `runTest`'s end-of-body
+     * `advanceUntilIdle()` would re-schedule delays forever until the 60 s real-time
+     * timeout. See [TripPollerTest] for the cleaner, scope-injected pattern that
+     * exercises the polling logic directly via `runTest { TripPoller(backgroundScope) }`.
      */
     private fun runTrackingTest(
         body: suspend TestScope.() -> Unit,

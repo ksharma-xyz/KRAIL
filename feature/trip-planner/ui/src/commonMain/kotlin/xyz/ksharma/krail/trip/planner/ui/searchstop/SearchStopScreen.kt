@@ -1324,16 +1324,6 @@ private fun LabelShortcutsRow(
         ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        // Done sits at the FRONT of the row while editing so it's reachable without
-        // scrolling past the user's pills, and so the action that exits edit mode is
-        // the most visually prominent thing on the row.
-        if (editing) {
-            item(key = "leading-done") {
-                Box(modifier = Modifier.padding(end = dim.spacingS)) {
-                    DonePill(onClick = onDoneEditing)
-                }
-            }
-        }
         items(items = labels, key = { it.label }) { label ->
             val isAssigning = assigningLabel?.label == label.label
             ReorderableItem(reorderState, key = label.label) { isDragging ->
@@ -1435,9 +1425,15 @@ private fun LabelShortcutsRow(
                 }
             }
         }
-        // "+ Add" remains trailing in idle mode; while editing the trailing slot is
-        // empty (Done lives at the front).
-        if (!editing) {
+        // Trailing slot: "+ Add" while idle, "Done" while editing. Putting Done at
+        // the END (not the front) keeps the reorder UX smooth — front-anchored Done
+        // shifted layout when items dragged toward index 0, which fought the
+        // reorderable library's drop-target calculations.
+        if (editing) {
+            item(key = "trailing-done") {
+                DonePill(onClick = onDoneEditing)
+            }
+        } else {
             item(key = "trailing-add") {
                 AddLabelPill(onClick = onAddLabelClick)
             }

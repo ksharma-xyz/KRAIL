@@ -148,6 +148,8 @@ internal fun createLightDarkModeAnimatedColors(
         walkingPath = targetColors.walkingPath,
         userLocationDot = targetColors.userLocationDot,
         outlineSubtle = targetColors.outlineSubtle,
+        stopLabelSurface = targetColors.stopLabelSurface,
+        onStopLabelSurface = targetColors.onStopLabelSurface,
     )
 }
 

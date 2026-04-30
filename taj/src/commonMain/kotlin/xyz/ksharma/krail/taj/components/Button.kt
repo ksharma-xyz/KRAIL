@@ -253,8 +253,12 @@ fun OutlinedButton(
             modifier = modifier
                 .heightIn(dimensions.height)
                 .clip(dimensions.shape)
+                // Use the container colour as-is — Color.copy(alpha = X) REPLACES alpha,
+                // which turns Color.Transparent (RGBA 0,0,0,0) into solid black when
+                // LocalContentAlpha is 1f. Disabled-state fade is applied to the border
+                // and content below, which is the correct visual for an outlined button.
                 .background(
-                    color = LocalContainerColor.current.copy(alpha = LocalContentAlpha.current),
+                    color = LocalContainerColor.current,
                     shape = dimensions.shape,
                 )
                 .border(

@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.taj.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentAlpha
@@ -217,6 +219,61 @@ fun AlertButton(
     }
 }
 
+/**
+ * Outlined-style button — transparent background, [colors].contentColor stroke,
+ * [colors].contentColor text/icons. Used for "secondary action" affordances
+ * (filter chips, optional shortcuts, the unset label pills on SearchStopScreen)
+ * where a filled [Button] would compete with a primary action on the same surface.
+ *
+ * Same parameter shape as [Button] / [SubtleButton] / [TextButton] / [AlertButton]
+ * so size and enabled-state behave identically; the only visual difference is the
+ * border-instead-of-background treatment.
+ */
+@Composable
+fun OutlinedButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = ButtonDefaults.outlinedButtonColors(),
+    dimensions: ButtonDimensions = ButtonDefaults.smallButtonSize(),
+    enabled: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    val contentAlphaProvider =
+        rememberSaveable(enabled) { if (enabled) EnabledContentAlpha else DisabledContentAlpha }
+    val borderWidth = KrailTheme.dimensions.strokeThin
+
+    CompositionLocalProvider(
+        LocalContentAlpha provides contentAlphaProvider,
+        LocalTextStyle provides buttonTextStyle(dimensions),
+        LocalContainerColor provides colors.containerColor,
+        LocalContentColor provides colors.contentColor,
+        LocalTextColor provides colors.contentColor,
+    ) {
+        Box(
+            modifier = modifier
+                .heightIn(dimensions.height)
+                .clip(dimensions.shape)
+                .background(
+                    color = LocalContainerColor.current.copy(alpha = LocalContentAlpha.current),
+                    shape = dimensions.shape,
+                )
+                .border(
+                    width = borderWidth,
+                    color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                    shape = dimensions.shape,
+                )
+                .klickable(
+                    enabled = enabled,
+                    onClick = onClick,
+                )
+                .padding(dimensions.padding),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
+}
+
 @Composable
 private fun buttonTextStyle(dimensions: ButtonDimensions) =
     when (dimensions) {
@@ -227,6 +284,7 @@ private fun buttonTextStyle(dimensions: ButtonDimensions) =
         else -> KrailTheme.typography.titleSmall
     }
 
+@Suppress("TooManyFunctions")
 object ButtonDefaults {
 
     @Composable
@@ -308,10 +366,41 @@ object ButtonDefaults {
         )
     }
 
+    @Composable
+    fun outlinedButtonColors(): ButtonColors {
+        // Transparent fill, label-coloured border + content. Border colour is read
+        // from contentColor inside [OutlinedButton] so themers can override both
+        // the text and stroke in one go.
+        val contentColor = KrailTheme.colors.label
+        return ButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = contentColor,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = contentColor.copy(alpha = DisabledContentAlpha),
+        )
+    }
+
     fun extraSmallButtonSize(): ButtonDimensions {
         return ButtonDimensions(
             height = SpacingTokens.XXS + SpacingTokens.XL, // 18.dp — no single token
             padding = PaddingValues(vertical = SpacingTokens.XXS, horizontal = SpacingTokens.M),
+        )
+    }
+
+    /**
+     * Chip-sized buttons match the existing pill geometry on SearchStopScreen
+     * (Home / Work / set + unset label pills, Done). Height is unconstrained so
+     * the button sizes purely to its content + padding — chips on the same row
+     * stay aligned regardless of which one came from a hand-rolled Row vs a
+     * [Button] / [OutlinedButton].
+     */
+    fun chipButtonSize(): ButtonDimensions {
+        return ButtonDimensions(
+            height = 0.dp,
+            padding = PaddingValues(
+                vertical = ComponentTokens.ChipVerticalPadding,
+                horizontal = ComponentTokens.ChipHorizontalPadding,
+            ),
         )
     }
 
@@ -568,6 +657,55 @@ private fun AlertButtonShowcase() {
 
 // endregion
 
+// region Outlined Button - Composite Previews
+
+@PreviewComponent
+@Composable
+private fun OutlinedButtonShowcase() {
+    val dim = KrailTheme.dimensions
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        Column(
+            modifier = Modifier
+                .background(KrailTheme.colors.surface)
+                .padding(dim.pageHorizontalPadding),
+            verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
+        ) {
+            Text(PREVIEW_TEXT_ALL_SIZES, style = KrailTheme.typography.titleMedium)
+            OutlinedButton(onClick = {}, dimensions = ButtonDefaults.extraSmallButtonSize()) {
+                Text(PREVIEW_TEXT_EXTRA_SMALL)
+            }
+            OutlinedButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
+                Text(PREVIEW_TEXT_SMALL)
+            }
+            OutlinedButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
+                Text(PREVIEW_TEXT_MEDIUM)
+            }
+            OutlinedButton(onClick = {}, dimensions = ButtonDefaults.largeButtonSize()) {
+                Text(PREVIEW_TEXT_LARGE)
+            }
+
+            Spacer(Modifier.height(dim.spacingM))
+            Text(PREVIEW_TEXT_STATES, style = KrailTheme.typography.titleMedium)
+            OutlinedButton(
+                onClick = {},
+                enabled = true,
+                dimensions = ButtonDefaults.mediumButtonSize(),
+            ) {
+                Text(PREVIEW_TEXT_ENABLED)
+            }
+            OutlinedButton(
+                onClick = {},
+                enabled = false,
+                dimensions = ButtonDefaults.mediumButtonSize(),
+            ) {
+                Text(PREVIEW_TEXT_DISABLED)
+            }
+        }
+    }
+}
+
+// endregion
+
 // ═══════════════════════════════════════════════════════════════════════════
 // SNAPSHOT TEST PREVIEWS - For Automated Testing (Add @ScreenshotTest as needed)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -724,6 +862,43 @@ private fun TextButtonDisabled() {
 private fun AlertButtonDisabled() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         AlertButton(onClick = {}, enabled = false, dimensions = ButtonDefaults.mediumButtonSize()) {
+            Text(PREVIEW_TEXT_DISABLED)
+        }
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun OutlinedButtonSmall() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        OutlinedButton(onClick = {}, dimensions = ButtonDefaults.smallButtonSize()) {
+            Text(PREVIEW_TEXT_SMALL)
+        }
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun OutlinedButtonMedium() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
+        OutlinedButton(onClick = {}, dimensions = ButtonDefaults.mediumButtonSize()) {
+            Text(PREVIEW_TEXT_MEDIUM)
+        }
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun OutlinedButtonDisabled() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
+        OutlinedButton(
+            onClick = {},
+            enabled = false,
+            dimensions = ButtonDefaults.mediumButtonSize(),
+        ) {
             Text(PREVIEW_TEXT_DISABLED)
         }
     }

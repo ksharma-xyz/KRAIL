@@ -48,6 +48,8 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
+import xyz.ksharma.krail.taj.themeColor
 
 private val ArrowIconSize = 18.dp // no token equivalent
 
@@ -200,6 +202,7 @@ private fun CardHeader(
     onClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
+    val arrowColor = if (isAppInDarkMode().not()) themeColor() else KrailTheme.colors.onSurface
     SubtleButton(
         onClick = onClick,
         dimensions = ButtonDefaults.largeButtonSize(),
@@ -227,7 +230,7 @@ private fun CardHeader(
                 Image(
                     painter = painterResource(Res.drawable.ic_arrow_down),
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    colorFilter = ColorFilter.tint(KrailTheme.colors.softLabel),
+                    colorFilter = ColorFilter.tint(arrowColor),
                     modifier = Modifier.size(ArrowIconSize).rotate(arrowRotation),
                 )
             }

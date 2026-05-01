@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -38,6 +39,13 @@ data class TimeTableState(
     val canLoadMore: Boolean = false,
     /** Whether the Show Previous / Load More pagination UI is enabled. */
     val paginationEnabled: Boolean = true,
+    /**
+     * User-defined stop labels observed from the DB. UI converts trip stops to
+     * [xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay]s using
+     * `Trip.fromStopDisplay(stopLabels)` / `Trip.toStopDisplay(stopLabels)` so
+     * the timetable header shows the user's nickname for a stop when set.
+     */
+    val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable

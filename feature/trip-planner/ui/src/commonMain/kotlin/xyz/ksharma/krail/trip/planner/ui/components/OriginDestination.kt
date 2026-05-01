@@ -18,20 +18,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
 private val TIMELINE_CIRCLE_RADIUS = 5.dp
+private const val LABELLED_NAME_CAPTION_ALPHA = 0.65f
 
+/**
+ * Vertical timeline showing the origin and destination of a trip. Each stop
+ * renders the user's label as primary text when set, with the raw stop name
+ * as a smaller caption underneath; unlabelled stops keep the existing
+ * single-line treatment.
+ *
+ * Optional click handlers light up only when the caller passes them — the
+ * timetable screen wires them to a stop-details sheet, while TrackTrip and
+ * the intro screen leave them null and stay non-interactive.
+ */
 @Composable
 internal fun OriginDestination(
-    trip: Trip,
+    origin: StopDisplay,
+    destination: StopDisplay,
     timeLineColor: Color,
     modifier: Modifier = Modifier,
-    originSubtitle: String? = null,
-    destinationSubtitle: String? = null,
+    onOriginClick: ((StopDisplay) -> Unit)? = null,
+    onDestinationClick: ((StopDisplay) -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     Column(
@@ -47,45 +61,15 @@ internal fun OriginDestination(
                     circleRadius = TIMELINE_CIRCLE_RADIUS,
                 ),
         ) {
-            Column(modifier = Modifier.padding(start = 16.dp).fillMaxWidth()) {
-                AnimatedContent(
-                    targetState = trip.fromStopName,
-                    transitionSpec = {
-                        (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { -it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
-                    },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "originStopName",
-                ) { targetText ->
-                    Text(
-                        text = targetText,
-                        color = timeLineColor,
-                        style = KrailTheme.typography.titleLarge,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                originSubtitle?.let {
-                    Text(
-                        text = it,
-                        color = timeLineColor.copy(alpha = 0.7f),
-                        style = KrailTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
-                    )
-                }
-            }
+            StopColumn(
+                display = origin,
+                timeLineColor = timeLineColor,
+                onClick = onOriginClick,
+                animationLabel = "originStopName",
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .fillMaxWidth(),
+            )
         }
 
         Spacer(
@@ -102,45 +86,73 @@ internal fun OriginDestination(
                     circleRadius = 5.dp,
                 ),
         ) {
-            Column(modifier = Modifier.padding(start = 16.dp).fillMaxWidth()) {
-                AnimatedContent(
-                    targetState = trip.toStopName,
-                    transitionSpec = {
-                        (
-                            fadeIn(
-                                animationSpec = tween(200),
-                            ) + slideInVertically(
-                                initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = EaseOutBounce),
-                            )
-                            ) togetherWith (
-                            fadeOut(
-                                animationSpec = tween(200),
-                            ) + slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(500),
-                            )
-                            )
-                    },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "destinationStopName",
-                ) { targetText ->
-                    Text(
-                        text = targetText,
-                        color = timeLineColor,
-                        style = KrailTheme.typography.titleLarge,
-                        modifier = Modifier.fillMaxWidth(),
+            StopColumn(
+                display = destination,
+                timeLineColor = timeLineColor,
+                onClick = onDestinationClick,
+                animationLabel = "destinationStopName",
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun StopColumn(
+    display: StopDisplay,
+    timeLineColor: Color,
+    onClick: ((StopDisplay) -> Unit)?,
+    animationLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    val labelled = display.label != null
+    val primaryText = display.label ?: display.name
+    val primaryStyle = if (labelled) {
+        KrailTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
+    } else {
+        KrailTheme.typography.titleLarge
+    }
+    val clickModifier = onClick?.let { handler ->
+        Modifier.klickable { handler(display) }
+    } ?: Modifier
+
+    Column(modifier = modifier.then(clickModifier)) {
+        AnimatedContent(
+            targetState = primaryText,
+            transitionSpec = {
+                (
+                    fadeIn(animationSpec = tween(200)) +
+                        slideInVertically(
+                            initialOffsetY = { it / 2 },
+                            animationSpec = tween(500, easing = EaseOutBounce),
+                        )
+                    ) togetherWith (
+                    fadeOut(animationSpec = tween(200)) +
+                        slideOutVertically(
+                            targetOffsetY = { -it / 2 },
+                            animationSpec = tween(500),
+                        )
                     )
-                }
-                destinationSubtitle?.let {
-                    Text(
-                        text = it,
-                        color = timeLineColor.copy(alpha = 0.7f),
-                        style = KrailTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
-                    )
-                }
-            }
+            },
+            contentAlignment = Alignment.CenterStart,
+            label = animationLabel,
+        ) { targetText ->
+            Text(
+                text = targetText,
+                color = timeLineColor,
+                style = primaryStyle,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        if (labelled) {
+            Text(
+                text = display.name,
+                color = timeLineColor.copy(alpha = LABELLED_NAME_CAPTION_ALPHA),
+                style = KrailTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
+            )
         }
     }
 }

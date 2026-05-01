@@ -80,8 +80,12 @@ import xyz.ksharma.krail.trip.planner.ui.components.JourneyCardState
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
+import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -109,6 +113,9 @@ fun TimeTableScreen(
         mutableStateListOf(*timeTableState.unselectedModes.toTypedArray())
     }
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
+    // Tracks which stop's details sheet is open. Tap on a stop in the
+    // OriginDestination header sets this; the sheet is dismissed back to null.
+    var selectedStop by remember { mutableStateOf<StopDisplay?>(null) }
 
     Column(
         modifier = modifier.fillMaxSize().background(color = KrailTheme.colors.surface),
@@ -190,8 +197,11 @@ fun TimeTableScreen(
             item(key = "Origin-Destination") {
                 timeTableState.trip?.let { trip ->
                     OriginDestination(
-                        trip = trip,
+                        origin = trip.fromStopDisplay(timeTableState.stopLabels),
+                        destination = trip.toStopDisplay(timeTableState.stopLabels),
                         timeLineColor = KrailTheme.colors.onSurface,
+                        onOriginClick = { display -> selectedStop = display },
+                        onDestinationClick = { display -> selectedStop = display },
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .background(color = KrailTheme.colors.surface),
@@ -366,6 +376,20 @@ fun TimeTableScreen(
                     modifier = Modifier.height(96.dp).systemBarsPadding(),
                 )
             }
+        }
+
+        selectedStop?.let { stop ->
+            // Stop-details sheet — opened by tapping a stop in the timetable
+            // header. transportModes is left empty for v1; the shared sheet
+            // gracefully hides the section when the list is empty. Future
+            // iteration can enrich this (see SAVED_TRIPS_NAMING_PLAN.md /
+            // LABEL_DISPLAY_PLAN.md follow-ups).
+            StopDetailsBottomSheet(
+                stopId = stop.stopId,
+                stopName = stop.name,
+                transportModes = persistentListOf(),
+                onDismiss = { selectedStop = null },
+            )
         }
     }
 }

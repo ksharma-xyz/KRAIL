@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -41,6 +42,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
@@ -51,6 +53,7 @@ import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -181,6 +184,14 @@ class TimeTableViewModel(
             .asBoolean(fallback = false)
     }
 
+    init {
+        // Single VM-lifetime observer so DB updates always reach the UI even if
+        // the screen briefly unsubscribes across config changes. Mirrors
+        // SearchStopViewModel's pattern; we deliberately skip the seed-on-empty
+        // branch since SearchStopViewModel owns label seeding.
+        observeStopLabels()
+    }
+
     /**
      * Get raw journey data by ID for map visualization.
      */
@@ -270,6 +281,24 @@ class TimeTableViewModel(
             TimeTableUiEvent.LoadMoreTrips -> onLoadMoreTrips()
 
             TimeTableUiEvent.LoadPreviousTrips -> onLoadPreviousTrips()
+        }
+    }
+
+    private fun observeStopLabels() {
+        viewModelScope.launchWithExceptionHandler<TimeTableViewModel>(ioDispatcher) {
+            sandook.observeStopLabels()
+                .distinctUntilChanged()
+                .collectLatest { rows ->
+                    val labels = rows.map { row ->
+                        StopLabel(
+                            emoji = row.emoji,
+                            label = row.label,
+                            stopId = row.stop_id,
+                            stopName = row.stop_name,
+                        )
+                    }.toImmutableList()
+                    updateUiState { copy(stopLabels = labels) }
+                }
         }
     }
 
@@ -433,6 +462,7 @@ class TimeTableViewModel(
         pruneStaleLoadMoreEntries()
     }
 
+    @OptIn(ExperimentalTime::class)
     @VisibleForTesting
     fun pruneStaleLoadMoreEntries() {
         val latestFreshInstant = journeys.values

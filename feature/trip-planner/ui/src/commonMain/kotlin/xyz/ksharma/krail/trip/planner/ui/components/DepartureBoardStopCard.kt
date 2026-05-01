@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,8 +49,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.theme.isAppInDarkMode
-import xyz.ksharma.krail.taj.themeColor
 
 private val ArrowIconSize = 18.dp // no token equivalent
 
@@ -81,6 +80,7 @@ fun DepartureBoardStopCard(
     state: DeparturesState,
     onEvent: (DeparturesUiEvent) -> Unit,
     modifier: Modifier = Modifier,
+    iconColor: Color = KrailTheme.colors.onSurface,
     stopName: String = "",
     isExpanded: Boolean? = null,
     onExpandChange: ((Boolean) -> Unit)? = null,
@@ -149,6 +149,7 @@ fun DepartureBoardStopCard(
             expanded = expanded,
             silentLoading = state.silentLoading,
             arrowRotation = arrowRotation,
+            iconColor = iconColor,
             onClick = {
                 val next = !expanded
                 if (onExpandChange != null) {
@@ -199,10 +200,10 @@ private fun CardHeader(
     expanded: Boolean,
     silentLoading: Boolean,
     arrowRotation: Float,
+    iconColor: Color,
     onClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
-    val arrowColor = if (isAppInDarkMode().not()) themeColor() else KrailTheme.colors.onSurface
     SubtleButton(
         onClick = onClick,
         dimensions = ButtonDefaults.largeButtonSize(),
@@ -230,7 +231,7 @@ private fun CardHeader(
                 Image(
                     painter = painterResource(Res.drawable.ic_arrow_down),
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    colorFilter = ColorFilter.tint(arrowColor),
+                    colorFilter = ColorFilter.tint(iconColor),
                     modifier = Modifier.size(ArrowIconSize).rotate(arrowRotation),
                 )
             }

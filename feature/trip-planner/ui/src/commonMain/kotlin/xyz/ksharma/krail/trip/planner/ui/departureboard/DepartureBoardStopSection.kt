@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,12 +57,14 @@ import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEv
 fun LazyListScope.departureBoardAccordionSection(
     entry: StopDepartureBoardEntry,
     isExpanded: Boolean,
+    iconColor: Color,
     onEvent: (DepartureBoardUiEvent) -> Unit,
 ) {
     stickyHeader(key = "${entry.stopId}_header", contentType = "stop_header") {
         DepartureBoardAccordionSectionHeader(
             entry = entry,
             isExpanded = isExpanded,
+            iconColor = iconColor,
             onExpandChange = { expand ->
                 onEvent(
                     if (expand) {
@@ -111,6 +114,7 @@ fun LazyListScope.departureBoardAccordionSection(
 internal fun DepartureBoardAccordionSectionHeader(
     entry: StopDepartureBoardEntry,
     isExpanded: Boolean,
+    iconColor: Color,
     onExpandChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -164,7 +168,7 @@ internal fun DepartureBoardAccordionSectionHeader(
             Image(
                 painter = painterResource(Res.drawable.ic_arrow_down),
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                colorFilter = ColorFilter.tint(iconColor),
                 modifier = Modifier.size(ARROW_ICON_SIZE).rotate(arrowRotation),
             )
         }

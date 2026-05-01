@@ -223,5 +223,46 @@ class SearchStopRulesTest {
         assertFalse(shouldShowPillRow(ListState.Error, recentStops = listOf(centralRecent)))
     }
 
+    @Test
+    fun `pill row visible in Recent state when a label is set even with no recents`() {
+        assertTrue(
+            shouldShowPillRow(
+                listState = ListState.Recent,
+                recentStops = emptyList(),
+                stopLabels = listOf(homeSet),
+            ),
+        )
+    }
+
+    @Test
+    fun `pill row hidden in Recent state when no recents and no labels are set`() {
+        assertFalse(
+            shouldShowPillRow(
+                listState = ListState.Recent,
+                recentStops = emptyList(),
+                stopLabels = listOf(home, gym),
+            ),
+        )
+    }
+
+    @Test
+    fun `pill row visible after clear-all when at least one label remains set`() {
+        // Simulates: user clears recents (recentStops empty) but Home is already configured.
+        assertTrue(
+            shouldShowPillRow(
+                listState = ListState.Recent,
+                recentStops = emptyList(),
+                stopLabels = listOf(homeSet, gym),
+            ),
+        )
+    }
+
+    @Test
+    fun `set labels do not affect Results or NoMatch states`() {
+        val labelsWithSet = listOf(homeSet, workSet)
+        assertFalse(shouldShowPillRow(ListState.NoMatch, emptyList(), labelsWithSet))
+        assertFalse(shouldShowPillRow(ListState.Error, emptyList(), labelsWithSet))
+    }
+
     // endregion
 }

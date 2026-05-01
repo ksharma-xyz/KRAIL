@@ -94,15 +94,18 @@ internal fun conflictForAssign(
  * with stars to tap — otherwise tapping an unset Home pill enters assigning mode
  * with nothing to act on, which feels broken to the user.
  *
- * - In Recent mode: show iff the user has at least one recent stop.
+ * - In Recent mode: show if the user has at least one recent stop OR at least one
+ *   label is already configured. Set labels navigate directly to a stop (no dead-end),
+ *   so they remain useful even after the user clears their recent searches.
  * - In Results mode: show iff the search returned at least one result. Loading,
  *   NoMatch and Error states all hide the row.
  */
 internal fun shouldShowPillRow(
     listState: ListState,
     recentStops: List<SearchStopState.StopResult>,
+    stopLabels: List<StopLabel> = emptyList(),
 ): Boolean = when (listState) {
-    ListState.Recent -> recentStops.isNotEmpty()
+    ListState.Recent -> recentStops.isNotEmpty() || stopLabels.any { it.isSet }
     is ListState.Results -> listState.results.isNotEmpty()
     ListState.NoMatch, ListState.Error -> false
 }

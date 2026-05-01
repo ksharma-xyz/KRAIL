@@ -30,21 +30,28 @@ The screen is built around three ideas: **search for a stop**, **save stops as l
 
 ### Pill row visibility (`shouldShowPillRow`)
 
-The whole pill row + assigning banner only render when there's something below for
-the user to act on:
+The whole pill row + assigning banner only render when there's something for the
+user to act on:
 
 | List state | Pill row |
 |---|---|
-| Recent, no recents yet | hidden |
+| Recent, no recents, no labels set | hidden |
+| Recent, no recents, ≥ 1 label set | visible |
 | Recent, ≥ 1 recent stop | visible |
 | Results loading (no results yet) | hidden |
 | Results with ≥ 1 result | visible |
 | NoMatch | hidden |
 | Error | hidden |
 
-Reasoning: tapping an unset Home pill enters assigning mode, which expects at least
-one stop with a star button below. Showing pills against an empty canvas would let
-users tap into a dead-end state.
+Reasoning: tapping an **unset** pill enters assigning mode, which requires at least
+one stop with a star button below — showing it on an empty canvas is a dead-end.
+Tapping a **set** pill navigates directly to that stop (From / To), so it is always
+safe to show when a label is configured, even after the user clears their recents.
+
+First-launch progression:
+1. No labels set, no recents → pill row hidden (nothing useful to show yet).
+2. User makes a few searches → recents appear → pill row shows (labels can now be assigned).
+3. User assigns a label → label row stays visible even if recents are later cleared.
 
 ---
 

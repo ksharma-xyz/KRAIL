@@ -932,8 +932,8 @@ private fun SearchStopListContent(
         searchStopState.stopLabels.mapNotNull { it.stopId }.toSet()
     }
     val isLoading = listState is ListState.Results && listState.isLoading
-    val showPillRow = remember(listState, searchStopState.recentStops) {
-        shouldShowPillRow(listState, searchStopState.recentStops)
+    val showPillRow = remember(listState, searchStopState.recentStops, searchStopState.stopLabels) {
+        shouldShowPillRow(listState, searchStopState.recentStops, searchStopState.stopLabels)
     }
     when (listState) {
         ListState.Recent -> {

@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -96,6 +98,7 @@ fun SavedTripsScreen(
     onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
+    val iconColor = if (isAppInDarkMode().not()) themeColor() else KrailTheme.colors.onSurface
     val emptyStateTip = remember {
         buildList {
             add("Tap ★ on a trip to save it here.")
@@ -259,6 +262,7 @@ fun SavedTripsScreen(
                         savedTripsContent(
                             savedTripsState = savedTripsState,
                             trackedJourney = trackedJourney,
+                            iconColor = iconColor,
                             onEvent = onEvent,
                             onSavedTripCardClick = onSavedTripCardClick,
                             onTrackingCardClick = onTrackingCardClick,
@@ -358,6 +362,7 @@ private fun LazyListScope.infoTiles(
 private fun LazyListScope.savedTripsContent(
     savedTripsState: SavedTripsState,
     trackedJourney: TrackedJourney?,
+    iconColor: Color,
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onTrackingCardClick: () -> Unit = {},
@@ -412,9 +417,9 @@ private fun LazyListScope.savedTripsContent(
                     ),
                 )
             },
-            primaryTransportMode = null, // TODO
             modifier = Modifier
                 .padding(horizontal = dim.pageHorizontalPadding),
+            favouriteIconColor = iconColor,
         )
 
         Spacer(modifier = Modifier.height(dim.spacingXL))
@@ -465,6 +470,7 @@ private fun LazyListScope.savedTripsContent(
             departureBoardAccordionSection(
                 entry = entry,
                 isExpanded = expandedDepartureBoardStopId == entry.stopId,
+                iconColor = iconColor,
                 onEvent = onDepartureBoardEvent,
             )
         }

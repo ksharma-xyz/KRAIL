@@ -81,6 +81,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withTimeoutOrNull
+import krail.feature.trip_planner.ui.generated.resources.ic_map
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -122,7 +123,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
-import krail.feature.trip_planner.ui.generated.resources.ic_map
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")

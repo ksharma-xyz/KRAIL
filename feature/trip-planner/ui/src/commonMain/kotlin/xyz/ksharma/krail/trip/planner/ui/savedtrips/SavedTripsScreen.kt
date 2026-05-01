@@ -102,10 +102,15 @@ fun SavedTripsScreen(
         }.random()
     }
 
-    // Pill only shown when content is rich enough that a collapsed state adds value.
-    val showPill = savedTripsState.savedTrips.size >= 2 &&
-        savedTripsState.parkRideUiState.isNotEmpty() &&
-        departureBoardEntries.size >= 2
+    // Pill only shown when there's enough saved content above to justify collapsing
+    // the search row out of the way:
+    //   • 2+ saved trips, OR
+    //   • 1 saved trip + at least one Park & Ride entry.
+    // Anything less and the expanded row stays — first-time and lightly-used
+    // accounts still get the full search affordance front-and-centre.
+    val savedTripsCount = savedTripsState.savedTrips.size
+    val hasParkRide = savedTripsState.parkRideUiState.isNotEmpty()
+    val showPill = savedTripsCount >= 2 || (savedTripsCount >= 1 && hasParkRide)
 
     // Search row expand / from-highlight state — rememberSaveable survives rotation.
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }

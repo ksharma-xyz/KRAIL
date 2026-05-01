@@ -118,6 +118,7 @@ class SavedTripsViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             observeSavedTrips()
+            observeStopLabels()
             seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
@@ -269,6 +270,16 @@ class SavedTripsViewModel(
                     }.toImmutableList(),
                 )
             }
+        }
+    }
+
+    private fun observeStopLabels() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            sandook.observeStopLabels()
+                .distinctUntilChanged()
+                .collect { labels ->
+                    updateUiState { copy(stopLabels = labels.toImmutableList()) }
+                }
         }
     }
 

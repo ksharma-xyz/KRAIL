@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -58,6 +59,7 @@ fun SavedTripCard(
     } else {
         KrailTheme.colors.onSurface
     }
+    val bothLabelled = fromDisplay.label != null && toDisplay.label != null
 
     Row(
         modifier = modifier
@@ -70,43 +72,108 @@ fun SavedTripCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        // Stop names
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(dim.spacingL),
-        ) {
-            StopDisplayRow(display = fromDisplay)
-            StopDisplayRow(display = toDisplay)
+        // Stop content — two layouts depending on whether both stops are labelled
+        if (bothLabelled) {
+            BothLabelledContent(
+                fromDisplay = fromDisplay,
+                toDisplay = toDisplay,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingL),
+            ) {
+                StopDisplayRow(display = fromDisplay)
+                StopDisplayRow(display = toDisplay)
+            }
         }
 
-        // Right side: mode pill (if available) + star
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxHeight(),
+        // Star button
+        Box(
+            modifier = Modifier
+                .size(dim.savedTripIconButtonSize)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClickLabel = "Remove Saved Trip",
+                    role = Role.Button,
+                    onClick = onStarClick,
+                )
+                .semantics(mergeDescendants = true) {},
+            contentAlignment = Alignment.Center,
         ) {
-            // Star button
-            Box(
-                modifier = Modifier
-                    .size(dim.savedTripIconButtonSize)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClickLabel = "Remove Saved Trip",
-                        role = Role.Button,
-                        onClick = onStarClick,
+            Image(
+                painter = painterResource(Res.drawable.ic_star_filled),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(starColor),
+                modifier = Modifier.size(dim.iconSmall),
+            )
+        }
+    }
+}
+
+/**
+ * Side-by-side two-column layout used when both stops carry a user label.
+ * Labels are the primary text; stop names render as secondary below them.
+ * A thin vertical divider separates the columns.
+ */
+@Composable
+private fun BothLabelledContent(
+    fromDisplay: StopDisplay,
+    toDisplay: StopDisplay,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Row(
+        modifier = modifier.height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LabelledStopColumn(display = fromDisplay, modifier = Modifier.weight(1f))
+        Box(
+            modifier = Modifier
+                .width(dim.strokeThin)
+                .fillMaxHeight()
+                .background(KrailTheme.colors.outlineSubtle),
+        )
+        LabelledStopColumn(display = toDisplay, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun LabelledStopColumn(
+    display: StopDisplay,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        ) {
+            display.label?.let { label ->
+                stopLabelIcon(label)?.let { icon ->
+                    Image(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                        modifier = Modifier.size(dim.spacingXL),
                     )
-                    .semantics(mergeDescendants = true) {},
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_star_filled),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(starColor),
-                    modifier = Modifier.size(dim.iconSmall),
+                }
+                Text(
+                    text = label,
+                    style = KrailTheme.typography.titleMedium,
                 )
             }
         }
+        Text(
+            text = display.name,
+            style = KrailTheme.typography.bodyMedium,
+        )
     }
 }
 
@@ -116,7 +183,6 @@ private fun StopDisplayRow(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
@@ -126,6 +192,14 @@ private fun StopDisplayRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
             ) {
+                stopLabelIcon(label)?.let { icon ->
+                    Image(
+                        painter = painterResource(icon),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                        modifier = Modifier.size(dim.spacingXL),
+                    )
+                }
                 Text(
                     text = label,
                     style = KrailTheme.typography.titleMedium,
@@ -134,7 +208,7 @@ private fun StopDisplayRow(
         }
         Text(
             text = display.name,
-            style =  KrailTheme.typography.bodyMedium,
+            style = KrailTheme.typography.bodyMedium,
         )
     }
 }
@@ -157,7 +231,7 @@ private fun PreviewSavedTripCard_Unlabelled() {
 
 @PreviewComponent
 @Composable
-private fun PreviewSavedTripCard_Labelled() {
+private fun PreviewSavedTripCard_BothLabelled() {
     PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
         SavedTripCard(
             fromDisplay = StopDisplay(stopId = "1", name = "Central Station", label = "Home"),
@@ -171,7 +245,7 @@ private fun PreviewSavedTripCard_Labelled() {
 
 @PreviewComponent
 @Composable
-private fun PreviewSavedTripCard_NoMode() {
+private fun PreviewSavedTripCard_OneLabelled() {
     PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
         SavedTripCard(
             fromDisplay = StopDisplay(stopId = "1", name = "Manly Wharf", label = "Home"),
@@ -208,7 +282,7 @@ private fun PreviewSavedTripCardList() {
             )
             SavedTripCard(
                 fromDisplay = StopDisplay(stopId = "1", name = "Central Station", label = "Home"),
-                toDisplay = StopDisplay(stopId = "2", name = "Town Hall Station", label = "Work"),
+                toDisplay = StopDisplay(stopId = "2", name = "Town Hall Station"),
                 primaryTransportMode = TransportMode.Metro,
                 onCardClick = {},
                 onStarClick = {},

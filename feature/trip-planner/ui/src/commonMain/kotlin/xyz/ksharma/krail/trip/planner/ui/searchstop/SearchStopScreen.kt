@@ -95,7 +95,6 @@ import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
-import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -1313,6 +1312,10 @@ private fun LabelShortcutsRow(
         val key = from.key as? String ?: return@rememberReorderableLazyListState
         onMoveLabel(key, to.index)
     }
+    val pillButtonColors = ButtonDefaults.buttonColors(
+        customContainerColor = KrailTheme.colors.onStopLabelSurface,
+        customContentColor = KrailTheme.colors.stopLabelSurface,
+    )
 
     LazyRow(
         state = lazyListState,
@@ -1431,27 +1434,26 @@ private fun LabelShortcutsRow(
         // the END (not the front) keeps the reorder UX smooth — front-anchored Done
         // shifted layout when items dragged toward index 0, which fought the
         // reorderable library's drop-target calculations.
+        // Both Done and + Add share the same solid pill colors and asymmetric padding
+        // (double start to create visual breathing room from the label pills).
         if (editing) {
             item(key = "trailing-done") {
-                // Done sits next to the always-dark stopLabelSurface pills, so its
-                // container must be light in both modes — monochromeButtonColors flips
-                // to onSurface (dark in light mode), which would blend into the pills.
                 Button(
                     onClick = onDoneEditing,
-                    colors = ButtonDefaults.buttonColors(
-                        customContainerColor = KrailTheme.colors.onStopLabelSurface,
-                        customContentColor = KrailTheme.colors.stopLabelSurface,
-                    ),
+                    colors = pillButtonColors,
                     dimensions = ButtonDefaults.chipButtonSize(),
+                    modifier = Modifier.padding(start = dim.spacingM),
                 ) {
                     Text(text = "Done")
                 }
             }
         } else {
             item(key = "trailing-add") {
-                OutlinedButton(
+                Button(
                     onClick = onAddLabelClick,
+                    colors = pillButtonColors,
                     dimensions = ButtonDefaults.chipButtonSize(),
+                    modifier = Modifier.padding(start = dim.spacingM),
                 ) {
                     Text(text = "+ Add")
                 }

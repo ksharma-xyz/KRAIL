@@ -19,9 +19,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,11 +35,10 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.krail.taj.resources.Res
-import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.ic_info
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
@@ -67,7 +67,10 @@ fun AddLabelBottomSheet(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    var name by rememberSaveable { mutableStateOf("") }
+    // Hoisted text-field state so suggestion taps can update the visible text
+    // without rekeying the TextField — rekeying would dismiss the keyboard.
+    val textFieldState = rememberTextFieldState("")
+    val name = textFieldState.text.toString()
     var selectedSuggestionIndex by rememberSaveable { mutableIntStateOf(-1) }
 
     val availableSuggestions = remember(existingLabels) {
@@ -203,7 +206,7 @@ fun AddLabelBottomSheet(
                                     )
                                     .klickable {
                                         selectedSuggestionIndex = index
-                                        name = chipName
+                                        textFieldState.setTextAndPlaceCursorAtEnd(chipName)
                                     }
                                     .padding(
                                         horizontal = dim.chipHorizontalPadding,
@@ -235,24 +238,21 @@ fun AddLabelBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
             ) {
                 SectionHeading(text = "Name")
-                key(selectedSuggestionIndex) {
-                    TextField(
-                        placeholder = "e.g. Home, Gym, School…",
-                        initialText = name,
-                        onTextChange = { text ->
-                            name = text.toString()
-                            val cleaned = normaliseLabelName(name)
-                            selectedSuggestionIndex = if (cleaned.isNotBlank()) {
-                                availableSuggestions.indexOfFirst {
-                                    labelNamesMatch(it.first, cleaned)
-                                }
-                            } else {
-                                -1
+                TextField(
+                    placeholder = "e.g. Home, Gym, School…",
+                    state = textFieldState,
+                    onTextChange = { text ->
+                        val cleaned = normaliseLabelName(text.toString())
+                        selectedSuggestionIndex = if (cleaned.isNotBlank()) {
+                            availableSuggestions.indexOfFirst {
+                                labelNamesMatch(it.first, cleaned)
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
+                        } else {
+                            -1
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 if (isDuplicate) {
                     Text(
                         text = "\"$cleanedName\" is already a label.",
@@ -299,7 +299,7 @@ private fun StopChip(stopName: String, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(Res.drawable.ic_location),
+            painter = painterResource(TripPlannerRes.drawable.ic_location_on),
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
             modifier = Modifier.size(12.dp),
@@ -316,7 +316,7 @@ private fun StopChip(stopName: String, modifier: Modifier = Modifier) {
 private fun LabelPreviewPill(name: String) {
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
-    val icon = stopLabelIcon(name) ?: Res.drawable.ic_location
+    val icon = stopLabelIcon(name) ?: TripPlannerRes.drawable.ic_location_on
     Row(
         modifier = Modifier
             .clip(shape)

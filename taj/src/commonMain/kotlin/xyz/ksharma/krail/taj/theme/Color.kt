@@ -39,6 +39,12 @@ val md_theme_light_outline_subtle = Color(0x33010101)
 // Used for past/previous departure rows and past journey cards.
 val md_theme_light_past_departure_row_surface = Color(0xFFEEEEEE)
 
+// Stop-label surface — intentionally dark in BOTH light and dark mode so stop-label
+// pills read as a single visual treatment regardless of theme. Pair with
+// [md_theme_on_stop_label_surface] for content drawn on top.
+val md_theme_stop_label_surface = Color(0xFF1C1B1A)
+val md_theme_on_stop_label_surface = Color(0xFFFCF6F1)
+
 /**
  * KRAIL Dark theme color tokens
  */
@@ -145,6 +151,13 @@ data class KrailColors(
     val pastDepartureRowSurface: Color,
     /** Subtle border/stroke color for chip outlines, dividers, and UI control tracks. */
     val outlineSubtle: Color,
+    /**
+     * Background/border surface for stop-label pills. Same dark value in both light and
+     * dark mode by design — pair with [onStopLabelSurface] for content drawn on top.
+     */
+    val stopLabelSurface: Color,
+    /** Content colour (text, icons) drawn on top of [stopLabelSurface]. Light in both modes. */
+    val onStopLabelSurface: Color,
 )
 
 internal val KrailLightColors = KrailColors(
@@ -175,6 +188,8 @@ internal val KrailLightColors = KrailColors(
     bottomSheetDragHandle = md_theme_light_sheet_drag_handle,
     pastDepartureRowSurface = md_theme_light_past_departure_row_surface,
     outlineSubtle = md_theme_light_outline_subtle,
+    stopLabelSurface = md_theme_stop_label_surface,
+    onStopLabelSurface = md_theme_on_stop_label_surface,
 )
 
 internal val KrailDarkColors = KrailColors(
@@ -205,6 +220,8 @@ internal val KrailDarkColors = KrailColors(
     bottomSheetDragHandle = md_theme_dark_sheet_drag_handle,
     pastDepartureRowSurface = md_theme_dark_past_departure_row_surface,
     outlineSubtle = md_theme_dark_outline_subtle,
+    stopLabelSurface = md_theme_stop_label_surface,
+    onStopLabelSurface = md_theme_on_stop_label_surface,
 )
 
 internal val LocalKrailColors = staticCompositionLocalOf {
@@ -236,5 +253,7 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         bottomSheetDragHandle = Color.Unspecified,
         pastDepartureRowSurface = Color.Unspecified,
         outlineSubtle = Color.Unspecified,
+        stopLabelSurface = Color.Unspecified,
+        onStopLabelSurface = Color.Unspecified,
     )
 }

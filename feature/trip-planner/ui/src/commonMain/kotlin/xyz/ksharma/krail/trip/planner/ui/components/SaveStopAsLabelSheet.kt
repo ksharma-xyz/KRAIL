@@ -23,10 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.krail.taj.resources.Res
-import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
@@ -105,7 +105,7 @@ private fun LabelChoiceChip(
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
     val themeColor = themeColor()
-    val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location
+    val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location_on
     // Solid chip when the label already has a stop; outlined when it doesn't, since
     // tapping an outlined chip is what attaches this stop to that empty label.
     val isSet = label.isSet

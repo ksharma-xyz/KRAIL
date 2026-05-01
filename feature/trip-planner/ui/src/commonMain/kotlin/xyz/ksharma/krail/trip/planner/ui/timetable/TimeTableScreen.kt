@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -66,7 +67,6 @@ import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
-import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
@@ -121,84 +121,84 @@ fun TimeTableScreen(
     // OriginDestination header sets this; the sheet is dismissed back to null.
     var selectedStop by remember { mutableStateOf<StopDisplay?>(null) }
 
-    Column(
+    Box(
         modifier = modifier.fillMaxSize().background(color = KrailTheme.colors.surface),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().statusBarsPadding(),
+            contentPadding = PaddingValues(bottom = 16.dp),
         ) {
-            TitleBar(
-                onNavActionClick = onBackClick,
-                title = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Timetable",
-                            color = KrailTheme.colors.onSurface,
-                        )
-
-                        AnimatedVisibility(
-                            visible = timeTableState.silentLoading && !timeTableState.isLoading,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
+            stickyHeader(key = "title-bar") {
+                TitleBar(
+                    onNavActionClick = onBackClick,
+                    title = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            AnimatedDots(
-                                color = themeColor,
-                                modifier = Modifier.padding(start = 24.dp),
+                            Text(
+                                text = "Timetable",
+                                color = KrailTheme.colors.onSurface,
+                            )
+
+                            AnimatedVisibility(
+                                visible = timeTableState.silentLoading && !timeTableState.isLoading,
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                            ) {
+                                AnimatedDots(
+                                    color = themeColor,
+                                    modifier = Modifier.padding(start = 24.dp),
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        val rotation by animateFloatAsState(
+                            targetValue = if (isReverseButtonRotated) 180f else 0f,
+                            animationSpec = tween(durationMillis = 300),
+                        )
+                        ActionButton(
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    rotationZ = rotation
+                                },
+                            onClick = {
+                                isReverseButtonRotated = !isReverseButtonRotated
+                                onEvent(TimeTableUiEvent.ReverseTripButtonClicked)
+                            },
+                            contentDescription = "Reverse Trip Search",
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.ic_reverse),
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                                modifier = Modifier.size(24.dp),
                             )
                         }
-                    }
-                },
-                actions = {
-                    val rotation by animateFloatAsState(
-                        targetValue = if (isReverseButtonRotated) 180f else 0f,
-                        animationSpec = tween(durationMillis = 300),
-                    )
-                    ActionButton(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                rotationZ = rotation
-                            },
-                        onClick = {
-                            isReverseButtonRotated = !isReverseButtonRotated
-                            onEvent(TimeTableUiEvent.ReverseTripButtonClicked)
-                        },
-                        contentDescription = "Reverse Trip Search",
-                    ) {
-                        Image(
-                            painter = painterResource(Res.drawable.ic_reverse),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                    ActionButton(
-                        onClick = { onEvent(TimeTableUiEvent.SaveTripButtonClicked) },
-                        contentDescription = if (timeTableState.isTripSaved) {
-                            "Remove Saved Trip"
-                        } else {
-                            "Save Trip"
-                        },
-                    ) {
-                        Image(
-                            painter = if (timeTableState.isTripSaved) {
-                                painterResource(Res.drawable.ic_star_filled)
+                        ActionButton(
+                            onClick = { onEvent(TimeTableUiEvent.SaveTripButtonClicked) },
+                            contentDescription = if (timeTableState.isTripSaved) {
+                                "Remove Saved Trip"
                             } else {
-                                painterResource(Res.drawable.ic_star)
+                                "Save Trip"
                             },
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                },
-            )
-        }
-
-        LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
-            item(key = "Origin-Destination") {
+                        ) {
+                            Image(
+                                painter = if (timeTableState.isTripSaved) {
+                                    painterResource(Res.drawable.ic_star_filled)
+                                } else {
+                                    painterResource(Res.drawable.ic_star)
+                                },
+                                contentDescription = null,
+                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    },
+                )
+            }
+            stickyHeader(key = "Origin-Destination") {
                 timeTableState.trip?.let { trip ->
                     OriginDestination(
                         origin = trip.fromStopDisplay(timeTableState.stopLabels),
@@ -218,7 +218,7 @@ fun TimeTableScreen(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .padding(horizontal = 12.dp)
-                        .padding(top = 8.dp),
+                        .padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -438,11 +438,6 @@ private fun LazyListScope.journeyListContent(
             state = state,
             callbacks = callbacks,
         )
-        if (state.previousJourneyList.isNotEmpty()) {
-            item(key = "previous-divider") {
-                Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-            }
-        }
     }
     journeyCardItems(
         journeys = state.journeyList,
@@ -468,15 +463,20 @@ private fun LazyListScope.paginationHeader(
     onEvent: (TimeTableUiEvent) -> Unit,
 ) {
     item(key = "show-previous") {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (isLoadingPrevious) {
+        if (isLoadingPrevious) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = 8.dp))
-            } else {
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(vertical = 4.dp, horizontal = KrailTheme.dimensions.spacingXXS),
+            ) {
                 TextButton(onClick = { onEvent(TimeTableUiEvent.LoadPreviousTrips) }) {
-                    Text(text = "Show Previous Departures")
+                    Text(text = "Show previous departures")
                 }
             }
         }
@@ -501,12 +501,12 @@ private fun LazyListScope.paginationFooter(
         }
     } else if (canLoadMore) {
         item(key = "load-more-button") {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                contentAlignment = Alignment.Center,
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(vertical = 4.dp, horizontal = KrailTheme.dimensions.spacingXXS),
             ) {
                 TextButton(onClick = { onEvent(TimeTableUiEvent.LoadMoreTrips) }) {
-                    Text(text = "Load More Departures")
+                    Text(text = "Load more departures")
                 }
             }
         }

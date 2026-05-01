@@ -90,7 +90,7 @@ internal fun OriginDestination(
             timeLineColor = timeLineColor,
             onClick = onOriginClick,
         )
-        Divider(modifier = Modifier.padding(start = dim.spacingXL, end = dim.spacingM))
+        Divider(modifier = Modifier.padding(start = dim.spacingXL + dim.iconSmall + dim.spacingM, end = dim.spacingL))
         StopRow(
             display = destination,
             isOrigin = false,
@@ -166,11 +166,26 @@ private fun StopRow(
             contentAlignment = Alignment.CenterStart,
             label = if (isOrigin) "originStopName" else "destinationStopName",
         ) { targetText ->
-            Text(
-                text = targetText,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.onSurface,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+            ) {
+                display.label?.let { label ->
+                    stopLabelIcon(label)?.let { icon ->
+                        Image(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                            modifier = Modifier.size(dim.spacingXL),
+                        )
+                    }
+                }
+                Text(
+                    text = targetText,
+                    style = KrailTheme.typography.titleMedium,
+                    color = KrailTheme.colors.onSurface,
+                )
+            }
         }
     }
 }

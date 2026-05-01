@@ -401,7 +401,7 @@ private fun JourneyContent(
                     drawLayer(graphicsLayer)
                 },
         ) {
-            item(key = "origin-destination") {
+            stickyHeader(key = "origin-destination") {
                 OriginDestination(
                     origin = StopDisplay(stopId = journey.fromStopId, name = journey.fromStopName),
                     destination = StopDisplay(stopId = journey.toStopId, name = journey.toStopName),

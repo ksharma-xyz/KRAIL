@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -54,11 +55,13 @@ import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_star
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
+import xyz.ksharma.krail.departures.ui.DeparturesViewModel
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Button
@@ -74,6 +77,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.ActionData
+import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.JourneyCard
 import xyz.ksharma.krail.trip.planner.ui.components.JourneyCardState
@@ -380,15 +384,28 @@ fun TimeTableScreen(
 
         selectedStop?.let { stop ->
             // Stop-details sheet — opened by tapping a stop in the timetable
-            // header. transportModes is left empty for v1; the shared sheet
-            // gracefully hides the section when the list is empty. Future
-            // iteration can enrich this (see SAVED_TRIPS_NAMING_PLAN.md /
-            // LABEL_DISPLAY_PLAN.md follow-ups).
+            // header. Mirrors the SearchStopMap wrapper's contents minus the
+            // map-only bits (LatLng, parkAndRide indicator, "Select stop"
+            // action button) since this sheet is opened from inside a trip,
+            // not from a search picker. transportModes left empty until we
+            // have a per-stop modes lookup wired in.
+            val departuresViewModel = koinViewModel<DeparturesViewModel>()
+            val departuresState by departuresViewModel.uiState
+                .collectAsStateWithLifecycle()
             StopDetailsBottomSheet(
                 stopId = stop.stopId,
                 stopName = stop.name,
                 transportModes = persistentListOf(),
                 onDismiss = { selectedStop = null },
+                additionalInfo = {
+                    DepartureBoardStopCard(
+                        stopId = stop.stopId,
+                        stopName = stop.name,
+                        state = departuresState,
+                        onEvent = departuresViewModel::onEvent,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                },
             )
         }
     }

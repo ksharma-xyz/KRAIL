@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
 private val TIMELINE_CIRCLE_RADIUS = 5.dp
 private const val LABELLED_NAME_CAPTION_ALPHA = 0.65f
+private val CLICKABLE_CORNER_RADIUS = 8.dp
+private val CLICKABLE_VERTICAL_PADDING = 6.dp
 
 /**
  * Vertical timeline showing the origin and destination of a trip. Each stop
@@ -114,8 +118,15 @@ private fun StopColumn(
     } else {
         KrailTheme.typography.titleLarge
     }
+    // When clickable, give the touch target some breathing room and round its
+    // corners so the ripple reads as a tappable affordance rather than bleeding
+    // into adjacent content. Non-clickable surfaces (TrackTrip, intro) keep
+    // today's exact layout — no clip, no padding.
     val clickModifier = onClick?.let { handler ->
-        Modifier.klickable { handler(display) }
+        Modifier
+            .clip(RoundedCornerShape(CLICKABLE_CORNER_RADIUS))
+            .klickable { handler(display) }
+            .padding(vertical = CLICKABLE_VERTICAL_PADDING)
     } ?: Modifier
 
     Column(modifier = modifier.then(clickModifier)) {

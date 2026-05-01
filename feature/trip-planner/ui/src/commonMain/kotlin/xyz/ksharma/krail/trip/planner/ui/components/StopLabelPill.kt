@@ -71,8 +71,8 @@ internal fun SetLabelPill(
 
 /**
  * Outlined pill shown when a [StopLabel] has no stop assigned. Background stays
- * transparent so the screen's themed gradient shows through; the border uses the
- * dark `stopLabelSurface` token so the outline reads consistently across themes.
+ * transparent so the screen's themed gradient shows through; the border uses
+ * `onSurface` (full opacity) to match the weight of the OutlinedButton "+ Add" chip.
  *
  * Styling is locked inside the pill via composition locals.
  *
@@ -88,7 +88,7 @@ internal fun UnsetLabelPill(
 ) {
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
-    val borderColor = KrailTheme.colors.stopLabelSurface
+    val borderColor = KrailTheme.colors.onSurface
     val contentColor = KrailTheme.colors.label
 
     CompositionLocalProvider(

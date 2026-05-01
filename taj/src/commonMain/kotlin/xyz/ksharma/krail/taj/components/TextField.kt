@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldDecorator
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -61,6 +62,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     initialText: String? = null,
+    state: TextFieldState? = null,
     enabled: Boolean = true,
     textStyle: TextStyle? = null,
     readOnly: Boolean = false,
@@ -74,7 +76,10 @@ fun TextField(
     val isFocused by interactionSource.collectIsFocusedAsState()
     val contentAlpha = if (enabled) 1f else TextFieldTokens.DisabledLabelOpacity
 
-    val textFieldState = rememberTextFieldState(initialText.orEmpty())
+    // Hoisted state takes precedence — callers that need to mutate the text from
+    // outside (e.g. selecting a suggestion chip that fills the field) must pass
+    // their own state so the field is not rekeyed and focus / IME are preserved.
+    val textFieldState = state ?: rememberTextFieldState(initialText.orEmpty())
     val textSelectionColors = TextSelectionColors(
         handleColor = KrailTheme.colors.onSurface,
         backgroundColor = KrailTheme.colors.onSurface.copy(alpha = TextSelectionBackgroundOpacity),

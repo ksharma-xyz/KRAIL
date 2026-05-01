@@ -18,7 +18,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -70,7 +69,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import app.krail.taj.resources.ic_close
-import app.krail.taj.resources.ic_location
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -83,6 +81,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withTimeoutOrNull
+import krail.feature.trip_planner.ui.generated.resources.ic_map
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -93,6 +92,7 @@ import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.backgroundColorOf
+import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.OutlinedButton
@@ -108,10 +108,11 @@ import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.LabelConflictSheet
 import xyz.ksharma.krail.trip.planner.ui.components.SaveStopAsLabelSheet
+import xyz.ksharma.krail.trip.planner.ui.components.SetLabelPill
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
-import xyz.ksharma.krail.trip.planner.ui.components.stopLabelIcon
+import xyz.ksharma.krail.trip.planner.ui.components.UnsetLabelPill
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -121,6 +122,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
+import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -1431,11 +1433,28 @@ private fun LabelShortcutsRow(
         // reorderable library's drop-target calculations.
         if (editing) {
             item(key = "trailing-done") {
-                DonePill(onClick = onDoneEditing)
+                // Done sits next to the always-dark stopLabelSurface pills, so its
+                // container must be light in both modes — monochromeButtonColors flips
+                // to onSurface (dark in light mode), which would blend into the pills.
+                Button(
+                    onClick = onDoneEditing,
+                    colors = ButtonDefaults.buttonColors(
+                        customContainerColor = KrailTheme.colors.onStopLabelSurface,
+                        customContentColor = KrailTheme.colors.stopLabelSurface,
+                    ),
+                    dimensions = ButtonDefaults.chipButtonSize(),
+                ) {
+                    Text(text = "Done")
+                }
             }
         } else {
             item(key = "trailing-add") {
-                AddLabelPill(onClick = onAddLabelClick)
+                OutlinedButton(
+                    onClick = onAddLabelClick,
+                    dimensions = ButtonDefaults.chipButtonSize(),
+                ) {
+                    Text(text = "+ Add")
+                }
             }
         }
     }
@@ -1447,19 +1466,22 @@ private fun DeleteOverlay(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
+    // Pill background is always dark (stopLabelSurface), so the overlay must use the
+    // paired light token in both modes — using onSurface here would flip to dark in
+    // light mode and disappear into the pill.
     Box(
         modifier = modifier
             .offset(x = dim.spacingS, y = -dim.spacingS)
             .size(dim.spacingXXL)
             .clip(CircleShape)
-            .background(KrailTheme.colors.onSurface, CircleShape)
+            .background(KrailTheme.colors.onStopLabelSurface, CircleShape)
             .klickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(
             painter = painterResource(TajRes.drawable.ic_close),
             contentDescription = "Delete label",
-            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            colorFilter = ColorFilter.tint(KrailTheme.colors.stopLabelSurface),
             modifier = Modifier.size(dim.spacingL),
         )
     }
@@ -1490,87 +1512,6 @@ private fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
 }
 
 @Composable
-private fun SetLabelPill(
-    label: StopLabel,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
-    val themeColor = themeColor()
-    val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
-    Row(
-        modifier = modifier
-            .clip(shape)
-            .background(themeColor, shape)
-            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(icon),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-            modifier = Modifier.size(dim.spacingXL),
-        )
-        Text(
-            text = label.label,
-            style = KrailTheme.typography.labelLarge,
-            color = KrailTheme.colors.surface,
-        )
-    }
-}
-
-@Composable
-private fun UnsetLabelPill(
-    label: StopLabel,
-    @Suppress("UNUSED_PARAMETER") isAssigning: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
-    // Visual feedback for assigning mode is the scale-up animation on the parent Box;
-    // the pill's own colours stay constant so it doesn't blend into the themed
-    // background gradient.
-    val borderColor = KrailTheme.colors.label
-    val contentColor = KrailTheme.colors.label
-    val icon = stopLabelIcon(label.label) ?: TajRes.drawable.ic_location
-    Row(
-        modifier = modifier
-            .clip(shape)
-            .border(width = dim.strokeThin, color = borderColor, shape = shape)
-            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(icon),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(contentColor),
-            modifier = Modifier.size(dim.spacingXL),
-        )
-        Text(
-            text = label.label,
-            style = KrailTheme.typography.labelLarge,
-            color = contentColor,
-        )
-    }
-}
-
-@Composable
-private fun AddLabelPill(onClick: () -> Unit) {
-    // chipButtonSize matches the hand-rolled Set/Unset/Done pill geometry
-    // (chipHorizontal/Vertical padding, no min-height) so the row stays
-    // visually aligned. smallButtonSize was making "+ Add" noticeably shorter
-    // and narrower than its neighbours.
-    OutlinedButton(
-        onClick = onClick,
-        dimensions = ButtonDefaults.chipButtonSize(),
-    ) {
-        Text(text = "+ Add", style = KrailTheme.typography.labelLarge)
-    }
-}
-
-@Composable
 private fun PillRowInfoBanner(
     text: String,
     modifier: Modifier = Modifier,
@@ -1589,30 +1530,6 @@ private fun PillRowInfoBanner(
                 bottom = dim.spacingS,
             ),
     )
-}
-
-/**
- * Visually distinct from label pills — uses inverse onSurface/surface so "Done" reads
- * as an action button (like the journey-card map button), not as another pill.
- */
-@Composable
-private fun DonePill(onClick: () -> Unit) {
-    val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
-    Row(
-        modifier = Modifier
-            .clip(shape)
-            .background(KrailTheme.colors.onSurface, shape)
-            .klickable(onClick = onClick)
-            .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "Done",
-            style = KrailTheme.typography.labelLarge,
-            color = KrailTheme.colors.surface,
-        )
-    }
 }
 
 @Composable
@@ -1646,7 +1563,7 @@ private fun SelectOnMapItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(TajRes.drawable.ic_location),
+            painter = painterResource(TripPlannerRes.drawable.ic_map),
             contentDescription = null,
             colorFilter = ColorFilter.tint(color = KrailTheme.colors.onSurface),
             modifier = Modifier.size(dim.spacingXXL),

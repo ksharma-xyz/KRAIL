@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber", "TooManyFunctions")
+@file:Suppress("MagicNumber")
 
 package xyz.ksharma.krail.trip.planner.ui.departureboard
 
@@ -8,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,22 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
-import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
-import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.StopDepartureBoardEntry
@@ -106,10 +98,7 @@ fun LazyListScope.departureBoardAccordionSection(
 
 // ── Header card composable ────────────────────────────────────────────────────
 
-/**
- * The tappable header card for a stop section.
- * Shared by [departureBoardAccordionSection] (lazy use) and [DepartureBoardAccordionSection] (preview use).
- */
+/** Tappable header card for a stop section. */
 @Composable
 internal fun DepartureBoardAccordionSectionHeader(
     entry: StopDepartureBoardEntry,
@@ -203,158 +192,7 @@ private fun DepartureBoardAccordionContent(
     )
 }
 
-// ── Standalone composable (previews only) ────────────────────────────────────
-
-/**
- * Accordion section for a single stop. Uses a plain [Column] layout.
- * Intended for standalone Compose Previews — the production saved trips screen uses
- * [departureBoardAccordionSection] instead for per-item lazy list keys.
- */
-@Composable
-fun DepartureBoardAccordionSection(
-    entry: StopDepartureBoardEntry,
-    isExpanded: Boolean,
-    onExpandChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    onLoadPreviousDepartures: (String) -> Unit = {},
-    onRefreshStop: (String) -> Unit = {},
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        DepartureBoardAccordionSectionHeader(
-            entry = entry,
-            isExpanded = isExpanded,
-            onExpandChange = onExpandChange,
-        )
-
-        if (isExpanded) {
-            Column(modifier = Modifier.background(KrailTheme.colors.surface)) {
-                DepartureBoardAccordionContent(
-                    stopId = entry.stopId,
-                    state = entry.state,
-                    onLoadPreviousDepartures = onLoadPreviousDepartures,
-                    onRefreshStop = onRefreshStop,
-                )
-            }
-        }
-    }
-}
-
-// ── Previews ──────────────────────────────────────────────────────────────────
-
 private val SECTION_HEADER_BOTTOM_PADDING = 16.dp
 private val ARROW_ICON_SIZE = 18.dp
 private val DOTS_WIDTH = 32.dp
 private val DOTS_HEIGHT = 16.dp
-
-private const val TRANSPORT_MODE_TRAIN = "Train"
-private const val TRANSPORT_MODE_BUS = "Bus"
-
-private val previewTrainDepartures: ImmutableList<StopDeparture> = persistentListOf(
-    StopDeparture(
-        lineNumber = "T1",
-        lineColorCode = "#F99D1C",
-        transportModeName = TRANSPORT_MODE_TRAIN,
-        destinationName = "Liverpool via Strathfield",
-        departureTimeText = "11:30 AM",
-        departureUtcDateTime = "2026-04-08T01:30:00Z",
-        platformText = "Platform 4",
-        isRealTime = true,
-    ),
-    StopDeparture(
-        lineNumber = "T2",
-        lineColorCode = "#0098CD",
-        transportModeName = TRANSPORT_MODE_TRAIN,
-        destinationName = "Bondi Junction",
-        departureTimeText = "11:33 AM",
-        departureUtcDateTime = "2026-04-08T01:33:00Z",
-        platformText = "Platform 7",
-        isRealTime = false,
-    ),
-)
-
-private val previewMixedDepartures: ImmutableList<StopDeparture> = persistentListOf(
-    StopDeparture(
-        lineNumber = "T1",
-        lineColorCode = "#F99D1C",
-        transportModeName = TRANSPORT_MODE_TRAIN,
-        destinationName = "Liverpool via Strathfield",
-        departureTimeText = "11:30 AM",
-        departureUtcDateTime = "2026-04-08T01:30:00Z",
-        platformText = "Platform 4",
-        isRealTime = true,
-    ),
-    StopDeparture(
-        lineNumber = "333",
-        lineColorCode = "#00B5EF",
-        transportModeName = TRANSPORT_MODE_BUS,
-        destinationName = "Parramatta",
-        departureTimeText = "11:35 AM",
-        departureUtcDateTime = "2026-04-08T01:35:00Z",
-        platformText = "Stand A",
-        isRealTime = false,
-    ),
-)
-
-@PreviewComponent
-@Composable
-private fun DepartureBoardStopSectionCollapsedPreview() {
-    PreviewTheme(KrailThemeStyle.Train) {
-        DepartureBoardAccordionSection(
-            entry = StopDepartureBoardEntry(
-                stopId = "10111010",
-                stopName = "Toongabbie Station",
-                state = DeparturesState(isLoading = false, departures = previewTrainDepartures),
-            ),
-            isExpanded = false,
-            onExpandChange = {},
-        )
-    }
-}
-
-@PreviewComponent
-@Composable
-private fun DepartureBoardStopSectionExpandedTrainPreview() {
-    PreviewTheme(KrailThemeStyle.Train) {
-        DepartureBoardAccordionSection(
-            entry = StopDepartureBoardEntry(
-                stopId = "10111010",
-                stopName = "Toongabbie Station",
-                state = DeparturesState(isLoading = false, departures = previewTrainDepartures),
-            ),
-            isExpanded = true,
-            onExpandChange = {},
-        )
-    }
-}
-
-@Preview(name = "Expanded — mixed modes")
-@Composable
-private fun DepartureBoardStopSectionMixedPreview() {
-    PreviewTheme(KrailThemeStyle.Bus) {
-        DepartureBoardAccordionSection(
-            entry = StopDepartureBoardEntry(
-                stopId = "10111010",
-                stopName = "Central Station",
-                state = DeparturesState(isLoading = false, departures = previewMixedDepartures),
-            ),
-            isExpanded = true,
-            onExpandChange = {},
-        )
-    }
-}
-
-@Preview(name = "Loading state")
-@Composable
-private fun DepartureBoardStopSectionLoadingPreview() {
-    PreviewTheme(KrailThemeStyle.Train) {
-        DepartureBoardAccordionSection(
-            entry = StopDepartureBoardEntry(
-                stopId = "10111010",
-                stopName = "Toongabbie Station",
-                state = DeparturesState(isLoading = true),
-            ),
-            isExpanded = true,
-            onExpandChange = {},
-        )
-    }
-}

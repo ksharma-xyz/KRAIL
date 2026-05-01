@@ -99,7 +99,7 @@ import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.LiveVehicleLayer
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.TrackedJourneyMapMapper.toJourneyMapState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
-import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 import xyz.ksharma.krail.trip.planner.ui.timetable.ActionButton
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -275,12 +275,8 @@ private fun PromptContent(
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         OriginDestination(
-            trip = Trip(
-                fromStopId = deepLink.fromStopId,
-                fromStopName = deepLink.fromStopName,
-                toStopId = deepLink.toStopId,
-                toStopName = deepLink.toStopName,
-            ),
+            origin = StopDisplay(stopId = deepLink.fromStopId, name = deepLink.fromStopName),
+            destination = StopDisplay(stopId = deepLink.toStopId, name = deepLink.toStopName),
             timeLineColor = KrailTheme.colors.onSurface,
             modifier = Modifier
                 .fillMaxWidth()
@@ -315,12 +311,8 @@ private fun LoadingContent(
     Column(modifier = modifier.fillMaxSize()) {
         deepLink?.let { dl ->
             OriginDestination(
-                trip = Trip(
-                    fromStopId = dl.fromStopId,
-                    fromStopName = dl.fromStopName,
-                    toStopId = dl.toStopId,
-                    toStopName = dl.toStopName,
-                ),
+                origin = StopDisplay(stopId = dl.fromStopId, name = dl.fromStopName),
+                destination = StopDisplay(stopId = dl.toStopId, name = dl.toStopName),
                 timeLineColor = KrailTheme.colors.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -411,12 +403,8 @@ private fun JourneyContent(
         ) {
             item(key = "origin-destination") {
                 OriginDestination(
-                    trip = Trip(
-                        fromStopId = journey.fromStopId,
-                        fromStopName = journey.fromStopName,
-                        toStopId = journey.toStopId,
-                        toStopName = journey.toStopName,
-                    ),
+                    origin = StopDisplay(stopId = journey.fromStopId, name = journey.fromStopName),
+                    destination = StopDisplay(stopId = journey.toStopId, name = journey.toStopName),
                     timeLineColor = KrailTheme.colors.onSurface,
                     modifier = Modifier
                         .fillMaxWidth()

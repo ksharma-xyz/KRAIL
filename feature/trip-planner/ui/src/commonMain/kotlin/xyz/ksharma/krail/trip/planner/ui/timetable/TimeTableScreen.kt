@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -54,11 +55,13 @@ import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_star
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
+import xyz.ksharma.krail.departures.ui.DeparturesViewModel
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Button
@@ -74,14 +77,19 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.ActionData
+import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.JourneyCard
 import xyz.ksharma.krail.trip.planner.ui.components.JourneyCardState
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
+import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -109,6 +117,9 @@ fun TimeTableScreen(
         mutableStateListOf(*timeTableState.unselectedModes.toTypedArray())
     }
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
+    // Tracks which stop's details sheet is open. Tap on a stop in the
+    // OriginDestination header sets this; the sheet is dismissed back to null.
+    var selectedStop by remember { mutableStateOf<StopDisplay?>(null) }
 
     Column(
         modifier = modifier.fillMaxSize().background(color = KrailTheme.colors.surface),
@@ -190,8 +201,11 @@ fun TimeTableScreen(
             item(key = "Origin-Destination") {
                 timeTableState.trip?.let { trip ->
                     OriginDestination(
-                        trip = trip,
+                        origin = trip.fromStopDisplay(timeTableState.stopLabels),
+                        destination = trip.toStopDisplay(timeTableState.stopLabels),
                         timeLineColor = KrailTheme.colors.onSurface,
+                        onOriginClick = { display -> selectedStop = display },
+                        onDestinationClick = { display -> selectedStop = display },
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .background(color = KrailTheme.colors.surface),
@@ -366,6 +380,33 @@ fun TimeTableScreen(
                     modifier = Modifier.height(96.dp).systemBarsPadding(),
                 )
             }
+        }
+
+        selectedStop?.let { stop ->
+            // Stop-details sheet — opened by tapping a stop in the timetable
+            // header. Mirrors the SearchStopMap wrapper's contents minus the
+            // map-only bits (LatLng, parkAndRide indicator, "Select stop"
+            // action button) since this sheet is opened from inside a trip,
+            // not from a search picker. transportModes left empty until we
+            // have a per-stop modes lookup wired in.
+            val departuresViewModel = koinViewModel<DeparturesViewModel>()
+            val departuresState by departuresViewModel.uiState
+                .collectAsStateWithLifecycle()
+            StopDetailsBottomSheet(
+                stopId = stop.stopId,
+                stopName = stop.name,
+                transportModes = persistentListOf(),
+                onDismiss = { selectedStop = null },
+                additionalInfo = {
+                    DepartureBoardStopCard(
+                        stopId = stop.stopId,
+                        stopName = stop.name,
+                        state = departuresState,
+                        onEvent = departuresViewModel::onEvent,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                },
+            )
         }
     }
 }

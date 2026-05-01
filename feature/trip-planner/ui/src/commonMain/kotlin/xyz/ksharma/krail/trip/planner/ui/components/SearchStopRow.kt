@@ -51,6 +51,8 @@ import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
@@ -110,13 +112,13 @@ fun SearchStopRow(
                     initialOffsetY = { it },
                     animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 ) + fadeIn(animationSpec = tween(400)) togetherWith
-                    fadeOut(animationSpec = tween(150))
+                        fadeOut(animationSpec = tween(150))
             } else {
                 fadeIn(animationSpec = tween(100)) togetherWith
-                    slideOutVertically(
-                        targetOffsetY = { it },
-                        animationSpec = tween(350, easing = FastOutSlowInEasing),
-                    ) + fadeOut(animationSpec = tween(250))
+                        slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = tween(350, easing = FastOutSlowInEasing),
+                        ) + fadeOut(animationSpec = tween(250))
             }
         },
         modifier = modifier,
@@ -166,22 +168,13 @@ private fun CollapsedPill(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .wrapContentWidth()
-                .background(color = themeColorHex.hexToComposeColor(), shape = shape)
-                .klickable(onClick = onClick)
-                .padding(
-                    horizontal = dim.buttonLargeHorizontalPadding,
-                    vertical = dim.spacingML,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-            verticalAlignment = Alignment.CenterVertically,
+
+        Button(
+            dimensions = ButtonDefaults.mediumButtonSize(),
+            onClick = onClick
         ) {
             Text(
-                text = "+ Plan a trip",
-                style = KrailTheme.typography.titleSmall,
-                color = KrailTheme.colors.surface,
+                text = "Plan a trip",
             )
         }
     }
@@ -262,14 +255,14 @@ private fun ExpandedSearchRow(
                         targetState = fromStopItem?.stopName ?: "Starting from",
                         transitionSpec = {
                             fadeIn(animationSpec = tween(200)) +
-                                slideInVertically(
-                                    initialOffsetY = { it / 2 },
-                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
-                                ) togetherWith fadeOut(animationSpec = tween(200)) +
-                                slideOutVertically(
-                                    targetOffsetY = { -it / 2 },
-                                    animationSpec = tween(500),
-                                )
+                                    slideInVertically(
+                                        initialOffsetY = { it / 2 },
+                                        animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                    ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                    slideOutVertically(
+                                        targetOffsetY = { -it / 2 },
+                                        animationSpec = tween(500),
+                                    )
                         },
                         contentAlignment = Alignment.CenterStart,
                         label = "startingFromText",
@@ -294,14 +287,14 @@ private fun ExpandedSearchRow(
                     targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
                         fadeIn(animationSpec = tween(200)) +
-                            slideInVertically(
-                                initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = FastOutSlowInEasing),
-                            ) togetherWith fadeOut(animationSpec = tween(200)) +
-                            slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(500),
-                            )
+                                slideInVertically(
+                                    initialOffsetY = { -it / 2 },
+                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 2 },
+                                    animationSpec = tween(500),
+                                )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "destinationText",

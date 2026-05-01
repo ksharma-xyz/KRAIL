@@ -46,7 +46,6 @@ fun SavedTripCard(
 ) {
     val dim = KrailTheme.dimensions
     val cardShape = CardShape
-    val bothLabelled = fromDisplay.label != null && toDisplay.label != null
 
     Row(
         modifier = modifier
@@ -60,10 +59,12 @@ fun SavedTripCard(
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         // Stop content — two layouts depending on whether both stops are labelled
-        if (bothLabelled) {
+        val fromLabel = fromDisplay.label
+        val toLabel = toDisplay.label
+        if (fromLabel != null && toLabel != null) {
             LabelledSavedTripContent(
-                fromLabel = fromDisplay.label!!,
-                toLabel = toDisplay.label!!,
+                fromLabel = fromLabel,
+                toLabel = toLabel,
                 modifier = Modifier.weight(1f),
             )
         } else {
@@ -122,7 +123,6 @@ private fun LabelledSavedTripContent(
         Text(
             text = "to",
             style = KrailTheme.typography.bodySmall,
-            color = KrailTheme.colors.softLabel,
         )
         Text(
             text = toLabel,

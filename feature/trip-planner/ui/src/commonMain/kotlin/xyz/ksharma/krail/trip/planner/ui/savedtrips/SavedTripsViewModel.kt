@@ -277,8 +277,16 @@ class SavedTripsViewModel(
         viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
             sandook.observeStopLabels()
                 .distinctUntilChanged()
-                .collect { labels ->
-                    updateUiState { copy(stopLabels = labels.toImmutableList()) }
+                .collect { rows ->
+                    val labels = rows.map { row ->
+                        StopLabel(
+                            emoji = row.emoji,
+                            label = row.label,
+                            stopId = row.stop_id,
+                            stopName = row.stop_name,
+                        )
+                    }.toImmutableList()
+                    updateUiState { copy(stopLabels = labels) }
                 }
         }
     }

@@ -8,40 +8,50 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
+import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
+import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
-private val TIMELINE_CIRCLE_RADIUS = 5.dp
-private const val LABELLED_NAME_CAPTION_ALPHA = 0.65f
-private val CLICKABLE_CORNER_RADIUS = 8.dp
-private val CLICKABLE_VERTICAL_PADDING = 6.dp
+private val SHADOW_RADIUS = 12.dp
+private val SHADOW_SPREAD = 2.dp
+private const val SHADOW_ALPHA = 1f
+private val ORIGIN_CIRCLE_SIZE = 10.dp
+private val STOP_ROW_VERTICAL_PADDING = 12.dp
 
-/**
- * Vertical timeline showing the origin and destination of a trip. Each stop
- * renders the user's label as primary text when set, with the raw stop name
- * as a smaller caption underneath; unlabelled stops keep the existing
- * single-line treatment.
- *
- * Optional click handlers light up only when the caller passes them — the
- * timetable screen wires them to a stop-details sheet, while TrackTrip and
- * the intro screen leave them null and stay non-interactive.
- */
 @Composable
 internal fun OriginDestination(
     origin: StopDisplay,
@@ -52,86 +62,92 @@ internal fun OriginDestination(
     onDestinationClick: ((StopDisplay) -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
+    val cardShape = CardShape
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = dim.spacingXL),
+            .dropShadow(
+                shape = cardShape,
+                shadow = Shadow(
+                    radius = SHADOW_RADIUS,
+                    color = themeBackgroundColor(),
+                    spread = SHADOW_SPREAD,
+                    alpha = SHADOW_ALPHA,
+                ),
+            )
+            .clip(cardShape)
+            .border(
+                width = dim.strokeThin,
+                color = themeBackgroundColor(),
+                shape = cardShape,
+            )
+            .background(color = KrailTheme.colors.surface, shape = cardShape),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .timeLineTop(
-                    color = timeLineColor,
-                    strokeWidth = dim.strokeMedium,
-                    circleRadius = TIMELINE_CIRCLE_RADIUS,
-                ),
-        ) {
-            StopColumn(
-                display = origin,
-                timeLineColor = timeLineColor,
-                onClick = onOriginClick,
-                animationLabel = "originStopName",
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .fillMaxWidth(),
-            )
-        }
-
-        Spacer(
-            modifier = Modifier.fillMaxWidth()
-                .height(12.dp)
-                .timeLineCenter(color = timeLineColor, strokeWidth = 3.dp),
+        StopRow(
+            display = origin,
+            isOrigin = true,
+            timeLineColor = timeLineColor,
+            onClick = onOriginClick,
         )
-
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .timeLineBottom(
-                    color = timeLineColor,
-                    strokeWidth = 3.dp,
-                    circleRadius = 5.dp,
-                ),
-        ) {
-            StopColumn(
-                display = destination,
-                timeLineColor = timeLineColor,
-                onClick = onDestinationClick,
-                animationLabel = "destinationStopName",
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .fillMaxWidth(),
-            )
-        }
+        Divider(modifier = Modifier.padding(start = dim.spacingXL, end = dim.spacingM))
+        StopRow(
+            display = destination,
+            isOrigin = false,
+            timeLineColor = timeLineColor,
+            onClick = onDestinationClick,
+        )
     }
 }
 
 @Composable
-private fun StopColumn(
+private fun StopRow(
     display: StopDisplay,
+    isOrigin: Boolean,
     timeLineColor: Color,
     onClick: ((StopDisplay) -> Unit)?,
-    animationLabel: String,
     modifier: Modifier = Modifier,
 ) {
-    val labelled = display.label != null
-    val primaryText = display.label ?: display.name
-    val primaryStyle = if (labelled) {
-        KrailTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold)
-    } else {
-        KrailTheme.typography.titleLarge
-    }
-    // When clickable, give the touch target some breathing room and round its
-    // corners so the ripple reads as a tappable affordance rather than bleeding
-    // into adjacent content. Non-clickable surfaces (TrackTrip, intro) keep
-    // today's exact layout — no clip, no padding.
+    val dim = KrailTheme.dimensions
     val clickModifier = onClick?.let { handler ->
-        Modifier
-            .clip(RoundedCornerShape(CLICKABLE_CORNER_RADIUS))
-            .klickable { handler(display) }
-            .padding(vertical = CLICKABLE_VERTICAL_PADDING)
+        Modifier.klickable { handler(display) }
     } ?: Modifier
+    val displayText = if (display.label != null) {
+        "${display.label} (${display.name})"
+    } else {
+        display.name
+    }
 
-    Column(modifier = modifier.then(clickModifier)) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(clickModifier)
+            .padding(horizontal = dim.spacingXL, vertical = STOP_ROW_VERTICAL_PADDING),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+    ) {
+        Box(
+            modifier = Modifier.size(dim.iconSmall),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (isOrigin) {
+                Box(
+                    modifier = Modifier
+                        .size(ORIGIN_CIRCLE_SIZE)
+                        .background(timeLineColor, CircleShape),
+                )
+            } else {
+                Image(
+                    painter = painterResource(Res.drawable.ic_location_on),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(timeLineColor),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
         AnimatedContent(
-            targetState = primaryText,
+            targetState = displayText,
             transitionSpec = {
                 (
                     fadeIn(animationSpec = tween(200)) +
@@ -148,22 +164,56 @@ private fun StopColumn(
                     )
             },
             contentAlignment = Alignment.CenterStart,
-            label = animationLabel,
+            label = if (isOrigin) "originStopName" else "destinationStopName",
         ) { targetText ->
             Text(
                 text = targetText,
-                color = timeLineColor,
-                style = primaryStyle,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (labelled) {
-            Text(
-                text = display.name,
-                color = timeLineColor.copy(alpha = LABELLED_NAME_CAPTION_ALPHA),
-                style = KrailTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
+                style = KrailTheme.typography.titleMedium,
+                color = KrailTheme.colors.onSurface,
             )
         }
     }
 }
+
+// region Previews
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewOriginDestination_Unlabelled() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        OriginDestination(
+            origin = StopDisplay(stopId = "1", name = "Central Station"),
+            destination = StopDisplay(stopId = "2", name = "Town Hall Station"),
+            timeLineColor = themeColor(),
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewOriginDestination_BothLabelled() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
+        OriginDestination(
+            origin = StopDisplay(stopId = "1", name = "Central Station", label = "Home"),
+            destination = StopDisplay(stopId = "2", name = "Town Hall Station", label = "Work"),
+            timeLineColor = themeColor(),
+        )
+    }
+}
+
+@ScreenshotTest
+@Preview(name = "Origin labelled only — Ferry")
+@Composable
+private fun PreviewOriginDestination_OriginLabelledOnly() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
+        OriginDestination(
+            origin = StopDisplay(stopId = "1", name = "Manly Wharf", label = "Home"),
+            destination = StopDisplay(stopId = "2", name = "Circular Quay Wharf"),
+            timeLineColor = themeColor(),
+        )
+    }
+}
+
+// endregion

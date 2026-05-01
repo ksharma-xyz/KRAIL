@@ -4,15 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.feature.track.TrackedJourney
-import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -40,16 +37,10 @@ fun TrackingCard(
             Text(text = tracked.deepLink.toStopName, style = KrailTheme.typography.bodyMedium)
         }
 
-        RoundIconButton(
+        OutlinedButton(
             onClick = onStopTracking,
-            color = KrailTheme.colors.onSurface,
-            onClickLabel = "Stop tracking",
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = null,
-                tint = KrailTheme.colors.surface,
-            )
+            Text("Stop")
         }
     }
 }

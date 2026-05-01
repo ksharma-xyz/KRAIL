@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
@@ -28,16 +27,18 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
 @Composable
 fun SavedTripCard(
-    trip: Trip,
+    fromDisplay: StopDisplay,
+    toDisplay: StopDisplay,
     primaryTransportMode: TransportMode?,
     onStarClick: () -> Unit,
     onCardClick: () -> Unit,
@@ -59,12 +60,11 @@ fun SavedTripCard(
         }
 
         Column(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(dim.cardInternalSpacing),
         ) {
-            Text(text = trip.fromStopName, style = KrailTheme.typography.bodyMedium)
-            Text(text = trip.toStopName, style = KrailTheme.typography.bodyMedium)
+            StopDisplayRow(display = fromDisplay)
+            StopDisplayRow(display = toDisplay)
         }
 
         Box(
@@ -98,19 +98,46 @@ fun SavedTripCard(
     }
 }
 
+@Composable
+private fun StopDisplayRow(
+    display: StopDisplay,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    val displayText = if (display.label != null) {
+        "${display.label} (${display.name})"
+    } else {
+        display.name
+    }
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+    ) {
+        display.label?.let { label ->
+            stopLabelIcon(label)?.let { icon ->
+                Image(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                    modifier = Modifier.size(dim.spacingL),
+                )
+            }
+        }
+        Text(text = displayText, style = KrailTheme.typography.bodyMedium)
+    }
+}
+
 // region Previews
 
-@Preview
+@PreviewComponent
 @Composable
 private fun SavedTripCardPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
         SavedTripCard(
-            trip = Trip(
-                fromStopId = "1",
-                fromStopName = "Edmondson Park Station",
-                toStopId = "2",
-                toStopName = "Harris Park Station",
-            ),
+            fromDisplay = StopDisplay(stopId = "1", name = "Edmondson Park Station"),
+            toDisplay = StopDisplay(stopId = "2", name = "Harris Park Station"),
             primaryTransportMode = TransportMode.Train,
             onCardClick = {},
             onStarClick = {},
@@ -118,7 +145,21 @@ private fun SavedTripCardPreview() {
     }
 }
 
-@Preview
+@PreviewComponent
+@Composable
+private fun SavedTripCardLabelledPreview() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        SavedTripCard(
+            fromDisplay = StopDisplay(stopId = "1", name = "Central Station", label = "Home"),
+            toDisplay = StopDisplay(stopId = "2", name = "Town Hall Station", label = "Work"),
+            primaryTransportMode = TransportMode.Train,
+            onCardClick = {},
+            onStarClick = {},
+        )
+    }
+}
+
+@PreviewComponent
 @Composable
 private fun SavedTripCardListPreview() {
     PreviewTheme {
@@ -128,48 +169,32 @@ private fun SavedTripCardListPreview() {
             verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
         ) {
             SavedTripCard(
-                trip = Trip(
-                    fromStopId = "1",
-                    fromStopName = "Edmondson Park Station",
-                    toStopId = "2",
-                    toStopName = "Harris Park Station",
-                ),
+                fromDisplay = StopDisplay(stopId = "1", name = "Edmondson Park Station"),
+                toDisplay = StopDisplay(stopId = "2", name = "Harris Park Station"),
                 primaryTransportMode = TransportMode.Train,
                 onCardClick = {},
                 onStarClick = {},
             )
 
             SavedTripCard(
-                trip = Trip(
-                    fromStopId = "1",
-                    fromStopName = "Harrington Street, Stand D",
-                    toStopId = "2",
-                    toStopName = "Albert Rd, Stand A",
-                ),
+                fromDisplay = StopDisplay(stopId = "1", name = "Harrington Street, Stand D"),
+                toDisplay = StopDisplay(stopId = "2", name = "Albert Rd, Stand A"),
                 primaryTransportMode = TransportMode.Bus,
                 onCardClick = {},
                 onStarClick = {},
             )
 
             SavedTripCard(
-                trip = Trip(
-                    fromStopId = "1",
-                    fromStopName = "Manly Wharf",
-                    toStopId = "2",
-                    toStopName = "Circular Quay Wharf",
-                ),
+                fromDisplay = StopDisplay(stopId = "1", name = "Manly Wharf", label = "Home"),
+                toDisplay = StopDisplay(stopId = "2", name = "Circular Quay Wharf", label = "Work"),
                 primaryTransportMode = TransportMode.Ferry,
                 onCardClick = {},
                 onStarClick = {},
             )
 
             SavedTripCard(
-                trip = Trip(
-                    fromStopId = "1",
-                    fromStopName = "Central Station",
-                    toStopId = "2",
-                    toStopName = "Town Hall Station",
-                ),
+                fromDisplay = StopDisplay(stopId = "1", name = "Central Station"),
+                toDisplay = StopDisplay(stopId = "2", name = "Town Hall Station"),
                 primaryTransportMode = TransportMode.Metro,
                 onCardClick = {},
                 onStarClick = {},

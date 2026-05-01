@@ -70,6 +70,8 @@ import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionS
 import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
@@ -395,7 +397,8 @@ private fun LazyListScope.savedTripsContent(
     ) { trip ->
         val dim = KrailTheme.dimensions
         SavedTripCard(
-            trip = trip,
+            fromDisplay = trip.fromStopDisplay(savedTripsState.stopLabels),
+            toDisplay = trip.toStopDisplay(savedTripsState.stopLabels),
             onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
             onCardClick = {
                 onSavedTripCardClick(

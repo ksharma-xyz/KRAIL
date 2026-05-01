@@ -118,6 +118,7 @@ class SavedTripsViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SavedTrips)
             observeSavedTrips()
+            observeStopLabels()
             seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
@@ -269,6 +270,24 @@ class SavedTripsViewModel(
                     }.toImmutableList(),
                 )
             }
+        }
+    }
+
+    private fun observeStopLabels() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            sandook.observeStopLabels()
+                .distinctUntilChanged()
+                .collect { rows ->
+                    val labels = rows.map { row ->
+                        StopLabel(
+                            emoji = row.emoji,
+                            label = row.label,
+                            stopId = row.stop_id,
+                            stopName = row.stop_name,
+                        )
+                    }.toImmutableList()
+                    updateUiState { copy(stopLabels = labels) }
+                }
         }
     }
 

@@ -106,6 +106,17 @@ implementation(project(":core:log"))
 `enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")` is active in `settings.gradle.kts`.
 The accessor name mirrors the directory path with dots (`core/log` → `projects.core.log`).
 
+## Preview Annotations
+
+Always use the project's custom preview annotations — never bare `@Preview`.
+
+| Annotation | Use for |
+|---|---|
+| `@PreviewComponent` | Individual components / composables |
+| `@ScreenPreview` | Full screens |
+
+Both are defined in `xyz.ksharma.krail.taj.preview`. They expand to multiple device/theme combinations automatically. Using `@Preview` directly produces a single-config preview and misses dark mode, font scale, etc.
+
 ## Per-feature UX rule docs
 
 Some features have a markdown file capturing their UX invariants and outstanding test

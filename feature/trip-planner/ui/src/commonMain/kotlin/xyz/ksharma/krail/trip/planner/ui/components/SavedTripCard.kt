@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,7 +54,11 @@ fun SavedTripCard(
             .clip(cardShape)
             .background(color = themeBackgroundColor(), shape = cardShape)
             .klickable(onClick = onCardClick)
-            .padding(horizontal = dim.spacingXL, vertical = dim.spacingXL)
+            .padding(
+                horizontal = dim.spacingXL,
+                vertical = if (fromDisplay.label != null && toDisplay.label != null)
+                    dim.spacingS else dim.spacingXL
+            )
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
@@ -112,9 +117,10 @@ private fun LabelledSavedTripContent(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    Column(
+    FlowRow(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS)
     ) {
         Text(
             text = fromLabel,
@@ -142,27 +148,15 @@ private fun StopDisplayRow(
         verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
     ) {
         display.label?.let { label ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-            ) {
-                stopLabelIcon(label)?.let { icon ->
-                    Image(
-                        painter = painterResource(icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                        modifier = Modifier.size(dim.spacingXL),
-                    )
-                }
-                Text(
-                    text = label,
-                    style = KrailTheme.typography.titleMedium,
-                )
-            }
+            Text(
+                text = label,
+                style = KrailTheme.typography.titleMedium,
+            )
         }
         Text(
             text = display.name,
-            style = KrailTheme.typography.bodyMedium,
+            style = if (display.label != null) KrailTheme.typography.bodySmall
+            else KrailTheme.typography.bodyLarge,
         )
     }
 }

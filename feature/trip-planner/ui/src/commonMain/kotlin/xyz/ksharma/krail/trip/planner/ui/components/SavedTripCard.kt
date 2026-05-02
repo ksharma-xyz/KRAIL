@@ -7,14 +7,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -48,7 +47,6 @@ fun SavedTripCard(
 ) {
     val dim = KrailTheme.dimensions
     val cardShape = CardShape
-    val bothLabelled = fromDisplay.label != null && toDisplay.label != null
 
     Row(
         modifier = modifier
@@ -56,16 +54,25 @@ fun SavedTripCard(
             .clip(cardShape)
             .background(color = themeBackgroundColor(), shape = cardShape)
             .klickable(onClick = onCardClick)
-            .padding(horizontal = dim.spacingXL, vertical = dim.spacingXL)
+            .padding(
+                horizontal = dim.spacingXL,
+                vertical = if (fromDisplay.label != null && toDisplay.label != null) {
+                    dim.spacingS
+                } else {
+                    dim.spacingXL
+                },
+            )
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         // Stop content — two layouts depending on whether both stops are labelled
-        if (bothLabelled) {
-            BothLabelledContent(
-                fromDisplay = fromDisplay,
-                toDisplay = toDisplay,
+        val fromLabel = fromDisplay.label
+        val toLabel = toDisplay.label
+        if (fromLabel != null && toLabel != null) {
+            LabelledSavedTripContent(
+                fromLabel = fromLabel,
+                toLabel = toLabel,
                 modifier = Modifier.weight(1f),
             )
         } else {
@@ -103,65 +110,32 @@ fun SavedTripCard(
 }
 
 /**
- * Side-by-side two-column layout used when both stops carry a user label.
- * Labels are the primary text; stop names render as secondary below them.
- * A thin vertical divider separates the columns.
+ * Shown when both stops carry a user label. Presents labels as the sole content:
+ * fromLabel (bold), "to" (muted small), toLabel (bold). No stop names or icons.
  */
 @Composable
-private fun BothLabelledContent(
-    fromDisplay: StopDisplay,
-    toDisplay: StopDisplay,
+private fun LabelledSavedTripContent(
+    fromLabel: String,
+    toLabel: String,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    Row(
-        modifier = modifier.height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        LabelledStopColumn(display = fromDisplay, modifier = Modifier.weight(1f))
-        Box(
-            modifier = Modifier
-                .width(dim.strokeThin)
-                .fillMaxHeight()
-                .background(KrailTheme.colors.outlineSubtle),
-        )
-        LabelledStopColumn(display = toDisplay, modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun LabelledStopColumn(
-    display: StopDisplay,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    Column(
+    FlowRow(
         modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
     ) {
-        Row(
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-        ) {
-            display.label?.let { label ->
-                stopLabelIcon(label)?.let { icon ->
-                    Image(
-                        painter = painterResource(icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                        modifier = Modifier.size(dim.spacingXL),
-                    )
-                }
-                Text(
-                    text = label,
-                    style = KrailTheme.typography.titleMedium,
-                )
-            }
-        }
         Text(
-            text = display.name,
-            style = KrailTheme.typography.bodyMedium,
+            text = fromLabel,
+            style = KrailTheme.typography.titleMedium,
+        )
+        Text(
+            text = "to",
+            style = KrailTheme.typography.bodySmall,
+        )
+        Text(
+            text = toLabel,
+            style = KrailTheme.typography.titleMedium,
         )
     }
 }
@@ -177,27 +151,18 @@ private fun StopDisplayRow(
         verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
     ) {
         display.label?.let { label ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-            ) {
-                stopLabelIcon(label)?.let { icon ->
-                    Image(
-                        painter = painterResource(icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                        modifier = Modifier.size(dim.spacingXL),
-                    )
-                }
-                Text(
-                    text = label,
-                    style = KrailTheme.typography.titleMedium,
-                )
-            }
+            Text(
+                text = label,
+                style = KrailTheme.typography.titleMedium,
+            )
         }
         Text(
             text = display.name,
-            style = KrailTheme.typography.bodyMedium,
+            style = if (display.label != null) {
+                KrailTheme.typography.bodySmall
+            } else {
+                KrailTheme.typography.bodyLarge
+            },
         )
     }
 }

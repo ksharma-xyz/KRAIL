@@ -1434,13 +1434,11 @@ private fun LabelShortcutsRow(
         // the END (not the front) keeps the reorder UX smooth — front-anchored Done
         // shifted layout when items dragged toward index 0, which fought the
         // reorderable library's drop-target calculations.
-        // Both Done and + Add share the same solid pill colors and asymmetric padding
-        // (double start to create visual breathing room from the label pills).
         if (editing) {
             item(key = "trailing-done") {
                 Button(
                     onClick = onDoneEditing,
-                    colors = pillButtonColors,
+                    colors = ButtonDefaults.monochromeButtonColors(),
                     dimensions = ButtonDefaults.chipButtonSize(),
                     modifier = Modifier.padding(start = dim.spacingM),
                 ) {

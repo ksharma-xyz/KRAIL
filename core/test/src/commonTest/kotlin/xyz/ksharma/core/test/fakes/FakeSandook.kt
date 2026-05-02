@@ -87,6 +87,7 @@ class FakeSandook : Sandook {
         toStopId: String,
         toStopName: String,
     ) {
+        val existingSortOrder = tripsFlow.value.find { it.tripId == tripId }?.sort_order ?: 0L
         val trip = SavedTrip(
             tripId,
             fromStopId,
@@ -94,6 +95,7 @@ class FakeSandook : Sandook {
             toStopId,
             toStopName,
             timestamp = null,
+            sort_order = existingSortOrder,
         )
         val current = tripsFlow.value.toMutableList()
         current.removeAll { it.tripId == tripId }
@@ -117,6 +119,12 @@ class FakeSandook : Sandook {
 
     override fun selectTripById(tripId: String): SavedTrip? {
         return tripsFlow.value.find { it.tripId == tripId }
+    }
+
+    override fun updateSavedTripSortOrder(tripId: String, sortOrder: Long) {
+        tripsFlow.value = tripsFlow.value.map { trip ->
+            if (trip.tripId == tripId) trip.copy(sort_order = sortOrder) else trip
+        }
     }
 
     override fun clearSavedTrips() {

@@ -70,6 +70,10 @@ internal class RealSandook(
         return query.selectTripById(tripId).executeAsOneOrNull()
     }
 
+    override fun updateSavedTripSortOrder(tripId: String, sortOrder: Long) {
+        query.updateSavedTripSortOrder(sort_order = sortOrder, tripId = tripId)
+    }
+
     override fun clearSavedTrips() {
         query.clearSavedTrips()
     }

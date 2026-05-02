@@ -23,4 +23,6 @@ data class SavedTripsState(
     val toStop: StopItem? = null,
     val hasSeenInviteFriendsTile: Boolean = false,
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
+    // Default true so the tip is hidden until the preference is loaded from DB.
+    val hasSeenReorderTip: Boolean = true,
 )

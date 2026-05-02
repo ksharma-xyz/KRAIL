@@ -1,0 +1,75 @@
+name: Generate Release Notes
+
+# Manually triggered only — run this after cutting a release to get
+# AI-written Play Store + App Store copy.
+#
+# Prerequisites (one-time setup):
+#   1. Create an Anthropic API account at https://console.anthropic.com
+#      (separate from your Claude.ai subscription — API usage is billed
+#       per token. Generating release notes costs ~$0.003 per run using
+#       claude-haiku-4-5-20251001.)
+#   2. Add ANTHROPIC_API_KEY to repo secrets:
+#      GitHub → Settings → Secrets → Actions → New repository secret
+#
+# Usage:
+#   Actions → Generate Release Notes → Run workflow
+#   Fill in the two tag fields and click Run.
+#
+# Output:
+#   The generated notes appear in the Job Summary of this run.
+#   Copy them from there into the Play Store / App Store consoles.
+#   The GitHub Release draft body is also updated automatically.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag:
+        description: 'Previous release tag (e.g. v1.19.0)'
+        required: true
+        type: string
+      to_tag:
+        description: 'New release tag (e.g. v1.20.0)'
+        required: true
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed to update the GitHub Release draft
+
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # required — script reads git log between tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Anthropic SDK
+        run: pip install --quiet anthropic
+
+      - name: Generate release notes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --from "${{ inputs.from_tag }}" \
+            --to   "${{ inputs.to_tag }}" \
+            --output-file release_notes.txt
+
+      - name: Write to Job Summary
+        run: cat release_notes.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: Update GitHub Release draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Update the GitHub Release draft body with the AI-generated notes.
+          # Strips the markdown header lines — keeps just the notes content.
+          tail -n +6 release_notes.txt | head -n -3 > release_body.txt
+          gh release edit "${{ inputs.to_tag }}" --notes-file release_body.txt \
+            || echo "::warning::Could not update GitHub Release (it may not exist yet for ${{ inputs.to_tag }} — create a draft first)."

@@ -602,6 +602,7 @@ private class FakeSandook : xyz.ksharma.krail.sandook.Sandook {
     override fun selectAllTrips(): List<xyz.ksharma.krail.sandook.SavedTrip> = emptyList()
     override fun observeAllTrips(): Flow<List<xyz.ksharma.krail.sandook.SavedTrip>> = flowOf(emptyList())
     override fun selectTripById(tripId: String): xyz.ksharma.krail.sandook.SavedTrip? = null
+    override fun updateSavedTripSortOrder(tripId: String, sortOrder: Long) = Unit
     override fun clearSavedTrips() = Unit
     override fun getAlerts(journeyId: String): List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId> = emptyList()
     override fun clearAlerts() = Unit

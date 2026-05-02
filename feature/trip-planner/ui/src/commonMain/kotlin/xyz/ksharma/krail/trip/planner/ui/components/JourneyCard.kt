@@ -46,6 +46,7 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.AlertButton
@@ -531,7 +532,7 @@ private fun buildShareText(
     } else {
         "I'll arrive at $destinationTime — about $totalTravelTime away."
     }
-    val link = deepLinkUrl ?: "https://krail.app"
+    val link = deepLinkUrl ?: KRAIL_WEBSITE_URL
     return "Hey mate!\n\n$journeyLine\n\nTrack this trip live on KRAIL!\n$link"
 }
 

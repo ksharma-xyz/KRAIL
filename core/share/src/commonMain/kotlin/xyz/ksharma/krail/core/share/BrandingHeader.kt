@@ -2,6 +2,7 @@ package xyz.ksharma.krail.core.share
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 
 /**
  * Returns a new [ImageBitmap] with a KRAIL branding header painted above the original image.
@@ -18,7 +19,7 @@ import androidx.compose.ui.graphics.ImageBitmap
  */
 expect fun ImageBitmap.withBrandingHeader(
     titleText: String = "KRAIL",
-    subtitleText: String = "https://krail.app",
+    subtitleText: String = KRAIL_WEBSITE_URL,
     backgroundColor: Color,
     textColor: Color,
     density: Float,

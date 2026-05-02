@@ -110,14 +110,17 @@ private fun LabelledSavedTripContent(
         Text(
             text = fromLabel,
             style = KrailTheme.typography.titleMedium,
+            modifier = Modifier.align(Alignment.Bottom),
         )
         Text(
             text = "to",
             style = KrailTheme.typography.bodySmall,
+            modifier = Modifier.align(Alignment.Bottom),
         )
         Text(
             text = toLabel,
             style = KrailTheme.typography.titleMedium,
+            modifier = Modifier.align(Alignment.Bottom),
         )
     }
 }

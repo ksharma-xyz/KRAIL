@@ -35,6 +35,7 @@ Both must end with **"Let's KRAIL."** (Android) or **"Let's KRAIL."** (iOS). Nev
 - Never use the word "experience". Never say "we are pleased to announce". Never say "improvements".
 - Bug fixes get one line max: "Fixed: [what users were seeing]."
 - Don't list every commit — synthesise into user-facing changes.
+- Every point must answer three things: **what** the feature is, **where** the user finds it, **what** they gain. Never write a vague cool-sounding line — make it concrete and actionable.
 - Short sentences. Present tense. Active voice.
 - Em dashes are OK in release notes (this is not user-facing UI copy).
 - Numbers (1, 2, 3) for iOS bullet lists. **No emoji on iOS — ever.**

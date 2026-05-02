@@ -27,5 +27,5 @@ class KrailApplication : Application() {
 
 /** Android-platform bindings that can't live in the shared composeApp module. */
 private val androidAppModule = module {
-    single<AppDeepLinkHandler> { RealAppDeepLinkHandler(pendingDeepLinkManager = get()) }
+    single<AppDeepLinkHandler> { RealAppDeepLinkHandler(pendingDeepLinkManager = get(), flag = get()) }
 }

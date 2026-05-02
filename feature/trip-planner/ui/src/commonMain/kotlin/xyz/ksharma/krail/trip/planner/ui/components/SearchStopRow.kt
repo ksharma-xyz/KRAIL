@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,12 +50,13 @@ import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -79,7 +79,6 @@ fun SearchStopRow(
     onReverseButtonClick: () -> Unit = {},
     onSearchButtonClick: () -> Unit = {},
 ) {
-    val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
     val navBarPadding = with(LocalDensity.current) {
         WindowInsets.navigationBars.getBottom(this).toDp()
@@ -138,7 +137,6 @@ fun SearchStopRow(
             )
         } else {
             CollapsedPill(
-                themeColorHex = themeColorHex,
                 navBarPadding = navBarPadding.value,
                 onClick = onExpandRequest,
             )
@@ -148,13 +146,11 @@ fun SearchStopRow(
 
 @Composable
 private fun CollapsedPill(
-    themeColorHex: String,
     navBarPadding: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
 
     Box(
         modifier = modifier
@@ -166,22 +162,12 @@ private fun CollapsedPill(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .wrapContentWidth()
-                .background(color = themeColorHex.hexToComposeColor(), shape = shape)
-                .klickable(onClick = onClick)
-                .padding(
-                    horizontal = dim.buttonLargeHorizontalPadding,
-                    vertical = dim.spacingML,
-                ),
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-            verticalAlignment = Alignment.CenterVertically,
+        Button(
+            dimensions = ButtonDefaults.mediumButtonSize(),
+            onClick = onClick,
         ) {
             Text(
-                text = "+ Plan a trip",
-                style = KrailTheme.typography.titleSmall,
-                color = KrailTheme.colors.surface,
+                text = "Plan a trip",
             )
         }
     }

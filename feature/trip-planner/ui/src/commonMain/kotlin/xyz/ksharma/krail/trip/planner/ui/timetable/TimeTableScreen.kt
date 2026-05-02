@@ -73,6 +73,7 @@ import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
@@ -207,7 +208,7 @@ fun TimeTableScreen(
                         onOriginClick = { display -> selectedStop = display },
                         onDestinationClick = { display -> selectedStop = display },
                         modifier = Modifier.fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = KrailTheme.dimensions.spacingL, vertical = 8.dp)
                             .background(color = KrailTheme.colors.surface),
                     )
                 }
@@ -217,7 +218,7 @@ fun TimeTableScreen(
                 FlowRow(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = 12.dp)
+                        .padding(horizontal = KrailTheme.dimensions.spacingL)
                         .padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -648,6 +649,7 @@ fun ActionButton(
 
 // region Preview
 
+@PreviewScreen
 @Composable
 private fun PreviewTimeTableScreen() {
     PreviewTheme {
@@ -693,6 +695,7 @@ private fun PreviewTimeTableScreen() {
     }
 }
 
+@PreviewScreen
 @Composable
 private fun PreviewTimeTableScreenError() {
     PreviewTheme {
@@ -720,6 +723,7 @@ private fun PreviewTimeTableScreenError() {
     }
 }
 
+@PreviewScreen
 @Composable
 private fun PreviewTimeTableScreenNoResults() {
     PreviewTheme {

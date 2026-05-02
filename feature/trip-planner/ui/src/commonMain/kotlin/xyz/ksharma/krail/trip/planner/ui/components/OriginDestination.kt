@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,7 +71,12 @@ internal fun OriginDestination(
             timeLineColor = timeLineColor,
             onClick = onOriginClick,
         )
-        Divider(modifier = Modifier.padding(start = dim.spacingXL + dim.iconSmall + dim.spacingM, end = dim.spacingL))
+        Divider(
+            modifier = Modifier.padding(
+                start = dim.spacingXL + dim.iconSmall + dim.spacingM,
+                end = dim.spacingL,
+            ),
+        )
         StopRow(
             display = destination,
             isOrigin = false,
@@ -92,11 +98,6 @@ private fun StopRow(
     val clickModifier = onClick?.let { handler ->
         Modifier.klickable { handler(display) }
     } ?: Modifier
-    val displayText = if (display.label != null) {
-        "${display.label} (${display.name})"
-    } else {
-        display.name
-    }
     val labelIcon = display.label?.let { stopLabelIcon(it) }
 
     Row(
@@ -118,11 +119,13 @@ private fun StopRow(
                     colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
                     modifier = Modifier.fillMaxSize(),
                 )
+
                 isOrigin -> Box(
                     modifier = Modifier
                         .size(ORIGIN_CIRCLE_SIZE)
                         .background(timeLineColor, CircleShape),
                 )
+
                 else -> Image(
                     painter = painterResource(Res.drawable.ic_location_on),
                     contentDescription = null,
@@ -133,7 +136,7 @@ private fun StopRow(
         }
 
         AnimatedContent(
-            targetState = displayText,
+            targetState = display,
             transitionSpec = {
                 (
                     fadeIn(animationSpec = tween(200)) +
@@ -151,12 +154,27 @@ private fun StopRow(
             },
             contentAlignment = Alignment.CenterStart,
             label = if (isOrigin) "originStopName" else "destinationStopName",
-        ) { targetText ->
-            Text(
-                text = targetText,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.onSurface,
-            )
+        ) { targetDisplay ->
+            targetDisplay.label?.let { label ->
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                    verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+                ) {
+                    Text(
+                        text = label,
+                        style = KrailTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = "(${targetDisplay.name})",
+                        style = KrailTheme.typography.bodySmall,
+                    )
+                }
+            } ?: run {
+                Text(
+                    text = targetDisplay.name,
+                    style = KrailTheme.typography.titleMedium,
+                )
+            }
         }
     }
 }

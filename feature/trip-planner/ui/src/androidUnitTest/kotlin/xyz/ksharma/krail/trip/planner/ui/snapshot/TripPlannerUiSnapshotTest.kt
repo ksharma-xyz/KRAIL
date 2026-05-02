@@ -12,9 +12,9 @@ import xyz.ksharma.krail.core.snapshot.BaseSnapshotTest
  * Snapshot tests for the Trip Planner UI module.
  *
  * Run commands:
- * - Record: ./gradlew :feature:trip-planner:ui:recordRoborazziDebug
- * - Verify: ./gradlew :feature:trip-planner:ui:verifyRoborazziDebug
- * - Compare: ./gradlew :feature:trip-planner:ui:compareRoborazziDebug
+ * - Record: ./gradlew :feature:trip-planner:ui:testAndroidHostTest -Proborazzi.test.record=true
+ * - Verify: ./gradlew :feature:trip-planner:ui:testAndroidHostTest -Proborazzi.test.verify=true
+ * - Compare: ./gradlew :feature:trip-planner:ui:testAndroidHostTest -Proborazzi.test.compare=true
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

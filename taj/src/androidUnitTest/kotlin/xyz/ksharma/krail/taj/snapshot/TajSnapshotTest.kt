@@ -12,9 +12,9 @@ import xyz.ksharma.krail.core.snapshot.BaseSnapshotTest
  * Snapshot tests for Taj Design System components.
  *
  * Run commands:
- * - Record: ./gradlew :taj:recordRoborazziDebug
- * - Verify: ./gradlew :taj:verifyRoborazziDebug
- * - Compare: ./gradlew :taj:compareRoborazziDebug
+ * - Record: ./gradlew :taj:testAndroidHostTest -Proborazzi.test.record=true
+ * - Verify: ./gradlew :taj:testAndroidHostTest -Proborazzi.test.verify=true
+ * - Compare: ./gradlew :taj:testAndroidHostTest -Proborazzi.test.compare=true
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

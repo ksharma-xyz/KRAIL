@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_android_share
 import app.krail.taj.resources.ic_ios_share
 import org.jetbrains.compose.resources.painterResource
@@ -29,6 +28,7 @@ import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.Res as TajRes
 
 @Composable
@@ -38,12 +38,13 @@ fun IntroContentInviteFriends(
     onShareClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(dim.spacingL)) {
             Text(
                 text = "TRIPS ARE\nBETTER\nWITH FRIENDS",
                 style = KrailTheme.typography.introTagline,
@@ -58,7 +59,7 @@ fun IntroContentInviteFriends(
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(SHARE_BUTTON_SIZE)
                     .clip(CircleShape)
                     .background(color = style.hexToComposeColor())
                     .clickable(
@@ -79,7 +80,7 @@ fun IntroContentInviteFriends(
                     },
                     contentDescription = "Invite Friends",
                     colorFilter = ColorFilter.tint(Color.White),
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(dim.iconL),
                 )
             }
         }
@@ -91,3 +92,5 @@ fun IntroContentInviteFriends(
         )
     }
 }
+
+private val SHARE_BUTTON_SIZE = 64.dp

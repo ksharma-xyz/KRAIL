@@ -54,6 +54,7 @@ fun ThemeSelectionScreen(
             animationSpec = tween(durationMillis = 300, easing = LinearEasing),
         )
 
+        val dim = KrailTheme.dimensions
         Column {
             TitleBar(
                 onNavActionClick = onBackClick,
@@ -66,8 +67,8 @@ fun ThemeSelectionScreen(
                     text = "Pick your favourite colour!",
                     style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
                     modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 32.dp),
+                        .padding(horizontal = dim.spacingXXXL)
+                        .padding(bottom = dim.spacingXXXXL),
                 )
 
                 KrailThemeStyle.entries.forEachIndexed { index, theme ->
@@ -81,21 +82,21 @@ fun ThemeSelectionScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(96.dp))
+                Spacer(modifier = Modifier.height(THEME_SCROLL_BOTTOM_PADDING))
             }
         }
 
         Column(
             modifier = Modifier.align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 10.dp),
+                .padding(bottom = dim.spacingML),
         ) {
             val themeController = LocalThemeController.current
 
             ThemeSelectionRadioGroup(
                 selectedTheme = themeController.currentMode,
                 glowColor = buttonBackgroundColor,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXXXL, vertical = dim.spacingML),
                 onThemeSelect = { newTheme ->
                     themeController.setThemeMode(newTheme)
                     onThemeModeSelect(newTheme.code)
@@ -104,3 +105,5 @@ fun ThemeSelectionScreen(
         }
     }
 }
+
+private val THEME_SCROLL_BOTTOM_PADDING = 96.dp

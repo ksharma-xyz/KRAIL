@@ -107,14 +107,15 @@ fun DiscoverScreenCompact(
         return
     }
 
+    val dim = KrailTheme.dimensions
     Box(
         modifier = Modifier.fillMaxSize()
             .background(color = KrailTheme.colors.surface),
     ) {
         if (isLargeFontScale()) {
             LazyColumn(
-                contentPadding = PaddingValues(bottom = 200.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = DISCOVER_SCROLL_PADDING),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = modifier.fillMaxSize(),
             ) {
@@ -204,11 +205,12 @@ fun DiscoverScreenTablet(
             .background(KrailTheme.colors.surface),
     ) {
         Column {
-            if (isLargeFontScale()) {
+            val dim = KrailTheme.dimensions
+        if (isLargeFontScale()) {
                 // Large font: centered lazy column
                 LazyColumn(
-                    contentPadding = PaddingValues(top = 120.dp, bottom = 200.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = DISCOVER_SCROLL_TOP_PADDING, bottom = DISCOVER_SCROLL_PADDING),
+                    verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxSize(),
                 ) {
@@ -241,15 +243,15 @@ fun DiscoverScreenTablet(
             } else {
                 // Normal font: grid layout
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 320.dp),
+                    columns = GridCells.Adaptive(minSize = DISCOVER_GRID_MIN_SIZE),
                     contentPadding = PaddingValues(
-                        top = 120.dp,
-                        start = 24.dp,
-                        end = 24.dp,
-                        bottom = 200.dp,
+                        top = DISCOVER_SCROLL_TOP_PADDING,
+                        start = dim.spacingXXXL,
+                        end = dim.spacingXXXL,
+                        bottom = DISCOVER_SCROLL_PADDING,
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
+                    verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     items(
@@ -295,6 +297,7 @@ private fun BoxScope.DiscoverFooterChipsRow(
     onChipSelected: (DiscoverCardType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     DiscoverChipRow(
         chipTypes = state.sortedDiscoverCardTypes,
         selectedType = state.selectedType,
@@ -310,7 +313,7 @@ private fun BoxScope.DiscoverFooterChipsRow(
                     endY = Float.POSITIVE_INFINITY,
                 ),
             )
-            .padding(vertical = 16.dp)
+            .padding(vertical = dim.spacingXL)
             .navigationBarsPadding(),
         onChipSelected = onChipSelected,
     )
@@ -355,17 +358,22 @@ private fun BoxScope.DiscoverTitleBar(
         )
         val density = LocalDensity.current
         val fontScale = density.fontScale
+        val dim = KrailTheme.dimensions
 
         Text(
             text = "What's On, Sydney!",
             style = KrailTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal),
             modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = if (fontScale < 1.5f) 16.dp else 8.dp)
+                .padding(horizontal = dim.spacingXXXL)
+                .padding(bottom = if (fontScale < 1.5f) dim.spacingXL else dim.spacingM)
                 .background(color = Color.Transparent),
         )
     }
 }
+
+private val DISCOVER_SCROLL_PADDING = 200.dp
+private val DISCOVER_SCROLL_TOP_PADDING = 120.dp
+private val DISCOVER_GRID_MIN_SIZE = 320.dp
 
 // region Previews
 

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.discover.state.DiscoverCardType
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverChipDefaults.RowContentPadding
@@ -36,11 +37,12 @@ fun DiscoverChipRow(
                 type.displayName
             },
         ) { type ->
+            val dim = KrailTheme.dimensions
             DiscoverChip(
                 type = type,
                 selected = type == selectedType,
                 modifier = Modifier
-                    .padding(horizontal = 10.dp)
+                    .padding(horizontal = dim.spacingML)
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },

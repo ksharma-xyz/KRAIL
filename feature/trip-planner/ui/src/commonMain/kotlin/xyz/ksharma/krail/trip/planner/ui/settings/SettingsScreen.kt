@@ -53,6 +53,7 @@ fun SettingsScreen(
     onIntroClick: () -> Unit = {},
     onSocialLinkClick: (KrailSocialType) -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -71,7 +72,7 @@ fun SettingsScreen(
 
             LazyColumn(
                 modifier = Modifier,
-                contentPadding = PaddingValues(bottom = 104.dp),
+                contentPadding = PaddingValues(bottom = CONTENT_BOTTOM_PADDING),
             ) {
                 item {
                     SettingsItem(
@@ -98,8 +99,8 @@ fun SettingsScreen(
                         text = "About",
                         style = KrailTheme.typography.title,
                         modifier = Modifier
-                            .padding(top = 24.dp, bottom = 16.dp)
-                            .padding(horizontal = 26.dp),
+                            .padding(top = dim.spacingXXXL, bottom = dim.spacingXL)
+                            .padding(horizontal = SECTION_TITLE_HORIZONTAL_PADDING),
                     )
                 }
 
@@ -127,7 +128,7 @@ fun SettingsScreen(
                             SocialConnectionRow(
                                 socialLinks = KrailSocialType.entries,
                                 modifier = Modifier
-                                    .padding(start = (24 + 16 + 6).dp, end = 16.dp),
+                                    .padding(start = SOCIAL_ROW_START_PADDING, end = dim.spacingXL),
                                 onClick = { onSocialLinkClick(it) },
                             )
                         },
@@ -135,7 +136,7 @@ fun SettingsScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.fillMaxWidth().height(108.dp))
+                    Spacer(modifier = Modifier.fillMaxWidth().height(FOOTER_SPACER_HEIGHT))
                 }
             }
         }
@@ -144,14 +145,14 @@ fun SettingsScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
                 .background(KrailTheme.colors.surface)
                 .navigationBarsPadding()
-                .padding(bottom = 10.dp, top = 16.dp),
+                .padding(bottom = dim.spacingML, top = dim.spacingXL),
         ) {
             AppLogo()
             Text(
                 text = "v$appVersion",
                 style = KrailTheme.typography.bodyLarge,
                 color = KrailTheme.colors.softLabel,
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = dim.spacingXL),
                 textAlign = TextAlign.Center,
             )
         }
@@ -192,24 +193,25 @@ private fun SettingsItem(
     onClick: (() -> Unit)? = null,
 ) {
     val themeColor by LocalThemeColor.current
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier.fillMaxWidth()
             .klickable(enabled = onClick != null, onClick = onClick ?: {})
             .semantics(mergeDescendants = true) {},
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(dim.spacingXXXL))
         Row(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = dim.pageHorizontalPadding)
                 .semantics(mergeDescendants = true) {},
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 contentDescription = null,
                 painter = icon,
                 colorFilter = ColorFilter.tint(color = themeColor.hexToComposeColor()),
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(dim.iconM),
             )
             Text(
                 text = text,
@@ -220,10 +222,15 @@ private fun SettingsItem(
         if (detailContent != null) {
             detailContent.invoke()
         } else {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXXXL))
         }
         if (showDivider) {
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
         }
     }
 }
+
+private val CONTENT_BOTTOM_PADDING = 104.dp
+private val SECTION_TITLE_HORIZONTAL_PADDING = 26.dp
+private val SOCIAL_ROW_START_PADDING = 46.dp
+private val FOOTER_SPACER_HEIGHT = 108.dp

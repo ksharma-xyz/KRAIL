@@ -106,16 +106,17 @@ fun ThemeSelectionRadioButton(
         label = "pulseAlpha",
     )
 
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 16.dp)
+            .padding(horizontal = dim.spacingL, vertical = dim.spacingXL)
             .scalingKlickable { onClick(themeStyle) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(COLOR_SWATCH_OUTER_SIZE)
                 .then(
                     if (selected) {
                         Modifier.drawBehind {
@@ -137,7 +138,7 @@ fun ThemeSelectionRadioButton(
         ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(dim.iconL)
                     .clip(CircleShape)
                     .background(color = themeStyle.hexColorCode.hexToComposeColor()),
             )
@@ -145,20 +146,20 @@ fun ThemeSelectionRadioButton(
 
         Box(
             modifier = Modifier
-                .padding(start = 16.dp),
+                .padding(start = dim.spacingXL),
         ) {
             if (selected && textLayoutResult != null) {
                 val textWidth = with(density) { textLayoutResult!!.size.width.toDp() }
                 Canvas(
                     modifier = Modifier
                         .width(textWidth)
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = dim.spacingL),
                 ) {
                     val layout = textLayoutResult!!
                     val lineCount = layout.lineCount
-                    val strokeWidth = 32.dp.toPx()
-                    val amplitude = 14.dp.toPx()
-                    val waveLength = 32.dp.toPx()
+                    val strokeWidth = WAVE_STROKE_WIDTH.toPx()
+                    val amplitude = WAVE_AMPLITUDE.toPx()
+                    val waveLength = WAVE_LENGTH.toPx()
                     var remaining = currentPathLength
 
                     for (line in 0 until lineCount) {
@@ -210,7 +211,7 @@ fun ThemeSelectionRadioButton(
                 style = KrailTheme.typography.title.copy(fontWeight = FontWeight.Normal),
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .padding(horizontal = 2.dp),
+                    .padding(horizontal = dim.strokeRegular),
                 onTextLayout = { textLayoutResult = it },
                 color = KrailTheme.colors.onSurface,
                 textAlign = TextAlign.Start,
@@ -242,3 +243,8 @@ private fun ThemeSelectionRadioButtonUnselectedPreview() {
         )
     }
 }
+
+private val COLOR_SWATCH_OUTER_SIZE = 40.dp
+private val WAVE_STROKE_WIDTH = 32.dp
+private val WAVE_AMPLITUDE = 14.dp
+private val WAVE_LENGTH = 32.dp

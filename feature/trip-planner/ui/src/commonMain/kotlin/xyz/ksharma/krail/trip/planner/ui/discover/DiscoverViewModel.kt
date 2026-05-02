@@ -23,6 +23,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DiscoverCardClick.S
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent.SocialConnectionSource
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.discover.network.api.DiscoverSydneyManager
@@ -240,7 +241,7 @@ private fun createShareText(
     ctaLink: String? = null,
 ): String {
     log("ctaLink: $ctaLink")
-    val letsKrailText = "\n#LetsKRAIL https://krail.app"
+    val letsKrailText = "\n#LetsKRAIL $KRAIL_WEBSITE_URL"
 
     val postfix = when (cardType) {
         DiscoverCardType.Travel -> "\n$ctaLink\n\nFound in KRAIL App$letsKrailText"

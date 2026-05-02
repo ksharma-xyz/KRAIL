@@ -2,6 +2,8 @@ package xyz.ksharma.krail
 
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_HOST
+import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_PATH
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
@@ -42,13 +44,11 @@ class IOSDeepLinkHandler : KoinComponent {
     }
 
     private fun String.extractEncodedData(): String? {
-        val host = "ksharma-xyz.github.io"
-        // Resolve query start only when host is present and path starts with /trip
-        val queryStart = indexOf(host)
+        val queryStart = indexOf(KRAIL_DEEP_LINK_HOST)
             .takeIf { it >= 0 }
             ?.let { hostIdx ->
-                val pathSection = substring(hostIdx + host.length)
-                indexOf('?').takeIf { pathSection.startsWith("/trip") && it >= 0 }?.plus(1)
+                val pathSection = substring(hostIdx + KRAIL_DEEP_LINK_HOST.length)
+                indexOf('?').takeIf { pathSection.startsWith(KRAIL_DEEP_LINK_PATH) && it >= 0 }?.plus(1)
             }
             ?: return null
         return substring(queryStart).split("&")

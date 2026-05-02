@@ -10,7 +10,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
@@ -46,9 +43,6 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
-private val SHADOW_RADIUS = 12.dp
-private val SHADOW_SPREAD = 2.dp
-private const val SHADOW_ALPHA = 1f
 private val ORIGIN_CIRCLE_SIZE = 10.dp
 private val STOP_ROW_VERTICAL_PADDING = 12.dp
 
@@ -67,22 +61,8 @@ internal fun OriginDestination(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .dropShadow(
-                shape = cardShape,
-                shadow = Shadow(
-                    radius = SHADOW_RADIUS,
-                    color = themeBackgroundColor(),
-                    spread = SHADOW_SPREAD,
-                    alpha = SHADOW_ALPHA,
-                ),
-            )
             .clip(cardShape)
-            .border(
-                width = dim.strokeThin,
-                color = themeBackgroundColor(),
-                shape = cardShape,
-            )
-            .background(color = KrailTheme.colors.surface, shape = cardShape),
+            .background(color = themeBackgroundColor(), shape = cardShape),
     ) {
         StopRow(
             display = origin,
@@ -117,6 +97,7 @@ private fun StopRow(
     } else {
         display.name
     }
+    val labelIcon = display.label?.let { stopLabelIcon(it) }
 
     Row(
         modifier = modifier
@@ -130,14 +111,19 @@ private fun StopRow(
             modifier = Modifier.size(dim.iconSmall),
             contentAlignment = Alignment.Center,
         ) {
-            if (isOrigin) {
-                Box(
+            when {
+                labelIcon != null -> Image(
+                    painter = painterResource(labelIcon),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                    modifier = Modifier.fillMaxSize(),
+                )
+                isOrigin -> Box(
                     modifier = Modifier
                         .size(ORIGIN_CIRCLE_SIZE)
                         .background(timeLineColor, CircleShape),
                 )
-            } else {
-                Image(
+                else -> Image(
                     painter = painterResource(Res.drawable.ic_location_on),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(timeLineColor),
@@ -166,26 +152,11 @@ private fun StopRow(
             contentAlignment = Alignment.CenterStart,
             label = if (isOrigin) "originStopName" else "destinationStopName",
         ) { targetText ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-            ) {
-                display.label?.let { label ->
-                    stopLabelIcon(label)?.let { icon ->
-                        Image(
-                            painter = painterResource(icon),
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                            modifier = Modifier.size(dim.spacingXL),
-                        )
-                    }
-                }
-                Text(
-                    text = targetText,
-                    style = KrailTheme.typography.titleMedium,
-                    color = KrailTheme.colors.onSurface,
-                )
-            }
+            Text(
+                text = targetText,
+                style = KrailTheme.typography.titleMedium,
+                color = KrailTheme.colors.onSurface,
+            )
         }
     }
 }

@@ -7,6 +7,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 const val TRACK_DEEP_LINK_BASE_URL = "https://ksharma-xyz.github.io/trip"
+const val KRAIL_WEBSITE_URL = "https://krail.app"
 
 object TripDeepLinkEncoder {
 

@@ -3,6 +3,9 @@ package xyz.ksharma.krail
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 
 /**
  * iOS entry point for deep link handling.
@@ -22,12 +25,17 @@ import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 class IOSDeepLinkHandler : KoinComponent {
 
     private val pendingDeepLinkManager: PendingDeepLinkManager by inject()
+    private val flag: Flag by inject()
 
     /**
      * Handle a URL string delivered by the OS (Universal Link or custom scheme).
      * Pass `url.absoluteString` from Swift.
+     *
+     * Silently ignored when [FlagKeys.TRIP_TRACKING_ENABLED] is off so deep links
+     * land on the website instead of opening the track-trip screen.
      */
     fun handle(urlString: String?) {
+        if (!flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)) return
         urlString
             ?.extractEncodedData()
             ?.let { pendingDeepLinkManager.dispatchHot(it) }

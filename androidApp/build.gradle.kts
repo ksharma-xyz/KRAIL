@@ -97,6 +97,7 @@ dependencies {
     implementation(projects.composeApp)
     implementation(projects.core.deeplink)
     implementation(projects.core.log)
+    implementation(projects.core.remoteConfig)
 
     // Android-specific dependencies
     implementation(libs.activity.compose)

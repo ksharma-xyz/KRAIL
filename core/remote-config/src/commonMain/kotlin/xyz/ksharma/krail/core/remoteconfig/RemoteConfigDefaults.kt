@@ -133,6 +133,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key,
                 second = false,
             ),
+            Pair(
+                first = FlagKeys.TRIP_TRACKING_ENABLED.key,
+                second = false,
+            ),
         )
     }
 }

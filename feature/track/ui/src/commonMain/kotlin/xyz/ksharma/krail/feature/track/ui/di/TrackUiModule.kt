@@ -17,6 +17,7 @@ val trackUiModule = module {
             gtfsRealtimeRepository = get(),
             sandook = get(),
             shareManager = get(),
+            flag = get(),
         )
     }
 }

@@ -21,10 +21,10 @@ platform :ios do
     # xcversion is not used — the underlying xcode-install gem is sunsetted and
     # broken on macos-15 runners (fastlane/fastlane#29469).
 
-    # The project has GENERATE_INFOPLIST_FILE = YES, so Xcode generates Info.plist
-    # at build time from CURRENT_PROJECT_VERSION — patching the plist file on disk
-    # (set_info_plist_value) has no effect. The correct approach is to pass
-    # CURRENT_PROJECT_VERSION via xcargs, overriding the hardcoded project value.
+    # The project uses INFOPLIST_FILE (not GENERATE_INFOPLIST_FILE = YES), so Xcode
+    # reads Info.plist from disk and substitutes $(VARIABLE) build settings at archive
+    # time. CFBundleVersion uses $(CURRENT_PROJECT_VERSION) — pass it via xcargs so the
+    # correct build number is stamped without editing the plist on disk.
     # IOS_BUILD_NUMBER is set by the CI workflow step before this lane runs.
     # Skipped for local builds (IOS_BUILD_NUMBER not set).
     build_number = ENV['IOS_BUILD_NUMBER']
@@ -34,9 +34,8 @@ platform :ios do
     end
 
     # Read MARKETING_VERSION from Config.xcconfig so it's always in sync with the
-    # source of truth. xcargs overrides whatever may be hardcoded in the xcodeproj,
-    # which is required when GENERATE_INFOPLIST_FILE = YES (Xcode generates Info.plist
-    # from build settings at archive time, not from the plist on disk).
+    # source of truth. Pass it via xcargs so the Info.plist $(MARKETING_VERSION)
+    # substitution uses the correct value at archive time.
     xcconfig_path = File.expand_path("Configuration/Config.xcconfig", __dir__ + "/..")
     marketing_version = File.read(xcconfig_path).match(/^MARKETING_VERSION\s*=\s*(.+)/)&.captures&.first&.strip
     if marketing_version.nil? || marketing_version.empty?
@@ -69,8 +68,8 @@ platform :ios do
       buildlog_path: "./build/logs",
       clean: true,
       skip_package_dependencies_resolution: true,
-      # CURRENT_PROJECT_VERSION overrides the hardcoded value in the xcodeproj so the
-      # generated Info.plist gets the correct CFBundleVersion.
+      # CURRENT_PROJECT_VERSION — substituted into Info.plist $(CURRENT_PROJECT_VERSION).
+      # MARKETING_VERSION — substituted into Info.plist $(MARKETING_VERSION).
       # DEVELOPMENT_TEAM ensures SPM package targets also have a team set.
       # PROVISIONING_PROFILE_SPECIFIER is NOT here — set per-target above.
       xcargs: [

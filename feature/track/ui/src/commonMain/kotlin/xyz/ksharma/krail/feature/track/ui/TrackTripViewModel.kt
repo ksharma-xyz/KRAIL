@@ -26,6 +26,9 @@ import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
@@ -49,7 +52,11 @@ class TrackTripViewModel(
     gtfsRealtimeRepository: GtfsRealtimeRepository,
     sandook: Sandook,
     private val shareManager: ShareManager,
+    flag: Flag,
 ) : ViewModel() {
+
+    val isTripTrackingEnabled: Boolean =
+        flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
 
     private val loadingEmoji: String by lazy {
         (festivalManager.festivalOnDate() ?: NoFestival()).greetingAndEmoji.second

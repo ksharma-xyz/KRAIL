@@ -56,6 +56,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.coroutinesExt)
+                implementation(projects.core.remoteConfig)
                 implementation(projects.core.maps.state)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.di)

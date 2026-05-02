@@ -56,8 +56,11 @@ fun SavedTripCard(
             .klickable(onClick = onCardClick)
             .padding(
                 horizontal = dim.spacingXL,
-                vertical = if (fromDisplay.label != null && toDisplay.label != null)
-                    dim.spacingS else dim.spacingXL
+                vertical = if (fromDisplay.label != null && toDisplay.label != null) {
+                    dim.spacingS
+                } else {
+                    dim.spacingXL
+                },
             )
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
@@ -120,7 +123,7 @@ private fun LabelledSavedTripContent(
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS)
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
     ) {
         Text(
             text = fromLabel,
@@ -155,8 +158,11 @@ private fun StopDisplayRow(
         }
         Text(
             text = display.name,
-            style = if (display.label != null) KrailTheme.typography.bodySmall
-            else KrailTheme.typography.bodyLarge,
+            style = if (display.label != null) {
+                KrailTheme.typography.bodySmall
+            } else {
+                KrailTheme.typography.bodyLarge
+            },
         )
     }
 }

@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,7 +57,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -81,7 +79,6 @@ fun SearchStopRow(
     onReverseButtonClick: () -> Unit = {},
     onSearchButtonClick: () -> Unit = {},
 ) {
-    val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
     val navBarPadding = with(LocalDensity.current) {
         WindowInsets.navigationBars.getBottom(this).toDp()
@@ -112,13 +109,13 @@ fun SearchStopRow(
                     initialOffsetY = { it },
                     animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 ) + fadeIn(animationSpec = tween(400)) togetherWith
-                        fadeOut(animationSpec = tween(150))
+                    fadeOut(animationSpec = tween(150))
             } else {
                 fadeIn(animationSpec = tween(100)) togetherWith
-                        slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = tween(350, easing = FastOutSlowInEasing),
-                        ) + fadeOut(animationSpec = tween(250))
+                    slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(350, easing = FastOutSlowInEasing),
+                    ) + fadeOut(animationSpec = tween(250))
             }
         },
         modifier = modifier,
@@ -140,7 +137,6 @@ fun SearchStopRow(
             )
         } else {
             CollapsedPill(
-                themeColorHex = themeColorHex,
                 navBarPadding = navBarPadding.value,
                 onClick = onExpandRequest,
             )
@@ -150,13 +146,11 @@ fun SearchStopRow(
 
 @Composable
 private fun CollapsedPill(
-    themeColorHex: String,
     navBarPadding: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
 
     Box(
         modifier = modifier
@@ -168,10 +162,9 @@ private fun CollapsedPill(
             ),
         contentAlignment = Alignment.Center,
     ) {
-
         Button(
             dimensions = ButtonDefaults.mediumButtonSize(),
-            onClick = onClick
+            onClick = onClick,
         ) {
             Text(
                 text = "Plan a trip",
@@ -255,14 +248,14 @@ private fun ExpandedSearchRow(
                         targetState = fromStopItem?.stopName ?: "Starting from",
                         transitionSpec = {
                             fadeIn(animationSpec = tween(200)) +
-                                    slideInVertically(
-                                        initialOffsetY = { it / 2 },
-                                        animationSpec = tween(500, easing = FastOutSlowInEasing),
-                                    ) togetherWith fadeOut(animationSpec = tween(200)) +
-                                    slideOutVertically(
-                                        targetOffsetY = { -it / 2 },
-                                        animationSpec = tween(500),
-                                    )
+                                slideInVertically(
+                                    initialOffsetY = { it / 2 },
+                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                slideOutVertically(
+                                    targetOffsetY = { -it / 2 },
+                                    animationSpec = tween(500),
+                                )
                         },
                         contentAlignment = Alignment.CenterStart,
                         label = "startingFromText",
@@ -287,14 +280,14 @@ private fun ExpandedSearchRow(
                     targetState = toStopItem?.stopName ?: "Destination",
                     transitionSpec = {
                         fadeIn(animationSpec = tween(200)) +
-                                slideInVertically(
-                                    initialOffsetY = { -it / 2 },
-                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
-                                ) togetherWith fadeOut(animationSpec = tween(200)) +
-                                slideOutVertically(
-                                    targetOffsetY = { it / 2 },
-                                    animationSpec = tween(500),
-                                )
+                            slideInVertically(
+                                initialOffsetY = { -it / 2 },
+                                animationSpec = tween(500, easing = FastOutSlowInEasing),
+                            ) togetherWith fadeOut(animationSpec = tween(200)) +
+                            slideOutVertically(
+                                targetOffsetY = { it / 2 },
+                                animationSpec = tween(500),
+                            )
                     },
                     contentAlignment = Alignment.CenterStart,
                     label = "destinationText",

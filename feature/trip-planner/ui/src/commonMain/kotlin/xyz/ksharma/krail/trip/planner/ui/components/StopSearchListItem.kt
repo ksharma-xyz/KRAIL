@@ -41,6 +41,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun StopSearchListItem(
@@ -190,6 +191,7 @@ private const val UNSAVE_ROTATION_DIRECTION = -1f
 
 // region Preview
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun StopSearchListItemPreview() {
@@ -206,6 +208,7 @@ private fun StopSearchListItemPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun StopSearchListItemLongNamePreview() {

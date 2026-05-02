@@ -39,6 +39,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Displays a trip search result with expandable/collapsible stops list.
@@ -276,6 +277,7 @@ enum class TripSearchListItemState {
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun TripSearchListItemCollapsedPreview() {
@@ -323,6 +325,7 @@ private fun TripSearchListItemCollapsedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun TripSearchListItemExpandedPreview() {

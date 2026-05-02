@@ -27,6 +27,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
 
@@ -141,6 +142,7 @@ fun ParkRideCard(
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideCardPreview() {

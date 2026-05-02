@@ -24,6 +24,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.BadgeTokens
 import xyz.ksharma.krail.taj.tokens.ButtonTokens.RoundButtonSize
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * A round icon button with customizable content and colors.
@@ -78,6 +79,7 @@ fun RoundIconButton(
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewRoundIconButton() {
@@ -93,6 +95,7 @@ private fun PreviewRoundIconButton() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewRoundIconButtonWithBadge() {

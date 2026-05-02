@@ -61,6 +61,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 private val SearchRowTopRadius = 36.dp
 private val SearchRowVerticalPadding = 20.dp
@@ -344,6 +345,7 @@ private fun ExpandedSearchRow(
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "1. Collapsed pill — Train theme")
 @Composable
 private fun PreviewSearchStopRow_Collapsed_Train() {
@@ -356,6 +358,7 @@ private fun PreviewSearchStopRow_Collapsed_Train() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "2. Expanded — both fields empty")
 @Composable
 private fun PreviewSearchStopRow_Expanded_Empty() {
@@ -369,6 +372,7 @@ private fun PreviewSearchStopRow_Expanded_Empty() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "3. Expanded — To pre-filled, From highlighted (label pill flow)")
 @Composable
 private fun PreviewSearchStopRow_Expanded_LabelPill() {
@@ -383,6 +387,7 @@ private fun PreviewSearchStopRow_Expanded_LabelPill() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "4. Expanded — both stops set")
 @Composable
 private fun PreviewSearchStopRow_Expanded_BothSet() {
@@ -397,6 +402,7 @@ private fun PreviewSearchStopRow_Expanded_BothSet() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "5. Collapsed pill — Ferry theme")
 @Composable
 private fun PreviewSearchStopRow_Collapsed_Ferry() {

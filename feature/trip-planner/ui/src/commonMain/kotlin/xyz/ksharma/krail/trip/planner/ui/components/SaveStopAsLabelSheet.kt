@@ -36,6 +36,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Sheet shown when the user taps the "save" button on a stop result row.
@@ -166,6 +167,7 @@ private fun NewLabelChip(onClick: () -> Unit) {
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "1. Save sheet")
 @Composable
 private fun PreviewSaveStopAsLabelSheet() {

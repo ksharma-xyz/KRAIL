@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * The top section of a [JourneyCard] that shows the departure time, transport mode icons/badges,
@@ -120,6 +121,7 @@ internal fun TransportModesRow(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_Train_WithPlatform() {
@@ -134,6 +136,7 @@ private fun Preview_JourneyCardHeader_Train_WithPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_Bus_WithBadge() {
@@ -148,6 +151,7 @@ private fun Preview_JourneyCardHeader_Bus_WithBadge() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_MultiMode_Inline() {
@@ -163,6 +167,7 @@ private fun Preview_JourneyCardHeader_MultiMode_Inline() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_ManyModes_WrappedLayout() {
@@ -180,6 +185,7 @@ private fun Preview_JourneyCardHeader_ManyModes_WrappedLayout() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_NoPlatform() {
@@ -194,6 +200,7 @@ private fun Preview_JourneyCardHeader_NoPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_Past() {

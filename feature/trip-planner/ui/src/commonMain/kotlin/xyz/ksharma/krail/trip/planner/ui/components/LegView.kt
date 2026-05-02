@@ -51,6 +51,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun LegView(
@@ -346,6 +347,7 @@ private fun StopsRow(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewLegView() {
@@ -378,6 +380,7 @@ private fun PreviewLegView() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewLegViewTwoStops() {
@@ -405,6 +408,7 @@ private fun PreviewLegViewTwoStops() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewLegViewMetro() {
@@ -432,6 +436,7 @@ private fun PreviewLegViewMetro() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewLegViewFerry() {
@@ -459,6 +464,7 @@ private fun PreviewLegViewFerry() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewLegViewLightRail() {
@@ -486,6 +492,7 @@ private fun PreviewLegViewLightRail() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewStopsRow() {
@@ -501,6 +508,7 @@ private fun PreviewStopsRow() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewProminentStopInfo() {
@@ -515,6 +523,7 @@ private fun PreviewProminentStopInfo() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewRouteSummary() {

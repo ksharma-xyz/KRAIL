@@ -27,6 +27,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun TransportModeIcon(
@@ -96,6 +97,7 @@ enum class TransportModeIconSize(val dpSize: Dp) {
 
 private const val previewGroupName = "Transport Mode Icons"
 
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun TrainPreview() {
@@ -107,6 +109,7 @@ private fun TrainPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TrainPreviewLarge() {
@@ -120,6 +123,7 @@ private fun TrainPreviewLarge() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun BusPreview() {
@@ -131,6 +135,7 @@ private fun BusPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun MetroPreview() {
@@ -142,6 +147,7 @@ private fun MetroPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun LightRailPreview() {
@@ -153,6 +159,7 @@ private fun LightRailPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun FerryPreview() {
@@ -164,6 +171,7 @@ private fun FerryPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TrainWithBackgroundPreview() {
@@ -175,6 +183,7 @@ private fun TrainWithBackgroundPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun BusWithBackgroundPreview() {
@@ -186,6 +195,7 @@ private fun BusWithBackgroundPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun MetroWithBackgroundPreview() {
@@ -197,6 +207,7 @@ private fun MetroWithBackgroundPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun LightRailWithBackgroundPreview() {
@@ -208,6 +219,7 @@ private fun LightRailWithBackgroundPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun FerryWithBackgroundPreview() {

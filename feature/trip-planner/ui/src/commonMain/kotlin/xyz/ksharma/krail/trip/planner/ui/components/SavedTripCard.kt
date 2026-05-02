@@ -27,6 +27,7 @@ import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun SavedTripCard(
@@ -154,6 +155,7 @@ private fun StopDisplayRow(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCard_Unlabelled() {
@@ -166,6 +168,7 @@ private fun PreviewSavedTripCard_Unlabelled() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCard_BothLabelled() {
@@ -178,6 +181,7 @@ private fun PreviewSavedTripCard_BothLabelled() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCard_OneLabelled() {
@@ -190,6 +194,7 @@ private fun PreviewSavedTripCard_OneLabelled() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCardList() {

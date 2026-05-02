@@ -32,6 +32,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Sizes available for [TransportModeBadge].
@@ -121,6 +122,7 @@ fun TransportModeBadge(
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun TransportModeBadgeBusPreview() {
@@ -132,6 +134,7 @@ private fun TransportModeBadgeBusPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun TransportModeBadgeTrainPreview() {
@@ -143,6 +146,7 @@ private fun TransportModeBadgeTrainPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TransportModeBadgeLargePreview() {
@@ -155,6 +159,7 @@ private fun TransportModeBadgeLargePreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TransportModeBadgeLargeSelectedPreview() {

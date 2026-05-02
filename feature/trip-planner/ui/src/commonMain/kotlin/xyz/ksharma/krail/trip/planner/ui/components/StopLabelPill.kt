@@ -26,6 +26,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Filled pill shown when a [StopLabel] has a stop assigned. Sits on the dark
@@ -118,6 +119,7 @@ internal fun UnsetLabelPill(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSetLabelPill_Train() {
@@ -126,6 +128,7 @@ private fun PreviewSetLabelPill_Train() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSetLabelPill_PurpleDrip() {
@@ -134,6 +137,7 @@ private fun PreviewSetLabelPill_PurpleDrip() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewUnsetLabelPill_Idle() {
@@ -145,6 +149,7 @@ private fun PreviewUnsetLabelPill_Idle() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewUnsetLabelPill_Assigning() {

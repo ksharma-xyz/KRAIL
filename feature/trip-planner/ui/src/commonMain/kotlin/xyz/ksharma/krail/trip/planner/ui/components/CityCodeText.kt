@@ -6,6 +6,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.antonioTypography
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun CityCodeText(
@@ -19,6 +20,7 @@ fun CityCodeText(
     )
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewCityCodeText() {

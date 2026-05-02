@@ -18,6 +18,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverChipDefaults.RowContentPadding
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun DiscoverChipRow(
@@ -55,6 +56,7 @@ fun DiscoverChipRow(
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DiscoverChipRowPreview() {

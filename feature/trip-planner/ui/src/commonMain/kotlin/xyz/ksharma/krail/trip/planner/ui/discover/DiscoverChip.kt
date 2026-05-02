@@ -31,6 +31,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun DiscoverChip(
@@ -125,6 +126,7 @@ fun DiscoverChip(
 
 // region Previews
 
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Selected Light Mode")
 @Composable
 private fun DiscoverChipPreview_BarbiePink_Selected() {
@@ -138,6 +140,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected() {
     }
 }
 
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Unselected Light Mode")
 @Preview
 @Composable
@@ -152,6 +155,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
     }
 }
 
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Selected Dark Mode")
 @Preview
 @Composable
@@ -167,6 +171,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
     }
 }
 
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Unselected Dark Mode")
 @Preview
 @Composable

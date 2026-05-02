@@ -51,6 +51,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Suppress("LongMethod")
 // The sheet is one continuous flow (title → optional stop chip → preview pill →
@@ -341,6 +342,7 @@ private fun LabelPreviewPill(name: String) {
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "1. Empty")
 @Composable
 private fun PreviewAddLabelBottomSheet_Empty() {
@@ -354,6 +356,7 @@ private fun PreviewAddLabelBottomSheet_Empty() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "2. With existing labels filtered")
 @Composable
 private fun PreviewAddLabelBottomSheet_FilteredSuggestions() {
@@ -371,6 +374,7 @@ private fun PreviewAddLabelBottomSheet_FilteredSuggestions() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "3. With stop context")
 @Composable
 private fun PreviewAddLabelBottomSheet_WithStop() {

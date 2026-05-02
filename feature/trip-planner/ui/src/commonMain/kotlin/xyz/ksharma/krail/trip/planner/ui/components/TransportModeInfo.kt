@@ -9,6 +9,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun TransportModeInfo(
@@ -33,6 +34,7 @@ fun TransportModeInfo(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TransportModeInfoPreview() {

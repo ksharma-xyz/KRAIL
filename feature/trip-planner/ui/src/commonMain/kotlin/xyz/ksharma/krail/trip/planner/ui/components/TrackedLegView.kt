@@ -37,6 +37,7 @@ import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Suppress("CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class)
@@ -369,6 +370,7 @@ private fun ApproachingTimeText(
 // region Previews
 
 @OptIn(ExperimentalTime::class)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TrackedLegViewPreview() {
@@ -421,6 +423,7 @@ private fun TrackedLegViewPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TrackedStopRowPreview() {

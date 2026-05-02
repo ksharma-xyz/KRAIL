@@ -21,6 +21,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 private val ParkRideIconCornerRadius = 6.dp // no token equivalent (between RadiusXS=4 and RadiusS=8)
 
@@ -70,6 +71,7 @@ internal fun ParkRideIconContainer(
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconPinkThemePreview() {
@@ -78,6 +80,7 @@ private fun ParkRideIconPinkThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconMetroThemePreview() {
@@ -86,6 +89,7 @@ private fun ParkRideIconMetroThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconBusThemePreview() {
@@ -94,6 +98,7 @@ private fun ParkRideIconBusThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconPurpleThemePreview() {
@@ -102,6 +107,7 @@ private fun ParkRideIconPurpleThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconTrainThemePreview() {

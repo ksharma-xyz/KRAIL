@@ -45,6 +45,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun DiscoverScreen(
@@ -377,6 +378,7 @@ private val DISCOVER_GRID_MIN_SIZE = 320.dp
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Preview(
     group = "Discover Card Tablet",
@@ -410,6 +412,7 @@ private fun DiscoverScreenTabletLightPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Preview(
     group = "Discover Card Phone",

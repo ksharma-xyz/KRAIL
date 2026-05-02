@@ -52,6 +52,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 // Stagger timing constants
 private const val BADGE_STAGGER_MS = 55 // delay between each badge
@@ -373,6 +374,7 @@ private val previewDepartures: ImmutableList<StopDeparture> = persistentListOf(
     ),
 )
 
+@ScreenshotTest
 @Preview(name = "Filter closed")
 @Composable
 private fun LinesServedRowClosedPreview() {
@@ -385,6 +387,7 @@ private fun LinesServedRowClosedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "Filter open — all expanded, T2 selected")
 @Composable
 private fun LinesServedRowOpenPreview() {
@@ -397,6 +400,7 @@ private fun LinesServedRowOpenPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "Bus only")
 @Composable
 private fun LinesServedRowBusOnlyPreview() {

@@ -17,6 +17,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Warning sheet for label assignment conflicts. The same component handles both
@@ -79,6 +80,7 @@ fun LabelConflictSheet(
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "Stop already saved")
 @Composable
 private fun PreviewLabelConflictSheet_StopSide() {
@@ -93,6 +95,7 @@ private fun PreviewLabelConflictSheet_StopSide() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "Label already in use")
 @Composable
 private fun PreviewLabelConflictSheet_LabelSide() {

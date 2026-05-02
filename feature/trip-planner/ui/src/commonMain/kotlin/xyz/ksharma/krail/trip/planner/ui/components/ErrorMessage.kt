@@ -23,6 +23,7 @@ import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun ErrorMessage(
@@ -101,6 +102,7 @@ data class ActionData(
 )
 
 // region Preview
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewErrorMessage() {

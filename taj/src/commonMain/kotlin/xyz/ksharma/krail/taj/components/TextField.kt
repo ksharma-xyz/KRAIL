@@ -52,6 +52,7 @@ import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextSelectionBackgroundOpacity
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Important documentation links:
@@ -243,6 +244,7 @@ private fun TextFieldPlaceholder(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TextFieldEnabledPreviewLight() {
@@ -253,6 +255,7 @@ private fun TextFieldEnabledPreviewLight() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TextFieldDisabledPreviewLight() {

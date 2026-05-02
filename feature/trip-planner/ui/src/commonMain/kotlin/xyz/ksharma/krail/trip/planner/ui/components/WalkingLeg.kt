@@ -19,6 +19,7 @@ import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun WalkingLeg(
@@ -49,6 +50,7 @@ fun WalkingLeg(
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewWalkingLeg() {

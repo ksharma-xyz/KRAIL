@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun LoadingEmojiAnim(
@@ -73,6 +74,7 @@ fun LoadingEmojiAnim(
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun Preview() {

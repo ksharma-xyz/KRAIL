@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Shared UI component that renders a departure or origin time, with an optional
@@ -107,6 +108,7 @@ fun ScheduledTimeRow(
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun ScheduledTimeRowOnTimePreview() {
@@ -118,6 +120,7 @@ private fun ScheduledTimeRowOnTimePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowDelayedPreview() {
@@ -132,6 +135,7 @@ private fun ScheduledTimeRowDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowEarlyPreview() {
@@ -146,6 +150,7 @@ private fun ScheduledTimeRowEarlyPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun ScheduledTimeRowPastOnTimePreview() {
@@ -157,6 +162,7 @@ private fun ScheduledTimeRowPastOnTimePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowPastDelayedPreview() {
@@ -171,6 +177,7 @@ private fun ScheduledTimeRowPastDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowPastEarlyPreview() {

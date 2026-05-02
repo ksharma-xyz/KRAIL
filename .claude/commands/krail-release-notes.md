@@ -12,6 +12,7 @@ When the user invokes this skill:
 4. Run `git log <previous-tag>..<target-version-or-HEAD> --oneline --no-merges` to get the commit list.
 5. Draft **two** versions of the release notes (Android first, then iOS), following the style guide and examples below.
 6. Present both versions and ask the user if they want tweaks before finalising.
+7. Once the user is happy, write the final notes to `docs/release-notes/v{version}.md` (create the file — do not ask for permission). Then tell the user the file path to copy from.
 
 ---
 
@@ -298,4 +299,23 @@ v1.20.0
 (character count: N / 4000)
 ```
 
-Then ask: "Want any changes before I finalise these?"
+Then ask: "Want any changes before I write these to `docs/release-notes/v{version}.md`?"
+
+The saved file format is:
+```markdown
+# KRAIL v{version} — Release Notes
+
+## Android — Google Play Store
+
+v{version}
+
+{android notes}
+
+---
+
+## iOS — App Store
+
+v{version}
+
+{ios notes}
+```

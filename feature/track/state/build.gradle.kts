@@ -41,6 +41,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.dateTime)
+                implementation(projects.core.deeplink)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.maps.state)

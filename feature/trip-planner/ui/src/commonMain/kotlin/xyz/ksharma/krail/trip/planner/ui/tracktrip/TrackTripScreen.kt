@@ -58,11 +58,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.track.DepartureDeviation
-import xyz.ksharma.krail.feature.track.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
 import xyz.ksharma.krail.feature.track.TrackedJourneyDisplay

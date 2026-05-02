@@ -34,6 +34,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.appInfo)
                 implementation(libs.compose.ui)
                 implementation(libs.compose.runtime)
                 api(libs.di.koinComposeViewmodel)

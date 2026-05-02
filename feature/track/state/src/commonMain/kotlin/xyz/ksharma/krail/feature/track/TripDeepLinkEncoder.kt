@@ -2,12 +2,13 @@ package xyz.ksharma.krail.feature.track
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_HOST
+import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_PATH
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-const val TRACK_DEEP_LINK_BASE_URL = "https://ksharma-xyz.github.io/trip"
-const val KRAIL_WEBSITE_URL = "https://krail.app"
+const val TRACK_DEEP_LINK_BASE_URL = "https://" + KRAIL_DEEP_LINK_HOST + KRAIL_DEEP_LINK_PATH
 
 object TripDeepLinkEncoder {
 

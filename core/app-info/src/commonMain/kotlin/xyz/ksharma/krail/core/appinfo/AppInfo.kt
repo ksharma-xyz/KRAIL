@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.core.appinfo
 
+const val KRAIL_WEBSITE_URL = "https://krail.app"
+
 /**
  * Inject [AppInfoProvider] to get instance of [AppInfo].
  */

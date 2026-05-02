@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.deeplink
 
 import android.net.Uri
+import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_HOST
+import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_PATH
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
@@ -46,12 +48,10 @@ internal class RealAppDeepLinkHandler(
     }
 
     private fun Uri.extractEncodedData(): String? =
-        takeIf { host == DEEP_LINK_HOST && path?.startsWith(DEEP_LINK_PATH_PREFIX) == true }
+        takeIf { host == KRAIL_DEEP_LINK_HOST && path?.startsWith(KRAIL_DEEP_LINK_PATH) == true }
             ?.getQueryParameter(QUERY_PARAM_DATA)
 
     private companion object {
-        const val DEEP_LINK_HOST = "ksharma-xyz.github.io"
-        const val DEEP_LINK_PATH_PREFIX = "/trip"
         const val QUERY_PARAM_DATA = "d"
     }
 }

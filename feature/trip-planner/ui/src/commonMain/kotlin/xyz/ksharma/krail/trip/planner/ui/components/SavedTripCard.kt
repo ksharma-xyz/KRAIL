@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import krail.feature.trip_planner.ui.generated.resources.Res
@@ -33,7 +35,9 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
 @Composable
@@ -43,17 +47,36 @@ fun SavedTripCard(
     onStarClick: () -> Unit,
     onCardClick: () -> Unit,
     modifier: Modifier = Modifier,
+    editing: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
     favouriteIconColor: Color = KrailTheme.colors.onSurface,
 ) {
     val dim = KrailTheme.dimensions
     val cardShape = CardShape
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val clickModifier = if (editing) {
+        Modifier
+    } else if (onLongClick != null) {
+        Modifier.combinedClickable(
+            interactionSource = interactionSource,
+            indication = krailRipple(color = themeColor()),
+            onLongClick = onLongClick,
+            onClick = onCardClick,
+        )
+    } else {
+        Modifier.klickable(
+            interactionSource = interactionSource,
+            onClick = onCardClick,
+        )
+    }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(cardShape)
             .background(color = themeBackgroundColor(), shape = cardShape)
-            .klickable(onClick = onCardClick)
+            .then(clickModifier)
             .padding(
                 horizontal = dim.spacingXL,
                 vertical = if (fromDisplay.label != null && toDisplay.label != null) {
@@ -85,11 +108,14 @@ fun SavedTripCard(
             }
         }
 
-        // Star button
+        // Star stays in layout during editing so IntrinsicSize.Min doesn't collapse the
+        // card height — it's invisible and non-interactive, delete is handled by the overlay.
         Box(
             modifier = Modifier
                 .size(dim.savedTripIconButtonSize)
+                .graphicsLayer { alpha = if (editing) 0f else 1f }
                 .clickable(
+                    enabled = !editing,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClickLabel = "Remove Saved Trip",

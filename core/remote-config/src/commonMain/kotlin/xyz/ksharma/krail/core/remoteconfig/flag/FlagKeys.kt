@@ -30,4 +30,6 @@ enum class FlagKeys(val key: String) {
 
     SEARCH_STOP_MAPS_AVAILABLE("maps_stop_search"),
     JOURNEY_MAPS_AVAILABLE("maps_journey"),
+
+    TRIP_TRACKING_ENABLED("trip_tracking_enabled"),
 }

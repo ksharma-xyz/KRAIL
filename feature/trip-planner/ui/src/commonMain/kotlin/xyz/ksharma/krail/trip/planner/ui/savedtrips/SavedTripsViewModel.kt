@@ -126,6 +126,7 @@ class SavedTripsViewModel(
             updateInfoTilesUiState()
             updateSelectedStops()
             updateInviteFriendsTileSeenState()
+            loadReorderTipSeenState()
         }
         .onCompletion {
             cleanupJobs()
@@ -187,6 +188,7 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
             is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
+            SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
         }
     }
 
@@ -639,6 +641,18 @@ class SavedTripsViewModel(
                 isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable && savedTrips.isNotEmpty(),
                 displayDiscoverBadge = !preferences.hasDiscoverBeenClicked(),
             )
+        }
+    }
+
+    private suspend fun loadReorderTipSeenState() {
+        val hasSeen = preferences.getBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP) ?: false
+        if (!hasSeen) updateUiState { copy(hasSeenReorderTip = false) }
+    }
+
+    private fun onMarkReorderTipSeen() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP, true)
+            // No UI state update — tip stays visible for the current session, hidden on next launch.
         }
     }
 

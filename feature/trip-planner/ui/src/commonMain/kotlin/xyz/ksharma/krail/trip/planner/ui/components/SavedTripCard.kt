@@ -65,11 +65,7 @@ fun SavedTripCard(
             .then(clickModifier)
             .padding(
                 horizontal = dim.spacingXL,
-                vertical = if (fromDisplay.label != null && toDisplay.label != null) {
-                    dim.spacingS
-                } else {
-                    dim.spacingXL
-                },
+                vertical = dim.spacingXL,
             )
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,

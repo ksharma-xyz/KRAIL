@@ -41,4 +41,6 @@ sealed interface SavedTripUiEvent {
     data object StopTracking : SavedTripUiEvent
 
     data class MoveSavedTripToIndex(val tripId: String, val targetIndex: Int) : SavedTripUiEvent
+
+    data object MarkReorderTipSeen : SavedTripUiEvent
 }

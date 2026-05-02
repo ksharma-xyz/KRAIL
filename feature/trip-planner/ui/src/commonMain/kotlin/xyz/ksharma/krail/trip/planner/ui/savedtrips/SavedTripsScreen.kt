@@ -14,8 +14,11 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
@@ -450,6 +453,26 @@ private fun LazyListScope.savedTripsContent(
         }
     }
 
+    item(key = "reorder_hint") {
+        val dim = KrailTheme.dimensions
+        AnimatedVisibility(
+            visible = editing,
+            enter = expandVertically(animationSpec = tween(durationMillis = 250)) +
+                fadeIn(animationSpec = tween(durationMillis = 200)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
+                fadeOut(animationSpec = tween(durationMillis = 150)),
+        ) {
+            Text(
+                text = "💡 Hold and drag cards to reorder. Tap Done when finished.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .padding(bottom = dim.spacingM),
+            )
+        }
+    }
+
     items(
         items = savedTripsState.savedTrips,
         key = { trip -> trip.tripId },
@@ -472,7 +495,6 @@ private fun LazyListScope.savedTripsContent(
                     SavedTripCard(
                         fromDisplay = trip.fromStopDisplay(savedTripsState.stopLabels),
                         toDisplay = trip.toStopDisplay(savedTripsState.stopLabels),
-                        onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
                         onCardClick = {
                             if (!editing) {
                                 onSavedTripCardClick(
@@ -496,7 +518,6 @@ private fun LazyListScope.savedTripsContent(
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             },
                         ),
-                        favouriteIconColor = iconColor,
                     )
 
                     if (editing) {

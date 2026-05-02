@@ -50,7 +50,10 @@ fun OurStoryScreen(
                         Text(
                             state.story,
                             style = KrailTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingXXXL),
+                            modifier = Modifier.padding(
+                                horizontal = dim.pageHorizontalPadding,
+                                vertical = dim.spacingXXXL,
+                            ),
                         )
                     }
 
@@ -58,7 +61,9 @@ fun OurStoryScreen(
                         Text(
                             text = state.disclaimer,
                             style = KrailTheme.typography.labelLarge,
-                            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding).padding(top = dim.spacingL),
+                            modifier = Modifier
+                                .padding(horizontal = dim.pageHorizontalPadding)
+                                .padding(top = dim.spacingL),
                         )
                     }
 

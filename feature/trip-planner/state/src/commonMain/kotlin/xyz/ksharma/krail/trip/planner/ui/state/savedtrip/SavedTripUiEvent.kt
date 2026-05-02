@@ -39,4 +39,6 @@ sealed interface SavedTripUiEvent {
     data class ToStopChanged(val toJson: String) : SavedTripUiEvent
 
     data object StopTracking : SavedTripUiEvent
+
+    data class MoveSavedTripToIndex(val tripId: String, val targetIndex: Int) : SavedTripUiEvent
 }

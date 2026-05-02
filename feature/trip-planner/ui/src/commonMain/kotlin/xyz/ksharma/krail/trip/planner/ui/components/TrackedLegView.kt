@@ -48,8 +48,9 @@ internal fun TrackedLegView(
     isArrived: Boolean = false,
     stopDelays: Map<String, Int> = emptyMap(),
 ) {
-    val circleRadius = 8.dp
-    val strokeWidth = 4.dp
+    val dim = KrailTheme.dimensions
+    val circleRadius = dim.spacingM
+    val strokeWidth = dim.strokeThick
     val lineColor = remember(leg.lineColorCode) { leg.lineColorCode.hexToComposeColor() }
     val pendingColor = KrailTheme.colors.softLabel
 
@@ -147,13 +148,13 @@ internal fun TrackedLegView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp, top = 16.dp),
+                .padding(bottom = dim.spacingXL, top = dim.spacingXL),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TransportModeBadge(
                 backgroundColor = lineColor,
                 badgeText = leg.lineName,
-                modifier = Modifier.padding(end = 10.dp),
+                modifier = Modifier.padding(end = dim.spacingML),
             )
             leg.headsign?.let { headsign ->
                 Text(
@@ -163,7 +164,7 @@ internal fun TrackedLegView(
             }
         }
 
-        Column(modifier = Modifier.fillMaxWidth().padding(start = 4.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(start = dim.spacingXS)) {
             // First stop (always prominent — origin)
             val firstStop = leg.stops.first()
             TrackedStopRow(
@@ -181,12 +182,12 @@ internal fun TrackedLegView(
                         circleRadius = stopCircleRadius(0),
                         circleColor = stopCircleColor(0),
                     )
-                    .padding(start = 16.dp),
+                    .padding(start = dim.spacingXL),
             )
 
             if (isActiveSegment(0)) {
                 Spacer(
-                    modifier = Modifier.height(16.dp)
+                    modifier = Modifier.height(dim.spacingXL)
                         .timeLineCenterSplit(
                             completedColor = lineColor,
                             pendingColor = pendingColor,
@@ -196,7 +197,7 @@ internal fun TrackedLegView(
                 )
             } else {
                 Spacer(
-                    modifier = Modifier.height(12.dp)
+                    modifier = Modifier.height(dim.spacingL)
                         .timeLineCenter(color = segmentColor(0), strokeWidth = strokeWidth),
                 )
             }
@@ -233,12 +234,12 @@ internal fun TrackedLegView(
                             circleRadius = stopCircleRadius(stopIdx),
                             circleColor = stopCircleColor(stopIdx),
                         )
-                        .padding(start = 16.dp),
+                        .padding(start = dim.spacingXL),
                 )
 
                 if (isActiveSegment(stopIdx)) {
                     Spacer(
-                        modifier = Modifier.height(16.dp)
+                        modifier = Modifier.height(dim.spacingXL)
                             .timeLineCenterSplit(
                                 lineColor,
                                 pendingColor,
@@ -248,7 +249,7 @@ internal fun TrackedLegView(
                     )
                 } else {
                     Spacer(
-                        modifier = Modifier.height(16.dp).timeLineCenter(
+                        modifier = Modifier.height(dim.spacingXL).timeLineCenter(
                             color = segmentColor(stopIdx),
                             strokeWidth = strokeWidth,
                         ),
@@ -280,7 +281,7 @@ internal fun TrackedLegView(
                         circleRadius = stopCircleRadius(lastIdx),
                         circleColor = stopCircleColor(lastIdx),
                     )
-                    .padding(start = 16.dp),
+                    .padding(start = dim.spacingXL),
             )
         }
     }
@@ -324,8 +325,8 @@ private fun TrackedStopRow(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Row(
-                modifier = Modifier.padding(end = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(end = KrailTheme.dimensions.spacingM),
+                horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingS),
             ) {
                 Text(text = time, style = timeStyle, color = contentColor)
                 scheduledTime?.let {
@@ -360,7 +361,7 @@ private fun ApproachingTimeText(
             text = "($timeText)",
             style = KrailTheme.typography.bodyMedium,
             color = contentColor,
-            modifier = Modifier.padding(vertical = 2.dp),
+            modifier = Modifier.padding(vertical = APPROACHING_TIME_VERTICAL_PADDING),
         )
     }
 }
@@ -415,7 +416,7 @@ private fun TrackedLegViewPreview() {
                 ),
             ),
             now = now,
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingXL),
         )
     }
 }
@@ -425,8 +426,8 @@ private fun TrackedLegViewPreview() {
 private fun TrackedStopRowPreview() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(KrailTheme.dimensions.spacingXL),
+            verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXL),
         ) {
             TrackedStopRow(
                 time = "12:05 PM",
@@ -451,3 +452,5 @@ private fun TrackedStopRowPreview() {
 }
 
 // endregion
+
+private val APPROACHING_TIME_VERTICAL_PADDING = 2.dp

@@ -219,7 +219,7 @@ fun AddLabelBottomSheet(
                                     painter = painterResource(icon),
                                     contentDescription = null,
                                     colorFilter = ColorFilter.tint(contentColor),
-                                    modifier = Modifier.size(14.dp),
+                                    modifier = Modifier.size(LABEL_ICON_SIZE),
                                 )
                                 Text(
                                     text = chipName,
@@ -302,7 +302,7 @@ private fun StopChip(stopName: String, modifier: Modifier = Modifier) {
             painter = painterResource(TripPlannerRes.drawable.ic_location_on),
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-            modifier = Modifier.size(12.dp),
+            modifier = Modifier.size(STOP_CHIP_ICON_SIZE),
         )
         Text(
             text = stopName,
@@ -329,7 +329,7 @@ private fun LabelPreviewPill(name: String) {
             painter = painterResource(icon),
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.size(LABEL_ICON_SIZE),
         )
         Text(
             text = name,
@@ -385,3 +385,6 @@ private fun PreviewAddLabelBottomSheet_WithStop() {
 }
 
 // endregion
+
+private val LABEL_ICON_SIZE = 14.dp
+private val STOP_CHIP_ICON_SIZE = 12.dp

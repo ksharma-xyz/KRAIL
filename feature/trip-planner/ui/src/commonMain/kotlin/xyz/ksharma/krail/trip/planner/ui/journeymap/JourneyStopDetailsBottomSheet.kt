@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.preview.PreviewComponent
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopInfoRow
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyStopUiMapper.getTimeInfo
@@ -41,17 +41,18 @@ fun JourneyStopDetailsBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         additionalInfo = {
+            val dim = KrailTheme.dimensions
             // Display time info rows
             timeInfo.forEach { info ->
                 StopInfoRow(
                     label = info.label,
                     value = info.value,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dim.spacingM))
             }
 
             if (timeInfo.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dim.spacingM))
             }
         },
     )

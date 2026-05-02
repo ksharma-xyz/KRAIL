@@ -144,7 +144,8 @@ fun TrackTripScreen(
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        AnimatedDots(modifier = Modifier.size(48.dp, 16.dp))
+                        val dim = KrailTheme.dimensions
+                        AnimatedDots(modifier = Modifier.size(dim.buttonRoundSize, dim.iconXS))
                     }
                     if (isJourneyActive) {
                         TextButton(onClick = { mapExpanded = !mapExpanded }) {
@@ -158,7 +159,7 @@ fun TrackTripScreen(
                                 painter = rememberShareIconPainter(),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(KrailTheme.dimensions.iconM),
                             )
                         }
                     }
@@ -218,6 +219,7 @@ fun TrackTripScreen(
                 TrackTripState.NotFound -> Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    val dim = KrailTheme.dimensions
                     ErrorMessage(
                         title = "Service not found",
                         message = "This service wasn't found. It may have been cancelled or\u00A0changed.",
@@ -225,7 +227,7 @@ fun TrackTripScreen(
                         actionData = ActionData("Retry") { viewModel.retry() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = dim.spacingXL),
                     )
                     Button(
                         onClick = {
@@ -234,7 +236,7 @@ fun TrackTripScreen(
                         },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = dim.spacingXL),
                     ) {
                         Text("Stop Tracking")
                     }
@@ -243,13 +245,14 @@ fun TrackTripScreen(
                 TrackTripState.Error -> Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    val dim = KrailTheme.dimensions
                     ErrorMessage(
                         title = "Something went wrong",
                         message = "Couldn't reach transport services. Check your connection and try\u00A0again.",
                         actionData = ActionData("Retry") { viewModel.retry() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = dim.spacingXL),
                     )
                     Button(
                         onClick = {
@@ -258,7 +261,7 @@ fun TrackTripScreen(
                         },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = dim.spacingXL),
                     ) {
                         Text("Stop Tracking")
                     }
@@ -276,6 +279,7 @@ private fun PromptContent(
     onStartTracking: (TripDeepLink) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Column(modifier = modifier.fillMaxSize()) {
         OriginDestination(
             origin = StopDisplay(stopId = deepLink.fromStopId, name = deepLink.fromStopName),
@@ -283,21 +287,21 @@ private fun PromptContent(
             timeLineColor = KrailTheme.colors.onSurface,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = dim.spacingXL, vertical = dim.spacingM)
                 .background(color = KrailTheme.colors.surface),
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = dim.spacingXL, vertical = dim.spacingXL),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingM),
         ) {
             Text(
                 text = "Track this trip for live real-time\u00A0updates.",
                 style = KrailTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 12.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingL),
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(dim.spacingM))
             Button(onClick = { onStartTracking(deepLink) }) {
                 Text("Start Tracking")
             }
@@ -312,6 +316,7 @@ private fun LoadingContent(
     emoji: String = "\uD83D\uDE86",
 ) {
     Column(modifier = modifier.fillMaxSize()) {
+        val dim = KrailTheme.dimensions
         deepLink?.let { dl ->
             OriginDestination(
                 origin = StopDisplay(stopId = dl.fromStopId, name = dl.fromStopName),
@@ -319,7 +324,7 @@ private fun LoadingContent(
                 timeLineColor = KrailTheme.colors.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = dim.spacingXL, vertical = dim.spacingM)
                     .background(color = KrailTheme.colors.surface),
             )
         }
@@ -329,7 +334,7 @@ private fun LoadingContent(
         ) {
             LoadingEmojiAnim(
                 emoji = emoji,
-                modifier = Modifier.padding(vertical = 40.dp),
+                modifier = Modifier.padding(vertical = LOADING_EMOJI_VERTICAL_PADDING),
             )
         }
     }
@@ -376,6 +381,7 @@ private fun JourneyContent(
         }
     }
 
+    val dim = KrailTheme.dimensions
     Column(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = mapExpanded,
@@ -397,7 +403,7 @@ private fun JourneyContent(
         }
 
         LazyColumn(
-            contentPadding = PaddingValues(top = 24.dp, bottom = 80.dp),
+            contentPadding = PaddingValues(top = dim.spacingXXXL, bottom = JOURNEY_CONTENT_BOTTOM_PADDING),
             modifier = Modifier.fillMaxSize()
                 .drawWithContent {
                     graphicsLayer.record { this@drawWithContent.drawContent() }
@@ -411,7 +417,7 @@ private fun JourneyContent(
                     timeLineColor = KrailTheme.colors.onSurface,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = dim.spacingXL, vertical = dim.spacingM)
                         .background(color = KrailTheme.colors.surface),
                 )
             }
@@ -422,19 +428,19 @@ private fun JourneyContent(
                     value = countdownDisplay.second,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = dim.spacingXL, vertical = dim.spacingM),
                 )
             }
 
             item(key = "divider") {
                 Divider(
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                        .padding(top = 16.dp, bottom = 12.dp),
+                    modifier = Modifier.padding(horizontal = dim.spacingXL)
+                        .padding(top = dim.spacingXL, bottom = dim.spacingL),
                 )
             }
 
             itemsIndexed(journey.legs, key = { index, _ -> "leg_$index" }) { _, leg ->
-                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Box(modifier = Modifier.padding(horizontal = dim.spacingXL)) {
                     when (leg) {
                         is TrackedLeg.Transport -> TrackedLegView(
                             leg = leg,
@@ -445,15 +451,18 @@ private fun JourneyContent(
 
                         is TrackedLeg.Walk -> WalkingLeg(
                             duration = leg.durationText,
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+                            modifier = Modifier.padding(
+                                vertical = dim.spacingM,
+                                horizontal = WALKING_LEG_HORIZONTAL_PADDING,
+                            ),
                         )
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(dim.spacingXL))
 
                 Divider(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingXS),
                 )
             }
         }
@@ -574,7 +583,8 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                 onNavActionClick = {},
                 actions = {
                     if (state is TrackTripState.Tracking && state.isRefreshing) {
-                        AnimatedDots(modifier = Modifier.size(48.dp, 16.dp))
+                        val dim = KrailTheme.dimensions
+                        AnimatedDots(modifier = Modifier.size(dim.buttonRoundSize, dim.iconXS))
                     }
                 },
             )
@@ -601,6 +611,7 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                 )
 
                 TrackTripState.NotFound -> Column(modifier = Modifier.fillMaxWidth()) {
+                    val dim = KrailTheme.dimensions
                     ErrorMessage(
                         title = "Service not found",
                         message = "This service wasn't found. It may have been cancelled or\u00A0changed.",
@@ -608,32 +619,33 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                         actionData = ActionData("Retry") { },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = dim.spacingXL),
                     )
                     Button(
                         onClick = {},
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = dim.spacingXL),
                     ) {
                         Text("Stop Tracking")
                     }
                 }
 
                 TrackTripState.Error -> Column(modifier = Modifier.fillMaxWidth()) {
+                    val dim = KrailTheme.dimensions
                     ErrorMessage(
                         title = "Something went wrong",
                         message = "Couldn't reach transport services. Check your connection and try\u00A0again.",
                         actionData = ActionData("Retry") { },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = dim.spacingXL),
                     )
                     Button(
                         onClick = {},
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = dim.spacingXL),
                     ) {
                         Text("Stop Tracking")
                     }
@@ -827,3 +839,7 @@ private fun TrackTripScreenTrackingMapButtonPreview() {
 }
 
 // endregion
+
+private val JOURNEY_CONTENT_BOTTOM_PADDING = 80.dp
+private val LOADING_EMOJI_VERTICAL_PADDING = 40.dp
+private val WALKING_LEG_HORIZONTAL_PADDING = 2.dp

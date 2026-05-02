@@ -40,6 +40,7 @@ import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.NavActionButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapToggleButton
 
@@ -79,6 +80,7 @@ fun SearchTopBar(
         }
     }
 
+    val dim = KrailTheme.dimensions
     Row(
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -86,9 +88,14 @@ fun SearchTopBar(
             .fillMaxWidth()
             .statusBarsPadding()
             .windowInsetsPadding(WindowInsets.ime)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .background(color = Color.Transparent, RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)),
+            .padding(horizontal = dim.spacingXL, vertical = dim.spacingL)
+            .background(
+                color = Color.Transparent,
+                RoundedCornerShape(bottomStart = dim.bottomSheetCornerRadius, bottomEnd = dim.bottomSheetCornerRadius),
+            )
+            .clip(
+                RoundedCornerShape(bottomStart = dim.bottomSheetCornerRadius, bottomEnd = dim.bottomSheetCornerRadius),
+            ),
     ) {
         TextField(
             placeholder = placeholderText,
@@ -117,11 +124,11 @@ fun SearchTopBar(
 
         // animateContentSize is only applied when animateMapButton == true (NotDetermined).
         // For false (Granted/Denied) the button appears instantly with no animation.
-        // height(48.dp) locks height so only width animates, preventing the button from
+        // height(buttonRoundSize) locks height so only width animates, preventing the button from
         // drifting up from the bottom-right when both dimensions would otherwise animate.
         Box(
             modifier = Modifier
-                .height(48.dp)
+                .height(dim.buttonRoundSize)
                 .then(
                     if (animateMapButton == true) {
                         Modifier.animateContentSize(
@@ -136,7 +143,7 @@ fun SearchTopBar(
                 MapToggleButton(
                     selected = isMapSelected,
                     onClick = { onMapToggle(!isMapSelected) },
-                    modifier = Modifier.padding(start = 12.dp),
+                    modifier = Modifier.padding(start = dim.spacingL),
                 ) {
                     Text("Map")
                 }
@@ -164,7 +171,7 @@ private fun PreviewSearchTopBar_List() {
                 onMapToggle = {},
                 onBackClick = {},
                 onTextChange = {},
-                modifier = Modifier.height(72.dp),
+                modifier = Modifier.height(SEARCH_TOP_BAR_HEIGHT),
             )
         }
     }
@@ -187,7 +194,7 @@ private fun PreviewSearchTopBar_Map() {
                 onMapToggle = {},
                 onBackClick = {},
                 onTextChange = {},
-                modifier = Modifier.height(72.dp),
+                modifier = Modifier.height(SEARCH_TOP_BAR_HEIGHT),
             )
         }
     }
@@ -200,7 +207,7 @@ private fun PreviewSearchTopBar_Compact() {
         val themeColor = remember { mutableStateOf(NswTransportMode.Train.colorCode) }
         CompositionLocalProvider(LocalThemeColor provides themeColor) {
             val focusRequester = remember { FocusRequester() }
-            Box(modifier = Modifier.width(360.dp).height(72.dp)) {
+            Box(modifier = Modifier.width(SEARCH_TOP_BAR_PREVIEW_WIDTH).height(SEARCH_TOP_BAR_HEIGHT)) {
                 SearchTopBar(
                     placeholderText = "Station",
                     focusRequester = focusRequester,
@@ -219,3 +226,6 @@ private fun PreviewSearchTopBar_Compact() {
 }
 
 // endregion
+
+private val SEARCH_TOP_BAR_HEIGHT = 72.dp
+private val SEARCH_TOP_BAR_PREVIEW_WIDTH = 360.dp

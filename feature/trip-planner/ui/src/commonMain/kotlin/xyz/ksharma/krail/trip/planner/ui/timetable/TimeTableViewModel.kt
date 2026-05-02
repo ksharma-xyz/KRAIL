@@ -43,6 +43,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.feature.track.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
@@ -494,17 +495,22 @@ class TimeTableViewModel(
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
+        val trackingEnabled = flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
         val deepLinkUrls = tripInfo?.let { trip ->
             journeyList.mapNotNull { journey ->
-                val url = TripDeepLinkEncoder.encode(
-                    fromStopId = trip.fromStopId,
-                    fromStopName = trip.fromStopName,
-                    toStopId = trip.toStopId,
-                    toStopName = trip.toStopName,
-                    departureUtcDateTime = journey.originUtcDateTime,
-                    legs = journey.legs,
-                    excludedProductClasses = unselectedModes,
-                ) ?: return@mapNotNull null
+                val url = if (trackingEnabled) {
+                    TripDeepLinkEncoder.encode(
+                        fromStopId = trip.fromStopId,
+                        fromStopName = trip.fromStopName,
+                        toStopId = trip.toStopId,
+                        toStopName = trip.toStopName,
+                        departureUtcDateTime = journey.originUtcDateTime,
+                        legs = journey.legs,
+                        excludedProductClasses = unselectedModes,
+                    ) ?: return@mapNotNull null
+                } else {
+                    KRAIL_WEBSITE_URL
+                }
                 journey.journeyId to url
             }.toMap().toImmutableMap()
         }

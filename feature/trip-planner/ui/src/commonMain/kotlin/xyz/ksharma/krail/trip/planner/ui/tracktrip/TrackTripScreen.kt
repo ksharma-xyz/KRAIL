@@ -62,6 +62,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.track.DepartureDeviation
+import xyz.ksharma.krail.feature.track.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
 import xyz.ksharma.krail.feature.track.TrackedJourneyDisplay
@@ -185,9 +186,11 @@ fun TrackTripScreen(
                     triggerShare = triggerShare,
                     onShareCapture = { bitmap ->
                         triggerShare = false
-                        val deepLinkUrl = encodedData
-                            ?.let { "\nhttps://ksharma-xyz.github.io/trip?d=$it" }
-                            .orEmpty()
+                        val deepLinkUrl = if (viewModel.isTripTrackingEnabled) {
+                            encodedData?.let { "\nhttps://ksharma-xyz.github.io/trip?d=$it" }.orEmpty()
+                        } else {
+                            "\n$KRAIL_WEBSITE_URL"
+                        }
                         val text = "${countdownDisplay.first} ${countdownDisplay.second}" +
                             "\n${s.journey.fromStopName} to ${s.journey.toStopName}" +
                             deepLinkUrl

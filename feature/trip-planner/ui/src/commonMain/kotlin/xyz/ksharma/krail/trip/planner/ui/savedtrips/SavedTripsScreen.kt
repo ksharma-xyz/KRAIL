@@ -4,11 +4,21 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.StartOffsetType
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
@@ -22,11 +32,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -39,15 +52,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.ReorderableLazyListState
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
@@ -56,9 +77,12 @@ import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
@@ -75,6 +99,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import app.krail.taj.resources.Res as TajRes
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
 
@@ -124,6 +149,20 @@ fun SavedTripsScreen(
     // When the pill condition isn't met, always show the expanded row.
     val effectiveIsExpanded = if (showPill) isSearchExpanded else true
 
+    // Edit mode for trip cards — long-press enters, Done button exits.
+    var editing by rememberSaveable { mutableStateOf(false) }
+
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val tripId = from.key as? String ?: return@rememberReorderableLazyListState
+        val toTripId = to.key as? String ?: return@rememberReorderableLazyListState
+        val fromTripIndex = savedTripsState.savedTrips.indexOfFirst { it.tripId == tripId }
+        val toTripIndex = savedTripsState.savedTrips.indexOfFirst { it.tripId == toTripId }
+        if (fromTripIndex != -1 && toTripIndex != -1) {
+            onEvent(SavedTripUiEvent.MoveSavedTripToIndex(tripId = tripId, targetIndex = toTripIndex))
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -135,24 +174,35 @@ fun SavedTripsScreen(
                     Text(text = "KRAIL", color = themeColor())
                 },
                 actions = {
-                    if (savedTripsState.isDiscoverAvailable) {
-                        RoundIconButton(
-                            showBadge = savedTripsState.displayDiscoverBadge,
-                            onClick = onDiscoverButtonClick,
+                    if (editing) {
+                        Button(
+                            onClick = { editing = false },
+                            colors = ButtonDefaults.monochromeButtonColors(),
+                            dimensions = ButtonDefaults.chipButtonSize(),
+                            modifier = Modifier.padding(horizontal = dim.spacingM),
                         ) {
-                            CityCodeText("SYD")
+                            Text(text = "Done")
                         }
-                    }
+                    } else {
+                        if (savedTripsState.isDiscoverAvailable) {
+                            RoundIconButton(
+                                showBadge = savedTripsState.displayDiscoverBadge,
+                                onClick = onDiscoverButtonClick,
+                            ) {
+                                CityCodeText("SYD")
+                            }
+                        }
 
-                    RoundIconButton(
-                        onClick = onSettingsButtonClick,
-                    ) {
-                        Image(
-                            painter = painterResource(Res.drawable.ic_settings),
-                            contentDescription = "Settings",
-                            colorFilter = ColorFilter.tint(LocalContentColor.current),
-                            modifier = Modifier.size(dim.spacingXXXL),
-                        )
+                        RoundIconButton(
+                            onClick = onSettingsButtonClick,
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.ic_settings),
+                                contentDescription = "Settings",
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                                modifier = Modifier.size(dim.spacingXXXL),
+                            )
+                        }
                     }
                 },
             )
@@ -160,6 +210,7 @@ fun SavedTripsScreen(
             val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
             LazyColumn(
+                state = lazyListState,
                 contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
             ) {
                 when {
@@ -271,6 +322,9 @@ fun SavedTripsScreen(
                             departureBoardEntries = departureBoardEntries,
                             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
                             onDepartureBoardEvent = onDepartureBoardEvent,
+                            editing = editing,
+                            reorderState = reorderState,
+                            onEnterEditing = { editing = true },
                         )
                     }
                 }
@@ -286,7 +340,7 @@ fun SavedTripsScreen(
         // matches whichever variant is about to appear: the pill springs in
         // bouncy from a 0-scale, the expanded row slides up from below.
         AnimatedVisibility(
-            visible = !savedTripsState.isSavedTripsLoading,
+            visible = !savedTripsState.isSavedTripsLoading && !editing,
             enter = if (showPill) {
                 scaleIn(
                     initialScale = 0f,
@@ -371,6 +425,9 @@ private fun LazyListScope.savedTripsContent(
     departureBoardEntries: ImmutableList<StopDepartureBoardEntry>,
     expandedDepartureBoardStopId: String?,
     onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
+    editing: Boolean,
+    reorderState: ReorderableLazyListState,
+    onEnterEditing: () -> Unit,
 ) {
     if (trackedJourney != null) {
         stickyHeader(key = "tracking_title") {
@@ -396,33 +453,105 @@ private fun LazyListScope.savedTripsContent(
         }
     }
 
+    item(key = "onboarding_reorder_tip") {
+        val dim = KrailTheme.dimensions
+        AnimatedVisibility(
+            visible = !savedTripsState.hasSeenReorderTip && !editing,
+            enter = expandVertically(animationSpec = tween(durationMillis = 300)) +
+                fadeIn(animationSpec = tween(durationMillis = 250)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
+                fadeOut(animationSpec = tween(durationMillis = 150)),
+        ) {
+            LaunchedEffect(Unit) { onEvent(SavedTripUiEvent.MarkReorderTipSeen) }
+            Text(
+                text = "💡 Long press any trip to reorder or remove it.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .padding(bottom = dim.spacingM),
+            )
+        }
+    }
+
+    item(key = "reorder_hint") {
+        val dim = KrailTheme.dimensions
+        AnimatedVisibility(
+            visible = editing,
+            enter = expandVertically(animationSpec = tween(durationMillis = 250)) +
+                fadeIn(animationSpec = tween(durationMillis = 200)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
+                fadeOut(animationSpec = tween(durationMillis = 150)),
+        ) {
+            Text(
+                text = "💡 Hold and drag cards to reorder. Tap Done when finished.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .padding(bottom = dim.spacingM),
+            )
+        }
+    }
+
     items(
         items = savedTripsState.savedTrips,
         key = { trip -> trip.tripId },
     ) { trip ->
         val dim = KrailTheme.dimensions
-        SavedTripCard(
-            fromDisplay = trip.fromStopDisplay(savedTripsState.stopLabels),
-            toDisplay = trip.toStopDisplay(savedTripsState.stopLabels),
-            onStarClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
-            onCardClick = {
-                onSavedTripCardClick(
-                    StopItem(
-                        stopId = trip.fromStopId,
-                        stopName = trip.fromStopName,
-                    ),
-                    StopItem(
-                        stopId = trip.toStopId,
-                        stopName = trip.toStopName,
-                    ),
-                )
-            },
-            modifier = Modifier
-                .padding(horizontal = dim.pageHorizontalPadding),
-            favouriteIconColor = iconColor,
-        )
+        val haptic = LocalHapticFeedback.current
 
-        Spacer(modifier = Modifier.height(dim.spacingXL))
+        ReorderableItem(reorderState, key = trip.tripId) { isDragging ->
+            val rotation = rememberWiggleRotation(
+                active = editing && !isDragging,
+                seed = trip.tripId.hashCode(),
+            )
+
+            Column(modifier = Modifier.padding(top = if (editing) dim.spacingS else 0.dp)) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer { rotationZ = rotation }
+                        .padding(horizontal = dim.pageHorizontalPadding),
+                ) {
+                    SavedTripCard(
+                        fromDisplay = trip.fromStopDisplay(savedTripsState.stopLabels),
+                        toDisplay = trip.toStopDisplay(savedTripsState.stopLabels),
+                        onCardClick = {
+                            if (!editing) {
+                                onSavedTripCardClick(
+                                    StopItem(stopId = trip.fromStopId, stopName = trip.fromStopName),
+                                    StopItem(stopId = trip.toStopId, stopName = trip.toStopName),
+                                )
+                            }
+                        },
+                        editing = editing,
+                        onLongClick = if (!editing) {
+                            {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onEnterEditing()
+                            }
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.longPressDraggableHandle(
+                            enabled = editing,
+                            onDragStarted = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                        ),
+                    )
+
+                    if (editing) {
+                        TripDeleteOverlay(
+                            onClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(dim.spacingXL))
+            }
+        }
     }
 
     if (savedTripsState.parkRideUiState.isNotEmpty()) {
@@ -483,6 +612,54 @@ private fun LazyListScope.savedTripsContent(
 }
 
 @Composable
+private fun TripDeleteOverlay(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Box(
+        modifier = modifier
+            .offset(x = dim.spacingS, y = -dim.spacingS)
+            .size(dim.spacingXXXL)
+            .clip(CircleShape)
+            .background(KrailTheme.colors.onSurface, CircleShape)
+            .klickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(TajRes.drawable.ic_close),
+            contentDescription = "Remove saved trip",
+            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            modifier = Modifier.size(dim.spacingL),
+        )
+    }
+}
+
+@Composable
+private fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
+    val transition = rememberInfiniteTransition(label = "trip-wiggle")
+    val seedAbs = kotlin.math.abs(seed)
+    val angle by transition.animateFloat(
+        initialValue = -WIGGLE_ANGLE_DEGREES,
+        targetValue = WIGGLE_ANGLE_DEGREES,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = WIGGLE_BASE_DURATION_MS +
+                    (seedAbs % WIGGLE_DURATION_VARIANCE_BUCKETS) * WIGGLE_DURATION_VARIANCE_STEP_MS,
+                easing = LinearEasing,
+            ),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(
+                offsetMillis = (seedAbs * WIGGLE_OFFSET_MULTIPLIER) % WIGGLE_OFFSET_MAX_MS,
+                offsetType = StartOffsetType.Delay,
+            ),
+        ),
+        label = "trip-wiggle-rotation",
+    )
+    return if (active) angle else 0f
+}
+
+@Composable
 private fun SavedTripsTitle(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -500,6 +677,13 @@ private fun SavedTripsTitle(
         }
     }
 }
+
+private const val WIGGLE_ANGLE_DEGREES = 1.5f
+private const val WIGGLE_BASE_DURATION_MS = 350
+private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
+private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70
+private const val WIGGLE_OFFSET_MULTIPLIER = 47
+private const val WIGGLE_OFFSET_MAX_MS = 200
 
 // region Previews
 

@@ -37,6 +37,7 @@ interface Sandook {
     fun observeAllTrips(): Flow<List<SavedTrip>>
 
     fun selectTripById(tripId: String): SavedTrip?
+    fun updateSavedTripSortOrder(tripId: String, sortOrder: Long)
     fun clearSavedTrips()
     // endregion
 

@@ -301,6 +301,7 @@ private fun TransportModeFilterRow(
     val allModes = remember {
         NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
     }
+    val dim = KrailTheme.dimensions
 
     LazyRow(
         modifier = modifier.fillMaxWidth(),
@@ -325,6 +326,7 @@ private fun MapControlToggle(
     modifier: Modifier = Modifier,
 ) {
     val themeColor = LocalThemeColor.current.value.hexToComposeColor()
+    val dim = KrailTheme.dimensions
 
     Row(
         modifier = modifier

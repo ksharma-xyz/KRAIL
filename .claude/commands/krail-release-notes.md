@@ -4,12 +4,15 @@ Write Play Store + App Store release notes for a new KRAIL version.
 
 When the user invokes this skill:
 
-1. Run `git tag --sort=-version:refname | head -10` to find the two most recent version tags.
-2. Run `git log <previous-tag>..<current-tag> --oneline --no-merges` (or `HEAD` if the new tag doesn't exist yet) to get the commit list between them.
-3. Also run `git log <previous-tag>..<current-tag> --oneline --no-merges --diff-filter=M -- "*.kt" "*.swift" "*.gradle.kts"` to focus on real code changes.
-4. Ask the user if there's a specific tag range they want (e.g. `v1.19.0..HEAD`) — if they specify one, use that instead.
+1. **Ask first — before running any git commands:**
+   > "Which version are you writing notes for? (e.g. v1.20.0)
+   > Previous tag to compare from? (e.g. v1.19.0-RC1 — leave blank to auto-detect)"
+2. Wait for the user's answer.
+3. Run `git tag --sort=-version:refname | head -10` to confirm available tags. If the user left the previous tag blank, pick the closest tag before their target version.
+4. Run `git log <previous-tag>..<target-version-or-HEAD> --oneline --no-merges` to get the commit list.
 5. Draft **two** versions of the release notes (Android first, then iOS), following the style guide and examples below.
 6. Present both versions and ask the user if they want tweaks before finalising.
+7. Once the user is happy, write the final notes to `docs/release-notes/v{version}.md` (create the file — do not ask for permission). Then tell the user the file path to copy from.
 
 ---
 
@@ -17,9 +20,10 @@ When the user invokes this skill:
 
 | Output | Store | Limit | Tone |
 |---|---|---|---|
-| **Android** | Google Play Store | 500 chars | Warmer, emoji OK, casual Sydney voice |
-| **iOS** | App Store | 4000 chars (but keep it short — match the examples) | Slightly more formal, numbered bullets preferred, no emoji or minimal |
+| **Android** | Google Play Store | 500 chars | Warmer, minimal emoji as bullet points only if they're cool, casual Sydney voice |
+| **iOS** | App Store | 4000 chars (but keep it short — match the examples) | More formal, numbered bullets, **no emoji whatsoever** |
 
+Both must start with the version number on its own line: `v1.20.0` (or whatever the version is).
 Both must end with **"Let's KRAIL."** (Android) or **"Let's KRAIL."** (iOS). Never "Let's KRAIL Sydney." on iOS unless it's a big feature launch.
 
 ---
@@ -31,9 +35,11 @@ Both must end with **"Let's KRAIL."** (Android) or **"Let's KRAIL."** (iOS). Nev
 - Never use the word "experience". Never say "we are pleased to announce". Never say "improvements".
 - Bug fixes get one line max: "Fixed: [what users were seeing]."
 - Don't list every commit — synthesise into user-facing changes.
+- Every point must answer three things: **what** the feature is, **where** the user finds it, **what** they gain. Never write a vague cool-sounding line — make it concrete and actionable.
 - Short sentences. Present tense. Active voice.
 - Em dashes are OK in release notes (this is not user-facing UI copy).
-- Numbers (1, 2, 3) for iOS bullet lists. Emoji bullets (🕒 📲 🛠️) for Android if the release has personality.
+- Numbers (1, 2, 3) for iOS bullet lists. **No emoji on iOS — ever.**
+- Android: emoji are allowed as bullet points only if they genuinely add character (e.g. 🏷️ 🕐 🛠️). Use sparingly — 0–3 per release max. Never force them.
 - If it's a small patch/maintenance release, keep it to 2–3 lines. Don't pad.
 
 ---
@@ -280,14 +286,37 @@ Present the two drafts clearly separated:
 ═══════════════════════════════
 ANDROID — Play Store
 ═══════════════════════════════
+v1.20.0
+
 [draft here]
 (character count: N / 500)
 
 ═══════════════════════════════
 iOS — App Store
 ═══════════════════════════════
+v1.20.0
+
 [draft here]
 (character count: N / 4000)
 ```
 
-Then ask: "Want any changes before I finalise these?"
+Then ask: "Want any changes before I write these to `docs/release-notes/v{version}.md`?"
+
+The saved file format is:
+```markdown
+# KRAIL v{version} — Release Notes
+
+## Android — Google Play Store
+
+v{version}
+
+{android notes}
+
+---
+
+## iOS — App Store
+
+v{version}
+
+{ios notes}
+```

@@ -6,11 +6,9 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -157,34 +155,31 @@ private fun CollapsedPill(
 ) {
     val dim = KrailTheme.dimensions
 
-    // One-shot bouncy "zoom" entry: pill arrives slightly oversized, dips below
-    // natural size, then springs back to 1.0. Plays at most once per session —
-    // rememberSaveable across navigation/back-stack so returning to this screen
-    // never replays it. If the user has already seen the bounce, the scale skips
-    // straight to 1.0.
+    // One-shot "hello" pulse — the pill lands at natural size via the parent's
+    // scaleIn(0 → 1), waits for that to fully settle, then breathes up to a
+    // small peak and back down. Stays at or above 1.0 the whole time, so the
+    // text never collides with the parent's scaleIn clip rect (the previous
+    // overshoot+dip approach showed visible cropping).
+    //
+    // Plays at most once per session — rememberSaveable survives navigation and
+    // config changes, so coming back to this screen does not replay it.
     var hasPlayedEntryAnimation by rememberSaveable { mutableStateOf(false) }
-    val scale = remember {
-        Animatable(if (hasPlayedEntryAnimation) 1f else PILL_ENTER_INITIAL_SCALE)
-    }
+    val scale = remember { Animatable(1f) }
     LaunchedEffect(Unit) {
         if (!hasPlayedEntryAnimation) {
-            // Wait for the parent AnimatedVisibility's scaleIn(0 → 1) to land
-            // before kicking off the inner bounce. Without this delay, the dip
-            // begins while the pill is still scaling up from 0, which reads as
-            // a glitch instead of an intentional bounce.
-            delay(PILL_ENTER_START_DELAY_MILLIS)
+            delay(PILL_PULSE_START_DELAY_MILLIS)
             scale.animateTo(
-                targetValue = PILL_ENTER_DIP_SCALE,
+                targetValue = PILL_PULSE_PEAK_SCALE,
                 animationSpec = tween(
-                    durationMillis = PILL_ENTER_DIP_DURATION_MILLIS,
+                    durationMillis = PILL_PULSE_UP_DURATION_MILLIS,
                     easing = FastOutSlowInEasing,
                 ),
             )
             scale.animateTo(
                 targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = PILL_ENTER_SPRING_DAMPING,
-                    stiffness = Spring.StiffnessLow,
+                animationSpec = tween(
+                    durationMillis = PILL_PULSE_DOWN_DURATION_MILLIS,
+                    easing = FastOutSlowInEasing,
                 ),
             )
             hasPlayedEntryAnimation = true
@@ -216,15 +211,14 @@ private fun CollapsedPill(
     }
 }
 
-private const val PILL_ENTER_START_DELAY_MILLIS = 200L
-private const val PILL_ENTER_INITIAL_SCALE = 1.18f
-private const val PILL_ENTER_DIP_SCALE = 0.88f
-private const val PILL_ENTER_DIP_DURATION_MILLIS = 220
-
-// Sits between Spring.DampingRatioMediumBouncy (0.5f, too lively) and
-// Spring.DampingRatioLowBouncy (0.75f, almost flat). Keeps the playful spring
-// character while trimming the visible overshoot to about half.
-private const val PILL_ENTER_SPRING_DAMPING = 0.65f
+// Wait for the parent AnimatedVisibility's scaleIn (~600ms with bouncy spring)
+// to fully settle before pulsing — competing scale animations against the
+// parent's clip rect was what caused visible text cropping in the previous
+// overshoot/dip design.
+private const val PILL_PULSE_START_DELAY_MILLIS = 600L
+private const val PILL_PULSE_PEAK_SCALE = 1.05f
+private const val PILL_PULSE_UP_DURATION_MILLIS = 240
+private const val PILL_PULSE_DOWN_DURATION_MILLIS = 360
 
 @Composable
 private fun ExpandedSearchRow(

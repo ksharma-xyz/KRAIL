@@ -441,9 +441,9 @@ private fun LazyListScope.savedTripsContent(
                 tracked = trackedJourney,
                 onCardClick = onTrackingCardClick,
                 onStopTracking = onStopTracking,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = KrailTheme.dimensions.spacingXL),
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(KrailTheme.dimensions.spacingXL))
         }
     }
 
@@ -507,7 +507,7 @@ private fun LazyListScope.savedTripsContent(
                 seed = trip.tripId.hashCode(),
             )
 
-            Column(modifier = Modifier.padding(top = if (editing) dim.spacingS else 0.dp)) {
+            Column(modifier = Modifier.padding(top = if (editing) dim.spacingS else dim.spacingNone)) {
                 Box(
                     modifier = Modifier
                         .graphicsLayer { rotationZ = rotation }

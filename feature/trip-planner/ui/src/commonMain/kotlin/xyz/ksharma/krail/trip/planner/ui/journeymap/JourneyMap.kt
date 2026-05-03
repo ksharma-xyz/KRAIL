@@ -39,6 +39,7 @@ import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
@@ -202,19 +203,19 @@ private fun JourneyMapContent(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .navigationBarsPadding()
-                .padding(16.dp),
+                .padding(KrailTheme.dimensions.spacingXL),
         )
 
         // Top overlays — permission banner (if shown) then freshness badge directly below it.
-        // fillMaxWidth + horizontal padding here so both children get consistent 16dp screen
+        // fillMaxWidth + horizontal padding here so both children get consistent spacingXL screen
         // margins without each child needing to specify it individually.
         if (showPermissionBanner || (showFreshnessBadge && badgeText != null)) {
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp),
+                    .padding(horizontal = KrailTheme.dimensions.spacingXL)
+                    .padding(top = KrailTheme.dimensions.spacingM),
             ) {
                 if (showPermissionBanner) {
                     LocationPermissionBanner(
@@ -231,7 +232,7 @@ private fun JourneyMapContent(
                             isStale = isStale,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = KrailTheme.dimensions.spacingM),
                         )
                     }
                 }

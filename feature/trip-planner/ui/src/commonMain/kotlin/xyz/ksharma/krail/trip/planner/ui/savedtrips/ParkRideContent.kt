@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -28,16 +27,17 @@ fun ParkRideLoadedContent(
     parkRideFacilityDetail: ParkRideFacilityDetail,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(dim.radiusM))
             .background(color = themeBackgroundColor())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = dim.spacingXL, vertical = dim.spacingL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         ) {
             // Facility Name
             Text(
@@ -49,10 +49,10 @@ fun ParkRideLoadedContent(
 
             // Spots Information
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
             ) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
                     Text(
                         text = "${parkRideFacilityDetail.spotsAvailable}",
                         style = KrailTheme.typography.headlineLarge,
@@ -68,7 +68,7 @@ fun ParkRideLoadedContent(
                 }
 
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                 ) {
                     Text(
                         text = "${parkRideFacilityDetail.percentageFull}%",

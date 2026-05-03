@@ -65,6 +65,7 @@ fun MapOptionsBottomSheet(
     var pendingShowDistanceScale by remember { mutableStateOf(showDistanceScale) }
     var pendingShowCompass by remember { mutableStateOf(showCompass) }
 
+    val dim = KrailTheme.dimensions
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = KrailTheme.colors.bottomSheetBackground,
@@ -80,8 +81,8 @@ fun MapOptionsBottomSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp),
+                    .padding(horizontal = dim.spacingXL)
+                    .padding(bottom = dim.spacingXL),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
@@ -142,62 +143,62 @@ fun MapOptionsBottomSheet(
                 }
             }
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
             Text(
                 text = "Tap any stop on the map to select it — no typing needed.",
                 style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.softLabel,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
             // Search Radius Section
             Text(
                 text = "Search Distance",
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dim.spacingL))
 
             SearchRadiusChips(
                 selectedRadiusKm = pendingRadiusKm,
                 onRadiusSelect = { radius ->
                     pendingRadiusKm = radius
                 },
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
             // Transport Mode Section
             Text(
                 text = "Show stops for",
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL),
             )
             Text(
                 text = "Choose which types of nearby stops appear on the map.",
                 style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp).padding(vertical = 4.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL).padding(vertical = dim.spacingXS),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dim.spacingL))
 
             TransportModeFilterRow(
                 selectedModes = pendingTransportModes,
@@ -213,21 +214,21 @@ fun MapOptionsBottomSheet(
                 },
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
             // Map Controls Section
             Text(
                 text = "Map Display",
                 style = KrailTheme.typography.titleMedium,
                 color = KrailTheme.colors.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL),
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dim.spacingL))
 
             MapControlToggle(
                 label = "Show distance scale",
@@ -237,7 +238,7 @@ fun MapOptionsBottomSheet(
                 },
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(dim.spacingM))
 
             MapControlToggle(
                 label = "Show compass",
@@ -248,7 +249,7 @@ fun MapOptionsBottomSheet(
             )
 
             // Bottom spacer for better UX
-            Spacer(modifier = Modifier.height(108.dp))
+            Spacer(modifier = Modifier.height(MAP_OPTIONS_BOTTOM_SPACER))
         }
     }
 }
@@ -264,7 +265,7 @@ private fun SearchRadiusChips(
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM),
     ) {
         radiusOptions.forEach { radius ->
             FilterChip(
@@ -300,11 +301,12 @@ private fun TransportModeFilterRow(
     val allModes = remember {
         NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
     }
+    val dim = KrailTheme.dimensions
 
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = dim.spacingXL),
+        horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM),
     ) {
         items(allModes) { mode ->
             TransportModeChip(
@@ -324,11 +326,12 @@ private fun MapControlToggle(
     modifier: Modifier = Modifier,
 ) {
     val themeColor = LocalThemeColor.current.value.hexToComposeColor()
+    val dim = KrailTheme.dimensions
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = dim.spacingXL),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -369,3 +372,5 @@ private fun PreviewMapOptionsBottomSheet() {
 }
 
 // endregion
+
+private val MAP_OPTIONS_BOTTOM_SPACER = 108.dp

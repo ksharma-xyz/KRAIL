@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewComponent
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 /**
@@ -38,11 +39,12 @@ internal fun MapActionButtons(
     modifier: Modifier = Modifier,
     isLocationActive: Boolean = false,
 ) {
+    val dim = KrailTheme.dimensions
     Row(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = dim.spacingXL, vertical = dim.spacingM),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -51,14 +53,14 @@ internal fun MapActionButtons(
             dimensions = ButtonDefaults.mediumButtonSize(),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
                     painter = painterResource(Res.drawable.ic_filter),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(ButtonDefaults.buttonColors().contentColor),
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(MAP_FILTER_ICON_SIZE),
                 )
                 Text(text = "Options")
             }
@@ -95,3 +97,5 @@ private fun MapActionButtonsInactivePreview() {
 }
 
 // endregion
+
+private val MAP_FILTER_ICON_SIZE = 18.dp

@@ -18,17 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-
-private val chipMinHeight = 44.dp
-private val chipMinWidth = 44.dp
-private val chipShape = RoundedCornerShape(8.dp)
 
 /**
  * A tappable, selectable chip that displays a transport line number using [lineColorCode].
@@ -56,6 +51,8 @@ fun LineBadgeChip(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
+    val chipMinSize = dim.iconXXL
+    val chipShape = RoundedCornerShape(dim.radiusS)
     val lineColor = remember(lineColorCode) { lineColorCode.hexToComposeColor() }
 
     val backgroundColor by animateColorAsState(
@@ -76,8 +73,8 @@ fun LineBadgeChip(
 
     Box(
         modifier = modifier
-            .heightIn(min = chipMinHeight)
-            .widthIn(min = chipMinWidth)
+            .heightIn(min = chipMinSize)
+            .widthIn(min = chipMinSize)
             .clip(chipShape)
             .background(backgroundColor)
             .border(width = dim.strokeRegular, color = borderColor, shape = chipShape)

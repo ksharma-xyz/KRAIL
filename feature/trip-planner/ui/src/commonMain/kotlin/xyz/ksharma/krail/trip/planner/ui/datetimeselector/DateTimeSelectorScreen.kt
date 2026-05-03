@@ -16,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -101,8 +100,9 @@ fun DateTimeSelectorScreen(
             journeyTimeOption == JourneyTimeOptions.LEAVE
     }
 
+    val dim = KrailTheme.dimensions
     LazyColumn(
-        contentPadding = PaddingValues(vertical = 16.dp),
+        contentPadding = PaddingValues(vertical = dim.spacingXL),
         modifier = modifier.background(color = KrailTheme.colors.bottomSheetBackground),
     ) {
         item("title_bar") {
@@ -137,7 +137,7 @@ fun DateTimeSelectorScreen(
                 onOptionSelected = {
                     journeyTimeOption = it
                 },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingXL),
             )
         }
 
@@ -156,15 +156,15 @@ fun DateTimeSelectorScreen(
                     }
                 },
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 12.dp),
+                    .padding(horizontal = dim.spacingXL)
+                    .padding(top = dim.spacingL),
             )
         }
 
         item("time_selection") {
             TimeSelection(
                 timePickerState = timePickerState,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingL),
             )
         }
 
@@ -185,7 +185,7 @@ fun DateTimeSelectorScreen(
                     )
                 },
                 dimensions = ButtonDefaults.largeButtonSize(),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXXXL, vertical = dim.spacingXL),
             ) {
                 Text(
                     text = if (reset) {
@@ -203,7 +203,7 @@ fun DateTimeSelectorScreen(
         }
 
         item("bottom_spacing") {
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(dim.buttonRoundSize))
         }
     }
 }

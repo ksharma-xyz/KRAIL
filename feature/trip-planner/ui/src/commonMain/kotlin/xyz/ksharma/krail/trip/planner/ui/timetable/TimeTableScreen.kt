@@ -110,6 +110,7 @@ fun TimeTableScreen(
     onModeClick: (Boolean) -> Unit = {},
     onMapClick: (String) -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
     val themeColor = themeColorHex.hexToComposeColor()
     var displayModeSelectionRow by rememberSaveable { mutableStateOf(false) }
@@ -127,14 +128,14 @@ fun TimeTableScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().statusBarsPadding(),
-            contentPadding = PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(bottom = dim.spacingXL),
         ) {
             stickyHeader(key = "title-bar") {
                 TitleBar(
                     onNavActionClick = onBackClick,
                     title = {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
@@ -149,7 +150,7 @@ fun TimeTableScreen(
                             ) {
                                 AnimatedDots(
                                     color = themeColor,
-                                    modifier = Modifier.padding(start = 24.dp),
+                                    modifier = Modifier.padding(start = dim.spacingXXXL),
                                 )
                             }
                         }
@@ -174,7 +175,7 @@ fun TimeTableScreen(
                                 painter = painterResource(Res.drawable.ic_reverse),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(dim.iconM),
                             )
                         }
                         ActionButton(
@@ -193,7 +194,7 @@ fun TimeTableScreen(
                                 },
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(dim.iconM),
                             )
                         }
                     },
@@ -208,7 +209,7 @@ fun TimeTableScreen(
                         onOriginClick = { display -> selectedStop = display },
                         onDestinationClick = { display -> selectedStop = display },
                         modifier = Modifier.fillMaxWidth()
-                            .padding(horizontal = KrailTheme.dimensions.spacingL, vertical = 8.dp)
+                            .padding(horizontal = dim.spacingL, vertical = dim.spacingM)
                             .background(color = KrailTheme.colors.surface),
                     )
                 }
@@ -218,10 +219,10 @@ fun TimeTableScreen(
                 FlowRow(
                     modifier = Modifier
                         .fillParentMaxWidth()
-                        .padding(horizontal = KrailTheme.dimensions.spacingL)
-                        .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(horizontal = dim.spacingL)
+                        .padding(top = dim.spacingL),
+                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
+                    verticalArrangement = Arrangement.spacedBy(dim.spacingL),
                 ) {
                     SubtleButton(
                         onClick = dateTimeSelectorClicked,
@@ -241,14 +242,14 @@ fun TimeTableScreen(
                     ) {
                         Row(
                             // todo -  handle in Button
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Image(
                                 painter = painterResource(Res.drawable.ic_filter),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(ButtonDefaults.subtleButtonColors().contentColor),
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(FILTER_ICON_SIZE),
                             )
                             Text(text = "Mode")
                         }
@@ -259,11 +260,11 @@ fun TimeTableScreen(
             if (displayModeSelectionRow) {
                 item(key = "transport-mode-selection-row") {
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+                        contentPadding = PaddingValues(horizontal = dim.spacingL),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp, bottom = 4.dp)
+                            .padding(top = dim.spacingL, bottom = dim.spacingXS)
                             .animateItem(),
                     ) {
                         items(
@@ -298,28 +299,28 @@ fun TimeTableScreen(
                             onModeSelectionChanged(unselectedModesProductClass.toSet())
                         },
                         modifier = Modifier
-                            .padding(vertical = 8.dp, horizontal = 12.dp)
+                            .padding(vertical = dim.spacingM, horizontal = dim.spacingL)
                             .animateItem(),
                     ) {
                         // todo -  handle in Button
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Image(
                                 painter = painterResource(Res.drawable.ic_check),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(color = getForegroundColor(themeColor)),
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(dim.iconS),
                             )
-                            Text("Done", modifier = Modifier.padding(start = 4.dp))
+                            Text("Done", modifier = Modifier.padding(start = dim.spacingXS))
                         }
                     }
                 }
             }
 
             item(key = "spacer-top") {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(dim.spacingL))
             }
 
             if (timeTableState.isError) {
@@ -340,7 +341,7 @@ fun TimeTableScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             LoadingEmojiAnim(
                                 emoji = emoji.emoji,
-                                modifier = Modifier.padding(vertical = 60.dp).animateItem(),
+                                modifier = Modifier.padding(vertical = LOADING_VERTICAL_PADDING).animateItem(),
                             )
 
                             Text(
@@ -348,7 +349,7 @@ fun TimeTableScreen(
                                 style = KrailTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = KrailTheme.colors.onSurface,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = dim.spacingXL),
                             )
                         }
                     }
@@ -378,7 +379,7 @@ fun TimeTableScreen(
 
             item(key = "spacer-bottom") {
                 Spacer(
-                    modifier = Modifier.height(96.dp).systemBarsPadding(),
+                    modifier = Modifier.height(BOTTOM_SPACER_HEIGHT).systemBarsPadding(),
                 )
             }
         }
@@ -405,7 +406,7 @@ fun TimeTableScreen(
                         state = departuresState,
                         onEvent = departuresViewModel::onEvent,
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(dim.spacingXL))
                 },
             )
         }
@@ -466,15 +467,15 @@ private fun LazyListScope.paginationHeader(
     item(key = "show-previous") {
         if (isLoadingPrevious) {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KrailTheme.dimensions.spacingL),
                 contentAlignment = Alignment.Center,
             ) {
-                AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = 8.dp))
+                AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = KrailTheme.dimensions.spacingM))
             }
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(vertical = 4.dp, horizontal = KrailTheme.dimensions.spacingXXS),
+                    .padding(vertical = KrailTheme.dimensions.spacingXS, horizontal = KrailTheme.dimensions.spacingXXS),
             ) {
                 TextButton(onClick = { onEvent(TimeTableUiEvent.LoadPreviousTrips) }) {
                     Text(text = "Show previous departures")
@@ -494,17 +495,17 @@ private fun LazyListScope.paginationFooter(
     if (isLoadingMore) {
         item(key = "loading-more") {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KrailTheme.dimensions.spacingL),
                 contentAlignment = Alignment.Center,
             ) {
-                AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = 8.dp))
+                AnimatedDots(color = themeColor, modifier = Modifier.padding(vertical = KrailTheme.dimensions.spacingM))
             }
         }
     } else if (canLoadMore) {
         item(key = "load-more-button") {
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(vertical = 4.dp, horizontal = KrailTheme.dimensions.spacingXXS),
+                    .padding(vertical = KrailTheme.dimensions.spacingXS, horizontal = KrailTheme.dimensions.spacingXXS),
             ) {
                 TextButton(onClick = { onEvent(TimeTableUiEvent.LoadMoreTrips) }) {
                     Text(text = "Load more departures")
@@ -514,7 +515,7 @@ private fun LazyListScope.paginationFooter(
     } else {
         item(key = "plan-trip-button") {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KrailTheme.dimensions.spacingXS),
                 contentAlignment = Alignment.Center,
             ) {
                 TextButton(onClick = onPlanTripClick) {
@@ -567,7 +568,7 @@ private fun LazyListScope.journeyCardItems(
                     ),
                 )
             },
-            modifier = Modifier.padding(vertical = 8.dp).animateItem(),
+            modifier = Modifier.padding(vertical = KrailTheme.dimensions.spacingM).animateItem(),
             departureDeviation = journey.departureDeviation,
             scheduledOriginTime = journey.scheduledOriginTime,
             deepLinkUrl = state.deepLinkUrls[journey.journeyId],
@@ -635,7 +636,7 @@ fun ActionButton(
 ) {
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(KrailTheme.dimensions.buttonRoundSize)
             .clip(CircleShape)
             .klickable { onClick() }
             .semantics(mergeDescendants = true) {
@@ -752,3 +753,7 @@ private fun PreviewTimeTableScreenNoResults() {
 }
 
 // endregion
+
+private val FILTER_ICON_SIZE = 18.dp
+private val LOADING_VERTICAL_PADDING = 60.dp
+private val BOTTOM_SPACER_HEIGHT = 96.dp

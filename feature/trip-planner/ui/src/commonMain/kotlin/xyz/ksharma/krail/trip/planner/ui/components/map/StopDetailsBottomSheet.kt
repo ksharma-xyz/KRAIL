@@ -18,7 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Button
@@ -53,6 +52,7 @@ fun StopDetailsBottomSheet(
     additionalInfo: @Composable () -> Unit = {},
     actionButton: @Composable () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = KrailTheme.colors.bottomSheetBackground,
@@ -70,8 +70,8 @@ fun StopDetailsBottomSheet(
                 style = KrailTheme.typography.headlineMedium,
                 color = KrailTheme.colors.onSurface,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp),
+                    .padding(horizontal = dim.spacingXL)
+                    .padding(bottom = dim.spacingM),
             )
 
             // Stop ID
@@ -79,14 +79,14 @@ fun StopDetailsBottomSheet(
                 text = "Stop ID - $stopId",
                 style = KrailTheme.typography.bodyMedium,
                 color = KrailTheme.colors.softLabel,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = dim.spacingXL),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
-            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+            Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
             // Additional info (custom content)
             additionalInfo()
@@ -97,24 +97,24 @@ fun StopDetailsBottomSheet(
                     text = "Transport Modes",
                     style = KrailTheme.typography.titleMedium,
                     color = KrailTheme.colors.onSurface,
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = dim.spacingXL),
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(dim.spacingL))
 
                 TransportModeRow(
                     transportModes = transportModes,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(dim.spacingXXXL))
             }
 
             // Action button (custom)
             actionButton()
 
             // Bottom spacer
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXXXL))
         }
     }
 }
@@ -127,15 +127,16 @@ private fun TransportModeRow(
     transportModes: ImmutableList<TransportMode>,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
     LazyRow(
         modifier = modifier,
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = dim.spacingXL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
         items(transportModes) { mode ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingM),
             ) {
                 TransportModeIcon(
                     transportMode = mode,
@@ -164,7 +165,7 @@ fun StopInfoRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = KrailTheme.dimensions.spacingXL, vertical = KrailTheme.dimensions.spacingXS),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -193,8 +194,8 @@ fun StopActionButton(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = KrailTheme.dimensions.spacingXL),
+        horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingL),
     ) {
         Button(
             onClick = onClick,

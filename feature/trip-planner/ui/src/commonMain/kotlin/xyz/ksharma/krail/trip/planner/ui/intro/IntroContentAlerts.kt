@@ -17,12 +17,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.CollapsibleAlert
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
@@ -42,13 +42,14 @@ fun IntroContentAlerts(
         }
     }
 
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingL),
         ) {
             AlertButton(
                 dimensions = ButtonDefaults.smallButtonSize(),
@@ -90,7 +91,7 @@ fun AnimatedAlertsOneByOne(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM)) {
         AnimatedVisibility(
             visible = showFirst,
             enter = scaleIn(

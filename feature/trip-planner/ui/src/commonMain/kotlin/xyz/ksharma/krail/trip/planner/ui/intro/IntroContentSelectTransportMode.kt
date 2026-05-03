@@ -11,11 +11,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 
 @Composable
@@ -61,16 +61,17 @@ fun IntroContentSelectTransportMode(
         }
     }
 
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(dim.spacingL)) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingL),
             ) {
                 allModes.forEach { mode ->
                     TransportModeChip(

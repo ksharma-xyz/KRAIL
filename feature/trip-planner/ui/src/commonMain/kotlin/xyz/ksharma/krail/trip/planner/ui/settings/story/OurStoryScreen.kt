@@ -36,6 +36,7 @@ fun OurStoryScreen(
             )
         }
 
+        val dim = KrailTheme.dimensions
         Crossfade(
             targetState = state.isLoading,
             label = "OurStoryContent",
@@ -43,13 +44,16 @@ fun OurStoryScreen(
             if (!isLoading) {
                 LazyColumn(
                     modifier = Modifier,
-                    contentPadding = PaddingValues(top = 20.dp, bottom = 104.dp),
+                    contentPadding = PaddingValues(top = dim.spacingXXL, bottom = CONTENT_BOTTOM_PADDING),
                 ) {
                     item {
                         Text(
                             state.story,
                             style = KrailTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                            modifier = Modifier.padding(
+                                horizontal = dim.pageHorizontalPadding,
+                                vertical = dim.spacingXXXL,
+                            ),
                         )
                     }
 
@@ -57,15 +61,20 @@ fun OurStoryScreen(
                         Text(
                             text = state.disclaimer,
                             style = KrailTheme.typography.labelLarge,
-                            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 12.dp),
+                            modifier = Modifier
+                                .padding(horizontal = dim.pageHorizontalPadding)
+                                .padding(top = dim.spacingL),
                         )
                     }
 
                     item {
-                        AppLogo(modifier = Modifier.padding(top = 48.dp))
+                        AppLogo(modifier = Modifier.padding(top = APP_LOGO_TOP_PADDING))
                     }
                 }
             }
         }
     }
 }
+
+private val CONTENT_BOTTOM_PADDING = 104.dp
+private val APP_LOGO_TOP_PADDING = 48.dp

@@ -58,7 +58,7 @@ private fun DividerHorizontalPreview() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(PREVIEW_BOX_SIZE)
                 .background(KrailTheme.colors.surface),
             contentAlignment = Alignment.Center,
         ) {
@@ -73,7 +73,7 @@ private fun DividerVerticalPreview() {
     PreviewTheme {
         Box(
             modifier = Modifier
-                .size(30.dp)
+                .size(PREVIEW_BOX_SIZE)
                 .background(KrailTheme.colors.surface),
             contentAlignment = Alignment.Center,
         ) {
@@ -81,3 +81,5 @@ private fun DividerVerticalPreview() {
         }
     }
 }
+
+private val PREVIEW_BOX_SIZE = 30.dp

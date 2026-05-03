@@ -55,7 +55,8 @@ fun IntroContentSaveTrips(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val dim = KrailTheme.dimensions
+        Column(verticalArrangement = Arrangement.spacedBy(dim.spacingML)) {
             OriginDestination(
                 origin = demoOrigin,
                 destination = demoDestination,
@@ -95,7 +96,7 @@ fun IntroContentSaveTrips(
 
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(SAVE_BUTTON_SIZE)
                     .clip(CircleShape)
                     .background(color = style.hexToComposeColor())
                     .clickable(
@@ -128,7 +129,7 @@ fun IntroContentSaveTrips(
                         "Save Trip"
                     },
                     colorFilter = ColorFilter.tint(Color.White),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(dim.iconXXXL)
                         .graphicsLayer(rotationZ = rotation.value),
                 )
             }
@@ -142,5 +143,6 @@ fun IntroContentSaveTrips(
     }
 }
 
+private val SAVE_BUTTON_SIZE = 64.dp
 private val demoOrigin = StopDisplay(stopId = "1", name = "Wynyard Station")
 private val demoDestination = StopDisplay(stopId = "2", name = "Central Station")

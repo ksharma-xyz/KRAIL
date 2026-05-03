@@ -22,6 +22,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ClearRecentSearchClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelCreatedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelRemovedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelReorderedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelStopAssignedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
@@ -356,6 +357,16 @@ class SearchStopViewModel(
                 current.add(target, moved)
                 val reordered = current.toImmutableList()
                 updateUiState { copy(stopLabels = reordered) }
+                analytics.track(
+                    StopLabelReorderedEvent(
+                        labelName = moved.label,
+                        previousIndex = sourceIndex,
+                        newIndex = target,
+                        totalCount = reordered.size,
+                        isProtectedLabel = moved.label
+                            .equals(StopLabel.PROTECTED_LABEL, ignoreCase = true),
+                    ),
+                )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     reordered.forEachIndexed { index, label ->
                         sandook.upsertStopLabel(

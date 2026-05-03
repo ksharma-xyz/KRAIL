@@ -582,5 +582,59 @@ class SearchStopViewModelLabelHandlersTest {
             }
         }
 
+    @Test
+    fun `Given two labels When MoveLabelToIndex moves Home to position 1 Then reordered event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 1))
+                advanceUntilIdle()
+
+                val tracked = fakeAnalytics.getTrackedEvent("stop_label_reordered")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.StopLabelReorderedEvent>(tracked)
+                assertEquals("Home", event.labelName)
+                assertEquals(0, event.previousIndex)
+                assertEquals(1, event.newIndex)
+                assertEquals(2, event.totalCount)
+                // Home is the protected label; flag must be true so the dashboard can
+                // separate "user moved Home" from "user moved a custom label".
+                assertTrue(event.isProtectedLabel)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given target equal to source When MoveLabelToIndex fires Then no reordered event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                // The handler returns early when source == target, so no analytics
+                // should fire either — otherwise drop-in-place drags would inflate
+                // the reorder counts.
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 0))
+                advanceUntilIdle()
+
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_reordered"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given unknown label key When MoveLabelToIndex fires Then no reordered event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("DoesNotExist", 0))
+                advanceUntilIdle()
+
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_reordered"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // endregion
 }

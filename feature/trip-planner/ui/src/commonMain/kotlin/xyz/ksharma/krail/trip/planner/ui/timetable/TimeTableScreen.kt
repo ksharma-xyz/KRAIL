@@ -206,8 +206,26 @@ fun TimeTableScreen(
                         origin = trip.fromStopDisplay(timeTableState.stopLabels),
                         destination = trip.toStopDisplay(timeTableState.stopLabels),
                         timeLineColor = KrailTheme.colors.onSurface,
-                        onOriginClick = { display -> selectedStop = display },
-                        onDestinationClick = { display -> selectedStop = display },
+                        onOriginClick = { display ->
+                            selectedStop = display
+                            onEvent(
+                                TimeTableUiEvent.OriginDestinationStopHeaderClicked(
+                                    stopId = display.stopId,
+                                    stopName = display.name,
+                                    isOrigin = true,
+                                ),
+                            )
+                        },
+                        onDestinationClick = { display ->
+                            selectedStop = display
+                            onEvent(
+                                TimeTableUiEvent.OriginDestinationStopHeaderClicked(
+                                    stopId = display.stopId,
+                                    stopName = display.name,
+                                    isOrigin = false,
+                                ),
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = dim.spacingL, vertical = dim.spacingM)
                             .background(color = KrailTheme.colors.surface),

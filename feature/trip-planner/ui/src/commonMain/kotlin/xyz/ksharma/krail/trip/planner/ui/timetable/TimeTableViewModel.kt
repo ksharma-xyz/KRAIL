@@ -282,6 +282,18 @@ class TimeTableViewModel(
             TimeTableUiEvent.LoadMoreTrips -> onLoadMoreTrips()
 
             TimeTableUiEvent.LoadPreviousTrips -> onLoadPreviousTrips()
+
+            is TimeTableUiEvent.OriginDestinationStopHeaderClicked -> {
+                analytics.track(
+                    AnalyticsEvent.TimeTableStopHeaderClickEvent(
+                        stopId = event.stopId,
+                        stopName = event.stopName,
+                        isOrigin = event.isOrigin,
+                        tripFromStopId = tripInfo?.fromStopId.orEmpty(),
+                        tripToStopId = tripInfo?.toStopId.orEmpty(),
+                    ),
+                )
+            }
         }
     }
 

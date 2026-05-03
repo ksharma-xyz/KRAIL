@@ -20,6 +20,9 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ClearRecentSearchClickEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelCreatedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelRemovedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopLabelStopAssignedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
@@ -221,6 +224,13 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.AssignLabelStop -> {
+                // Snapshot pre-state so isReassignment is captured against the value
+                // *before* the optimistic update mutates it.
+                val previousStopId = _uiState.value.stopLabels
+                    .firstOrNull { it.label == event.labelKey }
+                    ?.stopId
+                val isReassignment = previousStopId != null && previousStopId != event.stopItem.stopId
+
                 // Optimistic: update state immediately so the pill row reflects the
                 // assignment before the IO write completes. The DB observer re-emits
                 // the same shape and the second update is a no-op.
@@ -234,6 +244,16 @@ class SearchStopViewModel(
                     }.toImmutableList()
                     copy(stopLabels = updated)
                 }
+                analytics.track(
+                    StopLabelStopAssignedEvent(
+                        labelName = event.labelKey,
+                        stopId = event.stopItem.stopId,
+                        stopName = event.stopItem.stopName,
+                        isReassignment = isReassignment,
+                        isProtectedLabel = event.labelKey
+                            .equals(StopLabel.PROTECTED_LABEL, ignoreCase = true),
+                    ),
+                )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.updateStopLabelStop(event.labelKey, event.stopItem.stopId, event.stopItem.stopName)
                     // Stops the user pins to a label are also stops they "interacted
@@ -261,6 +281,13 @@ class SearchStopViewModel(
                                     .toImmutableList(),
                             )
                         }
+                        analytics.track(
+                            StopLabelCreatedEvent(
+                                labelName = cleanedName,
+                                emoji = event.emoji,
+                                totalLabelsCountAfter = _uiState.value.stopLabels.size,
+                            ),
+                        )
                         viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                             sandook.upsertStopLabel(cleanedName, event.emoji, null, null, sortOrder)
                         }
@@ -269,6 +296,9 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.ClearLabelStop -> {
+                val hadStop = _uiState.value.stopLabels
+                    .firstOrNull { it.label == event.labelKey }
+                    ?.stopId != null
                 updateUiState {
                     val updated = stopLabels.map { label ->
                         if (label.label == event.labelKey) {
@@ -279,6 +309,13 @@ class SearchStopViewModel(
                     }.toImmutableList()
                     copy(stopLabels = updated)
                 }
+                analytics.track(
+                    StopLabelRemovedEvent(
+                        labelName = event.labelKey,
+                        action = StopLabelRemovedEvent.Action.CLEAR,
+                        hadStop = hadStop,
+                    ),
+                )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.updateStopLabelStop(event.labelKey, null, null)
                 }
@@ -290,10 +327,20 @@ class SearchStopViewModel(
                 if (event.labelKey.equals(StopLabel.PROTECTED_LABEL, ignoreCase = true)) {
                     return
                 }
+                val hadStop = _uiState.value.stopLabels
+                    .firstOrNull { it.label == event.labelKey }
+                    ?.stopId != null
                 updateUiState {
                     val updated = stopLabels.filterNot { it.label == event.labelKey }.toImmutableList()
                     copy(stopLabels = updated)
                 }
+                analytics.track(
+                    StopLabelRemovedEvent(
+                        labelName = event.labelKey,
+                        action = StopLabelRemovedEvent.Action.DELETE,
+                        hadStop = hadStop,
+                    ),
+                )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.deleteStopLabel(event.labelKey)
                 }

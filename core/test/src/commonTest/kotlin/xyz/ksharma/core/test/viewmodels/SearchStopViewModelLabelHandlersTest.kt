@@ -15,6 +15,7 @@ import xyz.ksharma.core.test.fakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.core.test.fakes.FakeSandook
 import xyz.ksharma.core.test.fakes.FakeSandookPreferences
 import xyz.ksharma.core.test.fakes.FakeStopResultsManager
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -23,6 +24,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -407,6 +410,177 @@ class SearchStopViewModelLabelHandlersTest {
             assertTrue(state.stopLabels.any { it.label == "Gym" })
         }
     }
+
+    // endregion
+
+    // region Analytics — StopLabelCreatedEvent / StopLabelStopAssignedEvent / StopLabelRemovedEvent
+    //
+    // These tests lock down the wire-up between label handlers and the analytics
+    // tracker. The product question we're protecting: can BigQuery answer
+    // "how are users actually using stop labels?" from these three events alone.
+    // If a handler stops firing its event, the dashboard goes silent without any
+    // crash signal — so the assertion is "the event arrived" plus "the payload
+    // matches what the dashboard expects to group on".
+
+    @Test
+    fun `Given new label name When CreateLabel fires Then StopLabelCreatedEvent is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋"))
+                advanceUntilIdle()
+
+                val tracked = fakeAnalytics.getTrackedEvent("stop_label_created")
+                assertNotNull(tracked, "expected stop_label_created to fire")
+                val event = assertIs<AnalyticsEvent.StopLabelCreatedEvent>(tracked)
+                assertEquals("Gym", event.labelName)
+                assertEquals("🏋", event.emoji)
+                // Seeded Home + Work + new Gym = 3.
+                assertEquals(3, event.totalLabelsCountAfter)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given duplicate label name When CreateLabel fires Then no analytics event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠"))
+                advanceUntilIdle()
+
+                // Duplicate path is a silent no-op — analytics must mirror that, otherwise
+                // the dashboard would inflate "labels created" with phantom rows.
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_created"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given blank label name When CreateLabel fires Then no analytics event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀"))
+                advanceUntilIdle()
+
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_created"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given empty label When AssignLabelStop fires Then assigned event reports first-time pin`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                advanceUntilIdle()
+
+                val tracked = fakeAnalytics.getTrackedEvent("stop_label_stop_assigned")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(tracked)
+                assertEquals("Home", event.labelName)
+                assertEquals("stop_central", event.stopId)
+                assertEquals("Central Station", event.stopName)
+                assertFalse(event.isReassignment, "first pin should not be a reassignment")
+                assertTrue(event.isProtectedLabel, "Home is the protected label")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given previously pinned label When AssignLabelStop fires again Then assigned event reports reassignment`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                // Pin Central first, then overwrite with Town Hall — the second event
+                // should carry isReassignment=true so the dashboard can separate
+                // "filling empty slots" from "swapping pins".
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                val townHall = StopItem(stopId = "stop_townhall", stopName = "Town Hall")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Work", central))
+                advanceUntilIdle()
+                fakeAnalytics.clear()
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Work", townHall))
+                advanceUntilIdle()
+
+                val tracked = fakeAnalytics.getTrackedEvent("stop_label_stop_assigned")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(tracked)
+                assertEquals("Work", event.labelName)
+                assertEquals("stop_townhall", event.stopId)
+                assertTrue(event.isReassignment, "second pin overwrote a different stop")
+                assertFalse(event.isProtectedLabel, "Work is a default but not protected")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given pinned label When ClearLabelStop fires Then removed event reports CLEAR with hadStop true`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                advanceUntilIdle()
+                fakeAnalytics.clear()
+                viewModel.onEvent(SearchStopUiEvent.ClearLabelStop("Home"))
+                advanceUntilIdle()
+
+                val tracked = fakeAnalytics.getTrackedEvent("stop_label_removed")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.StopLabelRemovedEvent>(tracked)
+                assertEquals("Home", event.labelName)
+                assertEquals(AnalyticsEvent.StopLabelRemovedEvent.Action.CLEAR, event.action)
+                assertTrue(event.hadStop, "label had a pinned stop before clear")
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given non-protected label When DeleteLabel fires Then removed event reports DELETE`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.DeleteLabel("Work"))
+                advanceUntilIdle()
+
+                val tracked = fakeAnalytics.getTrackedEvent("stop_label_removed")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.StopLabelRemovedEvent>(tracked)
+                assertEquals("Work", event.labelName)
+                assertEquals(AnalyticsEvent.StopLabelRemovedEvent.Action.DELETE, event.action)
+                // Seeded Work has no pinned stop, so hadStop must be false. This keeps
+                // the "users delete labels they never used" funnel honest.
+                assertFalse(event.hadStop)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given protected Home label When DeleteLabel fires Then no removed event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.DeleteLabel(StopLabel.PROTECTED_LABEL))
+                advanceUntilIdle()
+
+                // Handler early-returns for Home; analytics must mirror the no-op so
+                // defensive UI clicks don't pollute the dataset.
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_removed"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 
     // endregion
 }

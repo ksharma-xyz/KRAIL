@@ -70,3 +70,6 @@ fastlane/test_output/
 # AI
 .claude/scheduled_tasks.lock
 
+
+# Claude Code worktrees (per-feature scratch trees, not part of the repo)
+.claude/worktrees/

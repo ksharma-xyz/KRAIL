@@ -8,6 +8,7 @@ private const val PROP_STOP_ID = "stopId"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
 private const val PROP_STOP_NAME = "stopName"
+private const val PROP_LABEL_NAME = "labelName"
 
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
@@ -86,6 +87,114 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "recentSearchCount" to recentSearchCount,
         ),
     )
+
+    // endregion
+
+    // region StopLabels
+
+    /**
+     * Fired when the user creates a new custom stop label via the save / create-label sheet.
+     * Use to measure adoption: how many users actually create labels, and which semantics
+     * they reach for (e.g. "Gym", "Airport", "Mom's").
+     *
+     * Aggregations this enables:
+     *  - "What % of users ever create a custom label?" → distinct user count on event name.
+     *  - "Which label names are most common?" → group by [labelName].
+     *  - "Are power users emerging?" → bucket [totalLabelsCountAfter] (1, 2, 3-5, 6+).
+     *  - "What emoji do people pick?" → group by [emoji].
+     *
+     * @param labelName             The normalised label text persisted to the DB
+     *                              (emoji and whitespace already stripped).
+     * @param emoji                 The emoji chosen in the picker.
+     * @param totalLabelsCountAfter Total number of labels the user has *after* this creation —
+     *                              lets us split casual users (1–2 labels) from heavy users.
+     */
+    data class StopLabelCreatedEvent(
+        val labelName: String,
+        val emoji: String,
+        val totalLabelsCountAfter: Int,
+    ) : AnalyticsEvent(
+        name = "stop_label_created",
+        properties = mapOf(
+            PROP_LABEL_NAME to labelName,
+            "emoji" to emoji,
+            "totalLabelsCountAfter" to totalLabelsCountAfter,
+        ),
+    )
+
+    /**
+     * Fired when the user pins a stop to a label — the core "label is being used" signal.
+     * This is the moment a label transitions from empty to actionable.
+     *
+     * Aggregations this enables:
+     *  - "Which labels actually get filled?" → group by [labelName].
+     *  - "Which stops are most pinned?" → group by [PROP_STOP_ID].
+     *  - "Are users replacing existing pins or filling empty slots?" → filter [isReassignment].
+     *  - "Does the protected Home label behave differently from custom labels?"
+     *    → filter [isProtectedLabel].
+     *
+     * @param labelName         The label receiving the stop.
+     * @param stopId            NSW Transport stop ID being pinned.
+     * @param stopName          Human-readable stop name.
+     * @param isReassignment    `true` if the label already had a different stop pinned and
+     *                          this assignment is overwriting it.
+     * @param isProtectedLabel  `true` for the protected Home label (special-cased
+     *                          throughout the app — non-deletable).
+     */
+    data class StopLabelStopAssignedEvent(
+        val labelName: String,
+        val stopId: String,
+        val stopName: String,
+        val isReassignment: Boolean,
+        val isProtectedLabel: Boolean,
+    ) : AnalyticsEvent(
+        name = "stop_label_stop_assigned",
+        properties = mapOf(
+            PROP_LABEL_NAME to labelName,
+            PROP_STOP_ID to stopId,
+            PROP_STOP_NAME to stopName,
+            "isReassignment" to isReassignment,
+            "isProtectedLabel" to isProtectedLabel,
+        ),
+    )
+
+    /**
+     * Fired when the user either deletes a label entirely or clears the stop attached
+     * to it. One event with the [action] discriminator answers the unified
+     * "label cleanup behaviour" question without joining two streams.
+     *
+     * Aggregations this enables:
+     *  - "Are users removing labels or just clearing them?" → group by [action].
+     *  - "Are users deleting labels they never filled?" → filter [action] = DELETE,
+     *    [hadStop] = false.
+     *  - "Do users churn through the same label name?" → join with
+     *    [StopLabelCreatedEvent] on [labelName].
+     *
+     * Note: protected Home label deletions are silently no-op'd by the handler, so this
+     * event does not fire for them — keeps the data clean from defensive UI calls.
+     *
+     * @param labelName Label being removed.
+     * @param action    [Action.DELETE] when the entire label is removed,
+     *                  [Action.CLEAR] when only the stop is unlinked.
+     * @param hadStop   Whether the label had a stop attached at the moment of removal.
+     */
+    data class StopLabelRemovedEvent(
+        val labelName: String,
+        val action: Action,
+        val hadStop: Boolean,
+    ) : AnalyticsEvent(
+        name = "stop_label_removed",
+        properties = mapOf(
+            PROP_LABEL_NAME to labelName,
+            "action" to action.value,
+            "hadStop" to hadStop,
+        ),
+    ) {
+        enum class Action(val value: String) {
+            DELETE("delete"),
+            CLEAR("clear"),
+        }
+    }
 
     // endregion
 

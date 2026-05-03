@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -153,6 +155,37 @@ private fun CollapsedPill(
 ) {
     val dim = KrailTheme.dimensions
 
+    // One-shot "hello" pulse — the pill lands at natural size via the parent's
+    // scaleIn(0 → 1), waits for that to fully settle, then breathes up to a
+    // small peak and back down. Stays at or above 1.0 the whole time, so the
+    // text never collides with the parent's scaleIn clip rect (the previous
+    // overshoot+dip approach showed visible cropping).
+    //
+    // Plays at most once per session — rememberSaveable survives navigation and
+    // config changes, so coming back to this screen does not replay it.
+    var hasPlayedEntryAnimation by rememberSaveable { mutableStateOf(false) }
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        if (!hasPlayedEntryAnimation) {
+            delay(PILL_PULSE_START_DELAY_MILLIS)
+            scale.animateTo(
+                targetValue = PILL_PULSE_PEAK_SCALE,
+                animationSpec = tween(
+                    durationMillis = PILL_PULSE_UP_DURATION_MILLIS,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = PILL_PULSE_DOWN_DURATION_MILLIS,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+            hasPlayedEntryAnimation = true
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -166,6 +199,10 @@ private fun CollapsedPill(
         Button(
             dimensions = ButtonDefaults.mediumButtonSize(),
             onClick = onClick,
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            },
         ) {
             Text(
                 text = "Plan a trip",
@@ -173,6 +210,15 @@ private fun CollapsedPill(
         }
     }
 }
+
+// Wait for the parent AnimatedVisibility's scaleIn (~600ms with bouncy spring)
+// to fully settle before pulsing — competing scale animations against the
+// parent's clip rect was what caused visible text cropping in the previous
+// overshoot/dip design.
+private const val PILL_PULSE_START_DELAY_MILLIS = 600L
+private const val PILL_PULSE_PEAK_SCALE = 1.05f
+private const val PILL_PULSE_UP_DURATION_MILLIS = 240
+private const val PILL_PULSE_DOWN_DURATION_MILLIS = 360
 
 @Composable
 private fun ExpandedSearchRow(

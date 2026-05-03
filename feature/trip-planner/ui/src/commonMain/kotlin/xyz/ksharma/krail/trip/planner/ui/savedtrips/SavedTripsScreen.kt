@@ -6,18 +6,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -336,25 +333,16 @@ fun SavedTripsScreen(
         // savedTrips list (pill condition false → expanded), then flips to the
         // pill once the DB lands — a visible flash of the wrong UI.
         //
-        // The enter spec is chosen at the moment visibility flips on, so it
-        // matches whichever variant is about to appear: the pill springs in
-        // bouncy from a 0-scale, the expanded row slides up from below.
+        // Reveal is a plain slide-up + fade for both the collapsed pill and the
+        // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
+        // itself — keeping the row-level reveal calm avoids stacking two bouncy
+        // animations (parent scale + child pulse) on top of each other.
         AnimatedVisibility(
             visible = !savedTripsState.isSavedTripsLoading && !editing,
-            enter = if (showPill) {
-                scaleIn(
-                    initialScale = 0f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                ) + fadeIn(animationSpec = tween(durationMillis = 150))
-            } else {
-                slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                ) + fadeIn(animationSpec = tween(durationMillis = 200))
-            },
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+            ) + fadeIn(animationSpec = tween(durationMillis = 200)),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             SearchStopRow(

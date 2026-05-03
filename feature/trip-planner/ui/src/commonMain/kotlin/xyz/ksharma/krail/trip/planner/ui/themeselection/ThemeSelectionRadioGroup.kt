@@ -75,15 +75,16 @@ fun ThemeSelectionRadioGroup(
     val textWidths = remember { mutableStateMapOf<Int, Float>() }
     val density = LocalDensity.current
 
+    val dim = KrailTheme.dimensions
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(GROUP_HEIGHT)
             .background(
                 color = KrailTheme.colors.themeSelectionBackground,
-                shape = RoundedCornerShape(32.dp),
+                shape = RoundedCornerShape(GROUP_CORNER_RADIUS),
             )
-            .padding(4.dp),
+            .padding(dim.spacingXS),
     ) {
         val containerWidth = constraints.maxWidth.toFloat()
         val optionWidth = containerWidth / ThemeMode.entries.size
@@ -92,7 +93,7 @@ fun ThemeSelectionRadioGroup(
 
         // Current handle width based on selected text + padding
         val currentHandleWidth = textWidths[targetIndex] ?: fallbackWidth
-        val paddedHandleWidth = currentHandleWidth + with(density) { 24.dp.toPx() }
+        val paddedHandleWidth = currentHandleWidth + with(density) { HANDLE_LABEL_PADDING.toPx() }
 
         // Animate handle width
         val animatedWidth by animateFloatAsState(
@@ -132,7 +133,7 @@ fun ThemeSelectionRadioGroup(
         // Handle
         Box(
             modifier = Modifier
-                .height(48.dp)
+                .height(dim.buttonRoundSize)
                 .width(with(density) { animatedWidth.toDp() })
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .pointerInput(Unit) {
@@ -151,7 +152,7 @@ fun ThemeSelectionRadioGroup(
                         },
                     ) { change, dragAmount ->
                         change.consume()
-                        val horizontalPaddingPx = with(density) { 4.dp.toPx() }
+                        val horizontalPaddingPx = with(density) { dim.spacingXS.toPx() }
                         val minOffset = horizontalPaddingPx
                         val maxOffset = containerWidth - horizontalPaddingPx - animatedWidth
 
@@ -170,7 +171,7 @@ fun ThemeSelectionRadioGroup(
         // Labels with measurement
         Row(
             modifier = Modifier.fillMaxSize()
-                .padding(horizontal = 4.dp), // push edge labels inward
+                .padding(horizontal = dim.spacingXS), // push edge labels inward
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -180,7 +181,7 @@ fun ThemeSelectionRadioGroup(
                     isSelected = targetIndex == index,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 8.dp) // spacing between text and handle edges
+                        .padding(horizontal = dim.spacingM) // spacing between text and handle edges
                         .onGloballyPositioned { coords ->
                             val width = coords.size.width.toFloat()
                             textWidths[index] = width
@@ -206,7 +207,7 @@ private fun ThemeSelectorHandle(
     )
 
     val shadowRadius by animateDpAsState(
-        targetValue = if (isDragging) 20.dp else 14.dp, // Always have shadow, more when dragging
+        targetValue = if (isDragging) SHADOW_RADIUS_DRAGGING else SHADOW_RADIUS_DEFAULT,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "shadowRadius",
     )
@@ -223,11 +224,12 @@ private fun ThemeSelectorHandle(
         label = "shadowAlpha",
     )
 
+    val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
             .scale(scale)
             .dropShadow(
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(dim.radiusXXL),
                 shadow = Shadow(
                     color = pressedShadowColors[0],
                     radius = shadowRadius,
@@ -236,7 +238,7 @@ private fun ThemeSelectorHandle(
                 ),
             )
             .dropShadow(
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(dim.radiusXXL),
                 shadow = Shadow(
                     color = pressedShadowColors[1],
                     radius = (shadowRadius.value * 0.7f).dp,
@@ -245,7 +247,7 @@ private fun ThemeSelectorHandle(
                 ),
             )
             .dropShadow(
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(dim.radiusXXL),
                 shadow = Shadow(
                     color = pressedShadowColors[2],
                     radius = (shadowRadius.value * 0.4f).dp,
@@ -256,7 +258,7 @@ private fun ThemeSelectorHandle(
             // Handle background uses surface color
             .background(
                 color = KrailTheme.colors.surface,
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(dim.radiusXXL),
             ),
     )
 }
@@ -298,8 +300,9 @@ private fun ThemeOptionLabel(
         label = "letterSpacing",
     )
 
+    val dim = KrailTheme.dimensions
     Box(
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+        modifier = modifier.padding(horizontal = dim.spacingM, vertical = dim.spacingM),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -320,6 +323,11 @@ private fun ThemeOptionLabel(
 }
 
 private const val FALLBACK_WIDTH_RATIO = 0.6f
+private val GROUP_HEIGHT = 56.dp
+private val GROUP_CORNER_RADIUS = 32.dp
+private val HANDLE_LABEL_PADDING = 24.dp
+private val SHADOW_RADIUS_DEFAULT = 14.dp
+private val SHADOW_RADIUS_DRAGGING = 20.dp
 
 // region Previews
 
@@ -344,7 +352,7 @@ private fun ThemeSelectionRadioGroupPreview() {
                     .systemBarsPadding()
                     .fillMaxWidth()
                     .background(KrailTheme.colors.surface)
-                    .padding(24.dp),
+                    .padding(KrailTheme.dimensions.spacingXXXL),
                 contentAlignment = Alignment.Center,
             ) {
                 ThemeSelectionRadioGroup(

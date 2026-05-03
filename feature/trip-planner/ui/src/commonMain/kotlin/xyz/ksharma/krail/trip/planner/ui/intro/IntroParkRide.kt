@@ -12,10 +12,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
@@ -33,13 +33,14 @@ fun IntroParkRide(tagline: String, style: String, modifier: Modifier) {
         }
     }
 
+    val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingL),
         ) {
             CompositionLocalProvider(LocalThemeColor provides themeColor) {
                 ParkRideCard(

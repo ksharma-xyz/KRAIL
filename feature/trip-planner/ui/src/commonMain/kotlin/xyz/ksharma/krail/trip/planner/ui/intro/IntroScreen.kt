@@ -95,6 +95,7 @@ fun IntroScreen(
         displayKRAILButton = true
     }
 
+    val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -106,7 +107,7 @@ fun IntroScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 32.dp, horizontal = 24.dp),
+                    .padding(vertical = dim.spacingXXXXL, horizontal = dim.spacingXXXL),
             ) {
                 IntroTitle(
                     offsetFraction,
@@ -121,7 +122,7 @@ fun IntroScreen(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
+                    .padding(top = dim.spacingXXXL),
             ) {
                 val screenHeight = maxHeight
                 val selectedHeight = screenHeight * 0.75f
@@ -129,8 +130,8 @@ fun IntroScreen(
 
                 HorizontalPager(
                     state = pagerState,
-                    contentPadding = PaddingValues(horizontal = 64.dp),
-                    pageSpacing = 20.dp,
+                    contentPadding = PaddingValues(horizontal = PAGER_HORIZONTAL_PADDING),
+                    pageSpacing = dim.spacingXXL,
                     modifier = Modifier.fillMaxWidth(),
                 ) { pageNumber ->
                     val pageOffset =
@@ -184,7 +185,7 @@ fun IntroScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = 10.dp),
+                .padding(bottom = dim.spacingML),
         ) {
             AnimatedVisibility(
                 visible = displayKRAILButton,
@@ -206,7 +207,7 @@ fun IntroScreen(
                         customContainerColor = animatedButtonColor,
                         customContentColor = Color.White,
                     ),
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = dim.spacingXXXL, vertical = dim.spacingML),
                 ) {
                     Text(
                         text = state.pages[startPage].ctaText,
@@ -262,7 +263,7 @@ private fun IntroPageContent(
             IntroContentSaveTrips(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
 
@@ -270,7 +271,7 @@ private fun IntroPageContent(
             IntroContentRealTime(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
 
@@ -278,7 +279,7 @@ private fun IntroPageContent(
             IntroContentAlerts(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
 
@@ -286,7 +287,7 @@ private fun IntroPageContent(
             IntroContentPlanTrip(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
 
@@ -294,7 +295,7 @@ private fun IntroPageContent(
             IntroContentSelectTransportMode(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
 
@@ -303,7 +304,7 @@ private fun IntroPageContent(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
                 onShareClick = onShareClick,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
 
@@ -311,7 +312,7 @@ private fun IntroPageContent(
             IntroParkRide(
                 tagline = pageData.tagline,
                 style = pageData.primaryStyle,
-                modifier = modifier.padding(20.dp),
+                modifier = modifier.padding(KrailTheme.dimensions.spacingXXL),
             )
         }
     }
@@ -320,3 +321,5 @@ private fun IntroPageContent(
 private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
     return (currentPage - page) + currentPageOffsetFraction
 }
+
+private val PAGER_HORIZONTAL_PADDING = 64.dp

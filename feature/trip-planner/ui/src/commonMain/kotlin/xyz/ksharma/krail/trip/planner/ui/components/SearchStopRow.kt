@@ -2,12 +2,15 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -34,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -153,6 +157,26 @@ private fun CollapsedPill(
 ) {
     val dim = KrailTheme.dimensions
 
+    // Bouncy "zoom" entry: pill arrives slightly oversized, dips below natural size,
+    // then springs back to 1.0. Reads as a playful pop rather than a flat appearance.
+    val scale = remember { Animatable(PillEnterInitialScale) }
+    LaunchedEffect(Unit) {
+        scale.animateTo(
+            targetValue = PillEnterDipScale,
+            animationSpec = tween(
+                durationMillis = PillEnterDipDurationMillis,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+        scale.animateTo(
+            targetValue = 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -166,6 +190,10 @@ private fun CollapsedPill(
         Button(
             dimensions = ButtonDefaults.mediumButtonSize(),
             onClick = onClick,
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            },
         ) {
             Text(
                 text = "Plan a trip",
@@ -173,6 +201,10 @@ private fun CollapsedPill(
         }
     }
 }
+
+private const val PillEnterInitialScale = 1.18f
+private const val PillEnterDipScale = 0.88f
+private const val PillEnterDipDurationMillis = 220
 
 @Composable
 private fun ExpandedSearchRow(

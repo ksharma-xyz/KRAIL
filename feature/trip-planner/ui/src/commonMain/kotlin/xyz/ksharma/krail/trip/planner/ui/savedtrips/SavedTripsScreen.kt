@@ -484,7 +484,7 @@ private fun LazyListScope.savedTripsContent(
                 fadeOut(animationSpec = tween(durationMillis = 150)),
         ) {
             Text(
-                text = "💡 Hold and drag cards to reorder. Tap Done when finished.",
+                text = "💡 Long press and drag cards to reorder. Tap Done when finished.",
                 style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.softLabel,
                 modifier = Modifier
@@ -678,7 +678,7 @@ private fun SavedTripsTitle(
     }
 }
 
-private const val WIGGLE_ANGLE_DEGREES = 1.5f
+private const val WIGGLE_ANGLE_DEGREES = 0.75f
 private const val WIGGLE_BASE_DURATION_MS = 350
 private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
 private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70

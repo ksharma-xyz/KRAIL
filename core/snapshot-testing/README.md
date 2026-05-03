@@ -85,10 +85,39 @@ that expands to `@Preview`) won't be found.
 
 ### Em-dashes in `@Preview(name = …)` break the test runner
 
-A preview named `@Preview(name = "Expanded — both fields empty")` produced a screenshot file with
-the em-dash in its name and then hung the host test process indefinitely (no progress for 14+ min,
-gradle worker had to be killed). Use plain ASCII for `name` values: a hyphen, colon, or comma instead
-of `—`. This also matches the project-wide rule against em-dashes in user-facing copy.
+A preview named `@Preview(name = "Expanded — both fields empty")` either hangs the host test
+process indefinitely on macOS or throws `IllegalArgumentException` on Linux CI when Roborazzi
+tries to write the resulting PNG. Use plain ASCII for `name` values: a hyphen, colon, or comma
+instead of `—`. This also matches the project-wide rule against em-dashes in user-facing copy.
+
+### Previews we deliberately do NOT screenshot test
+
+These render infinite animations that never settle under Robolectric's frame clock and must NOT
+be re-annotated with `@ScreenshotTest` until the underlying composables learn to render a static
+"resting" frame when `LocalInspectionMode == true`:
+
+- `taj/components/LoadingDotsPill.kt` — `PreviewLoadingDotsPill_Visible` (infinite dots animation)
+- `feature/trip-planner/ui/components/loading/LoadingEmojiAnim.kt` — `Preview` (rocket emoji animation)
+- `feature/trip-planner/ui/components/DepartureBoardStopCard.kt` — `DepartureBoardStopCardLoadingPreview`
+  (passes `isLoading = true`, which renders `LoadingDotsPill`)
+
+If you add a new preview that uses any of `LoadingDotsPill`, `LoadingEmojiAnim`, `AnimatedDots`,
+`Animatable.animateTo` in a loop, or `LaunchedEffect { while (true) … }`, do not add `@ScreenshotTest`
+to it. Add the function name to this list instead and we will pick them up when the per-capture
+timeout work lands (see "Future work" below).
+
+### Future work
+
+- **Per-capture timeout in `BaseSnapshotTest`** — wrap each `captureScreenshot` call in a 30s
+  thread-level timeout so a single hang doesn't block the whole run. Failed captures should log
+  `[snapshot] TIMEOUT after 30s: <name>` and continue.
+- **Skip annotation** — introduce `@SkipScreenshotTest` (or a `disabled = true` parameter on
+  `@ScreenshotTest`) and wire it into the scanner via `excludeIfAnnotatedWithAnyOf`. That way
+  the previews above can keep their `@ScreenshotTest` annotation for documentation while the
+  scanner skips them.
+- **`LocalInspectionMode`-aware loading composables** — make `LoadingDotsPill`, `LoadingEmojiAnim`
+  etc. check `LocalInspectionMode.current` and render a static frame in inspection mode. That
+  removes the need for the skip list entirely.
 
 ## Commands
 

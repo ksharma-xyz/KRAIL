@@ -208,7 +208,7 @@ private fun PreviewOriginDestination_BothLabelled() {
 }
 
 @ScreenshotTest
-@Preview(name = "Origin labelled only — Ferry")
+@Preview(name = "Origin labelled only - Ferry")
 @Composable
 private fun PreviewOriginDestination_OriginLabelledOnly() {
     PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {

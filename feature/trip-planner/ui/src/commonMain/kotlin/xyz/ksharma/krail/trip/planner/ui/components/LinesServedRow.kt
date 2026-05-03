@@ -388,7 +388,7 @@ private fun LinesServedRowClosedPreview() {
 }
 
 @ScreenshotTest
-@Preview(name = "Filter open — all expanded, T2 selected")
+@Preview(name = "Filter open - all expanded, T2 selected")
 @Composable
 private fun LinesServedRowOpenPreview() {
     PreviewTheme(KrailThemeStyle.Train) {

@@ -157,24 +157,38 @@ private fun CollapsedPill(
 ) {
     val dim = KrailTheme.dimensions
 
-    // Bouncy "zoom" entry: pill arrives slightly oversized, dips below natural size,
-    // then springs back to 1.0. Reads as a playful pop rather than a flat appearance.
-    val scale = remember { Animatable(PillEnterInitialScale) }
+    // One-shot bouncy "zoom" entry: pill arrives slightly oversized, dips below
+    // natural size, then springs back to 1.0. Plays at most once per session —
+    // rememberSaveable across navigation/back-stack so returning to this screen
+    // never replays it. If the user has already seen the bounce, the scale skips
+    // straight to 1.0.
+    var hasPlayedEntryAnimation by rememberSaveable { mutableStateOf(false) }
+    val scale = remember {
+        Animatable(if (hasPlayedEntryAnimation) 1f else PillEnterInitialScale)
+    }
     LaunchedEffect(Unit) {
-        scale.animateTo(
-            targetValue = PillEnterDipScale,
-            animationSpec = tween(
-                durationMillis = PillEnterDipDurationMillis,
-                easing = FastOutSlowInEasing,
-            ),
-        )
-        scale.animateTo(
-            targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow,
-            ),
-        )
+        if (!hasPlayedEntryAnimation) {
+            // Wait for the parent AnimatedVisibility's scaleIn(0 → 1) to land
+            // before kicking off the inner bounce. Without this delay, the dip
+            // begins while the pill is still scaling up from 0, which reads as
+            // a glitch instead of an intentional bounce.
+            delay(PillEnterStartDelayMillis)
+            scale.animateTo(
+                targetValue = PillEnterDipScale,
+                animationSpec = tween(
+                    durationMillis = PillEnterDipDurationMillis,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+            scale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow,
+                ),
+            )
+            hasPlayedEntryAnimation = true
+        }
     }
 
     Box(
@@ -202,6 +216,7 @@ private fun CollapsedPill(
     }
 }
 
+private const val PillEnterStartDelayMillis = 200L
 private const val PillEnterInitialScale = 1.18f
 private const val PillEnterDipScale = 0.88f
 private const val PillEnterDipDurationMillis = 220

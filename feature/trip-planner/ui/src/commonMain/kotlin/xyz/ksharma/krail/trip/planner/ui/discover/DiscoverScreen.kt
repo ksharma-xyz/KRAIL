@@ -206,7 +206,7 @@ fun DiscoverScreenTablet(
     ) {
         Column {
             val dim = KrailTheme.dimensions
-        if (isLargeFontScale()) {
+            if (isLargeFontScale()) {
                 // Large font: centered lazy column
                 LazyColumn(
                     contentPadding = PaddingValues(top = DISCOVER_SCROLL_TOP_PADDING, bottom = DISCOVER_SCROLL_PADDING),

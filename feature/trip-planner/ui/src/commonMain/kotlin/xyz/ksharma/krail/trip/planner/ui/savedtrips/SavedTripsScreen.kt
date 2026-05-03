@@ -484,7 +484,7 @@ private fun LazyListScope.savedTripsContent(
                 fadeOut(animationSpec = tween(durationMillis = 150)),
         ) {
             Text(
-                text = "💡 Hold and drag cards to reorder. Tap Done when finished.",
+                text = "💡 Long press and drag cards to reorder. Tap Done when finished.",
                 style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.softLabel,
                 modifier = Modifier

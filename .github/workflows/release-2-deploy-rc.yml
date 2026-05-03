@@ -79,7 +79,20 @@ jobs:
       track: internal
     secrets: inherit
 
-  # ── 5. Distribute to TestFlight (runs in parallel with Android pipeline) ────
+  # ── 5. Distribute the same RC APK to Firebase Friends group ─────────────────
+  # Lets testers without Google Play Internal access (or who prefer Firebase
+  # for installs) try the same release-signed build that's heading to prod.
+  # Release notes carry the RC tag (e.g. "v1.21.0-RC2") so it's obvious which
+  # candidate they're looking at.
+  distribute-firebase:
+    needs: [build-android-release, tag-release-candidate]
+    uses: ./.github/workflows/distribute-firebase.yml
+    with:
+      variant: release
+      release-notes: ${{ needs.tag-release-candidate.outputs.tag }}
+    secrets: inherit
+
+  # ── 6. Distribute to TestFlight (runs in parallel with Android pipeline) ────
   distribute-testflight:
     uses: ./.github/workflows/distribute-testflight.yml
     secrets: inherit

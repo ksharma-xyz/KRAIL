@@ -164,7 +164,7 @@ private fun CollapsedPill(
     // straight to 1.0.
     var hasPlayedEntryAnimation by rememberSaveable { mutableStateOf(false) }
     val scale = remember {
-        Animatable(if (hasPlayedEntryAnimation) 1f else PillEnterInitialScale)
+        Animatable(if (hasPlayedEntryAnimation) 1f else PILL_ENTER_INITIAL_SCALE)
     }
     LaunchedEffect(Unit) {
         if (!hasPlayedEntryAnimation) {
@@ -172,18 +172,18 @@ private fun CollapsedPill(
             // before kicking off the inner bounce. Without this delay, the dip
             // begins while the pill is still scaling up from 0, which reads as
             // a glitch instead of an intentional bounce.
-            delay(PillEnterStartDelayMillis)
+            delay(PILL_ENTER_START_DELAY_MILLIS)
             scale.animateTo(
-                targetValue = PillEnterDipScale,
+                targetValue = PILL_ENTER_DIP_SCALE,
                 animationSpec = tween(
-                    durationMillis = PillEnterDipDurationMillis,
+                    durationMillis = PILL_ENTER_DIP_DURATION_MILLIS,
                     easing = FastOutSlowInEasing,
                 ),
             )
             scale.animateTo(
                 targetValue = 1f,
                 animationSpec = spring(
-                    dampingRatio = PillEnterSpringDamping,
+                    dampingRatio = PILL_ENTER_SPRING_DAMPING,
                     stiffness = Spring.StiffnessLow,
                 ),
             )
@@ -216,14 +216,15 @@ private fun CollapsedPill(
     }
 }
 
-private const val PillEnterStartDelayMillis = 200L
-private const val PillEnterInitialScale = 1.18f
-private const val PillEnterDipScale = 0.88f
-private const val PillEnterDipDurationMillis = 220
+private const val PILL_ENTER_START_DELAY_MILLIS = 200L
+private const val PILL_ENTER_INITIAL_SCALE = 1.18f
+private const val PILL_ENTER_DIP_SCALE = 0.88f
+private const val PILL_ENTER_DIP_DURATION_MILLIS = 220
+
 // Sits between Spring.DampingRatioMediumBouncy (0.5f, too lively) and
 // Spring.DampingRatioLowBouncy (0.75f, almost flat). Keeps the playful spring
 // character while trimming the visible overshoot to about half.
-private const val PillEnterSpringDamping = 0.65f
+private const val PILL_ENTER_SPRING_DAMPING = 0.65f
 
 @Composable
 private fun ExpandedSearchRow(

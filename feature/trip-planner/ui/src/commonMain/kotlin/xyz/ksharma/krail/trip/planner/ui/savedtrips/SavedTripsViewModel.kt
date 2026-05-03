@@ -409,8 +409,19 @@ class SavedTripsViewModel(
         val trips = _uiState.value.savedTrips.toMutableList()
         val fromIndex = trips.indexOfFirst { it.tripId == tripId }
         if (fromIndex == -1 || targetIndex !in trips.indices) return
-        trips.add(targetIndex, trips.removeAt(fromIndex))
+        if (fromIndex == targetIndex) return
+        val moved = trips.removeAt(fromIndex)
+        trips.add(targetIndex, moved)
         updateUiState { copy(savedTrips = trips.toImmutableList()) }
+        analytics.track(
+            AnalyticsEvent.SavedTripCardReorderedEvent(
+                fromStopId = moved.fromStopId,
+                toStopId = moved.toStopId,
+                previousIndex = fromIndex,
+                newIndex = targetIndex,
+                totalCount = trips.size,
+            ),
+        )
         viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
             trips.forEachIndexed { index, trip ->
                 sandook.updateSavedTripSortOrder(tripId = trip.tripId, sortOrder = index.toLong())

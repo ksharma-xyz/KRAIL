@@ -43,4 +43,18 @@ sealed interface TimeTableUiEvent {
 
     /** Load past trips before the earliest currently shown departure. */
     data object LoadPreviousTrips : TimeTableUiEvent
+
+    /**
+     * Fired when the user taps the origin or destination label in the timetable
+     * sticky header (the gesture that opens the stop-details bottom sheet).
+     *
+     * Analytics-only — the sheet itself is opened by local Compose state in
+     * `TimeTableScreen`. Routing this through the VM keeps analytics calls in
+     * one place and makes the path testable with `FakeAnalytics`.
+     */
+    data class OriginDestinationStopHeaderClicked(
+        val stopId: String,
+        val stopName: String,
+        val isOrigin: Boolean,
+    ) : TimeTableUiEvent
 }

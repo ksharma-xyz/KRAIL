@@ -25,6 +25,7 @@ import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTr
 import xyz.ksharma.core.test.fakes.FakeImageBitmap
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
@@ -46,6 +47,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -1306,4 +1308,94 @@ class TimeTableViewModelTest {
             totalUniqueServiceAlerts = 0,
         )
     }
+
+    // region OriginDestinationStopHeaderClicked — analytics for the gesture that
+    // opens the stop-details sheet. The trip context (tripFromStopId / tripToStopId)
+    // comes from the VM's `tripInfo` field, which is set by LoadTimeTable.
+
+    @Test
+    fun `GIVEN trip loaded WHEN origin header is clicked THEN stop header click event is tracked with isOrigin true`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.uiState.test {
+                skipItems(1)
+                // LoadTimeTable populates `tripInfo` so the click handler can
+                // include the trip pair in the analytics payload.
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                advanceUntilIdle()
+                analytics.clear()
+
+                viewModel.onEvent(
+                    TimeTableUiEvent.OriginDestinationStopHeaderClicked(
+                        stopId = "FROM_STOP_ID_1",
+                        stopName = "STOP_NAME_1",
+                        isOrigin = true,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val tracked = analytics.getTrackedEvent("timetable_stop_header_click")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.TimeTableStopHeaderClickEvent>(tracked)
+                assertEquals("FROM_STOP_ID_1", event.stopId)
+                assertEquals("STOP_NAME_1", event.stopName)
+                assertTrue(event.isOrigin)
+                // Payload anchors to the trip pair so the dashboard can join with
+                // PlanTripClickEvent / LoadTimeTableClickEvent.
+                assertEquals("FROM_STOP_ID_1", event.tripFromStopId)
+                assertEquals("TO_STOP_ID_1", event.tripToStopId)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN trip loaded WHEN destination header is clicked THEN stop header click event is tracked with isOrigin false`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                advanceUntilIdle()
+                analytics.clear()
+
+                viewModel.onEvent(
+                    TimeTableUiEvent.OriginDestinationStopHeaderClicked(
+                        stopId = "TO_STOP_ID_1",
+                        stopName = "STOP_NAME_2",
+                        isOrigin = false,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val tracked = analytics.getTrackedEvent("timetable_stop_header_click")
+                assertNotNull(tracked)
+                val event = assertIs<AnalyticsEvent.TimeTableStopHeaderClickEvent>(tracked)
+                assertEquals("TO_STOP_ID_1", event.stopId)
+                assertEquals("STOP_NAME_2", event.stopName)
+                assertFalse(event.isOrigin)
+                assertEquals("FROM_STOP_ID_1", event.tripFromStopId)
+                assertEquals("TO_STOP_ID_1", event.tripToStopId)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion
 }

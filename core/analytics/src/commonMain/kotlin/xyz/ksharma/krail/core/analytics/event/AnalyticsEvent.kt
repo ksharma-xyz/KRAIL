@@ -9,6 +9,11 @@ private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
 private const val PROP_STOP_NAME = "stopName"
 private const val PROP_LABEL_NAME = "labelName"
+private const val PROP_FROM_STOP_ID = "fromStopId"
+private const val PROP_TO_STOP_ID = "toStopId"
+private const val PROP_PREVIOUS_INDEX = "previousIndex"
+private const val PROP_NEW_INDEX = "newIndex"
+private const val PROP_TOTAL_COUNT = "totalCount"
 
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
@@ -22,13 +27,13 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class SavedTripCardClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "saved_trip_card_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     data class DeleteSavedTripClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "delete_saved_trip_card_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     data object ReverseStopClickEvent : AnalyticsEvent(name = "reverse_stop_click")
@@ -36,7 +41,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class LoadTimeTableClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "load_timetable_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     data object SettingsClickEvent : AnalyticsEvent(name = "settings_click")
@@ -44,6 +49,42 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data object FromFieldClickEvent : AnalyticsEvent(name = "from_field_click")
 
     data object ToFieldClickEvent : AnalyticsEvent(name = "to_field_click")
+
+    /**
+     * Fired when the user reorders a saved-trip card by drag-and-drop in edit mode.
+     * Use to measure whether reorder is actually used and how. Specifically:
+     *  - "What % of users with saved trips ever reorder?" → distinct user count.
+     *  - "Are users mostly promoting trips to the top, or shuffling middle slots?"
+     *    → distribution of [newIndex], filter [newIndex] = 0.
+     *  - "Does reorder usage scale with list size?" → bucket on [totalCount].
+     *  - "Which trips get reordered most often?" → group by [PROP_FROM_STOP_ID]
+     *    + [PROP_TO_STOP_ID]; can be joined with [SavedTripCardClickEvent].
+     *
+     * @param fromStopId    NSW Transport stop ID for the trip's origin — anchors
+     *                      the moved card to a specific saved trip.
+     * @param toStopId      Stop ID for the trip's destination.
+     * @param previousIndex Position the card was at before the move.
+     * @param newIndex      Position the card landed at after the move.
+     * @param totalCount    Number of saved trips in the list at the time of the
+     *                      reorder. Lets us split "casual user with 2 cards"
+     *                      from "power user with 8".
+     */
+    data class SavedTripCardReorderedEvent(
+        val fromStopId: String,
+        val toStopId: String,
+        val previousIndex: Int,
+        val newIndex: Int,
+        val totalCount: Int,
+    ) : AnalyticsEvent(
+        name = "saved_trip_card_reordered",
+        properties = mapOf(
+            PROP_FROM_STOP_ID to fromStopId,
+            PROP_TO_STOP_ID to toStopId,
+            PROP_PREVIOUS_INDEX to previousIndex,
+            PROP_NEW_INDEX to newIndex,
+            PROP_TOTAL_COUNT to totalCount,
+        ),
+    )
 
     // endregion
 
@@ -196,6 +237,41 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         }
     }
 
+    /**
+     * Fired when the user reorders a stop label pill by drag-and-drop.
+     *
+     * Aggregations this enables:
+     *  - "Are stop labels actually being reordered, or do users leave Home/Work in
+     *    the seeded order?" → presence/count of this event.
+     *  - "Are users moving the protected Home label around?" → filter
+     *    [isProtectedLabel] = true. Useful because Home is non-deletable but is
+     *    still draggable; this answers "do users want it elsewhere".
+     *  - "Promotion vs shuffle behaviour" → [newIndex] distribution.
+     *
+     * @param labelName        Label that was moved.
+     * @param previousIndex    Index before the move.
+     * @param newIndex         Index after the move.
+     * @param totalCount       Total labels in the list at reorder time.
+     * @param isProtectedLabel `true` for the Home label (non-deletable but
+     *                         still draggable).
+     */
+    data class StopLabelReorderedEvent(
+        val labelName: String,
+        val previousIndex: Int,
+        val newIndex: Int,
+        val totalCount: Int,
+        val isProtectedLabel: Boolean,
+    ) : AnalyticsEvent(
+        name = "stop_label_reordered",
+        properties = mapOf(
+            PROP_LABEL_NAME to labelName,
+            PROP_PREVIOUS_INDEX to previousIndex,
+            PROP_NEW_INDEX to newIndex,
+            PROP_TOTAL_COUNT to totalCount,
+            "isProtectedLabel" to isProtectedLabel,
+        ),
+    )
+
     // endregion
 
     // region Theme
@@ -218,17 +294,17 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class ReverseTimeTableClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "reverse_time_table_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     data class SaveTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
         name = "save_trip_click",
-        properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+        properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
     )
 
     data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
         name = "plan_trip_click",
-        properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+        properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
     )
 
     data class ModeClickEvent(
@@ -238,8 +314,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "mode_click",
         properties = mapOf(
-            "fromStopId" to fromStopId,
-            "toStopId" to toStopId,
+            PROP_FROM_STOP_ID to fromStopId,
+            PROP_TO_STOP_ID to toStopId,
             "displayModeSelectionRow" to displayModeSelectionRow,
         ),
     )
@@ -251,8 +327,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "mode_selection_done",
         properties = mapOf(
-            "fromStopId" to fromStopId,
-            "toStopId" to toStopId,
+            PROP_FROM_STOP_ID to fromStopId,
+            PROP_TO_STOP_ID to toStopId,
             "unselected" to unselectedProductClasses.toString(),
         ),
     )
@@ -325,8 +401,46 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class JourneyAlertClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "journey_alert_click",
-            properties = mapOf("fromStopId" to fromStopId, "toStopId" to toStopId),
+            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
+
+    /**
+     * Fired when the user taps the origin or destination label in the timetable
+     * sticky header — the gesture that opens the stop-details bottom sheet.
+     *
+     * The single most useful field is [isOrigin]: it answers
+     * "are users more curious about where they're leaving from, or where they're
+     * going to?". Combined with [PROP_FROM_STOP_ID] / [PROP_TO_STOP_ID] (which
+     * anchor to the same trip referenced by [LoadTimeTableClickEvent] and
+     * [PlanTripClickEvent]) the dashboard can also answer
+     * "of users who plan a trip, what % drill into stop details before boarding?".
+     *
+     * @param stopId        The stop the user tapped.
+     * @param stopName      Human-readable stop name for that tap.
+     * @param isOrigin      `true` if the tapped label was the trip origin,
+     *                      `false` if it was the destination.
+     * @param tripFromStopId Origin of the trip the click happened inside —
+     *                       always present, even when [isOrigin] is true (so
+     *                       a single dashboard query can join on the trip pair
+     *                       without re-deriving it from [stopId]).
+     * @param tripToStopId   Destination of the trip the click happened inside.
+     */
+    data class TimeTableStopHeaderClickEvent(
+        val stopId: String,
+        val stopName: String,
+        val isOrigin: Boolean,
+        val tripFromStopId: String,
+        val tripToStopId: String,
+    ) : AnalyticsEvent(
+        name = "timetable_stop_header_click",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            PROP_STOP_NAME to stopName,
+            "isOrigin" to isOrigin,
+            PROP_FROM_STOP_ID to tripFromStopId,
+            PROP_TO_STOP_ID to tripToStopId,
+        ),
+    )
 
     // endregion
 

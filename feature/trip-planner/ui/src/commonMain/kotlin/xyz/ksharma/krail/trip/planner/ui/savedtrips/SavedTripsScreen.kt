@@ -678,7 +678,7 @@ private fun SavedTripsTitle(
     }
 }
 
-private const val WIGGLE_ANGLE_DEGREES = 1.5f
+private const val WIGGLE_ANGLE_DEGREES = 0.75f
 private const val WIGGLE_BASE_DURATION_MS = 350
 private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
 private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70

@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -34,9 +33,10 @@ fun TimeSelection(
     val themeColor = themeColorHex.hexToComposeColor()
     val themeContentColor = getForegroundColor(themeColor)
 
+    val dim = KrailTheme.dimensions
     Column(
-        modifier = modifier.padding(top = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.padding(top = dim.spacingL),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
         val density = LocalDensity.current
         if (displayTitle) {
@@ -72,7 +72,7 @@ fun TimeSelection(
                     timeSelectorUnselectedContentColor = KrailTheme.colors.onSurface.copy(alpha = 0.8f),
                 ),
                 layoutType = TimePickerLayoutType.Vertical,
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = dim.spacingL),
             )
         }
     }

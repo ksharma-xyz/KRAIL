@@ -114,12 +114,12 @@ internal fun DepartureBoardAccordionSectionHeader(
         label = "arrow-rotation",
     )
     val outerPadding by animateDpAsState(
-        targetValue = if (isExpanded) 0.dp else dim.spacingXL,
+        targetValue = if (isExpanded) dim.spacingNone else dim.spacingXL,
         animationSpec = tween(durationMillis = 300),
         label = "outer-padding",
     )
     val cornerRadius by animateDpAsState(
-        targetValue = if (isExpanded) 0.dp else dim.cardCornerRadius,
+        targetValue = if (isExpanded) dim.spacingNone else dim.cardCornerRadius,
         animationSpec = tween(durationMillis = 300),
         label = "corner-radius",
     )

@@ -130,7 +130,7 @@ private fun LabelChoiceChip(
             painter = painterResource(icon),
             contentDescription = null,
             colorFilter = ColorFilter.tint(contentColor),
-            modifier = Modifier.size(14.dp),
+            modifier = Modifier.size(LABEL_CHIP_ICON_SIZE),
         )
         Text(
             text = label.label,
@@ -185,3 +185,5 @@ private fun PreviewSaveStopAsLabelSheet() {
 }
 
 // endregion
+
+private val LABEL_CHIP_ICON_SIZE = 14.dp

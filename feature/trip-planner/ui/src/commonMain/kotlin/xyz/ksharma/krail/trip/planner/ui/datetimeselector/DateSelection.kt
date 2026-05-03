@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_chevron_left
 import krail.feature.trip_planner.ui.generated.resources.ic_chevron_right
@@ -28,9 +27,10 @@ fun DateSelection(
     onNextClicked: () -> Unit = {},
     onPreviousClicked: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     Column(
-        modifier = modifier.fillMaxWidth().padding(top = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.fillMaxWidth().padding(top = dim.spacingXL),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
         Text(
             text = "Select Date",

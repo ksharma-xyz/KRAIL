@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.collections.immutable.persistentListOf
 import org.koin.compose.viewmodel.koinViewModel
@@ -50,6 +49,7 @@ fun StopDetailsBottomSheet(
         onDismiss = onDismiss,
         modifier = modifier,
         additionalInfo = {
+            val dim = KrailTheme.dimensions
             DepartureBoardStopCard(
                 stopId = stop.stopId,
                 stopName = stop.stopName,
@@ -57,18 +57,18 @@ fun StopDetailsBottomSheet(
                 onEvent = departuresViewModel::onEvent,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
 
             if (stop.hasParkAndRide) {
-                ParkingInfoSection(modifier = Modifier.padding(horizontal = 16.dp))
+                ParkingInfoSection(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(dim.spacingXL))
 
-                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(modifier = Modifier.padding(horizontal = dim.spacingXL))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(dim.spacingXL))
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dim.spacingXL))
         },
         actionButton = { actionContent() },
     )
@@ -80,13 +80,13 @@ private fun ParkingInfoSection(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingL),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ParkAndRideIcon()
 
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
         ) {
             Text(
                 text = "Park & Ride Available",

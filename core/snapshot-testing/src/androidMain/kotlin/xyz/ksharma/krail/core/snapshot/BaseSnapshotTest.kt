@@ -11,9 +11,9 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.robolectric.Robolectric
-import sergio.sastre.composable.preview.scanner.common.CommonComposablePreviewScanner
-import sergio.sastre.composable.preview.scanner.common.CommonPreviewInfo
-import sergio.sastre.composable.preview.scanner.common.screenshotid.CommonPreviewScreenshotIdBuilder
+import sergio.sastre.composable.preview.scanner.android.AndroidComposablePreviewScanner
+import sergio.sastre.composable.preview.scanner.android.AndroidPreviewInfo
+import sergio.sastre.composable.preview.scanner.android.screenshotid.AndroidPreviewScreenshotIdBuilder
 import sergio.sastre.composable.preview.scanner.core.preview.ComposablePreview
 import sergio.sastre.composable.preview.scanner.core.preview.getAnnotation
 
@@ -24,7 +24,7 @@ import sergio.sastre.composable.preview.scanner.core.preview.getAnnotation
  * 1. Create a test class that extends this class
  * 2. Override [packageToScan] with your module's package name
  * 3. Annotate your @Preview functions with @ScreenshotTest
- * 4. Run ./gradlew :yourModule:recordRoborazziDebug
+ * 4. Run ./gradlew :yourModule:recordRoborazziAndroidHostTest
  *
  * Example:
  * ```
@@ -84,7 +84,7 @@ abstract class BaseSnapshotTest {
      * Call this from your @Test method.
      */
     protected fun generateSnapshots() {
-        val scanner = CommonComposablePreviewScanner()
+        val scanner = AndroidComposablePreviewScanner()
             .scanPackageTrees(packageToScan)
             .includeAnnotationInfoForAllOf(ScreenshotTest::class.java)
             .includeIfAnnotatedWithAnyOf(ScreenshotTest::class.java)
@@ -107,7 +107,7 @@ abstract class BaseSnapshotTest {
     /**
      * Captures all configured snapshot variations for a preview.
      */
-    private fun capturePreviewSnapshots(preview: ComposablePreview<CommonPreviewInfo>) {
+    private fun capturePreviewSnapshots(preview: ComposablePreview<AndroidPreviewInfo>) {
         val screenshotConfig = preview.getAnnotation<ScreenshotTest>()
         val threshold = screenshotConfig?.threshold ?: SnapshotDefaults.defaultThreshold
 
@@ -129,7 +129,7 @@ abstract class BaseSnapshotTest {
      * Captures a single screenshot with the specified configuration.
      */
     private fun captureScreenshot(
-        preview: ComposablePreview<CommonPreviewInfo>,
+        preview: ComposablePreview<AndroidPreviewInfo>,
         fontScale: Float,
         isDarkMode: Boolean,
         threshold: Double,
@@ -221,11 +221,11 @@ abstract class BaseSnapshotTest {
      * Format: {PreviewName}_{theme}_{fontScale}
      */
     private fun buildScreenshotFileName(
-        preview: ComposablePreview<CommonPreviewInfo>,
+        preview: ComposablePreview<AndroidPreviewInfo>,
         fontScale: Float,
         isDarkMode: Boolean,
     ): String {
-        val baseName = CommonPreviewScreenshotIdBuilder(preview)
+        val baseName = AndroidPreviewScreenshotIdBuilder(preview)
             .ignoreClassName()
             .build()
 

@@ -27,7 +27,6 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Compact rounded pill containing [AnimatedDots]. Designed to float on the z-axis above
@@ -101,7 +100,7 @@ private const val ENTER_EXIT_SCALE = 0.85f
 
 // region Previews
 
-@ScreenshotTest
+// @ScreenshotTest disabled: isLoading=true renders an infinite dots animation that hangs Robolectric.
 @Preview
 @Composable
 private fun PreviewLoadingDotsPill_Visible() {

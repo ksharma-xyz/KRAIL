@@ -42,6 +42,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_filter
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -52,7 +53,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 // Stagger timing constants
 private const val BADGE_STAGGER_MS = 55 // delay between each badge

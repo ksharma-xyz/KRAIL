@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.track.TrackedLeg
 import xyz.ksharma.krail.feature.track.TrackedStop
@@ -37,7 +38,6 @@ import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Suppress("CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class)

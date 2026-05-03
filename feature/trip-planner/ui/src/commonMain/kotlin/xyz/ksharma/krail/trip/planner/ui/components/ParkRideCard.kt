@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableSet
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -27,7 +28,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
 

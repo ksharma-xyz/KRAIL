@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.Divider
@@ -27,7 +28,6 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.departureboard.toTransportMode
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Displays a single departure row:

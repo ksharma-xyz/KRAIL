@@ -39,6 +39,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -52,7 +53,6 @@ import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextSelectionBackgroundOpacity
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * Important documentation links:

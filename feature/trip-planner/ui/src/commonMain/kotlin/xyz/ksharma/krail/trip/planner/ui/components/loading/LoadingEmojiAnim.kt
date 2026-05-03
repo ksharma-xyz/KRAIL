@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun LoadingEmojiAnim(
@@ -74,7 +73,7 @@ fun LoadingEmojiAnim(
     }
 }
 
-@ScreenshotTest
+// @ScreenshotTest disabled: infinite emoji animation hangs Robolectric.
 @Preview
 @Composable
 private fun Preview() {

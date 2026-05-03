@@ -22,6 +22,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.darken
@@ -31,7 +32,6 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun DiscoverChip(

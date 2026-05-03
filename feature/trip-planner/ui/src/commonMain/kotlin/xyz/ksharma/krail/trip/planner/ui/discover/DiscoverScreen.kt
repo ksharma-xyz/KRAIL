@@ -31,6 +31,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveBreakpoints
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
@@ -45,7 +46,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun DiscoverScreen(

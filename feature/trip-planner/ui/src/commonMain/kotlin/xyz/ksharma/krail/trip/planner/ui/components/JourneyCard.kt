@@ -48,6 +48,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.share.withBrandingHeader
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
@@ -62,7 +63,6 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * A card that displays information about a journey.

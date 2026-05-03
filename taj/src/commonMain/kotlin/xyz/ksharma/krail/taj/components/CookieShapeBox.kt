@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.BUMPS
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.SIZE
 import xyz.ksharma.krail.taj.magicBorderColors
@@ -23,7 +24,6 @@ import xyz.ksharma.krail.taj.shapes.buildCookiePath
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.SpacingTokens
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 /**
  * A box with a cookie-shaped background and optional multi-color stroke.

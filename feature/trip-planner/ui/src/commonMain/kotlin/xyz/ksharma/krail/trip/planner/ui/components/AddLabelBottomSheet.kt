@@ -40,6 +40,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
@@ -51,7 +52,6 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Suppress("LongMethod")
 // The sheet is one continuous flow (title → optional stop chip → preview pill →

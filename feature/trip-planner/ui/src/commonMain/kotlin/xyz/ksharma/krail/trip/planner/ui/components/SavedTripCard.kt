@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -27,7 +28,6 @@ import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 
 @Composable
 fun SavedTripCard(

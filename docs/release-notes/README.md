@@ -10,11 +10,6 @@ the AI workflow uses past examples to learn the voice for new ones.
 
 ## How to write notes for a new release
 
-You have two ways to draft them. Both produce the same output (a markdown
-file in this folder), and you should review the result either way.
-
-### Option 1 — Claude Code skill (interactive, local)
-
 Run the project skill from a Claude Code chat:
 
 ```
@@ -30,34 +25,14 @@ The skill (`.claude/commands/krail-release-notes.md`) will:
 4. Iterate with you on tweaks.
 5. Write the agreed copy to `docs/release-notes/v{version}.md`.
 
-Use this when you want a conversational drafting flow with the ability to
-push back on the wording before anything gets written to disk.
-
-### Option 2 — GitHub Actions workflow (one-shot, headless)
-
-Run `.github/workflows/generate-release-notes.yml` from the Actions tab:
-
-- **From tag** — previous release tag (e.g. `v1.19.0`)
-- **To tag** — new release tag (e.g. `v1.20.0`)
-
-The workflow calls the Anthropic API with `claude-haiku-4-5-20251001`
-(~$0.003 per run) and writes the result to:
-
-- The job summary of the run (copy from there into the stores)
-- The body of the matching GitHub Release draft
-
-Use this when you've already cut + tagged the release and just want the
-copy generated from CI without spinning up a local chat. Note: this
-workflow does **not** commit the result to `docs/release-notes/` — that's
-a manual step. Paste the generated text into a new `v{version}.md` and
-open a PR (or run the skill afterward to save it).
-
-**Prerequisite:** `ANTHROPIC_API_KEY` must be set in repo secrets.
+Drafting happens locally — there is no CI workflow for this. Keeping it
+local means you get to push back on wording before anything is written to
+disk, and we don't pay for API calls every time a release is cut.
 
 ## Voice & style guide
 
 Don't reinvent the voice each release — there's a single source of truth at
-`.claude/commands/krail-release-notes.md`. Both options above pull from it.
+`.claude/commands/krail-release-notes.md`. The skill pulls from it.
 Highlights:
 
 - **Features first, bug fixes second.** Lead with what users gain.
@@ -99,7 +74,7 @@ release-1-cut.yml  →  prod/{v}      (cut release branch, bump main)
 release-2-deploy-rc.yml  →  RC build to GP Internal + TestFlight
 release-3-tag.yml  →  v{v} tag       (publish for production rollout)
    ↓
-generate-release-notes.yml  (run this OR /krail-release-notes locally)
+/krail-release-notes  (run locally in Claude Code)
    ↓
 docs/release-notes/v{v}.md  (commit the draft, paste into stores)
    ↓

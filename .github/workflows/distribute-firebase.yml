@@ -6,6 +6,19 @@ on:
       variant:
         required: true
         type: string
+      release-notes:
+        # Optional override for the Firebase release notes. Defaults to the head
+        # commit subject (used by main pushes). RC distributions pass the RC tag
+        # here so testers see "v1.21.0-RC2" instead of a random commit title.
+        required: false
+        type: string
+        default: ''
+      group:
+        # Optional override for the Firebase tester group. Defaults to "Internal"
+        # for debug builds and "Friends" for release builds.
+        required: false
+        type: string
+        default: ''
 
 jobs:
   distribute-apk:
@@ -43,20 +56,28 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
           FIREBASE_APP_ID: ${{ env.FIREBASE_APP_ID }}
+          NOTES_OVERRIDE: ${{ inputs.release-notes }}
+          GROUP_OVERRIDE: ${{ inputs.group }}
         run: |
           COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n1 | tr -d '\n' | tr -d '\r')
 
           if [ "${{ inputs.variant }}" = "debug" ]; then
-            firebase appdistribution:distribute androidApp-debug.apk \
-              --app "$FIREBASE_APP_ID" \
-              --groups "Internal" \
-              --release-notes "Debug: $COMMIT_TITLE"
+            DEFAULT_NOTES="Debug: $COMMIT_TITLE"
+            DEFAULT_GROUP="Internal"
+            APK="androidApp-debug.apk"
           else
-            firebase appdistribution:distribute androidApp-release.apk \
-              --app "$FIREBASE_APP_ID" \
-              --groups "Friends" \
-              --release-notes "Release: $COMMIT_TITLE"
+            DEFAULT_NOTES="Release: $COMMIT_TITLE"
+            DEFAULT_GROUP="Friends"
+            APK="androidApp-release.apk"
           fi
+
+          NOTES="${NOTES_OVERRIDE:-$DEFAULT_NOTES}"
+          GROUP="${GROUP_OVERRIDE:-$DEFAULT_GROUP}"
+
+          firebase appdistribution:distribute "$APK" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "$GROUP" \
+            --release-notes "$NOTES"
 
       - name: Cleanup sensitive files
         run: rm -f gcloud.json

@@ -183,7 +183,7 @@ private fun CollapsedPill(
             scale.animateTo(
                 targetValue = 1f,
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    dampingRatio = PillEnterSpringDamping,
                     stiffness = Spring.StiffnessLow,
                 ),
             )
@@ -220,6 +220,10 @@ private const val PillEnterStartDelayMillis = 200L
 private const val PillEnterInitialScale = 1.18f
 private const val PillEnterDipScale = 0.88f
 private const val PillEnterDipDurationMillis = 220
+// Sits between Spring.DampingRatioMediumBouncy (0.5f, too lively) and
+// Spring.DampingRatioLowBouncy (0.75f, almost flat). Keeps the playful spring
+// character while trimming the visible overshoot to about half.
+private const val PillEnterSpringDamping = 0.65f
 
 @Composable
 private fun ExpandedSearchRow(

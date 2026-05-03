@@ -82,3 +82,65 @@ recommends. The `:common` and `:jvm` artifacts are deprecated and slated for rem
 The scanner discovers methods by their `@Preview` annotation in the bytecode and then filters by
 `@ScreenshotTest`. A function with only `@ScreenshotTest` (no `@Preview` or multi-preview wrapper
 that expands to `@Preview`) won't be found.
+
+### Em-dashes in `@Preview(name = …)` break the test runner
+
+A preview named `@Preview(name = "Expanded — both fields empty")` produced a screenshot file with
+the em-dash in its name and then hung the host test process indefinitely (no progress for 14+ min,
+gradle worker had to be killed). Use plain ASCII for `name` values: a hyphen, colon, or comma instead
+of `—`. This also matches the project-wide rule against em-dashes in user-facing copy.
+
+## Commands
+
+| Action | Command |
+|---|---|
+| Record baseline | `./gradlew :module:recordRoborazziAndroidHostTest` |
+| Verify against baseline (CI mode) | `./gradlew :module:verifyRoborazziAndroidHostTest` |
+| Compare and emit diff PNGs | `./gradlew :module:compareRoborazziAndroidHostTest` |
+| Just run the test (debug scanner) | `./gradlew :module:testAndroidHostTest --tests "...SnapshotTest"` |
+| Watch progress live | `watch -n 2 'find <module>/screenshots -name "*.png" \| wc -l'` |
+| See which preview is currently being captured | `./gradlew :module:recordRoborazziAndroidHostTest --info 2>&1 \| grep Capturing` |
+
+PNG output goes to `<module>/screenshots/`. Diff images from a failed verify go to
+`<module>/build/outputs/roborazzi/`. The Roborazzi HTML report is in `<module>/build/reports/roborazzi/`.
+
+## Debugging "Found 0 previews"
+
+The test prints `Found N previews with @ScreenshotTest in <package>` near the start of the run.
+If `N == 0`, walk through this checklist before anything else:
+
+1. **Confirm the source set is actually compiled.** Look for "The Kotlin source set androidUnitTest
+   was configured but not added to any Kotlin compilation" in gradle output — that means tests live
+   in the wrong directory. Move them to `src/androidHostTest/kotlin/` and wire it up in
+   `build.gradle.kts` via `getByName("androidHostTest") { kotlin.srcDir(…) }`.
+2. **Confirm the scanner matches the annotation.** `BaseSnapshotTest` uses
+   `AndroidComposablePreviewScanner`, which scans for `androidx.compose.ui.tooling.preview.Preview`.
+   `javap -verbose <YourFile>Kt.class | grep Preview` should show
+   `Landroidx/compose/ui/tooling/preview/Preview;` in the constant pool.
+3. **Confirm `@ScreenshotTest` is on the same function as a `@Preview`.** It must be on the function
+   itself, alongside the `@Preview` (or alongside a custom multi-preview annotation like
+   `@PreviewComponent` whose own meta-annotations include `@Preview`).
+4. **Run the test class directly** to skip Roborazzi's record machinery while debugging:
+   `./gradlew :module:testAndroidHostTest --tests "...SnapshotTest" --info`
+5. **Inspect the test XML** at `<module>/build/test-results/testAndroidHostTest/TEST-*SnapshotTest.xml`
+   — the `<system-out>` block contains the `Found N previews` line and any per-capture log output.
+
+## Adding a new module
+
+1. Add the dependency in the module's `build.gradle.kts`:
+   ```kotlin
+   sourceSets {
+       commonMain { dependencies { implementation(projects.core.snapshotTestingAnnotations) } }
+       getByName("androidHostTest") {
+           kotlin.srcDir("src/androidHostTest/kotlin")
+           dependencies { implementation(projects.core.snapshotTesting) }
+       }
+   }
+   ```
+2. Create `src/androidHostTest/kotlin/.../snapshot/<Module>SnapshotTest.kt` extending `BaseSnapshotTest`.
+3. Add `@ScreenshotTest` next to existing `@Preview`/`@PreviewComponent` annotations on the
+   composables you want captured (do not add `@Preview` to functions that did not previously have one).
+4. Run `./gradlew :module:recordRoborazziAndroidHostTest` to generate the baseline.
+5. Verify the new screenshots are LFS-tracked: `git lfs ls-files | grep <module>/screenshots`.
+   The root `.gitattributes` already covers `**/screenshots/**/*.png`, so this should be automatic.
+6. Commit the test class, `build.gradle.kts` change, and the new PNGs.

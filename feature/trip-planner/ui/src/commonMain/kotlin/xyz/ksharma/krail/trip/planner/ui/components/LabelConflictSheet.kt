@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
@@ -79,6 +80,7 @@ fun LabelConflictSheet(
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "Stop already saved")
 @Composable
 private fun PreviewLabelConflictSheet_StopSide() {
@@ -93,6 +95,7 @@ private fun PreviewLabelConflictSheet_StopSide() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "Label already in use")
 @Composable
 private fun PreviewLabelConflictSheet_LabelSide() {

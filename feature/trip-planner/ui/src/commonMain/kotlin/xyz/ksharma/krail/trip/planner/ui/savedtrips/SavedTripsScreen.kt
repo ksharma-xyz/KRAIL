@@ -687,7 +687,7 @@ private const val WIGGLE_OFFSET_MAX_MS = 200
 
 // region Previews
 
-@Preview(name = "1. Empty — no saved trips")
+@Preview(name = "1. Empty - no saved trips")
 @Composable
 private fun PreviewSavedTripsScreen_Empty() {
     PreviewTheme {

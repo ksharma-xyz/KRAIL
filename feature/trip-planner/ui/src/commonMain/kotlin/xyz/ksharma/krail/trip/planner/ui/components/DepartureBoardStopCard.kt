@@ -38,6 +38,7 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
@@ -325,6 +326,7 @@ private val previewFerryDepartures = persistentListOf(
     ),
 )
 
+@ScreenshotTest
 @Preview(name = "Collapsed", showBackground = true)
 @Composable
 private fun DepartureBoardStopCardCollapsedPreview() {
@@ -337,6 +339,7 @@ private fun DepartureBoardStopCardCollapsedPreview() {
     }
 }
 
+// @ScreenshotTest disabled: isLoading=true renders an infinite animation that hangs Robolectric.
 @PreviewComponent
 @Composable
 private fun DepartureBoardStopCardLoadingPreview() {
@@ -350,6 +353,7 @@ private fun DepartureBoardStopCardLoadingPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureBoardStopCardLoadedTrainPreview() {
@@ -366,6 +370,7 @@ private fun DepartureBoardStopCardLoadedTrainPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureBoardStopCardLoadedBusPreview() {
@@ -382,6 +387,7 @@ private fun DepartureBoardStopCardLoadedBusPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureBoardStopCardLoadedFerryPreview() {
@@ -398,6 +404,7 @@ private fun DepartureBoardStopCardLoadedFerryPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureBoardStopCardErrorPreview() {
@@ -414,6 +421,7 @@ private fun DepartureBoardStopCardErrorPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureBoardStopCardEmptyPreview() {

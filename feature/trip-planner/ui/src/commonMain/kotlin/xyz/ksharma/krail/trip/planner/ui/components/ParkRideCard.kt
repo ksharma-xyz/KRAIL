@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableSet
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -141,6 +142,7 @@ fun ParkRideCard(
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideCardPreview() {

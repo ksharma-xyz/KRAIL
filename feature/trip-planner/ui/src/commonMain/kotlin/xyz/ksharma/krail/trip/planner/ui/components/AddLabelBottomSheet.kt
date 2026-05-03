@@ -40,6 +40,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
@@ -341,6 +342,7 @@ private fun LabelPreviewPill(name: String) {
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "1. Empty")
 @Composable
 private fun PreviewAddLabelBottomSheet_Empty() {
@@ -354,6 +356,7 @@ private fun PreviewAddLabelBottomSheet_Empty() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "2. With existing labels filtered")
 @Composable
 private fun PreviewAddLabelBottomSheet_FilteredSuggestions() {
@@ -371,6 +374,7 @@ private fun PreviewAddLabelBottomSheet_FilteredSuggestions() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "3. With stop context")
 @Composable
 private fun PreviewAddLabelBottomSheet_WithStop() {

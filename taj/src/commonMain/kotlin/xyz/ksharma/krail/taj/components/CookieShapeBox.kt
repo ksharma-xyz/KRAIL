@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.BUMPS
 import xyz.ksharma.krail.taj.components.CookieShapeBoxDefaults.SIZE
 import xyz.ksharma.krail.taj.magicBorderColors
@@ -120,6 +121,7 @@ object CookieShapeBoxDefaults {
     )
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun CookiePreviewBox() {
@@ -128,6 +130,7 @@ private fun CookiePreviewBox() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun CookiePreviewCanvas() {
@@ -136,6 +139,7 @@ private fun CookiePreviewCanvas() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun CookieShapeBoxSweepGradient() {
@@ -151,6 +155,7 @@ private fun CookieShapeBoxSweepGradient() {
     )
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun CookieShapeBoxRadialGradient() {

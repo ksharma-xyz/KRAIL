@@ -100,6 +100,7 @@ private const val ENTER_EXIT_SCALE = 0.85f
 
 // region Previews
 
+// @ScreenshotTest disabled: isLoading=true renders an infinite dots animation that hangs Robolectric.
 @Preview
 @Composable
 private fun PreviewLoadingDotsPill_Visible() {

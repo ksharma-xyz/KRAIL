@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -78,6 +79,7 @@ fun RoundIconButton(
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewRoundIconButton() {
@@ -93,6 +95,7 @@ private fun PreviewRoundIconButton() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun PreviewRoundIconButtonWithBadge() {

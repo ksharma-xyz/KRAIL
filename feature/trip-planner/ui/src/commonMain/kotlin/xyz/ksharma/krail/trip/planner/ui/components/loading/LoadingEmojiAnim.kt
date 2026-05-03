@@ -73,6 +73,7 @@ fun LoadingEmojiAnim(
     }
 }
 
+// @ScreenshotTest disabled: infinite emoji animation hangs Robolectric.
 @Preview
 @Composable
 private fun Preview() {

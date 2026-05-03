@@ -55,6 +55,7 @@ fun DiscoverChipRow(
 
 // region Previews
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @Preview
 @Composable
 private fun DiscoverChipRowPreview() {

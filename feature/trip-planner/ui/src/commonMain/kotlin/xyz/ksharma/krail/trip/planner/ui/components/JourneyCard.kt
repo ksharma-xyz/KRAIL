@@ -48,6 +48,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.share.withBrandingHeader
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
@@ -556,6 +557,7 @@ private val PREVIEW_STOPS = persistentListOf(
     ),
 )
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Default_InlineModesAndPlatform() {
@@ -583,6 +585,7 @@ private fun Preview_Default_InlineModesAndPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_ManyModes_Wrap() {
@@ -616,6 +619,7 @@ private fun Preview_ManyModes_Wrap() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCard_Expanded() {
@@ -666,6 +670,7 @@ private fun Preview_JourneyCard_Expanded() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCard_Expanded_NoAlerts() {
@@ -717,6 +722,7 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Default_WithWalkTime() {
@@ -741,6 +747,7 @@ private fun Preview_Default_WithWalkTime() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Default_WithDeviation_Early() {
@@ -766,6 +773,7 @@ private fun Preview_Default_WithDeviation_Early() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Expanded_WithWalkAndDeviation() {
@@ -816,6 +824,7 @@ private fun Preview_Expanded_WithWalkAndDeviation() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Expanded_MultipleAlerts() {
@@ -866,6 +875,7 @@ private fun Preview_Expanded_MultipleAlerts() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_Default_PastJourney() {
@@ -890,6 +900,7 @@ private fun Preview_Default_PastJourney() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun JourneyCardCollapsedDelayedPreview() {
@@ -915,6 +926,7 @@ private fun JourneyCardCollapsedDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun JourneyCardCollapsedEarlyPreview() {
@@ -940,6 +952,7 @@ private fun JourneyCardCollapsedEarlyPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun JourneyCardCollapsedOnTimePreview() {

@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.Divider
@@ -246,6 +247,7 @@ private val sampleDepartures = persistentListOf(
     ),
 )
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureRowBusOnTimePreview() {
@@ -254,6 +256,7 @@ private fun DepartureRowBusOnTimePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DepartureRowBusDelayedPreview() {
@@ -262,6 +265,7 @@ private fun DepartureRowBusDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DepartureRowBusEarlyPreview() {
@@ -270,6 +274,7 @@ private fun DepartureRowBusEarlyPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DepartureRowTrainPreview() {
@@ -278,6 +283,7 @@ private fun DepartureRowTrainPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DepartureRowFerryNoPlatformPreview() {
@@ -286,6 +292,7 @@ private fun DepartureRowFerryNoPlatformPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureRowListBusPreview() {
@@ -296,6 +303,7 @@ private fun DepartureRowListBusPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DepartureRowListMetroPreview() {
@@ -306,6 +314,7 @@ private fun DepartureRowListMetroPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureRowPreviousTrainPreview() {
@@ -327,6 +336,7 @@ private fun DepartureRowPreviousTrainPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun DepartureRowPreviousBusDelayedPreview() {
@@ -350,6 +360,7 @@ private fun DepartureRowPreviousBusDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureRowListWithPreviousPreview() {
@@ -415,6 +426,7 @@ private fun DepartureRowListWithPreviousPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun DepartureRowListMultiDayPreview() {

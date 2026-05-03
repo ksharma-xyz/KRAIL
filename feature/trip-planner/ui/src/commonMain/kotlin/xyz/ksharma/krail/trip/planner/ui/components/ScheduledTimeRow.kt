@@ -13,6 +13,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -107,6 +108,7 @@ fun ScheduledTimeRow(
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun ScheduledTimeRowOnTimePreview() {
@@ -118,6 +120,7 @@ private fun ScheduledTimeRowOnTimePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowDelayedPreview() {
@@ -132,6 +135,7 @@ private fun ScheduledTimeRowDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowEarlyPreview() {
@@ -146,6 +150,7 @@ private fun ScheduledTimeRowEarlyPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun ScheduledTimeRowPastOnTimePreview() {
@@ -157,6 +162,7 @@ private fun ScheduledTimeRowPastOnTimePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowPastDelayedPreview() {
@@ -171,6 +177,7 @@ private fun ScheduledTimeRowPastDelayedPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ScheduledTimeRowPastEarlyPreview() {

@@ -61,7 +61,8 @@ kotlin {
         }
 
         // Test infrastructure with all the heavy dependencies
-        androidUnitTest {
+        getByName("androidHostTest") {
+            kotlin.srcDir("src/androidHostTest/kotlin")
             dependencies {
                 implementation(projects.core.snapshotTesting)
             }

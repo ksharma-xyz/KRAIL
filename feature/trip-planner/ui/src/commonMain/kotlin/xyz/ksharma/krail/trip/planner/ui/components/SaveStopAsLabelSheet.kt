@@ -28,6 +28,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -166,6 +167,7 @@ private fun NewLabelChip(onClick: () -> Unit) {
 
 // region Previews
 
+@ScreenshotTest
 @Preview(name = "1. Save sheet")
 @Composable
 private fun PreviewSaveStopAsLabelSheet() {

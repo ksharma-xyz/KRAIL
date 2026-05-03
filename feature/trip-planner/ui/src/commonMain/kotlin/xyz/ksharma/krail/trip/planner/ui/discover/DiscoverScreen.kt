@@ -31,6 +31,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveBreakpoints
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.discover.state.Button
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.discover.state.DiscoverState
@@ -377,6 +378,7 @@ private val DISCOVER_GRID_MIN_SIZE = 320.dp
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Preview(
     group = "Discover Card Tablet",
@@ -410,6 +412,7 @@ private fun DiscoverScreenTabletLightPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Preview(
     group = "Discover Card Phone",

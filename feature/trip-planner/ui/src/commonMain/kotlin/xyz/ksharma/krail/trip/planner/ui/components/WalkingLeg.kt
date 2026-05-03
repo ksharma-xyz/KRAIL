@@ -49,6 +49,7 @@ fun WalkingLeg(
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @Preview
 @Composable
 private fun PreviewWalkingLeg() {

@@ -42,6 +42,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_filter
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -373,6 +374,7 @@ private val previewDepartures: ImmutableList<StopDeparture> = persistentListOf(
     ),
 )
 
+@ScreenshotTest
 @Preview(name = "Filter closed")
 @Composable
 private fun LinesServedRowClosedPreview() {
@@ -385,7 +387,8 @@ private fun LinesServedRowClosedPreview() {
     }
 }
 
-@Preview(name = "Filter open — all expanded, T2 selected")
+@ScreenshotTest
+@Preview(name = "Filter open - all expanded, T2 selected")
 @Composable
 private fun LinesServedRowOpenPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
@@ -397,6 +400,7 @@ private fun LinesServedRowOpenPreview() {
     }
 }
 
+@ScreenshotTest
 @Preview(name = "Bus only")
 @Composable
 private fun LinesServedRowBusOnlyPreview() {

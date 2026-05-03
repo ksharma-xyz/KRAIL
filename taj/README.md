@@ -6,17 +6,17 @@ This directory contains snapshot tests for the Taj design system components.
 
 ### Record Screenshots
 ```bash
-./gradlew :taj:recordRoborazziDebug
+./gradlew :taj:testAndroidHostTest -Proborazzi.test.record=true
 ```
 
 ### Verify Screenshots
 ```bash
-./gradlew :taj:verifyRoborazziDebug
+./gradlew :taj:testAndroidHostTest -Proborazzi.test.verify=true
 ```
 
 ### Compare & Generate Report
 ```bash
-./gradlew :taj:compareRoborazziDebug
+./gradlew :taj:testAndroidHostTest -Proborazzi.test.compare=true
 ```
 
 ## Adding New Snapshot Tests
@@ -41,7 +41,7 @@ fun MyComponentPreview() {
 ### 2. Run Record Command
 
 ```bash
-./gradlew :taj:recordRoborazziDebug
+./gradlew :taj:testAndroidHostTest -Proborazzi.test.record=true
 ```
 
 ### 3. Check Generated Screenshots
@@ -141,11 +141,11 @@ git lfs status
 ### "Screenshots not found" error
 Run the record command first:
 ```bash
-./gradlew :taj:recordRoborazziDebug
+./gradlew :taj:testAndroidHostTest -Proborazzi.test.record=true
 ```
 
 ### Tests fail after UI changes
 This is expected! Review the diff images in the build output, then update:
 ```bash
-./gradlew :taj:recordRoborazziDebug
+./gradlew :taj:testAndroidHostTest -Proborazzi.test.record=true
 ```

@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -70,6 +71,7 @@ internal fun ParkRideIconContainer(
 
 // region Previews
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconPinkThemePreview() {
@@ -78,6 +80,7 @@ private fun ParkRideIconPinkThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconMetroThemePreview() {
@@ -86,6 +89,7 @@ private fun ParkRideIconMetroThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconBusThemePreview() {
@@ -94,6 +98,7 @@ private fun ParkRideIconBusThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconPurpleThemePreview() {
@@ -102,6 +107,7 @@ private fun ParkRideIconPurpleThemePreview() {
     }
 }
 
+@ScreenshotTest
 @Preview
 @Composable
 private fun ParkRideIconTrainThemePreview() {

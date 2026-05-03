@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.SeparatorIcon
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -120,6 +121,7 @@ internal fun TransportModesRow(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_Train_WithPlatform() {
@@ -134,6 +136,7 @@ private fun Preview_JourneyCardHeader_Train_WithPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_Bus_WithBadge() {
@@ -148,6 +151,7 @@ private fun Preview_JourneyCardHeader_Bus_WithBadge() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_MultiMode_Inline() {
@@ -163,6 +167,7 @@ private fun Preview_JourneyCardHeader_MultiMode_Inline() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_ManyModes_WrappedLayout() {
@@ -180,6 +185,7 @@ private fun Preview_JourneyCardHeader_ManyModes_WrappedLayout() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_NoPlatform() {
@@ -194,6 +200,7 @@ private fun Preview_JourneyCardHeader_NoPlatform() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun Preview_JourneyCardHeader_Past() {

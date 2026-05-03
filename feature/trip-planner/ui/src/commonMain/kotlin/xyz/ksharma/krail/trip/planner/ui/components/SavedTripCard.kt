@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -154,6 +155,7 @@ private fun StopDisplayRow(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCard_Unlabelled() {
@@ -166,6 +168,7 @@ private fun PreviewSavedTripCard_Unlabelled() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCard_BothLabelled() {
@@ -178,6 +181,7 @@ private fun PreviewSavedTripCard_BothLabelled() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCard_OneLabelled() {
@@ -190,6 +194,7 @@ private fun PreviewSavedTripCard_OneLabelled() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSavedTripCardList() {

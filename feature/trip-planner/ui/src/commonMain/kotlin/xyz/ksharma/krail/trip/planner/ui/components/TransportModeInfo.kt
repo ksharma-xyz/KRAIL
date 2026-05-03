@@ -33,6 +33,7 @@ fun TransportModeInfo(
 
 // region Previews
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun TransportModeInfoPreview() {

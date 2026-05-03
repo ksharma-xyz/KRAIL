@@ -121,6 +121,7 @@ fun TransportModeBadge(
 
 // region Previews
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @Preview
 @Composable
 private fun TransportModeBadgeBusPreview() {
@@ -132,6 +133,7 @@ private fun TransportModeBadgeBusPreview() {
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @Preview
 @Composable
 private fun TransportModeBadgeTrainPreview() {
@@ -143,6 +145,7 @@ private fun TransportModeBadgeTrainPreview() {
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun TransportModeBadgeLargePreview() {
@@ -155,6 +158,7 @@ private fun TransportModeBadgeLargePreview() {
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun TransportModeBadgeLargeSelectedPreview() {

@@ -118,6 +118,7 @@ internal fun UnsetLabelPill(
 
 // region Previews
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun PreviewSetLabelPill_Train() {
@@ -126,6 +127,7 @@ private fun PreviewSetLabelPill_Train() {
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun PreviewSetLabelPill_PurpleDrip() {
@@ -134,6 +136,7 @@ private fun PreviewSetLabelPill_PurpleDrip() {
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun PreviewUnsetLabelPill_Idle() {
@@ -145,6 +148,7 @@ private fun PreviewUnsetLabelPill_Idle() {
     }
 }
 
+// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun PreviewUnsetLabelPill_Assigning() {

@@ -1,0 +1,119 @@
+name: "4. Bump main after release publish"
+
+# Auto-bump fallback for the version on `main` once a GitHub Release goes
+# from draft → published.
+#
+# Why this exists:
+#   `release-1-cut.yml` already bumps `main` to the next version when a
+#   release branch is cut. This workflow is the safety net for cases where
+#   `prod/{version}` was created by hand (or the cut bump step failed) and
+#   `main` ends up still carrying the just-released version.
+#
+# Behaviour:
+#   - Triggered when a GitHub Release with a tag like `v1.20.0` is published
+#     (skips RC tags `v*-RC*` and any non-semver tag).
+#   - Computes the next minor version (1.20.0 → 1.21.0).
+#   - If `main` is already ≥ next version, the job logs and exits cleanly.
+#   - Otherwise opens a PR titled `chore: bump version to X.Y.Z` against `main`.
+#     A human reviews + merges (auto-merge is safe to enable on it).
+#
+# Why a PR (not a direct push):
+#   This fires unattended. A PR forces a review checkpoint, and CI on the PR
+#   catches any version-related breakage before it lands on main.
+#
+# What gets bumped:
+#   - androidApp/build.gradle.kts → versionName
+#   - iosApp/Configuration/Config.xcconfig → MARKETING_VERSION
+#   (Info.plist reads $(MARKETING_VERSION) at archive time per #1549, so no
+#   direct edit is needed there.)
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    # Skip RC tags and any non-semver tag (e.g. "snapshot-2026-05-01").
+    if: ${{ !contains(github.ref_name, '-RC') && startsWith(github.ref_name, 'v') }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: parse
+        run: |
+          # github.ref_name is like "v1.20.0"
+          RELEASED="${GITHUB_REF_NAME#v}"
+          if ! [[ "$RELEASED" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::notice::Released tag '$RELEASED' is not semver — skipping bump"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          MAJOR=$(echo "$RELEASED" | cut -d. -f1)
+          MINOR=$(echo "$RELEASED" | cut -d. -f2)
+          NEXT="${MAJOR}.$((MINOR + 1)).0"
+
+          CURRENT_ANDROID=$(grep -oP '(?<=versionName = ")[^"]+' androidApp/build.gradle.kts)
+          CURRENT_IOS=$(grep -oP '(?<=MARKETING_VERSION=).+' iosApp/Configuration/Config.xcconfig)
+
+          echo "released=$RELEASED" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT"         >> "$GITHUB_OUTPUT"
+          echo "current_android=$CURRENT_ANDROID" >> "$GITHUB_OUTPUT"
+          echo "current_ios=$CURRENT_IOS"         >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+          echo "::notice::Released $RELEASED → next $NEXT (main: android=$CURRENT_ANDROID, ios=$CURRENT_IOS)"
+
+      - name: Skip if main already ahead
+        id: gate
+        if: steps.parse.outputs.skip == 'false'
+        run: |
+          # Compare versions using sort -V
+          NEXT="${{ steps.parse.outputs.next }}"
+          CURRENT="${{ steps.parse.outputs.current_android }}"
+          HIGHEST=$(printf '%s\n%s\n' "$NEXT" "$CURRENT" | sort -V | tail -n1)
+          if [ "$CURRENT" = "$HIGHEST" ] && [ "$CURRENT" != "$NEXT" ]; then
+            echo "::notice::main android version $CURRENT is already ≥ $NEXT — no bump needed"
+            echo "needs_bump=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_bump=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump versions
+        if: steps.gate.outputs.needs_bump == 'true'
+        run: |
+          NEXT="${{ steps.parse.outputs.next }}"
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"$NEXT\"/" androidApp/build.gradle.kts
+          sed -i "s/MARKETING_VERSION=.*/MARKETING_VERSION=$NEXT/" iosApp/Configuration/Config.xcconfig
+          echo "── androidApp/build.gradle.kts ──"
+          grep "versionName" androidApp/build.gradle.kts
+          echo "── iosApp/Configuration/Config.xcconfig ──"
+          grep "MARKETING_VERSION" iosApp/Configuration/Config.xcconfig
+
+      - name: Open bump PR
+        if: steps.gate.outputs.needs_bump == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+          NEXT: ${{ steps.parse.outputs.next }}
+          RELEASED: ${{ steps.parse.outputs.released }}
+        run: |
+          BRANCH="chore/bump-version-${NEXT}"
+          git config user.name  "krail-release-bot"
+          git config user.email "release@krail.app"
+          git checkout -b "$BRANCH"
+          git add androidApp/build.gradle.kts iosApp/Configuration/Config.xcconfig
+          git commit -m "chore: bump version to ${NEXT} [skip ci]"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: bump version to ${NEXT}" \
+            --body "Auto-opened after \`v${RELEASED}\` was published. Bumps android \`versionName\` and iOS \`MARKETING_VERSION\` to \`${NEXT}\` so main stays ahead of any in-flight release branch. Safe to merge as soon as CI is green."

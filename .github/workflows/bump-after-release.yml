@@ -41,10 +41,17 @@ jobs:
     # Skip RC tags and any non-semver tag (e.g. "snapshot-2026-05-01").
     if: ${{ !contains(github.ref_name, '-RC') && startsWith(github.ref_name, 'v') }}
     steps:
+      - name: Generate krail-bot token
+        id: app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.KRAIL_BOT_APP_ID }}
+          private-key: ${{ secrets.KRAIL_BOT_PRIVATE_KEY }}
+
       - uses: actions/checkout@v6
         with:
           ref: main
-          token: ${{ secrets.PAT_KRAIL_GITHUB }}
+          token: ${{ steps.app_token.outputs.token }}
           fetch-depth: 0
 
       - name: Compute next version
@@ -101,13 +108,13 @@ jobs:
       - name: Open bump PR
         if: steps.gate.outputs.needs_bump == 'true'
         env:
-          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
           NEXT: ${{ steps.parse.outputs.next }}
           RELEASED: ${{ steps.parse.outputs.released }}
         run: |
           BRANCH="chore/bump-version-${NEXT}"
-          git config user.name  "krail-release-bot"
-          git config user.email "release@krail.app"
+          git config user.name  "krail-gtfs-bot[bot]"
+          git config user.email "${{ secrets.KRAIL_BOT_APP_ID }}+krail-gtfs-bot[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add androidApp/build.gradle.kts iosApp/Configuration/Config.xcconfig
           git commit -m "chore: bump version to ${NEXT} [skip ci]"

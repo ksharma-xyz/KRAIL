@@ -31,6 +31,22 @@ on:
   release:
     types: [published]
 
+  # Manual override:
+  #   Use this when you want a non-default bump (e.g. patch like 1.21.1 instead
+  #   of the auto-computed minor 1.22.0), or when a release publish event was
+  #   missed and you need to retrigger the bump.
+  workflow_dispatch:
+    inputs:
+      next_version:
+        description: 'Version to bump main to (e.g. 1.21.1). Required.'
+        required: true
+        type: string
+      released_version:
+        description: 'Version that was just released (e.g. 1.20.5). Used in the PR body. Optional.'
+        required: false
+        type: string
+        default: ''
+
 permissions:
   contents: write
   pull-requests: write
@@ -38,8 +54,10 @@ permissions:
 jobs:
   bump:
     runs-on: ubuntu-latest
-    # Skip RC tags and any non-semver tag (e.g. "snapshot-2026-05-01").
-    if: ${{ !contains(github.ref_name, '-RC') && startsWith(github.ref_name, 'v') }}
+    # On release events: skip RC tags and any non-semver tag.
+    # On manual dispatch: always run; the version-validation step inside
+    # 'Compute next version' rejects malformed inputs.
+    if: ${{ github.event_name == 'workflow_dispatch' || (!contains(github.ref_name, '-RC') && startsWith(github.ref_name, 'v')) }}
     steps:
       - name: Generate krail-bot token
         id: app_token
@@ -56,17 +74,32 @@ jobs:
 
       - name: Compute next version
         id: parse
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_NEXT: ${{ inputs.next_version }}
+          MANUAL_RELEASED: ${{ inputs.released_version }}
         run: |
-          # github.ref_name is like "v1.20.0"
-          RELEASED="${GITHUB_REF_NAME#v}"
-          if ! [[ "$RELEASED" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::notice::Released tag '$RELEASED' is not semver — skipping bump"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            # Manual run: trust the user-supplied next_version verbatim.
+            NEXT="$MANUAL_NEXT"
+            RELEASED="$MANUAL_RELEASED"
+            if ! [[ "$NEXT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::next_version '$NEXT' is not semver MAJOR.MINOR.PATCH"
+              exit 1
+            fi
+          else
+            # Release event: derive next from the published tag.
+            # github.ref_name is like "v1.20.0".
+            RELEASED="${GITHUB_REF_NAME#v}"
+            if ! [[ "$RELEASED" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::notice::Released tag '$RELEASED' is not semver, skipping bump"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            MAJOR=$(echo "$RELEASED" | cut -d. -f1)
+            MINOR=$(echo "$RELEASED" | cut -d. -f2)
+            NEXT="${MAJOR}.$((MINOR + 1)).0"
           fi
-          MAJOR=$(echo "$RELEASED" | cut -d. -f1)
-          MINOR=$(echo "$RELEASED" | cut -d. -f2)
-          NEXT="${MAJOR}.$((MINOR + 1)).0"
 
           CURRENT_ANDROID=$(grep -oP '(?<=versionName = ")[^"]+' androidApp/build.gradle.kts)
           CURRENT_IOS=$(grep -oP '(?<=MARKETING_VERSION=).+' iosApp/Configuration/Config.xcconfig)
@@ -77,7 +110,7 @@ jobs:
           echo "current_ios=$CURRENT_IOS"         >> "$GITHUB_OUTPUT"
           echo "skip=false" >> "$GITHUB_OUTPUT"
 
-          echo "::notice::Released $RELEASED → next $NEXT (main: android=$CURRENT_ANDROID, ios=$CURRENT_IOS)"
+          echo "::notice::Bumping main to $NEXT (released=$RELEASED, current android=$CURRENT_ANDROID, ios=$CURRENT_IOS)"
 
       - name: Skip if main already ahead
         id: gate
@@ -111,6 +144,8 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
           NEXT: ${{ steps.parse.outputs.next }}
           RELEASED: ${{ steps.parse.outputs.released }}
+          EVENT_NAME: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
         run: |
           BRANCH="chore/bump-version-${NEXT}"
           git config user.name  "krail-gtfs-bot[bot]"
@@ -119,8 +154,19 @@ jobs:
           git add androidApp/build.gradle.kts iosApp/Configuration/Config.xcconfig
           git commit -m "chore: bump version to ${NEXT} [skip ci]"
           git push -u origin "$BRANCH"
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "$RELEASED" ]; then
+              REASON="Manual bump triggered by @${ACTOR} after \`v${RELEASED}\` was published."
+            else
+              REASON="Manual bump triggered by @${ACTOR}."
+            fi
+          else
+            REASON="Auto-opened after \`v${RELEASED}\` was published."
+          fi
+
           gh pr create \
             --base main \
             --head "$BRANCH" \
             --title "chore: bump version to ${NEXT}" \
-            --body "Auto-opened after \`v${RELEASED}\` was published. Bumps android \`versionName\` and iOS \`MARKETING_VERSION\` to \`${NEXT}\` so main stays ahead of any in-flight release branch. Safe to merge as soon as CI is green."
+            --body "${REASON} Bumps android \`versionName\` and iOS \`MARKETING_VERSION\` to \`${NEXT}\` so main stays ahead of any in-flight release branch. Safe to merge as soon as CI is green."

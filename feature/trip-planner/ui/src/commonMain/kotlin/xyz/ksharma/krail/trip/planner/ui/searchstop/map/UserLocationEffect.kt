@@ -5,17 +5,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import org.maplibre.compose.camera.CameraPosition
-import org.maplibre.compose.camera.CameraState
-import org.maplibre.spatialk.geojson.Position
-import xyz.ksharma.krail.core.location.Location
-import xyz.ksharma.krail.core.location.LocationConfig
+import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.dhruva.location.LocationConfig
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
-import xyz.ksharma.krail.core.permission.PermissionStatus
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Lifecycle-aware side-effect that tracks the user's location while the screen is visible.
@@ -32,33 +27,23 @@ import kotlin.time.Duration.Companion.milliseconds
  *   calls [userLocationManager.locationUpdates] which triggers the system permission dialog.
  *   This should only be true after an explicit user action (location button tap).
  *
- * @param userLocationManager Provides location updates and permission check/request APIs.
- * @param cameraState MapLibre camera used to animate to the user's position when [autoCenter] is true.
- * @param onLocationUpdate Called on every location fix with the latest [LatLng]. Use this to update
- *   the user-location dot on the map or any other UI that depends on the current position.
- * @param onPermissionDeny Called when location permission is permanently denied so the screen can
- *   show a settings-redirect banner.
- * @param allowPermissionRequest When false the effect waits silently for an explicit user action
- *   (e.g. tapping the location button) before triggering the system permission dialog. Flip to true
- *   only after the user has intentionally requested their location.
- * @param autoCenter When true, animates the camera to the user's position on the first location fix.
- *   Set to false when the screen already has a meaningful starting position (e.g. journey origin)
- *   and the auto-pan would override it.
+ * **Camera control is intentionally not handled here.** Animating the camera from inside the
+ * `collect { ... }` is fragile across lifecycle bounces — the iOS permission dialog can
+ * trigger ON_STOP/ON_START, cancelling the in-flight tracking job and dropping the closure
+ * state (`hasAutoCentered`) before the first fix lands. Instead, screens drive the camera
+ * from a `LaunchedEffect` keyed on the resulting user-location state, which is recomposition-
+ * aware and survives the lifecycle bounce.
  */
 @Composable
 internal fun TrackUserLocation(
     userLocationManager: UserLocationManager,
-    cameraState: CameraState,
     onLocationUpdate: (LatLng) -> Unit,
     onPermissionDeny: (PermissionStatus) -> Unit,
     allowPermissionRequest: Boolean,
-    autoCenter: Boolean = true,
 ) {
     val scope = rememberCoroutineScope()
 
     LifecycleStartEffect(allowPermissionRequest) {
-        var hasAutoCentered = false
-
         val trackingJob = scope.launch {
             val status = userLocationManager.checkPermissionStatus()
             when {
@@ -74,7 +59,7 @@ internal fun TrackUserLocation(
                 }
             }
 
-            log("[USER_LOCATION] Starting location tracking (status=$status, allowRequest=$allowPermissionRequest)")
+            log("[USER_LOCATION] Starting tracking (status=$status, allowRequest=$allowPermissionRequest)")
             userLocationManager.locationUpdates(
                 config = LocationConfig(updateIntervalMs = UserLocationConfig.UPDATE_INTERVAL_MS),
             )
@@ -86,27 +71,12 @@ internal fun TrackUserLocation(
                 .collect { location ->
                     log("[USER_LOCATION] Location update: loc=$location")
                     onLocationUpdate(LatLng(location.latitude, location.longitude))
-                    // Only pan once: avoids fighting the user's manual camera gestures after
-                    // the first fix. If autoCenter is false (e.g. journey map where the camera
-                    // is already positioned at the journey origin), skip entirely.
-                    if (autoCenter && !hasAutoCentered) {
-                        hasAutoCentered = true
-                        cameraState.animateTo(
-                            CameraPosition(
-                                target = location.toPosition(),
-                                zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
-                            ),
-                            duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
-                        )
-                    }
                 }
         }
 
         onStopOrDispose {
-            log("[USER_LOCATION] Stopping location tracking (screen not visible)")
+            log("[USER_LOCATION] Stopping tracking (screen not visible)")
             trackingJob.cancel()
         }
     }
 }
-
-private fun Location.toPosition(): Position = Position(latitude = latitude, longitude = longitude)

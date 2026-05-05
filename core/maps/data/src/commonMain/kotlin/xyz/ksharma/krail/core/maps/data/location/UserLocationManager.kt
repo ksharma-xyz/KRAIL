@@ -1,9 +1,9 @@
 package xyz.ksharma.krail.core.maps.data.location
 
 import kotlinx.coroutines.flow.Flow
-import xyz.ksharma.krail.core.location.Location
-import xyz.ksharma.krail.core.location.LocationConfig
-import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.dhruva.location.Location
+import xyz.ksharma.dhruva.location.LocationConfig
 
 /**
  * Manages user location access with permission handling.
@@ -27,7 +27,7 @@ interface UserLocationManager {
      * Continuous location updates as a Flow.
      *
      * Requests permission automatically if not yet determined.
-     * Throws [xyz.ksharma.krail.core.location.LocationError.PermissionDenied] if denied.
+     * Throws [xyz.ksharma.dhruva.location.LocationError.PermissionDenied] if denied.
      *
      * Cancelling the flow stops all location updates — this happens automatically
      * when collected inside a [androidx.compose.runtime.LaunchedEffect] that leaves composition.

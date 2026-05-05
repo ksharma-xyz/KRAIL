@@ -15,10 +15,8 @@ import xyz.ksharma.krail.core.deeplink.di.deepLinkModule
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.core.di.coroutineDispatchersModule
 import xyz.ksharma.krail.core.festival.di.festivalModule
-import xyz.ksharma.krail.core.location.data.di.locationModuleCommon
 import xyz.ksharma.krail.core.maps.data.di.mapsDataModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
-import xyz.ksharma.krail.core.permission.data.di.permissionModuleCommon
 import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
 import xyz.ksharma.krail.core.share.di.shareModule
 import xyz.ksharma.krail.departures.network.api.di.departuresNetworkModule
@@ -45,8 +43,9 @@ fun initKoin(config: KoinAppDeclaration? = null) {
         modules(
             coroutineDispatchersModule,
             coreNetworkModule,
-            permissionModuleCommon,
-            locationModuleCommon,
+            // Permission + location are now provided by aagya/dhruva via Composable
+            // factories (rememberPermissionController, rememberLocationTracker), so
+            // no Koin module registration is required.
             viewModelsModule,
             sandookModule,
             mapsDataModule,

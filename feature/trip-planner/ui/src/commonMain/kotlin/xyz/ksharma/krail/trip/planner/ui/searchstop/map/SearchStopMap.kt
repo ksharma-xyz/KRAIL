@@ -192,7 +192,6 @@ private fun MapContent(
 
         TrackUserLocation(
             userLocationManager = userLocationManager,
-            cameraState = cameraState,
             allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
                 permissionStatus = PermissionStatus.Granted
@@ -204,6 +203,25 @@ private fun MapContent(
                 showPermissionBanner = true
             },
         )
+
+        // Auto-center camera on the first non-null user location.
+        // State-driven (recomposition-aware) so it survives the iOS permission dialog
+        // bouncing the activity through ON_STOP/ON_START, which used to cancel the
+        // animateTo before it could fire on the first grant.
+        var hasAutoCentered by rememberSaveable { mutableStateOf(false) }
+        val firstUserLocation = mapState.mapDisplay.userLocation
+        LaunchedEffect(firstUserLocation, hasAutoCentered) {
+            if (firstUserLocation != null && !hasAutoCentered) {
+                hasAutoCentered = true
+                cameraState.animateTo(
+                    CameraPosition(
+                        target = firstUserLocation.toPosition(),
+                        zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
+                    ),
+                    duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
+                )
+            }
+        }
 
         // Track camera moves to update map center and reload stops
         @OptIn(FlowPreview::class)

@@ -49,8 +49,8 @@ playServicesLocation = "21.3.0"
 reorderable = "2.5.1"
 
 # KRAIL-extracted libraries (published as separate KMP libs)
-aagya = "0.1.0"
-dhruva = "0.1.0"
+aagya = "0.1.1"
+dhruva = "0.1.1"
 
 [libraries]
 # KRAIL-extracted libraries

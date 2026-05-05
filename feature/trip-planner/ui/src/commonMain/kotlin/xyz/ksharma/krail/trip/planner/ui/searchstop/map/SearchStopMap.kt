@@ -37,6 +37,7 @@ import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -47,7 +48,6 @@ import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
-import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.components.Text

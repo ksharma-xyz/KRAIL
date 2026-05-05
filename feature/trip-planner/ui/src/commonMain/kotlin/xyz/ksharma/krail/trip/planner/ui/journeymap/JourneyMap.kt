@@ -29,6 +29,7 @@ import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
@@ -38,7 +39,6 @@ import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
-import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState

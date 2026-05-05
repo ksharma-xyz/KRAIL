@@ -5,14 +5,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import xyz.ksharma.dhruva.location.Location
-import xyz.ksharma.dhruva.location.LocationConfig
-import xyz.ksharma.dhruva.location.LocationError
-import xyz.ksharma.dhruva.location.data.LocationTracker
 import xyz.ksharma.aagya.permission.AppPermission
 import xyz.ksharma.aagya.permission.PermissionResult
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.aagya.permission.data.PermissionController
+import xyz.ksharma.dhruva.location.Location
+import xyz.ksharma.dhruva.location.LocationConfig
+import xyz.ksharma.dhruva.location.LocationError
+import xyz.ksharma.dhruva.location.data.LocationTracker
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 
 internal class UserLocationManagerImpl(
@@ -25,7 +25,8 @@ internal class UserLocationManagerImpl(
             is PermissionStatus.Granted -> getLocation()
             is PermissionStatus.NotDetermined -> requestPermissionAndGetLocation()
             is PermissionStatus.Denied,
-            PermissionStatus.Restricted -> Result.failure(LocationError.PermissionDenied())
+            PermissionStatus.Restricted,
+            -> Result.failure(LocationError.PermissionDenied())
         }
     }
 
@@ -37,7 +38,8 @@ internal class UserLocationManagerImpl(
                 if (result !is PermissionResult.Granted) throw LocationError.PermissionDenied()
             }
             is PermissionStatus.Denied,
-            PermissionStatus.Restricted -> throw LocationError.PermissionDenied()
+            PermissionStatus.Restricted,
+            -> throw LocationError.PermissionDenied()
         }
         emitAll(locationTracker.startTracking(config))
     }
@@ -52,8 +54,8 @@ internal class UserLocationManagerImpl(
             is PermissionResult.Granted -> getLocation()
             is PermissionResult.Denied,
             is PermissionResult.Cancelled,
-            is PermissionResult.PolicyExhausted ->
-                Result.failure(LocationError.PermissionDenied())
+            is PermissionResult.PolicyExhausted,
+            -> Result.failure(LocationError.PermissionDenied())
         }
 
     private suspend fun getLocation(): Result<Location> = suspendSafeResult(Dispatchers.IO) {

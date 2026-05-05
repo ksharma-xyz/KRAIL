@@ -1,9 +1,9 @@
 package xyz.ksharma.krail.core.maps.data.location
 
 import kotlinx.coroutines.flow.Flow
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.dhruva.location.LocationConfig
-import xyz.ksharma.aagya.permission.PermissionStatus
 
 /**
  * Manages user location access with permission handling.

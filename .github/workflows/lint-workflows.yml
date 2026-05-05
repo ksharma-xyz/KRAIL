@@ -1,0 +1,46 @@
+name: Lint Workflows
+
+# Runs actionlint on every change touching .github/workflows/. actionlint
+# catches a few classes of bug that bit us in distribute-firebase.yml:
+#
+#   - Shell-injection via raw `${{ github.event.head_commit.message }}` in a
+#     `run:` script (commit message contained `(#1566)` -> shell parse error,
+#     and could have been arbitrary command execution if the message had been
+#     `; rm -rf /; #`).
+#   - Undefined env vars, bad needs/inputs/outputs references.
+#   - Shellcheck warnings inside run blocks.
+#
+# https://github.com/rhysd/actionlint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actionlint.yml"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actionlint.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run actionlint
+        # `-shellcheck=` (empty value) disables actionlint's shellcheck
+        # integration. We keep actionlint's NATIVE checks — which catch the
+        # `${{ ... }}` shell-injection that motivated this lint — but skip
+        # shellcheck. Shellcheck is noisy with SC2086 (unquoted variable) infos
+        # against a dozen pre-existing workflow scripts we don't want to refactor
+        # in this PR. Re-enable when we're ready to do that cleanup separately.
+        uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: -color -shellcheck=

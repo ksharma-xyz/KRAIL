@@ -53,15 +53,27 @@ jobs:
           fi
 
       - name: Distribute APK to Firebase App Distribution
+        # IMPORTANT: never inline `${{ ... }}` containing untrusted data (commit
+        # messages, PR titles, branch names, issue bodies, etc.) directly into a
+        # `run:` shell script. GitHub Actions substitutes `${{ ... }}` as raw
+        # text BEFORE the shell parses, so any shell metacharacter in the value
+        # (`(`, `)`, `"`, `$`, `;`, backticks, `&&`, ...) breaks the script or
+        # executes arbitrary commands. This bit us with a commit titled
+        # `... auto-bump PR (#1566)` whose `(#1566)` parsed as a sub-shell.
+        # Always pass such values through `env:` and reference them as `$VAR`,
+        # which the shell expands AFTER parsing and treats as opaque data.
         env:
           GOOGLE_APPLICATION_CREDENTIALS: gcloud.json
           FIREBASE_APP_ID: ${{ env.FIREBASE_APP_ID }}
           NOTES_OVERRIDE: ${{ inputs.release-notes }}
           GROUP_OVERRIDE: ${{ inputs.group }}
+          VARIANT: ${{ inputs.variant }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_TITLE=$(echo "${{ github.event.head_commit.message }}" | head -n1 | tr -d '\n' | tr -d '\r')
+          # Take only the first line of the commit message (the subject).
+          COMMIT_TITLE=$(printf '%s' "$COMMIT_MESSAGE" | head -n1 | tr -d '\r')
 
-          if [ "${{ inputs.variant }}" = "debug" ]; then
+          if [ "$VARIANT" = "debug" ]; then
             DEFAULT_NOTES="Debug: $COMMIT_TITLE"
             DEFAULT_GROUP="Internal"
             APK="androidApp-debug.apk"

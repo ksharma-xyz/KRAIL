@@ -37,6 +37,7 @@ import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -47,7 +48,6 @@ import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
-import xyz.ksharma.krail.core.permission.PermissionStatus
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.components.Text
@@ -192,7 +192,6 @@ private fun MapContent(
 
         TrackUserLocation(
             userLocationManager = userLocationManager,
-            cameraState = cameraState,
             allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
                 permissionStatus = PermissionStatus.Granted
@@ -204,6 +203,25 @@ private fun MapContent(
                 showPermissionBanner = true
             },
         )
+
+        // Auto-center camera on the first non-null user location.
+        // State-driven (recomposition-aware) so it survives the iOS permission dialog
+        // bouncing the activity through ON_STOP/ON_START, which used to cancel the
+        // animateTo before it could fire on the first grant.
+        var hasAutoCentered by rememberSaveable { mutableStateOf(false) }
+        val firstUserLocation = mapState.mapDisplay.userLocation
+        LaunchedEffect(firstUserLocation, hasAutoCentered) {
+            if (firstUserLocation != null && !hasAutoCentered) {
+                hasAutoCentered = true
+                cameraState.animateTo(
+                    CameraPosition(
+                        target = firstUserLocation.toPosition(),
+                        zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
+                    ),
+                    duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
+                )
+            }
+        }
 
         // Track camera moves to update map center and reload stops
         @OptIn(FlowPreview::class)

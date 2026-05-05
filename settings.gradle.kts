@@ -18,14 +18,6 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        // Local-only: lets us pick up io.github.ksharma-xyz:aagya/dhruva 0.1.1
-        // before they're published to Maven Central, for testing.
-        // Remove this line once the corresponding versions are on Central.
-        mavenLocal {
-            content {
-                includeGroup("io.github.ksharma-xyz")
-            }
-        }
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")

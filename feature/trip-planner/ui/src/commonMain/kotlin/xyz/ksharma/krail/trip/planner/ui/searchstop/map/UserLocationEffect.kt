@@ -8,13 +8,13 @@ import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.CameraState
 import org.maplibre.spatialk.geojson.Position
-import xyz.ksharma.krail.core.location.Location
-import xyz.ksharma.krail.core.location.LocationConfig
+import xyz.ksharma.dhruva.location.Location
+import xyz.ksharma.dhruva.location.LocationConfig
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
-import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.aagya.permission.PermissionStatus
 import kotlin.time.Duration.Companion.milliseconds
 
 /**

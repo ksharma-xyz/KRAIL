@@ -2,8 +2,8 @@ package xyz.ksharma.krail.core.maps.data.location
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import xyz.ksharma.krail.core.location.data.rememberLocationTracker
-import xyz.ksharma.krail.core.permission.data.rememberPermissionController
+import xyz.ksharma.dhruva.location.data.rememberLocationTracker
+import xyz.ksharma.aagya.permission.data.rememberPermissionController
 
 /**
  * Remember a [UserLocationManager] instance for the current composition.

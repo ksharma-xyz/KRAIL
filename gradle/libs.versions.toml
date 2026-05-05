@@ -48,7 +48,17 @@ material3 = "1.9.0"
 playServicesLocation = "21.3.0"
 reorderable = "2.5.1"
 
+# KRAIL-extracted libraries (published as separate KMP libs)
+aagya = "0.1.0"
+dhruva = "0.1.0"
+
 [libraries]
+# KRAIL-extracted libraries
+aagya-state = { module = "io.github.ksharma-xyz:aagya-state", version.ref = "aagya" }
+aagya-data = { module = "io.github.ksharma-xyz:aagya-data", version.ref = "aagya" }
+dhruva-state = { module = "io.github.ksharma-xyz:dhruva-state", version.ref = "dhruva" }
+dhruva-data = { module = "io.github.ksharma-xyz:dhruva-data", version.ref = "dhruva" }
+
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }

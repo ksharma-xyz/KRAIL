@@ -38,7 +38,7 @@ import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
-import xyz.ksharma.krail.core.permission.PermissionStatus
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState

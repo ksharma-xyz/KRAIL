@@ -5,14 +5,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import xyz.ksharma.krail.core.location.Location
-import xyz.ksharma.krail.core.location.LocationConfig
-import xyz.ksharma.krail.core.location.LocationError
-import xyz.ksharma.krail.core.location.data.LocationTracker
-import xyz.ksharma.krail.core.permission.AppPermission
-import xyz.ksharma.krail.core.permission.PermissionResult
-import xyz.ksharma.krail.core.permission.PermissionStatus
-import xyz.ksharma.krail.core.permission.data.PermissionController
+import xyz.ksharma.dhruva.location.Location
+import xyz.ksharma.dhruva.location.LocationConfig
+import xyz.ksharma.dhruva.location.LocationError
+import xyz.ksharma.dhruva.location.data.LocationTracker
+import xyz.ksharma.aagya.permission.AppPermission
+import xyz.ksharma.aagya.permission.PermissionResult
+import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.aagya.permission.data.PermissionController
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 
 internal class UserLocationManagerImpl(
@@ -21,34 +21,38 @@ internal class UserLocationManagerImpl(
 ) : UserLocationManager {
 
     override suspend fun getCurrentLocation(): Result<Location> {
-        return when (permissionController.checkPermissionStatus(AppPermission.Location.WhenInUse)) {
+        return when (permissionController.checkPermissionStatus(AppPermission.Location.Fine)) {
             is PermissionStatus.Granted -> getLocation()
             is PermissionStatus.NotDetermined -> requestPermissionAndGetLocation()
-            is PermissionStatus.Denied -> Result.failure(LocationError.PermissionDenied())
+            is PermissionStatus.Denied,
+            PermissionStatus.Restricted -> Result.failure(LocationError.PermissionDenied())
         }
     }
 
     override fun locationUpdates(config: LocationConfig): Flow<Location> = flow {
-        when (permissionController.checkPermissionStatus(AppPermission.Location.WhenInUse)) {
+        when (permissionController.checkPermissionStatus(AppPermission.Location.Fine)) {
             is PermissionStatus.Granted -> Unit
             is PermissionStatus.NotDetermined -> {
-                val result = permissionController.requestPermission(AppPermission.Location.WhenInUse)
+                val result = permissionController.requestPermission(AppPermission.Location.Fine)
                 if (result !is PermissionResult.Granted) throw LocationError.PermissionDenied()
             }
-            is PermissionStatus.Denied -> throw LocationError.PermissionDenied()
+            is PermissionStatus.Denied,
+            PermissionStatus.Restricted -> throw LocationError.PermissionDenied()
         }
         emitAll(locationTracker.startTracking(config))
     }
 
     override suspend fun checkPermissionStatus(): PermissionStatus =
-        permissionController.checkPermissionStatus(AppPermission.Location.WhenInUse)
+        permissionController.checkPermissionStatus(AppPermission.Location.Fine)
 
     override fun openAppSettings() = permissionController.openAppSettings()
 
     private suspend fun requestPermissionAndGetLocation(): Result<Location> =
-        when (permissionController.requestPermission(AppPermission.Location.WhenInUse)) {
+        when (permissionController.requestPermission(AppPermission.Location.Fine)) {
             is PermissionResult.Granted -> getLocation()
-            is PermissionResult.Denied, is PermissionResult.Cancelled ->
+            is PermissionResult.Denied,
+            is PermissionResult.Cancelled,
+            is PermissionResult.PolicyExhausted ->
                 Result.failure(LocationError.PermissionDenied())
         }
 

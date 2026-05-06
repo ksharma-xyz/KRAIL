@@ -58,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -91,9 +90,9 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.backgroundColorOf
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -687,17 +686,9 @@ private fun SearchStopScreenSinglePane(
             exit = fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)),
             modifier = Modifier.fillMaxSize(),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                backgroundColorOf(themeColor.hexToComposeColor()),
-                                KrailTheme.colors.surface,
-                            ),
-                        ),
-                    ),
+            CloudGradientBackground(
+                modifier = Modifier.fillMaxSize(),
+                themeColor = themeColor.hexToComposeColor(),
             ) {
                 SearchStopListContent(
                     listState = searchStopState.listState,
@@ -822,82 +813,79 @@ private fun SearchStopScreenDualPane(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        backgroundColorOf(themeColor.hexToComposeColor()),
-                        KrailTheme.colors.surface,
-                    ),
-                ),
-            )
-            .imePadding(),
+    CloudGradientBackground(
+        modifier = modifier.fillMaxSize(),
+        themeColor = themeColor.hexToComposeColor(),
     ) {
-        // Split view: List on left, Map on right
-        Row(
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+                .fillMaxSize()
+                .imePadding(),
         ) {
-            // Left pane: List with search bar
-            Column(
+            // Split view: List on left, Map on right
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxWidth(),
             ) {
-                // Search top bar only spans the list width
-                SearchTopBar(
-                    placeholderText = placeholderText,
-                    initialText = initialText,
-                    focusRequester = focusRequester,
-                    keyboard = keyboard,
-                    isMapSelected = false,
-                    isMapAvailable = false,
-                    onMapToggle = { },
-                    onBackClick = onBackClick,
-                    onTextChange = onTextChange,
-                )
-
-                SearchStopListContent(
-                    listState = searchStopState.listState,
-                    searchStopState = searchStopState,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    assigningLabel = assigningLabel,
-                    editingLabels = editingLabels,
-                    onStopSelect = onStopSelect,
-                    onSaveAsLabel = onSaveAsLabel,
-                    onUnsaveLabel = onUnsaveLabel,
-                    onUnsetLabelClick = onUnsetLabelClick,
-                    onEnterEditing = onEnterEditing,
-                    onDeleteLabel = onDeleteLabel,
-                    onMoveLabel = onMoveLabel,
-                    onAddLabelClick = onAddLabelClick,
-                    onDoneEditing = onDoneEditing,
-                    onEvent = onEvent,
-                    isMapsAvailable = false, // map already visible in right pane
-                    onOpenMap = {},
-                )
-            }
-
-            // Right pane: Map (edge-to-edge)
-            // Show map if available and initialized
-            searchStopState.mapUiState?.let { mapState ->
-                // Push compass/scale bar below the status bar so they don't sit behind it.
-                val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                SearchStopMap(
+                // Left pane: List with search bar
+                Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    mapUiState = mapState,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    ornamentTopPadding = statusBarTopPadding,
-                    onEvent = onEvent,
-                    onStopSelect = onStopSelect,
-                )
+                ) {
+                    // Search top bar only spans the list width
+                    SearchTopBar(
+                        placeholderText = placeholderText,
+                        initialText = initialText,
+                        focusRequester = focusRequester,
+                        keyboard = keyboard,
+                        isMapSelected = false,
+                        isMapAvailable = false,
+                        onMapToggle = { },
+                        onBackClick = onBackClick,
+                        onTextChange = onTextChange,
+                    )
+
+                    SearchStopListContent(
+                        listState = searchStopState.listState,
+                        searchStopState = searchStopState,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        assigningLabel = assigningLabel,
+                        editingLabels = editingLabels,
+                        onStopSelect = onStopSelect,
+                        onSaveAsLabel = onSaveAsLabel,
+                        onUnsaveLabel = onUnsaveLabel,
+                        onUnsetLabelClick = onUnsetLabelClick,
+                        onEnterEditing = onEnterEditing,
+                        onDeleteLabel = onDeleteLabel,
+                        onMoveLabel = onMoveLabel,
+                        onAddLabelClick = onAddLabelClick,
+                        onDoneEditing = onDoneEditing,
+                        onEvent = onEvent,
+                        isMapsAvailable = false, // map already visible in right pane
+                        onOpenMap = {},
+                    )
+                }
+
+                // Right pane: Map (edge-to-edge)
+                // Show map if available and initialized
+                searchStopState.mapUiState?.let { mapState ->
+                    // Push compass/scale bar below the status bar so they don't sit behind it.
+                    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                    SearchStopMap(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        mapUiState = mapState,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        ornamentTopPadding = statusBarTopPadding,
+                        onEvent = onEvent,
+                        onStopSelect = onStopSelect,
+                    )
+                }
             }
         }
     }

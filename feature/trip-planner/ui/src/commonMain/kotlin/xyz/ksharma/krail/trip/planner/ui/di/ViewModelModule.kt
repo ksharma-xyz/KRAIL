@@ -21,6 +21,8 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.createNearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
@@ -102,7 +104,8 @@ val viewModelsModule = module {
         )
     }
 
-    single<StopResultsManager> { RealStopResultsManager(get(), get(), get()) }
+    single<FuzzyStopRanker> { DefaultFuzzyStopRanker() }
+    single<StopResultsManager> { RealStopResultsManager(get(), get(), get(), get()) }
 
     single<NearbyStopsManager> {
         createNearbyStopsManager(

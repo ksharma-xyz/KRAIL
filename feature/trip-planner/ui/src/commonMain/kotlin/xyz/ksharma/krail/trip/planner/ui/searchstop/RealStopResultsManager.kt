@@ -10,6 +10,7 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
@@ -17,6 +18,8 @@ import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.normalize
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -24,6 +27,7 @@ class RealStopResultsManager(
     private val sandook: Sandook,
     private val nswBusRoutesSandook: NswBusRoutesSandook,
     private val flag: Flag,
+    private val fuzzyStopRanker: FuzzyStopRanker,
 ) : StopResultsManager {
 
     // Store selected stops with private setters
@@ -35,6 +39,10 @@ class RealStopResultsManager(
 
     private val highPriorityStopIdList: List<String> by lazy {
         flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toStopsIdList()
+    }
+
+    private val isFuzzyEnabled: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key).asBoolean(fallback = false)
     }
 
     // Methods to update selected stops
@@ -76,16 +84,20 @@ class RealStopResultsManager(
         val results = mutableListOf<SearchStopState.SearchResult>()
 
         // 1. Search for stops by stop name/ID - these go in as individual Stop results
-        val stopResults: List<SelectProductClassesForStop> =
-            sandook.selectStops(stopName = query, excludeProductClassList = listOf())
-
-        val stopSearchResults = stopResults
+        val exactResults = sandook.selectStops(stopName = query, excludeProductClassList = listOf())
             .map { it.toStopSearchResult() }
             .let(::prioritiseStops)
-            .take(50)
-            .map { SearchStopState.SearchResult.Stop(it.stopName, it.stopId, it.transportModeType) }
 
-        results.addAll(stopSearchResults)
+        val stopSearchResults = if (isFuzzyEnabled && exactResults.size < MIN_FUZZY_FALLBACK_THRESHOLD) {
+            val fuzzyResults = fetchFuzzyResults(query, exactResults)
+            (exactResults + fuzzyResults).distinctBy { it.stopId }.take(50)
+        } else {
+            exactResults.take(50)
+        }
+
+        results.addAll(
+            stopSearchResults.map { SearchStopState.SearchResult.Stop(it.stopName, it.stopId, it.transportModeType) },
+        )
 
         // 2. Search for routes by exact route short name (if enabled)
         // Returns multiple Route results, one per unique headsign (direction)
@@ -99,6 +111,40 @@ class RealStopResultsManager(
         }
 
         return results
+    }
+
+    private fun fetchFuzzyResults(
+        query: String,
+        exactResults: List<SearchStopState.SearchResult.Stop>,
+    ): List<SearchStopState.SearchResult.Stop> {
+        val candidates = fetchFuzzyCandidates(query)
+        val exactIds = exactResults.map { it.stopId }.toSet()
+        return fuzzyStopRanker.rank(query = query, candidates = candidates)
+            .filter { it.stopId !in exactIds }
+    }
+
+    private fun fetchFuzzyCandidates(query: String): List<SearchStopState.SearchResult.Stop> {
+        val normalized = normalize(query)
+        val tokens = normalized.split(" ").filter { it.length >= BIGRAM_LENGTH }
+        val prefixes = tokens.flatMap { token ->
+            buildList {
+                add(token.take(BIGRAM_LENGTH))
+                if (token.length > BIGRAM_LENGTH) add(token.substring(1, BIGRAM_LENGTH + 1))
+            }
+        }.distinct().take(MAX_PREFIX_QUERIES)
+
+        val seen = mutableSetOf<String>()
+        val candidates = mutableListOf<SearchStopState.SearchResult.Stop>()
+        for (prefix in prefixes) {
+            for (stop in sandook.selectStops(stopName = prefix, excludeProductClassList = listOf())) {
+                if (stop.stopId !in seen && candidates.size < MAX_FUZZY_CANDIDATES) {
+                    seen += stop.stopId
+                    candidates += stop.toStopSearchResult()
+                }
+            }
+            if (candidates.size >= MAX_FUZZY_CANDIDATES) break
+        }
+        return candidates
     }
 
     /**
@@ -242,4 +288,11 @@ class RealStopResultsManager(
     }
 
     // endregion
+
+    companion object {
+        private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5
+        private const val MAX_FUZZY_CANDIDATES = 200
+        private const val MAX_PREFIX_QUERIES = 4
+        private const val BIGRAM_LENGTH = 2
+    }
 }

@@ -56,20 +56,36 @@ Before any comparison, both the query and each candidate stop name are **normali
 
 | Typed | Expanded |
 |---|---|
+| `ally` | `alley` |
+| `arc` | `arcade` |
+| `ave` | `avenue` |
+| `blvd` | `boulevard` |
+| `cct` | `circuit` |
+| `cl` | `close` |
+| `crn` | `corner` |
+| `ct` | `court` |
+| `dr` | `drive` |
+| `esp` | `esplanade` |
+| `fwy` | `freeway` |
+| `gdns` | `gardens` |
+| `gr` | `grove` |
+| `hwy` | `highway` |
+| `int` | `interchange` |
+| `ln` | `lane` |
+| `pde` | `parade` |
+| `pkway` / `pwy` | `parkway` |
+| `pl` | `place` |
+| `prom` | `promenade` |
 | `rd` | `road` |
+| `res` | `reserve` |
+| `rt` | `retreat` |
+| `sq` | `square` |
 | `st` | `street` |
 | `stn` | `station` |
-| `ave` / `av` | `avenue` |
-| `pde` | `parade` |
-| `hwy` | `highway` |
-| `fwy` | `freeway` |
-| `dr` | `drive` |
-| `ct` | `court` |
-| `pl` | `place` |
-| `blvd` | `boulevard` |
-| `sq` | `square` |
-| `ln` | `lane` |
-| `crn` | `corner` |
+| `tce` | `terrace` |
+| `tk` | `track` |
+| `tway` | `transitway` (NSW T-Way bus stops) |
+| `wlk` | `walk` |
 
 **Query expansion is bidirectional**: the user can type `rd` and match `Road` (query `rd` → `road`), or type `road` and match a stop named `York Rd` (candidate `rd` kept unexpanded → `rd`; query `road` matches via prefix since `road`.startsWith(`rd`) is false but `rd` is a prefix of `road`). The word "station" in a stop name is **not** expanded to "stn"; expansion only goes from abbreviation to full form.
 

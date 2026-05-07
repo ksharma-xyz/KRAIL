@@ -2,6 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import xyz.ksharma.krail.core.log.log
@@ -78,18 +80,26 @@ class RealStopResultsManager(
     override suspend fun fetchStopResults(
         query: String,
         searchRoutesEnabled: Boolean, // Default value defined in interface
-    ): List<SearchStopState.SearchResult> {
+    ): List<SearchStopState.SearchResult> = withContext(Dispatchers.Default) {
         log("fetchStopResults from LOCAL_STOPS")
+
+        // Cap pasted/oversized input at the boundary before it reaches DB LIKE queries,
+        // regex normalisation, or Levenshtein matrices.
+        val safeQuery = query.take(MAX_QUERY_LENGTH)
 
         val results = mutableListOf<SearchStopState.SearchResult>()
 
         // 1. Search for stops by stop name/ID - these go in as individual Stop results
-        val exactResults = sandook.selectStops(stopName = query, excludeProductClassList = listOf())
+        val exactResults = sandook.selectStops(stopName = safeQuery, excludeProductClassList = listOf())
             .map { it.toStopSearchResult() }
             .let(::prioritiseStops)
 
+        // Fuzzy is best-effort: if it fails (DB hiccup, unexpected scoring input),
+        // fall back to exact-only rather than failing the whole search.
         val stopSearchResults = if (isFuzzyEnabled && exactResults.size < MIN_FUZZY_FALLBACK_THRESHOLD) {
-            val fuzzyResults = fetchFuzzyResults(query, exactResults)
+            val fuzzyResults = runCatching { fetchFuzzyResults(safeQuery, exactResults) }
+                .onFailure { log("Fuzzy fetch failed for query=\"$safeQuery\": ${it.message}") }
+                .getOrDefault(emptyList())
             (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseStops)
         } else {
             exactResults
@@ -102,7 +112,7 @@ class RealStopResultsManager(
         // 2. Search for routes by exact route short name (if enabled)
         // Returns multiple Route results, one per unique headsign (direction)
         if (searchRoutesEnabled) {
-            val routeShortName = nswBusRoutesSandook.selectRouteByShortName(query)
+            val routeShortName = nswBusRoutesSandook.selectRouteByShortName(safeQuery)
             if (routeShortName != null) {
                 val routeResults = buildRouteSearchResults(routeShortName)
                 // Add route results at the beginning since they're exact matches
@@ -110,7 +120,7 @@ class RealStopResultsManager(
             }
         }
 
-        return results
+        results
     }
 
     private fun fetchFuzzyResults(
@@ -321,6 +331,11 @@ class RealStopResultsManager(
 
     companion object {
         private const val MAX_STOP_SEARCH_RESULTS = 50
+
+        // Boundary cap on user-supplied query length. Long enough for any legitimate
+        // stop name plus a couple of disambiguating tokens; short enough that pasted
+        // megabyte-sized input can't blow up DB LIKE / regex / Levenshtein costs.
+        private const val MAX_QUERY_LENGTH = 128
         private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5
         private const val MAX_FUZZY_CANDIDATES = 200
         private const val MAX_CANDIDATES_PER_PREFIX = 50

@@ -26,7 +26,7 @@ class DefaultFuzzyStopRanker : FuzzyStopRanker {
         val minScore = minScoreThreshold(normalizedQuery.length)
         return candidates
             .mapNotNull { stop ->
-                val score = scoreCandidateName(normalizedQuery, normalize(stop.stopName))
+                val score = scoreCandidateName(normalizedQuery, normalize(stop.stopName, expandAbbreviations = false))
                 if (score >= minScore) stop to score else null
             }
             .sortedByDescending { (_, score) -> score }
@@ -44,6 +44,16 @@ private const val MEDIUM_QUERY_THRESHOLD = 0.55
 private const val LONG_QUERY_THRESHOLD = 0.50
 private const val CONCAT_SCORE_WEIGHT = 0.9
 private const val PREFIX_BONUS = 0.1
+private const val MIN_TOKEN_QUALITY = 0.6
+
+// Small bonus that prefers shorter/more-specific candidates when base scores tie.
+// E.g. "Wollongong Station" (2 tokens) over "Wollongong Rd opp Earle St" (5 tokens).
+private const val SPECIFICITY_WEIGHT = 0.1
+
+// LCS is unreliable for very short query tokens (e.g. "ro" scoring 1.0 inside "barangaroo"
+// because the 2-char LCS fills the entire query token length). Only apply LCS when the
+// query token is long enough to be discriminative.
+private const val LCS_MIN_QUERY_TOKEN_LEN = 3
 
 // ── Abbreviation dictionary ───────────────────────────────────────────────────
 // Only expanded when the token is standalone (handled by normalize's token loop).
@@ -71,15 +81,20 @@ internal val ABBREVIATIONS: Map<String, String> = mapOf(
 /**
  * Lowercases, strips punctuation, collapses whitespace, and expands common
  * transport abbreviations on a per-token basis.
+ *
+ * When [expandAbbreviations] is true, "st" at position 0 is left unexpanded
+ * because leading "St" is a saint prefix ("St James", "St Leonards"), not a
+ * street abbreviation — expanding it causes false positives for unrelated queries.
  */
-internal fun normalize(s: String): String {
+internal fun normalize(s: String, expandAbbreviations: Boolean = true): String {
     val stripped = s.lowercase().trim()
         .replace(Regex("[^a-z0-9 ]"), "")
         .replace(Regex("\\s+"), " ")
         .trim()
-    return stripped.split(" ").filter { it.isNotEmpty() }.joinToString(" ") { token ->
-        ABBREVIATIONS[token] ?: token
-    }
+    if (!expandAbbreviations) return stripped
+    return stripped.split(" ").filter { it.isNotEmpty() }.mapIndexed { index, token ->
+        if (token == "st" && index == 0) token else ABBREVIATIONS[token] ?: token
+    }.joinToString(" ")
 }
 
 /**
@@ -111,6 +126,38 @@ internal fun levenshtein(a: String, b: String, maxDistance: Int = Int.MAX_VALUE)
 }
 
 /**
+ * Returns the per-query-token best-match score against [candidate].
+ * Each element is the max of prefix, edit-distance, and LCS signals for that token.
+ *
+ * Abbreviation reverse-matching (e.g. candidate "st" → query "street") is intentionally
+ * excluded here and applied later, after the multi-token gate, in [scoreCandidateName].
+ * Including it here would prevent the gate from catching cases like "blacktown road" vs
+ * "Alison Park Blackwall Point Rd" — the gate needs the raw pre-abbrev scores.
+ */
+private fun perTokenScores(query: String, candidate: String): List<Double> {
+    val queryTokens = query.split(" ").filter { it.isNotEmpty() }
+    val candidateTokens = candidate.split(" ").filter { it.isNotEmpty() }
+    if (queryTokens.isEmpty() || candidateTokens.isEmpty()) return emptyList()
+    return queryTokens.map { qTok ->
+        candidateTokens.maxOf { cTok ->
+            val prefixScore = when {
+                cTok.startsWith(qTok) -> 1.0
+                qTok.startsWith(cTok) -> cTok.length.toDouble() / qTok.length
+                else -> commonPrefixLength(qTok, cTok).toDouble() / qTok.length
+            }
+            val maxLen = maxOf(qTok.length, cTok.length)
+            val editScore = 1.0 - levenshtein(qTok, cTok, maxLen).toDouble() / maxLen
+            val lcsScore = if (qTok.length < LCS_MIN_QUERY_TOKEN_LEN) {
+                0.0
+            } else {
+                longestCommonSubstringLength(qTok, cTok).toDouble() / qTok.length
+            }
+            maxOf(prefixScore, editScore, lcsScore).coerceIn(0.0, 1.0)
+        }
+    }
+}
+
+/**
  * For each query token, finds the best-matching candidate token using three
  * complementary signals, then averages across all query tokens:
  *
@@ -121,30 +168,19 @@ internal fun levenshtein(a: String, b: String, maxDistance: Int = Int.MAX_VALUE)
  * A score of 1.0 is a perfect match.
  */
 internal fun tokenOverlapScore(query: String, candidate: String): Double {
-    val queryTokens = query.split(" ").filter { it.isNotEmpty() }
-    val candidateTokens = candidate.split(" ").filter { it.isNotEmpty() }
-    if (queryTokens.isEmpty() || candidateTokens.isEmpty()) return 0.0
-    val scores = queryTokens.map { qTok ->
-        candidateTokens.maxOf { cTok ->
-            val prefixScore = when {
-                cTok.startsWith(qTok) -> 1.0
-                qTok.startsWith(cTok) -> cTok.length.toDouble() / qTok.length
-                else -> commonPrefixLength(qTok, cTok).toDouble() / qTok.length
-            }
-            val maxLen = maxOf(qTok.length, cTok.length)
-            val editScore = 1.0 - levenshtein(qTok, cTok, maxLen).toDouble() / maxLen
-            val lcsScore = longestCommonSubstringLength(qTok, cTok).toDouble() / qTok.length
-            maxOf(prefixScore, editScore, lcsScore).coerceIn(0.0, 1.0)
-        }
-    }
-    return scores.average()
+    val scores = perTokenScores(query, candidate)
+    return if (scores.isEmpty()) 0.0 else scores.average()
 }
 
 /**
  * Detects queries where the user omitted spaces between stop-name words
  * (e.g. "townhall" → "Town Hall"). Each candidate token is searched as a
- * consecutive substring of the query; matched character count divided by the
- * larger of total-candidate-length and query-length gives a [0, 1] score.
+ * consecutive substring of the query; matched character count divided by
+ * query length measures how fully the query is explained by candidate tokens.
+ *
+ * Using query length (not max of query/candidate) avoids penalising candidates
+ * with many tokens beyond what the query covers — "townhall" matching "town"+"hall"
+ * in "town hall station" should score 8/8 = 1.0, not 8/15.
  */
 internal fun concatSplitScore(query: String, candidate: String): Double {
     val candidateTokens = candidate.split(" ").filter { it.isNotEmpty() }
@@ -159,19 +195,53 @@ internal fun concatSplitScore(query: String, candidate: String): Double {
             remaining = remaining.removeRange(pos, pos + token.length)
         }
     }
-    return matched.toDouble() / maxOf(totalLen, query.length)
+    return matched.toDouble() / query.length
 }
 
 /**
  * Combines [tokenOverlapScore] and [concatSplitScore] into a single relevance
- * value in [0, 1.1]. The concat path is weighted slightly below the token path;
- * a small prefix bonus rewards stops whose name literally starts with the query.
+ * value. The concat path is weighted slightly below the token path; a small
+ * prefix bonus rewards stops whose name literally starts with the query; and a
+ * specificity bonus prefers candidates with fewer tokens (more specific names)
+ * when other scores are equal.
+ *
+ * Multi-token quality gate: for queries with ≥ 2 tokens, a candidate is rejected
+ * outright (score 0) if 2 or more query tokens each score below [MIN_TOKEN_QUALITY]
+ * against every candidate token. This prevents weak partial overlaps from
+ * accumulating into a passing average (e.g. "blackwall" ≈ "blacktown" at 0.56
+ * combined with "rd" ≈ "road" at 0.50 averaging to 0.53 — above the 0.50 threshold
+ * but clearly an irrelevant stop).
+ *
+ * Token scores are length-weighted so a 9-char token like "blacktwon" dominates a
+ * 2-char partial word like "ro". Without this weighting, a transposition typo
+ * ("blacktwon ro" → "blacktown") would average to 0.44 and fall below threshold.
  */
 internal fun scoreCandidateName(normalizedQuery: String, normalizedCandidate: String): Double {
-    val tokenScore = tokenOverlapScore(normalizedQuery, normalizedCandidate)
+    val perToken = perTokenScores(normalizedQuery, normalizedCandidate)
+    val gateBlocked = perToken.isEmpty() ||
+        (perToken.size >= 2 && perToken.count { it < MIN_TOKEN_QUALITY } >= 2)
+    if (gateBlocked) return 0.0
+    val queryTokens = normalizedQuery.split(" ").filter { it.isNotEmpty() }
+    val candidateTokens = normalizedCandidate.split(" ").filter { it.isNotEmpty() }
+    // Abbreviation reverse-match boost (applied after gate): if a candidate token at position > 0
+    // is an abbreviation that expands to the query token, score 1.0. Position 0 is excluded because
+    // leading "St" is a saint prefix, not a street abbreviation ("St James" ≠ "Street James").
+    val perTokenBoosted = perToken.zip(queryTokens).map { (score, qTok) ->
+        val abbrevMatch = candidateTokens.drop(1).any { cTok -> ABBREVIATIONS[cTok] == qTok }
+        if (abbrevMatch) maxOf(score, 1.0) else score
+    }
+    val totalLen = queryTokens.sumOf { it.length }.toDouble()
+    val tokenScore = if (totalLen == 0.0 || queryTokens.size != perTokenBoosted.size) {
+        perTokenBoosted.average()
+    } else {
+        perTokenBoosted.zip(queryTokens).sumOf { (score, tok) -> score * tok.length } / totalLen
+    }
     val concatScore = concatSplitScore(normalizedQuery, normalizedCandidate)
     val prefixBonus = if (normalizedCandidate.startsWith(normalizedQuery)) PREFIX_BONUS else 0.0
-    return maxOf(tokenScore, concatScore * CONCAT_SCORE_WEIGHT) + prefixBonus
+    // Prefer candidates with fewer tokens — "Wollongong Station" (2) over "Wollongong Rd opp …" (5).
+    val specificityBonus = queryTokens.size.toDouble() /
+        maxOf(queryTokens.size, candidateTokens.size) * SPECIFICITY_WEIGHT
+    return maxOf(tokenScore, concatScore * CONCAT_SCORE_WEIGHT) + prefixBonus + specificityBonus
 }
 
 /**

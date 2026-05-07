@@ -68,6 +68,11 @@ class FuzzyStopRankerTest {
         assertEquals("oconnell street", normalize("O'Connell Street"))
     }
 
+    @Test
+    fun `normalize does not expand leading st as saint prefix`() {
+        assertEquals("st james", normalize("St James"))
+    }
+
     // endregion
 
     // region levenshtein
@@ -214,6 +219,9 @@ class FuzzyStopRankerTest {
         stop("Liverpool Street", "LVP"),
         stop("York Road", "YRD"),
         stop("Pitt Street", "PTT"),
+        stop("St James Station", "SJS"),
+        stop("St Leonards Station", "SLS"),
+        stop("Alison Park Blackwall Point Rd", "APB"),
     )
 
     private fun assertTopFive(query: String, expectedStopId: String) {
@@ -251,6 +259,68 @@ class FuzzyStopRankerTest {
     @Test fun `golden york rd resolves York Road`() = assertTopFive("york rd", "YRD")
     @Test fun `golden pitt st resolves Pitt Street`() = assertTopFive("pitt st", "PTT")
     @Test fun `golden third ave resolves Third Avenue`() = assertTopFive("third ave", "THD")
+
+    // Missing middle vowels / character deletions
+    @Test fun `golden schofld resolves Schofields`() = assertTopFive("schofld", "SCH")
+    @Test fun `golden schfld resolves Schofields`() = assertTopFive("schfld", "SCH")
+
+    // Concatenation with skipped letters
+    @Test fun `golden twnhall resolves Town Hall`() = assertTopFive("twnhall", "200070")
+    @Test fun `golden blackyown resolves Blacktown Station`() = assertTopFive("blackyown", "BTN2")
+
+    // endregion
+
+    // region false-positive guards — stops that must NOT appear for unrelated queries
+
+    @Test
+    fun `cowper street does not surface St James Station`() {
+        val results = ranker.rank(query = "cowper street", candidates = candidatePool())
+        val ids = results.map { it.stopId }
+        assertTrue("SJS" !in ids, "St James Station must not match 'cowper street' but appeared in: $ids")
+        assertTrue("SLS" !in ids, "St Leonards must not match 'cowper street' but appeared in: $ids")
+    }
+
+    @Test
+    fun `cowper street surfaces Cowper Street stop`() {
+        val results = ranker.rank(query = "cowper street", candidates = candidatePool())
+        val ids = results.take(3).map { it.stopId }
+        assertTrue("CWP" in ids, "Expected Cowper Street in top 3 for 'cowper street' but got: $ids")
+    }
+
+    @Test
+    fun `pitt st does not surface St James Station`() {
+        val results = ranker.rank(query = "pitt st", candidates = candidatePool())
+        val ids = results.map { it.stopId }
+        assertTrue("SJS" !in ids, "St James must not match 'pitt st' but appeared in: $ids")
+    }
+
+    @Test
+    fun `blacktwon ro does not surface Barangaroo`() {
+        val results = ranker.rank(query = "blacktwon ro", candidates = candidatePool())
+        val ids = results.map { it.stopId }
+        assertTrue("APB" !in ids, "Barangaroo-like stop must not match 'blacktwon ro' but appeared in: $ids")
+    }
+
+    @Test
+    fun `blacktwon ro resolves Blacktown`() {
+        val results = ranker.rank(query = "blacktwon ro", candidates = candidatePool())
+        val ids = results.take(5).map { it.stopId }
+        assertTrue("BTN" in ids || "BTN2" in ids, "Expected Blacktown in top 5 for 'blacktwon ro' but got: $ids")
+    }
+
+    @Test
+    fun `blacktown road does not surface Alison Park Blackwall Point Rd`() {
+        val results = ranker.rank(query = "blacktown road", candidates = candidatePool())
+        val ids = results.map { it.stopId }
+        assertTrue("APB" !in ids, "Alison Park Blackwall Point Rd must not match 'blacktown road' but appeared in: $ids")
+    }
+
+    @Test
+    fun `blacktown road surfaces Blacktown Station`() {
+        val results = ranker.rank(query = "blacktown road", candidates = candidatePool())
+        val ids = results.take(5).map { it.stopId }
+        assertTrue("BTN" in ids || "BTN2" in ids, "Expected Blacktown or Blacktown Station in top 5 for 'blacktown road' but got: $ids")
+    }
 
     // endregion
 

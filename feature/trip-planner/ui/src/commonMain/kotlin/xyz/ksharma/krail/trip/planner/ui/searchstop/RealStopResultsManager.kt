@@ -10,7 +10,6 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
-import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
@@ -41,9 +40,7 @@ class RealStopResultsManager(
         flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toStopsIdList()
     }
 
-    private val isFuzzyEnabled: Boolean by lazy {
-        flag.getFlagValue(FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key).asBoolean(fallback = false)
-    }
+    private val isFuzzyEnabled: Boolean = true
 
     // Methods to update selected stops
     override fun setSelectedFromStop(stopItem: StopItem?) {
@@ -90,7 +87,7 @@ class RealStopResultsManager(
 
         val stopSearchResults = if (isFuzzyEnabled && exactResults.size < MIN_FUZZY_FALLBACK_THRESHOLD) {
             val fuzzyResults = fetchFuzzyResults(query, exactResults)
-            (exactResults + fuzzyResults).distinctBy { it.stopId }.take(50)
+            (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseStops).take(50)
         } else {
             exactResults.take(50)
         }
@@ -119,30 +116,60 @@ class RealStopResultsManager(
     ): List<SearchStopState.SearchResult.Stop> {
         val candidates = fetchFuzzyCandidates(query)
         val exactIds = exactResults.map { it.stopId }.toSet()
-        return fuzzyStopRanker.rank(query = query, candidates = candidates)
+        return fuzzyStopRanker.rank(query = query, candidates = candidates, topK = MAX_FUZZY_CANDIDATES)
             .filter { it.stopId !in exactIds }
     }
 
     private fun fetchFuzzyCandidates(query: String): List<SearchStopState.SearchResult.Stop> {
         val normalized = normalize(query)
-        val tokens = normalized.split(" ").filter { it.length >= BIGRAM_LENGTH }
+        val tokens = normalized.split(" ").filter { it.length >= MIN_TOKEN_LENGTH }
         val prefixes = tokens.flatMap { token ->
             buildList {
-                add(token.take(BIGRAM_LENGTH))
-                if (token.length > BIGRAM_LENGTH) add(token.substring(1, BIGRAM_LENGTH + 1))
+                add(token.take(NGRAM_LENGTH))
+                if (token.length > NGRAM_LENGTH) add(token.substring(NGRAM_OFFSET_1, NGRAM_LENGTH + NGRAM_OFFSET_1))
+                if (token.length > NGRAM_LENGTH + NGRAM_OFFSET_1) {
+                    add(
+                        token.substring(NGRAM_OFFSET_2, NGRAM_LENGTH + NGRAM_OFFSET_2),
+                    )
+                }
+                if (token.length > NGRAM_LENGTH + NGRAM_OFFSET_2) {
+                    add(
+                        token.substring(NGRAM_OFFSET_3, NGRAM_LENGTH + NGRAM_OFFSET_3),
+                    )
+                }
             }
         }.distinct().take(MAX_PREFIX_QUERIES)
 
         val seen = mutableSetOf<String>()
         val candidates = mutableListOf<SearchStopState.SearchResult.Stop>()
-        for (prefix in prefixes) {
-            for (stop in sandook.selectStops(stopName = prefix, excludeProductClassList = listOf())) {
-                if (stop.stopId !in seen && candidates.size < MAX_FUZZY_CANDIDATES) {
+
+        // Seed with high-priority stops so major train stations are always scored,
+        // regardless of whether the trigram prefilter finds them.
+        for (stopId in highPriorityStopIdList) {
+            sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())
+                .firstOrNull { it.stopId == stopId }
+                ?.let { stop ->
                     seen += stop.stopId
                     candidates += stop.toStopSearchResult()
                 }
+        }
+
+        // Add trigram-matched candidates. Use a per-prefix cap so a single
+        // high-volume trigram (e.g. "hal") cannot consume all 200 slots and
+        // prevent the other trigrams from contributing any candidates.
+        for (prefix in prefixes) {
+            var addedForPrefix = 0
+            for (stop in sandook.selectStops(stopName = prefix, excludeProductClassList = listOf())) {
+                val canAdd = stop.stopId !in seen &&
+                    candidates.size < MAX_FUZZY_CANDIDATES &&
+                    addedForPrefix < MAX_CANDIDATES_PER_PREFIX
+                if (canAdd) {
+                    seen += stop.stopId
+                    candidates += stop.toStopSearchResult()
+                    addedForPrefix++
+                }
+                if (addedForPrefix >= MAX_CANDIDATES_PER_PREFIX) break
             }
-            if (candidates.size >= MAX_FUZZY_CANDIDATES) break
         }
         return candidates
     }
@@ -292,7 +319,12 @@ class RealStopResultsManager(
     companion object {
         private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5
         private const val MAX_FUZZY_CANDIDATES = 200
+        private const val MAX_CANDIDATES_PER_PREFIX = 50
         private const val MAX_PREFIX_QUERIES = 4
-        private const val BIGRAM_LENGTH = 2
+        private const val MIN_TOKEN_LENGTH = 2
+        private const val NGRAM_LENGTH = 3
+        private const val NGRAM_OFFSET_1 = 1
+        private const val NGRAM_OFFSET_2 = 2
+        private const val NGRAM_OFFSET_3 = 3
     }
 }

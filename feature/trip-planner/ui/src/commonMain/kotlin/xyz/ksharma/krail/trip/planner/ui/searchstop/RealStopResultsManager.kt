@@ -2,6 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import xyz.ksharma.krail.core.log.log
@@ -10,6 +12,7 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
@@ -17,6 +20,8 @@ import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.normalize
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -24,6 +29,8 @@ class RealStopResultsManager(
     private val sandook: Sandook,
     private val nswBusRoutesSandook: NswBusRoutesSandook,
     private val flag: Flag,
+    private val fuzzyStopRanker: FuzzyStopRanker,
+    private val defaultDispatcher: CoroutineDispatcher,
 ) : StopResultsManager {
 
     // Store selected stops with private setters
@@ -35,6 +42,10 @@ class RealStopResultsManager(
 
     private val highPriorityStopIdList: List<String> by lazy {
         flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toStopsIdList()
+    }
+
+    private val isFuzzyEnabled: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key).asBoolean(fallback = false)
     }
 
     // Methods to update selected stops
@@ -70,27 +81,44 @@ class RealStopResultsManager(
     override suspend fun fetchStopResults(
         query: String,
         searchRoutesEnabled: Boolean, // Default value defined in interface
-    ): List<SearchStopState.SearchResult> {
+    ): List<SearchStopState.SearchResult> = withContext(defaultDispatcher) {
         log("fetchStopResults from LOCAL_STOPS")
+
+        // Trim and cap pasted/oversized input at the boundary before it reaches DB LIKE
+        // queries, regex normalisation, or Levenshtein matrices. Trim avoids "  central"
+        // missing matches because LIKE 'X%' won't tolerate leading whitespace.
+        val safeQuery = query.take(MAX_QUERY_LENGTH).trim()
+
+        // Don't search on 1-character queries. The exact path's substring LIKE returns
+        // a flood of accidental matches and the fuzzy path is too noisy to be useful.
+        if (safeQuery.length < MIN_QUERY_LENGTH) return@withContext emptyList()
 
         val results = mutableListOf<SearchStopState.SearchResult>()
 
         // 1. Search for stops by stop name/ID - these go in as individual Stop results
-        val stopResults: List<SelectProductClassesForStop> =
-            sandook.selectStops(stopName = query, excludeProductClassList = listOf())
-
-        val stopSearchResults = stopResults
+        val exactResults = sandook.selectStops(stopName = safeQuery, excludeProductClassList = listOf())
             .map { it.toStopSearchResult() }
             .let(::prioritiseStops)
-            .take(50)
-            .map { SearchStopState.SearchResult.Stop(it.stopName, it.stopId, it.transportModeType) }
 
-        results.addAll(stopSearchResults)
+        // Fuzzy is best-effort: if it fails (DB hiccup, unexpected scoring input),
+        // fall back to exact-only rather than failing the whole search.
+        val stopSearchResults = if (isFuzzyEnabled && exactResults.size < MIN_FUZZY_FALLBACK_THRESHOLD) {
+            val fuzzyResults = runCatching { fetchFuzzyResults(safeQuery, exactResults) }
+                .onFailure { log("Fuzzy fetch failed for query=\"$safeQuery\": ${it.message}") }
+                .getOrDefault(emptyList())
+            (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseStops)
+        } else {
+            exactResults
+        }.take(MAX_STOP_SEARCH_RESULTS)
+
+        results.addAll(
+            stopSearchResults.map { SearchStopState.SearchResult.Stop(it.stopName, it.stopId, it.transportModeType) },
+        )
 
         // 2. Search for routes by exact route short name (if enabled)
         // Returns multiple Route results, one per unique headsign (direction)
         if (searchRoutesEnabled) {
-            val routeShortName = nswBusRoutesSandook.selectRouteByShortName(query)
+            val routeShortName = nswBusRoutesSandook.selectRouteByShortName(safeQuery)
             if (routeShortName != null) {
                 val routeResults = buildRouteSearchResults(routeShortName)
                 // Add route results at the beginning since they're exact matches
@@ -98,7 +126,68 @@ class RealStopResultsManager(
             }
         }
 
-        return results
+        results
+    }
+
+    private fun fetchFuzzyResults(
+        query: String,
+        exactResults: List<SearchStopState.SearchResult.Stop>,
+    ): List<SearchStopState.SearchResult.Stop> {
+        val candidates = fetchFuzzyCandidates(query)
+        val exactIds = exactResults.map { it.stopId }.toSet()
+        return fuzzyStopRanker.rank(query = query, candidates = candidates, topK = MAX_FUZZY_CANDIDATES)
+            .filter { it.stopId !in exactIds }
+    }
+
+    private fun fetchFuzzyCandidates(query: String): List<SearchStopState.SearchResult.Stop> {
+        val normalized = normalize(query)
+        val tokens = normalized.split(" ").filter { it.length >= MIN_TOKEN_LENGTH }
+        val prefixes = tokens.flatMap { token ->
+            buildList {
+                add(token.take(NGRAM_LENGTH))
+                if (token.length > NGRAM_LENGTH) add(token.substring(NGRAM_OFFSET_1, NGRAM_LENGTH + NGRAM_OFFSET_1))
+                if (token.length > NGRAM_LENGTH + NGRAM_OFFSET_1) {
+                    add(
+                        token.substring(NGRAM_OFFSET_2, NGRAM_LENGTH + NGRAM_OFFSET_2),
+                    )
+                }
+                if (token.length > NGRAM_LENGTH + NGRAM_OFFSET_2) {
+                    add(
+                        token.substring(NGRAM_OFFSET_3, NGRAM_LENGTH + NGRAM_OFFSET_3),
+                    )
+                }
+            }
+        }.distinct().take(MAX_PREFIX_QUERIES)
+
+        val seen = mutableSetOf<String>()
+        val candidates = mutableListOf<SearchStopState.SearchResult.Stop>()
+
+        // Seed with high-priority stops so major train stations are always scored,
+        // regardless of whether the trigram prefilter finds them. One batch query
+        // instead of N round-trips.
+        for (stop in sandook.selectStopsByIds(highPriorityStopIdList)) {
+            seen += stop.stopId
+            candidates += stop.toStopSearchResult()
+        }
+
+        // Add trigram-matched candidates. Use a per-prefix cap so a single
+        // high-volume trigram (e.g. "hal") cannot consume all 200 slots and
+        // prevent the other trigrams from contributing any candidates.
+        for (prefix in prefixes) {
+            var addedForPrefix = 0
+            for (stop in sandook.selectStops(stopName = prefix, excludeProductClassList = listOf())) {
+                val canAdd = stop.stopId !in seen &&
+                    candidates.size < MAX_FUZZY_CANDIDATES &&
+                    addedForPrefix < MAX_CANDIDATES_PER_PREFIX
+                if (canAdd) {
+                    seen += stop.stopId
+                    candidates += stop.toStopSearchResult()
+                    addedForPrefix++
+                }
+                if (addedForPrefix >= MAX_CANDIDATES_PER_PREFIX) break
+            }
+        }
+        return candidates
     }
 
     /**
@@ -242,4 +331,29 @@ class RealStopResultsManager(
     }
 
     // endregion
+
+    companion object {
+        private const val MAX_STOP_SEARCH_RESULTS = 50
+
+        // Boundary cap on user-supplied query length. The longest legitimate query
+        // observed in 60-day analytics is ~30 chars ("253 cleveland st redfern nsw a");
+        // 64 gives ~2x headroom while still rejecting pasted megabyte-sized input
+        // before it hits DB LIKE / regex / Levenshtein costs. There's no measurable
+        // perf difference between 32 and 64 since all per-candidate work is bounded
+        // by candidate-name length, not query length.
+        private const val MAX_QUERY_LENGTH = 64
+
+        // Below this length the substring LIKE matches everything and the ranker is noise.
+        private const val MIN_QUERY_LENGTH = 2
+
+        private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5
+        private const val MAX_FUZZY_CANDIDATES = 200
+        private const val MAX_CANDIDATES_PER_PREFIX = 50
+        private const val MAX_PREFIX_QUERIES = 4
+        private const val MIN_TOKEN_LENGTH = 2
+        private const val NGRAM_LENGTH = 3
+        private const val NGRAM_OFFSET_1 = 1
+        private const val NGRAM_OFFSET_2 = 2
+        private const val NGRAM_OFFSET_3 = 3
+    }
 }

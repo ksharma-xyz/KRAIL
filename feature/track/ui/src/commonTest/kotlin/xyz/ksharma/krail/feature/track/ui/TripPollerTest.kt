@@ -387,6 +387,7 @@ private object NoopSandook : xyz.ksharma.krail.sandook.Sandook {
     override fun clearNswStopsTable() = Unit
     override fun clearNswProductClassTable() = Unit
     override fun selectStops(stopName: String, excludeProductClassList: List<Int>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
+    override fun selectStopsByIds(stopIds: List<String>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
     override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> = emptyMap()
     override fun insertOrReplaceRecentSearchStop(stopId: String) = Unit
     override fun selectRecentSearchStops(): List<xyz.ksharma.krail.sandook.SelectRecentSearchStops> = emptyList()

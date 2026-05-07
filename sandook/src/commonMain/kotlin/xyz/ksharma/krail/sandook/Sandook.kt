@@ -85,6 +85,12 @@ interface Sandook {
     ): List<SelectProductClassesForStop>
 
     /**
+     * Batch lookup for a known set of stopIds. Single query regardless of count.
+     * Missing stopIds are simply absent from the result.
+     */
+    fun selectStopsByIds(stopIds: List<String>): List<SelectProductClassesForStop>
+
+    /**
      * Batch coordinate lookup. Returns a map of stopId → (lat, lon) for all stopIds that
      * exist in the DB. Missing stopIds are absent from the result — callers must handle null.
      * Single query regardless of stop count.

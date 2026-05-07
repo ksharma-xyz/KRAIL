@@ -137,6 +137,7 @@ kotlin {
 
         getByName("androidHostTest") {
             kotlin.srcDir("src/androidHostTest/kotlin")
+            resources.srcDir("src/androidHostTest/resources")
             dependencies {
                 implementation(projects.core.snapshotTesting)
             }

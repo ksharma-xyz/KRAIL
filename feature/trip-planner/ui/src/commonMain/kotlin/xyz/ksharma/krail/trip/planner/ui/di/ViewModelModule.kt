@@ -7,6 +7,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.DefaultDispatcher
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
@@ -21,6 +22,8 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
+import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.createNearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
@@ -102,7 +105,16 @@ val viewModelsModule = module {
         )
     }
 
-    single<StopResultsManager> { RealStopResultsManager(get(), get(), get()) }
+    single<FuzzyStopRanker> { DefaultFuzzyStopRanker() }
+    single<StopResultsManager> {
+        RealStopResultsManager(
+            sandook = get(),
+            nswBusRoutesSandook = get(),
+            flag = get(),
+            fuzzyStopRanker = get(),
+            defaultDispatcher = get(named(DefaultDispatcher)),
+        )
+    }
 
     single<NearbyStopsManager> {
         createNearbyStopsManager(

@@ -201,6 +201,21 @@ class FakeSandook : Sandook {
         }
     }
 
+    override fun selectStopsByIds(stopIds: List<String>): List<SelectProductClassesForStop> {
+        if (stopIds.isEmpty()) return emptyList()
+        val idSet = stopIds.toSet()
+        return stops.filter { it.stopId in idSet }.map { stop ->
+            SelectProductClassesForStop(
+                stop.stopId,
+                stop.stopName,
+                stop.stopLat,
+                stop.stopLon,
+                isParent = stop.isParent,
+                productClasses = stopProductClasses[stop.stopId]?.joinToString(",") ?: ""
+            )
+        }
+    }
+
 
     override fun insertOrReplaceRecentSearchStop(stopId: String) {
         // Remove existing entry if it exists

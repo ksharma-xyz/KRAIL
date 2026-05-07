@@ -32,4 +32,6 @@ enum class FlagKeys(val key: String) {
     JOURNEY_MAPS_AVAILABLE("maps_journey"),
 
     TRIP_TRACKING_ENABLED("trip_tracking_enabled"),
+
+    ENABLE_FUZZY_STOP_SEARCH("enable_fuzzy_stop_search"),
 }

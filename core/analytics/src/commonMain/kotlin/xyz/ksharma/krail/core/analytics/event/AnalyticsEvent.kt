@@ -442,6 +442,72 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     )
 
+    /**
+     * Fired when the user taps "Load more" at the bottom of the timetable list to
+     * page in the next window of future trips.
+     *
+     * @param loadMoreCount Pre-increment page index — number of additional pages already
+     *   successfully fetched at tap time. Lets the dashboard answer "what % of users go
+     *   past N pages?" and tell us whether `MAX_LOAD_MORE_COUNT` is set sensibly.
+     * @param isCustomDateTime `true` when the user picked a non-default departure/arrival
+     *   time, `false` when they're viewing the default "now". Splits exploratory
+     *   pagination from "I want a slightly later option" pagination.
+     * @param latestVisibleDepartureMinutesFromNow Minutes between now and the latest
+     *   user-visible (filtered) departure when the tap happened. Tells us how far ahead
+     *   users are already looking when they reach for more.
+     * @param visibleJourneyCount How many journeys were rendered (post-filter) at tap
+     *   time. Sparse lists imply pagination is essential, not exploratory.
+     */
+    data class TimeTableLoadMoreClickEvent(
+        val fromStopId: String,
+        val toStopId: String,
+        val loadMoreCount: Int,
+        val isCustomDateTime: Boolean,
+        val latestVisibleDepartureMinutesFromNow: Int,
+        val visibleJourneyCount: Int,
+    ) : AnalyticsEvent(
+        name = "timetable_load_more_click",
+        properties = mapOf(
+            PROP_FROM_STOP_ID to fromStopId,
+            PROP_TO_STOP_ID to toStopId,
+            "loadMoreCount" to loadMoreCount,
+            "isCustomDateTime" to isCustomDateTime,
+            "latestVisibleDepartureMinutesFromNow" to latestVisibleDepartureMinutesFromNow,
+            "visibleJourneyCount" to visibleJourneyCount,
+        ),
+    )
+
+    /**
+     * Fired when the user taps "Load previous" at the top of the timetable list to
+     * page in trips that departed before the earliest currently shown departure.
+     *
+     * @param isCustomDateTime `true` when the user picked a non-default departure/arrival
+     *   time. High `false` volume here means users land on the screen with the wrong
+     *   default time and are reaching backwards.
+     * @param earliestVisibleDepartureMinutesFromNow Minutes between now and the earliest
+     *   user-visible (filtered) departure when the tap happened. Negative when the user
+     *   is already looking at past trips, positive when they're scrolling backwards from
+     *   a future-scheduled view.
+     * @param visibleJourneyCount How many journeys were rendered (post-filter) at tap
+     *   time.
+     */
+    data class TimeTableLoadPreviousClickEvent(
+        val fromStopId: String,
+        val toStopId: String,
+        val isCustomDateTime: Boolean,
+        val earliestVisibleDepartureMinutesFromNow: Int,
+        val visibleJourneyCount: Int,
+    ) : AnalyticsEvent(
+        name = "timetable_load_previous_click",
+        properties = mapOf(
+            PROP_FROM_STOP_ID to fromStopId,
+            PROP_TO_STOP_ID to toStopId,
+            "isCustomDateTime" to isCustomDateTime,
+            "earliestVisibleDepartureMinutesFromNow" to earliestVisibleDepartureMinutesFromNow,
+            "visibleJourneyCount" to visibleJourneyCount,
+        ),
+    )
+
     // endregion
 
     // region Generic Events

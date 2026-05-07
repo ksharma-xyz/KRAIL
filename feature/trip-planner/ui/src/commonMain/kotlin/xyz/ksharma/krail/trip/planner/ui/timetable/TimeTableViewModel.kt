@@ -582,6 +582,7 @@ class TimeTableViewModel(
      */
     @OptIn(ExperimentalTime::class)
     private fun onLoadMoreTrips() {
+        trackLoadMoreClick()
         if (loadMoreCount >= MAX_LOAD_MORE_COUNT) return
         val allJourneys = (journeys.values + loadMoreJourneys.values)
         val lastInstant = allJourneys
@@ -620,6 +621,7 @@ class TimeTableViewModel(
      */
     @OptIn(ExperimentalTime::class)
     private fun onLoadPreviousTrips() {
+        trackLoadPreviousClick()
         val allJourneys = (previousJourneysCache.values + journeys.values + loadMoreJourneys.values)
         val firstInstant = allJourneys
             .minByOrNull { Instant.parse(it.originUtcDateTime) }
@@ -646,6 +648,49 @@ class TimeTableViewModel(
             }
             updateUiState { copy(isLoadingPrevious = false) }
         }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun trackLoadMoreClick() {
+        val info = tripInfo ?: return
+        val visibleList = _uiState.value.journeyList
+        val now = Clock.System.now()
+        val latestMinutes = visibleList
+            .mapNotNull { runCatching { Instant.parse(it.originUtcDateTime) }.getOrNull() }
+            .maxOrNull()
+            ?.let { (it - now).inWholeMinutes.toInt() }
+            ?: 0
+        analytics.track(
+            AnalyticsEvent.TimeTableLoadMoreClickEvent(
+                fromStopId = info.fromStopId,
+                toStopId = info.toStopId,
+                loadMoreCount = loadMoreCount,
+                isCustomDateTime = dateTimeSelectionItem != null,
+                latestVisibleDepartureMinutesFromNow = latestMinutes,
+                visibleJourneyCount = visibleList.size,
+            ),
+        )
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun trackLoadPreviousClick() {
+        val info = tripInfo ?: return
+        val visibleList = _uiState.value.journeyList
+        val now = Clock.System.now()
+        val earliestMinutes = visibleList
+            .mapNotNull { runCatching { Instant.parse(it.originUtcDateTime) }.getOrNull() }
+            .minOrNull()
+            ?.let { (it - now).inWholeMinutes.toInt() }
+            ?: 0
+        analytics.track(
+            AnalyticsEvent.TimeTableLoadPreviousClickEvent(
+                fromStopId = info.fromStopId,
+                toStopId = info.toStopId,
+                isCustomDateTime = dateTimeSelectionItem != null,
+                earliestVisibleDepartureMinutesFromNow = earliestMinutes,
+                visibleJourneyCount = visibleList.size,
+            ),
+        )
     }
 
     /** Like [loadTrip] but uses explicit [date]/[time] params instead of [dateTimeSelectionItem]. */

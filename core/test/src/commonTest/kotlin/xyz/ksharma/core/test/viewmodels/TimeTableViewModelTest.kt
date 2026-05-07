@@ -1206,6 +1206,101 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN loaded journeys WHEN LoadMoreTrips fires THEN load_more_click is tracked with trip pair and pre-increment count`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "S1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "S2",
+            )
+            tripPlanningService.isSuccess = true
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val visibleAtTap = viewModel.uiState.value.journeyList.size
+            assertTrue(visibleAtTap > 0)
+            analytics.clear()
+
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+
+            val tracked = analytics.getTrackedEvent("timetable_load_more_click")
+            assertNotNull(tracked)
+            val event = assertIs<AnalyticsEvent.TimeTableLoadMoreClickEvent>(tracked)
+            assertEquals("FROM_STOP_ID_1", event.fromStopId)
+            assertEquals("TO_STOP_ID_1", event.toStopId)
+            // First tap, no successful pages yet → 0
+            assertEquals(0, event.loadMoreCount)
+            // Default time used → not custom
+            assertFalse(event.isCustomDateTime)
+            // Captured the visible list size at tap time, before this fetch's results merged in
+            assertEquals(visibleAtTap, event.visibleJourneyCount)
+        }
+
+    @Test
+    fun `GIVEN multiple successful LoadMoreTrips WHEN tapped again THEN loadMoreCount reflects pages already fetched`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // First two pages succeed, then we inspect the third tap's payload
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+            analytics.clear()
+
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+
+            val tracked = analytics.getTrackedEvent("timetable_load_more_click")
+            assertNotNull(tracked)
+            val event = assertIs<AnalyticsEvent.TimeTableLoadMoreClickEvent>(tracked)
+            // Two pages already fetched before this tap
+            assertEquals(2, event.loadMoreCount)
+        }
+
+    @Test
+    fun `GIVEN loaded journeys WHEN LoadPreviousTrips fires THEN load_previous_click is tracked with trip pair and visible count`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "S1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "S2",
+            )
+            tripPlanningService.isSuccess = true
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            val visibleAtTap = viewModel.uiState.value.journeyList.size
+            assertTrue(visibleAtTap > 0)
+            analytics.clear()
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+
+            val tracked = analytics.getTrackedEvent("timetable_load_previous_click")
+            assertNotNull(tracked)
+            val event = assertIs<AnalyticsEvent.TimeTableLoadPreviousClickEvent>(tracked)
+            assertEquals("FROM_STOP_ID_1", event.fromStopId)
+            assertEquals("TO_STOP_ID_1", event.toStopId)
+            assertFalse(event.isCustomDateTime)
+            assertEquals(visibleAtTap, event.visibleJourneyCount)
+        }
+
+    @Test
     fun `GIVEN load-more journeys WHEN trip changes THEN loadMoreJourneys and previousJourneysCache are cleared`() =
         runTest {
             val trip1 = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")

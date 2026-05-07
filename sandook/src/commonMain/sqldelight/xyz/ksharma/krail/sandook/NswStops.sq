@@ -47,6 +47,19 @@ DELETE FROM NswStops;
 clearNswStopProductClassTable:
 DELETE FROM NswStopProductClass;
 
+-- Batch lookup for a known set of stopIds. Returns a row per matching stop with
+-- product classes joined. Missing stopIds are simply absent — caller must handle.
+-- Used by the fuzzy search high-priority seed loop to fetch ~15 stops in one query
+-- instead of N round-trips.
+selectProductClassesForStopsByIds:
+SELECT s.*,
+       COALESCE(GROUP_CONCAT(p.productClass), '') AS productClasses
+FROM NswStops AS s
+LEFT JOIN NswStopProductClass AS p
+    ON s.stopId = p.stopId
+WHERE s.stopId IN :stopIds
+GROUP BY s.stopId;
+
 -- select stops and their prodcut classes for a given stopId / name --
 selectProductClassesForStop:
 SELECT s.*,

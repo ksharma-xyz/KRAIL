@@ -158,6 +158,22 @@ internal class RealSandook(
         ).executeAsList()
     }
 
+    override fun selectStopsByIds(stopIds: List<String>): List<SelectProductClassesForStop> {
+        if (stopIds.isEmpty()) return emptyList()
+        // SQLDelight generates a separate type per query even with identical SELECT shapes,
+        // so we map back to the canonical SelectProductClassesForStop the rest of the app uses.
+        return nswStopsQueries.selectProductClassesForStopsByIds(stopIds).executeAsList().map { row ->
+            SelectProductClassesForStop(
+                stopId = row.stopId,
+                stopName = row.stopName,
+                stopLat = row.stopLat,
+                stopLon = row.stopLon,
+                isParent = row.isParent,
+                productClasses = row.productClasses,
+            )
+        }
+    }
+
     override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> {
         if (stopIds.isEmpty()) return emptyMap()
         return nswStopsQueries.selectStopCoordinatesBatch(stopIds)

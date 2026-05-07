@@ -83,9 +83,14 @@ class RealStopResultsManager(
     ): List<SearchStopState.SearchResult> = withContext(Dispatchers.Default) {
         log("fetchStopResults from LOCAL_STOPS")
 
-        // Cap pasted/oversized input at the boundary before it reaches DB LIKE queries,
-        // regex normalisation, or Levenshtein matrices.
-        val safeQuery = query.take(MAX_QUERY_LENGTH)
+        // Trim and cap pasted/oversized input at the boundary before it reaches DB LIKE
+        // queries, regex normalisation, or Levenshtein matrices. Trim avoids "  central"
+        // missing matches because LIKE 'X%' won't tolerate leading whitespace.
+        val safeQuery = query.take(MAX_QUERY_LENGTH).trim()
+
+        // Don't search on 1-character queries. The exact path's substring LIKE returns
+        // a flood of accidental matches and the fuzzy path is too noisy to be useful.
+        if (safeQuery.length < MIN_QUERY_LENGTH) return@withContext emptyList()
 
         val results = mutableListOf<SearchStopState.SearchResult>()
 
@@ -332,10 +337,17 @@ class RealStopResultsManager(
     companion object {
         private const val MAX_STOP_SEARCH_RESULTS = 50
 
-        // Boundary cap on user-supplied query length. Long enough for any legitimate
-        // stop name plus a couple of disambiguating tokens; short enough that pasted
-        // megabyte-sized input can't blow up DB LIKE / regex / Levenshtein costs.
-        private const val MAX_QUERY_LENGTH = 128
+        // Boundary cap on user-supplied query length. The longest legitimate query
+        // observed in 60-day analytics is ~30 chars ("253 cleveland st redfern nsw a");
+        // 64 gives ~2x headroom while still rejecting pasted megabyte-sized input
+        // before it hits DB LIKE / regex / Levenshtein costs. There's no measurable
+        // perf difference between 32 and 64 since all per-candidate work is bounded
+        // by candidate-name length, not query length.
+        private const val MAX_QUERY_LENGTH = 64
+
+        // Below this length the substring LIKE matches everything and the ranker is noise.
+        private const val MIN_QUERY_LENGTH = 2
+
         private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5
         private const val MAX_FUZZY_CANDIDATES = 200
         private const val MAX_CANDIDATES_PER_PREFIX = 50

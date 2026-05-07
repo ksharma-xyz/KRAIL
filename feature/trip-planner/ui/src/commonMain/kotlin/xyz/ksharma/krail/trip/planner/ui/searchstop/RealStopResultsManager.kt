@@ -10,6 +10,7 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
@@ -40,7 +41,9 @@ class RealStopResultsManager(
         flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toStopsIdList()
     }
 
-    private val isFuzzyEnabled: Boolean = true
+    private val isFuzzyEnabled: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key).asBoolean(fallback = false)
+    }
 
     // Methods to update selected stops
     override fun setSelectedFromStop(stopItem: StopItem?) {
@@ -87,10 +90,10 @@ class RealStopResultsManager(
 
         val stopSearchResults = if (isFuzzyEnabled && exactResults.size < MIN_FUZZY_FALLBACK_THRESHOLD) {
             val fuzzyResults = fetchFuzzyResults(query, exactResults)
-            (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseStops).take(50)
+            (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseStops)
         } else {
-            exactResults.take(50)
-        }
+            exactResults
+        }.take(MAX_STOP_SEARCH_RESULTS)
 
         results.addAll(
             stopSearchResults.map { SearchStopState.SearchResult.Stop(it.stopName, it.stopId, it.transportModeType) },
@@ -317,6 +320,7 @@ class RealStopResultsManager(
     // endregion
 
     companion object {
+        private const val MAX_STOP_SEARCH_RESULTS = 50
         private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5
         private const val MAX_FUZZY_CANDIDATES = 200
         private const val MAX_CANDIDATES_PER_PREFIX = 50

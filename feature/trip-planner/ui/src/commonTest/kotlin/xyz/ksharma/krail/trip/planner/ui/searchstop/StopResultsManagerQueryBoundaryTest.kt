@@ -1,20 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
-import xyz.ksharma.krail.sandook.NswBusRouteVariants
-import xyz.ksharma.krail.sandook.NswBusRoutesSandook
-import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
-import xyz.ksharma.krail.sandook.SelectStopsByTripId
 import xyz.ksharma.krail.sandook.StopLabels
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
@@ -28,6 +25,7 @@ import kotlin.test.assertTrue
  * input trimming, length capping, short-circuit on too-short queries, and
  * partial-success when the fuzzy ranker throws.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class StopResultsManagerQueryBoundaryTest {
 
     @Test
@@ -131,16 +129,34 @@ class StopResultsManagerQueryBoundaryTest {
         )
     }
 
+    @Test
+    fun `high-priority stops use single batch DB call instead of N round-trips`() = runTest {
+        // Three high-priority IDs; with the batch fix this is one selectStopsByIds call,
+        // not three selectStops calls.
+        val sandook = RecordingSandook()
+        val manager = manager(sandook, fuzzyEnabled = true, highPriorityIds = listOf("HP1", "HP2", "HP3"))
+
+        manager.fetchStopResults("ce", searchRoutesEnabled = false)
+
+        assertEquals(
+            listOf(listOf("HP1", "HP2", "HP3")),
+            sandook.selectStopsByIdsCalls,
+            "Expected exactly one batch lookup for all 3 high-priority IDs",
+        )
+    }
+
     // -- helpers --
 
     private fun manager(
         sandook: Sandook,
         ranker: FuzzyStopRanker = DefaultFuzzyStopRanker(),
         fuzzyEnabled: Boolean = false,
+        highPriorityIds: List<String> = emptyList(),
     ): RealStopResultsManager {
-        val fakeFlag = FakeBoundaryFlag(
+        val idsJson = highPriorityIds.joinToString(",") { "\"$it\"" }
+        val fakeFlag = FakeFlag(
             mapOf(
-                FlagKeys.HIGH_PRIORITY_STOP_IDS.key to FlagValue.JsonValue("""{"stop_ids":[]}"""),
+                FlagKeys.HIGH_PRIORITY_STOP_IDS.key to FlagValue.JsonValue("""{"stop_ids":[$idsJson]}"""),
                 FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key to FlagValue.BooleanValue(fuzzyEnabled),
             ),
         )
@@ -149,6 +165,7 @@ class StopResultsManagerQueryBoundaryTest {
             nswBusRoutesSandook = NoOpBusRoutes,
             flag = fakeFlag,
             fuzzyStopRanker = ranker,
+            defaultDispatcher = UnconfinedTestDispatcher(),
         )
     }
 
@@ -168,17 +185,11 @@ class StopResultsManagerQueryBoundaryTest {
     }
 }
 
-// region fakes
-
-private class FakeBoundaryFlag(private val values: Map<String, FlagValue>) : Flag {
-    override fun getFlagValue(key: String): FlagValue =
-        values[key] ?: error("FakeBoundaryFlag: no value registered for key '$key'")
-}
-
 private class RecordingSandook(
     private val returns: List<SelectProductClassesForStop> = emptyList(),
 ) : Sandook {
     val selectStopsCalls = mutableListOf<String>()
+    val selectStopsByIdsCalls = mutableListOf<List<String>>()
 
     override fun selectStops(
         stopName: String,
@@ -186,6 +197,11 @@ private class RecordingSandook(
     ): List<SelectProductClassesForStop> {
         selectStopsCalls += stopName
         return returns
+    }
+
+    override fun selectStopsByIds(stopIds: List<String>): List<SelectProductClassesForStop> {
+        selectStopsByIdsCalls += stopIds
+        return emptyList()
     }
 
     override fun observeStopLabels(): Flow<List<StopLabels>> = emptyFlow()
@@ -220,20 +236,3 @@ private class RecordingSandook(
     override fun cleanupOrphanedRecentSearchStops() = error("not used")
     override fun cleanupOldRecentSearchStops() = error("not used")
 }
-
-private object NoOpBusRoutes : NswBusRoutesSandook {
-    override fun selectRouteByShortName(routeShortName: String): String? = null
-    override fun selectRouteVariantsByShortName(routeShortName: String): List<NswBusRouteVariants> = emptyList()
-    override fun selectTripsByRouteId(routeId: String): List<NswBusTripOptions> = emptyList()
-    override fun selectTripsByRouteIds(routeIds: List<String>): List<NswBusTripOptions> = emptyList()
-    override fun selectStopsByTripId(tripId: String): List<SelectStopsByTripId> = emptyList()
-    override fun busRouteGroupsCount(): Int = 0
-    override fun insertBusRouteGroup(routeShortName: String) = error("not used")
-    override fun insertBusRouteVariant(routeId: String, routeShortName: String, routeName: String) = error("not used")
-    override fun insertBusTripOption(tripId: String, routeId: String, headsign: String) = error("not used")
-    override fun insertBusTripStop(tripId: String, stopId: String, stopSequence: Int) = error("not used")
-    override fun clearNswBusRoutesData() = error("not used")
-    override fun insertTransaction(body: () -> Unit) = error("not used")
-}
-
-// endregion

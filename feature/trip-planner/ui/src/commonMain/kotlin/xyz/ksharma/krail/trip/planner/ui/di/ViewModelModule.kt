@@ -7,6 +7,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.DefaultDispatcher
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
@@ -105,7 +106,15 @@ val viewModelsModule = module {
     }
 
     single<FuzzyStopRanker> { DefaultFuzzyStopRanker() }
-    single<StopResultsManager> { RealStopResultsManager(get(), get(), get(), get()) }
+    single<StopResultsManager> {
+        RealStopResultsManager(
+            sandook = get(),
+            nswBusRoutesSandook = get(),
+            flag = get(),
+            fuzzyStopRanker = get(),
+            defaultDispatcher = get(named(DefaultDispatcher)),
+        )
+    }
 
     single<NearbyStopsManager> {
         createNearbyStopsManager(

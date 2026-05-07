@@ -2,7 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -30,6 +30,7 @@ class RealStopResultsManager(
     private val nswBusRoutesSandook: NswBusRoutesSandook,
     private val flag: Flag,
     private val fuzzyStopRanker: FuzzyStopRanker,
+    private val defaultDispatcher: CoroutineDispatcher,
 ) : StopResultsManager {
 
     // Store selected stops with private setters
@@ -80,7 +81,7 @@ class RealStopResultsManager(
     override suspend fun fetchStopResults(
         query: String,
         searchRoutesEnabled: Boolean, // Default value defined in interface
-    ): List<SearchStopState.SearchResult> = withContext(Dispatchers.Default) {
+    ): List<SearchStopState.SearchResult> = withContext(defaultDispatcher) {
         log("fetchStopResults from LOCAL_STOPS")
 
         // Trim and cap pasted/oversized input at the boundary before it reaches DB LIKE
@@ -162,14 +163,11 @@ class RealStopResultsManager(
         val candidates = mutableListOf<SearchStopState.SearchResult.Stop>()
 
         // Seed with high-priority stops so major train stations are always scored,
-        // regardless of whether the trigram prefilter finds them.
-        for (stopId in highPriorityStopIdList) {
-            sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())
-                .firstOrNull { it.stopId == stopId }
-                ?.let { stop ->
-                    seen += stop.stopId
-                    candidates += stop.toStopSearchResult()
-                }
+        // regardless of whether the trigram prefilter finds them. One batch query
+        // instead of N round-trips.
+        for (stop in sandook.selectStopsByIds(highPriorityStopIdList)) {
+            seen += stop.stopId
+            candidates += stop.toStopSearchResult()
         }
 
         // Add trigram-matched candidates. Use a per-prefix cap so a single

@@ -99,6 +99,8 @@ For a single-character typo, at least one of the four positional trigrams will s
 
 Before the trigram queries run, the ~15 high-priority stops (Central, Town Hall, Wynyard, Tallawong, etc.) are fetched directly by stop ID and pre-loaded into the candidate pool. This guarantees major train stations are always scored, regardless of what the trigram prefilter finds. Stops that don't score above the threshold for the current query are still filtered out by the scorer.
 
+The fetch uses `Sandook.selectStopsByIds(...)` — a single batch SQL query (`WHERE stopId IN :stopIds`) instead of N round-trips, so seeding adds one DB call regardless of how many high-priority IDs are configured.
+
 ---
 
 ## Scoring

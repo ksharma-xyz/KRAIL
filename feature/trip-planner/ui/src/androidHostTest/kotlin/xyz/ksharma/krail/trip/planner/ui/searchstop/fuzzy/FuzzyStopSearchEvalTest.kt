@@ -149,6 +149,16 @@ class FuzzyStopSearchEvalTest {
         EvalCase("parramatta",  include = listOf("Parramatta Station")),
         EvalCase("schofields",  include = listOf("Schofields Station")),
 
+        // ── Multi-token + typo (zero-result analytics) ────────────────────────
+        // Real queries that returned nothing in 60-day analytics; promoted from
+        // the discovery list once the ranker handled them.
+        EvalCase("wollngong hospital", include = listOf("Wollongong Hospital")),
+        EvalCase("bella vista metr",   include = listOf("Bella Vista")),
+        EvalCase("livwrpoo",           include = listOf("Liverpool")),
+        EvalCase("eouse hill",         include = listOf("Rouse Hill")),
+        EvalCase("sudney",             include = listOf("Sydney")),
+        EvalCase("sudne",              include = listOf("Sydney")),
+
         // ── False-positive guards ──────────────────────────────────────────────
         EvalCase(
             query   = "blacktwon ro",
@@ -169,13 +179,36 @@ class FuzzyStopSearchEvalTest {
 
     // ═════════════════════════════════════════════════════════════════════════
     // DISCOVERY
-    // Add queries here to see top results without any assertion.
-    // Review the output, then promote passing cases to [cases] above.
+    //
+    // Use this list to ask "what would the user actually see if they typed X?"
+    // Add a string here, run the test below, and the top-10 results print to
+    // stdout — no assertions, no commit needed if you're just exploring.
+    //
+    // Workflow:
+    //   1. Add the query string to [discoveryQueries].
+    //   2. Run: ./gradlew :feature:trip-planner:ui:testAndroidHostTest \
+    //              --tests "*.FuzzyStopSearchEvalTest.discover*"
+    //   3. Inspect the stdout. If results look right, promote to [cases]
+    //      above with an EvalCase(...) and remove from this list.
+    //   4. If results look wrong, leave a comment explaining the ambiguity
+    //      so future contributors don't re-investigate.
+    //
+    // Examples (all uncommented entries print on next test run):
     // ═════════════════════════════════════════════════════════════════════════
 
     private val discoveryQueries: List<String> = listOf(
-        // "woll9n": "9"→"i" matches "Wollin Pl" before "Wollongong"; ambiguous without context
+        // "woll9n": "9"→"i" matches "Wollin Pl" before "Wollongong"; ambiguous without context.
         "woll9n",
+        // Uncomment these to explore — they're real zero-result analytics queries
+        // we haven't yet asserted on. If they look right, promote to [cases].
+        // "withers road after milford",
+        // "unsw hifh",
+        // "pist office",
+        // "stockland sho",
+        // "shellharbour sto",
+        // "carrigto",
+        // "sevenhi",
+        // "spit b",
     )
 
     // ═════════════════════════════════════════════════════════════════════════

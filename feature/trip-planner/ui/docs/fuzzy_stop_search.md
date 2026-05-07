@@ -191,7 +191,49 @@ When the flag is `false`, the search returns exact DB results only (same behavio
 
 ---
 
+## Input boundary handling
+
+Before any DB query, regex normalisation, or scoring runs, the user query passes through three boundary checks in `RealStopResultsManager.fetchStopResults`:
+
+1. **Truncate to `MAX_QUERY_LENGTH` (64 chars).** The longest legitimate query observed in 60-day analytics is ~30 characters; 64 gives ~2× headroom while rejecting pasted megabyte-sized strings before they can blow up DB `LIKE`, regex, or Levenshtein matrices.
+2. **Trim leading/trailing whitespace.** `LIKE 'X%'` won't tolerate a leading space, so `"  central"` was previously missing matches.
+3. **Reject queries shorter than `MIN_QUERY_LENGTH` (2 chars).** Single-character substring `LIKE` returns a flood of accidental matches and the ranker is too noisy to be useful below this length. Returns empty immediately, with zero DB cost.
+
+These are covered by `StopResultsManagerQueryBoundaryTest` in `commonTest`.
+
+---
+
+## Production hardening
+
+Beyond the algorithm, three runtime guards live in `RealStopResultsManager`:
+
+- **Off-Main dispatch.** `fetchStopResults` runs inside `withContext(Dispatchers.Default)`. The ViewModel launches it on `viewModelScope` (Main by default), so without this wrapper the DB queries plus 200-candidate fuzzy scoring would block the typing path on slower Androids.
+- **Partial-success on fuzzy failure.** The fuzzy fetch is wrapped in `runCatching`. If the ranker or its DB queries throw (corrupt index, unexpected scoring input), the call falls back to exact-only results and logs the failure — the user still sees their exact matches rather than an error screen.
+- **Cancellation via the ViewModel.** `SearchStopViewModel` cancels the previous `searchJob` on every keystroke and debounces 100ms. Combined with the 200-candidate production cap (≈ 20 ms total ranking work), stale rankings drop within one cache window. The ranker itself is intentionally not `suspend` — making it so just to call `ensureActive()` between candidates would force every test into `runTest {}` for negligible real-world benefit.
+
+---
+
+## Eval framework and discovery
+
+`FuzzyStopSearchEvalTest` (in `androidHostTest`) loads all 37,208 real NSW stops from `nsw_stops_eval.csv` and grades the ranker against assertion cases derived from 60-day zero-result analytics. The CSV is the **benchmark snapshot**; regenerate via `python3 scripts/extract_nsw_stops.py` only when stop data changes.
+
+Two test methods:
+
+- `eval fuzzy stop quality against real NSW stops` — runs `cases` with include/exclude assertions; fails below 80% pass rate.
+- `discover new queries against real NSW stops` — runs `discoveryQueries` and prints top-10 results to stdout without asserting. Use this to ask **"what would the user actually see if they typed X?"** before promoting to a hard assertion.
+
+To explore a new query: add the string to `discoveryQueries`, run
+
+```
+./gradlew :feature:trip-planner:ui:testAndroidHostTest \
+  --tests "*.FuzzyStopSearchEvalTest.discover*"
+```
+
+inspect the printed results, then promote to `cases` with an `EvalCase(...)` once you're happy.
+
+---
+
 ## What it cannot solve
 
 - **Civic addresses** (`29 Bathurst St`, `219 Kent St`) — these don't exist as stops in GTFS. Needs a geocoding layer (separate ticket).
-- **Route number searches** (`702`, `M50`) — handled by the separate route-search path, not fuzzy matching.
+- **Route number searches** (`702`, `M50`) — handled by the separate route-search path, not fuzzy matching. Future work: short-circuit when the route or stop ID matches exactly so the noisy fuzzy results don't drown out the obviously-intended one result.

@@ -172,7 +172,7 @@ common ground:
 |---|---|---|
 | Proto schema | Nullable; "absent" is legal on the wire. | n/a — both sides must accept it. |
 | **Server (BFF)** | **Unit tests assert** that response builders populate every contractually-required field. **`null` must never be emitted for those fields, even though the proto allows it** — when upstream data is missing, the BFF substitutes a sensible default (see below). CI fails if a builder leaves a promised field unset. | A bug in BFF — fix before merge. |
-| **Client (KRAIL)** | Maps the nullable proto into a non-null domain model at the network-layer boundary. Missing required fields → mapper returns a typed parse error / falls back to the kill-switch path, never crashes UI. | Treated as a degraded response; logged with `correlationId` for follow-up. |
+| **Client (KRAIL)** | Maps the nullable proto into a non-null domain model at the network-layer boundary. When a required field is missing, the mapper returns a typed parse error and falls back to the kill-switch path; UI never crashes. | Treated as a degraded response; logged with `correlationId` for follow-up. |
 
 The proto says "could be null"; the BFF's CI tests prove the promise holds.
 Adding a new field is a one-side change with no client work needed until
@@ -338,10 +338,10 @@ needs UI handling). Human review is the safety net.
 
 The workflows above keep version bumps mechanical and traceable:
 
-- **Adding a contract-optional field**: PR to `krail-api-proto` → `ci.yml`
-  passes (no breaking change) → manual `release.yml` dispatch with
-  `bump_type: minor` → tag `v0.x+1.0` → BFF `proto-bump.yml` opens a PR
-  → KRAIL `proto-bump.yml` opens a PR.
+- **Adding a contract-optional field**: PR to `krail-api-proto`. `ci.yml`
+  passes (no breaking change). Manual `release.yml` dispatch with
+  `bump_type: minor` produces tag `v0.x+1.0`. BFF `proto-bump.yml` opens a PR.
+  KRAIL `proto-bump.yml` opens a PR.
 - **Adding a contract-required field**: same as above, but the BFF PR
   also has to add the response-builder population + unit test before it
   can merge. Detected by the contract-enforcement tests failing on the

@@ -47,8 +47,8 @@ kotlin {
 //
 // Submodule: https://github.com/ksharma-xyz/KRAIL-API-PROTO
 // Layout:
-//   krail-api-proto/proto/api/   → app.krail.bff.proto (JourneyList, JourneyCardInfo, …)
-//   krail-api-proto/proto/data/  → app.krail.bff.proto.data (StopsDataset, RoutesDataset)
+//   krail-api-proto/proto/api/   contains app.krail.bff.proto (JourneyList, JourneyCardInfo, ...)
+//   krail-api-proto/proto/data/  contains app.krail.bff.proto.data (StopsDataset, RoutesDataset)
 wire {
     kotlin {
         javaInterop = true

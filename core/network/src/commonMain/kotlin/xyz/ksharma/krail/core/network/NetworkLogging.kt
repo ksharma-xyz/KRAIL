@@ -38,8 +38,8 @@ enum class NetworkTarget(val label: String) {
  * Example output (with the [KRAIL_NETWORK_LOG_TAG] prefix prepended by [krailLog]):
  *
  * ```
- * KrailNetwork: → BFF GET /v1/tp/trip [override=on]
- * KrailNetwork: → NSW GET /v1/tp/trip [override=off]
+ * KrailNetwork: BFF GET /v1/tp/trip [override=on]
+ * KrailNetwork: NSW GET /v1/tp/trip [override=off]
  * ```
  *
  * No bodies, no query strings — just the path. Per `KRAIL_INTEGRATION_MASTER_PLAN.md` §13,
@@ -58,5 +58,5 @@ fun logNetworkCall(
     overrideOn: Boolean = IS_BFF_LOCAL_OVERRIDE_SET,
 ) {
     val overrideLabel = if (overrideOn) "on" else "off"
-    krailLog("$KRAIL_NETWORK_LOG_TAG → ${target.label} $method $path [override=$overrideLabel]")
+    krailLog("$KRAIL_NETWORK_LOG_TAG ${target.label} $method $path [override=$overrideLabel]")
 }

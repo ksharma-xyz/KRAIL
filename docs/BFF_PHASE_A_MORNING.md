@@ -75,8 +75,8 @@ Run in order. Most are copy-paste-runnable.
    ./scripts/fullQualityChecks.sh
    ```
 
-3. **Open an Android emulator.** Android Studio → Tools → Device Manager →
-   start any AVD with API 34 or newer. Or from CLI:
+3. **Open an Android emulator.** Android Studio: open Tools, then Device
+   Manager, and start any AVD with API 34 or newer. Or from CLI:
 
    ```sh
    ~/Library/Android/sdk/emulator/emulator -list-avds
@@ -106,7 +106,7 @@ Run in order. Most are copy-paste-runnable.
    Expected on every BFF/NSW call:
 
    ```
-   D KrailNetwork: → BFF GET /v1/tp/trip [override=on]
+   D KrailNetwork: BFF GET /v1/tp/trip [override=on]
    I KrailNetwork: REQUEST: http://10.0.2.2:8080/v1/tp/trip
    I KrailNetwork: METHOD: GET
    I KrailNetwork: RESPONSE: 200 OK
@@ -124,33 +124,33 @@ Run in order. Most are copy-paste-runnable.
    cd /Users/ksharma/code/apps/KRAIL-BFF && ./scripts/dev.sh logs
    ```
 
-7. **Smoke-test each screen.** Confirm each KRAIL `→ BFF` log line is
+7. **Smoke-test each screen.** Confirm each KRAIL `BFF` log line is
    matched by a server-side `GET …` line.
 
    - **Trip search**: search "Town Hall" as origin, "Central" as destination.
-     Tap the suggestion result. KRAIL log: `→ BFF GET /v1/tp/trip`.
+     Tap the suggestion result. KRAIL log: `BFF GET /v1/tp/trip`.
      BFF log: `GET /v1/tp/trip … 200`.
    - **Departures (Saved Trips)**: tap any saved trip card on the home
      screen, or tap a stop card to open its departure board. KRAIL log:
-     `→ BFF GET /v1/stops/{stopId}/departures`. BFF log:
+     `BFF GET /v1/stops/{stopId}/departures`. BFF log:
      `GET /v1/stops/200060/departures … 200`.
    - **Park & Ride list**: requires `NSW_PARK_RIDE_BETA` Firebase RC flag
      to be ON for the device. Open the Park & Ride entry tile.
-     KRAIL log: `→ BFF GET /v1/parking/facilities`.
+     KRAIL log: `BFF GET /v1/parking/facilities`.
      BFF log: `GET /v1/parking/facilities … 200`.
    - **Park & Ride detail**: tap any car park in the list.
-     KRAIL log: `→ BFF GET /v1/parking/facilities/{id}/availability`.
+     KRAIL log: `BFF GET /v1/parking/facilities/{id}/availability`.
      BFF log: `GET /v1/parking/facilities/{id}/availability … 200`.
    - **Live tracking**: trigger a journey screen with live data
-     (the screens are built but may need a deeplink or hidden entry to reach
-     — see §7). KRAIL log: `→ BFF GET /v[12]/gtfs/realtime/{feed}` and
-     `→ BFF GET /v2/gtfs/vehiclepos/{feed}`. BFF log: matching `GET` lines.
+     (the screens are built but may need a deeplink or hidden entry to reach,
+     see §7). KRAIL log: `BFF GET /v[12]/gtfs/realtime/{feed}` and
+     `BFF GET /v2/gtfs/vehiclepos/{feed}`. BFF log: matching `GET` lines.
    - **Stop search**: search any stop name in trip planner.
-     KRAIL log: `→ NSW GET /v1/tp/stop_finder` (deliberately stays on NSW —
+     KRAIL log: `NSW GET /v1/tp/stop_finder` (deliberately stays on NSW;
      BFF has no `stop_finder`; Phase D handles it). BFF log: nothing.
 
 8. **Cross-check counts.** If everything routed correctly, the BFF log line
-   count should roughly match the count of `→ BFF` lines from KRAIL logcat
+   count should roughly match the count of `BFF` lines from KRAIL logcat
    over the same window. Off-by-one is fine (timing / HEAD requests).
 
 ---
@@ -173,7 +173,7 @@ app silently falls back to NSW direct.
    ```
 
 3. Re-run the §3 step 7 smoke tests. Same data should render. KRAIL logs
-   should now read `→ NSW …` for every line. BFF log should be silent.
+   should now read `NSW …` for every line. BFF log should be silent.
 
 4. Restore `local.properties` (uncomment) before committing.
 
@@ -188,15 +188,15 @@ What landed overnight:
   `$rootDir/krail-api-proto/proto`. Mirrors `:io:gtfs`. Compiles in isolation.
 - `IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED` flag in `BaseUrl.kt`, hard-coded
   `false`. Gates a scaffold branch in `RealTripPlanningService.trip()`.
-- Stub `JourneyListMapper.kt` with the right function signature; throws
-  `NotImplementedError` until wired up.
+- Stub `JourneyListMapper.kt` with the right function signature; calls
+  `error(...)` until wired up.
 
 What is NOT wired:
 
 - `feature/trip-planner/network` does not yet `implementation(projects.io.bffApi)`.
   Deliberately left out so Phase A is unaffected if the dependency causes
   any compile or codegen visibility issue.
-- The proto branch in `RealTripPlanningService.trip()` is `error(...)`-only —
+- The proto branch in `RealTripPlanningService.trip()` is `error(...)`-only;
   it never runs because the flag is `false`.
 
 Two-step plan to flip on next session:
@@ -205,8 +205,9 @@ Two-step plan to flip on next session:
    Add `implementation(projects.io.bffApi)` to
    `feature/trip-planner/network/build.gradle.kts`. Replace the parameter
    type with `JourneyList` (import `app.krail.bff.proto.JourneyList`).
-   Replace the `error(...)` scaffold with the real `httpClient.get(...)` →
-   `ByteArray` → `JourneyList.ADAPTER.decode(bytes)` → mapper call chain.
+   Replace the `error(...)` scaffold with the real call chain:
+   `httpClient.get(...)` returning `ByteArray`, decoded via
+   `JourneyList.ADAPTER.decode(bytes)`, then through the mapper.
 2. Flip `IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED` to `true`, or move it into
    the debug-settings store once Phase B lands.
 

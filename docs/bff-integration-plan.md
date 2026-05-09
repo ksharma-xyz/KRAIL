@@ -257,7 +257,7 @@ For each `Real*Service`, three changes:
 
 3. `KRAIL_BFF_PROD_BASE_URL` is a new BuildKonfig field —
    `https://bff.krail.app` once deployed, empty string until then. Empty
-   string → silently falls back to NSW.
+   string falls back silently to NSW.
 
 When release routing eventually lands (Firebase RC), the release branch above
 becomes `return remoteConfig.bffTargetForScope(SCOPE)` — same resolver shape,
@@ -303,7 +303,7 @@ What this means per phase:
 | Phase | BFF response shape | Parallel mappers needed? | Kill-switch trivial? |
 |---|---|---|---|
 | **A** (current) | identical to NSW (JSON pass-through, or GTFS-RT proto bytes) | No — same shape, same parser | Yes — Phase B's selector just swaps base URL |
-| **C** (future) | screen-shaped proto (`TripResultsResponse`, etc.) | Yes — `BffResponse → Domain` adapter alongside the existing `NSW → Domain` mapper | Yes — both `.toDomain()` adapters converge to the same `Domain` |
+| **C** (future) | screen-shaped proto (`TripResultsResponse`, etc.) | Yes — `BffResponse-to-Domain` adapter alongside the existing `NSW-to-Domain` mapper | Yes — both `.toDomain()` adapters converge to the same `Domain` |
 
 So your concern about "kill switch needs different mappers" is correct — but
 only for Phase C. Phase A is shape-identical, so today's existing parsers
@@ -317,7 +317,7 @@ explicit about which app-side mappers go away in Phase C:
 | Computation | Today (KRAIL app) | Phase C (BFF) |
 |---|---|---|
 | Line color resolution | `NswTransportLine` lookup + mode fallback | BFF ships `color_hex` per `TransitLine` |
-| Mode → icon name | `TransportMode.iconName` mapping | BFF ships `icon_name` |
+| Mode-to-icon name | `TransportMode.iconName` mapping | BFF ships `icon_name` |
 | Platform extraction (Platform/Stand/Wharf) | mode-specific regex in `DepartureMonitorMapper` | BFF runs regex once; clean string in `StopRef.platform` |
 | Display text (e.g. "Burwood to Liverpool") | `resolveServiceDisplayText` | BFF ships `display_text` |
 | HH:MM AEST formatting | `utcToLocalDateTimeAEST().toHHMM()` | BFF formats; client still gets UTC |
@@ -325,12 +325,12 @@ explicit about which app-side mappers go away in Phase C:
 | Deviation label ("3 mins late") | mapper-side | BFF pre-computes |
 | Service alert dedup | mapper iterates legs | BFF dedupes once |
 | Park & ride availability math | `totalSpots − sum(occupancy)` | BFF computes |
-| GTFS-RT vehicle ↔ leg matching | `GtfsRealtimeMatcher` 4-tier match | BFF matches; ships only the matched vehicle per leg |
+| GTFS-RT vehicle and leg matching | `GtfsRealtimeMatcher` 4-tier match | BFF matches; ships only the matched vehicle per leg |
 
 Stays client-side (correctly): "approaching" countdown, current-stop progress,
 map camera bounds, "past stop" greying, theme-driven color application.
 
-Net per `API_SCHEMA_DESIGN.md §5`: **12 app mappers → 4** post-migration.
+Net per `API_SCHEMA_DESIGN.md §5`: **12 app mappers reduce to 4** post-migration.
 
 ### UTC timestamps — already true today, stays true in Phase C
 
@@ -504,9 +504,9 @@ modules is cleaner than one with two unrelated proto sets.
 - Per endpoint:
     - Add a `Bff<X>Client` that hits the proto endpoint and decodes the
       generated message via `<Message>.ADAPTER.decode(bytes)`.
-    - Add a `<Proto> → DomainModel` mapper. Mostly passthrough — BFF has done
+    - Add a `<Proto>-to-DomainModel` mapper. Mostly passthrough — BFF has done
       the screen-shaping.
-    - Keep the existing NSW `→ DomainModel` mapper for the kill-switch path
+    - Keep the existing NSW-to-DomainModel mapper for the kill-switch path
       until the cohort rollout for that endpoint hits 100% + 2-week grace.
     - Phase B's selector picks one of `NSW_DIRECT` / `BFF_LOCAL` / `BFF_PROD`
       — the BFF branches use the proto path automatically when target is BFF.
@@ -519,8 +519,8 @@ Migration order (from `BFF_ADOPTION_GUIDE.md §Migration order`):
 4. Trip results (`/v1/screens/trip-results`).
 5. Journey + journey/live (most complex, last).
 
-Each follows `BFF_ADOPTION_GUIDE.md §Step 1–6` (compare-mode → cohort
-rollout → cleanup).
+Each follows `BFF_ADOPTION_GUIDE.md §Step 1–6`: compare-mode, then cohort
+rollout, then cleanup.
 
 ---
 
@@ -549,8 +549,8 @@ A small commonMain helper, `logNetworkCall(target, method, path)` in
 right before its `httpClient.get(...)`. Output looks like:
 
 ```
-KrailNetwork: → BFF GET /v1/tp/trip [override=on]
-KrailNetwork: → NSW GET /v1/tp/stop_finder [override=off]
+KrailNetwork: BFF GET /v1/tp/trip [override=on]
+KrailNetwork: NSW GET /v1/tp/stop_finder [override=off]
 ```
 
 The pre-call line records which branch (BFF override on, or NSW direct) the
@@ -636,11 +636,11 @@ is correct.
 `BFF_ADOPTION_GUIDE.md §Step 5`):
 
 ```
-0% → internal devices (you, Phase B's debug screen)
-10% → real users via Firebase RC; watch error rate + "feature loaded" metric for 48–72h
-50% → if 10% clean
-100% → if 50% clean
-+2 weeks grace → delete NSW path for that endpoint
+0%:   internal devices (you, Phase B's debug screen)
+10%:  real users via Firebase RC; watch error rate + "feature loaded" metric for 48–72h
+50%:  promote if 10% clean
+100%: promote if 50% clean
++2 weeks grace, then delete NSW path for that endpoint
 ```
 
 In dev: the per-endpoint selector in Phase B's screen is the local equivalent

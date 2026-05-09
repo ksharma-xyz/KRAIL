@@ -7,6 +7,8 @@ import io.ktor.http.ParametersBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
+import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
@@ -19,6 +21,9 @@ internal class RealTripPlanningService(
     private val ioDispatcher: CoroutineDispatcher,
 ) : TripPlanningService {
 
+    private val tripBaseUrl: String =
+        if (IS_BFF_LOCAL_OVERRIDE_SET) KRAIL_BFF_BASE_URL else NSW_TRANSPORT_BASE_URL
+
     override suspend fun trip(
         originStopId: String,
         destinationStopId: String,
@@ -27,7 +32,7 @@ internal class RealTripPlanningService(
         time: String?,
         excludeProductClassSet: Set<Int>,
     ): TripResponse = withContext(ioDispatcher) {
-        httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/tp/trip") {
+        httpClient.get("$tripBaseUrl/v1/tp/trip") {
             url {
                 parameters.append(TripRequestParams.nameOrigin, originStopId)
                 parameters.append(TripRequestParams.nameDestination, destinationStopId)

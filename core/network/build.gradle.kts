@@ -89,6 +89,12 @@ val iosNswTransportApiKey: String = localProperties.getProperty("IOS_NSW_TRANSPO
     ?: System.getenv("IOS_NSW_TRANSPORT_API_KEY")
     ?: ""
 
+// Optional local KRAIL-BFF override. Empty / missing means no override; the
+// app uses the NSW direct path (production behavior). Set
+// `krail.bffBaseUrl=http://10.0.2.2:8080` in local.properties to opt in.
+val krailBffBaseUrl: String = localProperties.getProperty("krail.bffBaseUrl")
+    ?: ""
+
 // Only require API keys when CI is doing a real build that ships code; quality
 // checks (detekt, host tests) get placeholders below.
 if (!(isCIEnvironment && isCIQualityCheck)) {
@@ -127,5 +133,6 @@ buildkonfig {
 
         buildConfigField(FieldSpec.Type.STRING, "ANDROID_NSW_TRANSPORT_API_KEY", androidKey)
         buildConfigField(FieldSpec.Type.STRING, "IOS_NSW_TRANSPORT_API_KEY", iosKey)
+        buildConfigField(FieldSpec.Type.STRING, "KRAIL_BFF_BASE_URL", krailBffBaseUrl)
     }
 }

@@ -121,7 +121,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 tripPlannerNavigator.navigateToDiscover()
             },
             onEvent = { event -> viewModel.onEvent(event) },
-            onInviteFriendsTileDisplay = { viewModel.markInviteFriendsTileAsSeen() },
             departureBoardEntries = departureBoardEntries,
             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
             onDepartureBoardEvent = departureBoardViewModel::onEvent,

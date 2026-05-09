@@ -2,6 +2,10 @@
 
 Draft for review · 2026-05-09 · branch `feat/bff-local-debug-override`
 
+> **Morning runbook**: see [`BFF_PHASE_A_MORNING.md`](./BFF_PHASE_A_MORNING.md)
+> for copy-paste-runnable smoke-test steps. That doc is the single page to
+> read on wake-up; this plan is the long-form reference.
+
 > Sources (authoritative): `KRAIL-BFF/docs/handover/KRAIL_APP_INTEGRATION_HANDOVER.md`
 > (the playbook) and `KRAIL-BFF/docs/handover/KRAIL_API_REFERENCE.md` (real
 > captured wire format, field-by-field). Background: `BFF_ADOPTION_GUIDE.md`,
@@ -16,11 +20,11 @@ Draft for review · 2026-05-09 · branch `feat/bff-local-debug-override`
 Three phases, only Phase A is gated by the BFF docs handover; B is your
 debug-screen ask; C waits on upstream.
 
-| Phase | What                                                                                                                                                                         | Blocking                                                                                 | Effort                                                                           |
-|-------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| **A** | Finish the 4-endpoint pass-through wiring (trip, departures, park-ride, GTFS-RT) — the BFF team's actual handover.                                                           | Local BFF (already running).                                                             | ~1 hour. Two of four already done on current branch.                             |
-| **B** | New `feature/debug-settings` module. Debug-only screen with per-endpoint 3-target selector (NSW / BFF local / BFF prod) + kill-switch. Replaces the local.properties opt-in. | Phase A done.                                                                            | ~1–2 days.                                                                       |
-| **C** | Screen-shaped protobuf (Wire codegen, `JourneyList` proto, BFF-shaped mapper).                                                                                               | BFF deploys + `krail-api-proto` repo extracted + screen-shaped endpoints actually built. | Deferred. None of the BFF prerequisites exist today (per `KRAIL-BFF/STATUS.md`). |
+| Phase   | What                                                                                                                                                                         | Blocking                                                                                                                | Effort                                                                                            |
+|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| **A**   | Finish the 4-endpoint pass-through wiring (trip, departures, park-ride, GTFS-RT) — the BFF team's actual handover.                                                           | Local BFF (already running).                                                                                            | **✅ Code complete** on `feat/bff-local-debug-override`; pending only user smoke-test + commit.    |
+| **B**   | New `feature/debug-settings` module. Debug-only screen with per-endpoint 3-target selector (NSW / BFF local / BFF prod) + kill-switch. Replaces the local.properties opt-in. | Phase A done.                                                                                                           | ~1–2 days.                                                                                        |
+| **C**   | Screen-shaped protobuf (Wire codegen, `JourneyList` proto, BFF-shaped mapper).                                                                                               | BFF deploys + screen-shaped endpoints actually built. `krail-api-proto v0.1.0` published; submodule + `:io:bff-api` in. | **Foundation landed** (submodule + Wire module). Mapper + flag flip pending; ~1 weekend post-BFF. |
 
 ---
 
@@ -55,18 +59,21 @@ proto path." The two are decoupled — don't conflate them.
 
 ## Status of the current branch
 
-`feat/bff-local-debug-override` (off `main`, uncommitted):
+`feat/bff-local-debug-override` (off `main`):
 
 - ✅ BuildKonfig field `KRAIL_BFF_BASE_URL` (sourced from `local.properties`).
 - ✅ `BaseUrl.kt` exposes `KRAIL_BFF_BASE_URL` + `IS_BFF_LOCAL_OVERRIDE_SET`.
 - ✅ `RealTripPlanningService.trip()` routes via BFF when override set.
 - ✅ `RealDeparturesService.departures()` routes via BFF when override set.
+- ✅ `RealParkRideService.fetchCarParkFacilities()` (both overloads) route via BFF when override set.
+- ✅ `RealGtfsRealtimeService.buildUrl()` routes via BFF when override set, for all three feed-type cases.
 - ✅ Cleartext config under `androidApp/src/debug/` (Android) + Info.plist (iOS).
-- ❌ **`RealParkRideService` not wired** — both overloads still call NSW direct.
-- ❌ **`RealGtfsRealtimeService` not wired** — `buildUrl()` still uses NSW base.
+- ✅ Unit tests for the Park & Ride URL builders (`ParkRideUrlBuilderTest`) and the GTFS-RT URL builder (`BuildGtfsUrlTest`). Pure-function coverage; no mock HttpClient infrastructure introduced.
 
-These two gaps are explicit in the updated handover §6.5–§6.6 and §10
-checklist. They have to land before this branch matches the spec.
+All four target services are wired. The handover §16 17-box checklist
+(see master plan) is fully ticked from the code side; remaining boxes
+are user-pending verifications (build pass, simulator build, smoke test,
+git hygiene) and are listed under "What's left for the user" below.
 
 ---
 
@@ -77,27 +84,29 @@ swap per service, gated on `IS_BFF_LOCAL_OVERRIDE_SET`.
 
 ### TODO
 
-- [ ] **Park & Ride list** — `RealParkRideService.fetchCarParkFacilities()`
-  no-arg overload. NSW: `/v1/carpark` → BFF: `/v1/parking/facilities`.
+- [x] **Park & Ride list** — `RealParkRideService.fetchCarParkFacilities()`
+  no-arg overload. NSW `/v1/carpark` to BFF `/v1/parking/facilities`.
   Same `Map<String, String>` response.
-- [ ] **Park & Ride detail** — same file, `facilityId` overload.
-  NSW: `/v1/carpark?facility={id}` → BFF: `/v1/parking/facilities/{id}/availability`.
+- [x] **Park & Ride detail** — same file, `facilityId` overload.
+  NSW `/v1/carpark?facility={id}` to BFF `/v1/parking/facilities/{id}/availability`.
   Same `CarParkFacilityDetailResponse` parser. Note: BFF preserves the NSW
   quirk wrapper (`success: false` envelope, numbers-as-strings) per
   `KRAIL_API_REFERENCE.md §6`.
-- [ ] **GTFS-RT** — `RealGtfsRealtimeService.buildUrl()`. Add a single
-  `gtfsBaseUrl` val gated on the override; reuse for all 3 variants
+- [x] **GTFS-RT** — `RealGtfsRealtimeService.buildUrl()`. Single
+  `gtfsBaseUrl` val gated on the override; reused for all 3 variants
   (`/v1/gtfs/realtime/{feed}`, `/v2/gtfs/realtime/{feed}`,
   `/v2/gtfs/vehiclepos/{feed}`). Identical paths between NSW and BFF;
   no model changes; HEAD + `If-Modified-Since` flow preserved end-to-end.
-- [ ] User runs `./scripts/fullQualityChecks.sh` (KRAIL repo) — Android compile +
-  iOS Simulator compile + detekt. Paste tail of output.
+- [x] Pure-function unit tests pinning the URL shape per branch
+  (`ParkRideUrlBuilderTest`, `BuildGtfsUrlTest`).
+- [ ] User runs `./scripts/fullQualityChecks.sh` (KRAIL repo): Android compile
+  + iOS Simulator compile + detekt. Paste tail of output.
 - [ ] Smoke-test (BFF log shows the matching `GET` line for each):
-  Trip search → `GET /v1/tp/trip`;
-  Departures (Saved Trips) → `GET /v1/stops/{id}/departures`;
-  Park & Ride list → `GET /v1/parking/facilities` (need `NSW_PARK_RIDE_BETA` RC flag);
-  Park & Ride detail → `GET /v1/parking/facilities/{id}/availability`;
-  Live tracking (when reachable) → `GET /v[12]/gtfs/realtime/...` + `/v2/gtfs/vehiclepos/...`.
+  Trip search yields `GET /v1/tp/trip`;
+  Departures (Saved Trips) yields `GET /v1/stops/{id}/departures`;
+  Park & Ride list yields `GET /v1/parking/facilities` (need `NSW_PARK_RIDE_BETA` RC flag);
+  Park & Ride detail yields `GET /v1/parking/facilities/{id}/availability`;
+  Live tracking (when reachable) yields `GET /v[12]/gtfs/realtime/...` and `/v2/gtfs/vehiclepos/...`.
 - [ ] Verify `RealTripPlanningService.stopFinder()` still hits NSW (untouched).
 - [ ] Verify `git status` does not list `local.properties`.
 
@@ -346,7 +355,37 @@ implemented yet." The screen-shaped endpoints don't exist on BFF today
 
 ## Phase C — Screen-shaped protobuf (deferred)
 
-Out of scope today. Tracked only.
+Most of the consumer work is still deferred. The infrastructure to land it is now in place.
+
+### Phase C foundation landed (2026-05-09)
+
+On `feat/bff-local-debug-override`, alongside the Phase A work:
+
+- ✅ `krail-api-proto` git submodule added at repo root, pinned to `v0.1.0`
+  (<https://github.com/ksharma-xyz/KRAIL-API-PROTO>).
+- ✅ `:io:bff-api` Kotlin Multiplatform module added (Android + iosArm64 +
+  iosSimulatorArm64), Wire 6.2.0 plugin pointed at `$rootDir/krail-api-proto/proto`.
+  Pattern mirrors `:io:gtfs` exactly. Module compiles in isolation; nothing
+  depends on it yet, so failure here cannot regress Phase A.
+- ✅ `submodules: true` added to `actions/checkout` in every workflow that
+  compiles (`build-android.yml`, `build-ios.yml`, `code-quality.yml`,
+  `distribute-testflight.yml`).
+- ✅ `IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED` flag added to `BaseUrl.kt`,
+  hard-coded `false`. Eventual debug-settings UI flips at runtime.
+- ✅ `RealTripPlanningService.trip()` proto branch scaffold added (gated on the
+  flag, dead-code-eliminated today). Stub `JourneyListMapper` throws
+  `NotImplementedError` with a pointer to `BFF_PHASE_A_MORNING.md` §5.
+
+What's still pending for the consumer wiring:
+
+- Add `implementation(projects.io.bffApi)` to
+  `feature/trip-planner/network/build.gradle.kts`.
+- Replace the scaffold block in `RealTripPlanningService.trip()` with a real
+  `JourneyList` fetch + decode.
+- Implement `journeyListBytesToTripResponse(...)` in
+  `feature/trip-planner/network/.../mapper/JourneyListMapper.kt`.
+- Flip `IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED` to `true`
+  (or move it to the debug-settings store once Phase B lands).
 
 ### Why deferred
 
@@ -486,6 +525,37 @@ rollout → cleanup).
 ---
 
 ## Cross-cutting concerns
+
+### Logging (debug-only, INFO level)
+
+The shared Ktor `HttpClient` (in `core/network/.../HttpClient.kt`) installs
+the `io.ktor.client.plugins.logging.Logging` plugin in both Android and iOS
+actuals. Behavior:
+
+- Gated on `appInfoProvider.getAppInfo().isDebug`. Release builds set
+  `LogLevel.NONE`, so the plugin imposes no overhead and emits nothing.
+- Debug builds use `LogLevel.INFO` (method, URL, status, timings — never
+  bodies). Per `KRAIL_INTEGRATION_MASTER_PLAN.md` §13, request/response bodies
+  contain stop ids and times that, in aggregate, can reveal user patterns; we
+  deliberately do not log them.
+- Output routes through KRAIL's existing `Log.d` (`:core:log`) with the
+  prefix `KrailNetwork:` so a developer can filter the firehose:
+    - Android logcat: `adb logcat -s KrailNetwork:* *:E` (or filter for
+      `KrailNetwork` in Android Studio's Logcat search field).
+    - iOS Simulator: filter for `KrailNetwork` in Xcode's console.
+
+A small commonMain helper, `logNetworkCall(target, method, path)` in
+`xyz.ksharma.krail.core.network.NetworkLogging`, is called by each service
+right before its `httpClient.get(...)`. Output looks like:
+
+```
+KrailNetwork: → BFF GET /v1/tp/trip [override=on]
+KrailNetwork: → NSW GET /v1/tp/stop_finder [override=off]
+```
+
+The pre-call line records which branch (BFF override on, or NSW direct) the
+service took — Ktor's `Logging` plugin then logs the response status and
+timing once the call returns.
 
 ### `X-Krail-Version` header
 
@@ -641,3 +711,67 @@ Decide before I start coding either phase:
 - BFF-side work (`krail-api-proto` extraction, deployment, screen-shaped
   endpoints). Tracked in `KRAIL-BFF/STATUS.md`.
 - Graphite stack split. Will decide at implementation time per the 500-line rule.
+
+---
+
+## What's left for the user (morning)
+
+The agent has finished writing code; nothing has been built, tested, or
+committed. To close out Phase A:
+
+1. **Run the full quality checks** from the KRAIL repo root and paste the
+   tail of the output:
+
+   ```
+   ./scripts/fullQualityChecks.sh
+   ```
+
+   This runs Android compile + iOS Simulator compile + detekt. Detekt
+   auto-corrects import order and trailing commas; review the in-place
+   fixes before re-staging.
+
+2. **Open `iosApp` in Xcode** and build for the iOS Simulator. The agent
+   does not drive `xcodebuild` headless per repo convention.
+
+3. **Smoke-test the four screens** against the running BFF
+   (`./scripts/dev.sh up` from the BFF repo). Confirm the BFF log shows
+   the matching `GET` lines per master plan §16:
+   - Trip search: `GET /v1/tp/trip`
+   - Departures: `GET /v1/stops/{stopId}/departures`
+   - Park & Ride list: `GET /v1/parking/facilities` (needs the
+     `NSW_PARK_RIDE_BETA` Firebase RC flag enabled on the debug device)
+   - Park & Ride detail: `GET /v1/parking/facilities/{id}/availability`
+   - Live tracking: `GET /v[12]/gtfs/realtime/{feed}` and
+     `GET /v2/gtfs/vehiclepos/{feed}`
+   - Stop search keeps hitting NSW direct (proves the unmigrated path
+     still works).
+
+4. **Commit.** Suggested message:
+
+   ```
+   feat(network): debug-only KRAIL-BFF override for all NSW-covered endpoints
+
+   Behind the new local.properties key `krail.bffBaseUrl` (empty by default,
+   debug only). When set, the four NSW-direct services that have BFF
+   equivalents route through the BFF instead:
+
+   - RealTripPlanningService.trip()         to BFF /v1/tp/trip (same shape)
+   - RealDeparturesService.departures()     to BFF /v1/stops/{id}/departures
+   - RealParkRideService.fetchCarParkFacilities()
+                                            to BFF /v1/parking/facilities[/{id}/availability]
+   - RealGtfsRealtimeService (all 3 feeds)  to BFF /v[1|2]/gtfs/{realtime|vehiclepos}/{feed}
+
+   stopFinder stays on NSW direct (BFF has no stop_finder; long-term plan
+   is local search against a stops dataset, separate work).
+
+   Release builds + non-overridden debug builds are unchanged. Cleartext
+   exception scoped to androidApp/src/debug/ so release stays HTTPS-only.
+
+   Pure-function unit tests pin the URL shape per branch for the two
+   non-trivial services (Park & Ride two-overload split, GTFS-RT three
+   feed-type cases).
+   ```
+
+5. **Verify `git status` does not list `local.properties`.** That key is
+   gitignored and the override line is local-developer config — committing
+   it would force the BFF override on every developer's machine.

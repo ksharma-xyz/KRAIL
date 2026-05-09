@@ -8,6 +8,8 @@ import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
 import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
+import xyz.ksharma.krail.core.network.NetworkTarget
+import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 
 internal class RealDeparturesService(
@@ -21,6 +23,11 @@ internal class RealDeparturesService(
         time: String?,
     ): DepartureMonitorResponse = withContext(ioDispatcher) {
         if (IS_BFF_LOCAL_OVERRIDE_SET) {
+            logNetworkCall(
+                target = NetworkTarget.BFF,
+                method = "GET",
+                path = "/v1/stops/$stopId/departures",
+            )
             httpClient.get("$KRAIL_BFF_BASE_URL/v1/stops/$stopId/departures") {
                 url {
                     date?.let { parameters.append("date", it) }
@@ -28,6 +35,11 @@ internal class RealDeparturesService(
                 }
             }.body()
         } else {
+            logNetworkCall(
+                target = NetworkTarget.NSW,
+                method = "GET",
+                path = "/v1/tp/departure_mon",
+            )
             httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/tp/departure_mon") {
                 url {
                     parameters.append(DepartureRequestParams.OUTPUT_FORMAT, "rapidJSON")

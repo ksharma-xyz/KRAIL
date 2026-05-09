@@ -10,11 +10,18 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
+import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
+import xyz.ksharma.krail.core.network.NetworkTarget
+import xyz.ksharma.krail.core.network.logNetworkCall
 
 internal class RealGtfsRealtimeService(
     private val httpClient: HttpClient,
 ) : GtfsRealtimeService {
+
+    private val gtfsBaseUrl: String =
+        if (IS_BFF_LOCAL_OVERRIDE_SET) KRAIL_BFF_BASE_URL else NSW_TRANSPORT_BASE_URL
 
     override suspend fun fetchFeed(
         feedName: String,
@@ -41,6 +48,11 @@ internal class RealGtfsRealtimeService(
             }
         }
 
+        logNetworkCall(
+            target = if (IS_BFF_LOCAL_OVERRIDE_SET) NetworkTarget.BFF else NetworkTarget.NSW,
+            method = "GET",
+            path = url.removePrefix(gtfsBaseUrl),
+        )
         val response = httpClient.get(url) {
             accept(ContentType("application", "x-protobuf"))
         }
@@ -79,23 +91,28 @@ internal class RealGtfsRealtimeService(
         GtfsRealtimeResult.Error(e)
     }
 
-    private fun buildUrl(feedName: String, feedType: GtfsFeedType): String {
-        return when (feedType) {
-            GtfsFeedType.VEHICLE_POSITIONS -> {
-                // Vehicle positions are always v2 and at a dedicated /vehiclepos/ path.
-                // Documented at: https://api.transport.nsw.gov.au/v2/gtfs/vehiclepos/
-                "$NSW_TRANSPORT_BASE_URL/v2/gtfs/vehiclepos/$feedName"
-            }
-            GtfsFeedType.TRIP_UPDATES -> {
-                val version = if (feedName in V2_FEEDS) "v2" else "v1"
-                "$NSW_TRANSPORT_BASE_URL/$version/gtfs/realtime/$feedName"
-            }
-        }
-    }
+    private fun buildUrl(feedName: String, feedType: GtfsFeedType): String =
+        buildGtfsUrl(baseUrl = gtfsBaseUrl, feedName = feedName, feedType = feedType)
 
     companion object {
         // These feeds have v2 realtime (trip-updates) endpoints; all others use v1.
-        private val V2_FEEDS = setOf("sydneytrains", "metro")
+        internal val V2_FEEDS = setOf("sydneytrains", "metro")
+    }
+}
+
+internal fun buildGtfsUrl(
+    baseUrl: String,
+    feedName: String,
+    feedType: GtfsFeedType,
+): String = when (feedType) {
+    GtfsFeedType.VEHICLE_POSITIONS -> {
+        // Vehicle positions are always v2 and at a dedicated /vehiclepos/ path.
+        // Documented at: https://api.transport.nsw.gov.au/v2/gtfs/vehiclepos/
+        "$baseUrl/v2/gtfs/vehiclepos/$feedName"
+    }
+    GtfsFeedType.TRIP_UPDATES -> {
+        val version = if (feedName in RealGtfsRealtimeService.V2_FEEDS) "v2" else "v1"
+        "$baseUrl/$version/gtfs/realtime/$feedName"
     }
 }
 

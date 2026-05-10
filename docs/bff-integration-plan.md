@@ -1,10 +1,15 @@
 # KRAIL ↔ BFF Integration — Plan (v2)
 
-Draft for review · 2026-05-09 · branch `feat/bff-local-debug-override`
+Draft · 2026-05-10 · current branch `feat/bff-local-debug-override`
 
 > **Morning runbook**: see [`BFF_PHASE_A_MORNING.md`](./BFF_PHASE_A_MORNING.md)
 > for copy-paste-runnable smoke-test steps. That doc is the single page to
 > read on wake-up; this plan is the long-form reference.
+
+> **Phase A integration report**: see
+> [`BFF_PHASE_A_INTEGRATION_REPORT.md`](./BFF_PHASE_A_INTEGRATION_REPORT.md)
+> for the handover back to the BFF team (what worked, captured latencies,
+> asks for next phase).
 
 > Sources (authoritative): `KRAIL-BFF/docs/handover/KRAIL_APP_INTEGRATION_HANDOVER.md`
 > (the playbook) and `KRAIL-BFF/docs/handover/KRAIL_API_REFERENCE.md` (real
@@ -12,6 +17,83 @@ Draft for review · 2026-05-09 · branch `feat/bff-local-debug-override`
 > `API_SCHEMA_DESIGN.md`, `STATUS.md`.
 >
 > v2 supersedes v1 — the BFF docs were rewritten between drafts.
+
+---
+
+## Branch & PR roadmap
+
+This is the canonical map of what code lands where. Two branches active /
+planned right now; future phases will stack on the second.
+
+> **Rule** (from the user): BFF-side feedback that triggers KRAIL changes
+> goes back onto **Branch 1**, never a fresh branch. Branch 1 stays the
+> single point of truth for the BFF-integration plumbing until merged.
+
+### Branch 1 — `feat/bff-local-debug-override` (in flight, 3 commits)
+
+| Item | Status |
+|---|---|
+| Phase A wiring (trip / departures / park-ride / GTFS-RT) | ✅ committed (`b8c9811e4 prep` + `1028b5d1b`) |
+| Cleartext debug-only config (`androidApp/src/debug/`) | ✅ committed |
+| `KrailNetwork:` logging (Ktor `Logging` plugin + pre-call helper) | ✅ committed (`1028b5d1b`) |
+| Phase C foundation (`KRAIL-API-PROTO` submodule + `:io:bff-api` Wire codegen) | ✅ committed (`1028b5d1b`) |
+| Detekt + arrow scrub fix (no `→` anywhere; `error()` instead of `NotImplementedError`) | ✅ committed (`cf51b457b`) |
+| Quality checks + test suite + APK build verified green | ✅ run by user |
+| Smoke-test on AVD against running local BFF | ✅ done — 24 calls / 0 failures |
+| **`exclMOT_X` underscore bug fix** | 🔲 next commit on this branch |
+| **BFF-feedback tweaks** (whatever lands over next ~couple days) | 🔲 land here as additional commits |
+| Push + open PR (`gt submit`) | 🔲 when user authorises |
+
+**Rough total diff** (excluding the docs noise): ~600 lines net new across
+network plumbing, services, tests, and the `:io:bff-api` skeleton. Single
+PR; under the 500-line rule once docs are excluded from review.
+
+### Branch 2 — `feat/debug-settings` (stacked on Branch 1)
+
+The 3-source runtime selector — debug-only Settings entry that lets the
+developer pick `NSW_DIRECT` / `BFF_LOCAL` / `BFF_PROD` per endpoint, plus
+a global kill switch. Replaces the build-time `local.properties` opt-in
+with a DataStore-backed runtime store.
+
+Likely needs **2 stacked PRs** to stay under 500 lines each:
+
+#### PR 2a — module skeleton + store + service refactor (~350 lines)
+
+| Item | Lives in |
+|---|---|
+| New module `feature/debug-settings/state` (enums + state/event types) | new module |
+| New module `feature/debug-settings/store` (`DebugNetworkConfigStore` + KMP DataStore) | new module |
+| `EndpointScope`, `NetworkTarget` enums | `state` module |
+| `KRAIL_BFF_PROD_BASE_URL` BuildKonfig field (empty until BFF deploys) | `core/network` |
+| Refactor `Real*Service` constructors to take `AppInfoProvider` + store | 4 services |
+| `baseUrl()` resolver: read store in debug, fall through to BuildKonfig in release | 4 services |
+| Wire DI bindings | each network module |
+| Tests for the resolver (target × build-type matrix) | each module's `commonTest` |
+
+#### PR 2b — UI + nav entry + integration (~250 lines)
+
+| Item | Lives in |
+|---|---|
+| New module `feature/debug-settings/ui` (Compose) | new module |
+| `DebugSettingsScreen` (top-level list, taj design) | `ui` module |
+| `NetworkSelectorScreen` (per-scope radio rows) | `ui` module |
+| `DebugSettingsViewModel` | `ui` module |
+| Nav entry `DebugSettingsEntry` | `ui` module |
+| Row in main `SettingsScreen` gated on `appInfoProvider.getAppInfo().isDebug` | `feature/trip-planner/ui` |
+| `X-Krail-Version` default header in shared HttpClient | `core/network` |
+| Compare-mode toggle (off by default) | `ui` + `store` |
+
+### Future phases (later branches; not yet started)
+
+Each follows a similar branch-per-phase pattern; will be added to this
+roadmap as we approach them.
+
+| Phase | Branch | Depends on | Scope sketch |
+|---|---|---|---|
+| Phase C consumer | `feat/proto-trip-results` | Branch 1 (foundation already laid) | Implement `JourneyListMapper` (`JourneyList` → `TripResponse`); add `implementation(projects.io.bffApi)` to trip-planner network; flip `IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED` (or wire to debug-settings store); snapshot-test fixture |
+| Phase D | `feat/local-stop-search` | Branch 1 | Manifest fetch + cache + SHA-256 verify; `StopsDataset.pb` consumption (already in `:io:bff-api`); replace `RealTripPlanningService.stopFinder()` with local search; delete NSW direct call |
+| Phase B production | `feat/firebase-rc-rollout` | BFF deployed + Branch 2 | Firebase RC flags `bff_kill_switch` + `bff_use_for_*`; release-build resolver reads RC instead of debug store; cohort 0/10/50/100 documented |
+| Phase E | `feat/remove-nsw-key` | B + D at 100% for ≥2 weeks | Remove `NSW_API_KEY` BuildKonfig field, `local.properties` entry, CI secret; revoke key in NSW Open Data console |
 
 ---
 

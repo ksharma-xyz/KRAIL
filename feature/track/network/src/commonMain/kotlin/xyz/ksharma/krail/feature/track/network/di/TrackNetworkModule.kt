@@ -9,7 +9,12 @@ import xyz.ksharma.krail.feature.track.network.RealGtfsRealtimeService
 import xyz.ksharma.krail.feature.track.network.gtfsRealtimeHttpClient
 
 val trackNetworkModule = module {
-    single<GtfsRealtimeService> { RealGtfsRealtimeService(httpClient = gtfsRealtimeHttpClient(get())) }
+    single<GtfsRealtimeService> {
+        RealGtfsRealtimeService(
+            httpClient = gtfsRealtimeHttpClient(get()),
+            resolver = get(),
+        )
+    }
     single<GtfsRealtimeRepository> {
         RealGtfsRealtimeRepository(service = get(), ioDispatcher = Dispatchers.Default)
     }

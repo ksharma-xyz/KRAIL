@@ -22,6 +22,7 @@ import xyz.ksharma.krail.core.share.di.shareModule
 import xyz.ksharma.krail.departures.network.api.di.departuresNetworkModule
 import xyz.ksharma.krail.departures.ui.di.departuresUiModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
+import xyz.ksharma.krail.feature.debug.settings.store.di.debugSettingsStoreModule
 import xyz.ksharma.krail.feature.track.di.trackStateModule
 import xyz.ksharma.krail.feature.track.network.di.trackNetworkModule
 import xyz.ksharma.krail.feature.track.ui.di.trackUiModule
@@ -70,6 +71,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             trackStateModule,
             trackNetworkModule,
             trackUiModule,
+            debugSettingsStoreModule,
             // Navigation modules
             appNavigationModule,
             tripPlannerNavigationModule,

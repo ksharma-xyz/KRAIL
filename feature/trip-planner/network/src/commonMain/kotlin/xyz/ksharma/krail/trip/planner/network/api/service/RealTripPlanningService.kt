@@ -10,12 +10,12 @@ import io.ktor.http.ParametersBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
+import xyz.ksharma.krail.core.network.BffEndpointResolver
 import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
-import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
-import xyz.ksharma.krail.core.network.NetworkTarget
+import xyz.ksharma.krail.core.network.NetworkUpstream
 import xyz.ksharma.krail.core.network.logNetworkCall
+import xyz.ksharma.krail.core.network.toNetworkUpstream
 import xyz.ksharma.krail.trip.planner.network.api.mapper.journeyListToTripResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
@@ -26,10 +26,8 @@ import xyz.ksharma.krail.trip.planner.network.api.service.trip.TripRequestParams
 internal class RealTripPlanningService(
     private val httpClient: HttpClient,
     private val ioDispatcher: CoroutineDispatcher,
+    private val resolver: BffEndpointResolver,
 ) : TripPlanningService {
-
-    private val tripBaseUrl: String =
-        if (IS_BFF_LOCAL_OVERRIDE_SET) KRAIL_BFF_BASE_URL else NSW_TRANSPORT_BASE_URL
 
     override suspend fun trip(
         originStopId: String,
@@ -39,12 +37,14 @@ internal class RealTripPlanningService(
         time: String?,
         excludeProductClassSet: Set<Int>,
     ): TripResponse = withContext(ioDispatcher) {
-        // Phase C: when both the BFF local-override and the proto flag are
-        // on, hit /api/v1/trip/plan-proto and decode a JourneyList via Wire,
-        // then map to TripResponse so the existing UI mappers (notably
-        // JourneyMapMapper, which reads coords for polylines) work unchanged.
-        // Otherwise fall back to the NSW-shaped JSON path on either NSW
-        // direct or BFF JSON pass-through, depending on IS_BFF_LOCAL_OVERRIDE_SET.
+        // Phase C integrated with the BffEndpointResolver pattern. Resolver
+        // decides NSW vs BFF (debug builds via DebugNetworkConfigStore,
+        // release via Firebase RC `enable_proto_bff`). If the resolver picks
+        // BFF AND the proto flag is on, hit /api/v1/trip/plan-proto and decode
+        // a JourneyList via Wire — that path carries the polyline data the
+        // journey-map needs. Otherwise hit the NSW-shaped JSON endpoint on
+        // whichever base URL the resolver chose (NSW direct, or BFF JSON
+        // pass-through when the proto flag is off).
         val spec = TripRequestSpec(
             originStopId = originStopId,
             destinationStopId = destinationStopId,
@@ -53,24 +53,28 @@ internal class RealTripPlanningService(
             time = time,
             excludeProductClassSet = excludeProductClassSet,
         )
-        if (IS_BFF_LOCAL_OVERRIDE_SET && IS_BFF_PROTO_ENABLED) {
+        val baseUrl = resolver.resolveBaseUrl()
+        val upstream = baseUrl.toNetworkUpstream()
+
+        if (upstream == NetworkUpstream.BFF && IS_BFF_PROTO_ENABLED) {
             logNetworkCall(
-                target = NetworkTarget.BFF,
+                target = NetworkUpstream.BFF,
                 method = "GET",
                 path = "/api/v1/trip/plan-proto",
             )
-            val bytes: ByteArray = httpClient.get("$KRAIL_BFF_BASE_URL/api/v1/trip/plan-proto") {
+            val bytes: ByteArray = httpClient.get("$baseUrl/api/v1/trip/plan-proto") {
                 url { appendTripQueryParams(spec) }
                 accept(ContentType("application", "x-protobuf"))
             }.body()
             return@withContext journeyListToTripResponse(JourneyList.ADAPTER.decode(bytes))
         }
+
         logNetworkCall(
-            target = if (IS_BFF_LOCAL_OVERRIDE_SET) NetworkTarget.BFF else NetworkTarget.NSW,
+            target = upstream,
             method = "GET",
             path = "/v1/tp/trip",
         )
-        httpClient.get("$tripBaseUrl/v1/tp/trip") {
+        httpClient.get("$baseUrl/v1/tp/trip") {
             url { appendTripQueryParams(spec) }
         }.body()
     }
@@ -142,10 +146,10 @@ internal class RealTripPlanningService(
         stopSearchQuery: String,
         stopType: StopType,
     ): StopFinderResponse = withContext(ioDispatcher) {
-        // stop_finder always goes to NSW direct — BFF has no equivalent endpoint.
+        // stop_finder always goes to NSW direct. BFF has no equivalent endpoint.
         // Phase D will replace this with local search against a stops dataset.
         logNetworkCall(
-            target = NetworkTarget.NSW,
+            target = NetworkUpstream.NSW,
             method = "GET",
             path = "/v1/tp/stop_finder",
         )

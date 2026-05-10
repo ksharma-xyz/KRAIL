@@ -19,6 +19,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.network"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
     iosArm64()
     iosSimulatorArm64()
@@ -34,6 +35,9 @@ kotlin {
                 implementation(projects.core.appInfo)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
+                implementation(projects.core.remoteConfig)
+                implementation(projects.feature.debugSettings.state)
+                implementation(projects.feature.debugSettings.store)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)

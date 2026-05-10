@@ -1,26 +1,30 @@
 package xyz.ksharma.krail.feature.debug.settings.state
 
 /**
- * Where a given [EndpointScope] should send its traffic at runtime.
+ * Which BFF deployment a debug build targets when the BFF path is active.
  *
- * Resolution lives in the network services (deferred to a follow-up commit on
- * this branch). Empty / missing prod URL falls back silently to NSW so an
- * accidental `BFF_PROD` selection cannot break the app before BFF deploys.
+ * Only consulted when `BffEndpointResolver.useBff()` is true (either because
+ * Firebase RC `enable_proto_bff` is on, or because the developer set
+ * [FlagOverride.FORCE_ON] in the Debug Config UI). When neither is true the
+ * resolver routes to NSW direct and ignores this value entirely.
+ *
+ * Default for new installs is [BFF_LOCAL] so the existing `local.properties`
+ * `krail.bffBaseUrl` opt-in keeps working transparently for developers who
+ * already wired it up.
  */
 enum class NetworkTarget {
-    /** NSW transport.nsw.gov.au direct, current production behavior. */
-    NSW_DIRECT,
-
     /**
-     * Local KRAIL-BFF instance (set via `local.properties` `krail.bffBaseUrl`).
-     * Default for new debug-build installs so the existing local opt-in keeps
-     * working transparently.
+     * Local KRAIL-BFF instance, sourced from `local.properties`
+     * `krail.bffBaseUrl`. Empty URL falls back to NSW direct so a
+     * misconfigured local opt-in cannot break the app.
      */
     BFF_LOCAL,
 
     /**
-     * Production KRAIL-BFF (set via `local.properties` `krail.bffProdBaseUrl`).
-     * Empty URL until BFF deploys; resolver falls back to NSW in that case.
+     * Production KRAIL-BFF, sourced from `local.properties`
+     * `krail.bffProdBaseUrl`. Empty until BFF deploys; resolver falls back
+     * to NSW direct in that case so a `BFF_PROD` selection cannot break
+     * the app before the BFF actually ships.
      */
     BFF_PROD,
 }

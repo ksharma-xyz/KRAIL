@@ -15,6 +15,7 @@ val parkRideNetworkModule = module {
         RealParkRideService(
             httpClient = parkRideHttpClient(get()),
             ioDispatcher = get(named(IODispatcher)),
+            resolver = get(),
         )
     } bind ParkRideService::class
 

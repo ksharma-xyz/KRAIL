@@ -68,9 +68,7 @@ import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
-import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
-import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -112,7 +110,6 @@ fun SavedTripsScreen(
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
-    onInviteFriendsTileDisplay: () -> Unit = {},
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
     departureBoardEntries: ImmutableList<StopDepartureBoardEntry> = persistentListOf(),
@@ -255,56 +252,6 @@ fun SavedTripsScreen(
                                     onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
                                 },
                             )
-                        }
-
-                        val hasInviteFriendsInRemoteConfig =
-                            savedTripsState.infoTiles?.any { tile ->
-                                tile.key.startsWith("invite_friends", ignoreCase = true) ||
-                                    tile.type == InfoTileData.InfoTileType.INVITE_FRIENDS
-                            } ?: false
-
-                        val shouldShowInviteFriends = savedTripsState.savedTrips.size >= 2 &&
-                            !hasInviteFriendsInRemoteConfig
-
-                        if (shouldShowInviteFriends) {
-                            item(key = "invite_friends_tile_hardcoded") {
-                                LaunchedEffect(!savedTripsState.hasSeenInviteFriendsTile) {
-                                    if (!savedTripsState.hasSeenInviteFriendsTile) {
-                                        onInviteFriendsTileDisplay()
-                                    }
-                                }
-
-                                InfoTile(
-                                    infoTileData = InfoTileData(
-                                        key = "invite_friends_hardcoded",
-                                        title = "Invite Your Friends",
-                                        description = "You're the reason KRAIL is ad-free. Share it " +
-                                            "with friends and help Sydney ride better.",
-                                        primaryCta = InfoTileCta(
-                                            text = "Invite",
-                                            url = null,
-                                        ),
-                                        type = InfoTileData.InfoTileType.INVITE_FRIENDS,
-                                        showDismissButton = false,
-                                    ),
-                                    initialState = if (savedTripsState.hasSeenInviteFriendsTile) {
-                                        InfoTileState.COLLAPSED
-                                    } else {
-                                        InfoTileState.EXPANDED
-                                    },
-                                    onCtaClick = { tileData ->
-                                        onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
-                                    },
-                                    onDismissClick = { },
-                                    onTileExpand = { tileData ->
-                                        onEvent(SavedTripUiEvent.InfoTileExpand(tileData.key))
-                                    },
-                                    modifier = Modifier.padding(
-                                        horizontal = dim.pageHorizontalPadding,
-                                        vertical = dim.spacingM,
-                                    ),
-                                )
-                            }
                         }
 
                         savedTripsContent(

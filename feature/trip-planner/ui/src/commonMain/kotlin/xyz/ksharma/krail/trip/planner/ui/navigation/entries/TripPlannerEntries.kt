@@ -32,6 +32,5 @@ fun EntryProviderScope<NavKey>.TripPlannerEntries(
     DebugConfigEntries(
         onBack = { tripPlannerNavigator.goBack() },
         onNavigateToNetwork = { tripPlannerNavigator.navigateToDebugConfigNetwork() },
-        onNavigateToFeatureFlags = { tripPlannerNavigator.navigateToDebugConfigFeatureFlags() },
     )
 }

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.network.IS_BFF_PROD_DEPLOYED
 import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.KRAIL_BFF_PROD_BASE_URL
-import xyz.ksharma.krail.feature.debug.settings.state.NetworkTarget
+import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
@@ -32,15 +32,20 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 /**
- * Picker for which BFF deployment to hit when the BFF path is active.
+ * Picker for the single [NetworkSource] knob driving the resolver.
  * Selection persists immediately on tap; no save button.
+ *
+ * The FOLLOW_RC row's caption shows the live `enable_proto_bff` value plus
+ * what it currently maps to so a developer can see at a glance what the
+ * production cohort would see right now.
  */
 @Composable
 fun NetworkConfigScreen(
-    selected: NetworkTarget,
+    selected: NetworkSource,
+    liveBffEnabled: Boolean,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
-    onSelect: (NetworkTarget) -> Unit = {},
+    onSelect: (NetworkSource) -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -58,22 +63,40 @@ fun NetworkConfigScreen(
                 item(key = "header") {
                     NetworkConfigHeader()
                 }
+                item(key = "row-follow-rc") {
+                    NetworkRadioRow(
+                        title = "Follow Firebase RC",
+                        subtitle = followRcSubtitle(liveBffEnabled),
+                        selected = selected == NetworkSource.FOLLOW_RC,
+                        enabled = true,
+                        onClick = { onSelect(NetworkSource.FOLLOW_RC) },
+                    )
+                }
+                item(key = "row-nsw-direct") {
+                    NetworkRadioRow(
+                        title = "NSW Direct",
+                        subtitle = "https://api.transport.nsw.gov.au",
+                        selected = selected == NetworkSource.NSW_DIRECT,
+                        enabled = true,
+                        onClick = { onSelect(NetworkSource.NSW_DIRECT) },
+                    )
+                }
                 item(key = "row-bff-local") {
                     NetworkRadioRow(
                         title = "BFF Local",
                         subtitle = bffLocalSubtitle(),
-                        selected = selected == NetworkTarget.BFF_LOCAL,
-                        enabled = true,
-                        onClick = { onSelect(NetworkTarget.BFF_LOCAL) },
+                        selected = selected == NetworkSource.BFF_LOCAL,
+                        enabled = KRAIL_BFF_BASE_URL.isNotBlank(),
+                        onClick = { onSelect(NetworkSource.BFF_LOCAL) },
                     )
                 }
                 item(key = "row-bff-prod") {
                     NetworkRadioRow(
-                        title = "BFF Production",
+                        title = "BFF Prod",
                         subtitle = bffProdSubtitle(),
-                        selected = selected == NetworkTarget.BFF_PROD,
+                        selected = selected == NetworkSource.BFF_PROD,
                         enabled = IS_BFF_PROD_DEPLOYED,
-                        onClick = { onSelect(NetworkTarget.BFF_PROD) },
+                        onClick = { onSelect(NetworkSource.BFF_PROD) },
                     )
                 }
             }
@@ -85,7 +108,7 @@ fun NetworkConfigScreen(
 private fun NetworkConfigHeader() {
     val dim = KrailTheme.dimensions
     Text(
-        text = "Active when BFF is on. Pick which BFF deployment to hit.",
+        text = "Pick where the app's BFF-eligible requests go.",
         style = KrailTheme.typography.bodyLarge,
         color = KrailTheme.colors.softLabel,
         modifier = Modifier
@@ -94,11 +117,25 @@ private fun NetworkConfigHeader() {
     )
 }
 
+private fun followRcSubtitle(liveBffEnabled: Boolean): String {
+    val rcLine = "enable_proto_bff is currently $liveBffEnabled"
+    val mappingLine = if (liveBffEnabled) "Maps to: BFF Prod" else "Maps to: NSW Direct"
+    return "$rcLine\n$mappingLine"
+}
+
 private fun bffLocalSubtitle(): String =
-    if (KRAIL_BFF_BASE_URL.isNotBlank()) KRAIL_BFF_BASE_URL else "(not set in local.properties)"
+    if (KRAIL_BFF_BASE_URL.isNotBlank()) {
+        KRAIL_BFF_BASE_URL
+    } else {
+        "(set krail.bffBaseUrl in local.properties)"
+    }
 
 private fun bffProdSubtitle(): String =
-    if (KRAIL_BFF_PROD_BASE_URL.isNotBlank()) KRAIL_BFF_PROD_BASE_URL else "(not deployed)"
+    if (KRAIL_BFF_PROD_BASE_URL.isNotBlank()) {
+        KRAIL_BFF_PROD_BASE_URL
+    } else {
+        "(not deployed yet)"
+    }
 
 @Composable
 internal fun NetworkRadioRow(
@@ -171,6 +208,9 @@ private val RADIO_BORDER_WIDTH = 2.dp
 @Composable
 private fun NetworkConfigScreenPreview() {
     PreviewTheme {
-        NetworkConfigScreen(selected = NetworkTarget.BFF_LOCAL)
+        NetworkConfigScreen(
+            selected = NetworkSource.FOLLOW_RC,
+            liveBffEnabled = false,
+        )
     }
 }

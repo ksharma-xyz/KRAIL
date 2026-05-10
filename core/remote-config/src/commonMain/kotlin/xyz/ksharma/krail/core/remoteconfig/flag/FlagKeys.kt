@@ -42,8 +42,9 @@ enum class FlagKeys(val key: String) {
      * direct. Default `false` until cohort rollout begins.
      *
      * Resolved by `BffEndpointResolver` in `:core:network`. Debug builds
-     * may override via the Debug Config UI (`FlagOverride.FORCE_ON` /
-     * `FORCE_OFF`); release builds always read the live RC value.
+     * may override via the Debug Config UI (`NetworkSource.NSW_DIRECT` /
+     * `BFF_LOCAL` / `BFF_PROD`); release builds always read the live RC
+     * value.
      */
     ENABLE_PROTO_BFF("enable_proto_bff"),
 }

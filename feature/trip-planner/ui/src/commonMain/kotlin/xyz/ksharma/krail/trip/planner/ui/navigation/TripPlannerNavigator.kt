@@ -24,7 +24,6 @@ interface TripPlannerNavigator {
     fun navigateToTrackTrip(encodedData: String? = null)
     fun navigateToDebugConfig()
     fun navigateToDebugConfigNetwork()
-    fun navigateToDebugConfigFeatureFlags()
     fun goBack()
 
     // Special operations

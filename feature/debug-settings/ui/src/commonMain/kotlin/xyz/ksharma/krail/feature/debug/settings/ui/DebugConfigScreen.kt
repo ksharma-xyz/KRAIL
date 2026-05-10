@@ -24,13 +24,16 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
  * Top-level Debug Config screen, list of category tiles. Routed in from
  * Settings via the "Debug Config" row (which is gated on
  * `appInfo.isDebug`, so this screen never appears in release builds).
+ *
+ * Currently has just the Network tile. The list-of-tiles pattern is kept
+ * so future debug categories (logs, analytics overrides, force-crash, etc.)
+ * slot in cleanly without rewriting this screen.
  */
 @Composable
 fun DebugConfigScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
-    onFeatureFlagsClick: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -51,15 +54,8 @@ fun DebugConfigScreen(
                 item(key = "tile-network") {
                     DebugConfigTile(
                         title = "Network",
-                        subtitle = "Pick which BFF deployment to hit when BFF is on.",
+                        subtitle = "Pick where BFF-eligible calls are routed.",
                         onClick = onNetworkClick,
-                    )
-                }
-                item(key = "tile-feature-flags") {
-                    DebugConfigTile(
-                        title = "Feature Flags",
-                        subtitle = "Override the enable_proto_bff rollout flag.",
-                        onClick = onFeatureFlagsClick,
                     )
                 }
             }

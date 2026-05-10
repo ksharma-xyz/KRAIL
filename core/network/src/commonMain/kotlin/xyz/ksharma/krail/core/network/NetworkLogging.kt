@@ -20,9 +20,9 @@ internal const val KRAIL_NETWORK_LOG_TAG: String = "KrailNetwork:"
  * "target" segment of a network log line so a developer can tell at a
  * glance whether a call took the BFF path or the NSW direct path.
  *
- * Distinct from `xyz.ksharma.krail.feature.debug.settings.state.NetworkTarget`
- * which selects between BFF deployments (`BFF_LOCAL` vs `BFF_PROD`); this
- * enum is purely a pre-call log label.
+ * Distinct from `xyz.ksharma.krail.feature.debug.settings.state.NetworkSource`
+ * which is the developer-facing knob in the Debug Config UI; this enum is
+ * purely a pre-call log label.
  */
 enum class NetworkUpstream(val label: String) {
     /** KRAIL-BFF (local override or future production deploy). */

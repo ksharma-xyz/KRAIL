@@ -10,7 +10,6 @@ import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.feature.debug.settings.ui.DebugConfigScreen
 import xyz.ksharma.krail.feature.debug.settings.ui.DebugSettingsViewModel
-import xyz.ksharma.krail.feature.debug.settings.ui.FeatureFlagsScreen
 import xyz.ksharma.krail.feature.debug.settings.ui.NetworkConfigScreen
 
 /**
@@ -18,18 +17,16 @@ import xyz.ksharma.krail.feature.debug.settings.ui.NetworkConfigScreen
  * nav graph via `EntryProviderScope` from the host module (currently
  * trip-planner UI's `TripPlannerEntries`).
  *
- * @param onBack invoked when any of the three screens fires a back press.
+ * @param onBack invoked when any of the screens fires a back press.
  *   The host's navigator does the actual `pop` since this module is
  *   navigator-agnostic.
  * @param onNavigateToNetwork open the Network sub-screen.
- * @param onNavigateToFeatureFlags open the Feature Flags sub-screen.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun EntryProviderScope<NavKey>.DebugConfigEntries(
     onBack: () -> Unit,
     onNavigateToNetwork: () -> Unit,
-    onNavigateToFeatureFlags: () -> Unit,
 ) {
     entry<DebugConfigHomeRoute>(
         metadata = ListDetailSceneStrategy.detailPane(),
@@ -37,7 +34,6 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
         DebugConfigScreen(
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,
-            onFeatureFlagsClick = onNavigateToFeatureFlags,
         )
     }
 
@@ -46,24 +42,12 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
     ) {
         val viewModel: DebugSettingsViewModel = koinViewModel()
         val state by viewModel.state.collectAsStateWithLifecycle()
+        val bffEnabled by viewModel.bffEnabled.collectAsStateWithLifecycle()
         NetworkConfigScreen(
-            selected = state.networkTarget,
+            selected = state.source,
+            liveBffEnabled = bffEnabled,
             onBackClick = onBack,
-            onSelect = viewModel::selectNetworkTarget,
-        )
-    }
-
-    entry<DebugConfigFeatureFlagsRoute>(
-        metadata = ListDetailSceneStrategy.detailPane(),
-    ) {
-        val viewModel: DebugSettingsViewModel = koinViewModel()
-        val state by viewModel.state.collectAsStateWithLifecycle()
-        val liveBffEnabled by viewModel.liveBffEnabled.collectAsStateWithLifecycle()
-        FeatureFlagsScreen(
-            selected = state.flagOverride,
-            liveBffEnabled = liveBffEnabled,
-            onBackClick = onBack,
-            onSelect = viewModel::selectFlagOverride,
+            onSelect = viewModel::selectSource,
         )
     }
 }

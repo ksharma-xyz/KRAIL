@@ -6,11 +6,8 @@ package xyz.ksharma.krail.feature.debug.settings.state
  */
 sealed interface DebugSettingsEvent {
 
-    /** Pick the [NetworkTarget] used when the BFF path is active. */
-    data class SetNetworkTarget(val target: NetworkTarget) : DebugSettingsEvent
-
-    /** Pick the [FlagOverride] for the single `enable_proto_bff` flag. */
-    data class SetFlagOverride(val override: FlagOverride) : DebugSettingsEvent
+    /** Pick the [NetworkSource] used by the resolver. */
+    data class SetSource(val source: NetworkSource) : DebugSettingsEvent
 
     /** Restore the entire state to [DebugSettingsState.default]. */
     data object Reset : DebugSettingsEvent

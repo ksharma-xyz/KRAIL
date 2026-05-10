@@ -6,16 +6,15 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsState
-import xyz.ksharma.krail.feature.debug.settings.state.FlagOverride
-import xyz.ksharma.krail.feature.debug.settings.state.NetworkTarget
+import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
 import xyz.ksharma.krail.sandook.SandookPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
  * Tests for [RealDebugNetworkConfigStore]. Covers hydration from defaults,
- * write-and-read round-tripping for both the network target and flag
- * override, and the reset path. Uses an in-memory [SandookPreferences]
+ * write-and-read round-tripping for [NetworkSource], the reset path, and
+ * a corrupt-enum hydration fallback. Uses an in-memory [SandookPreferences]
  * fake to avoid any DB infrastructure in commonTest.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -32,55 +31,57 @@ class RealDebugNetworkConfigStoreTest {
     }
 
     @Test
-    fun `Given default state When SetNetworkTarget BFF_PROD Then state emits new target`() = runTest {
+    fun `Given default state When SetSource BFF_PROD Then store emits new source`() = runTest {
         val store = newStore()
 
-        store.set(DebugSettingsEvent.SetNetworkTarget(NetworkTarget.BFF_PROD))
+        store.set(DebugSettingsEvent.SetSource(NetworkSource.BFF_PROD))
 
-        assertEquals(NetworkTarget.BFF_PROD, store.networkTarget())
+        assertEquals(NetworkSource.BFF_PROD, store.source())
     }
 
     @Test
-    fun `Given default state When SetFlagOverride FORCE_ON Then state emits new override`() = runTest {
+    fun `Given default state When SetSource NSW_DIRECT Then store emits new source`() = runTest {
         val store = newStore()
 
-        store.set(DebugSettingsEvent.SetFlagOverride(FlagOverride.FORCE_ON))
+        store.set(DebugSettingsEvent.SetSource(NetworkSource.NSW_DIRECT))
 
-        assertEquals(FlagOverride.FORCE_ON, store.flagOverride())
+        assertEquals(NetworkSource.NSW_DIRECT, store.source())
     }
 
     @Test
-    fun `Given mutated state When Reset Then both fields revert to defaults`() = runTest {
+    fun `Given mutated state When Reset Then source reverts to default`() = runTest {
         val store = newStore()
-        store.set(DebugSettingsEvent.SetNetworkTarget(NetworkTarget.BFF_PROD))
-        store.set(DebugSettingsEvent.SetFlagOverride(FlagOverride.FORCE_ON))
+        store.set(DebugSettingsEvent.SetSource(NetworkSource.BFF_PROD))
 
         store.set(DebugSettingsEvent.Reset)
 
-        assertEquals(DebugSettingsState.default().networkTarget, store.networkTarget())
-        assertEquals(DebugSettingsState.default().flagOverride, store.flagOverride())
+        assertEquals(DebugSettingsState.DEFAULT_SOURCE, store.source())
     }
 
     @Test
     fun `Given persisted prefs When new store constructed Then hydrates from prefs`() = runTest {
         val prefs = InMemorySandookPreferences()
-        prefs.setString(RealDebugNetworkConfigStore.KEY_DEBUG_NETWORK_TARGET, NetworkTarget.BFF_PROD.name)
-        prefs.setString(RealDebugNetworkConfigStore.KEY_DEBUG_FLAG_OVERRIDE, FlagOverride.FORCE_ON.name)
+        prefs.setString(
+            RealDebugNetworkConfigStore.KEY_DEBUG_NETWORK_SOURCE,
+            NetworkSource.BFF_PROD.name,
+        )
 
         val store = RealDebugNetworkConfigStore(prefs, UnconfinedTestDispatcher())
 
-        assertEquals(NetworkTarget.BFF_PROD, store.networkTarget())
-        assertEquals(FlagOverride.FORCE_ON, store.flagOverride())
+        assertEquals(NetworkSource.BFF_PROD, store.source())
     }
 
     @Test
-    fun `Given corrupt enum string When hydrating Then falls back to default for that field`() = runTest {
+    fun `Given corrupt enum string When hydrating Then falls back to default`() = runTest {
         val prefs = InMemorySandookPreferences()
-        prefs.setString(RealDebugNetworkConfigStore.KEY_DEBUG_NETWORK_TARGET, "NOT_A_REAL_VALUE")
+        prefs.setString(
+            RealDebugNetworkConfigStore.KEY_DEBUG_NETWORK_SOURCE,
+            "NOT_A_REAL_VALUE",
+        )
 
         val store = RealDebugNetworkConfigStore(prefs, UnconfinedTestDispatcher())
 
-        assertEquals(DebugSettingsState.DEFAULT_NETWORK_TARGET, store.networkTarget())
+        assertEquals(DebugSettingsState.DEFAULT_SOURCE, store.source())
     }
 
     private fun newStore(): RealDebugNetworkConfigStore = RealDebugNetworkConfigStore(

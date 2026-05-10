@@ -5,33 +5,23 @@ package xyz.ksharma.krail.feature.debug.settings.state
  *
  * Persisted by `DebugNetworkConfigStore` in the `:feature:debug-settings:store`
  * module. Read by `BffEndpointResolver` (in `:core:network`) once per network
- * call to decide whether the call goes to BFF or NSW, and which BFF deployment.
+ * call to decide where the call should go.
  *
- * @property networkTarget which BFF deployment to hit when the resolver picks
- *   the BFF path. Default is [DEFAULT_NETWORK_TARGET] so a developer's existing
- *   `local.properties` opt-in keeps working.
- * @property flagOverride debug-only override for the single Firebase RC flag
- *   `enable_proto_bff`. Default is [DEFAULT_FLAG_OVERRIDE] so debug builds
- *   match the production cohort until a developer flips it. Ignored entirely
- *   in release builds.
+ * @property source the single knob driving the resolver. Default is
+ *   [DEFAULT_SOURCE] so debug builds match the production cohort until a
+ *   developer flips a row in the Network screen. Ignored entirely in
+ *   release builds (which always behave as [NetworkSource.FOLLOW_RC]).
  */
 data class DebugSettingsState(
-    val networkTarget: NetworkTarget,
-    val flagOverride: FlagOverride,
+    val source: NetworkSource = DEFAULT_SOURCE,
 ) {
     companion object {
-        /** Default BFF deployment for fresh installs. Preserves the local opt-in. */
-        val DEFAULT_NETWORK_TARGET: NetworkTarget = NetworkTarget.BFF_LOCAL
-
-        /** Default flag override for fresh installs. Matches the release cohort. */
-        val DEFAULT_FLAG_OVERRIDE: FlagOverride = FlagOverride.FOLLOW_RC
+        /** Default source for fresh installs. Matches the release cohort. */
+        val DEFAULT_SOURCE: NetworkSource = NetworkSource.FOLLOW_RC
 
         /**
          * Initial state for a fresh install (or after [DebugSettingsEvent.Reset]).
          */
-        fun default(): DebugSettingsState = DebugSettingsState(
-            networkTarget = DEFAULT_NETWORK_TARGET,
-            flagOverride = DEFAULT_FLAG_OVERRIDE,
-        )
+        fun default(): DebugSettingsState = DebugSettingsState(source = DEFAULT_SOURCE)
     }
 }

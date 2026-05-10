@@ -10,10 +10,6 @@ sealed interface DebugConfigRoute : NavKey
 @Serializable
 data object DebugConfigHomeRoute : DebugConfigRoute
 
-/** Network target picker (BFF Local vs BFF Prod). */
+/** Network source picker. */
 @Serializable
 data object DebugConfigNetworkRoute : DebugConfigRoute
-
-/** Feature flag override picker for the `enable_proto_bff` rollout flag. */
-@Serializable
-data object DebugConfigFeatureFlagsRoute : DebugConfigRoute

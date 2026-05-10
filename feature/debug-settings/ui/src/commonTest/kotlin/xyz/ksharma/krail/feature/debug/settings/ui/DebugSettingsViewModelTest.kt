@@ -15,8 +15,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsState
-import xyz.ksharma.krail.feature.debug.settings.state.FlagOverride
-import xyz.ksharma.krail.feature.debug.settings.state.NetworkTarget
+import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -26,7 +25,7 @@ import kotlin.test.assertEquals
 /**
  * Tests for [DebugSettingsViewModel]. Verifies that dispatching events
  * mutates the underlying store and that the live RC value flows into
- * `liveBffEnabled` on subscription.
+ * `bffEnabled` on subscription.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DebugSettingsViewModelTest {
@@ -44,43 +43,56 @@ class DebugSettingsViewModelTest {
     }
 
     @Test
-    fun `Given default state When selectNetworkTarget BFF_PROD Then store receives event`() = runTest {
+    fun `Given default state When selectSource BFF_PROD Then store receives event`() = runTest {
         val store = FakeDebugStore()
         val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
 
-        viewModel.selectNetworkTarget(NetworkTarget.BFF_PROD)
+        viewModel.selectSource(NetworkSource.BFF_PROD)
 
         assertEquals(
-            DebugSettingsEvent.SetNetworkTarget(NetworkTarget.BFF_PROD),
+            DebugSettingsEvent.SetSource(NetworkSource.BFF_PROD),
             store.lastEvent,
         )
     }
 
     @Test
-    fun `Given default state When selectFlagOverride FORCE_ON Then store receives event`() = runTest {
+    fun `Given default state When selectSource NSW_DIRECT Then store receives event`() = runTest {
         val store = FakeDebugStore()
         val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
 
-        viewModel.selectFlagOverride(FlagOverride.FORCE_ON)
+        viewModel.selectSource(NetworkSource.NSW_DIRECT)
 
         assertEquals(
-            DebugSettingsEvent.SetFlagOverride(FlagOverride.FORCE_ON),
+            DebugSettingsEvent.SetSource(NetworkSource.NSW_DIRECT),
             store.lastEvent,
         )
     }
 
     @Test
-    fun `Given live RC value When state collected Then liveBffEnabled emits the value`() = runTest {
+    fun `Given live RC value true When state collected Then bffEnabled emits true`() = runTest {
         val store = FakeDebugStore()
         val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(true))
 
-        // Subscribe to state to trigger onStart, which refreshes liveBffEnabled.
+        // Subscribe to state to trigger onStart, which refreshes bffEnabled.
         viewModel.state.test {
             awaitItem()
             cancelAndIgnoreRemainingEvents()
         }
 
-        assertEquals(true, viewModel.liveBffEnabled.value)
+        assertEquals(true, viewModel.bffEnabled.value)
+    }
+
+    @Test
+    fun `Given live RC value false When state collected Then bffEnabled emits false`() = runTest {
+        val store = FakeDebugStore()
+        val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
+
+        viewModel.state.test {
+            awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals(false, viewModel.bffEnabled.value)
     }
 
     @Test
@@ -107,14 +119,12 @@ private class FakeDebugStore : DebugNetworkConfigStore {
     var lastEvent: DebugSettingsEvent? = null
         private set
 
-    override suspend fun flagOverride(): FlagOverride = _state.value.flagOverride
-    override suspend fun networkTarget(): NetworkTarget = _state.value.networkTarget
+    override suspend fun source(): NetworkSource = _state.value.source
 
     override suspend fun set(event: DebugSettingsEvent) {
         lastEvent = event
         _state.value = when (event) {
-            is DebugSettingsEvent.SetNetworkTarget -> _state.value.copy(networkTarget = event.target)
-            is DebugSettingsEvent.SetFlagOverride -> _state.value.copy(flagOverride = event.override)
+            is DebugSettingsEvent.SetSource -> _state.value.copy(source = event.source)
             DebugSettingsEvent.Reset -> DebugSettingsState.default()
         }
     }

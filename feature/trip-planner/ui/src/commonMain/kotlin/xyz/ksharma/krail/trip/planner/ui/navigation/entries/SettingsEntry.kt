@@ -17,7 +17,7 @@ import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 
 /**
- * Settings Entry - Detail Screen in List-Detail pattern
+ * Settings Entry, Detail Screen in List-Detail pattern.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -33,6 +33,7 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
 
         SettingsScreen(
             appVersion = settingsState.appVersion,
+            showDebugConfig = settingsState.isDebug,
             onChangeThemeClick = {
                 tripPlannerNavigator.navigateToThemeSelection()
             },
@@ -53,6 +54,9 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
                     viewModel.onOurStoryClick()
                     tripPlannerNavigator.navigateToOurStory()
                 }
+            },
+            onDebugConfigClick = {
+                tripPlannerNavigator.navigateToDebugConfig()
             },
             onSocialLinkClick = { socialType ->
                 viewModel.onEvent(SettingsEvent.SocialLinkClick(socialType))

@@ -48,9 +48,11 @@ class SettingsViewModel(
     }
 
     private fun fetchAppVersion() {
+        val appInfo = appInfoProvider.getAppInfo()
         updateUiState {
             copy(
-                appVersion = appInfoProvider.getAppInfo().appVersionDisplay,
+                appVersion = appInfo.appVersionDisplay,
+                isDebug = appInfo.isDebug,
             )
         }
     }

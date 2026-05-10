@@ -61,18 +61,30 @@ Likely needs **2 stacked PRs** to stay under 500 lines each:
 | Wire DI bindings | each network module |
 | Tests for the resolver (target × build-type matrix) | each module's `commonTest` |
 
-#### PR 2b — UI + nav entry + integration (~250 lines)
+#### PR 2b — UI + resolver + RC reader (✅ landed)
+
+Architecture simplified to **a single Firebase RC flag** (`enable_proto_bff`)
+plus a debug-only override (`FOLLOW_RC` / `FORCE_ON` / `FORCE_OFF`). The
+per-endpoint `EndpointScope` enum, kill switch, and compare-mode are all gone:
+one switch flips all four BFF-eligible endpoints, the RC flag itself acts as
+the kill switch. `BFF_LOCAL` vs `BFF_PROD` is a separate dimension picked in
+the Network sub-screen.
 
 | Item | Lives in |
 |---|---|
 | New module `feature/debug-settings/ui` (Compose) | new module |
-| `DebugSettingsScreen` (top-level list, taj design) | `ui` module |
-| `NetworkSelectorScreen` (per-scope radio rows) | `ui` module |
-| `DebugSettingsViewModel` | `ui` module |
-| Nav entry `DebugSettingsEntry` | `ui` module |
-| Row in main `SettingsScreen` gated on `appInfoProvider.getAppInfo().isDebug` | `feature/trip-planner/ui` |
-| `X-Krail-Version` default header in shared HttpClient | `core/network` |
-| Compare-mode toggle (off by default) | `ui` + `store` |
+| `DebugConfigScreen` (top-level tile list) | `ui` module |
+| `NetworkConfigScreen` (radio: BFF Local / BFF Prod) | `ui` module |
+| `FeatureFlagsScreen` (radio: Follow RC / Force ON / Force OFF) | `ui` module |
+| `DebugSettingsViewModel` (shared by all three screens) | `ui` module |
+| Nav entries `DebugConfigEntries` + `TripPlannerNavigator` plumbing | `ui` module + `feature/trip-planner/ui` |
+| Row in main `SettingsScreen` gated on `SettingsState.isDebug` | `feature/trip-planner/ui` |
+| `BffEndpointResolver` shared helper (one resolveBaseUrl path for all 4 services) | `core/network` |
+| `Real*Service` refactor to inject `BffEndpointResolver` | 4 service modules |
+| RC reader for `enable_proto_bff` (FlagKeys + RemoteConfigDefaults) | `core/remote-config` |
+
+Compare-mode and the `X-Krail-Version` header are deferred; not blocking for
+the rollout shape.
 
 ### Future phases (later branches; not yet started)
 

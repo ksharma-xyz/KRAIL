@@ -11,7 +11,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
-import xyz.ksharma.krail.core.network.IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED
+import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
 import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.core.network.NetworkTarget
@@ -53,7 +53,7 @@ internal class RealTripPlanningService(
             time = time,
             excludeProductClassSet = excludeProductClassSet,
         )
-        if (IS_BFF_LOCAL_OVERRIDE_SET && IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED) {
+        if (IS_BFF_LOCAL_OVERRIDE_SET && IS_BFF_PROTO_ENABLED) {
             logNetworkCall(
                 target = NetworkTarget.BFF,
                 method = "GET",

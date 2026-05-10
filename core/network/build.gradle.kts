@@ -95,6 +95,13 @@ val iosNswTransportApiKey: String = localProperties.getProperty("IOS_NSW_TRANSPO
 val krailBffBaseUrl: String = localProperties.getProperty("krail.bffBaseUrl")
     ?: ""
 
+// Optional production KRAIL-BFF URL. Empty / missing represents
+// "BFF prod not yet deployed" — the runtime resolver falls back to NSW direct
+// in that case so a `BFF_PROD` selection in the debug-settings UI cannot break
+// the app before the BFF actually ships.
+val krailBffProdBaseUrl: String = localProperties.getProperty("krail.bffProdBaseUrl")
+    ?: ""
+
 // Only require API keys when CI is doing a real build that ships code; quality
 // checks (detekt, host tests) get placeholders below.
 if (!(isCIEnvironment && isCIQualityCheck)) {
@@ -134,5 +141,6 @@ buildkonfig {
         buildConfigField(FieldSpec.Type.STRING, "ANDROID_NSW_TRANSPORT_API_KEY", androidKey)
         buildConfigField(FieldSpec.Type.STRING, "IOS_NSW_TRANSPORT_API_KEY", iosKey)
         buildConfigField(FieldSpec.Type.STRING, "KRAIL_BFF_BASE_URL", krailBffBaseUrl)
+        buildConfigField(FieldSpec.Type.STRING, "KRAIL_BFF_PROD_BASE_URL", krailBffProdBaseUrl)
     }
 }

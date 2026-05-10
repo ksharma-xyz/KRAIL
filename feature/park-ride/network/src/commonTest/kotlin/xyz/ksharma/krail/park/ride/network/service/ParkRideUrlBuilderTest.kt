@@ -10,6 +10,8 @@ import kotlin.test.assertEquals
  * - facility list: NSW `/v1/carpark` vs BFF `/v1/parking/facilities`
  * - facility detail: NSW `/v1/carpark?facility=ID` vs BFF
  *   `/v1/parking/facilities/{id}/availability` (id in path, no query param)
+ * - batch by stop IDs: BFF only at `/v1/parking/availability?stopIds=...`
+ *   (no NSW equivalent)
  *
  * The branching is therefore non-trivial; pinning these strings catches
  * regressions where someone edits one branch and forgets to update the other.
@@ -85,6 +87,76 @@ class ParkRideUrlBuilderTest {
         )
 
         assertEquals("$bffBaseUrl/v1/parking/facilities/486/availability", url)
+    }
+
+    // endregion
+
+    // region: batch by stop IDs (BFF only)
+
+    @Test
+    fun `Given any input When building batch by stops URL Then BFF availability path is returned`() {
+        // The query string itself is appended by Ktor's `url { parameters.append(...) }`
+        // call inside RealParkRideService, so the helper only owns the base path.
+        // Pinning that path here protects against typos in the route itself.
+        val url = buildParkRideBatchByStopsUrl(bffBaseUrl = bffBaseUrl)
+
+        assertEquals("$bffBaseUrl/v1/parking/availability", url)
+    }
+
+    @Test
+    fun `Given a different BFF host When building batch by stops URL Then host is interpolated verbatim`() {
+        // Sanity check that the helper does not hard-code 10.0.2.2: iOS Simulator
+        // talks to localhost, not 10.0.2.2, and a future production deploy will
+        // use a real hostname.
+        val url = buildParkRideBatchByStopsUrl(bffBaseUrl = "http://localhost:8080")
+
+        assertEquals("http://localhost:8080/v1/parking/availability", url)
+    }
+
+    @Test
+    fun `Given full BFF batch URL with two stop IDs joined Then matches the canonical Android emulator form`() {
+        // The full URL the brief asks us to pin: base + path + joined stopIds.
+        // Ktor appends the query string at request time; we mirror that here
+        // by joining manually so the assertion is on a real string match.
+        val base = buildParkRideBatchByStopsUrl(bffBaseUrl = "http://10.0.2.2:8080")
+        val stopIds = listOf("275010", "2155384")
+        val full = "$base?stopIds=${stopIds.joinToString(",")}"
+
+        assertEquals(
+            "http://10.0.2.2:8080/v1/parking/availability?stopIds=275010,2155384",
+            full,
+        )
+    }
+
+    // endregion
+
+    // region: stop-ID cap helper
+
+    @Test
+    fun `Given stop IDs at the cap When capping Then the same list is returned unchanged`() {
+        val ids = (1..MAX_STOP_IDS_PER_BATCH).map { it.toString() }
+
+        val capped = capStopIdsForBatch(ids)
+
+        assertEquals(ids, capped)
+    }
+
+    @Test
+    fun `Given stop IDs over the cap When capping Then the first MAX_STOP_IDS_PER_BATCH are kept`() {
+        // Build a 25-element list: cap is 20, so we expect the first 20.
+        val ids = (1..25).map { it.toString() }
+
+        val capped = capStopIdsForBatch(ids)
+
+        assertEquals(MAX_STOP_IDS_PER_BATCH, capped.size)
+        assertEquals(ids.take(MAX_STOP_IDS_PER_BATCH), capped)
+    }
+
+    @Test
+    fun `Given an empty list When capping Then an empty list is returned`() {
+        val capped = capStopIdsForBatch(emptyList())
+
+        assertEquals(emptyList(), capped)
     }
 
     // endregion

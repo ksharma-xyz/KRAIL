@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
 import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
@@ -12,6 +13,7 @@ import xyz.ksharma.krail.core.network.NetworkTarget
 import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
+import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 
 internal class RealParkRideService(
     private val httpClient: HttpClient,
@@ -72,6 +74,58 @@ internal class RealParkRideService(
             val response: Map<String, String> = httpClient.get(requestUrl) {}.body()
             response
         }
+
+    override suspend fun fetchAvailabilityForStops(
+        stopIds: List<String>,
+    ): ParkingStopBatchResponse? {
+        // NSW has no equivalent batch endpoint, so the override-off branch
+        // returns null and the caller falls back to the per-facility path.
+        if (!IS_BFF_LOCAL_OVERRIDE_SET) return null
+
+        // Empty list is a no-op; do not fire a request.
+        if (stopIds.isEmpty()) return ParkingStopBatchResponse()
+
+        // Mirror the BFF's 20-ID cap client-side. Anything beyond the cap
+        // is silently truncated rather than erroring, matching the server's
+        // tolerant behaviour for the per-facility cap.
+        val cappedStopIds = capStopIdsForBatch(stopIds)
+
+        return withContext(ioDispatcher) {
+            val requestUrl = buildParkRideBatchByStopsUrl(
+                bffBaseUrl = KRAIL_BFF_BASE_URL,
+            )
+            logNetworkCall(
+                target = NetworkTarget.BFF,
+                method = "GET",
+                path = "/v1/parking/availability",
+            )
+            httpClient.get(requestUrl) {
+                url {
+                    parameters.append("stopIds", cappedStopIds.joinToString(","))
+                }
+            }.body()
+        }
+    }
+}
+
+/**
+ * BFF cap on `?stopIds=` values per batch request, per
+ * `KRAIL-BFF/docs/handover/PARK_RIDE_BATCH_HANDOVER.md` §2.
+ */
+internal const val MAX_STOP_IDS_PER_BATCH: Int = 20
+
+/**
+ * Truncates [stopIds] to the BFF's per-batch cap if needed, logging when a
+ * truncation actually happens. Pure and side-effect-free apart from the log
+ * line, so the cap behaviour can be unit-tested without a fake HTTP client.
+ */
+internal fun capStopIdsForBatch(stopIds: List<String>): List<String> {
+    if (stopIds.size <= MAX_STOP_IDS_PER_BATCH) return stopIds
+    log(
+        "fetchAvailabilityForStops: ${stopIds.size} stop IDs exceeds BFF cap of " +
+            "$MAX_STOP_IDS_PER_BATCH; truncating to first $MAX_STOP_IDS_PER_BATCH.",
+    )
+    return stopIds.take(MAX_STOP_IDS_PER_BATCH)
 }
 
 internal fun buildParkRideListUrl(
@@ -94,3 +148,13 @@ internal fun buildParkRideDetailUrl(
 } else {
     "$nswBaseUrl/v1/carpark"
 }
+
+/**
+ * Builds the BFF batch URL for the `?stopIds=` mode. The query parameter
+ * itself is appended by the Ktor caller via `url { parameters.append(...) }`
+ * so encoding is handled by the client; this helper exists purely so the
+ * base path is testable in isolation alongside the other URL builders.
+ */
+internal fun buildParkRideBatchByStopsUrl(
+    bffBaseUrl: String,
+): String = "$bffBaseUrl/v1/parking/availability"

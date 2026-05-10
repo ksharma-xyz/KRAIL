@@ -41,6 +41,7 @@ import xyz.ksharma.krail.info.tile.network.api.InfoTileManager
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
+import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
@@ -528,46 +529,25 @@ class SavedTripsViewModel(
             logError("No Park Ride facilities found for stopId: $stopId")
             return
         }
-        val cooldown = getApiCooldownDuration()
         val now = System.now().epochSeconds
+        val refreshable = filterRefreshableFacilities(
+            parkRideSandook = parkRideSandook,
+            facilityIds = facilityIds,
+            cooldown = getApiCooldownDuration(),
+            nowInstant = Instant.fromEpochSeconds(now),
+        )
+        if (refreshable.isEmpty()) return
 
-        facilityIds.forEach { facilityId ->
-            val lastCallEpoch = parkRideSandook.getLastApiCallTimestamp(facilityId)
-                ?: Instant.DISTANT_PAST.epochSeconds
-            val lastCall = Instant.fromEpochSeconds(lastCallEpoch)
-            val nowInstant = Instant.fromEpochSeconds(now)
-            if (nowInstant - lastCall >= cooldown) {
-                log("Fetching facility $facilityId for stop $stopId")
-                val apiResult = parkRideService.fetchCarParkFacilities(facilityId).getOrNull()
+        // BFF batch path: one HTTP call resolves stop to facilities and returns
+        // them all. NSW path returns null, the caller falls back to per-facility
+        // fan-out.
+        val batched: ParkingStopBatchResponse? =
+            parkRideService.fetchAvailabilityForStops(stopIds = listOf(stopId))
 
-                if (apiResult != null) {
-                    parkRideSandook.updateApiCallTimestamp(facilityId, now)
-
-                    // Get the stop name from the saved park ride mapping for this facility
-                    val stopName =
-                        parkRideSandook.getSavedParkRideByFacilityId(facilityId)?.stopName
-                            ?: stopId // Fall back to stopId if mapping is somehow missing
-
-                    val detail = apiResult.toNSWParkRideFacilityDetail(
-                        stopName = stopName,
-                        stopId = stopId,
-                    )
-
-                    parkRideSandook.insertOrReplaceAll(listOf(detail))
-                    log("Fetched and saved facility $facilityId for stop $stopId - $detail")
-                } else {
-                    // reset timestamp to DISTANT_PAST as API call failed, so we can retry
-                    // earlier than cooldown would end.
-                    parkRideSandook.updateApiCallTimestamp(
-                        facilityId = facilityId,
-                        timestamp = Instant.DISTANT_PAST.epochSeconds,
-                    )
-                    logError("API call failed for facility $facilityId")
-                }
-            } else {
-                val timeLeft = cooldown - (nowInstant - lastCall)
-                log("Facility $facilityId is on cooldown for another ${timeLeft.inWholeSeconds} seconds")
-            }
+        if (batched != null) {
+            applyBatchResults(parkRideSandook, stopId, refreshable, batched, now)
+        } else {
+            fanOutPerFacility(parkRideSandook, parkRideService, stopId, refreshable, now)
         }
     }
 

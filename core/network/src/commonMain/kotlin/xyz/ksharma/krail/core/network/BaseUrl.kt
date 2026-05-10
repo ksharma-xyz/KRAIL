@@ -28,4 +28,4 @@ val IS_BFF_LOCAL_OVERRIDE_SET: Boolean = KRAIL_BFF_BASE_URL.isNotBlank()
  * dedicated mapper, so we want to flip them independently — and ship Phase A
  * tonight without taking on Phase C's mapper risk.
  */
-const val IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED: Boolean = false
+const val IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED: Boolean = true

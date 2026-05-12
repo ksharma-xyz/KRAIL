@@ -14,7 +14,6 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswBusTripOptions
@@ -243,26 +242,17 @@ class RealStopResultsManager(
     // TODO - move to another file and add UT for it. Inject and use.
     override fun prioritiseStops(
         stopResults: List<SearchStopState.SearchResult.Stop>,
-    ): List<SearchStopState.SearchResult.Stop> {
-        val sortedTransportModes = NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
-        val transportModePriorityMap = sortedTransportModes.mapIndexed { index, transportMode ->
-            NswTransportConfig.productClassFor(transportMode) to index
-        }.toMap()
-
-        return stopResults.sortedWith(
-            compareBy(
-                { stopResult ->
-                    if (stopResult.stopId in highPriorityStopIdList) 0 else 1
-                },
-                { stopResult ->
-                    stopResult.transportModeType.minOfOrNull {
-                        transportModePriorityMap[NswTransportConfig.productClassFor(it)] ?: Int.MAX_VALUE
-                    } ?: Int.MAX_VALUE
-                },
-                { it.stopName },
-            ),
-        )
-    }
+    ): List<SearchStopState.SearchResult.Stop> = stopResults.sortedWith(
+        compareBy(
+            { stopResult ->
+                if (stopResult.stopId in highPriorityStopIdList) 0 else 1
+            },
+            { stopResult ->
+                stopResult.transportModeType.minOfOrNull { it.searchPriority } ?: Int.MAX_VALUE
+            },
+            { it.stopName },
+        ),
+    )
 
     override fun fetchLocalStopName(stopId: String): String? {
         val resultsDb = sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())

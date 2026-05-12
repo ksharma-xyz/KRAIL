@@ -19,18 +19,19 @@ sealed class TransportMode(
     val name: String,
     val productClass: Int,
     val priority: Int,
+    val searchPriority: Int,
 ) {
-    @Serializable object Train : TransportMode("#F6891F", "Train", 1, 1)
+    @Serializable object Train : TransportMode("#F6891F", "Train", 1, 1, 1)
 
-    @Serializable object Metro : TransportMode("#009B77", "Metro", 2, 3)
+    @Serializable object Metro : TransportMode("#009B77", "Metro", 2, 3, 2)
 
-    @Serializable object Bus : TransportMode("#00B5EF", "Bus", 5, 2)
+    @Serializable object Bus : TransportMode("#00B5EF", "Bus", 5, 2, 6)
 
-    @Serializable object LightRail : TransportMode("#E4022D", "Light Rail", 4, 4)
+    @Serializable object LightRail : TransportMode("#E4022D", "Light Rail", 4, 4, 3)
 
-    @Serializable object Ferry : TransportMode("#5AB031", "Ferry", 9, 5)
+    @Serializable object Ferry : TransportMode("#5AB031", "Ferry", 9, 5, 4)
 
-    @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6)
+    @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6, 5)
 
     companion object {
         val all: List<TransportMode> by lazy { listOf(Train, Metro, Bus, LightRail, Ferry, Coach) }

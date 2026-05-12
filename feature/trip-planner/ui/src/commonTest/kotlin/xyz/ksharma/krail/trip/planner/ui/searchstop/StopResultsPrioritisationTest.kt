@@ -89,6 +89,98 @@ class StopResultsPrioritisationTest {
         assertEquals("TRAIN", result.first().stopId)
     }
 
+    // region bus is always last among transport modes
+
+    @Test
+    fun `prioritiseStops places metro before bus`() {
+        val manager = managerWithHighPriorityIds()
+
+        val busStop = stop("BUS", "Random Bus Stop", TransportMode.Bus)
+        val metroStop = stop("METRO", "Metro Station", TransportMode.Metro)
+
+        val result = manager.prioritiseStops(listOf(busStop, metroStop))
+
+        assertEquals("METRO", result.first().stopId)
+    }
+
+    @Test
+    fun `prioritiseStops places light rail before bus`() {
+        val manager = managerWithHighPriorityIds()
+
+        val busStop = stop("BUS", "Random Bus Stop", TransportMode.Bus)
+        val lightRailStop = stop("LR", "Light Rail Stop", TransportMode.LightRail)
+
+        val result = manager.prioritiseStops(listOf(busStop, lightRailStop))
+
+        assertEquals("LR", result.first().stopId)
+    }
+
+    @Test
+    fun `prioritiseStops places ferry before bus`() {
+        val manager = managerWithHighPriorityIds()
+
+        val busStop = stop("BUS", "Random Bus Stop", TransportMode.Bus)
+        val ferryStop = stop("FERRY", "Ferry Wharf", TransportMode.Ferry)
+
+        val result = manager.prioritiseStops(listOf(busStop, ferryStop))
+
+        assertEquals("FERRY", result.first().stopId)
+    }
+
+    @Test
+    fun `prioritiseStops places coach before bus`() {
+        val manager = managerWithHighPriorityIds()
+
+        val busStop = stop("BUS", "Random Bus Stop", TransportMode.Bus)
+        val coachStop = stop("COACH", "Coach Terminal", TransportMode.Coach)
+
+        val result = manager.prioritiseStops(listOf(busStop, coachStop))
+
+        assertEquals("COACH", result.first().stopId)
+    }
+
+    @Test
+    fun `prioritiseStops places all non-bus modes before bus regardless of input order`() {
+        val manager = managerWithHighPriorityIds()
+
+        val busStop = stop("BUS", "Bus Interchange", TransportMode.Bus)
+        val trainStop = stop("TRAIN", "Central Station", TransportMode.Train)
+        val metroStop = stop("METRO", "Metro Station", TransportMode.Metro)
+        val lightRailStop = stop("LR", "Light Rail Stop", TransportMode.LightRail)
+        val ferryStop = stop("FERRY", "Circular Quay Wharf", TransportMode.Ferry)
+        val coachStop = stop("COACH", "Coach Terminal", TransportMode.Coach)
+
+        val result = manager.prioritiseStops(
+            listOf(busStop, metroStop, lightRailStop, trainStop, coachStop, ferryStop),
+        )
+
+        val busIndex = result.indexOfFirst { it.stopId == "BUS" }
+        val nonBusIds = listOf("TRAIN", "METRO", "LR", "FERRY", "COACH")
+        nonBusIds.forEach { id ->
+            val idx = result.indexOfFirst { it.stopId == id }
+            assertTrue(idx < busIndex, "Expected $id (index $idx) before BUS (index $busIndex)")
+        }
+    }
+
+    @Test
+    fun `prioritiseStops sorts non-bus modes among themselves by priority`() {
+        val manager = managerWithHighPriorityIds()
+
+        val trainStop = stop("TRAIN", "Central Station", TransportMode.Train)
+        val metroStop = stop("METRO", "Metro Station", TransportMode.Metro)
+        val lightRailStop = stop("LR", "Light Rail Stop", TransportMode.LightRail)
+        val ferryStop = stop("FERRY", "Circular Quay Wharf", TransportMode.Ferry)
+        val coachStop = stop("COACH", "Coach Terminal", TransportMode.Coach)
+
+        val result = manager.prioritiseStops(
+            listOf(coachStop, ferryStop, lightRailStop, metroStop, trainStop),
+        )
+
+        assertEquals(listOf("TRAIN", "METRO", "LR", "FERRY", "COACH"), result.map { it.stopId })
+    }
+
+    // endregion
+
     @Test
     fun `prioritiseStops is idempotent`() {
         val manager = managerWithHighPriorityIds("HP001")

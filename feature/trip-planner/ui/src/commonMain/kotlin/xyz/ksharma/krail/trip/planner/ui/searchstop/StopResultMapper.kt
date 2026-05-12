@@ -42,7 +42,7 @@ object StopResultMapper {
             )
         }.sortedBy { stopResult ->
             stopResult.transportModeType.minOfOrNull { mode ->
-                mode.priority
+                mode.searchPriority
             } ?: Int.MAX_VALUE
         }
     }

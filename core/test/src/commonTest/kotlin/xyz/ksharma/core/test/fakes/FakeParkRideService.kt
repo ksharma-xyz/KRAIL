@@ -3,6 +3,7 @@ package xyz.ksharma.core.test.fakes
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.park.ride.network.model.Location
 import xyz.ksharma.krail.park.ride.network.model.Occupancy
+import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.model.Zone
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 
@@ -19,6 +20,15 @@ class FakeParkRideService(
     override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> {
         return Result.success(facilityResponses.mapValues { it.value.facilityName })
     }
+
+    /**
+     * Default fake mirrors the production override-off behaviour: returns
+     * `null` so callers exercise the NSW per-facility fallback. Tests that
+     * need to assert the BFF batch path can subclass or wrap this fake.
+     */
+    override suspend fun fetchAvailabilityForStops(
+        stopIds: List<String>,
+    ): ParkingStopBatchResponse? = null
 
     companion object {
         val defaultFacilityResponses = mapOf(

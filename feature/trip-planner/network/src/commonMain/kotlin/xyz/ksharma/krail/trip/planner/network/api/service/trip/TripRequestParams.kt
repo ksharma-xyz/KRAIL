@@ -120,7 +120,7 @@ internal object TripRequestParams {
      * select one of the following: 1 = train, 2 = metro, 4 = light rail, 5 = bus, 7 = coach,
      * 9 = ferry, 11 = school bus.
      * `checkbox` allows you to exclude more than one means of transport when used in conjunction
-     * with the exclMOT_<ID> parameters.
+     * with the exclMOT<ID> parameters.
      *
      * Available values : checkbox, 1, 2, 4, 5, 7, 9, 11
      */
@@ -133,7 +133,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT1 = "exclMOT_1" // Optional, to exclude trains
+    const val exclMOT1 = "exclMOT1" // Optional, to exclude trains
 
     /**
      * Excludes metro services from the trip plan. Must be used in conjunction with
@@ -141,7 +141,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT2 = "exclMOT_2" // Optional, to exclude metro
+    const val exclMOT2 = "exclMOT2" // Optional, to exclude metro
 
     /**
      * Excludes light rail services from the trip plan. Must be used in conjunction with
@@ -149,7 +149,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT4 = "exclMOT_4" // Optional, to exclude light rail
+    const val exclMOT4 = "exclMOT4" // Optional, to exclude light rail
 
     /**
      * Excludes bus services from the trip plan. Must be used in conjunction with
@@ -157,7 +157,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT5 = "exclMOT_5" // Optional, to exclude bus
+    const val exclMOT5 = "exclMOT5" // Optional, to exclude bus
 
     /**
      * Excludes coach services from the trip plan. Must be used in conjunction with
@@ -165,7 +165,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT7: String = "exclMOT_7" // Optional, to exclude bus
+    const val exclMOT7: String = "exclMOT7" // Optional, to exclude coach
 
     /**
      * Excludes ferry services from the trip plan. Must be used in conjunction with
@@ -173,7 +173,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT9 = "exclMOT_9" // Optional, to exclude bus
+    const val exclMOT9 = "exclMOT9" // Optional, to exclude ferry
 
     /**
      * Excludes school bus services from the trip plan. Must be used in conjunction with
@@ -181,7 +181,7 @@ internal object TripRequestParams {
      *
      * Available values : 1
      */
-    const val exclMOT11 = "exclMOT_11"
+    const val exclMOT11 = "exclMOT11"
 
     /**
      * Including this parameter enables a number of options that result in this API call

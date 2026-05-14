@@ -33,6 +33,10 @@ jobs:
       FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Wire codegen for :io:bff-api reads protos from the krail-api-proto submodule.
+          # Without this, CI checkout would skip the submodule and the build would fail.
+          submodules: true
 
       # Select Xcode before anything else runs.
       # xcversion is not used — relies on the sunsetted xcode-install gem

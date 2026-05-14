@@ -1,0 +1,246 @@
+/* ============================================================
+   KRAIL Component Layer
+   Apply on top of tokens.css
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+body.krail {
+  background: var(--krail-surface);
+  color: var(--krail-on-surface);
+  font-family: var(--krail-font-default);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Icon ---------- */
+.krail-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--krail-icon-m);
+  height: var(--krail-icon-m);
+  flex-shrink: 0;
+}
+.krail-icon svg { width: 100%; height: 100%; }
+.krail-icon--xs { width: var(--krail-icon-xs); height: var(--krail-icon-xs); }
+.krail-icon--s  { width: var(--krail-icon-s);  height: var(--krail-icon-s);  }
+.krail-icon--l  { width: var(--krail-icon-l);  height: var(--krail-icon-l);  }
+.krail-icon--xl { width: var(--krail-icon-xl); height: var(--krail-icon-xl); }
+
+/* ---------- Buttons ---------- */
+/* Primary — themed, filled */
+.krail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--krail-space-m);
+  border: none;
+  cursor: pointer;
+  font-family: var(--krail-font-default);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.15px;
+  background: var(--krail-theme);
+  color: #FFFFFF;
+  height: var(--krail-button-medium-h);
+  padding: 0 var(--krail-space-xl);
+  border-radius: var(--krail-radius-full);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.krail-btn:hover { opacity: 0.92; }
+.krail-btn:active { transform: scale(0.97); }
+.krail-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.krail-btn--small { height: var(--krail-button-small-h); padding: 0 var(--krail-space-ml); font-size: 13px; }
+.krail-btn--large { height: 48px; padding: 0 var(--krail-space-xl); font-size: 17px; }
+
+/* Outlined — uses theme color border */
+.krail-btn--outlined {
+  background: transparent;
+  color: var(--krail-on-surface);
+  border: var(--krail-stroke-regular) solid var(--krail-theme);
+}
+
+/* Alert — yellow (warning) */
+.krail-btn--alert {
+  background: var(--krail-alert);
+  color: #1C1B1A;
+}
+
+/* Round icon button */
+.krail-btn-round {
+  width: var(--krail-button-round);
+  height: var(--krail-button-round);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  background: var(--krail-discover-chip-bg);
+  color: var(--krail-on-surface);
+}
+
+/* ---------- Chips ---------- */
+.krail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--krail-space-s);
+  padding: var(--krail-space-m) var(--krail-space-l);
+  border-radius: var(--krail-radius-full);
+  background: var(--krail-discover-chip-bg);
+  color: var(--krail-on-surface);
+  font-size: 14px;
+  font-weight: 500;
+  border: var(--krail-stroke-thin) solid var(--krail-outline-subtle);
+}
+.krail-chip--theme {
+  background: var(--krail-theme-bg);
+  border-color: var(--krail-theme);
+  color: var(--krail-on-surface);
+}
+.krail-chip--filled {
+  background: var(--krail-theme);
+  color: #FFFFFF;
+  border-color: var(--krail-theme);
+}
+
+/* Stop label pill (always dark, light text) */
+.krail-stop-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--krail-space-s);
+  padding: var(--krail-space-xs) var(--krail-space-m);
+  background: var(--krail-stop-label-surface);
+  color: var(--krail-on-stop-label-surface);
+  border-radius: var(--krail-radius-s);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.krail-stop-label .krail-icon { color: var(--krail-on-stop-label-surface); }
+
+/* ---------- Cards ---------- */
+.krail-card {
+  background: var(--krail-surface);
+  border: var(--krail-stroke-thin) solid var(--krail-outline-subtle);
+  border-radius: var(--krail-card-radius);
+  padding: var(--krail-card-v-pad) var(--krail-card-h-pad);
+}
+.krail-card--soft {
+  background: var(--krail-discover-card-bg);
+  border-color: transparent;
+}
+
+/* Journey card */
+.krail-journey-card {
+  background: var(--krail-surface);
+  border: var(--krail-stroke-thin) solid var(--krail-outline-subtle);
+  border-radius: var(--krail-card-radius);
+  padding: var(--krail-space-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--krail-space-l);
+}
+
+/* ---------- Text field ---------- */
+.krail-textfield {
+  display: flex;
+  align-items: center;
+  gap: var(--krail-space-l);
+  height: var(--krail-text-field-h);
+  padding: 0 var(--krail-space-xl);
+  border-radius: var(--krail-text-field-radius);
+  background: var(--krail-discover-chip-bg);
+  border: var(--krail-stroke-thin) solid var(--krail-outline-subtle);
+  color: var(--krail-on-surface);
+}
+.krail-textfield input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  font-family: var(--krail-font-default);
+  color: var(--krail-on-surface);
+}
+.krail-textfield input::placeholder { color: var(--krail-on-surface-placeholder); }
+.krail-textfield .krail-icon { color: var(--krail-on-surface-placeholder); }
+
+/* ---------- Divider ---------- */
+.krail-divider {
+  height: var(--krail-stroke-hairline);
+  background: var(--krail-outline-subtle);
+  border: 0;
+  width: 100%;
+}
+.krail-divider--vertical { width: var(--krail-stroke-hairline); height: auto; align-self: stretch; }
+
+/* ---------- Title bar ---------- */
+.krail-titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--krail-space-l);
+  padding: var(--krail-space-l) var(--krail-page-h-pad);
+  background: var(--krail-surface);
+}
+.krail-titlebar h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.15px;
+}
+
+/* ---------- Bottom sheet ---------- */
+.krail-bottom-sheet {
+  background: var(--krail-bottom-sheet-bg);
+  border-top-left-radius: var(--krail-bottom-sheet-radius);
+  border-top-right-radius: var(--krail-bottom-sheet-radius);
+  padding: var(--krail-space-l) var(--krail-bottom-sheet-pad) var(--krail-space-xxl);
+}
+.krail-bottom-sheet__handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--krail-sheet-drag-handle);
+  margin: 0 auto var(--krail-space-l);
+}
+
+/* ---------- Transport mode dot/badge ---------- */
+.krail-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #FFFFFF;
+  font-family: var(--krail-font-antonio);
+  letter-spacing: 0.4px;
+}
+.krail-mode--bus    { background: var(--krail-bus); }
+.krail-mode--train  { background: var(--krail-train); }
+.krail-mode--metro  { background: var(--krail-metro); }
+.krail-mode--ferry  { background: var(--krail-ferry); }
+.krail-mode--coach  { background: var(--krail-coach); }
+.krail-mode--lr     { background: var(--krail-light-rail); }
+
+/* Themed CSS variable swap helpers */
+[data-theme-style="train"]  { --krail-theme: var(--krail-train);       --krail-theme-bg: rgba(246,137,31,0.15); }
+[data-theme-style="metro"]  { --krail-theme: var(--krail-metro);       --krail-theme-bg: rgba(0,155,119,0.15); }
+[data-theme-style="bus"]    { --krail-theme: var(--krail-bus);         --krail-theme-bg: rgba(0,181,239,0.15); }
+[data-theme-style="ferry"]  { --krail-theme: var(--krail-ferry);       --krail-theme-bg: rgba(90,176,49,0.15); }
+[data-theme-style="purple"] { --krail-theme: var(--krail-purple-drip); --krail-theme-bg: rgba(172,0,201,0.15); }
+[data-theme-style="barbie"] { --krail-theme: var(--krail-barbie-pink); --krail-theme-bg: rgba(224,33,138,0.15); }
+
+[data-theme="dark"][data-theme-style="train"]  { --krail-theme-bg: rgba(246,137,31,0.45); }
+[data-theme="dark"][data-theme-style="metro"]  { --krail-theme-bg: rgba(0,155,119,0.45); }
+[data-theme="dark"][data-theme-style="bus"]    { --krail-theme-bg: rgba(0,181,239,0.45); }
+[data-theme="dark"][data-theme-style="ferry"]  { --krail-theme-bg: rgba(90,176,49,0.45); }
+[data-theme="dark"][data-theme-style="purple"] { --krail-theme-bg: rgba(172,0,201,0.45); }
+[data-theme="dark"][data-theme-style="barbie"] { --krail-theme-bg: rgba(224,33,138,0.45); }

@@ -12,6 +12,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.feature.track.network"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
 
     iosArm64()

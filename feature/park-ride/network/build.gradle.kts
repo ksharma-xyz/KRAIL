@@ -17,6 +17,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.park.ride.network"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
     listOf(
         iosArm64(),

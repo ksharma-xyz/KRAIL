@@ -590,6 +590,7 @@ private fun LazyListScope.journeyCardItems(
             departureDeviation = journey.departureDeviation,
             scheduledOriginTime = journey.scheduledOriginTime,
             deepLinkUrl = state.deepLinkUrls[journey.journeyId],
+            destinationUtcDateTime = journey.destinationUtcDateTime,
         )
     }
 }
@@ -617,6 +618,7 @@ private fun JourneyCardItem(
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
     deepLinkUrl: String? = null,
+    destinationUtcDateTime: String = "",
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -641,6 +643,7 @@ private fun JourneyCardItem(
             departureDeviation = departureDeviation,
             scheduledOriginTime = scheduledOriginTime,
             deepLinkUrl = deepLinkUrl,
+            destinationUtcDateTime = destinationUtcDateTime,
         )
     }
 }

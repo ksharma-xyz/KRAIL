@@ -2,15 +2,6 @@
 
 Draft · 2026-05-10 · current branch `feat/bff-local-debug-override`
 
-> **Morning runbook**: see [`BFF_PHASE_A_MORNING.md`](./BFF_PHASE_A_MORNING.md)
-> for copy-paste-runnable smoke-test steps. That doc is the single page to
-> read on wake-up; this plan is the long-form reference.
-
-> **Phase A integration report**: see
-> [`BFF_PHASE_A_INTEGRATION_REPORT.md`](./BFF_PHASE_A_INTEGRATION_REPORT.md)
-> for the handover back to the BFF team (what worked, captured latencies,
-> asks for next phase).
-
 > Sources (authoritative): `KRAIL-BFF/docs/handover/KRAIL_APP_INTEGRATION_HANDOVER.md`
 > (the playbook) and `KRAIL-BFF/docs/handover/KRAIL_API_REFERENCE.md` (real
 > captured wire format, field-by-field). Background: `BFF_ADOPTION_GUIDE.md`,
@@ -473,8 +464,8 @@ On `feat/bff-local-debug-override`, alongside the Phase A work:
 - ✅ `IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED` flag added to `BaseUrl.kt`,
   hard-coded `false`. Eventual debug-settings UI flips at runtime.
 - ✅ `RealTripPlanningService.trip()` proto branch scaffold added (gated on the
-  flag, dead-code-eliminated today). Stub `JourneyListMapper` throws
-  `NotImplementedError` with a pointer to `BFF_PHASE_A_MORNING.md` §5.
+  flag, dead-code-eliminated today). Stub `JourneyListMapper` throws with a
+  pointer to the consumer-wiring TODO below.
 
 What's still pending for the consumer wiring:
 

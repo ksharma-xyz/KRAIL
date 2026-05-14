@@ -72,6 +72,20 @@ We stack PRs. Break work into focused, layered branches and submit the full stac
 
 Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.
 
+## Submodules
+
+KRAIL pulls in the `krail-api-proto` repo as a git submodule at `krail-api-proto/`.
+Wire codegen in `:io:bff-api` reads `.proto` files from there. If a fresh checkout
+or worktree shows the directory empty, run:
+
+```sh
+git submodule update --init --recursive
+```
+
+`compileDebugSources` fails with a "no protos found" error otherwise. CI workflows
+that compile pass `submodules: true` to `actions/checkout`; if you add a new
+workflow that compiles, do the same.
+
 ## Full Quality Checks
 
 To verify a branch compiles on both platforms and passes static analysis, ask the user to run:

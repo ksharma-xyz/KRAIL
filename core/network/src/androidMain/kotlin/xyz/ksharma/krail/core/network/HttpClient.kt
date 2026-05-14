@@ -34,10 +34,13 @@ actual fun baseHttpClient(
         }
         install(Logging) {
             if (appInfoProvider.getAppInfo().isDebug) {
-                level = LogLevel.BODY
+                // Method + URL + status only. Bodies contain stop ids and times that,
+                // in aggregate, may reveal user patterns — so we never log them.
+                // (See KRAIL_INTEGRATION_MASTER_PLAN.md §13 on logging.)
+                level = LogLevel.INFO
                 logger = object : Logger {
                     override fun log(message: String) {
-                        krailLog(message)
+                        krailLog("$KRAIL_NETWORK_LOG_TAG $message")
                     }
                 }
                 sanitizeHeader { header -> header == HttpHeaders.Authorization }

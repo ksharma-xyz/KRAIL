@@ -19,6 +19,10 @@ jobs:
       passed: ${{ steps.detekt.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Wire codegen for :io:bff-api reads protos from the krail-api-proto submodule.
+          # Without this, CI checkout would skip the submodule and the build would fail.
+          submodules: true
 
       - name: Setup environment variables
         run: |

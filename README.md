@@ -81,10 +81,21 @@ maintainability across platforms. Key modules include:
 
 ## Building & Running
 
-- **Clone the repository**:
+- **Clone the repository (with submodules)**:
   ```sh
-  git clone git@github.com:ksharma-xyz/Krail.git
+  git clone --recurse-submodules git@github.com:ksharma-xyz/Krail.git
   ```
+
+  If you cloned without `--recurse-submodules`, fetch the submodule afterwards:
+  ```sh
+  cd Krail
+  git submodule update --init --recursive
+  ```
+
+  KRAIL pulls in [`KRAIL-API-PROTO`](https://github.com/ksharma-xyz/KRAIL-API-PROTO)
+  as a submodule at `krail-api-proto/`. Wire codegen in `:io:bff-api` reads
+  the `.proto` files from there; without the submodule, `compileDebugSources`
+  fails with a confusing "no protos found" error.
 
 - **Build**:
   ```bash

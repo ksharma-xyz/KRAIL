@@ -47,6 +47,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_walk
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -63,6 +64,9 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * A card that displays information about a journey.
@@ -102,6 +106,7 @@ fun JourneyCard(
     departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null,
     scheduledOriginTime: String? = null,
     deepLinkUrl: String? = null,
+    destinationUtcDateTime: String = "",
 ) {
     val dim = KrailTheme.dimensions
     val isPast by remember(timeToDeparture) {
@@ -203,6 +208,7 @@ fun JourneyCard(
                                 destinationTime = destinationTime,
                                 totalTravelTime = totalTravelTime,
                                 deepLinkUrl = deepLinkUrl,
+                                destinationUtcDateTime = destinationUtcDateTime,
                             ),
                             isPast,
                         )
@@ -515,12 +521,16 @@ private fun JourneyOriginTimeRow(
  * https://krail.app
  * ```
  */
+@OptIn(ExperimentalTime::class)
 private fun buildShareText(
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
     destinationTime: String,
     totalTravelTime: String,
     deepLinkUrl: String? = null,
+    destinationUtcDateTime: String = "",
 ): String {
+    val timeAway = shareTimeAwayText(destinationUtcDateTime, totalTravelTime)
+
     val lastStopName = legList
         .filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
         .lastOrNull()
@@ -529,12 +539,29 @@ private fun buildShareText(
         ?.name
 
     val journeyLine = if (lastStopName != null) {
-        "I'll reach $lastStopName at $destinationTime — about $totalTravelTime away."
+        "I'll reach $lastStopName at $destinationTime — about $timeAway away."
     } else {
-        "I'll arrive at $destinationTime — about $totalTravelTime away."
+        "I'll arrive at $destinationTime — about $timeAway away."
     }
     val link = deepLinkUrl ?: KRAIL_WEBSITE_URL
     return "Hey mate!\n\n$journeyLine\n\nTrack this trip live on KRAIL!\n$link"
+}
+
+/**
+ * Returns a human-readable "X mins / Xh Ym" string representing the time between now and
+ * [destinationUtcDateTime]. Falls back to [totalTravelTime] when no UTC timestamp is available.
+ *
+ * [clock] is injectable so unit tests can supply a fixed instant.
+ */
+@OptIn(ExperimentalTime::class)
+internal fun shareTimeAwayText(
+    destinationUtcDateTime: String,
+    totalTravelTime: String,
+    clock: Clock = Clock.System,
+): String = if (destinationUtcDateTime.isNotEmpty()) {
+    (Instant.parse(destinationUtcDateTime) - clock.now()).absoluteValue.toFormattedDurationTimeString()
+} else {
+    totalTravelTime
 }
 
 // region Previews

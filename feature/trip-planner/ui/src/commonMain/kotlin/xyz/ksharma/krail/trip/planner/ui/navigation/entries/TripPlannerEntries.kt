@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigEntries
+import xyz.ksharma.krail.feature.pro.ui.navigation.ProEntries
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 
 /**
@@ -32,5 +33,8 @@ fun EntryProviderScope<NavKey>.TripPlannerEntries(
     DebugConfigEntries(
         onBack = { tripPlannerNavigator.goBack() },
         onNavigateToNetwork = { tripPlannerNavigator.navigateToDebugConfigNetwork() },
+    )
+    ProEntries(
+        onBack = { tripPlannerNavigator.goBack() },
     )
 }

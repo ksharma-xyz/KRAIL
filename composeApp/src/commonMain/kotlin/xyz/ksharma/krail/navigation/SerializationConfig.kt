@@ -6,6 +6,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.core.navigation.SplashRoute
+import xyz.ksharma.krail.feature.pro.ui.navigation.ProUpgradeRoute
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
@@ -43,6 +44,9 @@ val krailNavSerializationConfig = SavedStateConfiguration {
             subclass(OurStoryRoute::class, OurStoryRoute.serializer())
             subclass(IntroRoute::class, IntroRoute.serializer())
             subclass(DiscoverRoute::class, DiscoverRoute.serializer())
+
+            // Pro routes
+            subclass(ProUpgradeRoute::class, ProUpgradeRoute.serializer())
 
             // Track routes
             subclass(TrackTripRoute::class, TrackTripRoute.serializer())

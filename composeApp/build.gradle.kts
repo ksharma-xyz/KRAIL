@@ -67,6 +67,7 @@ kotlin {
             implementation(projects.discover.network.real)
             implementation(projects.feature.debugSettings.store)
             implementation(projects.feature.debugSettings.ui)
+            implementation(projects.feature.pro.ui)
             implementation(projects.feature.departures.network)
             implementation(projects.feature.departures.ui)
             implementation(projects.feature.parkRide.network)

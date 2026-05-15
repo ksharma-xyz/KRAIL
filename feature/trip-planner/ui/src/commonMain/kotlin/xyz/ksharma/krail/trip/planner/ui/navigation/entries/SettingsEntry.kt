@@ -34,6 +34,9 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
         SettingsScreen(
             appVersion = settingsState.appVersion,
             showDebugConfig = settingsState.isDebug,
+            onProClick = {
+                tripPlannerNavigator.navigateToProUpgrade()
+            },
             onChangeThemeClick = {
                 tripPlannerNavigator.navigateToThemeSelection()
             },

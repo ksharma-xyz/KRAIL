@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.feature.pro.ui.ProBannerCard
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
@@ -48,6 +49,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     showDebugConfig: Boolean = false,
     onBackClick: () -> Unit = {},
+    onProClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
     onReferFriendClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
@@ -76,6 +78,10 @@ fun SettingsScreen(
                 modifier = Modifier,
                 contentPadding = PaddingValues(bottom = CONTENT_BOTTOM_PADDING),
             ) {
+                item(key = "settings-pro-banner") {
+                    ProBannerCard(onClick = onProClick)
+                }
+
                 item {
                     SettingsItem(
                         icon = painterResource(Res.drawable.ic_paint),

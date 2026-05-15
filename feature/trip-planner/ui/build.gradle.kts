@@ -84,6 +84,8 @@ kotlin {
                 implementation(projects.feature.debugSettings.ui)
                 implementation(projects.feature.departures.state)
                 implementation(projects.feature.departures.ui)
+                implementation(projects.feature.pro.state)
+                implementation(projects.feature.pro.ui)
                 implementation(projects.feature.parkRide.network)
                 implementation(projects.feature.parkRide.ui)
                 implementation(projects.feature.track.state)

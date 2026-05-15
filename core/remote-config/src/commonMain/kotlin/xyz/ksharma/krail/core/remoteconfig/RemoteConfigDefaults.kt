@@ -145,6 +145,19 @@ object RemoteConfigDefaults {
                 first = FlagKeys.ENABLE_PROTO_BFF.key,
                 second = false,
             ),
+            Pair(
+                first = FlagKeys.PRO_FEATURES.key,
+                second = """[
+                    |{"id":"smart_alerts","title":"Smart Alerts","subtitle":"Your 8:15 from Parramatta is running late. Know before you leave the house.","accentHex":"#F6891F","enabled":true},
+                    |{"id":"full_park_ride","title":"Full Park & Ride","subtitle":"Live counts at all 20+ stations. Push alert when a spot opens at yours.","accentHex":"#009B77","enabled":true},
+                    |{"id":"journey_maps","title":"Journey Maps","subtitle":"Street-level exit guidance and walking paths. No standing around guessing.","accentHex":"#5AB031","enabled":true},
+                    |{"id":"departure_board","title":"Departure Board","subtitle":"Live multi-mode board for any stop. Every bus, train and ferry at a glance.","accentHex":"#00B5EF","enabled":true},
+                    |{"id":"safe_ride","title":"SafeRide","subtitle":"Share your live location with someone. Auto-ends when you arrive safely.","accentHex":"#E4022D","enabled":true},
+                    |{"id":"widgets","title":"Home Screen Widgets","subtitle":"Your next service on your lock screen. Open nothing. Miss nothing.","accentHex":"#742282","enabled":true},
+                    |{"id":"full_themes","title":"Full Themes","subtitle":"All 8 colour palettes and custom app icons. Make KRAIL yours.","accentHex":"#AC00C9","enabled":true},
+                    |{"id":"early_access","title":"Early Access","subtitle":"New features before anyone else. You built this community — first dibs.","accentHex":"#E0218A","enabled":true}
+                    |]""".trimMargin(),
+            ),
         )
     }
 }

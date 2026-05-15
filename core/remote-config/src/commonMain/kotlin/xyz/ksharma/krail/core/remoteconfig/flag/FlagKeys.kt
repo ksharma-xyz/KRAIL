@@ -47,4 +47,13 @@ enum class FlagKeys(val key: String) {
      * value.
      */
     ENABLE_PROTO_BFF("enable_proto_bff"),
+
+    /**
+     * JSON array of [xyz.ksharma.krail.feature.pro.state.ProFeature] items that drive
+     * the KRAIL Pro upgrade screen feature-ticket deck. Parsed with [JsonConfig.lenient]
+     * so unknown fields are silently ignored and older clients stay safe.
+     *
+     * Format: `[{"id":"...", "title":"...", "subtitle":"...", "accentHex":"#RRGGBB", "enabled":true}]`
+     */
+    PRO_FEATURES("pro_features_json"),
 }

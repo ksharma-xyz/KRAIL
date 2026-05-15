@@ -8,6 +8,23 @@ import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 
 /**
+ * Master rollout-arming switch, sitting ABOVE the `enable_proto_bff`
+ * Firebase Remote Config flag.
+ *
+ * While `false`, [BffEndpointResolver.resolveBaseUrl] ignores the RC flag
+ * entirely: the FOLLOW_RC path always resolves to NSW direct regardless of
+ * the live flag value, in both release and debug builds. Explicit Debug
+ * Config picks (`BFF_LOCAL` / `BFF_PROD`) are unaffected so a developer can
+ * still test the BFF path on demand.
+ *
+ * This is a deliberate compile-time gate so a premature or accidental
+ * Firebase RC flip cannot route real users to a BFF that is not yet
+ * deployed / not yet ready. Flip to `true` in a release build ONLY when
+ * the production cohort rollout is intentionally being armed.
+ */
+internal const val BFF_ROLLOUT_ARMED: Boolean = false
+
+/**
  * Resolves the base URL each `Real*Service` should use for an endpoint that
  * has both an NSW direct path and a KRAIL-BFF equivalent.
  *
@@ -17,12 +34,15 @@ import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
  *
  * | Build   | Source       | Behaviour                                            |
  * |---------|--------------|------------------------------------------------------|
- * | release | n/a          | always FOLLOW_RC, BFF Prod URL when RC says enabled  |
- * | debug   | FOLLOW_RC    | RC value, BFF Local URL when enabled (so debug       |
- * |         |              | devs hit their local BFF when "following" rollout)   |
+ * | release | n/a          | FOLLOW_RC; BFF Prod URL when RC on AND rollout armed |
+ * | debug   | FOLLOW_RC    | RC value (BFF Local URL) only when rollout armed     |
  * | debug   | NSW_DIRECT   | NSW direct, RC ignored                               |
- * | debug   | BFF_LOCAL    | local BFF URL, RC ignored                            |
- * | debug   | BFF_PROD     | prod BFF URL, RC ignored                             |
+ * | debug   | BFF_LOCAL    | local BFF URL, RC + arming ignored                   |
+ * | debug   | BFF_PROD     | prod BFF URL, RC + arming ignored                    |
+ *
+ * The FOLLOW_RC rows are additionally gated by [BFF_ROLLOUT_ARMED]; while
+ * disarmed (current state) FOLLOW_RC always resolves to NSW. Explicit
+ * BFF_LOCAL / BFF_PROD picks bypass the arming gate.
  *
  * Empty BFF URLs are masked by [nswFallback] so a misconfigured local
  * opt-in or a not-yet-deployed prod URL cannot break the app.
@@ -38,6 +58,7 @@ class BffEndpointResolver(
     private val debugStore: DebugNetworkConfigStore,
     private val bffLocalBaseUrl: String = KRAIL_BFF_BASE_URL,
     private val bffProdBaseUrl: String = KRAIL_BFF_PROD_BASE_URL,
+    private val rolloutArmed: Boolean = BFF_ROLLOUT_ARMED,
 ) {
 
     /**
@@ -51,7 +72,12 @@ class BffEndpointResolver(
         val source: NetworkSource = if (isDebug) debugStore.source() else NetworkSource.FOLLOW_RC
         return when (source) {
             NetworkSource.FOLLOW_RC -> {
-                val rcEnabled = flag.getFlagValue(FlagKeys.ENABLE_PROTO_BFF.key).asBoolean(false)
+                // Master arming gate sits above the RC flag: while disarmed,
+                // FOLLOW_RC always resolves to NSW regardless of the live
+                // flag value. Explicit BFF_LOCAL / BFF_PROD picks below
+                // intentionally bypass this gate.
+                val rcEnabled = rolloutArmed &&
+                    flag.getFlagValue(FlagKeys.ENABLE_PROTO_BFF.key).asBoolean(false)
                 if (!rcEnabled) {
                     nswFallback
                 } else if (isDebug) {

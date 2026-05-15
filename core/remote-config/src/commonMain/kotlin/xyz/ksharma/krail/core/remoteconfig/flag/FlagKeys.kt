@@ -34,4 +34,17 @@ enum class FlagKeys(val key: String) {
     TRIP_TRACKING_ENABLED("trip_tracking_enabled"),
 
     ENABLE_FUZZY_STOP_SEARCH("enable_fuzzy_stop_search"),
+
+    /**
+     * Single rollout flag for the KRAIL-BFF. When `true`, the four
+     * BFF-eligible services (trip results, departures, park-ride,
+     * GTFS-realtime) route through the BFF; when `false` they hit NSW
+     * direct. Default `false` until cohort rollout begins.
+     *
+     * Resolved by `BffEndpointResolver` in `:core:network`. Debug builds
+     * may override via the Debug Config UI (`NetworkSource.NSW_DIRECT` /
+     * `BFF_LOCAL` / `BFF_PROD`); release builds always read the live RC
+     * value.
+     */
+    ENABLE_PROTO_BFF("enable_proto_bff"),
 }

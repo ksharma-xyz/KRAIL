@@ -2,6 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.core.navigation.NavigatorBase
+import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigHomeRoute
+import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigNetworkRoute
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 
 /**
@@ -72,6 +74,14 @@ internal class TripPlannerNavigatorImpl(
 
     override fun navigateToTrackTrip(encodedData: String?) {
         baseNavigator.pushSingleInstance(TrackTripRoute(encodedData))
+    }
+
+    override fun navigateToDebugConfig() {
+        baseNavigator.goTo(DebugConfigHomeRoute)
+    }
+
+    override fun navigateToDebugConfigNetwork() {
+        baseNavigator.goTo(DebugConfigNetworkRoute)
     }
 
     override fun goBack() {

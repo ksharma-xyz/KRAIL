@@ -13,6 +13,7 @@ val departuresNetworkModule = module {
         RealDeparturesService(
             httpClient = departuresHttpClient(get()),
             ioDispatcher = get(named(IODispatcher)),
+            resolver = get(),
         )
     } bind DeparturesService::class
 }

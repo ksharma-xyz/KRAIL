@@ -8,18 +8,19 @@ import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
+import xyz.ksharma.krail.core.network.BffEndpointResolver
 import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
-import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
-import xyz.ksharma.krail.core.network.NetworkTarget
+import xyz.ksharma.krail.core.network.NetworkUpstream
 import xyz.ksharma.krail.core.network.logNetworkCall
+import xyz.ksharma.krail.core.network.toNetworkUpstream
 import xyz.ksharma.krail.departures.network.api.mapper.toDepartureMonitorResponse
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 
 internal class RealDeparturesService(
     private val httpClient: HttpClient,
     private val ioDispatcher: CoroutineDispatcher,
+    private val resolver: BffEndpointResolver,
 ) : DeparturesService {
 
     override suspend fun departures(
@@ -27,20 +28,23 @@ internal class RealDeparturesService(
         date: String?,
         time: String?,
     ): DepartureMonitorResponse = withContext(ioDispatcher) {
-        // Phase C: when both the BFF local-override and the proto flag are
-        // on, hit /api/v1/stops/{stopId}/departures-proto and decode a
-        // DepartureBoardResponse via Wire, then map to the existing
-        // DepartureMonitorResponse so the existing UI layer works unchanged.
-        // Otherwise fall back to the JSON paths (BFF JSON pass-through or
-        // NSW direct).
-        if (IS_BFF_LOCAL_OVERRIDE_SET && IS_BFF_PROTO_ENABLED) {
+        // Resolver picks NSW vs BFF (debug-store in debug builds, Firebase RC
+        // in release). When BFF is chosen AND the proto flag is on, hit the
+        // proto endpoint and decode a DepartureBoardResponse, then map to the
+        // existing DepartureMonitorResponse so downstream UI is unchanged.
+        // Otherwise hit the JSON endpoint on whichever base URL the resolver
+        // chose (NSW direct or BFF JSON pass-through).
+        val baseUrl = resolver.resolveBaseUrl()
+        val upstream = baseUrl.toNetworkUpstream()
+
+        if (upstream == NetworkUpstream.BFF && IS_BFF_PROTO_ENABLED) {
             logNetworkCall(
-                target = NetworkTarget.BFF,
+                target = NetworkUpstream.BFF,
                 method = "GET",
                 path = "/api/v1/stops/$stopId/departures-proto",
             )
             val bytes: ByteArray = httpClient.get(
-                "$KRAIL_BFF_BASE_URL/api/v1/stops/$stopId/departures-proto",
+                "$baseUrl/api/v1/stops/$stopId/departures-proto",
             ) {
                 url {
                     date?.let { parameters.append("date", it) }
@@ -51,13 +55,14 @@ internal class RealDeparturesService(
             return@withContext DepartureBoardResponse.ADAPTER.decode(bytes)
                 .toDepartureMonitorResponse()
         }
-        if (IS_BFF_LOCAL_OVERRIDE_SET) {
+
+        if (upstream == NetworkUpstream.BFF) {
             logNetworkCall(
-                target = NetworkTarget.BFF,
+                target = NetworkUpstream.BFF,
                 method = "GET",
                 path = "/v1/stops/$stopId/departures",
             )
-            httpClient.get("$KRAIL_BFF_BASE_URL/v1/stops/$stopId/departures") {
+            httpClient.get("$baseUrl/v1/stops/$stopId/departures") {
                 url {
                     date?.let { parameters.append("date", it) }
                     time?.let { parameters.append("time", it) }
@@ -65,7 +70,7 @@ internal class RealDeparturesService(
             }.body()
         } else {
             logNetworkCall(
-                target = NetworkTarget.NSW,
+                target = NetworkUpstream.NSW,
                 method = "GET",
                 path = "/v1/tp/departure_mon",
             )

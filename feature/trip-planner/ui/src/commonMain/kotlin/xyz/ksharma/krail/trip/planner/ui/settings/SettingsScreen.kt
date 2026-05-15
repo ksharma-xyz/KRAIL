@@ -46,11 +46,13 @@ import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
 fun SettingsScreen(
     appVersion: String,
     modifier: Modifier = Modifier,
+    showDebugConfig: Boolean = false,
     onBackClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
     onReferFriendClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
+    onDebugConfigClick: () -> Unit = {},
     onSocialLinkClick: (KrailSocialType) -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
@@ -133,6 +135,16 @@ fun SettingsScreen(
                             )
                         },
                     )
+                }
+
+                if (showDebugConfig) {
+                    item(key = "settings-debug-config") {
+                        SettingsItem(
+                            icon = painterResource(Res.drawable.ic_paint),
+                            text = "Debug Config",
+                            onClick = onDebugConfigClick,
+                        )
+                    }
                 }
 
                 item {

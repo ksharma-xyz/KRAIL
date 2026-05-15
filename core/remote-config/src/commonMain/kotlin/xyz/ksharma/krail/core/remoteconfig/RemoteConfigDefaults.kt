@@ -141,6 +141,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key,
                 second = false,
             ),
+            Pair(
+                first = FlagKeys.ENABLE_PROTO_BFF.key,
+                second = false,
+            ),
         )
     }
 }

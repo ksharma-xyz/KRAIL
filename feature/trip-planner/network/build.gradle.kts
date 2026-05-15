@@ -17,6 +17,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.trip.planner.network"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
     listOf(
         iosArm64(),
@@ -39,6 +41,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.network)
+                implementation(projects.io.bffApi)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)

@@ -1,18 +1,22 @@
 package xyz.ksharma.krail.trip.planner.network.api.service
 
+import app.krail.bff.proto.JourneyList
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.accept
 import io.ktor.client.request.get
+import io.ktor.http.ContentType
 import io.ktor.http.ParametersBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
-import xyz.ksharma.krail.core.network.IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED
+import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
 import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.core.network.NetworkTarget
 import xyz.ksharma.krail.core.network.logNetworkCall
+import xyz.ksharma.krail.trip.planner.network.api.mapper.journeyListToTripResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
@@ -35,33 +39,31 @@ internal class RealTripPlanningService(
         time: String?,
         excludeProductClassSet: Set<Int>,
     ): TripResponse = withContext(ioDispatcher) {
-        // Phase C scaffold — when the proto flag flips on (and the BFF override
-        // is set), this method should hit /api/v1/trip/plan-proto and decode
-        // a JourneyList protobuf via :io:bff-api's Wire-generated classes.
-        //
-        // Wiring steps for the morning session (see docs/BFF_PHASE_A_MORNING.md §5):
-        //   1. Add `implementation(projects.io.bffApi)` to this module's
-        //      build.gradle.kts (commonMain dependencies).
-        //   2. Implement JourneyListMapper (currently throws NotImplementedError).
-        //   3. Replace this scaffold with the real proto fetch:
-        //      ```
-        //      val bytes: ByteArray = httpClient.get(
-        //          "$KRAIL_BFF_BASE_URL/api/v1/trip/plan-proto"
-        //      ) { /* same query params as the JSON path */ }.body()
-        //      JourneyList.ADAPTER.decode(bytes).toTripResponse()
-        //      ```
-        //   4. Keep the JSON paths below as the kill-switch fallback.
-        //
-        // Today this branch is unreachable (IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED
-        // is const false) so the compiler dead-code-eliminates it. We keep the
-        // throw to make the unwired contract loud if someone flips the flag.
-        @Suppress("KotlinConstantConditions", "UnreachableCode")
-        if (IS_BFF_LOCAL_OVERRIDE_SET && IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED) {
-            error(
-                "BFF proto path enabled but the JourneyList mapper is not yet wired up. " +
-                    "Add :io:bff-api dependency, implement JourneyListMapper, " +
-                    "then replace this scaffold (see docs/BFF_PHASE_A_MORNING.md §5).",
+        // Phase C: when both the BFF local-override and the proto flag are
+        // on, hit /api/v1/trip/plan-proto and decode a JourneyList via Wire,
+        // then map to TripResponse so the existing UI mappers (notably
+        // JourneyMapMapper, which reads coords for polylines) work unchanged.
+        // Otherwise fall back to the NSW-shaped JSON path on either NSW
+        // direct or BFF JSON pass-through, depending on IS_BFF_LOCAL_OVERRIDE_SET.
+        val spec = TripRequestSpec(
+            originStopId = originStopId,
+            destinationStopId = destinationStopId,
+            depArr = depArr,
+            date = date,
+            time = time,
+            excludeProductClassSet = excludeProductClassSet,
+        )
+        if (IS_BFF_LOCAL_OVERRIDE_SET && IS_BFF_PROTO_ENABLED) {
+            logNetworkCall(
+                target = NetworkTarget.BFF,
+                method = "GET",
+                path = "/api/v1/trip/plan-proto",
             )
+            val bytes: ByteArray = httpClient.get("$KRAIL_BFF_BASE_URL/api/v1/trip/plan-proto") {
+                url { appendTripQueryParams(spec) }
+                accept(ContentType("application", "x-protobuf"))
+            }.body()
+            return@withContext journeyListToTripResponse(JourneyList.ADAPTER.decode(bytes))
         }
         logNetworkCall(
             target = if (IS_BFF_LOCAL_OVERRIDE_SET) NetworkTarget.BFF else NetworkTarget.NSW,
@@ -69,33 +71,44 @@ internal class RealTripPlanningService(
             path = "/v1/tp/trip",
         )
         httpClient.get("$tripBaseUrl/v1/tp/trip") {
-            url {
-                parameters.append(TripRequestParams.nameOrigin, originStopId)
-                parameters.append(TripRequestParams.nameDestination, destinationStopId)
-
-                parameters.append(TripRequestParams.depArrMacro, depArr.macro)
-                date?.let { parameters.append(TripRequestParams.itdDate, date) }
-                time?.let { parameters.append(TripRequestParams.itdTime, time) }
-
-                parameters.append(TripRequestParams.typeDestination, "any")
-                parameters.append(TripRequestParams.calcNumberOfTrips, "6")
-                parameters.append(TripRequestParams.typeOrigin, "any")
-                parameters.append(TripRequestParams.tfNSWTR, "true")
-                parameters.append(TripRequestParams.version, "10.2.1.42")
-                parameters.append(TripRequestParams.coordOutputFormat, "EPSG:4326")
-                parameters.append(TripRequestParams.itOptionsActive, "1")
-                parameters.append(TripRequestParams.computeMonomodalTripBicycle, "false")
-                parameters.append(TripRequestParams.cycleSpeed, "16")
-                parameters.append(TripRequestParams.useElevationData, "1")
-                parameters.append(TripRequestParams.outputFormat, "rapidJSON")
-
-                addExcludedTransportModes(
-                    excludeProductClassSet = excludeProductClassSet,
-                    parameters = parameters,
-                )
-            }
+            url { appendTripQueryParams(spec) }
         }.body()
     }
+
+    private fun io.ktor.http.URLBuilder.appendTripQueryParams(spec: TripRequestSpec) {
+        parameters.append(TripRequestParams.nameOrigin, spec.originStopId)
+        parameters.append(TripRequestParams.nameDestination, spec.destinationStopId)
+
+        parameters.append(TripRequestParams.depArrMacro, spec.depArr.macro)
+        spec.date?.let { parameters.append(TripRequestParams.itdDate, it) }
+        spec.time?.let { parameters.append(TripRequestParams.itdTime, it) }
+
+        parameters.append(TripRequestParams.typeDestination, "any")
+        parameters.append(TripRequestParams.calcNumberOfTrips, "6")
+        parameters.append(TripRequestParams.typeOrigin, "any")
+        parameters.append(TripRequestParams.tfNSWTR, "true")
+        parameters.append(TripRequestParams.version, "10.2.1.42")
+        parameters.append(TripRequestParams.coordOutputFormat, "EPSG:4326")
+        parameters.append(TripRequestParams.itOptionsActive, "1")
+        parameters.append(TripRequestParams.computeMonomodalTripBicycle, "false")
+        parameters.append(TripRequestParams.cycleSpeed, "16")
+        parameters.append(TripRequestParams.useElevationData, "1")
+        parameters.append(TripRequestParams.outputFormat, "rapidJSON")
+
+        addExcludedTransportModes(
+            excludeProductClassSet = spec.excludeProductClassSet,
+            parameters = parameters,
+        )
+    }
+
+    private data class TripRequestSpec(
+        val originStopId: String,
+        val destinationStopId: String,
+        val depArr: DepArr,
+        val date: String?,
+        val time: String?,
+        val excludeProductClassSet: Set<Int>,
+    )
 
     private fun addExcludedTransportModes(
         excludeProductClassSet: Set<Int>,

@@ -1,17 +1,22 @@
 package xyz.ksharma.krail.park.ride.network.service
 
+import app.krail.bff.proto.ParkingAvailabilityResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.accept
 import io.ktor.client.request.get
+import io.ktor.http.ContentType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
+import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
 import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.core.network.NetworkTarget
 import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
+import xyz.ksharma.krail.park.ride.network.mapper.toStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 
@@ -89,8 +94,32 @@ internal class RealParkRideService(
         // is silently truncated rather than erroring, matching the server's
         // tolerant behaviour for the per-facility cap.
         val cappedStopIds = capStopIdsForBatch(stopIds)
+        val joinedStopIds = cappedStopIds.joinToString(",")
 
         return withContext(ioDispatcher) {
+            // Phase C: when both the BFF local-override and the proto flag
+            // are on, hit /api/v1/parking/availability-proto and decode a
+            // ParkingAvailabilityResponse via Wire, then map to the existing
+            // ParkingStopBatchResponse so SavedTripsViewModel works
+            // unchanged. Otherwise fall back to the JSON batch endpoint.
+            if (IS_BFF_PROTO_ENABLED) {
+                logNetworkCall(
+                    target = NetworkTarget.BFF,
+                    method = "GET",
+                    path = "/api/v1/parking/availability-proto",
+                )
+                val bytes: ByteArray = httpClient.get(
+                    "$KRAIL_BFF_BASE_URL/api/v1/parking/availability-proto",
+                ) {
+                    url {
+                        parameters.append("stopIds", joinedStopIds)
+                    }
+                    accept(ContentType("application", "x-protobuf"))
+                }.body()
+                return@withContext ParkingAvailabilityResponse.ADAPTER.decode(bytes)
+                    .toStopBatchResponse()
+            }
+
             val requestUrl = buildParkRideBatchByStopsUrl(
                 bffBaseUrl = KRAIL_BFF_BASE_URL,
             )
@@ -101,7 +130,7 @@ internal class RealParkRideService(
             )
             httpClient.get(requestUrl) {
                 url {
-                    parameters.append("stopIds", cappedStopIds.joinToString(","))
+                    parameters.append("stopIds", joinedStopIds)
                 }
             }.body()
         }

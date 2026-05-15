@@ -17,15 +17,27 @@ val IS_BFF_LOCAL_OVERRIDE_SET: Boolean = KRAIL_BFF_BASE_URL.isNotBlank()
 
 /**
  * Phase C scaffolding flag — when `true` AND [IS_BFF_LOCAL_OVERRIDE_SET] is on,
- * `RealTripPlanningService.trip()` calls the BFF's `/api/v1/trip/plan-proto`
- * endpoint and decodes a `JourneyList` protobuf instead of NSW JSON.
+ * the proto-flagged branch is taken on every consumer that has one wired up:
  *
- * Hard-coded to `false` for now. The eventual debug-settings UI (Phase B prep)
- * will flip this at runtime and this constant will move into the store.
+ *  - `RealTripPlanningService.trip()` hits `/api/v1/trip/plan-proto` and
+ *    decodes a `JourneyList`.
+ *  - `RealDeparturesService.departures()` hits
+ *    `/api/v1/stops/{id}/departures-proto` and decodes a
+ *    `DepartureBoardResponse`.
+ *  - `RealParkRideService.fetchAvailabilityForStops()` hits
+ *    `/api/v1/parking/availability-proto` and decodes a
+ *    `ParkingAvailabilityResponse`.
  *
- * Why a separate flag: Phase A's `IS_BFF_LOCAL_OVERRIDE_SET` is shape-identical
- * (BFF passes NSW JSON through). Phase C swaps the wire format and requires a
- * dedicated mapper, so we want to flip them independently — and ship Phase A
- * tonight without taking on Phase C's mapper risk.
+ * Each consumer maps its proto response back to the existing JSON-shape model
+ * so downstream UI code keeps working unchanged.
+ *
+ * Hard-coded to `true` for this branch. Phase B's production wiring flips this
+ * at runtime via Firebase Remote Config (`enable_proto_bff`). The future
+ * debug-settings UI (Branch 2) will let developers force a local value via
+ * `NetworkSource.FOLLOW_RC` etc.
+ *
+ * Why a separate flag from [IS_BFF_LOCAL_OVERRIDE_SET]: Phase A's override is
+ * shape-identical (BFF passes NSW JSON through). Phase C swaps the wire format
+ * and requires dedicated mappers, so the two flags must move independently.
  */
-const val IS_BFF_PROTO_FOR_TRIP_RESULTS_ENABLED: Boolean = false
+const val IS_BFF_PROTO_ENABLED: Boolean = true

@@ -42,6 +42,7 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.network)
                 implementation(projects.core.remoteConfig)
+                implementation(projects.io.bffApi)
                 implementation(projects.sandook)
 
                 implementation(libs.kotlinx.serialization.json)

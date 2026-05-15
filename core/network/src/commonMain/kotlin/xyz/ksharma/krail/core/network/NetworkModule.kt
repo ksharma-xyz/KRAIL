@@ -9,4 +9,11 @@ val coreNetworkModule = module {
             appInfoProvider = get(),
         )
     }
+    single {
+        BffEndpointResolver(
+            appInfoProvider = get(),
+            flag = get(),
+            debugStore = get(),
+        )
+    }
 }

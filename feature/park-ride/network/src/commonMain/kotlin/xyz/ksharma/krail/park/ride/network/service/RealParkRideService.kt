@@ -9,12 +9,11 @@ import io.ktor.http.ContentType
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.network.IS_BFF_LOCAL_OVERRIDE_SET
+import xyz.ksharma.krail.core.network.BffEndpointResolver
 import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
-import xyz.ksharma.krail.core.network.KRAIL_BFF_BASE_URL
-import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
-import xyz.ksharma.krail.core.network.NetworkTarget
+import xyz.ksharma.krail.core.network.NetworkUpstream
 import xyz.ksharma.krail.core.network.logNetworkCall
+import xyz.ksharma.krail.core.network.toNetworkUpstream
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.park.ride.network.mapper.toStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
@@ -23,6 +22,7 @@ import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 internal class RealParkRideService(
     private val httpClient: HttpClient,
     private val ioDispatcher: CoroutineDispatcher,
+    private val resolver: BffEndpointResolver,
 ) : ParkRideService {
 
     override suspend fun fetchCarParkFacilities(
@@ -32,17 +32,19 @@ internal class RealParkRideService(
 
         log("API Call: Fetching car park details for facility ID: $facilityId")
 
+        val baseUrl = resolver.resolveBaseUrl()
+        val isBff = baseUrl.toNetworkUpstream() == NetworkUpstream.BFF
         val requestUrl = buildParkRideDetailUrl(
-            isBffOverrideSet = IS_BFF_LOCAL_OVERRIDE_SET,
-            bffBaseUrl = KRAIL_BFF_BASE_URL,
-            nswBaseUrl = NSW_TRANSPORT_BASE_URL,
+            isBffOverrideSet = isBff,
+            bffBaseUrl = baseUrl,
+            nswBaseUrl = baseUrl,
             facilityId = facilityId,
         )
 
-        val response: CarParkFacilityDetailResponse = if (IS_BFF_LOCAL_OVERRIDE_SET) {
+        val response: CarParkFacilityDetailResponse = if (isBff) {
             // BFF embeds the facility id in the path; no query param.
             logNetworkCall(
-                target = NetworkTarget.BFF,
+                target = NetworkUpstream.BFF,
                 method = "GET",
                 path = "/v1/parking/facilities/$facilityId/availability",
             )
@@ -50,7 +52,7 @@ internal class RealParkRideService(
         } else {
             // NSW takes a single carpark endpoint plus a `facility` query param.
             logNetworkCall(
-                target = NetworkTarget.NSW,
+                target = NetworkUpstream.NSW,
                 method = "GET",
                 path = "/v1/carpark",
             )
@@ -66,15 +68,17 @@ internal class RealParkRideService(
 
     override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> =
         suspendSafeResult(ioDispatcher) {
+            val baseUrl = resolver.resolveBaseUrl()
+            val isBff = baseUrl.toNetworkUpstream() == NetworkUpstream.BFF
             val requestUrl = buildParkRideListUrl(
-                isBffOverrideSet = IS_BFF_LOCAL_OVERRIDE_SET,
-                bffBaseUrl = KRAIL_BFF_BASE_URL,
-                nswBaseUrl = NSW_TRANSPORT_BASE_URL,
+                isBffOverrideSet = isBff,
+                bffBaseUrl = baseUrl,
+                nswBaseUrl = baseUrl,
             )
             logNetworkCall(
-                target = if (IS_BFF_LOCAL_OVERRIDE_SET) NetworkTarget.BFF else NetworkTarget.NSW,
+                target = if (isBff) NetworkUpstream.BFF else NetworkUpstream.NSW,
                 method = "GET",
-                path = if (IS_BFF_LOCAL_OVERRIDE_SET) "/v1/parking/facilities" else "/v1/carpark",
+                path = if (isBff) "/v1/parking/facilities" else "/v1/carpark",
             )
             val response: Map<String, String> = httpClient.get(requestUrl) {}.body()
             response
@@ -83,57 +87,53 @@ internal class RealParkRideService(
     override suspend fun fetchAvailabilityForStops(
         stopIds: List<String>,
     ): ParkingStopBatchResponse? {
-        // NSW has no equivalent batch endpoint, so the override-off branch
-        // returns null and the caller falls back to the per-facility path.
-        if (!IS_BFF_LOCAL_OVERRIDE_SET) return null
-
-        // Empty list is a no-op; do not fire a request.
-        if (stopIds.isEmpty()) return ParkingStopBatchResponse()
-
-        // Mirror the BFF's 20-ID cap client-side. Anything beyond the cap
-        // is silently truncated rather than erroring, matching the server's
-        // tolerant behaviour for the per-facility cap.
-        val cappedStopIds = capStopIdsForBatch(stopIds)
-        val joinedStopIds = cappedStopIds.joinToString(",")
-
-        return withContext(ioDispatcher) {
-            // Phase C: when both the BFF local-override and the proto flag
-            // are on, hit /api/v1/parking/availability-proto and decode a
-            // ParkingAvailabilityResponse via Wire, then map to the existing
-            // ParkingStopBatchResponse so SavedTripsViewModel works
-            // unchanged. Otherwise fall back to the JSON batch endpoint.
-            if (IS_BFF_PROTO_ENABLED) {
-                logNetworkCall(
-                    target = NetworkTarget.BFF,
-                    method = "GET",
-                    path = "/api/v1/parking/availability-proto",
-                )
-                val bytes: ByteArray = httpClient.get(
-                    "$KRAIL_BFF_BASE_URL/api/v1/parking/availability-proto",
-                ) {
-                    url {
-                        parameters.append("stopIds", joinedStopIds)
-                    }
-                    accept(ContentType("application", "x-protobuf"))
-                }.body()
-                return@withContext ParkingAvailabilityResponse.ADAPTER.decode(bytes)
-                    .toStopBatchResponse()
-            }
-
-            val requestUrl = buildParkRideBatchByStopsUrl(
-                bffBaseUrl = KRAIL_BFF_BASE_URL,
-            )
-            logNetworkCall(
-                target = NetworkTarget.BFF,
-                method = "GET",
-                path = "/v1/parking/availability",
-            )
-            httpClient.get(requestUrl) {
-                url {
-                    parameters.append("stopIds", joinedStopIds)
-                }
-            }.body()
+        // NSW has no equivalent batch endpoint, so when the resolver routes
+        // us to NSW we return null and the caller falls back to the
+        // per-facility path. Empty list is a no-op; return an empty payload
+        // so the caller can distinguish "BFF on, no stops" from "BFF off".
+        val baseUrl = resolver.resolveBaseUrl()
+        return when {
+            baseUrl.toNetworkUpstream() != NetworkUpstream.BFF -> null
+            stopIds.isEmpty() -> ParkingStopBatchResponse()
+            else -> fetchBatch(baseUrl = baseUrl, stopIds = capStopIdsForBatch(stopIds))
         }
+    }
+
+    /**
+     * Hits the BFF parking batch endpoint. When [IS_BFF_PROTO_ENABLED] is on,
+     * decodes a `ParkingAvailabilityResponse` proto and maps to the existing
+     * `ParkingStopBatchResponse` shape; otherwise hits the JSON batch
+     * endpoint at `/v1/parking/availability` (BFF JSON pass-through).
+     */
+    private suspend fun fetchBatch(
+        baseUrl: String,
+        stopIds: List<String>,
+    ): ParkingStopBatchResponse = withContext(ioDispatcher) {
+        val joinedStopIds = stopIds.joinToString(",")
+        if (IS_BFF_PROTO_ENABLED) {
+            logNetworkCall(
+                target = NetworkUpstream.BFF,
+                method = "GET",
+                path = "/api/v1/parking/availability-proto",
+            )
+            val bytes: ByteArray = httpClient.get(
+                "$baseUrl/api/v1/parking/availability-proto",
+            ) {
+                url { parameters.append("stopIds", joinedStopIds) }
+                accept(ContentType("application", "x-protobuf"))
+            }.body()
+            return@withContext ParkingAvailabilityResponse.ADAPTER.decode(bytes)
+                .toStopBatchResponse()
+        }
+        val requestUrl = buildParkRideBatchByStopsUrl(bffBaseUrl = baseUrl)
+        logNetworkCall(
+            target = NetworkUpstream.BFF,
+            method = "GET",
+            path = "/v1/parking/availability",
+        )
+        httpClient.get(requestUrl) {
+            url { parameters.append("stopIds", joinedStopIds) }
+        }.body()
     }
 }
 

@@ -170,18 +170,71 @@ class BffEndpointResolverTest {
         )
     }
 
+    @Test
+    fun `12 release disarmed - RC true still routes to NSW`() = runTest {
+        val resolver = resolver(
+            isDebug = false,
+            rcValue = true,
+            source = NetworkSource.FOLLOW_RC,
+            armed = false,
+        )
+        assertEquals(nswUrl, resolver.resolveBaseUrl())
+    }
+
+    @Test
+    fun `13 debug FOLLOW_RC disarmed - RC true still routes to NSW`() = runTest {
+        val resolver = resolver(
+            isDebug = true,
+            rcValue = true,
+            source = NetworkSource.FOLLOW_RC,
+            armed = false,
+        )
+        assertEquals(nswUrl, resolver.resolveBaseUrl())
+    }
+
+    @Test
+    fun `14 debug BFF_LOCAL still resolves when disarmed - explicit pick bypasses arming`() =
+        runTest {
+            val resolver = resolver(
+                isDebug = true,
+                rcValue = false,
+                source = NetworkSource.BFF_LOCAL,
+                armed = false,
+            )
+            assertEquals(localBff, resolver.resolveBaseUrl())
+        }
+
+    @Test
+    fun `15 debug BFF_PROD still resolves when disarmed - explicit pick bypasses arming`() =
+        runTest {
+            val resolver = resolver(
+                isDebug = true,
+                rcValue = false,
+                source = NetworkSource.BFF_PROD,
+                armed = false,
+            )
+            assertEquals(prodBff, resolver.resolveBaseUrl())
+        }
+
+    @Test
+    fun `16 production default is disarmed - BFF_ROLLOUT_ARMED const must ship false`() {
+        assertEquals(false, BFF_ROLLOUT_ARMED)
+    }
+
     private fun resolver(
         isDebug: Boolean,
         rcValue: Boolean,
         source: NetworkSource,
         localBffUrl: String = localBff,
         prodBffUrl: String = prodBff,
+        armed: Boolean = true,
     ): BffEndpointResolver = BffEndpointResolver(
         appInfoProvider = FakeAppInfoProvider(isDebug),
         flag = FakeFlag(rcValue),
         debugStore = FakeDebugStore(source),
         bffLocalBaseUrl = localBffUrl,
         bffProdBaseUrl = prodBffUrl,
+        rolloutArmed = armed,
     )
 }
 

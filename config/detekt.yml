@@ -555,19 +555,21 @@ Compose:
     # treatAsLambda: MyLambdaType
   CompositionLocalAllowlist:
     active: true
-    # -- You can optionally define a list of CompositionLocals that are allowed here
-    allowedCompositionLocals: LocalTextColor,LocalContentAlpha, LocalTextStyle,LocalContentColor,LocalOnContentColor,LocalKrailTypography,LocalKrailColors,LocalThemeController,LocalResultEventBus,LocalSystemDarkThemeOverride,LocalKrailDimensions
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:
     active: true
     # -- You can optionally add your own composables here
     # contentEmitters: MyComposable,MyOtherComposable
+  ContentSlotReused:
+    active: true
   ContentTrailingLambda:
     active: true
     # -- You can optionally have a list of types to be treated as composable lambdas (e.g. typedefs or fun interfaces not picked up automatically)
     # treatAsComposableLambda: MyComposableLambdaType
   DefaultsVisibility:
+    active: true
+  LambdaParameterEventTrailing:
     active: true
   LambdaParameterInRestartableEffect:
     active: false
@@ -578,10 +580,6 @@ Compose:
     # -- You can optionally allow parts of it, if you are in the middle of a migration.
     # allowedFromM2: icons.Icons,TopAppBar
   ModifierClickableOrder:
-    active: true
-    # -- You can optionally add your own Modifier types
-    # customModifiers: BananaModifier,PotatoModifier
-  ModifierComposable:
     active: true
     # -- You can optionally add your own Modifier types
     # customModifiers: BananaModifier,PotatoModifier
@@ -624,12 +622,16 @@ Compose:
     active: true
   MutableStateParam:
     active: true
+  StateParam:
+    active: true
   ParameterNaming:
     active: true
     # -- You can optionally have a list of types to be treated as composable lambdas (e.g. typedefs or fun interfaces not picked up automatically)
     # treatAsComposableLambda: MyComposableLambdaType
   PreviewAnnotationNaming:
     active: true
+  PreviewNaming:
+    active: false
   PreviewPublic:
     active: true
   RememberMissing:

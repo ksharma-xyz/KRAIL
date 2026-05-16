@@ -14,12 +14,20 @@ import kotlin.time.Instant
 
 private const val AEST_TIMEZONE = "Australia/Sydney"
 
-internal fun Analytics.trackJourneyCardExpandEvent(hasStarted: Boolean) {
-    track(AnalyticsEvent.JourneyCardExpandEvent(hasStarted = hasStarted))
-}
-
-internal fun Analytics.trackJourneyCardCollapseEvent(hasStarted: Boolean) {
-    track(AnalyticsEvent.JourneyCardCollapseEvent(hasStarted = hasStarted))
+internal fun Analytics.trackJourneyCardToggleEvent(
+    expanded: Boolean,
+    hasStarted: Boolean,
+    legCount: Int,
+    transportModes: String,
+) {
+    track(
+        AnalyticsEvent.JourneyCardToggleEvent(
+            expanded = expanded,
+            hasStarted = hasStarted,
+            legCount = legCount,
+            transportModes = transportModes,
+        ),
+    )
 }
 
 /**

@@ -95,7 +95,7 @@ fun JourneyCard(
     totalUniqueServiceAlerts: Int,
     modifier: Modifier = Modifier,
     onAlertClick: () -> Unit = {},
-    onLegClick: (Boolean) -> Unit = {},
+    onLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit = { _, _, _ -> },
     onMapClick: () -> Unit = {},
     onShareJourney: (
         bitmap: ImageBitmap,
@@ -232,7 +232,7 @@ fun ExpandedJourneyCardContent(
     legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
     totalUniqueServiceAlerts: Int,
     onAlertClick: () -> Unit,
-    onLegClick: (Boolean) -> Unit,
+    onLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit,
     onMapClick: () -> Unit,
     modifier: Modifier = Modifier,
     isMapsAvailable: Boolean = false,
@@ -356,7 +356,11 @@ fun ExpandedJourneyCardContent(
                             ),
                             onClick = {
                                 displayAllStops = !displayAllStops
-                                onLegClick(displayAllStops)
+                                onLegClick(
+                                    displayAllStops,
+                                    leg.transportModeLine.transportMode.name,
+                                    leg.transportModeLine.lineName,
+                                )
                             },
                         )
                     }

@@ -268,7 +268,13 @@ class TimeTableViewModel(
             }
 
             is TimeTableUiEvent.AnalyticsJourneyLegClicked -> {
-                analytics.track(AnalyticsEvent.JourneyLegClickEvent(expanded = event.expanded))
+                analytics.track(
+                    AnalyticsEvent.JourneyLegClickEvent(
+                        expanded = event.expanded,
+                        transportMode = event.transportMode,
+                        lineName = event.lineName,
+                    ),
+                )
             }
 
             is TimeTableUiEvent.ModeSelectionChanged -> onModeSelectionChanged(event.unselectedModes)
@@ -749,15 +755,24 @@ class TimeTableViewModel(
     }
 
     private fun onJourneyCardClicked(journeyId: String) {
-        val hasJourneyStarted = journeys[journeyId]?.hasJourneyStarted ?: false
+        val journey = journeys[journeyId]
+        val hasJourneyStarted = journey?.hasJourneyStarted ?: false
+        val legCount = journey?.legs?.size ?: 0
+        val transportModes = journey?.transportModeLines
+            ?.map { it.transportMode.productClass }
+            ?.sorted()
+            ?.joinToString(",")
+            .orEmpty()
         val expandedJourneyId = _expandedJourneyId.value
         log("Journey Card Clicked(JourneyId): $journeyId")
         _expandedJourneyId.update { if (it == journeyId) null else journeyId }
-        if (expandedJourneyId == journeyId) {
-            analytics.trackJourneyCardCollapseEvent(hasStarted = hasJourneyStarted)
-        } else {
-            analytics.trackJourneyCardExpandEvent(hasStarted = hasJourneyStarted)
-        }
+        val expanding = expandedJourneyId != journeyId
+        analytics.trackJourneyCardToggleEvent(
+            expanded = expanding,
+            hasStarted = hasJourneyStarted,
+            legCount = legCount,
+            transportModes = transportModes,
+        )
     }
 
     private fun onLoadTimeTable(trip: Trip) {

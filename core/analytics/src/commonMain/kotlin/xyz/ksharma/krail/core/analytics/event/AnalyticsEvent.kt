@@ -14,6 +14,8 @@ private const val PROP_TO_STOP_ID = "toStopId"
 private const val PROP_PREVIOUS_INDEX = "previousIndex"
 private const val PROP_NEW_INDEX = "newIndex"
 private const val PROP_TOTAL_COUNT = "totalCount"
+private const val PROP_LEG_COUNT = "legCount"
+private const val PROP_TRANSPORT_MODES = "transportModes"
 
 sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
 
@@ -374,28 +376,52 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     ) : AnalyticsEvent(
         name = "share_journey_click",
         properties = mapOf(
-            "transportModes" to transportModes,
+            PROP_TRANSPORT_MODES to transportModes,
             "lines" to lines,
-            "legCount" to legCount,
+            PROP_LEG_COUNT to legCount,
             "totalTravelTime" to totalTravelTime,
             "originTime" to originTime,
             "isPastDeparture" to isPastDeparture,
         ),
     )
 
-    data class JourneyCardExpandEvent(val hasStarted: Boolean) : AnalyticsEvent(
-        name = "journey_card_expand",
-        properties = mapOf("hasStarted" to hasStarted),
+    /**
+     * @param transportModes Sorted comma-separated product-class integers of modes in this journey
+     *                       (e.g. "1,5" = Train + Bus). Matches the encoding used by [MapOptionsSavedEvent].
+     */
+    data class JourneyCardToggleEvent(
+        val expanded: Boolean,
+        val hasStarted: Boolean,
+        val legCount: Int,
+        val transportModes: String,
+    ) : AnalyticsEvent(
+        name = "journey_card_toggle",
+        properties = mapOf(
+            "expanded" to expanded,
+            "hasStarted" to hasStarted,
+            PROP_LEG_COUNT to legCount,
+            PROP_TRANSPORT_MODES to transportModes,
+        ),
     )
 
-    data class JourneyCardCollapseEvent(val hasStarted: Boolean) : AnalyticsEvent(
-        name = "journey_card_collapse",
-        properties = mapOf("hasStarted" to hasStarted),
-    )
-
-    data class JourneyLegClickEvent(val expanded: Boolean) : AnalyticsEvent(
+    /**
+     * Fired when the user taps a transport leg row inside an expanded journey card.
+     *
+     * @param expanded      true = stops list opened, false = collapsed.
+     * @param transportMode Human-readable transport mode name (e.g. "Train", "Bus", "Ferry").
+     * @param lineName      Line identifier displayed on the leg badge (e.g. "T1", "700", "F2").
+     */
+    data class JourneyLegClickEvent(
+        val expanded: Boolean,
+        val transportMode: String,
+        val lineName: String,
+    ) : AnalyticsEvent(
         name = "journey_leg_click",
-        properties = mapOf("expanded" to expanded),
+        properties = mapOf(
+            "expanded" to expanded,
+            "transportMode" to transportMode,
+            "lineName" to lineName,
+        ),
     )
 
     data class JourneyAlertClickEvent(val fromStopId: String, val toStopId: String) :
@@ -736,15 +762,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region SearchStopMap
 
     /**
-     * Fired when the user taps the Map toggle button in SearchTopBar.
-     * Use to measure map feature adoption: how many users ever discover and open the map view.
-     *
-     * @param selected true = user opened map view, false = returned to list view.
+     * Fired when the user taps the "Select on map" button in the SearchStop list.
+     * Use to measure how many users discover and use the map entry point.
      */
-    data class MapToggleClickEvent(val selected: Boolean) : AnalyticsEvent(
-        name = "search_stop_map_toggle_click",
-        properties = mapOf("selected" to selected),
-    )
+    data object SelectOnMapButtonClickEvent : AnalyticsEvent(name = "select_on_map_button_click")
 
     /**
      * Fired when the user taps "Save" on the MapOptionsBottomSheet.
@@ -775,7 +796,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "search_stop_map_options_saved",
         properties = mapOf(
             "radiusKm" to radiusKm,
-            "transportModes" to transportModes,
+            PROP_TRANSPORT_MODES to transportModes,
             "showDistanceScale" to showDistanceScale,
             "showCompass" to showCompass,
             "radiusChanged" to radiusChanged,

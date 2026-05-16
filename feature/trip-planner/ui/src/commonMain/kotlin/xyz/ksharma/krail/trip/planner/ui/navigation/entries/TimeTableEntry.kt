@@ -117,9 +117,14 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                     }
                 },
                 onBackClick = { tripPlannerNavigator.goBack() },
-                onJourneyLegClick = { expanded ->
-                    // Track analytics when user expands/collapses journey legs
-                    viewModel.onEvent(TimeTableUiEvent.AnalyticsJourneyLegClicked(expanded))
+                onJourneyLegClick = { expanded, transportMode, lineName ->
+                    viewModel.onEvent(
+                        TimeTableUiEvent.AnalyticsJourneyLegClicked(
+                            expanded = expanded,
+                            transportMode = transportMode,
+                            lineName = lineName,
+                        ),
+                    )
                 },
                 dateTimeSelectorClicked = {
                     // Track analytics for date/time selector

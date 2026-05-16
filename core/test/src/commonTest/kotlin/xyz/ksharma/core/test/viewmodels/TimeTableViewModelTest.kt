@@ -523,40 +523,112 @@ class TimeTableViewModelTest {
     // region Test for JourneyCardClicked
 
     @Test
-    fun `GIVEN a trip with journey list WHEN JourneyCardClicked is triggered THEN analytics event for collapse or expand is triggered`() =
+    fun `GIVEN a trip with journey list WHEN JourneyCardClicked is triggered THEN toggle event fires with expanded true then false`() =
         runTest {
-            // GIVEN
             val trip = Trip(
                 fromStopId = "FROM_STOP_ID_1",
                 fromStopName = "STOP_NAME_1",
                 toStopId = "TO_STOP_ID_1",
-                toStopName = "STOP_NAME_2"
+                toStopName = "STOP_NAME_2",
             )
             val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
 
-            // THEN journey details should be loaded
             viewModel.uiState.test {
-
                 skipItems(1)
-
                 viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
                 viewModel.fetchTrip()
-                skipItems(4) // silent loading toggle
+                skipItems(4)
 
-                // WHEN JourneyCardClicked is triggered
+                // First click — should expand
                 viewModel.onEvent(TimeTableUiEvent.JourneyCardClicked("TransportationId0null"))
-                // THEN
-                assertTrue(analytics.isEventTracked("journey_card_expand"))
+                assertTrue(analytics.isEventTracked("journey_card_toggle"))
+                val expandEvent = analytics.getTrackedEvent("journey_card_toggle")
+                assertIs<AnalyticsEvent.JourneyCardToggleEvent>(expandEvent)
+                assertTrue(expandEvent.expanded)
                 fakeAnalytics.clear()
 
-                // WHEN JourneyCardClicked is triggered again
+                // Second click — should collapse
                 viewModel.onEvent(TimeTableUiEvent.JourneyCardClicked("TransportationId0null"))
-                // THEN
-                assertTrue(analytics.isEventTracked("journey_card_collapse"))
+                assertTrue(analytics.isEventTracked("journey_card_toggle"))
+                val collapseEvent = analytics.getTrackedEvent("journey_card_toggle")
+                assertIs<AnalyticsEvent.JourneyCardToggleEvent>(collapseEvent)
+                assertFalse(collapseEvent.expanded)
                 fakeAnalytics.clear()
 
                 cancelAndConsumeRemainingEvents()
             }
+        }
+
+    @Test
+    fun `GIVEN journey with one Train leg WHEN JourneyCardClicked THEN toggle event carries correct transportModes and legCount`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                viewModel.fetchTrip()
+                skipItems(4)
+
+                viewModel.onEvent(TimeTableUiEvent.JourneyCardClicked("TransportationId0null"))
+
+                val event = analytics.getTrackedEvent("journey_card_toggle")
+                assertIs<AnalyticsEvent.JourneyCardToggleEvent>(event)
+                // Fake builder produces one Train leg (productClass = 1)
+                assertEquals("1", event.transportModes)
+                assertEquals(1, event.legCount)
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN AnalyticsJourneyLegClicked WHEN sent to ViewModel THEN JourneyLegClickEvent is tracked with all properties`() =
+        runTest {
+            val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(
+                TimeTableUiEvent.AnalyticsJourneyLegClicked(
+                    expanded = true,
+                    transportMode = "Train",
+                    lineName = "T1",
+                ),
+            )
+            advanceUntilIdle()
+
+            assertTrue(analytics.isEventTracked("journey_leg_click"))
+            val event = analytics.getTrackedEvent("journey_leg_click")
+            assertIs<AnalyticsEvent.JourneyLegClickEvent>(event)
+            assertTrue(event.expanded)
+            assertEquals("Train", event.transportMode)
+            assertEquals("T1", event.lineName)
+        }
+
+    @Test
+    fun `GIVEN AnalyticsJourneyLegClicked with expanded false WHEN sent to ViewModel THEN JourneyLegClickEvent reflects collapse`() =
+        runTest {
+            val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(
+                TimeTableUiEvent.AnalyticsJourneyLegClicked(
+                    expanded = false,
+                    transportMode = "Bus",
+                    lineName = "700",
+                ),
+            )
+            advanceUntilIdle()
+
+            val event = analytics.getTrackedEvent("journey_leg_click")
+            assertIs<AnalyticsEvent.JourneyLegClickEvent>(event)
+            assertFalse(event.expanded)
+            assertEquals("Bus", event.transportMode)
+            assertEquals("700", event.lineName)
         }
 
     // endregion
@@ -645,14 +717,16 @@ class TimeTableViewModelTest {
     @Test
     fun `GIVEN expanded state WHEN JourneyLegClicked is triggered THEN analytics event should be tracked`() =
         runTest {
-            // GIVEN
-            val expanded = true
             val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
 
-            // WHEN JourneyLegClicked is triggered
-            viewModel.onEvent(TimeTableUiEvent.AnalyticsJourneyLegClicked(expanded))
+            viewModel.onEvent(
+                TimeTableUiEvent.AnalyticsJourneyLegClicked(
+                    expanded = true,
+                    transportMode = "Train",
+                    lineName = "T1",
+                ),
+            )
 
-            // THEN analytics event should be tracked
             assertTrue(analytics.isEventTracked("journey_leg_click"))
         }
 

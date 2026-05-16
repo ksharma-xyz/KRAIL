@@ -710,7 +710,7 @@ private fun SearchStopScreenSinglePane(
                     isMapsAvailable = searchStopState.isMapsAvailable,
                     onOpenMap = {
                         onShowMapChange(true)
-                        onEvent(SearchStopUiEvent.MapToggleClicked(true))
+                        onEvent(SearchStopUiEvent.SelectOnMapButtonClicked)
                         if (searchStopState.mapUiState == null) {
                             onEvent(SearchStopUiEvent.InitializeMap)
                         }
@@ -731,7 +731,6 @@ private fun SearchStopScreenSinglePane(
             animateMapButton = animateMapButton,
             onMapToggle = { shouldShowMap ->
                 onShowMapChange(shouldShowMap)
-                onEvent(SearchStopUiEvent.MapToggleClicked(shouldShowMap))
                 if (shouldShowMap && searchStopState.mapUiState == null) {
                     onEvent(SearchStopUiEvent.InitializeMap)
                 }
@@ -743,7 +742,6 @@ private fun SearchStopScreenSinglePane(
                 // dark/light mode changes too, which would spuriously reset map mode.
                 if (showMap) {
                     onShowMapChange(false)
-                    onEvent(SearchStopUiEvent.MapToggleClicked(false))
                 }
                 onTextChange(value)
             },

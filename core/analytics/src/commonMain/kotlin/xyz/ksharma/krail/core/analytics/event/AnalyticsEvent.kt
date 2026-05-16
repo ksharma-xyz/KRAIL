@@ -511,6 +511,23 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // endregion
 
     // region Generic Events
+
+    /**
+     * Fired when the nav back stack produces zero entries, causing the NoEntriesUI fallback
+     * to appear. Should never fire after the fixes to resetRoot() and the duplicate toEntries()
+     * call. Monitor this event post-release — if it stays silent, remove the fallback.
+     *
+     * @param topLevelRoute Simple class name of the active top-level route at the time the
+     *                      empty state was observed. Helps identify which navigation path
+     *                      triggered the condition.
+     */
+    data class NoEntriesDetectedEvent(
+        val topLevelRoute: String,
+    ) : AnalyticsEvent(
+        name = "no_entries_detected",
+        properties = mapOf("topLevelRoute" to topLevelRoute),
+    )
+
     data class BackClickEvent(
         val fromScreen: AnalyticsScreen,
     ) : AnalyticsEvent(

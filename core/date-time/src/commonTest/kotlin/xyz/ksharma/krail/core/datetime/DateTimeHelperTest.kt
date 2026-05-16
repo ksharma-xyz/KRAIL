@@ -71,15 +71,26 @@ class DateTimeHelperTest {
     // region toGenericFormattedTimeString
 
     @Test
-    fun `toGenericFormattedTimeString — past departures`() {
-        // More than 1 minute in the past → "X min(s) ago"
+    fun `toGenericFormattedTimeString — past departures under 1 h`() {
         assertEquals("1 min ago", (-1).minutes.toGenericFormattedTimeString())
         assertEquals("2 mins ago", (-2).minutes.toGenericFormattedTimeString())
         assertEquals("40 mins ago", (-40).minutes.toGenericFormattedTimeString())
         assertEquals("59 mins ago", (-59).minutes.toGenericFormattedTimeString())
-        // Hours in the past (totalMinutes drives the display)
-        assertEquals("60 mins ago", (-60).minutes.toGenericFormattedTimeString())
-        assertEquals("90 mins ago", (-90).minutes.toGenericFormattedTimeString())
+    }
+
+    @Test
+    fun `toGenericFormattedTimeString — past departures 1h to 2h show Xh Ym ago`() {
+        assertEquals("1h ago", (-60).minutes.toGenericFormattedTimeString())
+        assertEquals("1h 1m ago", (-61).minutes.toGenericFormattedTimeString())
+        assertEquals("1h 20m ago", (-80).minutes.toGenericFormattedTimeString())
+        assertEquals("1h 30m ago", (-90).minutes.toGenericFormattedTimeString())
+        assertEquals("1h 59m ago", (-119).minutes.toGenericFormattedTimeString())
+    }
+
+    @Test
+    fun `toGenericFormattedTimeString — past departures 2h or more drop minutes`() {
+        assertEquals("2 hours ago", (-120).minutes.toGenericFormattedTimeString())
+        assertEquals("3 hours ago", (-180).minutes.toGenericFormattedTimeString())
     }
 
     @Test

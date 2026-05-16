@@ -103,10 +103,16 @@ object DateTimeHelper {
                 val absDays = (-this).inWholeDays
                 "$absDays ${if (absDays == 1L) "day" else "days"} ago"
             }
-            // Hours in the past — only beyond 2 h so 60–90 min shows as "X mins ago"
+            // 2 h or more in the past — drop minutes, just show hours
             this <= -PAST_HOURS_THRESHOLD -> {
                 val absHours = (-this).inWholeHours
                 "$absHours ${if (absHours == 1L) "hour" else "hours"} ago"
+            }
+            // Between 1 h and 2 h in the past — "Xh Ym ago" (mirrors future "in 1h Xm")
+            this <= (-1).hours -> {
+                val absHours = (-this).inWholeHours
+                val absPartialMinutes = ((-this) - absHours.hours).inWholeMinutes
+                if (absPartialMinutes == 0L) "${absHours}h ago" else "${absHours}h ${absPartialMinutes}m ago"
             }
             // More than a full minute in the past — "X min(s) ago"
             this <= (-1).minutes -> {

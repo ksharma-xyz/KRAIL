@@ -38,6 +38,7 @@ kotlin {
                 implementation(projects.core.remoteConfig)
                 implementation(projects.feature.debugSettings.state)
                 implementation(projects.feature.debugSettings.store)
+                implementation(projects.feature.pro.state)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)

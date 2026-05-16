@@ -10,15 +10,18 @@ enum class ProPlan(
     val displayPrice: String,
     val billingCycle: String,
     val savingsBadge: String?,
+    val note: String,
 ) {
     MONTHLY(
         displayPrice = "$3.99",
-        billingCycle = "per month",
+        billingCycle = "/ mo",
         savingsBadge = null,
+        note = "Cancel anytime",
     ),
     ANNUAL(
-        displayPrice = "$29.99",
-        billingCycle = "per year",
-        savingsBadge = "Save 37%",
+        displayPrice = "$35.99",
+        billingCycle = "/ yr",
+        savingsBadge = "BEST",
+        note = "~$3.00/mo · Save 25%",
     ),
 }

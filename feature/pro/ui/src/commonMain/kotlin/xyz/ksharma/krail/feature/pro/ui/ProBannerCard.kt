@@ -1,19 +1,24 @@
 package xyz.ksharma.krail.feature.pro.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -21,8 +26,7 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
 /**
- * Full-width gradient card shown at the top of Settings.
- * Taps open the Pro upgrade screen.
+ * Compact settings-row entry point for the Pro upgrade screen.
  */
 @Composable
 fun ProBannerCard(
@@ -36,52 +40,57 @@ fun ProBannerCard(
 
     Row(
         modifier = modifier
-            .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingL)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(dim.radiusXL))
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        themeColor.copy(alpha = 0.15f),
-                        themeColor.copy(alpha = 0.08f),
-                    ),
-                ),
-            )
             .klickable { onClick() }
-            .padding(horizontal = dim.cardHorizontalPadding, vertical = dim.cardVerticalPadding),
+            .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingM),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
-            modifier = Modifier.weight(1f),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
-                verticalAlignment = Alignment.CenterVertically,
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFFE0218A))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
             ) {
                 Text(
-                    text = "★",
-                    style = KrailTheme.typography.titleMedium,
-                    color = themeColor,
-                )
-                Text(
-                    text = "KRAIL Pro",
-                    style = KrailTheme.typography.titleMedium,
+                    text = "PRO",
+                    style = TextStyle(
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.sp,
+                        color = Color.White,
+                    ),
                 )
             }
             Text(
-                text = if (isProActive) "Active (debug override)" else "Unlock the full experience",
-                style = KrailTheme.typography.bodyMedium,
-                color = if (isProActive) themeColor else KrailTheme.colors.softLabel,
+                text = "KRAIL Pro",
+                style = KrailTheme.typography.titleMedium,
             )
         }
 
-        Text(
-            text = "›",
-            style = KrailTheme.typography.titleLarge,
-            color = themeColor,
-            modifier = Modifier.padding(start = dim.spacingM),
-        )
+        if (isProActive) {
+            Text(
+                text = "Active",
+                style = KrailTheme.typography.labelMedium,
+                color = Color(0xFFE0218A),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(themeColor.copy(alpha = 0.12f))
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+            ) {
+                Text(
+                    text = "Go Pro",
+                    style = KrailTheme.typography.labelMedium,
+                    color = themeColor,
+                )
+            }
+        }
     }
 }

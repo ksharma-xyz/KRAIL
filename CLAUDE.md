@@ -86,6 +86,38 @@ git submodule update --init --recursive
 that compile pass `submodules: true` to `actions/checkout`; if you add a new
 workflow that compiles, do the same.
 
+## Worktree build setup
+
+Fresh worktrees are missing gitignored files and build artefacts required to compile
+`:androidApp`. Before asking the user to run any build in a worktree, copy all four
+of these from the main checkout (`/Users/ksharma/code/apps/KRAIL/`):
+
+```sh
+WORKTREE=/Users/ksharma/code/apps/KRAIL/.claude/worktrees/<name>
+MAIN=/Users/ksharma/code/apps/KRAIL
+
+# 1. Gradle local config
+cp $MAIN/local.properties $WORKTREE/local.properties
+
+# 2. Firebase config (three locations)
+cp $MAIN/androidApp/src/debug/google-services.json   $WORKTREE/androidApp/src/debug/google-services.json
+cp $MAIN/androidApp/src/release/google-services.json $WORKTREE/androidApp/src/release/google-services.json
+cp $MAIN/androidApp/src/main/google-services.json    $WORKTREE/androidApp/src/main/google-services.json
+cp $MAIN/composeApp/src/debug/google-services.json   $WORKTREE/composeApp/src/debug/google-services.json
+cp $MAIN/composeApp/src/release/google-services.json $WORKTREE/composeApp/src/release/google-services.json
+
+# 3. Wire-generated proto sources (saves a full codegen run)
+cp -R $MAIN/io/bff-api/build/generated $WORKTREE/io/bff-api/build/generated
+
+# 4. Proto submodule
+git -C $WORKTREE submodule update --init --recursive
+```
+
+If any of these are skipped the build fails with one of:
+- `File google-services.json is missing` — missing Firebase config
+- `Unresolved reference 'app'` in BFF mappers — missing Wire-generated sources or empty submodule
+- `Register API key` — missing `local.properties`
+
 ## Full Quality Checks
 
 To verify a branch compiles on both platforms and passes static analysis, ask the user to run:

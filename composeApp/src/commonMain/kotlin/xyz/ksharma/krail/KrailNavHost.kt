@@ -128,7 +128,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     ) {
         if (entries.isNotEmpty()) {
             NavDisplay(
-                entries = navigationState.toEntries(entryProvider),
+                entries = entries,
                 onBack = { navigator.pop() },
                 sceneStrategy = listDetailStrategy,
                 modifier = modifier.fillMaxSize(),

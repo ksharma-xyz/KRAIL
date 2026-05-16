@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.navigation3.runtime.NavBackStack
@@ -109,9 +110,13 @@ class NavigationState(
      * Used when user shouldn't be able to navigate back.
      */
     fun resetRoot(route: NavKey) {
-        val currentStack = backStacks[topLevelRoute]
-        currentStack?.clear()
-        currentStack?.add(route)
+        val currentStack = backStacks[topLevelRoute] ?: return
+        // Batch clear + add so Compose never observes a transient empty stack,
+        // which would otherwise cause a NoEntriesUI flash between the two writes.
+        Snapshot.withMutableSnapshot {
+            currentStack.clear()
+            currentStack.add(route)
+        }
     }
 
     /**
@@ -119,9 +124,11 @@ class NavigationState(
      * Equivalent to navigate with popUpTo inclusive.
      */
     fun replaceCurrent(route: NavKey) {
-        val currentStack = backStacks[topLevelRoute]
-        currentStack?.removeLastOrNull()
-        goTo(route)
+        val currentStack = backStacks[topLevelRoute] ?: return
+        Snapshot.withMutableSnapshot {
+            currentStack.removeLastOrNull()
+            goTo(route)
+        }
     }
 }
 

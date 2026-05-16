@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -14,6 +15,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SocialConnectionLinkClickEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.feature.pro.state.ProDebugStore
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.social.ui.toAnalyticsEventPlatform
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
@@ -24,6 +26,7 @@ class SettingsViewModel(
     private val appInfoProvider: AppInfoProvider,
     private val analytics: Analytics,
     private val platformOps: PlatformOps,
+    private val proDebugStore: ProDebugStore,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SettingsState> = MutableStateFlow(SettingsState())
@@ -31,7 +34,11 @@ class SettingsViewModel(
         .onStart {
             fetchAppVersion()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.Settings)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsState())
+        }
+        .combine(proDebugStore.isProEnabled) { state, isProActive ->
+            state.copy(isProActive = isProActive)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsState())
 
     fun onEvent(event: SettingsEvent) {
         when (event) {

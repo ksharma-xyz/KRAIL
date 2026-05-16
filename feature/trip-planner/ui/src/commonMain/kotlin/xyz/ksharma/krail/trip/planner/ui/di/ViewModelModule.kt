@@ -51,6 +51,7 @@ val viewModelsModule = module {
             appInfoProvider = get(),
             analytics = get(),
             platformOps = get(),
+            proDebugStore = get(),
         )
     }
 

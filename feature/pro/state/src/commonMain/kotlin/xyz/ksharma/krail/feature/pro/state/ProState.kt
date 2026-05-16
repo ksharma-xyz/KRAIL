@@ -3,6 +3,7 @@ package xyz.ksharma.krail.feature.pro.state
 data class ProState(
     val selectedPlan: ProPlan = ProPlan.ANNUAL,
     val features: List<ProFeature> = ProFeature.defaults(),
+    val isProActive: Boolean = false,
 )
 
 enum class ProPlan(

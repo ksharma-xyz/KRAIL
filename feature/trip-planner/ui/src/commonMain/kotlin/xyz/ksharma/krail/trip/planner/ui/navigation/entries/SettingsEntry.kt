@@ -34,6 +34,7 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
         SettingsScreen(
             appVersion = settingsState.appVersion,
             showDebugConfig = settingsState.isDebug,
+            isProActive = settingsState.isProActive,
             onProClick = {
                 tripPlannerNavigator.navigateToProUpgrade()
             },

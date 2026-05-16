@@ -28,6 +28,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 fun ProBannerCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isProActive: Boolean = false,
 ) {
     val themeColorHex by LocalThemeColor.current
     val themeColor = themeColorHex.hexToComposeColor()
@@ -70,9 +71,9 @@ fun ProBannerCard(
                 )
             }
             Text(
-                text = "Unlock the full experience",
+                text = if (isProActive) "Active (debug override)" else "Unlock the full experience",
                 style = KrailTheme.typography.bodyMedium,
-                color = KrailTheme.colors.softLabel,
+                color = if (isProActive) themeColor else KrailTheme.colors.softLabel,
             )
         }
 

@@ -8,4 +8,5 @@ data class SettingsState(
      * never see the tile.
      */
     val isDebug: Boolean = false,
+    val isProActive: Boolean = false,
 )

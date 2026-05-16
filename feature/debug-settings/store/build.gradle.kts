@@ -28,6 +28,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.feature.debugSettings.state)
+                implementation(projects.feature.pro.state)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.sandook)

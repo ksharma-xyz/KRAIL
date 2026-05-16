@@ -14,6 +14,7 @@ package xyz.ksharma.krail.feature.debug.settings.state
  */
 data class DebugSettingsState(
     val source: NetworkSource = DEFAULT_SOURCE,
+    val isProEnabled: Boolean = false,
 ) {
     companion object {
         /** Default source for fresh installs. Matches the release cohort. */

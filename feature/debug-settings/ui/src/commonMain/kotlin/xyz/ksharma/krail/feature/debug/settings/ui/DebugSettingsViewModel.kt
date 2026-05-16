@@ -51,6 +51,10 @@ class DebugSettingsViewModel(
         onEvent(DebugSettingsEvent.SetSource(source))
     }
 
+    fun togglePro(enabled: Boolean) {
+        onEvent(DebugSettingsEvent.TogglePro(enabled))
+    }
+
     fun reset() {
         onEvent(DebugSettingsEvent.Reset)
     }

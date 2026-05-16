@@ -48,6 +48,7 @@ fun SettingsScreen(
     appVersion: String,
     modifier: Modifier = Modifier,
     showDebugConfig: Boolean = false,
+    isProActive: Boolean = false,
     onBackClick: () -> Unit = {},
     onProClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
@@ -79,7 +80,7 @@ fun SettingsScreen(
                 contentPadding = PaddingValues(bottom = CONTENT_BOTTOM_PADDING),
             ) {
                 item(key = "settings-pro-banner") {
-                    ProBannerCard(onClick = onProClick)
+                    ProBannerCard(onClick = onProClick, isProActive = isProActive)
                 }
 
                 item {

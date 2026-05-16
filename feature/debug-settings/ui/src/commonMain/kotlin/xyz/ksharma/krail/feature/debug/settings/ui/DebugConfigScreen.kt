@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,9 +33,11 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
  */
 @Composable
 fun DebugConfigScreen(
+    isProEnabled: Boolean = false,
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
+    onTogglePro: (Boolean) -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -56,6 +60,12 @@ fun DebugConfigScreen(
                         title = "Network",
                         subtitle = "Pick where BFF-eligible calls are routed.",
                         onClick = onNetworkClick,
+                    )
+                }
+                item(key = "tile-pro-toggle") {
+                    DebugProToggleRow(
+                        isProEnabled = isProEnabled,
+                        onToggle = onTogglePro,
                     )
                 }
             }
@@ -104,6 +114,40 @@ internal fun DebugConfigTile(
                     color = KrailTheme.colors.softLabel,
                 )
             }
+        }
+        Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
+    }
+}
+
+@Composable
+private fun DebugProToggleRow(
+    isProEnabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingXL),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = "KRAIL Pro", style = KrailTheme.typography.bodyLarge)
+                Text(
+                    text = "Force Pro active for UI testing. No real IAP.",
+                    style = KrailTheme.typography.body,
+                    color = KrailTheme.colors.softLabel,
+                )
+            }
+            Spacer(modifier = Modifier.padding(start = dim.spacingM))
+            Switch(
+                checked = isProEnabled,
+                onCheckedChange = onToggle,
+            )
         }
         Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
     }

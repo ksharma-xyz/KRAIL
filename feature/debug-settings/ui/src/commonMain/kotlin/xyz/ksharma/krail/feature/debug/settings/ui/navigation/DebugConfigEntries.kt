@@ -31,9 +31,14 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
     entry<DebugConfigHomeRoute>(
         metadata = ListDetailSceneStrategy.detailPane(),
     ) {
+        val viewModel: DebugSettingsViewModel = koinViewModel()
+        val state by viewModel.state.collectAsStateWithLifecycle()
+
         DebugConfigScreen(
+            isProEnabled = state.isProEnabled,
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,
+            onTogglePro = viewModel::togglePro,
         )
     }
 

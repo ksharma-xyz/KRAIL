@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsState
 import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
+import xyz.ksharma.krail.feature.pro.state.ProDebugStore
 
 /**
  * Single source of truth for the runtime debug-network configuration.
@@ -17,7 +18,7 @@ import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
  * only consults this store's [source] when `AppInfo.isDebug` is `true`;
  * release builds resolve straight from Firebase RC.
  */
-interface DebugNetworkConfigStore {
+interface DebugNetworkConfigStore : ProDebugStore {
 
     /**
      * Hot flow of the current settings snapshot. Emits the latest value on

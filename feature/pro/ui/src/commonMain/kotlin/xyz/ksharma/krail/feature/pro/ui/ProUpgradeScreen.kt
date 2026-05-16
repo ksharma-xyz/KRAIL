@@ -146,6 +146,7 @@ fun ProUpgradeScreen(
         // Sticky pricing dock
         ProPricingDock(
             selectedPlan = state.selectedPlan,
+            isProActive = state.isProActive,
             accentColor = animatedAccent,
             onSelectPlan = onSelectPlan,
             onSubscribe = onSubscribe,
@@ -241,6 +242,7 @@ private fun ProPricingDock(
     onSubscribe: () -> Unit,
     onRestorePurchase: () -> Unit,
     modifier: Modifier = Modifier,
+    isProActive: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     Column(
@@ -286,11 +288,12 @@ private fun ProPricingDock(
                 customContentColor = KrailTheme.colors.surface,
             ),
         ) {
-            Text(text = "Start free 14-day trial")
+            Text(text = if (isProActive) "Pro Active (Debug Override)" else "Start free 14-day trial")
         }
 
         Text(
-            text = "then ${selectedPlan.displayPrice} ${selectedPlan.billingCycle} · cancel anytime",
+            text = if (isProActive) "Debug override active. No real IAP."
+            else "then ${selectedPlan.displayPrice} ${selectedPlan.billingCycle} · cancel anytime",
             style = KrailTheme.typography.labelSmall,
             color = KrailTheme.colors.softLabel,
             textAlign = TextAlign.Center,

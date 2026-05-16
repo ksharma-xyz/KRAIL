@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import org.koin.compose.koinInject
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
@@ -75,6 +77,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
     //
     // Guard: if Splash is still active (cold-start race where a hot intent arrives within
     // the 1-second splash window), skip — SplashEntry will call consumePending() instead.
+    val analytics: Analytics = koinInject()
     val pendingDeepLinkManager: PendingDeepLinkManager = koinInject()
     LaunchedEffect(Unit) {
         pendingDeepLinkManager.hotEvents.collect { encodedData ->
@@ -119,6 +122,17 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
 
     // Calculate entries explicitly to check for emptiness
     val entries = navigationState.toEntries(entryProvider)
+
+    val hasNoEntries = entries.isEmpty()
+    LaunchedEffect(hasNoEntries) {
+        if (hasNoEntries) {
+            analytics.track(
+                AnalyticsEvent.NoEntriesDetectedEvent(
+                    topLevelRoute = navigationState.topLevelRoute::class.simpleName ?: "Unknown",
+                ),
+            )
+        }
+    }
 
     CompositionLocalProvider(
         LocalThemeColor provides mutableStateOf(navigator.themeColor),

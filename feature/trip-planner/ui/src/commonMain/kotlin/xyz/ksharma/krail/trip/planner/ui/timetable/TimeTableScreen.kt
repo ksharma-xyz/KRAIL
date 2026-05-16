@@ -103,7 +103,7 @@ fun TimeTableScreen(
     onEvent: (TimeTableUiEvent) -> Unit,
     onAlertClick: (String) -> Unit,
     onBackClick: () -> Unit,
-    onJourneyLegClick: (Boolean) -> Unit,
+    onJourneyLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit,
     modifier: Modifier = Modifier,
     dateTimeSelectorClicked: () -> Unit = {},
     onModeSelectionChanged: (Set<Int>) -> Unit = {},
@@ -434,7 +434,7 @@ fun TimeTableScreen(
 private data class JourneyCallbacks(
     val onEvent: (TimeTableUiEvent) -> Unit,
     val onAlertClick: (String) -> Unit,
-    val onLegClick: (Boolean) -> Unit,
+    val onLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit,
     val onMapClick: (String) -> Unit,
 )
 
@@ -611,7 +611,7 @@ private fun JourneyCardItem(
     totalUniqueServiceAlerts: Int,
     modifier: Modifier = Modifier,
     transportModeLineList: ImmutableList<TransportModeLine>? = null,
-    onLegClick: (Boolean) -> Unit,
+    onLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit,
     onMapClick: () -> Unit = {},
     onShareJourney: (ImageBitmap, String, Boolean) -> Unit = { _, _, _ -> },
     isMapsAvailable: Boolean = false,
@@ -711,7 +711,7 @@ private fun PreviewTimeTableScreen() {
                 onAlertClick = {},
                 onBackClick = {},
                 dateTimeSelectionItem = null,
-                onJourneyLegClick = {},
+                onJourneyLegClick = { _, _, _ -> },
             )
         }
     }
@@ -739,7 +739,7 @@ private fun PreviewTimeTableScreenError() {
                 onAlertClick = {},
                 onBackClick = {},
                 dateTimeSelectionItem = null,
-                onJourneyLegClick = {},
+                onJourneyLegClick = { _, _, _ -> },
             )
         }
     }
@@ -767,7 +767,7 @@ private fun PreviewTimeTableScreenNoResults() {
                 onEvent = {},
                 onAlertClick = {},
                 onBackClick = {},
-                onJourneyLegClick = {},
+                onJourneyLegClick = { _, _, _ -> },
             )
         }
     }

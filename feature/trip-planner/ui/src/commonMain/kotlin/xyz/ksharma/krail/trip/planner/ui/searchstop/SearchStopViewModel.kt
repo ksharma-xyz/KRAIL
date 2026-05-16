@@ -174,8 +174,8 @@ class SearchStopViewModel(
                 onShowCompassToggled(event.enabled)
             }
 
-            is SearchStopUiEvent.MapToggleClicked -> {
-                analytics.track(AnalyticsEvent.MapToggleClickEvent(selected = event.selected))
+            SearchStopUiEvent.SelectOnMapButtonClicked -> {
+                analytics.track(AnalyticsEvent.SelectOnMapButtonClickEvent)
             }
 
             SearchStopUiEvent.MapOptionsButtonClicked -> {

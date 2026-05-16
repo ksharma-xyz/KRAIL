@@ -398,4 +398,21 @@ class SearchStopViewModelTest {
         }
 
     // endregion RecentSearchStops
+
+    // region SelectOnMapButtonClicked
+
+    @Test
+    fun `GIVEN SelectOnMapButtonClicked WHEN sent to ViewModel THEN select_on_map_button_click event is tracked`() =
+        runTest {
+            viewModel.onEvent(SearchStopUiEvent.SelectOnMapButtonClicked)
+            advanceUntilIdle()
+
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            assertTrue(fakeAnalytics.isEventTracked("select_on_map_button_click"))
+            assertIs<AnalyticsEvent.SelectOnMapButtonClickEvent>(
+                fakeAnalytics.getTrackedEvent("select_on_map_button_click"),
+            )
+        }
+
+    // endregion SelectOnMapButtonClicked
 }

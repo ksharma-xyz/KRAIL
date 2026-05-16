@@ -22,7 +22,11 @@ sealed interface TimeTableUiEvent {
 
     data object BackClick : TimeTableUiEvent
 
-    data class AnalyticsJourneyLegClicked(val expanded: Boolean) : TimeTableUiEvent
+    data class AnalyticsJourneyLegClicked(
+        val expanded: Boolean,
+        val transportMode: String,
+        val lineName: String,
+    ) : TimeTableUiEvent
 
     data class ModeSelectionChanged(val unselectedModes: Set<Int>) : TimeTableUiEvent
 

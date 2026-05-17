@@ -17,7 +17,22 @@ object RemoteConfigDefaults {
         return arrayOf(
             Pair(
                 FlagKeys.HIGH_PRIORITY_STOP_IDS.key,
-                """["200060", "200070", "200080", "206010", "2150106", "200017", "200039", "201016", "201039", "201080", "200066", "200030", "200046", "200050", "2155384"]""".trimMargin(),
+                // Seeded into the fuzzy candidate pool unconditionally so they aren't
+                // starved by the trigram prefilter (which previously made "paramatta"
+                // miss the main station, "bella visa" miss Bella Vista, etc.):
+                //  - 15 CBD/interchange IDs (Central entrances, Town Hall, Wynyard, …)
+                //  - 9 highest-traffic heavy-rail stations (Schofields, Seven Hills,
+                //    Parramatta, Lidcombe, Redfern, Bankstown, Blacktown, Strathfield,
+                //    Circular Quay)
+                //  - the full Sydney Metro Northwest line + Macquarie University
+                //    (Castle Hill, Rouse Hill, Kellyville, Bella Vista, Hills
+                //    Showground, Norwest, Cherrybrook, Macquarie University)
+                """["200060", "200070", "200080", "206010", "2150106", "200017", """ +
+                    """"200039", "201016", "201039", "201080", "200066", "200030", """ +
+                    """"200046", "200050", "2155384", "276220", "214710", "215020", """ +
+                    """"214110", "201510", "220010", "214810", "213510", "200020", """ +
+                    """"2154391", "2155383", "2155382", "2153478", "2154392", """ +
+                    """"2153477", "2126158", "211310"]""",
             ),
             Pair(
                 FlagKeys.OUR_STORY_TEXT.key,

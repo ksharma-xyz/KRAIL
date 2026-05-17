@@ -196,6 +196,44 @@ class FuzzyStopRankerTest {
 
     // endregion
 
+    // region sequenceBonus (word-order / leading-position)
+
+    @Test
+    fun `sequenceBonus single-token query is zero`() {
+        // Single-token leading is already handled by the prefix bonus.
+        assertEquals(0.0, sequenceBonus("cowper", "cowper st at prince st"))
+    }
+
+    @Test
+    fun `sequenceBonus leading contiguous run scores highest`() {
+        // "cowper" at token 0, "street"->"st" abbrev at token 1 → name *is* Cowper St.
+        val leading = sequenceBonus("cowper street", "cowper st at prince st")
+        val trailing = sequenceBonus("cowper street", "connolly park cowper st")
+        val gapped = sequenceBonus("cowper street", "cowper before parkes st")
+        assertTrue(leading > trailing, "leading ($leading) should beat trailing ($trailing)")
+        assertTrue(trailing > gapped, "contiguous-trailing ($trailing) should beat gapped ($gapped)")
+        assertTrue(gapped > 0.0, "in-order gapped should still get a small bonus")
+    }
+
+    @Test
+    fun `sequenceBonus is zero when query tokens are out of order`() {
+        // "Page St at Cowper Ave": "cowper" is at token 3, the only "st" is token 1 (Page St)
+        // which precedes it — query tokens cannot be matched in increasing order.
+        assertEquals(0.0, sequenceBonus("cowper street", "page st at cowper ave"))
+    }
+
+    @Test
+    fun `scoreCandidateName ranks Cowper St road above trailing-qualifier and wrong-road`() {
+        val q = normalize("cowper street")
+        val road = scoreCandidateName(q, normalize("Cowper St at Prince St", expandAbbreviations = false))
+        val landmark = scoreCandidateName(q, normalize("Connolly Park, Cowper St", expandAbbreviations = false))
+        val wrongRoad = scoreCandidateName(q, normalize("Page St at Cowper Ave", expandAbbreviations = false))
+        assertTrue(road > landmark, "Cowper St road ($road) must outrank landmark ($landmark)")
+        assertTrue(landmark > wrongRoad, "landmark ($landmark) must outrank wrong-road ($wrongRoad)")
+    }
+
+    // endregion
+
     // region golden cases (derived from 60-day zero-result analytics snapshot)
 
     private fun candidatePool(): List<SearchStopState.SearchResult.Stop> = listOf(

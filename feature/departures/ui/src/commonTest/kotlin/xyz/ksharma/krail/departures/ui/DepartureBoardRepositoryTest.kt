@@ -326,9 +326,10 @@ class DepartureBoardRepositoryTest {
 
                 val callsAfterFirst = service.callCount
 
-                // Second call within the refresh window — should be a cache hit (NOOP)
+                // Second call within the refresh window — cache hit: returns immediately without
+                // suspending. Do NOT call advanceUntilIdle() here — that would advance virtual
+                // time, fire the auto-refresh loop, and inflate callCount.
                 repo.loadPreviousDepartures(STOP_A)
-                advanceUntilIdle()
 
                 assertEquals(
                     callsAfterFirst,

@@ -107,6 +107,18 @@ internal fun shouldShowPillRow(
     ListState.NoMatch, ListState.Error -> false
 }
 
+/**
+ * On a fresh install (Recent mode, zero recents) we surface a small curated set of
+ * [EMPTY_STATE_STOPS] so a brand-new user can pick a major interchange without typing,
+ * instead of facing a blank canvas. As soon as the user has at least one recent stop,
+ * recents take over and this returns false (empty-state stops are a first-open
+ * fallback, never shown alongside recents).
+ */
+internal fun shouldShowEmptyStateStops(
+    listState: ListState,
+    recentStops: List<SearchStopState.StopResult>,
+): Boolean = listState == ListState.Recent && recentStops.isEmpty()
+
 internal sealed interface AssignConflict {
     data class StopAlreadyOnAnotherLabel(
         val target: StopLabel,

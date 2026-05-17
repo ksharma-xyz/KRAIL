@@ -15,6 +15,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.departures.ui"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
 
     listOf(

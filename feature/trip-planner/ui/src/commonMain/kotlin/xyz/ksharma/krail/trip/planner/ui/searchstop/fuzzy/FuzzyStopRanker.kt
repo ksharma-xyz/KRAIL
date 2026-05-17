@@ -1,3 +1,9 @@
+// This file is a single cohesive scoring module: a set of small, tightly-coupled pure
+// functions (normalize, levenshtein, per-token / concat / sequence scoring) that only make
+// sense together. Splitting them across files to satisfy the per-file function count would
+// scatter the algorithm and hurt readability, so TooManyFunctions is suppressed here.
+@file:Suppress("TooManyFunctions")
+
 package xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy
 
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -41,7 +47,12 @@ private const val SHORT_QUERY_MAX_LEN = 3
 private const val MEDIUM_QUERY_MAX_LEN = 6
 private const val SHORT_QUERY_THRESHOLD = 0.85
 private const val MEDIUM_QUERY_THRESHOLD = 0.55
-private const val LONG_QUERY_THRESHOLD = 0.50
+
+// Raised from 0.50 → 0.60: at 0.50, near-homophones such as "Cooper Park" (~0.55) and
+// "Cowpasture Rd" (~0.55) cleared the gate for "cowper street" and polluted the results.
+// Genuine matches for long queries score well above this (real "Cowper St …" stops ≈ 1.04),
+// so 0.60 removes the noise without dropping legitimate fuzzy hits. Guarded by the 37k eval.
+private const val LONG_QUERY_THRESHOLD = 0.60
 private const val CONCAT_SCORE_WEIGHT = 0.9
 private const val PREFIX_BONUS = 0.1
 private const val MIN_TOKEN_QUALITY = 0.6
@@ -49,6 +60,20 @@ private const val MIN_TOKEN_QUALITY = 0.6
 // Small bonus that prefers shorter/more-specific candidates when base scores tie.
 // E.g. "Wollongong Station" (2 tokens) over "Wollongong Rd opp Earle St" (5 tokens).
 private const val SPECIFICITY_WEIGHT = 0.1
+
+// Word-order bonus for multi-token queries. Bag-of-words scoring ties every stop
+// containing the query words regardless of position — "Cowper St at Prince St" (the road
+// itself) scores the same as "Connolly Park, Cowper St" (a landmark with Cowper St as a
+// cross-street) and even "Page St at Cowper Ave" (wrong road, "st" borrowed from "Page St").
+// These tiers reward query tokens that appear in order in the candidate:
+//  - LEADING: in order, contiguous, and the run starts at candidate token 0 → the name *is*
+//    that road ("Cowper St at …"). Largest bonus.
+//  - CONTIGUOUS: in order and adjacent but starting later ("Connolly Park, Cowper St").
+//  - IN_ORDER: in order but with gaps ("Cowper before Parkes St").
+//  - out of order ("Page St at Cowper Ave") → no bonus, sinks below all genuine matches.
+private const val SEQUENCE_LEADING_BONUS = 0.30
+private const val SEQUENCE_CONTIGUOUS_BONUS = 0.12
+private const val SEQUENCE_IN_ORDER_BONUS = 0.04
 
 // LCS is unreliable for very short query tokens (e.g. "ro" scoring 1.0 inside "barangaroo"
 // because the 2-char LCS fills the entire query token length). Only apply LCS when the
@@ -155,21 +180,70 @@ private fun perTokenScores(query: String, candidate: String): List<Double> {
     val candidateTokens = candidate.split(" ").filter { it.isNotEmpty() }
     if (queryTokens.isEmpty() || candidateTokens.isEmpty()) return emptyList()
     return queryTokens.map { qTok ->
-        candidateTokens.maxOf { cTok ->
-            val prefixScore = when {
-                cTok.startsWith(qTok) -> 1.0
-                qTok.startsWith(cTok) -> cTok.length.toDouble() / qTok.length
-                else -> commonPrefixLength(qTok, cTok).toDouble() / qTok.length
-            }
-            val maxLen = maxOf(qTok.length, cTok.length)
-            val editScore = 1.0 - levenshtein(qTok, cTok, maxLen).toDouble() / maxLen
-            val lcsScore = if (qTok.length < LCS_MIN_QUERY_TOKEN_LEN) {
-                0.0
-            } else {
-                longestCommonSubstringLength(qTok, cTok).toDouble() / qTok.length
-            }
-            maxOf(prefixScore, editScore, lcsScore).coerceIn(0.0, 1.0)
+        candidateTokens.maxOf { cTok -> singleTokenScore(qTok, cTok) }
+    }
+}
+
+/**
+ * Max of prefix, edit-distance, and LCS signals for one query token vs one candidate
+ * token. Factored out of [perTokenScores] so [sequenceBonus] can reuse the exact same
+ * notion of "does this query token match this candidate token".
+ */
+private fun singleTokenScore(qTok: String, cTok: String): Double {
+    val prefixScore = when {
+        cTok.startsWith(qTok) -> 1.0
+        qTok.startsWith(cTok) -> cTok.length.toDouble() / qTok.length
+        else -> commonPrefixLength(qTok, cTok).toDouble() / qTok.length
+    }
+    val maxLen = maxOf(qTok.length, cTok.length)
+    val editScore = 1.0 - levenshtein(qTok, cTok, maxLen).toDouble() / maxLen
+    val lcsScore = if (qTok.length < LCS_MIN_QUERY_TOKEN_LEN) {
+        0.0
+    } else {
+        longestCommonSubstringLength(qTok, cTok).toDouble() / qTok.length
+    }
+    return maxOf(prefixScore, editScore, lcsScore).coerceIn(0.0, 1.0)
+}
+
+/**
+ * Word-order bonus. Greedily aligns each query token to the **earliest** later candidate
+ * token it matches (per-token score ≥ [MIN_TOKEN_QUALITY], or an abbreviation reverse-match
+ * such as candidate "st" ⇒ query "street" at candidate position > 0). Returns 0 for
+ * single-token queries (leading is already handled by the prefix bonus) and for any query
+ * whose tokens cannot all be matched in increasing order.
+ *
+ * - all matched, contiguous, run starts at candidate token 0 → [SEQUENCE_LEADING_BONUS]
+ * - all matched, contiguous, starts later                    → [SEQUENCE_CONTIGUOUS_BONUS]
+ * - all matched, in order but with gaps                       → [SEQUENCE_IN_ORDER_BONUS]
+ */
+internal fun sequenceBonus(normalizedQuery: String, normalizedCandidate: String): Double {
+    val queryTokens = normalizedQuery.split(" ").filter { it.isNotEmpty() }
+    val candidateTokens = normalizedCandidate.split(" ").filter { it.isNotEmpty() }
+    if (queryTokens.size < 2 || candidateTokens.isEmpty()) return 0.0
+
+    val matchedIndices = ArrayList<Int>(queryTokens.size)
+    var searchFrom = 0
+    for (qTok in queryTokens) {
+        val foundAt = (searchFrom until candidateTokens.size).firstOrNull { cIdx ->
+            val cTok = candidateTokens[cIdx]
+            (cIdx > 0 && ABBREVIATIONS[cTok] == qTok) ||
+                singleTokenScore(qTok, cTok) >= MIN_TOKEN_QUALITY
         }
+        if (foundAt == null) {
+            matchedIndices.clear() // a query token has no in-order match → not a sequence
+            break
+        }
+        matchedIndices += foundAt
+        searchFrom = foundAt + 1
+    }
+
+    val aligned = matchedIndices.size == queryTokens.size
+    val contiguous = aligned && matchedIndices.zipWithNext().all { (a, b) -> b == a + 1 }
+    return when {
+        !aligned -> 0.0
+        contiguous && matchedIndices.first() == 0 -> SEQUENCE_LEADING_BONUS
+        contiguous -> SEQUENCE_CONTIGUOUS_BONUS
+        else -> SEQUENCE_IN_ORDER_BONUS
     }
 }
 
@@ -257,7 +331,12 @@ internal fun scoreCandidateName(normalizedQuery: String, normalizedCandidate: St
     // Prefer candidates with fewer tokens — "Wollongong Station" (2) over "Wollongong Rd opp …" (5).
     val specificityBonus = queryTokens.size.toDouble() /
         maxOf(queryTokens.size, candidateTokens.size) * SPECIFICITY_WEIGHT
-    return maxOf(tokenScore, concatScore * CONCAT_SCORE_WEIGHT) + prefixBonus + specificityBonus
+    // Word-order: lifts "Cowper St at Prince St" (Cowper St is the road, tokens 0-1) above
+    // "Connolly Park, Cowper St" (trailing cross-street) and drops "Page St at Cowper Ave"
+    // (out of order — "st" came from "Page St", not adjacent to "cowper").
+    val sequenceBonus = sequenceBonus(normalizedQuery, normalizedCandidate)
+    return maxOf(tokenScore, concatScore * CONCAT_SCORE_WEIGHT) +
+        prefixBonus + specificityBonus + sequenceBonus
 }
 
 /**

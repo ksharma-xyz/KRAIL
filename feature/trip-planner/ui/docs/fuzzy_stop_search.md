@@ -124,7 +124,8 @@ The fetch uses `Sandook.selectStopsByIds(...)` — a single batch SQL query (`WH
 Each candidate is scored with two complementary functions and the higher one wins, with bonuses:
 
 ```
-score = max(tokenOverlapScore, concatSplitScore × 0.9) + prefixBonus + specificityBonus
+score = max(tokenOverlapScore, concatSplitScore × 0.9)
+        + prefixBonus + specificityBonus + sequenceBonus
 ```
 
 ### Token overlap score
@@ -163,6 +164,29 @@ Adds `(queryTokenCount / max(queryTokenCount, candidateTokenCount)) × 0.1`. Thi
 
 Both stops score 1.1 on the base signals, so without this bonus the road stop (listed earlier in the DB) would win. With it, `Wollongong Station` ranks first.
 
+### Sequence bonus (word order / leading position)
+
+The token and concat scores are a **bag of words** — they ignore *where* the query
+words sit in the candidate. For `cowper street` that meant `Cowper St at Prince St`
+(the road itself), `Connolly Park, Cowper St` (Cowper St is only a cross-street),
+and even `Page St at Cowper Ave` (the matched `st` belongs to *Page St*, not Cowper)
+all scored the same, so ordering fell to noise.
+
+`sequenceBonus` greedily aligns each query token to the **earliest later** candidate
+token it matches (per-token score ≥ 0.6, or an abbreviation reverse-match like
+candidate `st` ⇒ query `street` at candidate position > 0), then rewards in-order runs:
+
+| Alignment | Example for `cowper street` | Bonus |
+|---|---|---|
+| Contiguous, **starts at token 0** (name *is* the road) | `Cowper St at Prince St` | **+0.30** |
+| Contiguous, starts later | `Connolly Park, Cowper St` | +0.12 |
+| In order but with gaps | `Cowper before Parkes St` | +0.04 |
+| Out of order / not all matched | `Page St at Cowper Ave` | 0 |
+
+Single-token queries always get 0 (leading is already covered by the prefix bonus),
+so progressive-typing behaviour is unchanged. The 37k eval stays at 95% — the bonus
+reorders within the already-matched set, it doesn't admit or reject candidates.
+
 ### Multi-token quality gate
 
 For queries with ≥ 2 tokens, a candidate is **rejected outright** (score forced to 0) if 2 or more of its per-token scores (using raw, pre-boost signals) fall below **0.6**. This prevents weak partial overlaps from accumulating into a passing average:
@@ -184,7 +208,13 @@ Short queries are noisier (a 2-character query matches almost anything), so they
 |---|---|
 | 1-3 characters | 0.85 |
 | 4-6 characters | 0.55 |
-| 7+ characters | 0.50 |
+| 7+ characters | 0.60 |
+
+The 7+ bucket was raised from 0.50 to 0.60: at 0.50, near-homophones such as
+`Cooper Park` (~0.55) and `Cowpasture Rd` (~0.55) cleared the gate for `cowper street`
+and polluted the results. Genuine long-query matches score well above this (real
+`Cowper St …` stops ≈ 1.04), so 0.60 removes the noise without dropping real hits.
+The 37k-stop eval guards against regression (still 95%).
 
 ---
 
@@ -192,12 +222,21 @@ Short queries are noisier (a 2-character query matches almost anything), so they
 
 Certain stops (major interchanges: Central, Town Hall, Wynyard, Tallawong, etc.) are declared high-priority via remote config (`high_priority_stop_ids`). These always sort to the **top of the result list**, regardless of transport mode rank or whether they came from exact or fuzzy search.
 
-Sorting is three-level:
+Sorting tiers:
 1. High-priority stop? → 0 (top), else 1
-2. Transport mode priority (Train > Metro > Bus > ...)
-3. Stop name alphabetically
+2. Transport mode priority — `TransportMode.searchPriority`, ascending:
+   Train (1) > Metro (2) > Light Rail (3) > Ferry (4) > Coach (5) > Bus (6, last)
+3. Tie-break **within a tier**:
+   - **Exact-only path** (`prioritiseStops`): stop name alphabetically.
+   - **Fuzzy fallback path** (`prioritiseByRelevance`): descending relevance — exact
+     matches first, then fuzzy results in the order the ranker scored them.
 
-Both the exact-only path and the merged exact+fuzzy path pass through `prioritiseStops`, so this guarantee holds in all cases.
+The fuzzy path must **not** use the alphabetical tie-break: the ranker already produced
+a relevance order, and re-sorting it alphabetically scatters the best matches among
+low-score noise (e.g. a perfect `Cowper St at Prince St` sinking below `Cowpasture Rd`).
+`prioritiseByRelevance` keeps tiers 1–2 but relies on `List.sortedWith` being a *stable*
+sort, so same-tier candidates keep their incoming (relevance) order. The exact-only path
+keeps the alphabetical tie-break (no relevance score exists there).
 
 ---
 

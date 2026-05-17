@@ -105,7 +105,13 @@ class RealStopResultsManager(
             val fuzzyResults = runCatching { fetchFuzzyResults(safeQuery, exactResults) }
                 .onFailure { log("Fuzzy fetch failed for query=\"$safeQuery\": ${it.message}") }
                 .getOrDefault(emptyList())
-            (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseStops)
+            // exactResults first, then fuzzyResults in descending-relevance order (the ranker
+            // already sorted them by score). prioritiseByRelevance keeps the high-priority and
+            // transport-mode tiers but, unlike prioritiseStops, preserves this relevance order
+            // within a tier instead of re-sorting alphabetically by name — otherwise a perfect
+            // match like "Cowper St at Prince St" sinks alphabetically below noise such as
+            // "Cooper Park" / "Cowpasture Rd" that merely cleared the score threshold.
+            (exactResults + fuzzyResults).distinctBy { it.stopId }.let(::prioritiseByRelevance)
         } else {
             exactResults
         }.take(MAX_STOP_SEARCH_RESULTS)
@@ -254,6 +260,25 @@ class RealStopResultsManager(
         ),
     )
 
+    /**
+     * Same high-priority and transport-mode tiers as [prioritiseStops], but **without** the
+     * alphabetical name tie-break. [List.sortedWith] is a stable sort, so candidates that fall
+     * in the same tier keep their incoming order — which for the fuzzy path is descending
+     * relevance (exact matches first, then fuzzy results already ranked by score). This is the
+     * ordering the user sees for fuzzy fallback searches; the alphabetical tie-break is wrong
+     * there because it scatters the best matches among low-score noise.
+     */
+    private fun prioritiseByRelevance(
+        stopResults: List<SearchStopState.SearchResult.Stop>,
+    ): List<SearchStopState.SearchResult.Stop> = stopResults.sortedWith(
+        compareBy(
+            { stopResult -> if (stopResult.stopId in highPriorityStopIdList) 0 else 1 },
+            { stopResult ->
+                stopResult.transportModeType.minOfOrNull { it.searchPriority } ?: Int.MAX_VALUE
+            },
+        ),
+    )
+
     override fun fetchLocalStopName(stopId: String): String? {
         val resultsDb = sandook.selectStops(stopName = stopId, excludeProductClassList = listOf())
         return resultsDb
@@ -326,7 +351,7 @@ class RealStopResultsManager(
         private const val MAX_STOP_SEARCH_RESULTS = 50
 
         // Boundary cap on user-supplied query length. The longest legitimate query
-        // observed in 60-day analytics is ~30 chars ("253 cleveland st redfern nsw a");
+        // observed in 60-day analytics is ~30 chars (a street address with suburb);
         // 64 gives ~2x headroom while still rejecting pasted megabyte-sized input
         // before it hits DB LIKE / regex / Levenshtein costs. There's no measurable
         // perf difference between 32 and 64 since all per-candidate work is bounded

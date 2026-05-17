@@ -335,6 +335,7 @@ private fun DepartureBoardStopCardCollapsedPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(),
             onEvent = {},
         )
@@ -348,6 +349,7 @@ private fun DepartureBoardStopCardLoadingPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(isLoading = true),
             onEvent = {},
             isExpanded = true,
@@ -362,6 +364,7 @@ private fun DepartureBoardStopCardLoadedTrainPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = previewTrainDepartures,
@@ -379,6 +382,7 @@ private fun DepartureBoardStopCardLoadedBusPreview() {
     PreviewTheme(KrailThemeStyle.Bus) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = previewBusDepartures,
@@ -396,6 +400,7 @@ private fun DepartureBoardStopCardLoadedFerryPreview() {
     PreviewTheme(KrailThemeStyle.Ferry) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = previewFerryDepartures,
@@ -413,6 +418,7 @@ private fun DepartureBoardStopCardErrorPreview() {
     PreviewTheme(KrailThemeStyle.Metro) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 isError = true,
@@ -430,6 +436,7 @@ private fun DepartureBoardStopCardEmptyPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = persistentListOf(),

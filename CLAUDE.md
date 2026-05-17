@@ -74,6 +74,14 @@ We stack PRs. Break work into focused, layered branches and submit the full stac
    ```
    ./gradlew detekt --continue
    ```
+   After detekt runs, always check for auto-corrected files and commit them:
+   ```
+   git diff --name-only   # stage + commit any files detekt auto-corrected
+   ```
+   `autoCorrect: true` silently rewrites source files on disk. If those changes
+   aren't committed, CI sees the original violations and fails even though local
+   detekt reported success.
+
 2. Unit tests — run tests for every module touched by the change:
    ```
    ./gradlew :module:a:testAndroidHostTest :module:b:testAndroidHostTest --continue

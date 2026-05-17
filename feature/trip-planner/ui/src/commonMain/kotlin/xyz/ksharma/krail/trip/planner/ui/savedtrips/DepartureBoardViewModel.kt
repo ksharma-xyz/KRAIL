@@ -161,14 +161,24 @@ class DepartureBoardViewModel(
         if (_expandedStopId.value == stopId) return
         _expandedStopId.value = stopId
         val stopName = _stops.value.firstOrNull { it.first == stopId }?.second ?: ""
-        analytics.trackDepartureBoardToggle(stopId = stopId, stopName = stopName, expand = true, source = DepartureBoardSource.SAVED_TRIPS)
+        analytics.trackDepartureBoardToggle(
+            stopId = stopId,
+            stopName = stopName,
+            expand = true,
+            source = DepartureBoardSource.SAVED_TRIPS,
+        )
     }
 
     /** Collapses the currently open card. [flatMapLatest] cancels the polling loop. */
     fun onCardCollapse() {
         _expandedStopId.value?.let { stopId ->
             val stopName = _stops.value.firstOrNull { it.first == stopId }?.second ?: ""
-            analytics.trackDepartureBoardToggle(stopId = stopId, stopName = stopName, expand = false, source = DepartureBoardSource.SAVED_TRIPS)
+            analytics.trackDepartureBoardToggle(
+                stopId = stopId,
+                stopName = stopName,
+                expand = false,
+                source = DepartureBoardSource.SAVED_TRIPS,
+            )
         }
         _expandedStopId.value = null
     }

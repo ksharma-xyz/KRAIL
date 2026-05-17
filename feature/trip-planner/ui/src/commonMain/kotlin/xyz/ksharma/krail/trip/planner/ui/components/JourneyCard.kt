@@ -485,7 +485,7 @@ private fun JourneyOriginTimeRow(
             is TimeTableState.JourneyCardInfo.DepartureDeviation.Early ->
                 "Early ${departureDeviation.text.removeSuffix(" early")}"
 
-            else -> null
+            is TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime, null -> null
         }
     } else {
         null

@@ -224,4 +224,51 @@ class SearchStopRulesTest {
     }
 
     // endregion
+
+    // region shouldShowEmptyStateStops
+
+    @Test
+    fun `empty-state stops shown on fresh Recent state with no recents`() {
+        assertTrue(shouldShowEmptyStateStops(ListState.Recent, recentStops = emptyList()))
+    }
+
+    @Test
+    fun `empty-state stops hidden once at least one recent exists`() {
+        assertFalse(shouldShowEmptyStateStops(ListState.Recent, recentStops = listOf(centralRecent)))
+    }
+
+    @Test
+    fun `empty-state stops hidden in Results state`() {
+        val state = ListState.Results(results = persistentListOf(centralResult), isLoading = false)
+        assertFalse(shouldShowEmptyStateStops(state, recentStops = emptyList()))
+    }
+
+    @Test
+    fun `empty-state stops hidden in NoMatch and Error states`() {
+        assertFalse(shouldShowEmptyStateStops(ListState.NoMatch, recentStops = emptyList()))
+        assertFalse(shouldShowEmptyStateStops(ListState.Error, recentStops = emptyList()))
+    }
+
+    // endregion
+
+    // region EMPTY_STATE_STOPS contents
+
+    @Test
+    fun `empty-state stops are the four curated interchanges in order`() {
+        assertEquals(
+            listOf("Town Hall Station", "Central Station", "Parramatta Station", "Wynyard Station"),
+            EMPTY_STATE_STOPS.map { it.stopName },
+        )
+        assertEquals(
+            listOf("200070", "200060", "215020", "200080"),
+            EMPTY_STATE_STOPS.map { it.stopId },
+        )
+    }
+
+    @Test
+    fun `empty-state stops all carry at least one transport mode`() {
+        assertTrue(EMPTY_STATE_STOPS.all { it.transportModeType.isNotEmpty() })
+    }
+
+    // endregion
 }

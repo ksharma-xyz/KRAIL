@@ -48,6 +48,34 @@ users tap into a dead-end state.
 
 ---
 
+### Empty-state stops (`shouldShowEmptyStateStops`)
+
+On a true first open — Recent mode with **zero** recent stops — the screen would
+otherwise be a near-blank canvas (just the "select on map" button). Instead we render
+a small hardcoded curated list, `EMPTY_STATE_STOPS`: **Town Hall, Central, Parramatta,
+Wynyard** (order intentional), so a brand-new user can reach a major interchange
+without typing.
+
+| List state | Empty-state stops |
+|---|---|
+| Recent, no recents yet | **visible** (the 4 curated stops) |
+| Recent, ≥ 1 recent stop | hidden (recents replace them) |
+| Results / NoMatch / Error | hidden |
+
+Rules:
+- **No header.** A brand-new user just sees a few tappable stops; no "Popular"/
+  "Suggested" label (product decision).
+- **Replace, never coexist.** They are a first-open fallback only. The instant the
+  user has any recent stop, recents take over and the curated list disappears.
+- **Same tap path as recents.** Tapping one calls `onStopSelect` → the stop is saved
+  to recents, so next open it appears under Recents (and the curated list is gone).
+  Fires `TrackStopSelected(isRecentSearch = false)` — not a recent, not a search.
+- **Pill row stays hidden here** (unchanged): `shouldShowPillRow` still returns false
+  with zero recents, so a first-open user sees only the curated stops, not label
+  pills. Reaching assigning mode still requires a recent first.
+
+---
+
 ## Stops & saving
 
 ### Saving auto-pins to recents

@@ -921,6 +921,9 @@ private fun SearchStopListContent(
     val showPillRow = remember(listState, searchStopState.recentStops) {
         shouldShowPillRow(listState, searchStopState.recentStops)
     }
+    val showEmptyStateStops = remember(listState, searchStopState.recentStops) {
+        shouldShowEmptyStateStops(listState, searchStopState.recentStops)
+    }
     when (listState) {
         ListState.Recent -> {
             // Box wrapper lets the floating "searching..." pill sit on the z-axis above
@@ -953,6 +956,16 @@ private fun SearchStopListContent(
                     selectOnMapItem(isMapsAvailable = isMapsAvailable, onOpenMap = onOpenMap)
                     recentSearchStopsList(
                         recentStops = searchStopState.recentStops,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        savedStopIds = savedStopIds,
+                        onStopSelect = onStopSelect,
+                        onSaveAsLabel = onSaveAsLabel,
+                        onUnsaveLabel = onUnsaveLabel,
+                        onEvent = onEvent,
+                    )
+                    emptyStateStopsList(
+                        show = showEmptyStateStops,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
                         savedStopIds = savedStopIds,
@@ -1256,6 +1269,58 @@ private fun LazyListScope.recentSearchStopsList(
                     SearchStopUiEvent.TrackStopSelected(
                         stopItem = stopItem,
                         isRecentSearch = true,
+                    ),
+                )
+            },
+            isSaved = isSaved,
+            onSaveAsLabel = if (!isSaved) onSaveAsLabel else null,
+            onUnsaveLabel = if (isSaved) onUnsaveLabel else null,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Divider(
+            modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
+        )
+    }
+}
+
+/**
+ * First-open quick-select list. Renders [EMPTY_STATE_STOPS] only when [show] is true
+ * (Recent mode with zero recents — see [shouldShowEmptyStateStops]). No header by
+ * product decision: a brand-new user just sees a few tappable major stops. Tapping
+ * flows through the same [onStopSelect] path as recents, so the chosen stop is saved
+ * and shows up under Recents next time (empty-state stops then disappear).
+ * See `SEARCH_STOP_UX.md`.
+ */
+@Suppress("LongParameterList")
+private fun LazyListScope.emptyStateStopsList(
+    show: Boolean,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    savedStopIds: Set<String>,
+    onStopSelect: (StopItem) -> Unit,
+    onSaveAsLabel: (StopItem) -> Unit,
+    onUnsaveLabel: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    if (!show) return
+    items(
+        items = EMPTY_STATE_STOPS,
+        key = { "empty_state_${it.stopId}" },
+    ) { stop ->
+        val isSaved = stop.stopId in savedStopIds
+        StopSearchListItem(
+            stopId = stop.stopId,
+            stopName = stop.stopName,
+            transportModeSet = stop.transportModeType.toImmutableSet(),
+            textColor = KrailTheme.colors.label,
+            onClick = { stopItem ->
+                keyboard?.hide()
+                focusRequester.freeFocus()
+                onStopSelect(stopItem)
+                onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        stopItem = stopItem,
+                        isRecentSearch = false,
                     ),
                 )
             },

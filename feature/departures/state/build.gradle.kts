@@ -34,6 +34,8 @@ kotlin {
 
                 implementation(libs.compose.runtime)
                 implementation(libs.kotlinx.datetime)
+
+                implementation(projects.core.analytics)
             }
         }
     }

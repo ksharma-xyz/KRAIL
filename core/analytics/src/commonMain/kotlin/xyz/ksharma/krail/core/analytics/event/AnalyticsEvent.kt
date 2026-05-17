@@ -933,15 +933,16 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region DepartureBoard
 
     /**
-     * Identifies which departure board surface fired the event.
+     * Identifies which surface fired a departure board event.
      *
-     *  - [SAVED_TRIPS] — the accordion on the Saved Trips screen (driven by [DepartureBoardViewModel])
-     *  - [STOP_SHEET]  — the bottom sheet opened when a user taps a stop
-     *                    (driven by [DeparturesViewModel])
+     *  - [SAVED_TRIPS]      — accordion on the Saved Trips screen ([DepartureBoardViewModel])
+     *  - [TIMETABLE_SHEET]  — stop sheet opened via timetable header tap ([DeparturesViewModel])
+     *  - [MAP_SHEET]        — stop sheet opened via map pin tap ([DeparturesViewModel])
      */
     enum class DepartureBoardSource(val value: String) {
         SAVED_TRIPS("saved_trips"),
-        STOP_SHEET("stop_sheet"),
+        TIMETABLE_SHEET("timetable_sheet"),
+        MAP_SHEET("map_sheet"),
     }
 
     /**
@@ -1017,46 +1018,58 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     )
 
     /**
-     * Fired when the user taps a stop card in the saved-trips departure board accordion.
-     * Use to track which stops users most frequently monitor and expand/collapse patterns.
+     * Fired when the user expands or collapses a departure board card on any surface.
+     * Use to track open/close patterns and which stops users most frequently monitor.
      *
-     * @param stopId   Stop that was tapped.
+     * @param stopId   Stop whose board was toggled.
      * @param stopName Human-readable stop name.
      * @param expand   `true` = card is being expanded; `false` = card is being collapsed.
+     * @param source   Which surface the toggle happened on.
      */
-    data class DepartureBoardStopClickEvent(
+    data class DepartureBoardToggleEvent(
         val stopId: String,
         val stopName: String,
         val expand: Boolean,
+        val source: DepartureBoardSource,
     ) : AnalyticsEvent(
-        name = "dep_board_stop_click",
+        name = "dep_board_toggle",
         properties = mapOf(
             PROP_STOP_ID to stopId,
             PROP_STOP_NAME to stopName,
             PROP_EXPAND to expand,
+            PROP_SOURCE to source.value,
         ),
     )
 
     /**
-     * Fired when the user taps the Departure Board header in the nearby-stop bottom sheet
-     * (stop selection / stop details sheet) to expand or collapse the live board.
+     * Fired for error/retry lifecycle events on the departure board.
+     * Consolidates two states into one event to stay within the Firebase 500-event budget.
+     * Compute retry rate as `retry_count / error_count` per stop/source.
      *
-     * @param stopId   NSW Transport stop ID of the nearby stop.
-     * @param stopName Human-readable stop name.
-     * @param expand   `true` = board is being expanded; `false` = board is being collapsed.
+     * [Action.ERROR] — first transition to error state per polling session (auto-fired).
+     * [Action.RETRY] — user taps Retry after a load failure (user-initiated).
+     *
+     * @param stopId Stop affected by the status change.
+     * @param action What happened — error or user retry.
+     * @param source Which surface the event came from.
      */
-    data class NearbyStopDepartureBoardClickEvent(
+    data class DepartureBoardStatusEvent(
         val stopId: String,
-        val stopName: String,
-        val expand: Boolean,
+        val action: Action,
+        val source: DepartureBoardSource,
     ) : AnalyticsEvent(
-        name = "nearby_stop_dep_board_click",
+        name = "dep_board_status",
         properties = mapOf(
             PROP_STOP_ID to stopId,
-            PROP_STOP_NAME to stopName,
-            PROP_EXPAND to expand,
+            "action" to action.value,
+            PROP_SOURCE to source.value,
         ),
-    )
+    ) {
+        enum class Action(val value: String) {
+            ERROR("error"),
+            RETRY("retry"),
+        }
+    }
 
     // endregion
 

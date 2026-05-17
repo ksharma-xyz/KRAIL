@@ -68,6 +68,19 @@ We stack PRs. Break work into focused, layered branches and submit the full stac
 - Use `gt branch split --by-commit` or carve out a new child branch
 - Each PR should have a single clear concern (ViewModel logic, UI layer, bug fix, etc.)
 
+**Before every push / PR submission, run locally and fix all failures:**
+
+1. Detekt — catches style, formatting, and lint issues before CI does:
+   ```
+   ./gradlew detekt --continue
+   ```
+2. Unit tests — run tests for every module touched by the change:
+   ```
+   ./gradlew :module:a:testAndroidHostTest :module:b:testAndroidHostTest --continue
+   ```
+
+Never push while either check is red. Fix locally, then push.
+
 ## Build
 
 Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.

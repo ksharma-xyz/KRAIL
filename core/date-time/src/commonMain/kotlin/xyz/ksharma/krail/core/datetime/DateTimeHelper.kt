@@ -11,7 +11,6 @@ import xyz.ksharma.krail.core.log.logError
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -98,31 +97,29 @@ object DateTimeHelper {
         val partialMinutes = (this - hours.hours).inWholeMinutes
 
         return when {
-            // Days in the past — "X day(s) ago"
-            this <= (-1).days -> {
-                val absDays = (-this).inWholeDays
-                "$absDays ${if (absDays == 1L) "day" else "days"} ago"
-            }
-            // Hours in the past — only beyond 2 h so 60–90 min shows as "X mins ago"
-            this <= -PAST_HOURS_THRESHOLD -> {
-                val absHours = (-this).inWholeHours
-                "$absHours ${if (absHours == 1L) "hour" else "hours"} ago"
-            }
-            // More than a full minute in the past — "X min(s) ago"
-            this <= (-1).minutes -> {
-                val abs = totalMinutes.absoluteValue
-                "$abs ${if (abs == 1L) "min" else "mins"} ago"
-            }
-            // Within NOW_THRESHOLD of departure (past or future) — "Now"
+            this <= (-1).minutes -> toPastTimeString()
             this <= NOW_THRESHOLD -> "Now"
-            // 16–59 s away — round up and floor to "in 1 min"
             this < 1.minutes -> "in 1 min"
-            // Under an hour — "in X min(s)"
             this < 1.hours -> "in $totalMinutes ${if (totalMinutes == 1L) "min" else "mins"}"
-            // Exactly 1 h up to (but not including) 2 h — "in 1h Xm"
             this < 2.hours -> "in ${hours}h ${partialMinutes}m"
-            // 2 h or more — drop the minutes, just show hours
             else -> "in ${hours}h"
+        }
+    }
+
+    private fun Duration.toPastTimeString(): String {
+        val abs = -this
+        val absDays = abs.inWholeDays
+        val absHours = abs.inWholeHours
+        val absPartialMinutes = (abs - absHours.hours).inWholeMinutes
+        val absMinutes = abs.inWholeMinutes
+
+        return when {
+            absDays >= 1 -> "$absDays ${if (absDays == 1L) "day" else "days"} ago"
+            absHours >= PAST_HOURS_THRESHOLD.inWholeHours ->
+                "$absHours ${if (absHours == 1L) "hour" else "hours"} ago"
+            absHours >= 1 ->
+                if (absPartialMinutes == 0L) "${absHours}h ago" else "${absHours}h ${absPartialMinutes}m ago"
+            else -> "$absMinutes ${if (absMinutes == 1L) "min" else "mins"} ago"
         }
     }
 

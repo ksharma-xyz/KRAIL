@@ -41,8 +41,20 @@ fun Analytics.trackDepartureBoardShowPrevious(
     track(AnalyticsEvent.DepartureBoardShowPreviousEvent(stopId = stopId, show = show, source = source))
 }
 
-fun Analytics.trackDepartureBoardToggle(stopId: String, stopName: String, expand: Boolean, source: DepartureBoardSource) {
-    track(AnalyticsEvent.DepartureBoardToggleEvent(stopId = stopId, stopName = stopName, expand = expand, source = source))
+fun Analytics.trackDepartureBoardToggle(
+    stopId: String,
+    stopName: String,
+    expand: Boolean,
+    source: DepartureBoardSource,
+) {
+    track(
+        AnalyticsEvent.DepartureBoardToggleEvent(
+            stopId = stopId,
+            stopName = stopName,
+            expand = expand,
+            source = source,
+        ),
+    )
 }
 
 fun Analytics.trackDepartureBoardStatus(

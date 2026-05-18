@@ -4,8 +4,10 @@ import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -30,6 +32,26 @@ import kotlin.test.assertTrue
  *
  * For the saved-trips screen that shows an accordion of multiple stops, see
  * [DepartureBoardViewModelTest] in the `feature:trip-planner:ui` module.
+ *
+ * ## Coroutine-test conventions (read before editing)
+ *
+ * [DeparturesViewModel] gates its repository [DepartureBoardRepository.pollStop] collection on
+ * `uiState` having subscribers (`SharingStarted.WhileSubscribed(5_000)`). `pollStop` is an
+ * **infinite** self-rescheduling loop, so:
+ *
+ *  - Tests that need polling must collect `viewModel.uiState.test { }` — that subscription is
+ *    what starts the poll.
+ *  - **Never call `advanceUntilIdle()` while subscribed** — it chases the infinite loop forever
+ *    (this once produced a 98 GB Gradle log). Use `runCurrent()` for exact-count assertions
+ *    (drains the immediate fetch without advancing the clock, so no auto-refresh fires) or
+ *    `advanceTimeBy(refreshIntervalMs + …)` to drive a bounded number of poll cycles.
+ *  - After a polling `test {}` block, `advanceTimeBy(5_100L)` lets `WhileSubscribed(5_000)`
+ *    expire so the upstream poll is cancelled before `runTest` tears down.
+ *  - One-shot paths (`Refresh`, `LoadPreviousDepartures`, analytics-only events) run **without**
+ *    a `uiState` subscriber, so `advanceUntilIdle()` is safe there (nothing is polling).
+ *
+ * `Dispatchers.setMain(testDispatcher)` makes `runTest {}` reuse the test dispatcher's
+ * scheduler, so no explicit scheduler needs to be threaded through.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeparturesViewModelTest {
@@ -39,6 +61,13 @@ class DeparturesViewModelTest {
         refreshIntervalMs = 1_000L,
         previousDeparturesWindowMinutes = 30L,
     )
+
+    // One poll cycle: long enough to fire the auto-refresh loop once past the interval.
+    private val onePollCycleMs get() = testConfig.refreshIntervalMs + 100L
+
+    // Long enough for SharingStarted.WhileSubscribed(5_000) to emit STOP after the last
+    // subscriber leaves, cancelling the upstream pollStop loop.
+    private val whileSubscribedGraceMs = 5_100L
 
     private lateinit var fakeService: FakeDeparturesService
     private lateinit var repository: DepartureBoardRepository
@@ -84,18 +113,16 @@ class DeparturesViewModelTest {
                 awaitItem() // initial
 
                 viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-                advanceUntilIdle()
+                advanceTimeBy(onePollCycleMs)
 
-                // loading
-                awaitItem()
-
-                val success = awaitItem()
+                val success = expectMostRecentItem()
                 assertFalse(success.isLoading)
                 assertFalse(success.isError)
                 assertEquals(2, success.departures.size)
 
                 cancelAndIgnoreRemainingEvents()
             }
+            advanceTimeBy(whileSubscribedGraceMs)
         }
 
     @Test
@@ -106,16 +133,15 @@ class DeparturesViewModelTest {
             awaitItem() // initial
 
             viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
+            advanceTimeBy(onePollCycleMs)
 
-            awaitItem() // loading
-
-            val error = awaitItem()
+            val error = expectMostRecentItem()
             assertFalse(error.isLoading)
             assertTrue(error.isError)
 
             cancelAndIgnoreRemainingEvents()
         }
+        advanceTimeBy(whileSubscribedGraceMs)
     }
 
     // ── StopPolling ───────────────────────────────────────────────────────────
@@ -126,29 +152,30 @@ class DeparturesViewModelTest {
             awaitItem() // initial
 
             viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
-
-            awaitItem() // loading
-            awaitItem() // success
+            advanceTimeBy(onePollCycleMs)
+            val loaded = expectMostRecentItem()
+            assertFalse(loaded.isLoading, "Stop should have loaded before StopPolling")
 
             viewModel.onEvent(DeparturesUiEvent.StopPolling)
-            advanceUntilIdle()
+            advanceTimeBy(onePollCycleMs)
 
             // After StopPolling the VM switches activeStopId to null → repo emits idle state
-            val idle = awaitItem()
+            val idle = expectMostRecentItem()
             assertFalse(idle.isLoading, "Should not be loading after polling stopped")
             assertFalse(idle.isError)
 
             cancelAndIgnoreRemainingEvents()
         }
+        advanceTimeBy(whileSubscribedGraceMs)
     }
 
     // ── Refresh ───────────────────────────────────────────────────────────────
 
     @Test
     fun `Given active stop When Refresh sent Then API is called again`() = runTest {
+        // No uiState subscriber → pollStop is gated off, so onLoadDepartures only sets the
+        // active stop. onRefresh's one-shot repository.refresh is the only API call.
         viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-        advanceUntilIdle()
         val callsBefore = fakeService.callCount
 
         viewModel.onEvent(DeparturesUiEvent.Refresh)
@@ -171,26 +198,31 @@ class DeparturesViewModelTest {
     // ── LoadPreviousDepartures ────────────────────────────────────────────────
 
     @Test
-    fun `Given active stop When LoadPreviousDepartures sent Then isPreviousLoading transitions true then false`() =
+    fun `Given active stop When LoadPreviousDepartures sent Then previousDepartures populated`() =
         runTest {
-            // Use a past departure time so the previous departures filter keeps the rows
+            // Use a past departure time so the previous-departures filter keeps the rows
             fakeService.response = buildResponse(count = 1, plannedTime = "2020-01-01T00:00:00Z")
 
+            // Seed the repository cache via one direct poll cycle (bounded — not advanceUntilIdle,
+            // pollStop loops forever). This collection is the repo's own flow, not the gated VM one.
+            repository.pollStop(STOP_A).test {
+                awaitItem()
+                advanceTimeBy(onePollCycleMs)
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+
             viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
+            viewModel.onEvent(DeparturesUiEvent.LoadPreviousDepartures(STOP_A))
+            advanceUntilIdle() // safe: no uiState subscriber → pollStop gated off; one-shot load
 
-            viewModel.uiState.test {
-                awaitItem() // current success state
-
-                viewModel.onEvent(DeparturesUiEvent.LoadPreviousDepartures(STOP_A))
-                advanceUntilIdle()
-
-                val loading = awaitItem()
-                assertTrue(loading.isPreviousLoading)
-
-                val done = awaitItem()
-                assertFalse(done.isPreviousLoading)
-
+            repository.observeStop(STOP_A).test {
+                val state = awaitItem()
+                assertFalse(state.isPreviousLoading, "isPreviousLoading must be false when complete")
+                assertTrue(
+                    state.previousDepartures.isNotEmpty(),
+                    "previousDepartures must be populated with past departures",
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -200,36 +232,53 @@ class DeparturesViewModelTest {
     @Test
     fun `Given polling stop A When LoadDepartures for different stop B Then switches and polls B`() =
         runTest {
-            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
-            val callsForA = fakeService.callCount
-            assertTrue(callsForA >= 1, "Polling STOP_A should trigger at least one API call")
+            viewModel.uiState.test {
+                awaitItem() // initial
 
-            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_B, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
+                viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
+                advanceTimeBy(onePollCycleMs)
+                val callsForA = fakeService.callCount
+                assertTrue(callsForA >= 1, "Polling STOP_A should trigger at least one API call")
 
-            assertTrue(
-                fakeService.callCount > callsForA,
-                "Switching to STOP_B should trigger an additional API call",
-            )
+                viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_B, source = DEFAULT_SOURCE))
+                advanceTimeBy(onePollCycleMs)
+
+                assertTrue(
+                    fakeService.callCount > callsForA,
+                    "Switching to STOP_B should trigger an additional API call",
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+            advanceTimeBy(whileSubscribedGraceMs)
         }
 
     @Test
     fun `Given active stop When LoadDepartures sent for same stop Then no extra API call`() =
         runTest {
-            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
-            val callsAfterFirst = fakeService.callCount
+            viewModel.uiState.test {
+                awaitItem() // initial
 
-            // Same stop — ViewModel guards against re-setting the same activeStopId
-            viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
-            advanceUntilIdle()
+                viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
+                // runCurrent() drains the immediate fetch without advancing the clock, so the
+                // auto-refresh loop never fires — call count stays exact.
+                runCurrent()
+                val callsAfterFirst = fakeService.callCount
 
-            assertEquals(
-                callsAfterFirst,
-                fakeService.callCount,
-                "Sending LoadDepartures for the same stop must be a NOOP",
-            )
+                // Same stop — ViewModel guards against re-setting the same activeStopId, so the
+                // flatMapLatest poll is not restarted and no extra immediate fetch happens.
+                viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DEFAULT_SOURCE))
+                runCurrent()
+
+                assertEquals(
+                    callsAfterFirst,
+                    fakeService.callCount,
+                    "Sending LoadDepartures for the same stop must be a NOOP",
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+            advanceTimeBy(whileSubscribedGraceMs)
         }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -270,6 +319,12 @@ class DeparturesViewModelTest {
  * correct [DepartureBoardSource] attribution.
  *
  * Uses [CapturingAnalytics] instead of [NoOpAnalytics] so each tracked event can be asserted.
+ *
+ * See the coroutine-test conventions on [DeparturesViewModelTest]. Most events here are tracked
+ * synchronously inside `onEvent` (screen-view, toggle) or via a one-shot path (retry), so they
+ * run without a `uiState` subscriber and `advanceUntilIdle()` is safe. The ERROR event is the
+ * exception: it is emitted from the gated poll collector, so that test subscribes to `uiState`
+ * and uses `advanceTimeBy`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DeparturesViewModelAnalyticsTest {
@@ -279,6 +334,9 @@ class DeparturesViewModelAnalyticsTest {
         refreshIntervalMs = 1_000L,
         previousDeparturesWindowMinutes = 30L,
     )
+
+    private val onePollCycleMs get() = testConfig.refreshIntervalMs + 100L
+    private val whileSubscribedGraceMs = 5_100L
 
     private lateinit var fakeService: FakeDeparturesService
     private lateinit var repository: DepartureBoardRepository
@@ -315,7 +373,7 @@ class DeparturesViewModelAnalyticsTest {
             viewModel.onEvent(
                 DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.TIMETABLE_SHEET),
             )
-            advanceUntilIdle()
+            runCurrent()
 
             val screenViews = analytics.events.filterIsInstance<AnalyticsEvent.DepartureBoardScreenViewEvent>()
             assertEquals(1, screenViews.size)
@@ -328,7 +386,7 @@ class DeparturesViewModelAnalyticsTest {
             viewModel.onEvent(
                 DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.MAP_SHEET),
             )
-            advanceUntilIdle()
+            runCurrent()
 
             val screenViews = analytics.events.filterIsInstance<AnalyticsEvent.DepartureBoardScreenViewEvent>()
             assertEquals(1, screenViews.size)
@@ -338,9 +396,9 @@ class DeparturesViewModelAnalyticsTest {
     @Test
     fun `Given same stop loaded twice Then screen view event fires only once`() = runTest {
         viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.MAP_SHEET))
-        advanceUntilIdle()
+        runCurrent()
         viewModel.onEvent(DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.MAP_SHEET))
-        advanceUntilIdle()
+        runCurrent()
 
         val screenViews = analytics.events.filterIsInstance<AnalyticsEvent.DepartureBoardScreenViewEvent>()
         assertEquals(1, screenViews.size, "Screen view must not fire again for the same stop")
@@ -354,10 +412,9 @@ class DeparturesViewModelAnalyticsTest {
             viewModel.onEvent(
                 DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.TIMETABLE_SHEET),
             )
-            advanceUntilIdle()
 
             viewModel.onEvent(DeparturesUiEvent.Refresh)
-            advanceUntilIdle()
+            advanceUntilIdle() // safe: no uiState subscriber → pollStop gated off
 
             val retryEvents = analytics.events
                 .filterIsInstance<AnalyticsEvent.DepartureBoardStatusEvent>()
@@ -391,10 +448,7 @@ class DeparturesViewModelAnalyticsTest {
                 viewModel.onEvent(
                     DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.MAP_SHEET),
                 )
-                advanceUntilIdle()
-
-                awaitItem() // loading
-                awaitItem() // error state
+                advanceTimeBy(onePollCycleMs)
 
                 val errorEvents = analytics.events
                     .filterIsInstance<AnalyticsEvent.DepartureBoardStatusEvent>()
@@ -405,6 +459,7 @@ class DeparturesViewModelAnalyticsTest {
 
                 cancelAndIgnoreRemainingEvents()
             }
+            advanceTimeBy(whileSubscribedGraceMs)
         }
 
     // ── DepartureBoardToggle — toggle event ───────────────────────────────────
@@ -419,7 +474,7 @@ class DeparturesViewModelAnalyticsTest {
                 source = DepartureBoardSource.TIMETABLE_SHEET,
             ),
         )
-        advanceUntilIdle()
+        runCurrent()
 
         val toggleEvents = analytics.events.filterIsInstance<AnalyticsEvent.DepartureBoardToggleEvent>()
         assertEquals(1, toggleEvents.size)
@@ -435,7 +490,7 @@ class DeparturesViewModelAnalyticsTest {
             viewModel.onEvent(
                 DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.TIMETABLE_SHEET),
             )
-            advanceUntilIdle()
+            runCurrent()
 
             viewModel.onEvent(
                 DeparturesUiEvent.DepartureBoardToggle(
@@ -445,7 +500,7 @@ class DeparturesViewModelAnalyticsTest {
                     source = DepartureBoardSource.MAP_SHEET,
                 ),
             )
-            advanceUntilIdle()
+            runCurrent()
 
             val toggleEvents = analytics.events.filterIsInstance<AnalyticsEvent.DepartureBoardToggleEvent>()
             assertEquals(DepartureBoardSource.MAP_SHEET, toggleEvents.first().source)
@@ -459,15 +514,12 @@ class DeparturesViewModelAnalyticsTest {
             viewModel.onEvent(
                 DeparturesUiEvent.LoadDepartures(stopId = STOP_A, source = DepartureBoardSource.TIMETABLE_SHEET),
             )
-            advanceUntilIdle()
-
             viewModel.onEvent(
                 DeparturesUiEvent.LoadDepartures(stopId = STOP_B, source = DepartureBoardSource.MAP_SHEET),
             )
-            advanceUntilIdle()
 
             viewModel.onEvent(DeparturesUiEvent.Refresh)
-            advanceUntilIdle()
+            advanceUntilIdle() // safe: no uiState subscriber → pollStop gated off
 
             val retryEvents = analytics.events
                 .filterIsInstance<AnalyticsEvent.DepartureBoardStatusEvent>()

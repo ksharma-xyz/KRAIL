@@ -10,9 +10,12 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingCommand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
@@ -69,14 +72,29 @@ class DeparturesViewModel(
     init {
         log("[$LOG_TAG] t=${nowMs()} ViewModel CREATED")
         // Collect repository flow into _uiState so updateRelativeTimeText() can mutate it.
+        //
+        // Gated on uiState having subscribers via SharingStarted.WhileSubscribed(5_000) —
+        // the same lifecycle the sibling DepartureBoardViewModel uses. Without this gate the
+        // repository's infinite pollStop loop runs for the ViewModel's entire lifetime
+        // (network hit every refresh interval) even when the sheet is closed/backgrounded,
+        // and never lets a TestCoroutineScheduler reach idle. The 5_000 ms grace keeps
+        // polling alive across config changes / brief detaches, matching the sibling.
         viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
-            activeStopId
-                .flatMapLatest { stopId ->
-                    log("[$LOG_TAG] t=${nowMs()} activeStopId changed → $stopId, switching repo flow")
-                    if (stopId != null) {
-                        repository.pollStop(stopId)
+            SharingStarted.WhileSubscribed(POLL_SUBSCRIPTION_GRACE_MS)
+                .command(_uiState.subscriptionCount)
+                .distinctUntilChanged()
+                .flatMapLatest { command ->
+                    if (command == SharingCommand.START) {
+                        activeStopId.flatMapLatest { stopId ->
+                            log("[$LOG_TAG] t=${nowMs()} activeStopId changed → $stopId, switching repo flow")
+                            if (stopId != null) {
+                                repository.pollStop(stopId)
+                            } else {
+                                flowOf(DeparturesState(isLoading = false))
+                            }
+                        }
                     } else {
-                        flowOf(DeparturesState(isLoading = false))
+                        emptyFlow()
                     }
                 }
                 .collect { state ->
@@ -240,5 +258,10 @@ class DeparturesViewModel(
     companion object {
         const val LOG_TAG = "DEPARTURES"
         private const val REFRESH_TIME_TEXT_DURATION = 10_000L
+
+        // Keep the repository poll alive for this long after the last uiState subscriber
+        // leaves, so config changes / brief detaches don't restart polling. Matches the
+        // SharingStarted.WhileSubscribed(5_000) used by the sibling DepartureBoardViewModel.
+        private const val POLL_SUBSCRIPTION_GRACE_MS = 5_000L
     }
 }

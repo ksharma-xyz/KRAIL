@@ -35,5 +35,9 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
 
             configureJava()
         }
+
+        // Test-infrastructure guardrails. Idempotent — if AndroidKmpLibrary already
+        // registered these (modules applying both plugins), this is a no-op.
+        configureTestWiringVerification()
     }
 }

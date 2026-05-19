@@ -23,7 +23,7 @@ class StopResultsPrioritisationTest {
 
     private fun managerWithHighPriorityIds(vararg ids: String): RealStopResultsManager {
         val json = """{"stop_ids": [${ids.joinToString(",") { "\"$it\"" }}]}"""
-        val fakeFlag = FakeFlag(
+        val fakeFlag = MapBackedFakeFlag(
             mapOf(
                 FlagKeys.HIGH_PRIORITY_STOP_IDS.key to FlagValue.JsonValue(json),
                 FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key to FlagValue.BooleanValue(false),

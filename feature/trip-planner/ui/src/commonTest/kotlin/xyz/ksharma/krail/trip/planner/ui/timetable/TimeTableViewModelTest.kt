@@ -1,4 +1,4 @@
-package xyz.ksharma.core.test.viewmodels
+package xyz.ksharma.krail.trip.planner.ui.timetable
 
 import app.cash.turbine.test
 import kotlinx.collections.immutable.persistentListOf
@@ -12,17 +12,17 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
-import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeFestivalManager
-import xyz.ksharma.core.test.fakes.FakeFlag
-import xyz.ksharma.core.test.fakes.FakeRateLimiter
-import xyz.ksharma.core.test.fakes.FakeSandook
-import xyz.ksharma.core.test.fakes.FakeShareManager
-import xyz.ksharma.core.test.fakes.FakeTripPlanningService
-import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder
-import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder.buildTripResponse
-import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
-import xyz.ksharma.core.test.fakes.FakeImageBitmap
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeShareManager
+import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
+import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder
+import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder.buildTripResponse
+import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
+import xyz.ksharma.krail.core.testing.fakes.FakeImageBitmap
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent

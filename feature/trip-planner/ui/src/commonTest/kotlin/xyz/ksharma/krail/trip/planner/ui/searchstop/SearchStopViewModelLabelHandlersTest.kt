@@ -1,4 +1,4 @@
-package xyz.ksharma.core.test.viewmodels
+package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
@@ -9,12 +9,12 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeFlag
-import xyz.ksharma.core.test.fakes.FakeNearbyStopsManagerForMap
-import xyz.ksharma.core.test.fakes.FakeSandook
-import xyz.ksharma.core.test.fakes.FakeSandookPreferences
-import xyz.ksharma.core.test.fakes.FakeStopResultsManager
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel

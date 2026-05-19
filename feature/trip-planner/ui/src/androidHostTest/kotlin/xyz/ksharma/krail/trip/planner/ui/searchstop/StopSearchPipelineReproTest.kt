@@ -100,7 +100,7 @@ class StopSearchPipelineReproTest {
         // like the phone (these 15 major stops are seeded into the candidate pool
         // regardless of the trigram prefilter). Must stay in sync with
         // RemoteConfigDefaults.HIGH_PRIORITY_STOP_IDS.
-        val flag = FakeFlag(
+        val flag = MapBackedFakeFlag(
             mapOf(
                 FlagKeys.HIGH_PRIORITY_STOP_IDS.key to FlagValue.JsonValue(highPriorityJson),
                 FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key to FlagValue.BooleanValue(true),

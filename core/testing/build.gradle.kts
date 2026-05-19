@@ -50,6 +50,11 @@ kotlin {
                 api(libs.test.kotlin)
                 api(libs.test.kotlinxCoroutineTest)
                 api(libs.test.turbine)
+
+                // Production INTERFACE modules only — never `Real*` impl modules. This
+                // is what keeps `:core:testing` thin and prevents the god-module that
+                // `:core:test` became (see plan: anti-god-module guarantees).
+                api(projects.sandook) // Sandook + SandookPreferences interfaces
             }
         }
 

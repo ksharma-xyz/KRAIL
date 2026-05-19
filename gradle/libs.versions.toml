@@ -201,3 +201,4 @@ krail-compose-multiplatform = { id = "krail.compose.multiplatform", version = "u
 krail-android-kmp-library = { id = "krail.android.kmp.library", version = "unspecified" }
 krail-kotlin-multiplatform = { id = "krail.kotlin.multiplatform", version = "unspecified" }
 krail-maplibre = { id = "krail.maplibre", version = "unspecified" }
+krail-snapshot-testing = { id = "krail.snapshot.testing", version = "unspecified" }

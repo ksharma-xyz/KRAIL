@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.roborazzi)
+    alias(libs.plugins.krail.snapshot.testing)
     alias(libs.plugins.krail.android.kmp.library)
 }
 
@@ -48,8 +48,7 @@ kotlin {
                 implementation(libs.material.icons.core)
                 implementation(libs.compose.ui.tooling.preview)
 
-                // Lightweight annotation only - no Roborazzi/Robolectric bloat!
-                implementation(projects.core.snapshotTestingAnnotations)
+                // `:core:snapshot-testing-annotations` is added by `krail.snapshot.testing`.
             }
         }
 
@@ -60,12 +59,10 @@ kotlin {
             }
         }
 
-        // Test infrastructure with all the heavy dependencies
+        // `:core:snapshot-testing` is added by `krail.snapshot.testing`; this srcDir
+        // declaration is kept explicit so the host-test sources are unambiguous.
         getByName("androidHostTest") {
             kotlin.srcDir("src/androidHostTest/kotlin")
-            dependencies {
-                implementation(projects.core.snapshotTesting)
-            }
         }
 
         androidMain.dependencies {

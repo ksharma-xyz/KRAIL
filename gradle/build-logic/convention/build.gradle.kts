@@ -92,5 +92,14 @@ gradlePlugin {
             id = "krail.android.kmp.library"
             implementationClass = "xyz.ksharma.krail.gradle.AndroidKmpLibraryConventionPlugin"
         }
+
+        /**
+         * One-line snapshot-testing adoption: applies the roborazzi plugin and wires the
+         * `:core:snapshot-testing(-annotations)` deps into commonMain / androidHostTest.
+         */
+        register("snapshotTesting") {
+            id = "krail.snapshot.testing"
+            implementationClass = "xyz.ksharma.krail.gradle.SnapshotTestingConventionPlugin"
+        }
     }
 }

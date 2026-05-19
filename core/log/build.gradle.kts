@@ -15,6 +15,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.log"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -34,7 +36,8 @@ kotlin {
             }
         }
 
-        androidUnitTest {
+        getByName("androidHostTest") {
+            kotlin.srcDir("src/androidHostTest/kotlin")
             dependencies {
                 implementation(libs.test.kotlin)
             }

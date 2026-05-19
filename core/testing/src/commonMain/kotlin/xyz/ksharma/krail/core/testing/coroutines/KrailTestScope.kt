@@ -61,6 +61,19 @@ class KrailTestScope internal constructor(
     val mainDispatcher: CoroutineDispatcher = StandardTestDispatcher(scheduler, name = "krail-main")
 
     /**
+     * Drain all coroutines whose dispatch time is the *current* virtual instant.
+     * Does NOT advance virtual time, so it's safe against infinite pollers (unlike
+     * `advanceUntilIdle()`, which is deliberately NOT exposed here — see [pumpOnce]).
+     *
+     * Use this after a one-shot launch (e.g. `repo.refresh(...)`, the first fetch on a
+     * fresh `pollStop` collection) where you want the work to complete without time
+     * passing.
+     */
+    fun runCurrent() {
+        scheduler.runCurrent()
+    }
+
+    /**
      * Bounded advance — the ONLY safe pattern against `channelFlow` / `while(true){…}`
      * pollers. Advances [interval] of virtual time, then drains the work scheduled at
      * exactly that instant. Never use `advanceUntilIdle()` against an infinite poller

@@ -1,4 +1,4 @@
-package xyz.ksharma.core.test.discover
+package xyz.ksharma.krail.discover.network.real
 
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.DateTimeUnit
@@ -7,7 +7,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import xyz.ksharma.core.test.fakes.FakeDiscoverCardSeenPreferences
+import xyz.ksharma.krail.core.testing.fakes.FakeDiscoverCardSeenPreferences
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 import xyz.ksharma.krail.discover.network.real.db.RealDiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.state.DiscoverCardType

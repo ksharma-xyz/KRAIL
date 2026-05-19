@@ -1,10 +1,10 @@
 @file:Suppress("VisibleForTests")
-package xyz.ksharma.core.test.discover
+package xyz.ksharma.krail.discover.network.real
 
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import xyz.ksharma.core.test.fakes.FakeDiscoverCardSeenPreferences
+import xyz.ksharma.krail.core.testing.fakes.FakeDiscoverCardSeenPreferences
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue

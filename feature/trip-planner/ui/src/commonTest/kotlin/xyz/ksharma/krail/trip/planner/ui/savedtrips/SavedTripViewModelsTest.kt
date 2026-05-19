@@ -1,4 +1,4 @@
-package xyz.ksharma.core.test.viewmodels
+package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import app.cash.turbine.test
 import kotlinx.collections.immutable.persistentSetOf
@@ -10,18 +10,18 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeAppVersionManager
-import xyz.ksharma.core.test.fakes.FakeFlag
-import xyz.ksharma.core.test.fakes.FakeInfoTileManager
-import xyz.ksharma.core.test.fakes.FakeInviteFriendsTileManager
-import xyz.ksharma.core.test.fakes.FakeNswParkRideSandook
-import xyz.ksharma.core.test.fakes.FakeParkRideFacilityManager
-import xyz.ksharma.core.test.fakes.FakeParkRideService
-import xyz.ksharma.core.test.fakes.FakePlatformOps
-import xyz.ksharma.core.test.fakes.FakeSandook
-import xyz.ksharma.core.test.fakes.FakeSandookPreferences
-import xyz.ksharma.core.test.fakes.FakeStopResultsManager
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeAppVersionManager
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeInfoTileManager
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
+import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeParkRideFacilityManager
+import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
+import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.info.tile.network.api.db.isInfoTileDismissed

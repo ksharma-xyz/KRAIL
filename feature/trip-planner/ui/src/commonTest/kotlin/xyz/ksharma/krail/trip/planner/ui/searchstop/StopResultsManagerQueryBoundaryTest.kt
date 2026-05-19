@@ -154,7 +154,7 @@ class StopResultsManagerQueryBoundaryTest {
         highPriorityIds: List<String> = emptyList(),
     ): RealStopResultsManager {
         val idsJson = highPriorityIds.joinToString(",") { "\"$it\"" }
-        val fakeFlag = FakeFlag(
+        val fakeFlag = MapBackedFakeFlag(
             mapOf(
                 FlagKeys.HIGH_PRIORITY_STOP_IDS.key to FlagValue.JsonValue("""{"stop_ids":[$idsJson]}"""),
                 FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key to FlagValue.BooleanValue(fuzzyEnabled),

@@ -135,6 +135,7 @@ kotlin {
                 implementation(projects.core.analytics)
                 implementation(projects.sandook)
                 implementation(projects.feature.departures.network)
+                implementation(projects.core.testing)
             }
         }
 

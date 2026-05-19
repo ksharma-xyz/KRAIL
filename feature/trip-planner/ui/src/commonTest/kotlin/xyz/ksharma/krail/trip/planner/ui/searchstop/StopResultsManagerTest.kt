@@ -1,8 +1,8 @@
-package xyz.ksharma.core.test
+package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.toImmutableList
-import xyz.ksharma.core.test.fakes.FakeFlag
-import xyz.ksharma.core.test.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState

@@ -1,4 +1,4 @@
-package xyz.ksharma.core.test.viewmodels
+package xyz.ksharma.krail.trip.planner.ui.alerts
 
 import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
@@ -8,9 +8,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeSandook
-import xyz.ksharma.core.test.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel

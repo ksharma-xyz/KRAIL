@@ -7,10 +7,15 @@ import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.SelectStopsByTripId
 
-/** Map-backed [Flag] for tests. Throws on unregistered keys so missing setup fails loudly. */
-internal class FakeFlag(private val values: Map<String, FlagValue>) : Flag {
+/**
+ * Strict map-backed [Flag] for tests. Throws on unregistered keys so missing setup fails
+ * loudly — different shape from the canonical [xyz.ksharma.krail.core.testing.fakes.FakeFlag],
+ * which returns a default when a key is missing. Renamed so the canonical fake can also be
+ * imported into this package by the migrated ViewModel tests.
+ */
+internal class MapBackedFakeFlag(private val values: Map<String, FlagValue>) : Flag {
     override fun getFlagValue(key: String): FlagValue =
-        values[key] ?: error("FakeFlag: no value registered for key '$key'")
+        values[key] ?: error("MapBackedFakeFlag: no value registered for key '$key'")
 }
 
 /** Bus-routes sandook that errors on every call. Use when the test path doesn't touch routes. */

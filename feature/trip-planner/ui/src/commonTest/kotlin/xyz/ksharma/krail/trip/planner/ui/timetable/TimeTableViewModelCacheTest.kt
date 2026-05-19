@@ -1,4 +1,4 @@
-package xyz.ksharma.core.test.viewmodels
+package xyz.ksharma.krail.trip.planner.ui.timetable
 
 /**
  * Comprehensive tests for TimeTableViewModel's three-cache architecture and staleness-pruning
@@ -24,15 +24,15 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import xyz.ksharma.core.test.fakes.FakeAnalytics
-import xyz.ksharma.core.test.fakes.FakeFestivalManager
-import xyz.ksharma.core.test.fakes.FakeFlag
-import xyz.ksharma.core.test.fakes.FakeRateLimiter
-import xyz.ksharma.core.test.fakes.FakeSandook
-import xyz.ksharma.core.test.fakes.FakeShareManager
-import xyz.ksharma.core.test.fakes.FakeTripPlanningService
-import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder
-import xyz.ksharma.core.test.fakes.FakeTripResponseBuilder.buildTripResponse
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeShareManager
+import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
+import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder
+import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder.buildTripResponse
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem

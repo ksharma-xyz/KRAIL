@@ -56,6 +56,7 @@ kotlin {
             dependencies {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
+                implementation(projects.core.testing)
             }
         }
     }

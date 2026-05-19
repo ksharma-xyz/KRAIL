@@ -11,7 +11,6 @@
 :core:festival|src/commonTest/kotlin/xyz/ksharma/krail/core/festival/FestivalJsonValidationTest.kt
 :core:festival|src/commonTest/kotlin/xyz/ksharma/krail/core/festival/RealFestivalManagerTest.kt
 :core:network|src/commonTest/kotlin/xyz/ksharma/krail/core/network/BffEndpointResolverTest.kt
-:core:test|src/commonTest/kotlin/xyz/ksharma/core/test/discover/RealDiscoverSydneyManagerTest.kt
 :discover:network:real|src/commonTest/kotlin/xyz/ksharma/krail/discover/network/real/DiscoverJsonValidationTest.kt
 :feature:debug-settings:ui|src/commonTest/kotlin/xyz/ksharma/krail/feature/debug/settings/ui/DebugSettingsViewModelTest.kt
 :feature:track:ui|src/commonTest/kotlin/xyz/ksharma/krail/feature/track/ui/TrackTripViewModelTest.kt

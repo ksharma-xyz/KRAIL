@@ -38,6 +38,20 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
+      # Test-infrastructure guardrails — run BEFORE detekt/tests so a misconfigured
+      # module (missing withHostTest{}, test code leaking into production, ad-hoc
+      # duplicated fakes) fails fast with a clear message instead of silently
+      # skipping its tests. These tasks are also wired into `check` for local runs.
+      - name: Verify test wiring
+        id: verify-test-wiring
+        env:
+          CI: true
+          GITHUB_ACTIONS: true
+        run: >-
+          ./gradlew
+          verifyTestWiring verifyTestingModuleUsage verifyNoAdHocBoundaryFakes
+          --continue -PciQuality=true
+
       # -PciQuality=true tells core/network/build.gradle.kts to skip the
       # API-key requirement and use placeholders instead — neither detekt nor
       # the host tests hit the network so real keys aren't needed.

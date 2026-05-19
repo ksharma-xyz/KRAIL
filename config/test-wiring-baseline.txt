@@ -1,0 +1,18 @@
+# Ad-hoc boundary-fake baseline (verifyNoAdHocBoundaryFakes)
+#
+# Grandfathered, pre-existing ad-hoc fakes of boundary interfaces. The rule fails the
+# build for any NEW violation not listed here, so the ratchet only ever tightens.
+#
+# Each line: <gradle module path>|<file path relative to that module>
+# As the test-architecture migration (Stacks C/D) replaces these with the canonical
+# :core:testing fakes, DELETE the corresponding line in the SAME PR. When this file is
+# empty, delete it and the baseline lookup becomes a hard "zero ad-hoc fakes" gate.
+
+:core:festival|src/commonTest/kotlin/xyz/ksharma/krail/core/festival/FestivalJsonValidationTest.kt
+:core:festival|src/commonTest/kotlin/xyz/ksharma/krail/core/festival/RealFestivalManagerTest.kt
+:core:network|src/commonTest/kotlin/xyz/ksharma/krail/core/network/BffEndpointResolverTest.kt
+:core:test|src/commonTest/kotlin/xyz/ksharma/core/test/discover/RealDiscoverSydneyManagerTest.kt
+:discover:network:real|src/commonTest/kotlin/xyz/ksharma/krail/discover/network/real/DiscoverJsonValidationTest.kt
+:feature:debug-settings:ui|src/commonTest/kotlin/xyz/ksharma/krail/feature/debug/settings/ui/DebugSettingsViewModelTest.kt
+:feature:track:ui|src/commonTest/kotlin/xyz/ksharma/krail/feature/track/ui/TrackTripViewModelTest.kt
+:feature:trip-planner:ui|src/androidHostTest/kotlin/xyz/ksharma/krail/trip/planner/ui/searchstop/StopSearchPipelineReproTest.kt

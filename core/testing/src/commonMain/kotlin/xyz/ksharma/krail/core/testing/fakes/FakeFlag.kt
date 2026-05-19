@@ -1,0 +1,25 @@
+package xyz.ksharma.krail.core.testing.fakes
+
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+
+class FakeFlag : Flag {
+    private val flagValues = mutableMapOf<String, FlagValue>()
+
+    fun setFlagValue(key: String, value: FlagValue) {
+        flagValues[key] = value
+    }
+
+    override fun getFlagValue(key: String): FlagValue {
+        return flagValues[key] ?: when (key) {
+            FlagKeys.OUR_STORY_TEXT.key -> FlagValue.StringValue("Story Text")
+            FlagKeys.DISCLAIMER_TEXT.key -> FlagValue.StringValue("Disclaimer Text")
+            else -> FlagValue.BooleanValue(false)
+        }
+    }
+
+    fun setDiscoverAvailable(value: Boolean) {
+        setFlagValue(FlagKeys.DISCOVER_AVAILABLE.key, FlagValue.BooleanValue(value))
+    }
+}

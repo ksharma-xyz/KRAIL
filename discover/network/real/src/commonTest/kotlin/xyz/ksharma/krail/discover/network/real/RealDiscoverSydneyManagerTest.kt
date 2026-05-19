@@ -5,7 +5,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.testing.fakes.FakeDiscoverCardSeenPreferences
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
@@ -427,17 +427,4 @@ class RealDiscoverSydneyManagerTest {
         )
     }
 
-    // ========== Fake Flag ==========
-
-    private class FakeFlag : Flag {
-        private val flagValues = mutableMapOf<String, FlagValue>()
-
-        fun setFlagValue(key: String, value: FlagValue) {
-            flagValues[key] = value
-        }
-
-        override fun getFlagValue(key: String): FlagValue {
-            return flagValues[key] ?: FlagValue.BooleanValue(false)
-        }
-    }
 }

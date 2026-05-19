@@ -59,6 +59,8 @@ kotlin {
                 api(projects.core.remoteConfig) // Flag + FlagKeys + FlagValue
                 api(projects.feature.tripPlanner.network) // TripPlanningService, Stop/TripResponse, StopType, DepArr
                 api(projects.feature.departures.network) // DeparturesService + DepartureMonitorResponse
+                api(projects.core.appInfo) // AppInfo + AppInfoProvider + DevicePlatformType
+                api(projects.core.appVersion) // AppVersionManager + AppVersionUpdateState
             }
         }
 

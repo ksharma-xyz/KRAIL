@@ -1,9 +1,9 @@
-package xyz.ksharma.core.test.appversion
+package xyz.ksharma.krail.core.appversion
 
 import kotlinx.coroutines.test.runTest
-import xyz.ksharma.core.test.fakes.FakeAppInfo
-import xyz.ksharma.core.test.fakes.FakeAppInfoProvider
-import xyz.ksharma.core.test.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeAppInfo
+import xyz.ksharma.krail.core.testing.fakes.FakeAppInfoProvider
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appversion.RealAppVersionManager

@@ -16,6 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.appversion"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -51,6 +53,16 @@ kotlin {
                 implementation(libs.compose.material)
                 implementation(libs.compose.ui)
                 api(libs.di.koinComposeViewmodel)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(projects.core.testing)
+                // kotlin-test in commonMain `api` is not visible to consumer commonTest in
+                // KMP; per project convention each consumer also adds it to its commonTest.
+                implementation(libs.test.kotlin)
+                implementation(libs.test.kotlinxCoroutineTest)
             }
         }
     }

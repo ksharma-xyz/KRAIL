@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
+import xyz.ksharma.krail.core.testing.fakes.FakeDeparturesService
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import kotlin.test.AfterTest

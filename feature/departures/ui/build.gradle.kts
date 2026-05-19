@@ -59,6 +59,7 @@ kotlin {
                 implementation(libs.test.turbine)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(projects.core.analytics)
+                implementation(projects.core.testing)
             }
         }
     }

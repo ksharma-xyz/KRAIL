@@ -57,6 +57,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_star
 import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
@@ -421,6 +422,7 @@ fun TimeTableScreen(
                     DepartureBoardStopCard(
                         stopId = stop.stopId,
                         stopName = stop.name,
+                        source = DepartureBoardSource.TIMETABLE_SHEET,
                         state = departuresState,
                         onEvent = departuresViewModel::onEvent,
                     )

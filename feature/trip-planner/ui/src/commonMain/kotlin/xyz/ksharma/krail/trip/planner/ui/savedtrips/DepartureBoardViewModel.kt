@@ -22,7 +22,7 @@ import xyz.ksharma.krail.departures.ui.DepartureBoardRepository
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.trackDepartureBoardLineFilterClick
 import xyz.ksharma.krail.departures.ui.trackDepartureBoardShowPrevious
-import xyz.ksharma.krail.departures.ui.trackDepartureBoardStopClick
+import xyz.ksharma.krail.departures.ui.trackDepartureBoardToggle
 import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
@@ -161,14 +161,24 @@ class DepartureBoardViewModel(
         if (_expandedStopId.value == stopId) return
         _expandedStopId.value = stopId
         val stopName = _stops.value.firstOrNull { it.first == stopId }?.second ?: ""
-        analytics.trackDepartureBoardStopClick(stopId = stopId, stopName = stopName, expand = true)
+        analytics.trackDepartureBoardToggle(
+            stopId = stopId,
+            stopName = stopName,
+            expand = true,
+            source = DepartureBoardSource.SAVED_TRIPS,
+        )
     }
 
     /** Collapses the currently open card. [flatMapLatest] cancels the polling loop. */
     fun onCardCollapse() {
         _expandedStopId.value?.let { stopId ->
             val stopName = _stops.value.firstOrNull { it.first == stopId }?.second ?: ""
-            analytics.trackDepartureBoardStopClick(stopId = stopId, stopName = stopName, expand = false)
+            analytics.trackDepartureBoardToggle(
+                stopId = stopId,
+                stopName = stopName,
+                expand = false,
+                source = DepartureBoardSource.SAVED_TRIPS,
+            )
         }
         _expandedStopId.value = null
     }

@@ -37,6 +37,7 @@ import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
 import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
@@ -68,6 +69,7 @@ private val ArrowIconSize = 18.dp // no token equivalent
  *
  * @param stopId          NSW Transport stop ID, e.g. "10111010".
  * @param stopName        Human-readable stop name. Used in analytics for uncontrolled mode.
+ * @param source          Which surface is hosting this card — used for analytics attribution.
  * @param state           Current [DeparturesState] from the ViewModel or repository.
  * @param onEvent         Callback to send events to the ViewModel (only used in uncontrolled mode).
  * @param isExpanded      When non-null, puts the card in controlled mode with this expansion state.
@@ -78,6 +80,7 @@ private val ArrowIconSize = 18.dp // no token equivalent
 @Composable
 fun DepartureBoardStopCard(
     stopId: String,
+    source: DepartureBoardSource,
     state: DeparturesState,
     onEvent: (DeparturesUiEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -114,7 +117,7 @@ fun DepartureBoardStopCard(
             // Uncontrolled mode: start polling on expand, stop it on collapse.
             if (expanded) {
                 log("[DEPARTURES] UI card EXPANDED stopId=$stopId — sending LoadDepartures")
-                onEvent(DeparturesUiEvent.LoadDepartures(stopId, stopName))
+                onEvent(DeparturesUiEvent.LoadDepartures(stopId, stopName, source))
             } else {
                 log("[DEPARTURES] UI card COLLAPSED stopId=$stopId — sending StopPolling")
                 onEvent(DeparturesUiEvent.StopPolling)
@@ -156,9 +159,8 @@ fun DepartureBoardStopCard(
                 if (onExpandChange != null) {
                     onExpandChange(next)
                 } else {
-                    // Uncontrolled mode: track the expand/collapse click as a nearby-stop event.
                     internalExpanded = next
-                    onEvent(DeparturesUiEvent.NearbyStopDepartureBoardToggle(stopId, stopName, next))
+                    onEvent(DeparturesUiEvent.DepartureBoardToggle(stopId, stopName, next, source))
                 }
             },
         )
@@ -333,6 +335,7 @@ private fun DepartureBoardStopCardCollapsedPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(),
             onEvent = {},
         )
@@ -346,6 +349,7 @@ private fun DepartureBoardStopCardLoadingPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(isLoading = true),
             onEvent = {},
             isExpanded = true,
@@ -360,6 +364,7 @@ private fun DepartureBoardStopCardLoadedTrainPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = previewTrainDepartures,
@@ -377,6 +382,7 @@ private fun DepartureBoardStopCardLoadedBusPreview() {
     PreviewTheme(KrailThemeStyle.Bus) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = previewBusDepartures,
@@ -394,6 +400,7 @@ private fun DepartureBoardStopCardLoadedFerryPreview() {
     PreviewTheme(KrailThemeStyle.Ferry) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = previewFerryDepartures,
@@ -411,6 +418,7 @@ private fun DepartureBoardStopCardErrorPreview() {
     PreviewTheme(KrailThemeStyle.Metro) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 isError = true,
@@ -428,6 +436,7 @@ private fun DepartureBoardStopCardEmptyPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureBoardStopCard(
             stopId = "10101010",
+            source = DepartureBoardSource.MAP_SHEET,
             state = DeparturesState(
                 isLoading = false,
                 departures = persistentListOf(),

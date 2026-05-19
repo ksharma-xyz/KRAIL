@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.collections.immutable.persistentListOf
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.DeparturesViewModel
 import xyz.ksharma.krail.park.ride.ui.components.ParkAndRideIcon
@@ -53,6 +54,7 @@ fun StopDetailsBottomSheet(
             DepartureBoardStopCard(
                 stopId = stop.stopId,
                 stopName = stop.stopName,
+                source = DepartureBoardSource.MAP_SHEET,
                 state = departuresState,
                 onEvent = departuresViewModel::onEvent,
             )

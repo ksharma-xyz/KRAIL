@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.log.log
@@ -42,6 +43,9 @@ class DeparturesViewModel(
 
     // Tracks which stop this ViewModel instance is responsible for polling.
     private val activeStopId = MutableStateFlow<String?>(null)
+
+    // Surface that triggered the most recent LoadDepartures — used for analytics on retry/error.
+    private var activeSource: DepartureBoardSource = DepartureBoardSource.MAP_SHEET
 
     private val _uiState: MutableStateFlow<DeparturesState> = MutableStateFlow(DeparturesState())
     val uiState: StateFlow<DeparturesState> = _uiState.asStateFlow()
@@ -104,6 +108,16 @@ class DeparturesViewModel(
                             "departures=${state.departures.size} " +
                             "prevDepartures=${state.previousDepartures.size}",
                     )
+                    // Fire error event on the first transition into error state per polling session.
+                    if (state.isError && !_uiState.value.isError) {
+                        activeStopId.value?.let { stopId ->
+                            analytics.trackDepartureBoardStatus(
+                                stopId = stopId,
+                                action = AnalyticsEvent.DepartureBoardStatusEvent.Action.ERROR,
+                                source = activeSource,
+                            )
+                        }
+                    }
                     _uiState.value = state
                 }
         }
@@ -154,7 +168,7 @@ class DeparturesViewModel(
             DeparturesUiEvent.StopPolling -> onStopPolling()
             is DeparturesUiEvent.LineFilterChanged -> onLineFilterChanged(event)
             is DeparturesUiEvent.TogglePreviousDepartures -> onTogglePreviousDepartures(event)
-            is DeparturesUiEvent.NearbyStopDepartureBoardToggle -> onNearbyStopDepartureBoardToggle(event)
+            is DeparturesUiEvent.DepartureBoardToggle -> onDepartureBoardToggle(event)
         }
     }
 
@@ -164,12 +178,13 @@ class DeparturesViewModel(
         if (event.stopId != current) {
             log(
                 "[$LOG_TAG] t=$t onEvent LoadDepartures → stopId=${event.stopId} " +
-                    "(was $current)",
+                    "source=${event.source} (was $current)",
             )
+            activeSource = event.source
             analytics.trackDepartureBoardScreenView(
                 stopId = event.stopId,
                 stopName = event.stopName,
-                source = DepartureBoardSource.STOP_SHEET,
+                source = event.source,
             )
             activeStopId.value = event.stopId
         } else {
@@ -185,6 +200,11 @@ class DeparturesViewModel(
         val stopId = activeStopId.value
         if (stopId != null) {
             log("[$LOG_TAG] t=$t onEvent Refresh → stopId=$stopId")
+            analytics.trackDepartureBoardStatus(
+                stopId = stopId,
+                action = AnalyticsEvent.DepartureBoardStatusEvent.Action.RETRY,
+                source = activeSource,
+            )
             viewModelScope.launch { repository.refresh(stopId) }
         } else {
             log("[$LOG_TAG] t=$t onEvent Refresh NOOP — no active stop")
@@ -217,7 +237,7 @@ class DeparturesViewModel(
             selected = event.selected,
             lineNumber = event.lineNumber,
             transportMode = event.transportMode,
-            source = DepartureBoardSource.STOP_SHEET,
+            source = activeSource,
         )
     }
 
@@ -229,19 +249,20 @@ class DeparturesViewModel(
         analytics.trackDepartureBoardShowPrevious(
             stopId = event.stopId,
             show = event.show,
-            source = DepartureBoardSource.STOP_SHEET,
+            source = activeSource,
         )
     }
 
-    private fun onNearbyStopDepartureBoardToggle(event: DeparturesUiEvent.NearbyStopDepartureBoardToggle) {
+    private fun onDepartureBoardToggle(event: DeparturesUiEvent.DepartureBoardToggle) {
         log(
-            "[$LOG_TAG] t=${nowMs()} onEvent NearbyStopDepartureBoardToggle → " +
-                "stopId=${event.stopId} expand=${event.expand}",
+            "[$LOG_TAG] t=${nowMs()} onEvent DepartureBoardToggle → " +
+                "stopId=${event.stopId} expand=${event.expand} source=${event.source}",
         )
-        analytics.trackNearbyStopDepartureBoardClick(
+        analytics.trackDepartureBoardToggle(
             stopId = event.stopId,
             stopName = event.stopName,
             expand = event.expand,
+            source = event.source,
         )
     }
 

@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.departures.ui.state
 
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
+
 /**
  * User-initiated events that drive the departures feature.
  *
@@ -15,8 +17,13 @@ sealed interface DeparturesUiEvent {
      *
      * @param stopId   NSW Transport stop ID, e.g. "10111010".
      * @param stopName Human-readable stop name shown in the UI header (used for analytics).
+     * @param source   Which surface opened the board (used for analytics).
      */
-    data class LoadDepartures(val stopId: String, val stopName: String = "") : DeparturesUiEvent
+    data class LoadDepartures(
+        val stopId: String,
+        val stopName: String = "",
+        val source: DepartureBoardSource,
+    ) : DeparturesUiEvent
 
     /**
      * Requests a silent refresh of the currently displayed stop's departures.
@@ -75,16 +82,18 @@ sealed interface DeparturesUiEvent {
     ) : DeparturesUiEvent
 
     /**
-     * Notifies the ViewModel that the user tapped the Departure Board header in the
-     * nearby-stop bottom sheet to expand or collapse the live board.
+     * Notifies the ViewModel that the user tapped the Departure Board header to expand
+     * or collapse the live board on any stop-sheet surface.
      *
-     * @param stopId   The nearby stop's ID.
-     * @param stopName The nearby stop's human-readable name.
+     * @param stopId   The stop's ID.
+     * @param stopName The stop's human-readable name.
      * @param expand   `true` = board is being expanded; `false` = board is being collapsed.
+     * @param source   Which surface the toggle happened on.
      */
-    data class NearbyStopDepartureBoardToggle(
+    data class DepartureBoardToggle(
         val stopId: String,
         val stopName: String,
         val expand: Boolean,
+        val source: DepartureBoardSource,
     ) : DeparturesUiEvent
 }

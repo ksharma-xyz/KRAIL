@@ -344,6 +344,9 @@ class TimeTableViewModel(
             journeys.clear()
             loadMoreJourneys.clear()
             previousJourneysCache.clear()
+            // Old-mode raw journey data must not survive into the re-fetched list
+            // (this path clears caches inline instead of via resetPaginationCaches()).
+            rawJourneyDataByJourneyId.clear()
             loadMoreCount = 0
 
             // call api
@@ -577,6 +580,11 @@ class TimeTableViewModel(
     private fun resetPaginationCaches() {
         loadMoreJourneys.clear()
         previousJourneysCache.clear()
+        // Raw journey data backs the journey map. Every caller of this also clears
+        // `journeys` and triggers a re-fetch (which repopulates initial raw data via
+        // updateTripsCache), so clearing here prevents the map from leaking or serving
+        // stale load-more/previous journeys after a date-time or reverse-trip reset.
+        rawJourneyDataByJourneyId.clear()
         loadMoreCount = 0
         loadMoreFetchJob?.cancel()
         loadPreviousFetchJob?.cancel()
@@ -604,7 +612,10 @@ class TimeTableViewModel(
         loadMoreFetchJob?.cancel()
         loadMoreFetchJob = viewModelScope.launch(ioDispatcher) {
             loadTripAtTime(date = date, time = time).onSuccess { response ->
-                val (newJourneys, _) = response.buildJourneyListWithRawData()
+                val (newJourneys, newRawDataMap) = response.buildJourneyListWithRawData()
+                // Keep raw journey data so the journey map can resolve coordinates for
+                // load-more journeys via getRawJourneyById(). Without this the map is empty.
+                rawJourneyDataByJourneyId.putAll(newRawDataMap)
                 newJourneys?.forEach { journey ->
                     if (!loadMoreJourneys.containsKey(journey.journeyId) &&
                         !journeys.containsKey(journey.journeyId)
@@ -642,7 +653,10 @@ class TimeTableViewModel(
         loadPreviousFetchJob?.cancel()
         loadPreviousFetchJob = viewModelScope.launch(ioDispatcher) {
             loadTripAtTime(date = date, time = time).onSuccess { response ->
-                val (newJourneys, _) = response.buildJourneyListWithRawData()
+                val (newJourneys, newRawDataMap) = response.buildJourneyListWithRawData()
+                // Keep raw journey data so the journey map can resolve coordinates for
+                // previous journeys via getRawJourneyById(). Without this the map is empty.
+                rawJourneyDataByJourneyId.putAll(newRawDataMap)
                 newJourneys
                     ?.filter { Instant.parse(it.originUtcDateTime).isBefore(firstInstant) }
                     ?.forEach { journey ->

@@ -55,6 +55,10 @@ kotlin {
                 // is what keeps `:core:testing` thin and prevents the god-module that
                 // `:core:test` became (see plan: anti-god-module guarantees).
                 api(projects.sandook) // Sandook + SandookPreferences interfaces
+                api(projects.core.analytics) // Analytics + AnalyticsEvent
+                api(projects.core.remoteConfig) // Flag + FlagKeys + FlagValue
+                api(projects.feature.tripPlanner.network) // TripPlanningService, Stop/TripResponse, StopType, DepArr
+                api(projects.feature.departures.network) // DeparturesService + DepartureMonitorResponse
             }
         }
 

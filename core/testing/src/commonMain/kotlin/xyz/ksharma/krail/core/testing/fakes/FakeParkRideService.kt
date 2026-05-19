@@ -1,0 +1,113 @@
+package xyz.ksharma.krail.core.testing.fakes
+
+import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
+import xyz.ksharma.krail.park.ride.network.model.Location
+import xyz.ksharma.krail.park.ride.network.model.Occupancy
+import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
+import xyz.ksharma.krail.park.ride.network.model.Zone
+import xyz.ksharma.krail.park.ride.network.service.ParkRideService
+
+class FakeParkRideService(
+    private val facilityResponses: Map<String, CarParkFacilityDetailResponse> = defaultFacilityResponses,
+) : ParkRideService {
+
+    override suspend fun fetchCarParkFacilities(facilityId: String): Result<CarParkFacilityDetailResponse> {
+        return facilityResponses[facilityId]
+            ?.let { Result.success(it) }
+            ?: Result.failure(IllegalArgumentException("No fake response for facilityId: $facilityId"))
+    }
+
+    override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> {
+        return Result.success(facilityResponses.mapValues { it.value.facilityName })
+    }
+
+    /**
+     * Default fake mirrors the production override-off behaviour: returns
+     * `null` so callers exercise the NSW per-facility fallback. Tests that
+     * need to assert the BFF batch path can subclass or wrap this fake.
+     */
+    override suspend fun fetchAvailabilityForStops(
+        stopIds: List<String>,
+    ): ParkingStopBatchResponse? = null
+
+    companion object {
+        val defaultFacilityResponses = mapOf(
+            "31" to CarParkFacilityDetailResponse(
+                tsn = "2153478",
+                time = "803037917",
+                spots = "774",
+                zones = listOf(
+                    Zone(
+                        spots = "774",
+                        zoneId = "1",
+                        occupancy = Occupancy(
+                            loop = "32707",
+                            total = "200",
+                            monthlies = null,
+                            openGate = null,
+                            transients = "100",
+                        ),
+                        zoneName = "SYD392 Bella Vista Car Park",
+                        parentZoneId = "0",
+                    ),
+                ),
+                parkID = 1,
+                location = Location(
+                    suburb = "Bella Vista",
+                    address = "Byles Place",
+                    latitude = "-33.727438",
+                    longitude = "150.941761",
+                ),
+                occupancy = Occupancy(
+                    loop = "32707",
+                    total = "200",
+                    monthlies = null,
+                    openGate = null,
+                    transients = "100",
+                ),
+                messageDate = "2025-06-12T20:05:17",
+                facilityId = "31",
+                facilityName = "Park&Ride - Bella Vista",
+                tfnswFacilityId = "2153478TPR001",
+            ),
+            "42" to CarParkFacilityDetailResponse(
+                tsn = "9999999",
+                time = "803037999",
+                spots = "500",
+                zones = listOf(
+                    Zone(
+                        spots = "500",
+                        zoneId = "2",
+                        occupancy = Occupancy(
+                            loop = "12345",
+                            total = "50",
+                            monthlies = "10",
+                            openGate = null,
+                            transients = "40",
+                        ),
+                        zoneName = "SYD400 Norwest Car Park",
+                        parentZoneId = "0",
+                    ),
+                ),
+                parkID = 2,
+                location = Location(
+                    suburb = "Norwest",
+                    address = "Norwest Blvd",
+                    latitude = "-33.733333",
+                    longitude = "150.950000",
+                ),
+                occupancy = Occupancy(
+                    loop = "12345",
+                    total = "50",
+                    monthlies = "10",
+                    openGate = null,
+                    transients = "40",
+                ),
+                messageDate = "2025-06-13T10:00:00",
+                facilityId = "42",
+                facilityName = "Park&Ride - Norwest",
+                tfnswFacilityId = "9999999TPR002",
+            ),
+        )
+    }
+}

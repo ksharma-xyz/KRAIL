@@ -61,6 +61,16 @@ kotlin {
                 api(projects.feature.departures.network) // DeparturesService + DepartureMonitorResponse
                 api(projects.core.appInfo) // AppInfo + AppInfoProvider + DevicePlatformType
                 api(projects.core.appVersion) // AppVersionManager + AppVersionUpdateState
+                api(projects.core.festival) // FestivalManager + Festival model
+                api(projects.core.share) // ShareManager
+                api(projects.core.maps.data) // NearbyStop + NearbyStopsRepository
+                api(projects.infoTile.network.api) // InfoTileManager + db extensions
+                api(projects.infoTile.state) // InfoTileData
+                api(projects.feature.parkRide.network) // NswParkRideFacilityManager + CarPark models
+                api(projects.platform.ops) // PlatformOps
+                api(projects.core.transport) // TransportMode (for stop.transportModes in fakes)
+
+                api(libs.kotlinx.datetime) // LocalDate used by FakeFestivalManager
             }
         }
 

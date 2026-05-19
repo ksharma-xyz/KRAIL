@@ -80,6 +80,23 @@ abstract class BaseSnapshotTest {
         get() = SnapshotDefaults.testDarkMode
 
     /**
+     * Preview method names to SKIP — Robolectric hangs on composables that drive infinite
+     * animations (e.g. shimmer, indeterminate loading dots) because the snapshot capture
+     * never sees a stable frame. Listing them here replaces the old "documented in the
+     * README" workaround, so the skip lives next to the test and won't drift.
+     *
+     * Match is by exact preview function name (the value the scanner reports), e.g.
+     * `"PreviewLoadingDotsPill_Visible"`. Override per module:
+     * ```
+     * override val excludedPreviewNames = setOf(
+     *     "PreviewLoadingDotsPill_Visible",
+     *     "LoadingEmojiAnimPreview",
+     * )
+     * ```
+     */
+    open val excludedPreviewNames: Set<String> = emptySet()
+
+    /**
      * Main test method that scans and generates all snapshots.
      * Call this from your @Test method.
      */
@@ -95,9 +112,16 @@ abstract class BaseSnapshotTest {
             scanner
         }
 
-        val previews = scannerWithPrivacy.getPreviews()
+        val allPreviews = scannerWithPrivacy.getPreviews()
+        val (skipped, previews) = allPreviews.partition { it.methodName in excludedPreviewNames }
 
-        println("Found ${previews.size} previews with @ScreenshotTest in $packageToScan")
+        println("Found ${allPreviews.size} previews with @ScreenshotTest in $packageToScan")
+        if (skipped.isNotEmpty()) {
+            // Explicit, single-line skip log per excluded preview makes drift obvious if
+            // an entry in `excludedPreviewNames` no longer matches a real preview.
+            println("Skipping ${skipped.size} preview(s) via excludedPreviewNames:")
+            skipped.forEach { println("  - ${it.methodName}") }
+        }
 
         previews.forEach { preview ->
             capturePreviewSnapshots(preview)

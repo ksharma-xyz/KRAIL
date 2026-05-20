@@ -16,6 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.discover.network.real"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()

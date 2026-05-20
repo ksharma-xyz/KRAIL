@@ -16,6 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.info.tile.network.real"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -44,6 +46,12 @@ kotlin {
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.datetime)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(libs.test.kotlin)
             }
         }
     }

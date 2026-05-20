@@ -12,6 +12,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.deeplink"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()

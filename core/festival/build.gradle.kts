@@ -16,6 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.festival"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()

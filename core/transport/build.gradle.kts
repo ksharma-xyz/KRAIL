@@ -13,6 +13,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.transport"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()

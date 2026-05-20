@@ -1442,6 +1442,119 @@ class TimeTableViewModelTest {
             assertTrue(viewModel.uiState.value.canLoadMore, "canLoadMore should be true when journeys loaded")
         }
 
+    // ── rawJourneyDataByJourneyId lifecycle (backs the journey map screen) ─────
+    //
+    // The map screen looks up coordinates via `viewModel.getRawJourneyById(id)`. That
+    // map is fed by `rawJourneyDataByJourneyId`. Before the fix:
+    //
+    //   - onLoadMoreTrips / onLoadPreviousTrips discarded the raw-data half of
+    //     `response.buildJourneyListWithRawData()` — tapping a load-more / previous
+    //     journey on the map showed an empty map.
+    //   - onModeSelectionChanged / resetPaginationCaches cleared everything *except*
+    //     raw-data, so a stale load-more entry could leak into a re-fetched list.
+
+    @Test
+    fun `GIVEN initial load WHEN LoadMoreTrips THEN raw journey data is cached for new journeys`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // 2-journey response so dedup leaves at least one new load-more journey
+            // (the first overlaps the initial fetch; the second is fresh).
+            tripPlanningService.setResponseForCall(
+                tripPlanningService.tripCallCount,
+                FakeTripResponseBuilder.buildTripResponse(numberOfJourney = 2),
+            )
+
+            viewModel.onEvent(TimeTableUiEvent.LoadMoreTrips)
+            advanceUntilIdle()
+
+            assertTrue(
+                viewModel.loadMoreJourneys.isNotEmpty(),
+                "Sanity: load-more cache must hold the new journey",
+            )
+            viewModel.loadMoreJourneys.keys.forEach { id ->
+                assertNotNull(
+                    viewModel.getRawJourneyById(id),
+                    "Load-more journey '$id' must have raw data so the map can resolve coordinates",
+                )
+            }
+        }
+
+    @Test
+    fun `GIVEN journeys cached WHEN ModeSelectionChanged THEN raw journey data is cleared`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val initialIds = viewModel.uiState.value.journeyList.map { it.journeyId }
+            assertTrue(initialIds.isNotEmpty(), "Sanity: initial journeys must be loaded")
+            initialIds.forEach { id ->
+                assertNotNull(viewModel.getRawJourneyById(id), "Sanity: initial raw data populated")
+            }
+
+            // ModeSelectionChanged inline-resets the caches AND clears rawJourneyDataByJourneyId,
+            // then triggers a re-fetch. Old journey IDs must no longer resolve.
+            viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(unselectedModes = setOf(NswTransportMode.Bus.productClass)))
+            advanceUntilIdle()
+
+            initialIds.forEach { id ->
+                if (viewModel.uiState.value.journeyList.none { it.journeyId == id }) {
+                    // Only assert clearance for IDs that did NOT survive the re-fetch.
+                    // (If the re-fetch happens to produce the same ID, raw data is repopulated.)
+                    assertNull(
+                        viewModel.getRawJourneyById(id),
+                        "Stale raw data for journey '$id' must not survive a mode-selection reset",
+                    )
+                }
+            }
+        }
+
+    @Test
+    fun `GIVEN journeys cached WHEN DateTimeSelectionChanged THEN raw journey data is cleared via resetPaginationCaches`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val initialIds = viewModel.uiState.value.journeyList.map { it.journeyId }
+            assertTrue(initialIds.isNotEmpty(), "Sanity: initial journeys must be loaded")
+            initialIds.forEach { id ->
+                assertNotNull(viewModel.getRawJourneyById(id), "Sanity: initial raw data populated")
+            }
+
+            // DateTimeSelectionChanged → resetPaginationCaches() (which now also clears
+            // rawJourneyDataByJourneyId per the fix) + journeys.clear() + re-fetch.
+            val newSelection = DateTimeSelectionItem(
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+                option = JourneyTimeOptions.LEAVE,
+                hour = 12,
+                minute = 0,
+            )
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem = newSelection))
+            advanceUntilIdle()
+
+            initialIds.forEach { id ->
+                if (viewModel.uiState.value.journeyList.none { it.journeyId == id }) {
+                    assertNull(
+                        viewModel.getRawJourneyById(id),
+                        "Stale raw data for journey '$id' must not survive a date-time reset",
+                    )
+                }
+            }
+        }
+
     // endregion
 
     @OptIn(ExperimentalTime::class)

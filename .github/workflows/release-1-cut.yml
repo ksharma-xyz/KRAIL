@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -87,8 +88,10 @@ jobs:
           echo "next=${NEXT}" >> "$GITHUB_OUTPUT"
           echo "::notice::Bumping main to ${NEXT}"
 
-      - name: Switch to main for version bump
-        run: git checkout main
+      - name: Create bump branch off main
+        run: |
+          git checkout main
+          git checkout -b "chore/bump-version-${{ steps.next.outputs.next }}"
 
       - name: Bump versionName in build.gradle.kts
         run: |
@@ -116,12 +119,28 @@ jobs:
               print(f"Updated CFBundleShortVersionString to {version}")
           EOF
 
-      - name: Commit and push version bump to main
+      - name: Commit and open version bump PR into main
+        env:
+          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
         run: |
           git add androidApp/build.gradle.kts iosApp/iosApp/Info.plist
           if git diff --staged --quiet; then
-            echo "No changes to commit — main may already be at ${{ steps.next.outputs.next }}"
-          else
-            git commit -m "chore: bump version to ${{ steps.next.outputs.next }} [skip ci]"
-            git push origin main
+            echo "::notice::No changes to commit — main may already be at ${{ steps.next.outputs.next }}"
+            exit 0
           fi
+
+          BRANCH="chore/bump-version-${{ steps.next.outputs.next }}"
+          git commit -m "chore: bump version to ${{ steps.next.outputs.next }}"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: bump version to ${{ steps.next.outputs.next }}" \
+            --body "Automated version bump on main after cutting prod/${{ steps.version.outputs.name }}. main always carries the next version so PRs merged to main never share a versionName with an in-flight release branch.")
+          echo "::notice::Opened version bump PR: ${PR_URL}"
+
+          # Best-effort auto-merge; leave the PR open if required checks/settings block it.
+          gh pr merge "$PR_URL" --squash --auto \
+            && echo "::notice::Auto-merge enabled for ${PR_URL}" \
+            || echo "::warning::Could not enable auto-merge — merge ${PR_URL} manually."

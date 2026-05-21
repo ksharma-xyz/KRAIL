@@ -98,32 +98,24 @@ jobs:
           sed -i 's/versionName = "[^"]*"/versionName = "${{ steps.next.outputs.next }}"/' androidApp/build.gradle.kts
           grep "versionName" androidApp/build.gradle.kts
 
-      - name: Bump CFBundleShortVersionString in Info.plist
+      - name: Bump MARKETING_VERSION in Config.xcconfig
         run: |
-          python3 - << 'EOF'
-          import re
-          version = "${{ steps.next.outputs.next }}"
-          path = "iosApp/iosApp/Info.plist"
-          with open(path, "r") as f:
-              content = f.read()
-          updated = re.sub(
-              r'(<key>CFBundleShortVersionString</key>\s*<string>)[^<]*(</string>)',
-              rf'\g<1>{version}\g<2>',
-              content,
-          )
-          if updated == content:
-              print("WARNING: CFBundleShortVersionString not found — skipping iOS version bump")
-          else:
-              with open(path, "w") as f:
-                  f.write(updated)
-              print(f"Updated CFBundleShortVersionString to {version}")
-          EOF
+          # iOS version source of truth is MARKETING_VERSION in Config.xcconfig.
+          # Info.plist only references it via $(MARKETING_VERSION), so it must NOT
+          # be edited here — writing a literal there would clobber the variable.
+          FILE="iosApp/Configuration/Config.xcconfig"
+          if ! grep -q '^MARKETING_VERSION=' "$FILE"; then
+            echo "::error::MARKETING_VERSION not found in ${FILE}"
+            exit 1
+          fi
+          sed -i 's/^MARKETING_VERSION=.*/MARKETING_VERSION=${{ steps.next.outputs.next }}/' "$FILE"
+          grep '^MARKETING_VERSION=' "$FILE"
 
       - name: Commit and open version bump PR into main
         env:
           GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
         run: |
-          git add androidApp/build.gradle.kts iosApp/iosApp/Info.plist
+          git add androidApp/build.gradle.kts iosApp/Configuration/Config.xcconfig
           if git diff --staged --quiet; then
             echo "::notice::No changes to commit — main may already be at ${{ steps.next.outputs.next }}"
             exit 0

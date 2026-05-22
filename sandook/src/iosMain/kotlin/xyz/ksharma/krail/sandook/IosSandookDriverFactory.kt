@@ -3,6 +3,7 @@ package xyz.ksharma.krail.sandook
 import app.cash.sqldelight.db.AfterVersion
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
+import co.touchlab.sqliter.JournalMode
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter1
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter2
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter3
@@ -17,6 +18,20 @@ class IosSandookDriverFactory : SandookDriverFactory {
         return NativeSqliteDriver(
             schema = KrailSandook.Schema,
             name = "krailSandook.db",
+            onConfiguration = { config ->
+                // First-launch GTFS imports run multi-second write transactions. sqliter's
+                // default 5s busy timeout is shorter than those inserts, so a competing writer
+                // (e.g. theme selection) times out and crashes with SQLITE_BUSY. Raise the
+                // timeout well past worst-case insert time and keep WAL explicit so readers
+                // never block writers. The real fix for cross-pool contention is the single
+                // shared driver in the DI module; this is defence-in-depth.
+                config.copy(
+                    journalMode = JournalMode.WAL,
+                    extendedConfig = config.extendedConfig.copy(
+                        busyTimeout = BUSY_TIMEOUT_MS,
+                    ),
+                )
+            },
             callbacks = getMigrationCallbacks(),
         )
     }
@@ -32,4 +47,9 @@ class IosSandookDriverFactory : SandookDriverFactory {
         AfterVersion(7) { SandookMigrationAfter7.migrate(it) },
         AfterVersion(8) { SandookMigrationAfter8.migrate(it) },
     )
+
+    private companion object {
+        // Generous timeout (30s) so a slow first-launch GTFS insert never starves another writer.
+        const val BUSY_TIMEOUT_MS = 30_000
+    }
 }

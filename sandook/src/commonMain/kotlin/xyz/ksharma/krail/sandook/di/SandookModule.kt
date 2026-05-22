@@ -61,19 +61,19 @@ val sandookModule = module {
 
     single<NswBusRoutesSandook> {
         RealNswBusRoutesSandook(
-            factory = get(),
+            sandook = get<KrailSandook>(),
         )
     }
 
     single<NswStopsSandook> {
         RealNswStopsSandook(
-            factory = get(),
+            sandook = get<KrailSandook>(),
         )
     }
 
     single<Sandook> {
         RealSandook(
-            factory = get(),
+            sandook = get<KrailSandook>(),
             ioDispatcher = get(named(DispatchersComponent.IODispatcher)),
         )
     }

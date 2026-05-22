@@ -2,6 +2,8 @@ package xyz.ksharma.krail.io.gtfs.nswbusroutes
 
 import app.krail.kgtfs.proto.NswBusRouteList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import krail.io.gtfs.generated.resources.Res
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
@@ -21,18 +23,24 @@ class NswBusRoutesManager(
     private val preferences: SandookPreferences,
 ) : StopsManager {
 
+    // Invoked from both RealAppStart and IntroViewModel; serialise so concurrent first-launch
+    // callers don't both run the full insert (see NswStopsManager for the same guard).
+    private val insertMutex = Mutex()
+
     init {
         log("NswBusRoutesManager Initialized with version: $NSW_BUS_ROUTES_VERSION")
     }
 
     override suspend fun insertStops() = runCatching {
-        log("NswBusRoutesManager Inserting NSW Bus Routes data if not already inserted")
-        if (shouldInsertBusRoutes()) {
-            insertNswBusRoutes()
-        } else {
-            log("NswBusRoutesManager Bus routes already inserted in the database.")
+        insertMutex.withLock {
+            log("NswBusRoutesManager Inserting NSW Bus Routes data if not already inserted")
+            if (shouldInsertBusRoutes()) {
+                insertNswBusRoutes()
+            } else {
+                log("NswBusRoutesManager Bus routes already inserted in the database.")
+            }
+            log("NswBusRoutesManager insertStops() completed successfully")
         }
-        log("NswBusRoutesManager insertStops() completed successfully")
     }.getOrElse { error ->
         logError("NswBusRoutesManager Error inserting bus routes: ${error.message}")
         error.printStackTrace()

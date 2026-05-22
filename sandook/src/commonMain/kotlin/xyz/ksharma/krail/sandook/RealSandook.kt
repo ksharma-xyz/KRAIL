@@ -7,11 +7,10 @@ import kotlinx.coroutines.flow.Flow
 import xyz.ksharma.krail.core.log.log
 
 internal class RealSandook(
-    factory: SandookDriverFactory,
+    sandook: KrailSandook,
     private val ioDispatcher: CoroutineDispatcher,
 ) : Sandook {
 
-    private val sandook = KrailSandook(factory.createDriver())
     private val query = sandook.krailSandookQueries
 
     private val nswStopsQueries = sandook.nswStopsQueries

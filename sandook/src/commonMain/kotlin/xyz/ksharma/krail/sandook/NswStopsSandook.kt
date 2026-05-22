@@ -115,10 +115,9 @@ interface NswStopsSandook {
  * Delegates to the SQLDelight generated queries.
  */
 internal class RealNswStopsSandook(
-    private val factory: SandookDriverFactory,
+    sandook: KrailSandook,
 ) : NswStopsSandook {
 
-    private val sandook = KrailSandook(factory.createDriver())
     private val nswStopsQueries = sandook.nswStopsQueries
 
     // region Query Operations

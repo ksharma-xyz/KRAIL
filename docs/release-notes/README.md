@@ -72,13 +72,13 @@ notes to learn from.
 ```
 release-1-cut.yml  →  prod/{v}      (cut release branch, bump main)
 release-2-deploy-rc.yml  →  RC build to GP Internal + TestFlight
-release-3-tag.yml  →  v{v} tag       (publish for production rollout)
+                         →  draft GitHub Release for v{v} (refreshed each RC)
    ↓
 /krail-release-notes  (run locally in Claude Code)
    ↓
 docs/release-notes/v{v}.md  (commit the draft, paste into stores)
    ↓
-create-github-release.yml  →  GitHub Release published
+Publish the draft in the GitHub UI  →  creates v{v} tag + release goes public
    ↓
 bump-after-release.yml  →  PR to bump main if it isn't already ahead
 ```

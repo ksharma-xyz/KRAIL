@@ -6,6 +6,12 @@ name: "2. Deploy RC"
 #
 # Branch naming convention: prod/{version}  e.g. prod/1.19.0
 # Tags created:             v{version}-RC{n} e.g. v1.19.0-RC1, v1.19.0-RC2 …
+#
+# Every RC also creates/refreshes a DRAFT GitHub Release for the upcoming final
+# v{version} (auto-generated notes against prod/{version}). The draft stays a
+# draft until you publish it in the GitHub UI — publishing creates the final
+# v{version} tag at prod/{version} HEAD and fires bump-after-release.yml. There
+# is no separate "tag release" step to remember.
 
 on:
   push:
@@ -96,3 +102,30 @@ jobs:
   distribute-testflight:
     uses: ./.github/workflows/distribute-testflight.yml
     secrets: inherit
+
+  # ── 7. Create / refresh the draft GitHub Release for the final version ──────
+  # Keeps a single draft release for v{version} in sync with every RC, with
+  # auto-generated notes covering everything merged into prod/{version} so far.
+  # The release stays a DRAFT — you publish it in the GitHub UI when ready, which
+  # creates the final v{version} tag at prod/{version} HEAD and makes it public
+  # (firing bump-after-release.yml). No manual tag step required.
+  #
+  # Note: the body is regenerated on every RC, so finalise any hand-edits to the
+  # notes right before publishing.
+  draft-github-release:
+    needs: tag-release-candidate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create or refresh draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Final tag — does not exist yet; GitHub creates it at publish time.
+          tag_name: v${{ needs.tag-release-candidate.outputs.version }}
+          # Tag is created here when the draft is published.
+          target_commitish: ${{ github.ref_name }}
+          name: v${{ needs.tag-release-candidate.outputs.version }}
+          generate_release_notes: true
+          draft: true

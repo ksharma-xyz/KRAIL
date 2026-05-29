@@ -1,14 +1,18 @@
 name: Create GitHub Release
 
-# Triggered automatically when a final version tag (v1.2.3) is pushed.
-# RC tags (v1.2.3-RC1) are excluded — they are informational only.
+# Manual fallback for creating a draft GitHub Release.
 #
-# Can also be triggered manually or called from another workflow.
+# The normal path no longer needs this: release-2-deploy-rc.yml creates and
+# refreshes a draft release on every RC, and you publish it in the GitHub UI
+# (which creates the final v{version} tag). This workflow stays as a manual
+# escape hatch — e.g. to (re)generate a draft for a hand-made prod branch or a
+# tag created outside the RC flow.
+#
+# It is intentionally NOT triggered by tag pushes anymore: publishing the draft
+# creates the v{version} tag, and reacting to that push would flip the freshly
+# published release back to a draft.
 
 on:
-  push:
-    tags:
-      - 'v[0-9]*'        # matches v1.2.3, v1.2.3-RC1, etc.
   workflow_call:
     inputs:
       tag_name:
@@ -26,14 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    # Skip RC tags when triggered by a push (release-2-deploy-rc pushes v*-RC* tags).
-    # workflow_call / workflow_dispatch always run — callers are responsible for filtering.
-    if: ${{ github.event_name != 'push' || !contains(github.ref_name, '-RC') }}
     steps:
-      - name: Create GitHub Release
+      - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ inputs.tag_name || github.ref_name }}
+          tag_name: ${{ inputs.tag_name }}
           generate_release_notes: true
           draft: true

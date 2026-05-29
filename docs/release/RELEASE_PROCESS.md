@@ -14,9 +14,10 @@ main (versionName = 1.19.0)
   │                           GP Internal  GP Internal  GP Internal
   │                           TF build     TF build     TF build
   │
-  │                          (happy with RC3? run Tag Release)
+  │                          (happy with RC3? publish the draft release)
   │
-  │  ◄── Tag Release creates v1.19.0 tag + draft GitHub Release
+  │  ◄── Every RC refreshes a draft GitHub Release for v1.19.0.
+  │      Publish it in the GitHub UI → creates the v1.19.0 tag + goes public.
   │
   │  Manual promotion:
   │    Android → promote in Google Play Console
@@ -38,9 +39,8 @@ automatically on `main` right when the release branch is cut — you never bump 
 |---|---|---|---|
 | `build.yml` | Krail App CI | Push to `main`, PRs | Quality gate + debug/release build + Firebase |
 | `release-1-cut.yml` | 1. Cut Release Branch | Manual | Creates `prod/{version}` branch + bumps `main` to next version |
-| `release-2-deploy-rc.yml` | 2. Deploy RC | Auto on `prod/**` push | Android RC tag + Google Play Internal + iOS TestFlight |
-| `release-3-tag.yml` | 3. Tag Release | Manual | Creates final `v{version}` tag |
-| `create-github-release.yml` | Create GitHub Release | Auto on `v*` tag push (non-RC), or manual | Creates draft GitHub Release |
+| `release-2-deploy-rc.yml` | 2. Deploy RC | Auto on `prod/**` push | Android RC tag + Google Play Internal + iOS TestFlight + refreshes the draft GitHub Release |
+| `create-github-release.yml` | Create GitHub Release | Manual fallback only | (Re)creates a draft GitHub Release for a given tag |
 | `distribute-testflight.yml` | Distribute TestFlight | Auto (called by release-2) or Manual | iOS build + TestFlight upload |
 
 ---
@@ -79,6 +79,10 @@ distribute-testflight  →  builds IPA + uploads to TestFlight  (runs in paralle
 The first push creates `v1.19.0-RC1`. Every subsequent push to the same branch
 increments the counter: `v1.19.0-RC2`, `v1.19.0-RC3`, etc.
 
+Each RC also creates or refreshes a **draft** GitHub Release for the upcoming
+`v1.19.0`, with auto-generated notes covering everything merged into
+`prod/1.19.0` so far. It stays a draft until you publish it (see below).
+
 ### 3. Test on Google Play Internal and TestFlight
 
 - Install via Google Play internal track and TestFlight
@@ -91,27 +95,22 @@ increments the counter: `v1.19.0-RC2`, `v1.19.0-RC3`, etc.
 
 Once internal testing passes:
 
-### 1. Tag the release
-
-Run **Actions → 3. Tag Release → Run workflow**.
-
-| Field | Example |
-|---|---|
-| Version | `1.19.0` |
-
-This workflow:
-1. Validates `prod/1.19.0` exists
-2. Creates and pushes the final `v1.19.0` tag
-3. Pushing the tag automatically triggers `create-github-release.yml` → draft GitHub Release
-
-### 2. Promote to production (manual)
+### 1. Promote to production (manual)
 
 - **Android**: Google Play Console → your app → the latest internal build → Promote to Production
 - **iOS**: App Store Connect → TestFlight → the latest build → Submit for App Store review
 
-### 3. Publish the GitHub Release draft
+### 2. Publish the GitHub Release
 
-Review and publish the draft created by `create-github-release.yml`.
+Go to **GitHub → Releases**, open the draft for `v1.19.0` (kept current by every RC),
+review the auto-generated notes, and click **Publish release**.
+
+Publishing:
+1. Creates the final `v1.19.0` tag at the current `prod/1.19.0` HEAD
+2. Makes the release public
+3. Fires `bump-after-release.yml` (the safety-net bump of `main`)
+
+There is no separate tag step — publishing the draft does the tagging.
 
 ---
 
@@ -168,7 +167,7 @@ uploads for this app — it does **not** reset when the marketing version change
 |---|---|---|
 | `v1.19.0-RC1` | First release candidate | `release-2-deploy-rc.yml` (automatic) |
 | `v1.19.0-RC2` | Second RC after a fix | `release-2-deploy-rc.yml` (automatic) |
-| `v1.19.0` | Final production release | `release-3-tag.yml` (manual) |
+| `v1.19.0` | Final production release | Publishing the draft GitHub Release (GitHub UI) |
 
 ---
 
@@ -198,8 +197,8 @@ release cycle starts from `main`.
    git cherry-pick <commit-sha>
    git push origin prod/1.19.0
    ```
-3. Push to `prod/1.19.0` triggers `release-2-deploy-rc.yml` → new RC tag → GP Internal + TestFlight
-4. Validate on both platforms, then run `release-3-tag.yml` when ready
+3. Push to `prod/1.19.0` triggers `release-2-deploy-rc.yml` → new RC tag → GP Internal + TestFlight (and refreshes the draft release)
+4. Validate on both platforms, then publish the draft GitHub Release when ready
 
 **Patch release** (e.g. a critical fix after `v1.19.0` is already in production):
 
@@ -211,12 +210,12 @@ release cycle starts from `main`.
 
 ---
 
-## Checklist Before Running `release-3-tag.yml`
+## Checklist Before Publishing the Release
 
 - [ ] Latest RC has been installed from Google Play Internal and validated
 - [ ] Latest TestFlight build validated on iOS
 - [ ] All required commits are on `prod/{version}` (no pending fixes)
-- [ ] Release notes / changelog reviewed
+- [ ] Draft release notes reviewed (regenerated on every RC, so finalise edits just before publishing)
 
 ---
 
@@ -255,7 +254,7 @@ All secrets are already configured. Reference only:
 
 | Secret | Used by |
 |---|---|
-| `PAT_KRAIL_GITHUB` | RC/final tag creation, GitHub Release, version code write-back |
+| `PAT_KRAIL_GITHUB` | RC tag creation, cut/bump commits, version code write-back |
 | `ANDROID_KEYSTORE_FILE` | Android AAB signing |
 | `ANDROID_KEYSTORE_PASSWORD` | Android AAB signing |
 | `ANDROID_KEY_ALIAS` | Android AAB signing |
@@ -291,9 +290,10 @@ from the failed workflow run (GitHub Actions → re-run failed jobs).
 The branch `prod/{version}` was already created. Either push directly to that branch
 or choose a new version number.
 
-**`release-3-tag.yml` fails with "tag already exists"**
-`v{version}` was already tagged. Check the existing tag — if it was a mistake, delete
-it manually (`git push origin :refs/tags/v{version}`) then re-run.
+**Can't publish the draft — `v{version}` tag already exists**
+`v{version}` was already tagged (e.g. a previous publish). If it was a mistake, delete
+the tag (`git push origin :refs/tags/v{version}`) and the matching release, then publish
+the draft again.
 
 **versionName in build not matching expected version**
 `release-1-cut.yml` commits the bump to main. If you created the branch manually without

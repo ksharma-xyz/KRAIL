@@ -29,17 +29,75 @@ import kotlin.test.assertTrue
 class StopResultsManagerQueryBoundaryTest {
 
     @Test
-    fun `single character query returns empty without DB call`() = runTest {
+    fun `single character query never triggers substring LIKE search`() = runTest {
+        // Whether the curated short-query path returns matches or not, single-letter
+        // queries must skip selectStops (the '%a%' path) to avoid the result-set flood.
         val sandook = RecordingSandook()
         val manager = manager(sandook)
+
+        manager.fetchStopResults("a", searchRoutesEnabled = false)
+
+        assertTrue(
+            sandook.selectStopsCalls.isEmpty(),
+            "Expected no substring LIKE call for 1-char query, got: ${sandook.selectStopsCalls}",
+        )
+    }
+
+    @Test
+    fun `single character query returns empty when no high-priority stops are configured`() = runTest {
+        val sandook = RecordingSandook()
+        val manager = manager(sandook, highPriorityIds = emptyList())
 
         val result = manager.fetchStopResults("a", searchRoutesEnabled = false)
 
         assertTrue(result.isEmpty())
         assertTrue(
-            sandook.selectStopsCalls.isEmpty(),
-            "Expected no DB call for 1-char query, got: ${sandook.selectStopsCalls}",
+            sandook.selectStopsByIdsCalls.isEmpty(),
+            "Expected no DB lookup when high-priority list is empty",
         )
+    }
+
+    @Test
+    fun `single character query surfaces high-priority stops whose words start with the letter`() = runTest {
+        val stops = listOf(
+            stopRow("HP1", "Central Station"),
+            stopRow("HP2", "Town Hall Station"),
+            stopRow("HP3", "Circular Quay"),
+            stopRow("HP4", "Macquarie University"),
+        )
+        val sandook = RecordingSandook(returns = stops)
+        val manager = manager(
+            sandook,
+            highPriorityIds = listOf("HP1", "HP2", "HP3", "HP4"),
+        )
+
+        val result = manager.fetchStopResults("c", searchRoutesEnabled = false)
+
+        val resultIds = result.filterIsInstance<SearchStopState.SearchResult.Stop>().map { it.stopId }
+        // Central + Circular Quay start with 'c'. Macquarie has no word starting with 'c'
+        // (substring LIKE would have wrongly surfaced it). Town Hall has none either.
+        assertEquals(setOf("HP1", "HP3"), resultIds.toSet())
+        assertEquals(
+            listOf(listOf("HP1", "HP2", "HP3", "HP4")),
+            sandook.selectStopsByIdsCalls,
+            "Expected one batch lookup of the configured high-priority list",
+        )
+    }
+
+    @Test
+    fun `single character query matches mid-name word prefix as well as leading prefix`() = runTest {
+        val stops = listOf(
+            stopRow("HP1", "Town Hall Station"),
+            stopRow("HP2", "Mascot"),
+        )
+        val sandook = RecordingSandook(returns = stops)
+        val manager = manager(sandook, highPriorityIds = listOf("HP1", "HP2"))
+
+        val result = manager.fetchStopResults("h", searchRoutesEnabled = false)
+
+        val resultIds = result.filterIsInstance<SearchStopState.SearchResult.Stop>().map { it.stopId }
+        // 'h' matches the second word "Hall" in Town Hall Station, not Mascot.
+        assertEquals(listOf("HP1"), resultIds)
     }
 
     @Test
@@ -201,7 +259,8 @@ private class RecordingSandook(
 
     override fun selectStopsByIds(stopIds: List<String>): List<SelectProductClassesForStop> {
         selectStopsByIdsCalls += stopIds
-        return emptyList()
+        val wanted = stopIds.toSet()
+        return returns.filter { it.stopId in wanted }
     }
 
     override fun observeStopLabels(): Flow<List<StopLabels>> = emptyFlow()

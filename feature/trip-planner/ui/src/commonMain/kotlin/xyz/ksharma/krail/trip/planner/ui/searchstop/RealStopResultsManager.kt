@@ -88,9 +88,16 @@ class RealStopResultsManager(
         // missing matches because LIKE 'X%' won't tolerate leading whitespace.
         val safeQuery = query.take(MAX_QUERY_LENGTH).trim()
 
-        // Don't search on 1-character queries. The exact path's substring LIKE returns
-        // a flood of accidental matches and the fuzzy path is too noisy to be useful.
-        if (safeQuery.length < MIN_QUERY_LENGTH) return@withContext emptyList()
+        if (safeQuery.isEmpty()) return@withContext emptyList()
+
+        // Single-letter queries can't use the substring LIKE / fuzzy paths: '%a%' floods
+        // the result set with thousands of accidental matches and trigram seeding has no
+        // signal from one character. Fall back to the curated high-priority list (major
+        // CBD / interchange stations) filtered to names whose words start with the letter
+        // so "c" surfaces Central / Circular Quay / Castle Hill instead of nothing.
+        if (safeQuery.length < MIN_QUERY_LENGTH) {
+            return@withContext shortQueryStopResults(safeQuery)
+        }
 
         val results = mutableListOf<SearchStopState.SearchResult>()
 
@@ -132,6 +139,21 @@ class RealStopResultsManager(
         }
 
         results
+    }
+
+    private fun shortQueryStopResults(query: String): List<SearchStopState.SearchResult.Stop> {
+        if (highPriorityStopIdList.isEmpty()) return emptyList()
+        val q = query.lowercase()
+        return sandook.selectStopsByIds(highPriorityStopIdList)
+            .map { it.toStopSearchResult() }
+            .filter { stop ->
+                val name = stop.stopName.lowercase()
+                // Word-prefix: matches "Central" for "c" and "Town Hall" for "h",
+                // but not "Macquarie" for "c" (which substring LIKE would surface).
+                name.startsWith(q) || name.contains(" $q")
+            }
+            .let(::prioritiseStops)
+            .take(MAX_STOP_SEARCH_RESULTS)
     }
 
     private fun fetchFuzzyResults(
@@ -358,7 +380,8 @@ class RealStopResultsManager(
         // by candidate-name length, not query length.
         private const val MAX_QUERY_LENGTH = 64
 
-        // Below this length the substring LIKE matches everything and the ranker is noise.
+        // Below this length the substring LIKE matches everything and the ranker is noise,
+        // so we drop to the curated short-query path instead of running the full search.
         private const val MIN_QUERY_LENGTH = 2
 
         private const val MIN_FUZZY_FALLBACK_THRESHOLD = 5

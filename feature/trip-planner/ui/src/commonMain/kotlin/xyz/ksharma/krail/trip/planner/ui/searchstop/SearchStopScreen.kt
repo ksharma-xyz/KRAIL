@@ -27,16 +27,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -689,7 +693,9 @@ private fun SearchStopScreenSinglePane(
             modifier = Modifier.fillMaxSize(),
         ) {
             CloudGradientBackground(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
                 themeColor = themeColor.hexToComposeColor(),
             ) {
                 SearchStopListContent(
@@ -750,6 +756,7 @@ private fun SearchStopScreenSinglePane(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopStart)
+                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
                 .onGloballyPositioned { coords -> topBarHeightPx = coords.size.height },
         )
     }
@@ -834,7 +841,8 @@ private fun SearchStopScreenDualPane(
                 Column(
                     modifier = Modifier
                         .widthIn(min = SEARCH_STOP_LIST_PANE_MIN_WIDTH, max = SEARCH_STOP_LIST_PANE_MAX_WIDTH)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
                 ) {
                     // Search top bar only spans the list width
                     SearchTopBar(

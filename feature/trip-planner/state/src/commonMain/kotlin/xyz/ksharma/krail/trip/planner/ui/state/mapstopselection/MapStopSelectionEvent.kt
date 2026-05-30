@@ -10,4 +10,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 sealed interface MapStopSelectionEvent {
     /** User's GPS location updated. null = lost / not granted. Triggers nearby-stops reload. */
     data class UserLocationUpdated(val location: LatLng?) : MapStopSelectionEvent
+
+    /** Map camera moved to a new center. Triggers nearby-stops reload for the new position. */
+    data class MapCenterChanged(val center: LatLng) : MapStopSelectionEvent
 }

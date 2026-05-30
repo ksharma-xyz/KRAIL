@@ -129,10 +129,6 @@ fun SavedTripsScreen(
     // Slot for the dual-pane right side. SavedTrips knows nothing about its content —
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
-    // Fired when the bottom action pill triggers nav.
-    onCompactHeightPlanTrip: () -> Unit = {},
-    onCompactHeightSetDestination: () -> Unit = {},
-    onCompactHeightFindTrip: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val iconColor = if (isAppInDarkMode().not()) themeColor() else KrailTheme.colors.onSurface
@@ -153,15 +149,11 @@ fun SavedTripsScreen(
     val savedTripsCount = savedTripsState.savedTrips.size
     val hasParkRide = savedTripsState.parkRideUiState.isNotEmpty()
 
-    // Adaptive layout. Three orientation buckets:
-    //   - Phone portrait (COMPACT width): single-pane. Existing pill logic
-    //     (collapse SearchStopRow into "Plan a trip" pill when many trips).
-    //   - Phone landscape (isPhoneLandscape): dual-pane with the new
-    //     state-aware nav pill at the bottom (not the SearchStopRow).
-    //   - Tablet / foldable-unfolded (isTablet): dual-pane. SearchStopRow is
-    //     ALWAYS expanded — plenty of room, no pill collapse regardless of
-    //     trip count.
-    // See docs/TABLET_FOLDABLE_UX.md §4 + §5.
+    // Adaptive layout:
+    //   - Tablet / foldable-unfolded (isTablet): SearchStopRow always expanded.
+    //   - Phone portrait + phone landscape: pill collapses SearchStopRow when
+    //     enough content is present. Same behaviour in both orientations.
+    // See docs/TABLET_FOLDABLE_UX.md §4.
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val dualPane = adaptiveLayoutInfo.shouldShowDualPane
     val isPhoneLandscape = adaptiveLayoutInfo.isPhoneLandscape
@@ -169,7 +161,6 @@ fun SavedTripsScreen(
 
     val showPill = when {
         isTablet -> false
-        isPhoneLandscape -> false // phone landscape uses the new pill below, not this one
         else -> savedTripsCount >= 2 || (savedTripsCount >= 1 && hasParkRide)
     }
 
@@ -339,41 +330,25 @@ fun SavedTripsScreen(
                 ) + fadeIn(animationSpec = tween(durationMillis = 200)),
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                if (isPhoneLandscape) {
-                    // Phone landscape only: bottom SearchStopRow slides up and feels
-                    // weird in this tight geometry, and the pill's inline expand
-                    // path makes it worse. Replace with a state-aware navigation
-                    // pill that takes the user to the full-screen SearchStop flow.
-                    // Tablets in landscape get the regular expanded SearchStopRow
-                    // (the `else` branch) — they have plenty of room.
-                    SavedTripsCompactHeightActionPill(
-                        fromStop = savedTripsState.fromStop,
-                        toStop = savedTripsState.toStop,
-                        onPlanTrip = onCompactHeightPlanTrip,
-                        onSetDestination = onCompactHeightSetDestination,
-                        onFindTrip = onCompactHeightFindTrip,
-                    )
-                } else {
-                    SearchStopRow(
-                        fromStopItem = savedTripsState.fromStop,
-                        toStopItem = savedTripsState.toStop,
-                        isExpanded = effectiveIsExpanded,
-                        isFromHighlighted = isFromHighlighted,
-                        onExpandRequest = {
-                            isSearchExpanded = true
-                            isFromHighlighted = false
-                        },
-                        fromButtonClick = {
-                            isFromHighlighted = false
-                            fromButtonClick()
-                        },
-                        toButtonClick = toButtonClick,
-                        onReverseButtonClick = {
-                            onEvent(SavedTripUiEvent.ReverseStopClick)
-                        },
-                        onSearchButtonClick = { onSearchButtonClick() },
-                    )
-                }
+                SearchStopRow(
+                    fromStopItem = savedTripsState.fromStop,
+                    toStopItem = savedTripsState.toStop,
+                    isExpanded = effectiveIsExpanded,
+                    isFromHighlighted = isFromHighlighted,
+                    onExpandRequest = {
+                        isSearchExpanded = true
+                        isFromHighlighted = false
+                    },
+                    fromButtonClick = {
+                        isFromHighlighted = false
+                        fromButtonClick()
+                    },
+                    toButtonClick = toButtonClick,
+                    onReverseButtonClick = {
+                        onEvent(SavedTripUiEvent.ReverseStopClick)
+                    },
+                    onSearchButtonClick = { onSearchButtonClick() },
+                )
             }
         }
         log(
@@ -403,45 +378,6 @@ fun SavedTripsScreen(
             }
         } else {
             body()
-        }
-    }
-}
-
-/**
- * Bottom action pill rendered in place of SearchStopRow when isCompactHeight (phone
- * landscape). State-aware label + action — each tap navigates rather than expanding
- * inline, which saves vertical room. See docs/TABLET_FOLDABLE_UX.md §5.
- */
-@Composable
-private fun SavedTripsCompactHeightActionPill(
-    fromStop: StopItem?,
-    toStop: StopItem?,
-    onPlanTrip: () -> Unit,
-    onSetDestination: () -> Unit,
-    onFindTrip: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    val (label, action) = when {
-        fromStop == null -> "Plan a trip" to onPlanTrip
-        toStop == null -> "Set destination" to onSetDestination
-        else -> "See timetable" to onFindTrip
-    }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                bottom = dim.spacingXL,
-                start = dim.pageHorizontalPadding,
-                end = dim.pageHorizontalPadding,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Button(
-            onClick = action,
-            dimensions = ButtonDefaults.mediumButtonSize(),
-        ) {
-            Text(text = label)
         }
     }
 }

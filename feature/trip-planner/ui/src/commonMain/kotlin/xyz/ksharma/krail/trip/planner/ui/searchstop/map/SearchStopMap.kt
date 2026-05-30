@@ -73,6 +73,7 @@ fun SearchStopMap(
     onShowOptionsSheet: () -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
+    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -92,6 +93,7 @@ fun SearchStopMap(
                     onShowOptionsSheet = onShowOptionsSheet,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
+                    onPermissionBannerVisibilityChanged = onPermissionBannerVisibilityChanged,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -130,6 +132,7 @@ private fun MapContent(
     ornamentTopPadding: Dp = 0.dp,
     autoShowOptionsSheet: Boolean = false,
     onShowOptionsSheet: () -> Unit = {},
+    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -150,6 +153,9 @@ private fun MapContent(
     // User location state
     var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
     var showPermissionBanner by remember { mutableStateOf(false) }
+    LaunchedEffect(showPermissionBanner) {
+        onPermissionBannerVisibilityChanged(showPermissionBanner)
+    }
     // False until the user explicitly taps the location button.
     // When true, TrackUserLocation is allowed to trigger the system permission dialog.
     var allowPermissionRequest by remember { mutableStateOf(false) }

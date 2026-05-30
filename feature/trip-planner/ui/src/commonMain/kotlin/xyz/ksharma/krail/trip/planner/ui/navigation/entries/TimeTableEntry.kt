@@ -1,13 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,7 +14,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,7 +27,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
@@ -42,6 +37,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.dateTimeSelectionSaver
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.serviceAlertSaver
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableScreen
@@ -117,22 +113,22 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
         val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
         val dualPane = adaptiveLayoutInfo.shouldShowDualPane
 
-        // Map state for the currently expanded journey, or the first journey in the list
-        // when none is expanded — so the right pane never starts blank on tablet/foldable
-        // entry. Recomputes when expandedJourneyId or the journey-list head changes;
-        // the JourneyMap composable stays mounted, only its data layer re-renders.
-        val firstJourneyId = timeTableState.journeyList.firstOrNull()?.journeyId
-        val journeyMapState by produceState<JourneyMapUiState?>(
-            initialValue = null,
+        // Empty map state — used when no journey is expanded. Sydney coordinates via
+        // JourneyMapDisplay defaults; JourneyMap's internal TrackUserLocation will
+        // re-center to user location once the first GPS fix arrives.
+        val emptyMapState = remember { JourneyMapUiState.Ready(mapDisplay = JourneyMapDisplay()) }
+
+        // Map state for the currently expanded journey. Falls back to emptyMapState
+        // so JourneyMap stays mounted at all times (no appear/disappear flicker).
+        val journeyMapState by produceState<JourneyMapUiState>(
+            initialValue = emptyMapState,
             key1 = expandedJourneyId,
-            key2 = firstJourneyId,
         ) {
-            val targetJourneyId = expandedJourneyId ?: firstJourneyId
-            value = targetJourneyId?.let { id ->
+            value = expandedJourneyId?.let { id ->
                 withContext(Dispatchers.Default) {
                     viewModel.getRawJourneyById(id)?.toJourneyMapState()
                 }
-            }
+            } ?: emptyMapState
         }
 
         val timeTableScreen: @Composable (Modifier, Boolean) -> Unit = { mod, hideMapBtn ->
@@ -189,32 +185,12 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                         true,
                     )
 
-                    Box(
+                    JourneyMap(
+                        journeyMapState = journeyMapState,
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight()
-                            .background(color = KrailTheme.colors.surface),
-                    ) {
-                        when (val mapState = journeyMapState) {
-                            is JourneyMapUiState.Ready -> {
-                                JourneyMap(
-                                    journeyMapState = mapState,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            }
-                            else -> {
-                                Text(
-                                    text = "Tap a journey to see the route",
-                                    style = KrailTheme.typography.bodyLarge,
-                                    color = KrailTheme.colors.onSurface,
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .padding(KrailTheme.dimensions.spacingXL)
-                                        .fillMaxWidth(),
-                                )
-                            }
-                        }
-                    }
+                            .fillMaxHeight(),
+                    )
                 }
             } else {
                 timeTableScreen(Modifier.fillMaxSize(), false)

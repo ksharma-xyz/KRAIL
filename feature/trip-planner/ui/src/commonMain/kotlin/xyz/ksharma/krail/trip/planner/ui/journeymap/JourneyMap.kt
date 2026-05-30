@@ -128,11 +128,17 @@ private fun JourneyMapContent(
         else -> "Map showing scheduled times only."
     }
 
-    val cameraPosition = remember(mapState.cameraFocus, mapState.mapDisplay.stops) {
-        calculateInitialCameraPosition(mapState)
-    }
+    val initialCameraPosition = remember { calculateInitialCameraPosition(mapState) }
+    val cameraState = rememberCameraState(firstPosition = initialCameraPosition)
 
-    val cameraState = rememberCameraState(firstPosition = cameraPosition)
+    // Smooth camera animation when the displayed journey changes (different card
+    // expanded, journey collapsed back to empty). Reads userLocation at the moment
+    // the state changes — for the empty state, flies to user location if GPS is
+    // available, else falls back to Sydney default coordinates.
+    LaunchedEffect(mapState.cameraFocus, mapState.mapDisplay.stops) {
+        val target = cameraTargetForState(mapState, userLocation)
+        cameraState.animateTo(target, duration = CAMERA_TRANSITION_MS.milliseconds)
+    }
 
     TrackUserLocation(
         userLocationManager = userLocationManager,
@@ -247,6 +253,17 @@ private fun JourneyMapContent(
     }
 }
 
+private fun cameraTargetForState(mapState: JourneyMapUiState.Ready, userLocation: LatLng?): CameraPosition {
+    val isEmpty = mapState.mapDisplay.stops.isEmpty() && mapState.cameraFocus == null
+    if (isEmpty && userLocation != null) {
+        return CameraPosition(
+            target = Position(latitude = userLocation.latitude, longitude = userLocation.longitude),
+            zoom = UserLocationConfig.RECENTER_ZOOM,
+        )
+    }
+    return calculateInitialCameraPosition(mapState)
+}
+
 private fun calculateInitialCameraPosition(mapState: JourneyMapUiState.Ready): CameraPosition {
     val originStop = mapState.mapDisplay.stops.firstOrNull { it.stopType == StopType.ORIGIN }
 
@@ -266,3 +283,7 @@ private fun calculateInitialCameraPosition(mapState: JourneyMapUiState.Ready): C
 
     return CameraPosition(target = target, zoom = zoom)
 }
+
+// Duration for smooth camera fly-to when switching between journey routes or
+// returning to the empty (no-journey-selected) state.
+private const val CAMERA_TRANSITION_MS = 600L

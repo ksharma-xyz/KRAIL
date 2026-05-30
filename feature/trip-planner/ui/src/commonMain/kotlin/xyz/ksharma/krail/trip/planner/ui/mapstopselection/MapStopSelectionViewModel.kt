@@ -57,11 +57,17 @@ class MapStopSelectionViewModel(
     fun onEvent(event: MapStopSelectionEvent) {
         when (event) {
             is MapStopSelectionEvent.UserLocationUpdated -> onUserLocationUpdated(event.location)
+            is MapStopSelectionEvent.MapCenterChanged -> onMapCenterChanged(event.center)
         }
     }
 
     private fun onUserLocationUpdated(location: LatLng?) {
         updateMapDisplay { copy(userLocation = location) }
+        loadNearbyStops()
+    }
+
+    private fun onMapCenterChanged(center: LatLng) {
+        updateMapDisplay { copy(mapCenter = center) }
         loadNearbyStops()
     }
 

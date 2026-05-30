@@ -41,22 +41,13 @@ Files:
   (`SearchStopScreenDualPane` around line 762)
 - Sister doc: [`feature/trip-planner/ui/SEARCH_STOP_UX.md`](../feature/trip-planner/ui/SEARCH_STOP_UX.md)
 
-### Why the old layout looked "squished"
-
-`SearchStopEntry` currently declares
-`metadata = ListDetailSceneStrategy.listPane()`. At ≥ 600 dp the Material 3
-`ListDetailSceneStrategy` confines SearchStop to roughly half the window
-(the list pane), and SearchStop's own internal dual-pane then splits that
-half again. Net result: ~25 % screen width for stops list, ~25 % for map,
-the remainder eaten by surrounding scaffold. This is the bug to fix first.
-
 ### Rules
 
-- **Drop `ListDetailSceneStrategy.listPane()` from `SearchStopEntry`.**
-  SearchStop owns its own list+map split — the scene strategy must not
-  split the window a second time. With this single change the screen
-  occupies the full window at every form factor and the existing
-  dual-pane code starts looking right.
+- `SearchStopEntry` declares **no `ListDetailSceneStrategy` metadata** —
+  SearchStop renders full-width and owns its own list+map split.
+  (The old `listPane()` declaration caused a double-split: scaffold halved
+  the window, then SearchStop's internal dual-pane halved it again,
+  leaving ~25 % each. That is fixed.)
 - Dual-pane at ≥ 600 dp width (`shouldShowDualPane`, unchanged).
   COMPACT widths keep the existing single-pane list/map toggle.
 - **Pane ratio** in dual-pane: list pane = `widthIn(min = 320.dp,
@@ -93,64 +84,53 @@ Files:
 
 - Left pane: existing TimeTable journey list, capped at
   `widthIn(max = 520.dp)` so cards keep phone-width proportions.
-- Right pane: a **persistent `JourneyMap`** instance keyed on
-  `expandedJourneyId` from `TimeTableViewModel`. The map composable
-  stays mounted; only its data layer (route polyline, leg stops, live
-  vehicle) re-renders as the user expands different journeys.
+- Right pane: a **persistent `JourneyMap`** instance that stays mounted
+  at all times — no appear/disappear flicker as journeys expand/collapse.
 - `JourneyCard`'s "Maps" button is **hidden** when `shouldShowDualPane`
   is true. COMPACT keeps the button + the existing navigation to a
   full-screen `JourneyMapScreen`.
-- With no journey expanded, the right pane shows a trip-overview map:
-  origin + destination markers, framed to fit both.
-- `JourneyMap` is already extensible via its `extraMapContent` slot —
-  no refactor needed, only new call-sites.
-- Phone landscape (`isCompactHeight` and width ≥ 600 dp): the
-  dual-pane layout still applies. Left-pane cards should switch to a
-  compact summary so 5–6 journeys fit above the fold.
+- **With no journey expanded**: right pane shows an empty map
+  (`JourneyMapDisplay()` — no route, no stops). Camera centres at user
+  location if GPS is available, else Sydney default. The map animates
+  smoothly to the route when the user expands a card (600 ms fly-to).
+- **With a journey expanded**: map shows the route polyline, stops, and
+  leg colours. Camera flies to the route bounds / origin stop.
+- Phone landscape (`isCompactHeight` and width ≥ 600 dp): dual-pane
+  layout still applies. Cards remain full-width; vertical scroll handles
+  density.
 
 ---
 
 ## 4. SavedTripsScreen
 
-File: [`SavedTripsScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/savedtrips/SavedTripsScreen.kt)
+Files:
+- [`SavedTripsScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/savedtrips/SavedTripsScreen.kt)
+- [`SavedTripsEntry.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/navigation/entries/SavedTripsEntry.kt)
+- [`MapStopSelectionPane.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/mapstopselection/MapStopSelectionPane.kt)
 
-`SavedTripsEntry` already declares `ListDetailSceneStrategy.listPane()` —
-SavedTrips genuinely is the list owner of the list-detail pair with
-`TimeTableRoute`. This stays.
+`SavedTripsEntry` has **no `ListDetailSceneStrategy` metadata** — it renders
+full-width and manages its own left/right split internally (same pattern as
+SearchStop). `TimeTableRoute` navigation still works via back-stack push.
 
 ### Width rules (≥ 600 dp)
 
-Detail-pane behaviour when no specific detail route is pushed:
-
-- **No saved trips, no recents** (first-open on tablet): detail pane
-  shows a hero block — emoji + "Let's Go! Sydney" + larger CTA layout,
-  plus an inline Discover preview if available. Phone (COMPACT) keeps
-  the smaller `ErrorMessage` empty state.
-- **Trip selected** (user taps a `SavedTripCard`): detail pane renders
-  `TimeTableScreen` inline, re-using the existing composable with the
-  current `TimeTableViewModel`. Phone (COMPACT) still navigates to a
-  full-screen `TimeTableScreen` — unchanged.
-- **No selection yet, has saved trips**: detail pane shows the
-  DepartureBoard accordion in its expanded form plus Discover content,
-  so the right column is never blank.
+- **Left pane** (≤ 480 dp): the saved-trips list, DepartureBoard, Park & Ride,
+  Discover tiles, and the SearchStopRow pill at the bottom — same as
+  portrait, just width-capped.
+- **Right pane** (`weight(1f)`): a **read-only nearby-stops map** powered by
+  `MapStopSelectionPane` (singleton `MapStopSelectionViewModel`). Users can
+  explore nearby stops and view stop details; tapping a stop has no
+  trip-planning side-effect. The right pane is purely contextual.
+- Trip planning is done via the SearchStopRow pill at the bottom of the left
+  pane (same flow as portrait — pill collapses/expands SearchStopRow).
 
 ### Compact-height rules (`isCompactHeight`, height < 480 dp)
 
-Phone landscape and similar tight-vertical contexts:
-
-- The current bottom `SearchStopRow` (From + reverse + To + Search +
-  Settings + Discover) eats ≥ 200 dp of vertical space. Collapse it
-  into a single-line variant pinned to the title bar:
-  - From and To as horizontally arranged `TextFieldButton`s.
-  - Reverse-direction icon button between them.
-  - Search action collapses to a small icon button on the right.
-- The saved-trips list becomes the dominant element.
-- `DepartureBoard` accordion stays collapsed by default; expanded
-  state still scrolls under the list.
-- Park & Ride and Discover info-tiles stay scroll-revealed, not
-  pinned.
-- These rules apply on every form factor that hits `isCompactHeight`,
-  independent of the width-based dual-pane treatment above.
+Phone landscape uses the **same pill + expand-SearchStopRow** behaviour as
+portrait. No special single-line collapsed bar is needed — the pill already
+collapses the row to a single button, and expanding it fills the remaining
+height acceptably. `showPill` logic is the same in both orientations
+(collapses when ≥ 2 saved trips, or 1 trip + Park & Ride).
 
 ---
 
@@ -161,12 +141,12 @@ File: [`KrailNavHost.kt`](../composeApp/src/commonMain/kotlin/xyz/ksharma/krail/
 `KrailNavHost` uses `ListDetailSceneStrategy` from Navigation 3.
 Per-route `metadata` decides which pane each route lands in:
 
-| Route               | Metadata today        | Should be                                         |
+| Route               | Metadata              | Notes                                             |
 |---------------------|-----------------------|---------------------------------------------------|
-| `SavedTripsRoute`   | `listPane()`          | unchanged                                         |
-| `SearchStopRoute`   | `listPane()`          | **none** (owns its own list+map; render full-width) |
-| `TimeTableRoute`    | `detailPane()`        | unchanged                                         |
-| `JourneyMapRoute`   | (none today)          | phone-only destination; tablet uses inline map    |
+| `SavedTripsRoute`   | **none**              | owns its own left/right split internally          |
+| `SearchStopRoute`   | **none**              | owns its own list+map split internally            |
+| `TimeTableRoute`    | **none**              | owns its own list+map split internally            |
+| `JourneyMapRoute`   | (none)                | phone-only; tablet uses JourneyMap inline in TimeTable |
 | `SettingsRoute`     | `detailPane()`        | unchanged                                         |
 | `IntroRoute`        | `detailPane()`        | unchanged                                         |
 | `DiscoverRoute`     | `detailPane()`        | unchanged                                         |
@@ -211,23 +191,15 @@ adding a custom `@Preview`.
 
 ---
 
-## 8. Implementation order
+## 8. Implementation status
 
-These are the suggested follow-up tickets. Each is independent and small
-enough to ship behind its own PR.
+Items 1–5 are **shipped**. Remaining work:
 
-1. **Drop `listPane()` metadata from `SearchStopEntry`.** Single-line
-   change; immediately removes the 25 % / 25 % cramped layout on
-   tablets and foldable-unfolded.
-2. Tighten the SearchStop pane ratio (320–480 dp list, map fills rest).
-   Validate on phone landscape, foldable-unfolded portrait, tablet
-   landscape.
-3. Wire the TimeTable dual-pane with a persistent `JourneyMap`; hide
-   the "Maps" button when `shouldShowDualPane`.
-4. Wire the SavedTrips dual-pane (inline TimeTable detail +
-   state-aware right pane).
-5. SavedTrips compact-height: collapse `SearchStopRow` into a
-   single-line bar pinned to the title bar.
+1. ~~Drop `listPane()` from `SearchStopEntry`.~~ ✓ Done
+2. ~~Tighten SearchStop pane ratio (320–480 dp list, map fills rest).~~ ✓ Done
+3. ~~Wire TimeTable dual-pane with persistent `JourneyMap`; hide "Maps" button.~~ ✓ Done
+4. ~~Wire SavedTrips dual-pane right pane.~~ ✓ Done — read-only nearby-stops map
+5. ~~SavedTrips compact-height SearchStopRow adaptation.~~ ✓ Done — same pill+expand as portrait
 6. Add `@TabletScreenPreview` (landscape) and `@CompactHeightPreview`
    (phone landscape) annotations; backfill previews on the screens
    touched above.

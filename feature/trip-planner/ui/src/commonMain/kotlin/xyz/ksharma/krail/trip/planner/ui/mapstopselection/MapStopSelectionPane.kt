@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,10 +43,6 @@ fun MapStopSelectionPane(
     val viewModel: MapStopSelectionViewModel = koinInject()
     val mapState by viewModel.mapUiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.onEvent(MapStopSelectionEvent.Initialize)
-    }
-
     val statusBarTopPadding = WindowInsets.statusBars
         .asPaddingValues()
         .calculateTopPadding()
@@ -57,26 +52,24 @@ fun MapStopSelectionPane(
             .fillMaxSize()
             .background(color = KrailTheme.colors.surface),
     ) {
-        mapState?.let { state ->
-            SearchStopMap(
-                modifier = Modifier.fillMaxSize(),
-                mapUiState = state,
-                ornamentTopPadding = statusBarTopPadding,
-                onEvent = { sse ->
-                    // Translate the events MapStopSelectionViewModel cares about.
-                    // Everything else (sheet open, options, analytics) is ignored at
-                    // this layer; SearchStopMap manages those internally.
-                    when (sse) {
-                        is SearchStopUiEvent.UserLocationUpdated ->
-                            viewModel.onEvent(
-                                MapStopSelectionEvent.UserLocationUpdated(sse.location),
-                            )
-                        else -> Unit
-                    }
-                },
-                onStopSelect = onStopSelected,
-            )
-        }
+        SearchStopMap(
+            modifier = Modifier.fillMaxSize(),
+            mapUiState = mapState,
+            ornamentTopPadding = statusBarTopPadding,
+            onEvent = { sse ->
+                // Translate the events MapStopSelectionViewModel cares about.
+                // Everything else (sheet open, options, analytics) is ignored at
+                // this layer; SearchStopMap manages those internally.
+                when (sse) {
+                    is SearchStopUiEvent.UserLocationUpdated ->
+                        viewModel.onEvent(
+                            MapStopSelectionEvent.UserLocationUpdated(sse.location),
+                        )
+                    else -> Unit
+                }
+            },
+            onStopSelect = onStopSelected,
+        )
 
         topOverlay()
     }

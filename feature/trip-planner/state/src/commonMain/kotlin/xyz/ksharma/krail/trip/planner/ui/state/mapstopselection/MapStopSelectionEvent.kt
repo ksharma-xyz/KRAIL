@@ -8,9 +8,6 @@ import xyz.ksharma.krail.core.maps.state.LatLng
  * highlighting) live in the composable.
  */
 sealed interface MapStopSelectionEvent {
-    /** Force-initialise map state. No-op once mapUiState is Ready. */
-    data object Initialize : MapStopSelectionEvent
-
     /** User's GPS location updated. null = lost / not granted. Triggers nearby-stops reload. */
     data class UserLocationUpdated(val location: LatLng?) : MapStopSelectionEvent
 }

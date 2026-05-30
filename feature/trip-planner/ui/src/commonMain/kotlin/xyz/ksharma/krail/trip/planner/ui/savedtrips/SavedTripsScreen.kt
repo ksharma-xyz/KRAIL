@@ -142,27 +142,34 @@ fun SavedTripsScreen(
         }.random()
     }
 
-    // Pill only shown when there's enough saved content above to justify collapsing
-    // the search row out of the way:
+    // Pill (phone-portrait only) is shown when there's enough saved content above
+    // to justify collapsing the search row out of the way:
     //   • 2+ saved trips, OR
-    //   • 1 saved trip + at least one Park & Ride entry, OR
-    //   • compact-height form factor (phone landscape) — vertical room is too
-    //     scarce to keep the expanded row visible.
+    //   • 1 saved trip + at least one Park & Ride entry.
     // Anything less and the expanded row stays — first-time and lightly-used
     // accounts still get the full search affordance front-and-centre.
     val savedTripsCount = savedTripsState.savedTrips.size
     val hasParkRide = savedTripsState.parkRideUiState.isNotEmpty()
 
-    // Adaptive layout. Dual-pane on ≥ 600 dp width adds a right-hand hero pane;
-    // compact-height collapses the search row to the pill. See
-    // docs/TABLET_FOLDABLE_UX.md §4 + §5.
+    // Adaptive layout. Three orientation buckets:
+    //   - Phone portrait (COMPACT width): single-pane. Existing pill logic
+    //     (collapse SearchStopRow into "Plan a trip" pill when many trips).
+    //   - Phone landscape (isPhoneLandscape): dual-pane with the new
+    //     state-aware nav pill at the bottom (not the SearchStopRow).
+    //   - Tablet / foldable-unfolded (isTablet): dual-pane. SearchStopRow is
+    //     ALWAYS expanded — plenty of room, no pill collapse regardless of
+    //     trip count.
+    // See docs/TABLET_FOLDABLE_UX.md §4 + §5.
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val dualPane = adaptiveLayoutInfo.shouldShowDualPane
-    val isCompactHeight = adaptiveLayoutInfo.isCompactHeight
+    val isPhoneLandscape = adaptiveLayoutInfo.isPhoneLandscape
+    val isTablet = adaptiveLayoutInfo.isTablet
 
-    val showPill = isCompactHeight ||
-        savedTripsCount >= 2 ||
-        (savedTripsCount >= 1 && hasParkRide)
+    val showPill = when {
+        isTablet -> false
+        isPhoneLandscape -> false // phone landscape uses the new pill below, not this one
+        else -> savedTripsCount >= 2 || (savedTripsCount >= 1 && hasParkRide)
+    }
 
     // Search row expand / from-highlight state — rememberSaveable survives rotation.
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
@@ -329,11 +336,13 @@ fun SavedTripsScreen(
                 ) + fadeIn(animationSpec = tween(durationMillis = 200)),
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                if (isCompactHeight) {
-                    // Phone landscape: bottom SearchStopRow slides up and feels weird
-                    // in this geometry, and the pill's inline expand path makes it
-                    // worse. Replace with a state-aware navigation pill that takes
-                    // the user to the full-screen SearchStop flow instead.
+                if (isPhoneLandscape) {
+                    // Phone landscape only: bottom SearchStopRow slides up and feels
+                    // weird in this tight geometry, and the pill's inline expand
+                    // path makes it worse. Replace with a state-aware navigation
+                    // pill that takes the user to the full-screen SearchStop flow.
+                    // Tablets in landscape get the regular expanded SearchStopRow
+                    // (the `else` branch) — they have plenty of room.
                     SavedTripsCompactHeightActionPill(
                         fromStop = savedTripsState.fromStop,
                         toStop = savedTripsState.toStop,

@@ -23,6 +23,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
  * Shared owner of right-pane map state. One Koin singleton, reused by both
  * SavedTrips and SearchStop dual-pane (SearchStop migration lands in a follow-up PR).
  *
+ * State is **Ready from construction** — no initialise event needed, no race against
+ * the first composition. Pane just collects.
+ *
  * Lifecycle (mirrors TimeTableViewModel's WhileSubscribed pattern):
  * - Stops doing work as soon as the last consumer drops [mapUiState], with a small
  *   timeout to ride out config changes.
@@ -36,28 +39,20 @@ class MapStopSelectionViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
 ) {
-    private val _mapUiState: MutableStateFlow<MapUiState?> = MutableStateFlow(null)
+    private val _mapUiState: MutableStateFlow<MapUiState> = MutableStateFlow(MapUiState.Ready())
 
-    val mapUiState: StateFlow<MapUiState?> = _mapUiState
+    val mapUiState: StateFlow<MapUiState> = _mapUiState
         .onStart { log("[MAP_STOP_SEL] consumer attached") }
         .onCompletion { stopActiveWork() }
         .stateIn(
             scope = scope,
             started = SharingStarted.WhileSubscribed(SUBSCRIBER_TIMEOUT_MS),
-            initialValue = null,
+            initialValue = MapUiState.Ready(),
         )
 
     fun onEvent(event: MapStopSelectionEvent) {
         when (event) {
-            MapStopSelectionEvent.Initialize -> initialize()
             is MapStopSelectionEvent.UserLocationUpdated -> onUserLocationUpdated(event.location)
-        }
-    }
-
-    private fun initialize() {
-        if (_mapUiState.value == null) {
-            log("[MAP_STOP_SEL] initialising map state")
-            _mapUiState.value = MapUiState.Ready()
         }
     }
 

@@ -22,6 +22,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
@@ -51,7 +52,6 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
  *
  * See docs/TABLET_FOLDABLE_UX.md §3.
  */
-@Suppress("UNUSED_VARIABLE", "LongMethod")
 @Composable
 internal fun EntryProviderScope<NavKey>.TimeTableEntry(
     tripPlannerNavigator: TripPlannerNavigator,
@@ -66,10 +66,13 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val expandedJourneyId by viewModel.expandedJourneyId.collectAsStateWithLifecycle()
 
-        // CRITICAL: Must collect these to trigger flows' onStart blocks
-        val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-        val isActive by viewModel.isActive.collectAsStateWithLifecycle()
-        val autoRefreshTimeTable by viewModel.autoRefreshTimeTable.collectAsStateWithLifecycle()
+        // Collect these flows to trigger their onStart side-effects (polling, lifecycle
+        // gating) without exposing the values as unused local variables.
+        LaunchedEffect(viewModel) {
+            launch { viewModel.isLoading.collect {} }
+            launch { viewModel.isActive.collect {} }
+            launch { viewModel.autoRefreshTimeTable.collect {} }
+        }
 
         // Modal visibility state
         var showAlertsModal by rememberSaveable { mutableStateOf(false) }

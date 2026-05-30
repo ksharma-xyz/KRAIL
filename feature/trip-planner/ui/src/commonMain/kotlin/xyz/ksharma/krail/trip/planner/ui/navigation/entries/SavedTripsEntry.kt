@@ -1,15 +1,28 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.ResultEffect
+import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
@@ -131,11 +144,93 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     tripPlannerNavigator = tripPlannerNavigator,
                 )
             },
-            // rightPane intentionally left empty for now. The MapStopSelectionPane
-            // (shared Koin singleton VM) lands in the follow-up commit on this branch.
+            rightPane = {
+                MapStopSelectionPane(
+                    onStopSelected = { stopItem ->
+                        // Two-tap From / To flow. First unset slot wins; once both
+                        // are set, the next pick replaces From so the user can start
+                        // a fresh trip without explicit clear.
+                        when {
+                            savedTripState.fromStop == null -> {
+                                viewModel.onEvent(
+                                    SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()),
+                                )
+                            }
+                            savedTripState.toStop == null -> {
+                                viewModel.onEvent(
+                                    SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()),
+                                )
+                            }
+                            else -> {
+                                viewModel.onEvent(
+                                    SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()),
+                                )
+                            }
+                        }
+                    },
+                    topOverlay = {
+                        SavedTripsMapBanner(
+                            fromStop = savedTripState.fromStop,
+                            toStop = savedTripState.toStop,
+                            onSearchTrip = {
+                                triggerTripSearch(
+                                    fromStop = savedTripState.fromStop,
+                                    toStop = savedTripState.toStop,
+                                    viewModel = viewModel,
+                                    tripPlannerNavigator = tripPlannerNavigator,
+                                )
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .statusBarsPadding()
+                                .padding(KrailTheme.dimensions.spacingM),
+                        )
+                    },
+                )
+            },
         )
     }
 }
+
+/**
+ * Contextual pill on the SavedTrips map. Styling matches LocationPermissionBanner
+ * (rounded surface pill, onSurface text). Three states walk the user through the
+ * two-tap From / To pick + the "see timetable" action when both are set.
+ */
+@Composable
+private fun SavedTripsMapBanner(
+    fromStop: StopItem?,
+    toStop: StopItem?,
+    onSearchTrip: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    val (label, onTap) = when {
+        fromStop == null -> "Tap a stop to set your starting point" to null
+        toStop == null -> "Tap a stop to set your destination" to null
+        else -> "Tap to see timetable" to onSearchTrip
+    }
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(SAVED_TRIPS_BANNER_CORNER_RADIUS))
+            .background(
+                color = KrailTheme.colors.surface.copy(alpha = SAVED_TRIPS_BANNER_BG_ALPHA),
+            )
+            .then(if (onTap != null) Modifier.klickable(onClick = onTap) else Modifier)
+            .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = KrailTheme.typography.bodySmall,
+            color = KrailTheme.colors.onSurface,
+        )
+    }
+}
+
+private val SAVED_TRIPS_BANNER_CORNER_RADIUS = 24.dp
+private const val SAVED_TRIPS_BANNER_BG_ALPHA = 0.9f
 
 private fun triggerTripSearch(
     fromStop: StopItem?,

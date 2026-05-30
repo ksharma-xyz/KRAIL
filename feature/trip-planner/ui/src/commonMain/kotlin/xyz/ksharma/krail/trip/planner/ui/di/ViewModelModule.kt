@@ -15,6 +15,7 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.DepartureBoardViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
@@ -119,6 +120,16 @@ val viewModelsModule = module {
     single<NearbyStopsManager> {
         createNearbyStopsManager(
             repository = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
+    // Shared right-pane map state — one Koin singleton reused by SavedTrips dual-pane
+    // (and SearchStop dual-pane in a follow-up PR). WhileSubscribed pattern inside the
+    // VM auto-cancels active queries when no consumer is collecting mapUiState.
+    single {
+        MapStopSelectionViewModel(
+            nearbyStopsManager = get(),
             ioDispatcher = get(named(IODispatcher)),
         )
     }

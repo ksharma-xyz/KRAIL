@@ -22,16 +22,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -55,6 +58,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
@@ -66,6 +70,7 @@ import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileData
@@ -129,12 +134,24 @@ fun SavedTripsScreen(
     // Pill only shown when there's enough saved content above to justify collapsing
     // the search row out of the way:
     //   • 2+ saved trips, OR
-    //   • 1 saved trip + at least one Park & Ride entry.
+    //   • 1 saved trip + at least one Park & Ride entry, OR
+    //   • compact-height form factor (phone landscape) — vertical room is too
+    //     scarce to keep the expanded row visible.
     // Anything less and the expanded row stays — first-time and lightly-used
     // accounts still get the full search affordance front-and-centre.
     val savedTripsCount = savedTripsState.savedTrips.size
     val hasParkRide = savedTripsState.parkRideUiState.isNotEmpty()
-    val showPill = savedTripsCount >= 2 || (savedTripsCount >= 1 && hasParkRide)
+
+    // Adaptive layout. Dual-pane on ≥ 600 dp width adds a right-hand hero pane;
+    // compact-height collapses the search row to the pill. See
+    // docs/TABLET_FOLDABLE_UX.md §4 + §5.
+    val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
+    val dualPane = adaptiveLayoutInfo.shouldShowDualPane
+    val isCompactHeight = adaptiveLayoutInfo.isCompactHeight
+
+    val showPill = isCompactHeight ||
+        savedTripsCount >= 2 ||
+        (savedTripsCount >= 1 && hasParkRide)
 
     // Search row expand / from-highlight state — rememberSaveable survives rotation.
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
@@ -162,155 +179,181 @@ fun SavedTripsScreen(
             .fillMaxSize()
             .background(color = KrailTheme.colors.surface),
     ) {
-        Column {
-            TitleBar(
-                title = {
-                    Text(text = "KRAIL", color = themeColor())
-                },
-                actions = {
-                    if (editing) {
-                        Button(
-                            onClick = { editing = false },
-                            colors = ButtonDefaults.monochromeButtonColors(),
-                            dimensions = ButtonDefaults.chipButtonSize(),
-                            modifier = Modifier.padding(horizontal = dim.spacingM),
-                        ) {
-                            Text(text = "Done")
-                        }
-                    } else {
-                        if (savedTripsState.isDiscoverAvailable) {
-                            RoundIconButton(
-                                showBadge = savedTripsState.displayDiscoverBadge,
-                                onClick = onDiscoverButtonClick,
+        val body: @Composable BoxScope.() -> Unit = {
+            Column {
+                TitleBar(
+                    title = {
+                        Text(text = "KRAIL", color = themeColor())
+                    },
+                    actions = {
+                        if (editing) {
+                            Button(
+                                onClick = { editing = false },
+                                colors = ButtonDefaults.monochromeButtonColors(),
+                                dimensions = ButtonDefaults.chipButtonSize(),
+                                modifier = Modifier.padding(horizontal = dim.spacingM),
                             ) {
-                                CityCodeText("SYD")
+                                Text(text = "Done")
+                            }
+                        } else {
+                            if (savedTripsState.isDiscoverAvailable) {
+                                RoundIconButton(
+                                    showBadge = savedTripsState.displayDiscoverBadge,
+                                    onClick = onDiscoverButtonClick,
+                                ) {
+                                    CityCodeText("SYD")
+                                }
+                            }
+
+                            RoundIconButton(
+                                onClick = onSettingsButtonClick,
+                            ) {
+                                Image(
+                                    painter = painterResource(Res.drawable.ic_settings),
+                                    contentDescription = "Settings",
+                                    colorFilter = ColorFilter.tint(LocalContentColor.current),
+                                    modifier = Modifier.size(dim.spacingXXXL),
+                                )
+                            }
+                        }
+                    },
+                )
+
+                val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
+
+                LazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
+                ) {
+                    when {
+                        savedTripsState.isSavedTripsLoading -> Unit
+
+                        savedTripsState.savedTrips.isEmpty() -> {
+                            savedTripsState.infoTiles?.let { infoTiles ->
+                                infoTiles(
+                                    infoTiles = infoTiles,
+                                    onCtaClick = { tileData ->
+                                        onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                    },
+                                    onDismissClick = { tileData ->
+                                        onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
+                                    },
+                                    onTileExpand = {
+                                        onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
+                                    },
+                                )
+                            }
+
+                            item(key = "empty_state") {
+                                ErrorMessage(
+                                    emoji = "🌟",
+                                    title = "Let's Go! Sydney",
+                                    message = emptyStateTip,
+                                    modifier = Modifier
+                                        .padding(horizontal = dim.pageHorizontalPadding)
+                                        .animateItem(),
+                                )
                             }
                         }
 
-                        RoundIconButton(
-                            onClick = onSettingsButtonClick,
-                        ) {
-                            Image(
-                                painter = painterResource(Res.drawable.ic_settings),
-                                contentDescription = "Settings",
-                                colorFilter = ColorFilter.tint(LocalContentColor.current),
-                                modifier = Modifier.size(dim.spacingXXXL),
+                        savedTripsState.savedTrips.isNotEmpty() -> {
+                            savedTripsState.infoTiles?.let { infoTiles ->
+                                infoTiles(
+                                    infoTiles = infoTiles,
+                                    onCtaClick = { tileData ->
+                                        onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
+                                    },
+                                    onDismissClick = { tileData ->
+                                        onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
+                                    },
+                                    onTileExpand = {
+                                        onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
+                                    },
+                                )
+                            }
+
+                            savedTripsContent(
+                                savedTripsState = savedTripsState,
+                                trackedJourney = trackedJourney,
+                                iconColor = iconColor,
+                                onEvent = onEvent,
+                                onSavedTripCardClick = onSavedTripCardClick,
+                                onTrackingCardClick = onTrackingCardClick,
+                                onStopTracking = onStopTracking,
+                                expandedMap = expandedMap,
+                                departureBoardEntries = departureBoardEntries,
+                                expandedDepartureBoardStopId = expandedDepartureBoardStopId,
+                                onDepartureBoardEvent = onDepartureBoardEvent,
+                                editing = editing,
+                                reorderState = reorderState,
+                                onEnterEditing = { editing = true },
                             )
                         }
-                    }
-                },
-            )
-
-            val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
-
-            LazyColumn(
-                state = lazyListState,
-                contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
-            ) {
-                when {
-                    savedTripsState.isSavedTripsLoading -> Unit
-
-                    savedTripsState.savedTrips.isEmpty() -> {
-                        savedTripsState.infoTiles?.let { infoTiles ->
-                            infoTiles(
-                                infoTiles = infoTiles,
-                                onCtaClick = { tileData ->
-                                    onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
-                                },
-                                onDismissClick = { tileData ->
-                                    onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
-                                },
-                                onTileExpand = {
-                                    onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
-                                },
-                            )
-                        }
-
-                        item(key = "empty_state") {
-                            ErrorMessage(
-                                emoji = "🌟",
-                                title = "Let's Go! Sydney",
-                                message = emptyStateTip,
-                                modifier = Modifier
-                                    .padding(horizontal = dim.pageHorizontalPadding)
-                                    .animateItem(),
-                            )
-                        }
-                    }
-
-                    savedTripsState.savedTrips.isNotEmpty() -> {
-                        savedTripsState.infoTiles?.let { infoTiles ->
-                            infoTiles(
-                                infoTiles = infoTiles,
-                                onCtaClick = { tileData ->
-                                    onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
-                                },
-                                onDismissClick = { tileData ->
-                                    onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
-                                },
-                                onTileExpand = {
-                                    onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
-                                },
-                            )
-                        }
-
-                        savedTripsContent(
-                            savedTripsState = savedTripsState,
-                            trackedJourney = trackedJourney,
-                            iconColor = iconColor,
-                            onEvent = onEvent,
-                            onSavedTripCardClick = onSavedTripCardClick,
-                            onTrackingCardClick = onTrackingCardClick,
-                            onStopTracking = onStopTracking,
-                            expandedMap = expandedMap,
-                            departureBoardEntries = departureBoardEntries,
-                            expandedDepartureBoardStopId = expandedDepartureBoardStopId,
-                            onDepartureBoardEvent = onDepartureBoardEvent,
-                            editing = editing,
-                            reorderState = reorderState,
-                            onEnterEditing = { editing = true },
-                        )
                     }
                 }
             }
-        }
 
-        // Hold the bottom row off-screen until the saved-trips load has emitted at
-        // least once. Without this gate, the row renders against an empty
-        // savedTrips list (pill condition false → expanded), then flips to the
-        // pill once the DB lands — a visible flash of the wrong UI.
-        //
-        // Reveal is a plain slide-up + fade for both the collapsed pill and the
-        // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
-        // itself — keeping the row-level reveal calm avoids stacking two bouncy
-        // animations (parent scale + child pulse) on top of each other.
-        AnimatedVisibility(
-            visible = !savedTripsState.isSavedTripsLoading && !editing,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-            ) + fadeIn(animationSpec = tween(durationMillis = 200)),
-            modifier = Modifier.align(Alignment.BottomCenter),
-        ) {
-            SearchStopRow(
-                fromStopItem = savedTripsState.fromStop,
-                toStopItem = savedTripsState.toStop,
-                isExpanded = effectiveIsExpanded,
-                isFromHighlighted = isFromHighlighted,
-                onExpandRequest = {
-                    isSearchExpanded = true
-                    isFromHighlighted = false
-                },
-                fromButtonClick = {
-                    isFromHighlighted = false
-                    fromButtonClick()
-                },
-                toButtonClick = toButtonClick,
-                onReverseButtonClick = {
-                    onEvent(SavedTripUiEvent.ReverseStopClick)
-                },
-                onSearchButtonClick = { onSearchButtonClick() },
-            )
+            // Hold the bottom row off-screen until the saved-trips load has emitted at
+            // least once. Without this gate, the row renders against an empty
+            // savedTrips list (pill condition false → expanded), then flips to the
+            // pill once the DB lands — a visible flash of the wrong UI.
+            //
+            // Reveal is a plain slide-up + fade for both the collapsed pill and the
+            // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
+            // itself — keeping the row-level reveal calm avoids stacking two bouncy
+            // animations (parent scale + child pulse) on top of each other.
+            AnimatedVisibility(
+                visible = !savedTripsState.isSavedTripsLoading && !editing,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                ) + fadeIn(animationSpec = tween(durationMillis = 200)),
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) {
+                SearchStopRow(
+                    fromStopItem = savedTripsState.fromStop,
+                    toStopItem = savedTripsState.toStop,
+                    isExpanded = effectiveIsExpanded,
+                    isFromHighlighted = isFromHighlighted,
+                    onExpandRequest = {
+                        isSearchExpanded = true
+                        isFromHighlighted = false
+                    },
+                    fromButtonClick = {
+                        isFromHighlighted = false
+                        fromButtonClick()
+                    },
+                    toButtonClick = toButtonClick,
+                    onReverseButtonClick = {
+                        onEvent(SavedTripUiEvent.ReverseStopClick)
+                    },
+                    onSearchButtonClick = { onSearchButtonClick() },
+                )
+            }
+        }
+        if (dualPane) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .widthIn(max = SAVED_TRIPS_PANE_MAX_WIDTH)
+                        .fillMaxHeight(),
+                ) {
+                    body()
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                ) {
+                    SavedTripsHeroPane(
+                        hasSavedTrips = savedTripsCount > 0,
+                        isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
+                        onDiscoverClick = onDiscoverButtonClick,
+                    )
+                }
+            }
+        } else {
+            body()
         }
     }
 }
@@ -619,6 +662,67 @@ private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
 private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70
 private const val WIGGLE_OFFSET_MULTIPLIER = 47
 private const val WIGGLE_OFFSET_MAX_MS = 200
+
+// Left-pane width cap when SavedTrips is rendered in dual-pane (≥ 600 dp width).
+// Keeps the saved-trips list at phone-width proportions; hero pane fills the rest.
+// See docs/TABLET_FOLDABLE_UX.md §4.
+private val SAVED_TRIPS_PANE_MAX_WIDTH = 480.dp
+
+/**
+ * Right-pane content rendered alongside the saved-trips list on tablets,
+ * foldable-unfolded and phone landscape. Switches between an empty-state hero
+ * (no saved trips yet) and a populated-state prompt. See docs/TABLET_FOLDABLE_UX.md §4.
+ */
+@Composable
+private fun SavedTripsHeroPane(
+    hasSavedTrips: Boolean,
+    isDiscoverAvailable: Boolean,
+    onDiscoverClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(color = KrailTheme.colors.surface)
+            .padding(dim.spacingXXXL),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = if (hasSavedTrips) "🚂" else "🌟",
+            style = KrailTheme.typography.displayLarge,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(dim.spacingXL))
+        Text(
+            text = if (hasSavedTrips) "On the move" else "Let's Go! Sydney",
+            style = KrailTheme.typography.titleLarge,
+            color = KrailTheme.colors.onSurface,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(dim.spacingM))
+        Text(
+            text = if (hasSavedTrips) {
+                "Tap a saved trip on the left to see live departures."
+            } else {
+                "Tap From or To below to plan your first trip."
+            },
+            style = KrailTheme.typography.bodyLarge,
+            color = KrailTheme.colors.softLabel,
+            textAlign = TextAlign.Center,
+        )
+        if (isDiscoverAvailable) {
+            Spacer(modifier = Modifier.height(dim.spacingXXL))
+            Button(
+                onClick = onDiscoverClick,
+                dimensions = ButtonDefaults.largeButtonSize(),
+            ) {
+                Text(text = "Discover Sydney")
+            }
+        }
+    }
+}
 
 // region Previews
 

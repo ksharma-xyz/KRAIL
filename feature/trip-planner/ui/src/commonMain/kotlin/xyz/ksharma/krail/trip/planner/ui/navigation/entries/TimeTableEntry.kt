@@ -117,14 +117,18 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
         val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
         val dualPane = adaptiveLayoutInfo.shouldShowDualPane
 
-        // Map state for the currently expanded journey. produceState recomputes whenever
-        // expandedJourneyId changes — the JourneyMap composable stays mounted in the right
-        // pane, only its data layer re-renders.
+        // Map state for the currently expanded journey, or the first journey in the list
+        // when none is expanded — so the right pane never starts blank on tablet/foldable
+        // entry. Recomputes when expandedJourneyId or the journey-list head changes;
+        // the JourneyMap composable stays mounted, only its data layer re-renders.
+        val firstJourneyId = timeTableState.journeyList.firstOrNull()?.journeyId
         val journeyMapState by produceState<JourneyMapUiState?>(
             initialValue = null,
             key1 = expandedJourneyId,
+            key2 = firstJourneyId,
         ) {
-            value = expandedJourneyId?.let { id ->
+            val targetJourneyId = expandedJourneyId ?: firstJourneyId
+            value = targetJourneyId?.let { id ->
                 withContext(Dispatchers.Default) {
                     viewModel.getRawJourneyById(id)?.toJourneyMapState()
                 }

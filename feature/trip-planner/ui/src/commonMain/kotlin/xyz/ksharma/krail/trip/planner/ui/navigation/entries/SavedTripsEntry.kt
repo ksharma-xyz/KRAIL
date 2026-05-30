@@ -21,7 +21,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * Saved Trips Entry - List Screen in List-Detail pattern
+ * Saved Trips Entry - List Screen in List-Detail pattern.
+ *
+ * Right-pane content on tablet / foldable / phone-landscape is supplied as a slot
+ * (`rightPane`). Pending follow-up: plug in MapStopSelectionPane backed by a shared
+ * Koin singleton ViewModel.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -92,25 +96,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 }
             },
             onSearchButtonClick = {
-                val fromStopItem = savedTripState.fromStop
-                val toStopItem = savedTripState.toStop
-
-                if (fromStopItem != null && toStopItem != null &&
-                    fromStopItem.stopId != toStopItem.stopId
-                ) {
-                    viewModel.onEvent(
-                        SavedTripUiEvent.AnalyticsLoadTimeTableClick(
-                            fromStopId = fromStopItem.stopId,
-                            toStopId = toStopItem.stopId,
-                        ),
-                    )
-                    tripPlannerNavigator.navigateToTimeTable(
-                        fromStopId = fromStopItem.stopId,
-                        fromStopName = fromStopItem.stopName,
-                        toStopId = toStopItem.stopId,
-                        toStopName = toStopItem.stopName,
-                    )
-                }
+                triggerTripSearch(
+                    fromStop = savedTripState.fromStop,
+                    toStop = savedTripState.toStop,
+                    viewModel = viewModel,
+                    tripPlannerNavigator = tripPlannerNavigator,
+                )
             },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
@@ -124,6 +115,46 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             departureBoardEntries = departureBoardEntries,
             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
             onDepartureBoardEvent = departureBoardViewModel::onEvent,
+            onCompactHeightPlanTrip = {
+                viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
+                tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
+            },
+            onCompactHeightSetDestination = {
+                viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
+                tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
+            },
+            onCompactHeightFindTrip = {
+                triggerTripSearch(
+                    fromStop = savedTripState.fromStop,
+                    toStop = savedTripState.toStop,
+                    viewModel = viewModel,
+                    tripPlannerNavigator = tripPlannerNavigator,
+                )
+            },
+            // rightPane intentionally left empty for now. The MapStopSelectionPane
+            // (shared Koin singleton VM) lands in the follow-up commit on this branch.
+        )
+    }
+}
+
+private fun triggerTripSearch(
+    fromStop: StopItem?,
+    toStop: StopItem?,
+    viewModel: SavedTripsViewModel,
+    tripPlannerNavigator: TripPlannerNavigator,
+) {
+    if (fromStop != null && toStop != null && fromStop.stopId != toStop.stopId) {
+        viewModel.onEvent(
+            SavedTripUiEvent.AnalyticsLoadTimeTableClick(
+                fromStopId = fromStop.stopId,
+                toStopId = toStop.stopId,
+            ),
+        )
+        tripPlannerNavigator.navigateToTimeTable(
+            fromStopId = fromStop.stopId,
+            fromStopName = fromStop.stopName,
+            toStopId = toStop.stopId,
+            toStopName = toStop.stopName,
         )
     }
 }

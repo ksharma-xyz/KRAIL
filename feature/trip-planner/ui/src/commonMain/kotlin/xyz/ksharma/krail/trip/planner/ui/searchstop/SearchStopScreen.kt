@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -67,6 +68,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -820,16 +822,18 @@ private fun SearchStopScreenDualPane(
                 .fillMaxSize()
                 .imePadding(),
         ) {
-            // Split view: List on left, Map on right
+            // Split view: List on left (bounded width), Map on right (fills the rest).
+            // See docs/TABLET_FOLDABLE_UX.md §2 for the ratio rationale.
             Row(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
             ) {
-                // Left pane: List with search bar
+                // Left pane: list keeps phone-width proportions so stop rows stay readable;
+                // map then takes the remainder.
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .widthIn(min = SEARCH_STOP_LIST_PANE_MIN_WIDTH, max = SEARCH_STOP_LIST_PANE_MAX_WIDTH)
                         .fillMaxHeight(),
                 ) {
                     // Search top bar only spans the list width
@@ -1640,6 +1644,12 @@ private fun MapAutoInitEffect(
         }
     }
 }
+
+// Dual-pane list-column width bounds. Keeps the stops list at ≈ phone-width so
+// StopSearchListItem rows stay readable; map fills the remainder. See
+// docs/TABLET_FOLDABLE_UX.md §2 for the ratio table.
+private val SEARCH_STOP_LIST_PANE_MIN_WIDTH = 320.dp
+private val SEARCH_STOP_LIST_PANE_MAX_WIDTH = 480.dp
 
 // Pill scale factors used by LabelShortcutsRow's graphicsLayer transform — extracted
 // here so the call site reads as intent, not magic numbers.

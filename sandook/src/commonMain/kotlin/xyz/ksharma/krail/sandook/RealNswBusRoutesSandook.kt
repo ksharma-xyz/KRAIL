@@ -6,10 +6,9 @@ package xyz.ksharma.krail.sandook
  */
 @Suppress("TooManyFunctions")
 class RealNswBusRoutesSandook(
-    private val factory: SandookDriverFactory,
+    sandook: KrailSandook,
 ) : NswBusRoutesSandook {
 
-    private val sandook = KrailSandook(factory.createDriver())
     private val nswBusRoutesQueries = sandook.nswBusRoutesQueries
 
     // region Query Operations

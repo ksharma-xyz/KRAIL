@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
@@ -52,7 +53,15 @@ class ThemeSelectionViewModel(
 
     private fun onThemeSelected(productClass: Int) {
         transportSelectionJob?.cancel()
-        transportSelectionJob = viewModelScope.launch(ioDispatcher) {
+        // launchWithExceptionHandler (not runCatching): a transient DB lock (e.g. a slow
+        // first-launch GTFS import still holding the writer) must never crash the app, but
+        // runCatching also swallows CancellationException — and this job is cancelled on rapid
+        // re-selection above, so a caught cancellation would silently break structured
+        // concurrency. The handler ignores CancellationException and routes real failures to
+        // logError (Crashlytics).
+        transportSelectionJob = viewModelScope.launchWithExceptionHandler<ThemeSelectionViewModel>(
+            dispatcher = ioDispatcher,
+        ) {
             sandook.clearTheme() // Only one entry should exist at a time
             sandook.insertOrReplaceTheme(productClass.toLong())
             updateUiState {

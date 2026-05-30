@@ -2,6 +2,8 @@ package xyz.ksharma.krail.io.gtfs.nswstops
 
 import app.krail.kgtfs.proto.NswStopList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import krail.io.gtfs.generated.resources.Res
 import xyz.ksharma.krail.core.log.log
@@ -19,16 +21,25 @@ class NswStopsManager(
     private val preferences: SandookPreferences,
 ) : StopsManager {
 
+    // insertStops() is invoked from both RealAppStart and IntroViewModel and they can run
+    // concurrently on first launch. Without this lock both pass shouldInsertNswStops() (the stored
+    // version is only written after the transaction commits) and each runs the full ~37k-row
+    // insert, doubling the work and the time the DB write lock is held. Serialising here means the
+    // second caller re-checks after the first commits and skips.
+    private val insertMutex = Mutex()
+
     init {
         log("NswStopsManager Initialized with NSW Stops version: $NSW_STOPS_VERSION: $this")
     }
 
     override suspend fun insertStops() = runCatching {
-        log("NswStopsManager Inserting NSW Stops data if not already inserted: $this")
-        if (shouldInsertNswStops()) {
-            insertNswStops()
-        } else {
-            log("NswStopsManager Stops already inserted in the database.")
+        insertMutex.withLock {
+            log("NswStopsManager Inserting NSW Stops data if not already inserted: $this")
+            if (shouldInsertNswStops()) {
+                insertNswStops()
+            } else {
+                log("NswStopsManager Stops already inserted in the database.")
+            }
         }
     }.getOrElse { error ->
         log("NswStopsManager Error inserting stops: $error")

@@ -150,17 +150,15 @@ data class AdaptiveLayoutInfo(
         get() = isTabletOrFoldable
 
     /**
-     * Phone in landscape: narrow window (compact / medium width) + tight height.
-     * Use this for compact-height adaptations that should NOT trigger on tablets in
-     * landscape (where height is MEDIUM, not COMPACT — tablets get the regular
-     * tablet-landscape treatment instead).
+     * Phone in landscape: any window with compact height (< 480 dp).
+     *
+     * Width alone can't distinguish phone-landscape from tablet — modern phones with
+     * edge-to-edge displays hit EXPANDED width (≥ 840 dp) in landscape. But no tablet
+     * has < 480 dp height in any orientation, so [isCompactHeight] is the reliable
+     * signal for "this is a phone rotated to landscape, treat vertical space as scarce".
      */
     val isPhoneLandscape: Boolean
-        get() = isCompactHeight &&
-            (
-                widthSizeClass == WindowWidthSizeClass.COMPACT ||
-                    widthSizeClass == WindowWidthSizeClass.MEDIUM
-                )
+        get() = isCompactHeight
 
     /**
      * Tablet (or unfolded foldable) — wide enough for dual-pane AND tall enough that

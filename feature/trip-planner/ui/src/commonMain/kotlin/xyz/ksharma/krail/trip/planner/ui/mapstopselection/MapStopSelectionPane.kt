@@ -11,10 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
@@ -67,10 +68,13 @@ fun MapStopSelectionPane(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(color = KrailTheme.colors.surface),
+            .background(color = Color.Red) // DEBUG — if you see RED, layout works, map lib is the issue
+            .onSizeChanged { log("[MAP_STOP_SEL] Pane onSizeChanged size=${it.width}x${it.height}") },
     ) {
         SearchStopMap(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .onSizeChanged { log("[MAP_STOP_SEL] SearchStopMap onSizeChanged size=${it.width}x${it.height}") },
             mapUiState = mapState,
             ornamentTopPadding = statusBarTopPadding,
             onEvent = { sse ->

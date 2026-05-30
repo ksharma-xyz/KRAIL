@@ -38,7 +38,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -380,9 +380,13 @@ fun SavedTripsScreen(
         )
         if (dualPane) {
             Row(modifier = Modifier.fillMaxSize()) {
+                // Hard-set width (not widthIn(max=...)) so the weighted right pane
+                // gets a deterministic remaining width. Compose Row's interaction
+                // between widthIn caps + child fillMaxWidth inside the left Box can
+                // collapse the right pane to 0 width otherwise.
                 Box(
                     modifier = Modifier
-                        .widthIn(max = SAVED_TRIPS_PANE_MAX_WIDTH)
+                        .width(SAVED_TRIPS_PANE_MAX_WIDTH)
                         .fillMaxHeight(),
                 ) {
                     body()

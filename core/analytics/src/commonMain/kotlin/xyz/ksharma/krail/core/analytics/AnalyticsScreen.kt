@@ -15,5 +15,4 @@ sealed class AnalyticsScreen(val name: String) {
     data object SearchStopMap : AnalyticsScreen(name = "SearchStopMap")
     data object JourneyMap : AnalyticsScreen(name = "JourneyMap")
 
-    data object DepartureBoard : AnalyticsScreen(name = "DepartureBoard")
 }

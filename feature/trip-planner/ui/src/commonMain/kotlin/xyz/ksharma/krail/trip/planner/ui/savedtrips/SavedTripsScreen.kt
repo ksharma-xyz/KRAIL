@@ -75,6 +75,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileData
@@ -373,6 +374,10 @@ fun SavedTripsScreen(
                 }
             }
         }
+        log(
+            "[MAP_STOP_SEL] SavedTripsScreen dualPane=$dualPane " +
+                "isTablet=$isTablet isPhoneLandscape=$isPhoneLandscape",
+        )
         if (dualPane) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Box(

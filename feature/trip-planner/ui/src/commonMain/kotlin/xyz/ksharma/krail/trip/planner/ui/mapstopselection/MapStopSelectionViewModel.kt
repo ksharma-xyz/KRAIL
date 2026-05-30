@@ -39,10 +39,14 @@ class MapStopSelectionViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
 ) {
+    init {
+        log("[MAP_STOP_SEL] VM init — seeded MapUiState.Ready")
+    }
+
     private val _mapUiState: MutableStateFlow<MapUiState> = MutableStateFlow(MapUiState.Ready())
 
     val mapUiState: StateFlow<MapUiState> = _mapUiState
-        .onStart { log("[MAP_STOP_SEL] consumer attached") }
+        .onStart { log("[MAP_STOP_SEL] consumer attached (subscriber count > 0)") }
         .onCompletion { stopActiveWork() }
         .stateIn(
             scope = scope,

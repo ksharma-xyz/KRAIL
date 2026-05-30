@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -145,6 +146,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 )
             },
             rightPane = {
+                log("[MAP_STOP_SEL] SavedTrips rightPane slot invoked")
                 MapStopSelectionPane(
                     onStopSelected = { stopItem ->
                         // Two-tap From / To flow. First unset slot wins; once both

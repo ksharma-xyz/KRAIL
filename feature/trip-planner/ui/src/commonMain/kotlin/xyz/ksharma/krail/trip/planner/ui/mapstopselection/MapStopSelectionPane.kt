@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -40,8 +43,22 @@ fun MapStopSelectionPane(
     modifier: Modifier = Modifier,
     topOverlay: @Composable BoxScope.() -> Unit = {},
 ) {
+    log("[MAP_STOP_SEL] Pane composing")
+
     val viewModel: MapStopSelectionViewModel = koinInject()
     val mapState by viewModel.mapUiState.collectAsStateWithLifecycle()
+
+    SideEffect {
+        val readyKind = when (val state = mapState) {
+            is MapUiState.Ready ->
+                "Ready(nearby=${state.mapDisplay.nearbyStops.size}, " +
+                    "userLoc=${state.mapDisplay.userLocation != null}, " +
+                    "isLoadingNearby=${state.isLoadingNearbyStops})"
+            is MapUiState.Loading -> "Loading"
+            is MapUiState.Error -> "Error(${state.message})"
+        }
+        log("[MAP_STOP_SEL] Pane mapState=$readyKind")
+    }
 
     val statusBarTopPadding = WindowInsets.statusBars
         .asPaddingValues()

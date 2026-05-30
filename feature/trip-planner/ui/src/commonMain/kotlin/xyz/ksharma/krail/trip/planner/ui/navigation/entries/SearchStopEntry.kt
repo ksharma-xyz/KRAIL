@@ -1,7 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,16 +16,18 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
 /**
- * Search Stop Entry - Detail Screen in List-Detail pattern
+ * Renders full-width on every form factor. SearchStopScreen owns its own
+ * list + map split internally via AdaptiveScreenContent, so this entry must
+ * not declare ListDetailSceneStrategy.listPane() — doing so would halve the
+ * window before the screen's own dual-pane halves it again, producing the
+ * cramped ~25 % / ~25 % layout on tablets and phone landscape.
+ * See docs/TABLET_FOLDABLE_UX.md §2.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SearchStopEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
-    entry<SearchStopRoute>(
-        metadata = ListDetailSceneStrategy.listPane(),
-    ) { key ->
+    entry<SearchStopRoute> { key ->
         // ViewModel is scoped to this NavEntry and will be recreated each time
         // This ensures recent stops are refreshed when the screen is opened
         val viewModel: SearchStopViewModel = koinViewModel()

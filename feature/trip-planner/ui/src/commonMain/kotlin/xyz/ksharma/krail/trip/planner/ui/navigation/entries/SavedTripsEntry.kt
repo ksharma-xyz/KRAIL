@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,14 +39,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * (`rightPane`). Pending follow-up: plug in MapStopSelectionPane backed by a shared
  * Koin singleton ViewModel.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
-    entry<SavedTripsRoute>(
-        metadata = ListDetailSceneStrategy.listPane(),
-    ) {
+    entry<SavedTripsRoute> {
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()

@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -196,7 +197,8 @@ fun SavedTripsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(color = KrailTheme.colors.surface),
+            .background(color = KrailTheme.colors.surface)
+            .onSizeChanged { log("[MAP_STOP_SEL] outerBox size=${it.width}x${it.height}") },
     ) {
         val body: @Composable BoxScope.() -> Unit = {
             // Push content away from a side display cutout in landscape. Horizontal-only
@@ -379,15 +381,16 @@ fun SavedTripsScreen(
                 "isTablet=$isTablet isPhoneLandscape=$isPhoneLandscape",
         )
         if (dualPane) {
-            Row(modifier = Modifier.fillMaxSize()) {
-                // Hard-set width (not widthIn(max=...)) so the weighted right pane
-                // gets a deterministic remaining width. Compose Row's interaction
-                // between widthIn caps + child fillMaxWidth inside the left Box can
-                // collapse the right pane to 0 width otherwise.
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { log("[MAP_STOP_SEL] Row size=${it.width}x${it.height}") },
+            ) {
                 Box(
                     modifier = Modifier
                         .width(SAVED_TRIPS_PANE_MAX_WIDTH)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .onSizeChanged { log("[MAP_STOP_SEL] leftPane size=${it.width}x${it.height}") },
                 ) {
                     body()
                 }

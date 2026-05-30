@@ -192,3 +192,5 @@ that contradicts the doc should also update the doc in the same change.
 
 - `feature/trip-planner/ui/SEARCH_STOP_UX.md` — SearchStopScreen (labels, save sheet,
   edit mode, conflict warnings, contextual banner, state persistence).
+- `docs/TABLET_FOLDABLE_UX.md` — adaptive layout rules for tablets, foldables, and phone
+  landscape (per-screen dual-pane behaviour, compact-height adaptations, breakpoint contract).

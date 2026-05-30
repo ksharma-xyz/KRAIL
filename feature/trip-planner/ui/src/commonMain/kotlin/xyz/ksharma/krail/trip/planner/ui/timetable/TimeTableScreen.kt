@@ -110,6 +110,9 @@ fun TimeTableScreen(
     onModeSelectionChanged: (Set<Int>) -> Unit = {},
     onModeClick: (Boolean) -> Unit = {},
     onMapClick: (String) -> Unit = {},
+    // When true, the per-card "Maps" button is suppressed because a persistent map pane
+    // is rendered alongside this screen (see docs/TABLET_FOLDABLE_UX.md §3).
+    hideMapButton: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
@@ -385,6 +388,7 @@ fun TimeTableScreen(
                         onMapClick = onMapClick,
                     ),
                     onPlanTripClick = dateTimeSelectorClicked,
+                    hideMapButton = hideMapButton,
                 )
             } else { // Journey list is empty or null
                 item(key = "no-results") {
@@ -446,6 +450,7 @@ private fun LazyListScope.journeyListContent(
     themeColor: Color,
     callbacks: JourneyCallbacks,
     onPlanTripClick: () -> Unit,
+    hideMapButton: Boolean,
 ) {
     if (state.paginationEnabled) {
         paginationHeader(
@@ -459,6 +464,7 @@ private fun LazyListScope.journeyListContent(
             expandedJourneyId = expandedJourneyId,
             state = state,
             callbacks = callbacks,
+            hideMapButton = hideMapButton,
         )
     }
     journeyCardItems(
@@ -467,6 +473,7 @@ private fun LazyListScope.journeyListContent(
         expandedJourneyId = expandedJourneyId,
         state = state,
         callbacks = callbacks,
+        hideMapButton = hideMapButton,
     )
     if (state.paginationEnabled) {
         paginationFooter(
@@ -552,6 +559,7 @@ private fun LazyListScope.journeyCardItems(
     expandedJourneyId: String?,
     state: TimeTableState,
     callbacks: JourneyCallbacks,
+    hideMapButton: Boolean,
 ) {
     items(
         items = journeys,
@@ -577,7 +585,7 @@ private fun LazyListScope.journeyCardItems(
             onAlertClick = { callbacks.onAlertClick(journey.journeyId) },
             onLegClick = callbacks.onLegClick,
             onMapClick = { callbacks.onMapClick(journey.journeyId) },
-            isMapsAvailable = state.isMapsAvailable,
+            isMapsAvailable = state.isMapsAvailable && !hideMapButton,
             onShareJourney = { bitmap, shareText, isPastDeparture ->
                 callbacks.onEvent(
                     TimeTableUiEvent.ShareJourneyClicked(

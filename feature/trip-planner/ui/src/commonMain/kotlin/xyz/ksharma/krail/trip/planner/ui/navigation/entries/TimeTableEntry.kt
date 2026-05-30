@@ -1,53 +1,66 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
+import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
+import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapMapper.toJourneyMapState
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.dateTimeSelectionSaver
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.serviceAlertSaver
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableScreen
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
 /**
- * TimeTable Entry - Detail Screen in List-Detail pattern
+ * Renders full-width on every form factor. On tablets / foldable-unfolded / phone
+ * landscape (≥ 600 dp width), the screen splits internally: journey list on the left
+ * (capped width), persistent JourneyMap on the right. The per-card "Maps" button is
+ * suppressed in dual-pane because the map is always visible.
  *
- * Handles modal state for alerts and date/time selection.
- * Uses custom savers to preserve state across configuration changes.
+ * See docs/TABLET_FOLDABLE_UX.md §3.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Suppress("UNUSED_VARIABLE")
+@Suppress("UNUSED_VARIABLE", "LongMethod")
 @Composable
 internal fun EntryProviderScope<NavKey>.TimeTableEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
-    entry<TimeTableRoute>(
-        metadata = ListDetailSceneStrategy.detailPane(),
-    ) { key ->
+    entry<TimeTableRoute> { key ->
         LaunchedEffect(key) {
             log("🗺️ TimeTableEntry - key changed: from-${key.fromStopId}, to: ${key.toStopId}")
         }
@@ -100,8 +113,25 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             )
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Main TimeTable Screen
+        // Adaptive layout — dual-pane on ≥ 600 dp width
+        val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
+        val dualPane = adaptiveLayoutInfo.shouldShowDualPane
+
+        // Map state for the currently expanded journey. produceState recomputes whenever
+        // expandedJourneyId changes — the JourneyMap composable stays mounted in the right
+        // pane, only its data layer re-renders.
+        val journeyMapState by produceState<JourneyMapUiState?>(
+            initialValue = null,
+            key1 = expandedJourneyId,
+        ) {
+            value = expandedJourneyId?.let { id ->
+                withContext(Dispatchers.Default) {
+                    viewModel.getRawJourneyById(id)?.toJourneyMapState()
+                }
+            }
+        }
+
+        val timeTableScreen: @Composable (Modifier, Boolean) -> Unit = { mod, hideMapBtn ->
             TimeTableScreen(
                 timeTableState = timeTableState,
                 expandedJourneyId = expandedJourneyId,
@@ -140,7 +170,51 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 onMapClick = { journeyId ->
                     tripPlannerNavigator.navigateToJourneyMap(journeyId)
                 },
+                hideMapButton = hideMapBtn,
+                modifier = mod,
             )
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (dualPane) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    timeTableScreen(
+                        Modifier
+                            .widthIn(max = TIMETABLE_PANE_MAX_WIDTH)
+                            .fillMaxHeight(),
+                        true,
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(color = KrailTheme.colors.surface),
+                    ) {
+                        when (val mapState = journeyMapState) {
+                            is JourneyMapUiState.Ready -> {
+                                JourneyMap(
+                                    journeyMapState = mapState,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    text = "Tap a journey to see the route",
+                                    style = KrailTheme.typography.bodyLarge,
+                                    color = KrailTheme.colors.onSurface,
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .padding(KrailTheme.dimensions.spacingXL)
+                                        .fillMaxWidth(),
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                timeTableScreen(Modifier.fillMaxSize(), false)
+            }
 
             // Service Alerts Modal
             if (showAlertsModal) {
@@ -186,3 +260,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
         }
     }
 }
+
+// Left-pane width cap in dual-pane. Keeps journey cards at phone-width proportions
+// (≈ 520 dp) so they don't stretch awkwardly on tablets; map fills the remainder.
+private val TIMETABLE_PANE_MAX_WIDTH = 520.dp

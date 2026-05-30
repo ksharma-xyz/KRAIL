@@ -14,6 +14,4 @@ sealed class AnalyticsScreen(val name: String) {
     // Map screens — used for ScreenViewEvent + BigQuery engagement_time_msec queries
     data object SearchStopMap : AnalyticsScreen(name = "SearchStopMap")
     data object JourneyMap : AnalyticsScreen(name = "JourneyMap")
-
-    data object DepartureBoard : AnalyticsScreen(name = "DepartureBoard")
 }

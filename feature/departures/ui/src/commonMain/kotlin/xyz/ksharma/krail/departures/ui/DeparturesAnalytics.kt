@@ -1,17 +1,14 @@
 package xyz.ksharma.krail.departures.ui
 
 import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
-import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 
 internal fun Analytics.trackDepartureBoardScreenView(
     stopId: String,
     stopName: String,
     source: DepartureBoardSource,
 ) {
-    trackScreenViewEvent(AnalyticsScreen.DepartureBoard)
     track(AnalyticsEvent.DepartureBoardScreenViewEvent(stopId = stopId, stopName = stopName, source = source))
 }
 

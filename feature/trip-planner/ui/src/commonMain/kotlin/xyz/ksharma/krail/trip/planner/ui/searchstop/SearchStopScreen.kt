@@ -809,10 +809,12 @@ private fun SearchStopScreenDualPane(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .imePadding(),
+                .fillMaxSize(),
         ) {
             // Split view: List on left (bounded width), Map on right (fills the rest).
+            // No imePadding here — the keyboard appears at the bottom and the search bar
+            // is at the top; they don't overlap. imePadding would eat landscape height on
+            // iOS and collapse the map pane to zero.
             // See docs/TABLET_FOLDABLE_UX.md §2 for the ratio rationale.
             Row(
                 modifier = Modifier

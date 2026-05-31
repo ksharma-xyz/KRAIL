@@ -435,7 +435,7 @@ private fun CollapseHandle(onClick: () -> Unit) {
             modifier = Modifier
                 .size(width = 36.dp, height = 4.dp)
                 .background(
-                    color = KrailTheme.colors.surface.copy(alpha = 0.5f),
+                    color = KrailTheme.colors.surface,
                     shape = RoundedCornerShape(2.dp),
                 ),
         )

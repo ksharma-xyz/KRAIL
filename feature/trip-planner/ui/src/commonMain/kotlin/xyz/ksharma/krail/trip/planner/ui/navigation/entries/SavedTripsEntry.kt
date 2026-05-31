@@ -6,9 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
@@ -33,6 +35,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
     entry<SavedTripsRoute> {
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
+        val mapStopSelectionViewModel: MapStopSelectionViewModel = koinInject()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val departureBoardViewModel: DepartureBoardViewModel = koinViewModel()
@@ -112,7 +115,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
             onDepartureBoardEvent = departureBoardViewModel::onEvent,
             rightPane = {
-                MapStopSelectionPane()
+                MapStopSelectionPane(viewModel = mapStopSelectionViewModel)
             },
         )
     }

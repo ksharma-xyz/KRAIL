@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.compose.koinInject
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -35,11 +34,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  */
 @Composable
 fun MapStopSelectionPane(
+    viewModel: MapStopSelectionViewModel,
     modifier: Modifier = Modifier,
     onStopSelected: (StopItem) -> Unit = {},
     topOverlay: @Composable BoxScope.() -> Unit = {},
 ) {
-    val viewModel: MapStopSelectionViewModel = koinInject()
     val mapState by viewModel.mapUiState.collectAsStateWithLifecycle()
 
     val statusBarTopPadding = WindowInsets.statusBars

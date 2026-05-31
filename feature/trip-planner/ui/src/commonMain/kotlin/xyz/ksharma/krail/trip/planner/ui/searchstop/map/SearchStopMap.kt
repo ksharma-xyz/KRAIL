@@ -212,9 +212,12 @@ private fun MapContent(
 
         // Auto-center camera on the first non-null user location.
         // State-driven (recomposition-aware) so it survives the iOS permission dialog
-        // bouncing the activity through ON_STOP/ON_START, which used to cancel the
-        // animateTo before it could fire on the first grant.
-        var hasAutoCentered by rememberSaveable { mutableStateOf(false) }
+        // bouncing ON_STOP/ON_START without re-composing MapContent.
+        // remember (not rememberSaveable) — resets when the map is re-entered after
+        // navigation so the camera re-centers on each fresh open. rememberSaveable was
+        // persisting hasAutoCentered=true across back-nav returns, preventing centering
+        // even though location updates were arriving.
+        var hasAutoCentered by remember { mutableStateOf(false) }
         val firstUserLocation = mapState.mapDisplay.userLocation
         LaunchedEffect(firstUserLocation, hasAutoCentered) {
             if (firstUserLocation != null && !hasAutoCentered) {

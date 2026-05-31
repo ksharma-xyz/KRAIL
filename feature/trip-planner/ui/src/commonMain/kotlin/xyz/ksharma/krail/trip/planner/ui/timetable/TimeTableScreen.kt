@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -110,6 +115,9 @@ fun TimeTableScreen(
     onModeSelectionChanged: (Set<Int>) -> Unit = {},
     onModeClick: (Boolean) -> Unit = {},
     onMapClick: (String) -> Unit = {},
+    // When true, the per-card "Maps" button is suppressed because a persistent map pane
+    // is rendered alongside this screen (see docs/TABLET_FOLDABLE_UX.md §3).
+    hideMapButton: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
@@ -128,7 +136,10 @@ fun TimeTableScreen(
         modifier = modifier.fillMaxSize().background(color = KrailTheme.colors.surface),
     ) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().statusBarsPadding(),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
             contentPadding = PaddingValues(bottom = dim.spacingXL),
         ) {
             stickyHeader(key = "title-bar") {
@@ -383,6 +394,7 @@ fun TimeTableScreen(
                         onAlertClick = onAlertClick,
                         onLegClick = onJourneyLegClick,
                         onMapClick = onMapClick,
+                        hideMapButton = hideMapButton,
                     ),
                     onPlanTripClick = dateTimeSelectorClicked,
                 )
@@ -438,6 +450,7 @@ private data class JourneyCallbacks(
     val onAlertClick: (String) -> Unit,
     val onLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit,
     val onMapClick: (String) -> Unit,
+    val hideMapButton: Boolean = false,
 )
 
 private fun LazyListScope.journeyListContent(
@@ -577,7 +590,7 @@ private fun LazyListScope.journeyCardItems(
             onAlertClick = { callbacks.onAlertClick(journey.journeyId) },
             onLegClick = callbacks.onLegClick,
             onMapClick = { callbacks.onMapClick(journey.journeyId) },
-            isMapsAvailable = state.isMapsAvailable,
+            isMapsAvailable = state.isMapsAvailable && !callbacks.hideMapButton,
             onShareJourney = { bitmap, shareText, isPastDeparture ->
                 callbacks.onEvent(
                     TimeTableUiEvent.ShareJourneyClicked(

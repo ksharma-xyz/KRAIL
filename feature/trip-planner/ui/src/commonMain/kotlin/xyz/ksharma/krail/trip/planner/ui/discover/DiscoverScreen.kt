@@ -8,10 +8,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -110,8 +115,10 @@ fun DiscoverScreenCompact(
 
     val dim = KrailTheme.dimensions
     Box(
-        modifier = Modifier.fillMaxSize()
-            .background(color = KrailTheme.colors.surface),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = KrailTheme.colors.surface)
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
     ) {
         if (isLargeFontScale()) {
             LazyColumn(
@@ -203,7 +210,8 @@ fun DiscoverScreenTablet(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(KrailTheme.colors.surface),
+            .background(KrailTheme.colors.surface)
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
     ) {
         Column {
             val dim = KrailTheme.dimensions

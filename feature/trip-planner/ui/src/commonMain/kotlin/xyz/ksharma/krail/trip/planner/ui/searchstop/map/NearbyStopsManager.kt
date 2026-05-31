@@ -77,7 +77,11 @@ internal class RealNearbyStopsManager(
     ) {
         log("[NEARBY_STOPS] loadNearbyStops() called")
 
-        if (shouldUseCachedResults(center)) {
+        // Always fetch when the caller has no stops yet — a prior consumer may have
+        // populated the cache at this center, but this consumer's own state is empty
+        // and needs its own data (each consumer owns its own MapUiState store).
+        val callerHasStops = mapState.mapDisplay.nearbyStops.isNotEmpty()
+        if (callerHasStops && shouldUseCachedResults(center)) {
             log("[NEARBY_STOPS] Using cached nearby stops")
             return
         }

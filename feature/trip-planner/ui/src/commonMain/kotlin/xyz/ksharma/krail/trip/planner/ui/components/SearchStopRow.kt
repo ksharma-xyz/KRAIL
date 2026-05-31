@@ -19,6 +19,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,6 +81,7 @@ fun SearchStopRow(
     isExpanded: Boolean = false,
     isFromHighlighted: Boolean = false,
     onExpandRequest: () -> Unit = {},
+    onCollapseRequest: (() -> Unit)? = null,
     onReverseButtonClick: () -> Unit = {},
     onSearchButtonClick: () -> Unit = {},
 ) {
@@ -135,6 +138,7 @@ fun SearchStopRow(
                 isFromHighlighted = isFromHighlighted,
                 fromButtonClick = fromButtonClick,
                 toButtonClick = toButtonClick,
+                onCollapseRequest = onCollapseRequest,
                 onReverseButtonClick = onReverseButtonClick,
                 onSearchButtonClick = onSearchButtonClick,
             )
@@ -233,6 +237,7 @@ private fun ExpandedSearchRow(
     onReverseButtonClick: () -> Unit,
     onSearchButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onCollapseRequest: (() -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
@@ -249,7 +254,7 @@ private fun ExpandedSearchRow(
         label = "fromBorderAlpha",
     )
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(
@@ -258,134 +263,167 @@ private fun ExpandedSearchRow(
                     topStart = SearchRowTopRadius,
                     topEnd = SearchRowTopRadius,
                 ),
-            )
-            .padding(vertical = SearchRowVerticalPadding, horizontal = dim.pageHorizontalPadding)
-            .padding(
-                bottom = with(LocalDensity.current) { navBarPadding.dp },
-                top = dim.spacingM,
             ),
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
+        if (onCollapseRequest != null) {
+            CollapseHandle(onClick = onCollapseRequest)
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = SearchRowVerticalPadding, horizontal = dim.pageHorizontalPadding)
+                .padding(
+                    bottom = with(LocalDensity.current) { navBarPadding.dp },
+                    top = if (onCollapseRequest != null) 0.dp else dim.spacingM,
+                ),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // From field — animates in when opened via a label pill tap
-            AnimatedVisibility(
-                visible = showFromField,
-                enter = expandVertically(
-                    expandFrom = Alignment.Top,
-                    animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
-                ) + fadeIn(animationSpec = tween(350)),
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
             ) {
-                val fromFieldShape = RoundedCornerShape(50)
-                TextFieldButton(
-                    onClick = fromButtonClick,
-                    modifier = if (isFromHighlighted) {
-                        Modifier.border(
-                            width = dim.strokeRegular,
-                            color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
-                            shape = fromFieldShape,
-                        )
-                    } else {
-                        Modifier
-                    },
+                // From field — animates in when opened via a label pill tap
+                AnimatedVisibility(
+                    visible = showFromField,
+                    enter = expandVertically(
+                        expandFrom = Alignment.Top,
+                        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+                    ) + fadeIn(animationSpec = tween(350)),
                 ) {
+                    val fromFieldShape = RoundedCornerShape(50)
+                    TextFieldButton(
+                        onClick = fromButtonClick,
+                        modifier = if (isFromHighlighted) {
+                            Modifier.border(
+                                width = dim.strokeRegular,
+                                color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
+                                shape = fromFieldShape,
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ) {
+                        AnimatedContent(
+                            targetState = fromStopItem?.stopName ?: "Starting from",
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(200)) +
+                                    slideInVertically(
+                                        initialOffsetY = { it / 2 },
+                                        animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                    ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                    slideOutVertically(
+                                        targetOffsetY = { -it / 2 },
+                                        animationSpec = tween(500),
+                                    )
+                            },
+                            contentAlignment = Alignment.CenterStart,
+                            label = "startingFromText",
+                        ) { targetText ->
+                            ThemeTextFieldPlaceholderText(
+                                text = targetText,
+                                isActive = fromStopItem != null,
+                            )
+                        }
+                    }
+                }
+
+                // A small spacer replaces the From field gap when From is hidden,
+                // so the To field doesn't jump when From animates in.
+                if (!showFromField) {
+                    Spacer(modifier = Modifier.height(0.dp))
+                }
+
+                // To field — always visible when expanded
+                TextFieldButton(onClick = toButtonClick) {
                     AnimatedContent(
-                        targetState = fromStopItem?.stopName ?: "Starting from",
+                        targetState = toStopItem?.stopName ?: "Destination",
                         transitionSpec = {
                             fadeIn(animationSpec = tween(200)) +
                                 slideInVertically(
-                                    initialOffsetY = { it / 2 },
+                                    initialOffsetY = { -it / 2 },
                                     animationSpec = tween(500, easing = FastOutSlowInEasing),
                                 ) togetherWith fadeOut(animationSpec = tween(200)) +
                                 slideOutVertically(
-                                    targetOffsetY = { -it / 2 },
+                                    targetOffsetY = { it / 2 },
                                     animationSpec = tween(500),
                                 )
                         },
                         contentAlignment = Alignment.CenterStart,
-                        label = "startingFromText",
+                        label = "destinationText",
                     ) { targetText ->
                         ThemeTextFieldPlaceholderText(
                             text = targetText,
-                            isActive = fromStopItem != null,
+                            isActive = toStopItem != null,
                         )
                     }
                 }
             }
 
-            // A small spacer replaces the From field gap when From is hidden,
-            // so the To field doesn't jump when From animates in.
-            if (!showFromField) {
-                Spacer(modifier = Modifier.height(0.dp))
-            }
+            // Action buttons (reverse + search)
+            Column(
+                modifier = Modifier.padding(start = dim.spacingXL),
+                verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
+            ) {
+                val rotation by animateFloatAsState(
+                    targetValue = if (isReverseButtonRotated) 180f else 0f,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "reverseRotation",
+                )
 
-            // To field — always visible when expanded
-            TextFieldButton(onClick = toButtonClick) {
-                AnimatedContent(
-                    targetState = toStopItem?.stopName ?: "Destination",
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(200)) +
-                            slideInVertically(
-                                initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = FastOutSlowInEasing),
-                            ) togetherWith fadeOut(animationSpec = tween(200)) +
-                            slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(500),
-                            )
+                RoundIconButton(
+                    content = {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_reverse),
+                            contentDescription = "Reverse",
+                            colorFilter = ColorFilter.tint(LocalContentColor.current),
+                            modifier = Modifier.size(dim.iconDefault),
+                        )
                     },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "destinationText",
-                ) { targetText ->
-                    ThemeTextFieldPlaceholderText(
-                        text = targetText,
-                        isActive = toStopItem != null,
-                    )
-                }
+                    onClick = {
+                        isReverseButtonRotated = !isReverseButtonRotated
+                        onReverseButtonClick()
+                    },
+                    modifier = Modifier.graphicsLayer { rotationZ = rotation },
+                )
+
+                RoundIconButton(
+                    content = {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_search),
+                            contentDescription = "Search",
+                            colorFilter = ColorFilter.tint(LocalContentColor.current),
+                            modifier = Modifier.size(dim.iconDefault),
+                        )
+                    },
+                    onClick = onSearchButtonClick,
+                )
             }
         }
+    }
+}
 
-        // Action buttons (reverse + search)
-        Column(
-            modifier = Modifier.padding(start = dim.spacingXL),
-            verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
-        ) {
-            val rotation by animateFloatAsState(
-                targetValue = if (isReverseButtonRotated) 180f else 0f,
-                animationSpec = tween(durationMillis = 300),
-                label = "reverseRotation",
-            )
-
-            RoundIconButton(
-                content = {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_reverse),
-                        contentDescription = "Reverse",
-                        colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(dim.iconDefault),
-                    )
-                },
-                onClick = {
-                    isReverseButtonRotated = !isReverseButtonRotated
-                    onReverseButtonClick()
-                },
-                modifier = Modifier.graphicsLayer { rotationZ = rotation },
-            )
-
-            RoundIconButton(
-                content = {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_search),
-                        contentDescription = "Search",
-                        colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(dim.iconDefault),
-                    )
-                },
-                onClick = onSearchButtonClick,
-            )
-        }
+@Composable
+private fun CollapseHandle(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = 36.dp, height = 4.dp)
+                .background(
+                    color = LocalContentColor.current.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(2.dp),
+                ),
+        )
     }
 }
 

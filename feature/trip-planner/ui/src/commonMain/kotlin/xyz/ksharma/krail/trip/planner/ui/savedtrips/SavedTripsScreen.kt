@@ -339,6 +339,14 @@ fun SavedTripsScreen(
                         isSearchExpanded = true
                         isFromHighlighted = false
                     },
+                    onCollapseRequest = if (showPill) {
+                        {
+                            isSearchExpanded = false
+                            isFromHighlighted = false
+                        }
+                    } else {
+                        null
+                    },
                     fromButtonClick = {
                         isFromHighlighted = false
                         fromButtonClick()

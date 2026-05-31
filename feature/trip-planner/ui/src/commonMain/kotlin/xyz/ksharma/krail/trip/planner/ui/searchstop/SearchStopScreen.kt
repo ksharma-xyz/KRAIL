@@ -836,11 +836,20 @@ private fun SearchStopScreenDualPane(
                     .weight(1f)
                     .fillMaxWidth(),
             ) {
-                // Left pane: list keeps phone-width proportions so stop rows stay readable;
-                // map then takes the remainder.
+                // Left pane: bounded width when map is present so stop rows stay readable;
+                // fills full width when maps are disabled (no blank space on the right).
                 Column(
                     modifier = Modifier
-                        .widthIn(min = SEARCH_STOP_LIST_PANE_MIN_WIDTH, max = SEARCH_STOP_LIST_PANE_MAX_WIDTH)
+                        .then(
+                            if (searchStopState.isMapsAvailable) {
+                                Modifier.widthIn(
+                                    min = SEARCH_STOP_LIST_PANE_MIN_WIDTH,
+                                    max = SEARCH_STOP_LIST_PANE_MAX_WIDTH,
+                                )
+                            } else {
+                                Modifier.fillMaxWidth()
+                            },
+                        )
                         .fillMaxHeight()
                         .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
                 ) {
@@ -880,8 +889,8 @@ private fun SearchStopScreenDualPane(
                 }
 
                 // Right pane: Map (edge-to-edge)
-                // Show map if available and initialized
-                searchStopState.mapUiState?.let { mapState ->
+                val mapState = searchStopState.mapUiState
+                if (mapState != null) {
                     // Push compass/scale bar below the status bar so they don't sit behind it.
                     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                     SearchStopMap(
@@ -895,6 +904,10 @@ private fun SearchStopScreenDualPane(
                         onEvent = onEvent,
                         onStopSelect = onStopSelect,
                     )
+                } else if (searchStopState.isMapsAvailable) {
+                    // Map requested but not yet initialised (async init window). Hold the space
+                    // so the list stays left-aligned and there is no layout jump when the map appears.
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight())
                 }
             }
         }

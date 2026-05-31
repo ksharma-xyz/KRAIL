@@ -74,7 +74,7 @@ the remainder eaten by surrounding scaffold. This is the bug to fix first.
 - "Select on map" CTA stays hidden in dual-pane (map is always visible).
   Already enforced via `isMapsAvailable = false` passed to
   `SearchStopListContent`.
-- Map ↔ list selection stays synchronous (existing `onStopSelect`
+- Map and list selection stay synchronous (existing `onStopSelect`
   callback wired through `MapDisplay.selectedStop`).
 - Label / save-sheet / edit-mode / conflict behaviour is unchanged —
   see [`SEARCH_STOP_UX.md`](../feature/trip-planner/ui/SEARCH_STOP_UX.md).
@@ -198,13 +198,13 @@ File: [`IntroScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ks
 
 File: [`PreviewAnnotations.kt`](../taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/preview/PreviewAnnotations.kt)
 
-Today's `@ScreenPreview` covers phones in light/dark + 2× font scale
+Today's `@PreviewScreen` covers phones in light/dark + 2× font scale
 plus one tablet portrait config. It does **not** cover:
 
 - Tablet landscape (e.g. `spec:width=1280dp,height=800dp`).
 - Phone landscape / compact-height.
 
-When implementing the rules above, extend `@ScreenPreview` (or add
+When implementing the rules above, extend `@PreviewScreen` (or add
 `@TabletScreenPreview` / `@CompactHeightPreview`) so every dual-pane and
 compact-height variant is exercised in the IDE without each call-site
 adding a custom `@Preview`.

@@ -31,7 +31,6 @@ class MapStopSelectionViewModelTest {
         fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
         viewModel = MapStopSelectionViewModel(
             nearbyStopsManager = fakeNearbyStopsManager,
-            ioDispatcher = testDispatcher,
         )
     }
 

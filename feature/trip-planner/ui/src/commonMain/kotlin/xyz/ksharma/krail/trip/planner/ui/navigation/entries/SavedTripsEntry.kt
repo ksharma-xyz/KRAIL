@@ -36,6 +36,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
         val mapStopSelectionViewModel: MapStopSelectionViewModel = koinInject()
+        val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val departureBoardViewModel: DepartureBoardViewModel = koinViewModel()
@@ -115,7 +116,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
             onDepartureBoardEvent = departureBoardViewModel::onEvent,
             rightPane = {
-                MapStopSelectionPane(viewModel = mapStopSelectionViewModel)
+                MapStopSelectionPane(
+                    mapUiState = mapUiState,
+                    onEvent = mapStopSelectionViewModel::onEvent,
+                )
             },
         )
     }

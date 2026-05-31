@@ -12,21 +12,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * Edge-to-edge map pane showing nearby stops. Reusable by any screen.
  *
- * - Map data lives in a shared [MapStopSelectionViewModel] (Koin singleton). The
- *   pane subscribes to its state and forwards [SearchStopUiEvent.MapCenterChanged]
- *   and [SearchStopUiEvent.UserLocationUpdated] back to the VM so nearby stops load.
- * - [onStopSelected] fires when the user confirms a stop pick from the map's
- *   bottom sheet. Defaults to a no-op — callers that don't need stop-picking can
- *   omit it to make the map read-only (explore nearby stops, no side effects).
+ * - [mapUiState] is collected by the entry and passed in — the pane holds no VM reference.
+ * - [onEvent] forwards map interactions (center change, user location) back to the caller.
+ * - [onStopSelected] fires when the user confirms a stop pick from the map's bottom sheet.
+ *   Defaults to a no-op — callers that don't need stop-picking can omit it (read-only map).
  * - [topOverlay] is a `BoxScope` slot for an optional contextual banner. Suppressed
  *   automatically while the location-permission banner is visible.
  *
@@ -34,13 +32,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  */
 @Composable
 fun MapStopSelectionPane(
-    viewModel: MapStopSelectionViewModel,
+    mapUiState: MapUiState,
+    onEvent: (MapStopSelectionEvent) -> Unit,
     modifier: Modifier = Modifier,
     onStopSelected: (StopItem) -> Unit = {},
     topOverlay: @Composable BoxScope.() -> Unit = {},
 ) {
-    val mapState by viewModel.mapUiState.collectAsStateWithLifecycle()
-
     val statusBarTopPadding = WindowInsets.statusBars
         .asPaddingValues()
         .calculateTopPadding()
@@ -52,7 +49,7 @@ fun MapStopSelectionPane(
     Box(modifier = modifier.fillMaxSize()) {
         SearchStopMap(
             modifier = Modifier.fillMaxSize(),
-            mapUiState = mapState,
+            mapUiState = mapUiState,
             ornamentTopPadding = statusBarTopPadding,
             onPermissionBannerVisibilityChanged = { visible ->
                 isPermissionBannerShowing = visible
@@ -60,9 +57,9 @@ fun MapStopSelectionPane(
             onEvent = { sse ->
                 when (sse) {
                     is SearchStopUiEvent.MapCenterChanged ->
-                        viewModel.onEvent(MapStopSelectionEvent.MapCenterChanged(sse.center))
+                        onEvent(MapStopSelectionEvent.MapCenterChanged(sse.center))
                     is SearchStopUiEvent.UserLocationUpdated ->
-                        viewModel.onEvent(MapStopSelectionEvent.UserLocationUpdated(sse.location))
+                        onEvent(MapStopSelectionEvent.UserLocationUpdated(sse.location))
                     else -> Unit
                 }
             },

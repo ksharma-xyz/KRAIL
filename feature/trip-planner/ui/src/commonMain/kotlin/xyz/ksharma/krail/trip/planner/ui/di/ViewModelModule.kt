@@ -130,6 +130,7 @@ val viewModelsModule = module {
     single {
         MapStopSelectionViewModel(
             nearbyStopsManager = get(),
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
         )
     }
 

@@ -1,8 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.di
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
@@ -124,14 +121,11 @@ val viewModelsModule = module {
         )
     }
 
-    // Shared right-pane map state — one Koin singleton reused by SavedTrips dual-pane
-    // (and SearchStop dual-pane in a follow-up PR). WhileSubscribed pattern inside the
-    // VM auto-cancels active queries when no consumer is collecting mapUiState.
-    single {
-        MapStopSelectionViewModel(
-            nearbyStopsManager = get(),
-            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-        )
+    // Per-entry map ViewModel — each nav entry (SavedTrips, SearchStop) gets its own
+    // instance so screens never share state or compete for NearbyStopsManager queries.
+    // NearbyStopsManager itself is a single so network/cache work is still deduplicated.
+    viewModel {
+        MapStopSelectionViewModel(nearbyStopsManager = get())
     }
 
     viewModelOf(::DepartureBoardViewModel)

@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
@@ -35,7 +34,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
     entry<SavedTripsRoute> {
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
-        val mapStopSelectionViewModel: MapStopSelectionViewModel = koinInject()
+        val mapStopSelectionViewModel: MapStopSelectionViewModel = koinViewModel()
         val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 

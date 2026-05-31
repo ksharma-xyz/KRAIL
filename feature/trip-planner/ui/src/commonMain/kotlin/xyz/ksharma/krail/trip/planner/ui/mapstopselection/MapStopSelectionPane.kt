@@ -6,8 +6,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
+import xyz.ksharma.krail.taj.preview.PreviewComponent
+import xyz.ksharma.krail.taj.preview.PreviewScreen
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -49,3 +54,31 @@ fun MapStopSelectionPane(
         onStopSelect = onStopSelected,
     )
 }
+
+// region Previews
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewMapStopSelectionPane_Loading() {
+    PreviewTheme {
+        MapStopSelectionPane(
+            mapUiState = MapUiState.Loading,
+            onEvent = {},
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewScreen
+@Composable
+private fun PreviewMapStopSelectionPane_Ready() {
+    PreviewTheme {
+        MapStopSelectionPane(
+            mapUiState = MapUiState.Ready(mapDisplay = MapDisplay()),
+            onEvent = {},
+        )
+    }
+}
+
+// endregion

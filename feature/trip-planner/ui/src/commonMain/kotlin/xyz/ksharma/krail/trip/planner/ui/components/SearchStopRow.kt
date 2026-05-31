@@ -49,14 +49,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
@@ -67,8 +65,6 @@ import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private val SearchRowTopRadius = 36.dp
@@ -442,76 +438,4 @@ private fun CollapseHandle(onClick: () -> Unit) {
     }
 }
 
-// region Previews
-
-@ScreenshotTest
-@Preview(name = "1. Collapsed pill - Train theme")
-@Composable
-private fun PreviewSearchStopRow_Collapsed_Train() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = false,
-        )
-    }
-}
-
-@ScreenshotTest
-@Preview(name = "2. Expanded - both fields empty")
-@Composable
-private fun PreviewSearchStopRow_Expanded_Empty() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = true,
-            isFromHighlighted = false,
-        )
-    }
-}
-
-@ScreenshotTest
-@Preview(name = "3. Expanded - To pre-filled, From highlighted (label pill flow)")
-@Composable
-private fun PreviewSearchStopRow_Expanded_LabelPill() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = true,
-            isFromHighlighted = true,
-            toStopItem = StopItem(stopId = "2000001", stopName = "Central Station"),
-        )
-    }
-}
-
-@ScreenshotTest
-@Preview(name = "4. Expanded - both stops set")
-@Composable
-private fun PreviewSearchStopRow_Expanded_BothSet() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = true,
-            fromStopItem = StopItem(stopId = "2000002", stopName = "Town Hall Station"),
-            toStopItem = StopItem(stopId = "2000001", stopName = "Central Station"),
-        )
-    }
-}
-
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
-@Preview(name = "5. Collapsed pill - Ferry theme")
-@Composable
-private fun PreviewSearchStopRow_Collapsed_Ferry() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = false,
-        )
-    }
-}
-
-// endregion
+// Previews live in SearchStopRowPreviews.kt (kept separate to stay under TooManyFunctions limit)

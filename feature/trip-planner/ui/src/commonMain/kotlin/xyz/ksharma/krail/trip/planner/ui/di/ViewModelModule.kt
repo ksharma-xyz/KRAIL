@@ -130,7 +130,6 @@ val viewModelsModule = module {
     single {
         MapStopSelectionViewModel(
             nearbyStopsManager = get(),
-            ioDispatcher = get(named(IODispatcher)),
         )
     }
 

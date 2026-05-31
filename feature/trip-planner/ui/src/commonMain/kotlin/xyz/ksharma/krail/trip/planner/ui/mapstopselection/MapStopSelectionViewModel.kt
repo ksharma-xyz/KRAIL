@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.mapstopselection
 
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,8 +34,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
  */
 class MapStopSelectionViewModel(
     private val nearbyStopsManager: NearbyStopsManager,
-    @Suppress("UnusedPrivateProperty")
-    private val ioDispatcher: CoroutineDispatcher,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
 ) {
     init {

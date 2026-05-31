@@ -119,6 +119,9 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 MapStopSelectionPane(
                     mapUiState = mapUiState,
                     onEvent = mapStopSelectionViewModel::onEvent,
+                    onStopSelected = { stop ->
+                        viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                    },
                 )
             },
         )

@@ -13,6 +13,6 @@ enum class SearchRadius(val km: Double) {
     val label: String get() = "${km.toInt()}km"
 
     companion object {
-        val DEFAULT: SearchRadius = THREE
+        val DEFAULT: SearchRadius = ONE
     }
 }

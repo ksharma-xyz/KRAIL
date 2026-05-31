@@ -6,8 +6,10 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
@@ -32,6 +34,11 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
         // This ensures recent stops are refreshed when the screen is opened
         val viewModel: SearchStopViewModel = koinViewModel()
         val searchStopState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        // Shared singleton ViewModel for the dual-pane right-pane map. Injected here
+        // (entry level) so the composable tree never touches Koin directly.
+        val mapStopSelectionViewModel: MapStopSelectionViewModel = koinInject()
+        val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
 
         // Refresh recent stops every time screen opens.
         // Note: Cannot rely on StateFlow's onStart because WhileSubscribed(5000) keeps the
@@ -67,6 +74,8 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                 tripPlannerNavigator.goBack()
             },
             onEvent = { event -> viewModel.onEvent(event) },
+            dualPaneMapUiState = mapUiState,
+            onDualPaneMapEvent = mapStopSelectionViewModel::onEvent,
         )
     }
 }

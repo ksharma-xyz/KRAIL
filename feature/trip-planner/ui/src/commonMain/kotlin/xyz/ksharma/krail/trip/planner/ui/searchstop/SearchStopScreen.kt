@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,7 +37,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -117,8 +115,10 @@ import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.components.UnsetLabelPill
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
+import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
@@ -143,6 +143,8 @@ fun SearchStopScreen(
     goBack: () -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
+    dualPaneMapUiState: MapUiState? = null,
+    onDualPaneMapEvent: (MapStopSelectionEvent) -> Unit = {},
 ) {
     SideEffect { log("[SEARCH_STOP_SCREEN] recomposed") }
 
@@ -308,6 +310,8 @@ fun SearchStopScreen(
                 onAddLabelClick = { showAddLabelSheet = true },
                 onDoneEditing = { editingLabels = false },
                 onEvent = onEvent,
+                dualPaneMapUiState = dualPaneMapUiState,
+                onDualPaneMapEvent = onDualPaneMapEvent,
             )
         },
     )
@@ -790,34 +794,13 @@ private fun SearchStopScreenDualPane(
     onDoneEditing: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
+    dualPaneMapUiState: MapUiState? = null,
+    onDualPaneMapEvent: (MapStopSelectionEvent) -> Unit = {},
 ) {
-    // Dual-pane always shows the list — request focus on every fresh composition
-    // (including after rotation). Single-pane handles its own focus via LaunchedEffect(showMap).
-    SideEffect {
-        log(
-            "[SEARCH_STOP_DUAL_PANE] isMapsAvailable=${searchStopState.isMapsAvailable} " +
-                "| mapUiState=${searchStopState.mapUiState?.let { it::class.simpleName } ?: "null"}",
-        )
-    }
-
     // Focus and keyboard are one-shot — only needed on first entry.
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         keyboard?.show()
-    }
-
-    // Map init is keyed on isMapsAvailable so it re-runs if the remote config flag arrives
-    // after the first composition (the flag defaults to false in the initial state).
-    LaunchedEffect(searchStopState.isMapsAvailable) {
-        log(
-            "[SEARCH_STOP_DUAL_PANE] LaunchedEffect(isMapsAvailable): " +
-                "isMapsAvailable=${searchStopState.isMapsAvailable} " +
-                "mapUiState=${searchStopState.mapUiState?.let { it::class.simpleName } ?: "null"} " +
-                "→ willInitMap=${searchStopState.mapUiState == null && searchStopState.isMapsAvailable}",
-        )
-        if (searchStopState.mapUiState == null && searchStopState.isMapsAvailable) {
-            onEvent(SearchStopUiEvent.InitializeMap)
-        }
     }
 
     CloudGradientBackground(
@@ -836,12 +819,12 @@ private fun SearchStopScreenDualPane(
                     .weight(1f)
                     .fillMaxWidth(),
             ) {
-                // Left pane: bounded width when map is present so stop rows stay readable;
-                // fills full width when maps are disabled (no blank space on the right).
+                // Left pane: bounded width when right pane is present so stop rows stay readable;
+                // fills full width when the shared map VM has no state yet (no blank space on right).
                 Column(
                     modifier = Modifier
                         .then(
-                            if (searchStopState.isMapsAvailable) {
+                            if (dualPaneMapUiState != null) {
                                 Modifier.widthIn(
                                     min = SEARCH_STOP_LIST_PANE_MIN_WIDTH,
                                     max = SEARCH_STOP_LIST_PANE_MAX_WIDTH,
@@ -888,26 +871,16 @@ private fun SearchStopScreenDualPane(
                     )
                 }
 
-                // Right pane: Map (edge-to-edge)
-                val mapState = searchStopState.mapUiState
-                if (mapState != null) {
-                    // Push compass/scale bar below the status bar so they don't sit behind it.
-                    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                    SearchStopMap(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        mapUiState = mapState,
-                        keyboard = keyboard,
-                        focusRequester = focusRequester,
-                        ornamentTopPadding = statusBarTopPadding,
-                        onEvent = onEvent,
-                        onStopSelect = onStopSelect,
+                // Right pane: shared MapStopSelectionPane (same VM as SavedTrips dual-pane).
+                // The shared singleton ViewModel owns location tracking and nearby-stops state —
+                // no init event or isMapsAvailable check needed here.
+                if (dualPaneMapUiState != null) {
+                    MapStopSelectionPane(
+                        mapUiState = dualPaneMapUiState,
+                        onEvent = onDualPaneMapEvent,
+                        onStopSelected = onStopSelect,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                     )
-                } else if (searchStopState.isMapsAvailable) {
-                    // Map requested but not yet initialised (async init window). Hold the space
-                    // so the list stays left-aligned and there is no layout jump when the map appears.
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight())
                 }
             }
         }

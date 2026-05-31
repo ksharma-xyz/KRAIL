@@ -1,8 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.mapstopselection
 
 import app.cash.turbine.test
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -31,7 +33,7 @@ class MapStopSelectionViewModelTest {
         fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
         viewModel = MapStopSelectionViewModel(
             nearbyStopsManager = fakeNearbyStopsManager,
-            ioDispatcher = testDispatcher,
+            scope = CoroutineScope(SupervisorJob() + testDispatcher),
         )
     }
 

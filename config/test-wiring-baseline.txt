@@ -15,3 +15,4 @@
 :feature:debug-settings:ui|src/commonTest/kotlin/xyz/ksharma/krail/feature/debug/settings/ui/DebugSettingsViewModelTest.kt
 :feature:track:ui|src/commonTest/kotlin/xyz/ksharma/krail/feature/track/ui/TrackTripViewModelTest.kt
 :feature:trip-planner:ui|src/androidHostTest/kotlin/xyz/ksharma/krail/trip/planner/ui/searchstop/StopSearchPipelineReproTest.kt
+:feature:trip-planner:ui|src/commonTest/kotlin/xyz/ksharma/krail/trip/planner/ui/searchstop/map/NearbyStopsManagerCacheTest.kt

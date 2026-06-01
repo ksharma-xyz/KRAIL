@@ -21,14 +21,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
@@ -229,6 +232,11 @@ private fun MapContent(
         LaunchedEffect(cameraState) {
             snapshotFlow { cameraState.position.target }
                 .debounce(NearbyStopsConfig.CAMERA_PAN_DEBOUNCE_MS)
+                // Defensive: during an iOS resize transient MapLibre can briefly report a
+                // projected target outside valid lat/lon bounds. Dropping those stops the
+                // runaway nearby-stops query (and its "Invalid longitude" errors) instead of
+                // feeding garbage coordinates downstream.
+                .filter { it.latitude in -90.0..90.0 && it.longitude in -180.0..180.0 }
                 .collect { target ->
                     onEvent(
                         SearchStopUiEvent.MapCenterChanged(
@@ -239,46 +247,15 @@ private fun MapContent(
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            MaplibreMap(
-                modifier = Modifier.fillMaxSize(),
+            MapSurface(
+                mapState = mapState,
                 cameraState = cameraState,
-                baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
-                options = MapOptions(
-                    ornamentOptions = OrnamentOptions(
-                        padding = PaddingValues(top = ornamentTopPadding),
-                        isLogoEnabled = LOGO_ENABLED,
-                        isAttributionEnabled = ATTRIBUTION_ENABLED,
-                        attributionAlignment = Alignment.BottomEnd,
-                        isCompassEnabled = mapState.mapDisplay.showCompass,
-                        compassAlignment = Alignment.TopEnd,
-                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
-                        scaleBarAlignment = Alignment.TopStart,
-                    ),
-                ),
-            ) {
-                // Render nearby stops
-                if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
-                    log(
-                        "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
-                            "stops on map",
-                    )
-                    NearbyStopsLayer(
-                        stops = mapState.mapDisplay.nearbyStops,
-                        onStopClick = { stop ->
-                            log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
-                            selectedStop = stop
-                            onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
-                        },
-                    )
-                } else {
-                    log("[NEARBY_STOPS_UI] No stops to render")
-                }
-
-                // Render user location as red circle (always on top)
-                UserLocationLayer(
-                    userLocation = mapState.mapDisplay.userLocation,
-                )
-            }
+                ornamentTopPadding = ornamentTopPadding,
+                onStopSelected = { stop ->
+                    selectedStop = stop
+                    onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                },
+            )
 
             // Bottom left action buttons (Options and Location).
             // All location business logic lives here, not inside MapActionButtons.
@@ -396,6 +373,76 @@ private fun MapContent(
                             },
                         )
                     },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The MapLibre GL surface plus its on-map layers (nearby stops, user location).
+ *
+ * iOS UIKitView interop: if [MaplibreMap] is instantiated while EITHER axis of the container
+ * is 0, the native MLNMapView is created with a degenerate frame. With both axes 0 the Metal
+ * layer fails to allocate a drawable ("CAMetalLayer ... width=0 height=0" / "nextDrawable
+ * returning nil") and the map is blank. With one axis 0 (the adaptive window reports a
+ * transient `840×0dp` / `0×480dp` during rotation) MapLibre projects camera moves against a
+ * zero-area viewport and the camera target runs away to invalid coords (e.g. longitude > 180,
+ * mid-Pacific), so the map pans off the world AND the nearby-stops query errors out.
+ *
+ * Gate creation until BOTH width and height are non-zero so the native view always initialises
+ * with a valid frame. Android is unaffected (AndroidView re-lays-out cleanly) but the gate is
+ * harmless there.
+ */
+@Composable
+private fun MapSurface(
+    mapState: MapUiState.Ready,
+    cameraState: org.maplibre.compose.camera.CameraState,
+    ornamentTopPadding: Dp,
+    onStopSelected: (NearbyStopFeature) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var mapContainerSize by remember { mutableStateOf(IntSize.Zero) }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onSizeChanged { mapContainerSize = it },
+    ) {
+        if (mapContainerSize.width > 0 && mapContainerSize.height > 0) {
+            MaplibreMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraState = cameraState,
+                baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
+                options = MapOptions(
+                    ornamentOptions = OrnamentOptions(
+                        padding = PaddingValues(top = ornamentTopPadding),
+                        isLogoEnabled = LOGO_ENABLED,
+                        isAttributionEnabled = ATTRIBUTION_ENABLED,
+                        attributionAlignment = Alignment.BottomEnd,
+                        isCompassEnabled = mapState.mapDisplay.showCompass,
+                        compassAlignment = Alignment.TopEnd,
+                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
+                        scaleBarAlignment = Alignment.TopStart,
+                    ),
+                ),
+            ) {
+                if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
+                    log(
+                        "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
+                            "stops on map",
+                    )
+                    NearbyStopsLayer(
+                        stops = mapState.mapDisplay.nearbyStops,
+                        onStopClick = { stop ->
+                            log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
+                            onStopSelected(stop)
+                        },
+                    )
+                }
+
+                // Render user location as red circle (always on top)
+                UserLocationLayer(
+                    userLocation = mapState.mapDisplay.userLocation,
                 )
             }
         }

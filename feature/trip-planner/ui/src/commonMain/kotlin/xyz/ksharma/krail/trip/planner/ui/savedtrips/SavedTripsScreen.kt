@@ -62,7 +62,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -380,7 +382,16 @@ fun SavedTripsScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .onSizeChanged {
+                            log("[PANE_DIAG] SavedTrips rightPane size=${it.width}x${it.height}")
+                        }
+                        .onGloballyPositioned {
+                            log(
+                                "[PANE_DIAG] SavedTrips rightPane " +
+                                    "pos=${it.positionInWindow()} size=${it.size}",
+                            )
+                        },
                     content = rightPane,
                 )
             }

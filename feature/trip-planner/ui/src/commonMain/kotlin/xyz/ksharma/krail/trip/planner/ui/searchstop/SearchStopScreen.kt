@@ -37,7 +37,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -66,6 +66,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -797,47 +799,50 @@ private fun SearchStopScreenDualPane(
     dualPaneMapUiState: MapUiState? = null,
     onDualPaneMapEvent: (MapStopSelectionEvent) -> Unit = {},
 ) {
-    // Focus and keyboard are one-shot — only needed on first entry.
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboard?.show()
-    }
+    // Dual-pane (tablet / foldable / phone landscape): do NOT auto-show the keyboard.
+    // On iOS the soft keyboard covers ~50% of the landscape height and, more critically,
+    // its show/hide drives a layout-resize storm. Combined with the fixed-width list pane,
+    // the map's weight(1f) gets transiently measured at 0 width, which makes MapLibre's iOS
+    // UIKitView project a degenerate frame — the camera target runs away to invalid coords
+    // (e.g. longitude > 180) and the map renders blank. SavedTrips' dual-pane map is stable
+    // precisely because it never auto-shows the keyboard. The map is the primary interaction
+    // here; the user taps the search field when they actually want to type.
 
-    CloudGradientBackground(
+    // Split view: List on left (fixed width), Map on right (fills the rest).
+    // CRITICAL (iOS): the map must NOT be a descendant of CloudGradientBackground. That
+    // component paints via Modifier.drawBehind; on iOS a MaplibreMap (a UIKitView interop
+    // node) nested under a drawBehind ancestor is composited BEHIND that draw layer and
+    // never becomes visible — blank forever, even across rotation. SavedTrips keeps its map
+    // outside the gradient for exactly this reason, which is why its map always worked.
+    // So the gradient wraps ONLY the left list pane; the map pane is a sibling under the Row.
+    // See docs/TABLET_FOLDABLE_UX.md §2 for the ratio rationale.
+    Column(
         modifier = modifier.fillMaxSize(),
-        themeColor = themeColor.hexToComposeColor(),
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .fillMaxSize(),
+                .weight(1f)
+                .fillMaxWidth(),
         ) {
-            // Split view: List on left (bounded width), Map on right (fills the rest).
-            // No imePadding here — the keyboard appears at the bottom and the search bar
-            // is at the top; they don't overlap. imePadding would eat landscape height on
-            // iOS and collapse the map pane to zero.
-            // See docs/TABLET_FOLDABLE_UX.md §2 for the ratio rationale.
-            Row(
+            // Left pane: FIXED width when right pane is present (mirrors SavedTrips dual-pane).
+            // A flexible widthIn() sibling next to the map's weight(1f) gives the iOS UIKitView
+            // interop unstable constraints. A fixed width makes the map's weight(1f) deterministic
+            // in a single measure pass. Gradient spans full width when the shared map VM has no
+            // state yet (no blank right gap).
+            CloudGradientBackground(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                    .then(
+                        if (dualPaneMapUiState != null) {
+                            Modifier.width(SEARCH_STOP_LIST_PANE_MAX_WIDTH)
+                        } else {
+                            Modifier.fillMaxWidth()
+                        },
+                    )
+                    .fillMaxHeight()
+                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
+                themeColor = themeColor.hexToComposeColor(),
             ) {
-                // Left pane: bounded width when right pane is present so stop rows stay readable;
-                // fills full width when the shared map VM has no state yet (no blank space on right).
-                Column(
-                    modifier = Modifier
-                        .then(
-                            if (dualPaneMapUiState != null) {
-                                Modifier.widthIn(
-                                    min = SEARCH_STOP_LIST_PANE_MIN_WIDTH,
-                                    max = SEARCH_STOP_LIST_PANE_MAX_WIDTH,
-                                )
-                            } else {
-                                Modifier.fillMaxWidth()
-                            },
-                        )
-                        .fillMaxHeight()
-                        .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
-                ) {
+                Column(modifier = Modifier.fillMaxSize()) {
                     // Search top bar only spans the list width
                     SearchTopBar(
                         placeholderText = placeholderText,
@@ -849,6 +854,10 @@ private fun SearchStopScreenDualPane(
                         onMapToggle = { },
                         onBackClick = onBackClick,
                         onTextChange = onTextChange,
+                        // Dual-pane: top bar is the first child of the left Column, not a floating
+                        // overlay. ime padding here would push the list content down by the keyboard
+                        // height (the "content moved down" bug, worst on iOS landscape).
+                        applyImePadding = false,
                     )
 
                     SearchStopListContent(
@@ -872,16 +881,31 @@ private fun SearchStopScreenDualPane(
                         onOpenMap = {},
                     )
                 }
+            }
 
-                // Right pane: shared MapStopSelectionPane (same VM as SavedTrips dual-pane).
-                // The shared singleton ViewModel owns location tracking and nearby-stops state —
-                // no init event or isMapsAvailable check needed here.
-                if (dualPaneMapUiState != null) {
+            // Right pane: shared MapStopSelectionPane (same VM as SavedTrips dual-pane).
+            // Sibling of the gradient, NOT a child — see the iOS note above. The
+            // weight(1f).fillMaxHeight() lives on a wrapper Box (pane gets default Modifier),
+            // mirroring SavedTrips' dual-pane exactly.
+            if (dualPaneMapUiState != null) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .onSizeChanged {
+                            log("[PANE_DIAG] SearchStop rightPane size=${it.width}x${it.height}")
+                        }
+                        .onGloballyPositioned {
+                            log(
+                                "[PANE_DIAG] SearchStop rightPane " +
+                                    "pos=${it.positionInWindow()} size=${it.size}",
+                            )
+                        },
+                ) {
                     MapStopSelectionPane(
                         mapUiState = dualPaneMapUiState,
                         onEvent = onDualPaneMapEvent,
                         onStopSelected = onStopSelect,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
                     )
                 }
             }
@@ -1644,7 +1668,6 @@ private fun MapAutoInitEffect(
 // Dual-pane list-column width bounds. Keeps the stops list at ≈ phone-width so
 // StopSearchListItem rows stay readable; map fills the remainder. See
 // docs/TABLET_FOLDABLE_UX.md §2 for the ratio table.
-private val SEARCH_STOP_LIST_PANE_MIN_WIDTH = 320.dp
 private val SEARCH_STOP_LIST_PANE_MAX_WIDTH = 480.dp
 
 // Pill scale factors used by LabelShortcutsRow's graphicsLayer transform — extracted

@@ -114,7 +114,7 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
 
 ### Width rules (≥ 600 dp)
 
-- **Left pane** (≤ 480 dp): the saved-trips list, DepartureBoard, Park & Ride,
+- **Left pane** (≤ 480 dp): the saved-trips list, Park & Ride,
   Discover tiles, and the SearchStopRow pill at the bottom — same as
   portrait, just width-capped.
 - **Right pane** (`weight(1f)`): a **read-only nearby-stops map** powered by

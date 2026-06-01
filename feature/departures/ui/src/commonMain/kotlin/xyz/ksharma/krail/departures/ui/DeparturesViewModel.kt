@@ -77,12 +77,11 @@ class DeparturesViewModel(
         log("[$LOG_TAG] t=${nowMs()} ViewModel CREATED")
         // Collect repository flow into _uiState so updateRelativeTimeText() can mutate it.
         //
-        // Gated on uiState having subscribers via SharingStarted.WhileSubscribed(5_000) —
-        // the same lifecycle the sibling DepartureBoardViewModel uses. Without this gate the
-        // repository's infinite pollStop loop runs for the ViewModel's entire lifetime
-        // (network hit every refresh interval) even when the sheet is closed/backgrounded,
-        // and never lets a TestCoroutineScheduler reach idle. The 5_000 ms grace keeps
-        // polling alive across config changes / brief detaches, matching the sibling.
+        // Gated on uiState having subscribers via SharingStarted.WhileSubscribed(5_000).
+        // Without this gate the repository's infinite pollStop loop runs for the ViewModel's
+        // entire lifetime (network hit every refresh interval) even when the sheet is
+        // closed/backgrounded, and never lets a TestCoroutineScheduler reach idle. The
+        // 5_000 ms grace keeps polling alive across config changes / brief detaches.
         viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
             SharingStarted.WhileSubscribed(POLL_SUBSCRIPTION_GRACE_MS)
                 .command(_uiState.subscriptionCount)
@@ -281,8 +280,8 @@ class DeparturesViewModel(
         private const val REFRESH_TIME_TEXT_DURATION = 10_000L
 
         // Keep the repository poll alive for this long after the last uiState subscriber
-        // leaves, so config changes / brief detaches don't restart polling. Matches the
-        // SharingStarted.WhileSubscribed(5_000) used by the sibling DepartureBoardViewModel.
+        // leaves, so config changes / brief detaches don't restart polling.
+        // SharingStarted.WhileSubscribed(5_000).
         private const val POLL_SUBSCRIPTION_GRACE_MS = 5_000L
     }
 }

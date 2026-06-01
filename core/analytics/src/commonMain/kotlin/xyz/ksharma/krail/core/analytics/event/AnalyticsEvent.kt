@@ -935,12 +935,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     /**
      * Identifies which surface fired a departure board event.
      *
-     *  - [SAVED_TRIPS]      — accordion on the Saved Trips screen ([DepartureBoardViewModel])
      *  - [TIMETABLE_SHEET]  — stop sheet opened via timetable header tap ([DeparturesViewModel])
      *  - [MAP_SHEET]        — stop sheet opened via map pin tap ([DeparturesViewModel])
      */
     enum class DepartureBoardSource(val value: String) {
-        SAVED_TRIPS("saved_trips"),
         TIMETABLE_SHEET("timetable_sheet"),
         MAP_SHEET("map_sheet"),
     }

@@ -207,24 +207,32 @@ private fun MapContent(
             },
         )
 
-        // Auto-center on first user location.
-        // - hasAutoCentered seeds true if location is already known (re-entry case) —
-        //   no animation needed because cameraState already starts at userLoc above.
-        // - Keyed only on firstUserLocation, NOT on hasAutoCentered, so changing
-        //   hasAutoCentered false→true doesn't restart and cancel the animateTo.
-        val firstUserLocation = mapState.mapDisplay.userLocation
+        // Auto-center on first user location, exactly once, smoothly.
+        //
+        // CRITICAL: key the effect on a STABLE boolean (hasUserLocation), NOT on the changing
+        // LatLng. GPS emits a stream of slightly-different fixes; keying on the value re-launched
+        // this effect on every jitter, which CANCELLED the in-flight animateTo. Because
+        // hasAutoCentered had already flipped true, it never re-fired — so the camera was left
+        // frozen wherever the cancelled animation stopped: at the Sydney seed, or (on iOS) at an
+        // intermediate zoomed-all-the-way-out frame. Rotating "fixed" it only because
+        // rememberCameraState re-seeded firstPosition at the now-known location (the seed path,
+        // not this animate path). hasUserLocation flips false→true once and then stays true, so
+        // subsequent jitter no longer re-keys the effect and the animation runs to completion.
+        //
+        // If location permission is absent, userLocation stays null → no animation → the camera
+        // stays at the Sydney default seed. Only when a real fix arrives do we move to it.
+        val userLocation = mapState.mapDisplay.userLocation
+        val hasUserLocation = userLocation != null
         var hasAutoCentered by remember { mutableStateOf(false) }
-        LaunchedEffect(firstUserLocation) {
-            log(
-                "[CAMERA_DIAG] auto-center check: firstUserLocation=$firstUserLocation " +
-                    "hasAutoCentered=$hasAutoCentered",
-            )
-            if (firstUserLocation != null && !hasAutoCentered) {
+        LaunchedEffect(hasUserLocation) {
+            log("[CAMERA_DIAG] auto-center check: hasUserLocation=$hasUserLocation hasAutoCentered=$hasAutoCentered")
+            val target = userLocation
+            if (target != null && !hasAutoCentered) {
                 hasAutoCentered = true
-                log("[CAMERA_DIAG] animating camera to user location $firstUserLocation")
+                log("[CAMERA_DIAG] animating camera to user location $target")
                 cameraState.animateTo(
                     CameraPosition(
-                        target = firstUserLocation.toPosition(),
+                        target = target.toPosition(),
                         zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
                     ),
                     duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,

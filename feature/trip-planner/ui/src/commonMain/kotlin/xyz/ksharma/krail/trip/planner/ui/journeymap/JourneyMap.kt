@@ -89,6 +89,9 @@ fun JourneyMap(
 /**
  * The actual map content when data is ready.
  */
+@Suppress("CyclomaticComplexMethod")
+// Complexity is dominated by Compose state wiring (location/permission/freshness/camera effects
+// + the map's stop and route layers); splitting it fragments shared map state across composables.
 @Composable
 private fun JourneyMapContent(
     mapState: JourneyMapUiState.Ready,
@@ -138,6 +141,30 @@ private fun JourneyMapContent(
     LaunchedEffect(mapState.cameraFocus, mapState.mapDisplay.stops) {
         val target = cameraTargetForState(mapState, userLocation)
         cameraState.animateTo(target, duration = CAMERA_TRANSITION_MS.milliseconds)
+    }
+
+    // Empty-state (no journey) auto-centre on the user's first location fix.
+    // The effect above is keyed on cameraFocus + stops, NOT userLocation, so on a fresh
+    // load where the GPS fix arrives AFTER it runs, the camera stayed at the Sydney default
+    // until a rotation re-ran composition. Key this one on a STABLE boolean (flips
+    // false->true once) so GPS jitter can't re-launch and cancel the animateTo. Only acts
+    // while empty so it never yanks the camera off a selected journey; no location
+    // permission -> userLocation stays null -> camera stays at the Sydney default.
+    val hasUserLocation = userLocation != null
+    var hasCenteredOnUser by remember { mutableStateOf(false) }
+    LaunchedEffect(hasUserLocation) {
+        val loc = userLocation
+        val isEmpty = mapState.mapDisplay.stops.isEmpty() && mapState.cameraFocus == null
+        if (loc != null && isEmpty && !hasCenteredOnUser) {
+            hasCenteredOnUser = true
+            cameraState.animateTo(
+                CameraPosition(
+                    target = Position(latitude = loc.latitude, longitude = loc.longitude),
+                    zoom = UserLocationConfig.RECENTER_ZOOM,
+                ),
+                duration = CAMERA_TRANSITION_MS.milliseconds,
+            )
+        }
     }
 
     TrackUserLocation(

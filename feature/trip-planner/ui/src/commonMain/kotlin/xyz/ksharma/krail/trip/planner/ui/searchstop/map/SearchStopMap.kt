@@ -213,10 +213,15 @@ private fun MapContent(
         // - Keyed only on firstUserLocation, NOT on hasAutoCentered, so changing
         //   hasAutoCentered false→true doesn't restart and cancel the animateTo.
         val firstUserLocation = mapState.mapDisplay.userLocation
-        var hasAutoCentered by remember { mutableStateOf(firstUserLocation != null) }
+        var hasAutoCentered by remember { mutableStateOf(false) }
         LaunchedEffect(firstUserLocation) {
+            log(
+                "[CAMERA_DIAG] auto-center check: firstUserLocation=$firstUserLocation " +
+                    "hasAutoCentered=$hasAutoCentered",
+            )
             if (firstUserLocation != null && !hasAutoCentered) {
                 hasAutoCentered = true
+                log("[CAMERA_DIAG] animating camera to user location $firstUserLocation")
                 cameraState.animateTo(
                     CameraPosition(
                         target = firstUserLocation.toPosition(),

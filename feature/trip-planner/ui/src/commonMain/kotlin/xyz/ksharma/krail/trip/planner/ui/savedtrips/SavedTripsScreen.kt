@@ -368,7 +368,6 @@ fun SavedTripsScreen(
             // two-pane layouts can't drift. Right pane (map) is a sibling of the list, never
             // nested under it; see DualPaneScaffold for the iOS compositing invariant.
             DualPaneScaffold(
-                logTag = "SavedTrips",
                 listPane = { body() },
                 rightPane = rightPane,
             )

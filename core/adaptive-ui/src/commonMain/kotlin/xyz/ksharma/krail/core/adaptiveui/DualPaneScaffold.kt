@@ -9,12 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.core.log.log
 
 /**
  * The one dual-pane split used by every screen (SavedTrips, SearchStop, …) so the two-pane
@@ -39,17 +35,12 @@ import xyz.ksharma.krail.core.log.log
  *     no offscreen ancestor.
  *
  * When [rightPane] is null the [listPane] fills the full width (no blank gap on the right).
- *
- * @param logTag temporary diagnostic label (e.g. "SavedTrips" / "SearchStop"). When non-null,
- *   the right pane logs its size + window position under the `[PANE_DIAG]` tag so two screens
- *   can be compared. Remove call-site tags once the layout is trusted.
  */
 @Composable
 fun DualPaneScaffold(
     listPane: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     listPaneWidth: Dp = DUAL_PANE_LIST_WIDTH,
-    logTag: String? = null,
     rightPane: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     Row(modifier = modifier.fillMaxSize()) {
@@ -67,23 +58,7 @@ fun DualPaneScaffold(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()
-                    .then(
-                        if (logTag != null) {
-                            Modifier
-                                .onSizeChanged {
-                                    log("[PANE_DIAG] $logTag rightPane size=${it.width}x${it.height}")
-                                }
-                                .onGloballyPositioned {
-                                    log(
-                                        "[PANE_DIAG] $logTag rightPane " +
-                                            "pos=${it.positionInWindow()} size=${it.size}",
-                                    )
-                                }
-                        } else {
-                            Modifier
-                        },
-                    ),
+                    .fillMaxHeight(),
             ) {
                 rightPane()
             }

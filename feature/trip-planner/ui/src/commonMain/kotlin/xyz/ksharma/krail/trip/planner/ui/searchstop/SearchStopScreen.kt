@@ -812,7 +812,6 @@ private fun SearchStopScreenDualPane(
     // gradient must wrap ONLY the list. See DualPaneScaffold + docs/TABLET_FOLDABLE_UX.md §2.
     DualPaneScaffold(
         modifier = modifier,
-        logTag = "SearchStop",
         listPane = {
             CloudGradientBackground(
                 modifier = Modifier

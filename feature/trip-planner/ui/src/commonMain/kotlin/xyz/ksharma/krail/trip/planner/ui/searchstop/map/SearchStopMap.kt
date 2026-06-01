@@ -224,11 +224,9 @@ private fun MapContent(
         val hasUserLocation = userLocation != null
         var hasAutoCentered by remember { mutableStateOf(false) }
         LaunchedEffect(hasUserLocation) {
-            log("[CAMERA_DIAG] auto-center check: hasUserLocation=$hasUserLocation hasAutoCentered=$hasAutoCentered")
             val target = userLocation
             if (target != null && !hasAutoCentered) {
                 hasAutoCentered = true
-                log("[CAMERA_DIAG] animating camera to user location $target")
                 cameraState.animateTo(
                     CameraPosition(
                         target = target.toPosition(),

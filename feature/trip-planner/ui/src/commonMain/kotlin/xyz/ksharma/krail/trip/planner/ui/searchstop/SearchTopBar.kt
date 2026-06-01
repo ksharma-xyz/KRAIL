@@ -66,6 +66,7 @@ fun SearchTopBar(
     isMapAvailable: Boolean = false,
     isMapSelected: Boolean = false,
     animateMapButton: Boolean? = null,
+    applyImePadding: Boolean = true,
 ) {
     // rememberSaveable survives rotation so the slide-in plays only on first appearance,
     // not again after every configuration change.
@@ -87,7 +88,13 @@ fun SearchTopBar(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .windowInsetsPadding(WindowInsets.ime)
+            // Single-pane: the top bar floats in a Box over the content, so ime padding keeps it
+            // clear of the keyboard. Dual-pane: the top bar is the FIRST child of the left Column,
+            // so ime padding inflates its height by the keyboard height and shoves the list content
+            // down (severe on iOS landscape where the keyboard is ~50% of the height). The keyboard
+            // is at the bottom and the top bar at the top — they never overlap — so dual-pane opts
+            // out via applyImePadding = false.
+            .then(if (applyImePadding) Modifier.windowInsetsPadding(WindowInsets.ime) else Modifier)
             .padding(horizontal = dim.spacingXL, vertical = dim.spacingL)
             .background(
                 color = Color.Transparent,

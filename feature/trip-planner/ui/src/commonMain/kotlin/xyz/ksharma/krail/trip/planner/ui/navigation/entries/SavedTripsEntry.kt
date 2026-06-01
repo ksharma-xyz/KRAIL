@@ -1,7 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,6 +8,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.ResultEffect
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
@@ -21,18 +21,21 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * Saved Trips Entry - List Screen in List-Detail pattern
+ * Saved Trips Entry - List Screen in List-Detail pattern.
+ *
+ * Right-pane content on tablet / foldable / phone-landscape is supplied as a slot
+ * (`rightPane`). Pending follow-up: plug in MapStopSelectionPane backed by a shared
+ * Koin singleton ViewModel.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
-    entry<SavedTripsRoute>(
-        metadata = ListDetailSceneStrategy.listPane(),
-    ) {
+    entry<SavedTripsRoute> {
         // Scoped ViewModel that survives navigation
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
+        val mapStopSelectionViewModel: MapStopSelectionViewModel = koinViewModel()
+        val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val departureBoardViewModel: DepartureBoardViewModel = koinViewModel()
@@ -92,25 +95,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 }
             },
             onSearchButtonClick = {
-                val fromStopItem = savedTripState.fromStop
-                val toStopItem = savedTripState.toStop
-
-                if (fromStopItem != null && toStopItem != null &&
-                    fromStopItem.stopId != toStopItem.stopId
-                ) {
-                    viewModel.onEvent(
-                        SavedTripUiEvent.AnalyticsLoadTimeTableClick(
-                            fromStopId = fromStopItem.stopId,
-                            toStopId = toStopItem.stopId,
-                        ),
-                    )
-                    tripPlannerNavigator.navigateToTimeTable(
-                        fromStopId = fromStopItem.stopId,
-                        fromStopName = fromStopItem.stopName,
-                        toStopId = toStopItem.stopId,
-                        toStopName = toStopItem.stopName,
-                    )
-                }
+                triggerTripSearch(
+                    fromStop = savedTripState.fromStop,
+                    toStop = savedTripState.toStop,
+                    viewModel = viewModel,
+                    tripPlannerNavigator = tripPlannerNavigator,
+                )
             },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
@@ -124,6 +114,37 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             departureBoardEntries = departureBoardEntries,
             expandedDepartureBoardStopId = expandedDepartureBoardStopId,
             onDepartureBoardEvent = departureBoardViewModel::onEvent,
+            rightPane = {
+                MapStopSelectionPane(
+                    mapUiState = mapUiState,
+                    onEvent = mapStopSelectionViewModel::onEvent,
+                    onStopSelected = { stop ->
+                        viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                    },
+                )
+            },
+        )
+    }
+}
+
+private fun triggerTripSearch(
+    fromStop: StopItem?,
+    toStop: StopItem?,
+    viewModel: SavedTripsViewModel,
+    tripPlannerNavigator: TripPlannerNavigator,
+) {
+    if (fromStop != null && toStop != null && fromStop.stopId != toStop.stopId) {
+        viewModel.onEvent(
+            SavedTripUiEvent.AnalyticsLoadTimeTableClick(
+                fromStopId = fromStop.stopId,
+                toStopId = toStop.stopId,
+            ),
+        )
+        tripPlannerNavigator.navigateToTimeTable(
+            fromStopId = fromStop.stopId,
+            fromStopName = fromStop.stopName,
+            toStopId = toStop.stopId,
+            toStopName = toStop.stopName,
         )
     }
 }

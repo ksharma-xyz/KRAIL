@@ -148,6 +148,25 @@ data class AdaptiveLayoutInfo(
      */
     val shouldShowDualPane: Boolean
         get() = isTabletOrFoldable
+
+    /**
+     * Phone in landscape: any window with compact height (< 480 dp).
+     *
+     * Width alone can't distinguish phone-landscape from tablet — modern phones with
+     * edge-to-edge displays hit EXPANDED width (≥ 840 dp) in landscape. But no tablet
+     * has < 480 dp height in any orientation, so [isCompactHeight] is the reliable
+     * signal for "this is a phone rotated to landscape, treat vertical space as scarce".
+     */
+    val isPhoneLandscape: Boolean
+        get() = isCompactHeight
+
+    /**
+     * Tablet (or unfolded foldable) — wide enough for dual-pane AND tall enough that
+     * it isn't a phone in landscape. Used to gate adaptations that only make sense
+     * with both dimensions roomy (e.g. "always show the full bottom search row").
+     */
+    val isTablet: Boolean
+        get() = !isCompactHeight && widthSizeClass != WindowWidthSizeClass.COMPACT
 }
 
 /**

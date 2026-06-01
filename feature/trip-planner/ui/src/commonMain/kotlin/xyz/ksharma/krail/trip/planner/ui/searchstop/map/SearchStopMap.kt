@@ -21,6 +21,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
@@ -73,6 +75,7 @@ fun SearchStopMap(
     onShowOptionsSheet: () -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
+    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -92,6 +95,7 @@ fun SearchStopMap(
                     onShowOptionsSheet = onShowOptionsSheet,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
+                    onPermissionBannerVisibilityChanged = onPermissionBannerVisibilityChanged,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -130,6 +134,7 @@ private fun MapContent(
     ornamentTopPadding: Dp = 0.dp,
     autoShowOptionsSheet: Boolean = false,
     onShowOptionsSheet: () -> Unit = {},
+    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -150,6 +155,9 @@ private fun MapContent(
     // User location state
     var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
     var showPermissionBanner by remember { mutableStateOf(false) }
+    LaunchedEffect(showPermissionBanner) {
+        onPermissionBannerVisibilityChanged(showPermissionBanner)
+    }
     // False until the user explicitly taps the location button.
     // When true, TrackUserLocation is allowed to trigger the system permission dialog.
     var allowPermissionRequest by remember { mutableStateOf(false) }
@@ -166,28 +174,22 @@ private fun MapContent(
     val scope = rememberCoroutineScope()
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Start at default Sydney coordinates
+        // Seed from known user location so re-entry after a composition bounce
+        // (dual-pane layout shift, rotation) doesn't flash at Sydney default.
+        val knownLocation = mapState.mapDisplay.userLocation
         val cameraState = rememberCameraState(
-            firstPosition = CameraPosition(
-                target = Position(
-                    latitude = NearbyStopsConfig.DEFAULT_CENTER_LAT,
-                    longitude = NearbyStopsConfig.DEFAULT_CENTER_LON,
-                ),
-                zoom = NearbyStopsConfig.DEFAULT_ZOOM,
-            ),
+            firstPosition = initialCameraPosition(knownLocation),
         )
 
-        // Trigger initial load with default camera position
+        // Trigger initial nearby-stops load for the camera's starting position.
+        val initialCenter = knownLocation ?: LatLng(
+            NearbyStopsConfig.DEFAULT_CENTER_LAT,
+            NearbyStopsConfig.DEFAULT_CENTER_LON,
+        )
         LaunchedEffect(Unit) {
-            log("[NEARBY_STOPS_UI] Map initialized at default position")
-            onEvent(
-                SearchStopUiEvent.MapCenterChanged(
-                    LatLng(
-                        NearbyStopsConfig.DEFAULT_CENTER_LAT,
-                        NearbyStopsConfig.DEFAULT_CENTER_LON,
-                    ),
-                ),
-            )
+            val label = if (knownLocation != null) "user location" else "Sydney default"
+            log("[NEARBY_STOPS_UI] Map initialized at $label")
+            onEvent(SearchStopUiEvent.MapCenterChanged(initialCenter))
         }
 
         TrackUserLocation(
@@ -204,18 +206,30 @@ private fun MapContent(
             },
         )
 
-        // Auto-center camera on the first non-null user location.
-        // State-driven (recomposition-aware) so it survives the iOS permission dialog
-        // bouncing the activity through ON_STOP/ON_START, which used to cancel the
-        // animateTo before it could fire on the first grant.
-        var hasAutoCentered by rememberSaveable { mutableStateOf(false) }
-        val firstUserLocation = mapState.mapDisplay.userLocation
-        LaunchedEffect(firstUserLocation, hasAutoCentered) {
-            if (firstUserLocation != null && !hasAutoCentered) {
+        // Auto-center on first user location, exactly once, smoothly.
+        //
+        // CRITICAL: key the effect on a STABLE boolean (hasUserLocation), NOT on the changing
+        // LatLng. GPS emits a stream of slightly-different fixes; keying on the value re-launched
+        // this effect on every jitter, which CANCELLED the in-flight animateTo. Because
+        // hasAutoCentered had already flipped true, it never re-fired — so the camera was left
+        // frozen wherever the cancelled animation stopped: at the Sydney seed, or (on iOS) at an
+        // intermediate zoomed-all-the-way-out frame. Rotating "fixed" it only because
+        // rememberCameraState re-seeded firstPosition at the now-known location (the seed path,
+        // not this animate path). hasUserLocation flips false→true once and then stays true, so
+        // subsequent jitter no longer re-keys the effect and the animation runs to completion.
+        //
+        // If location permission is absent, userLocation stays null → no animation → the camera
+        // stays at the Sydney default seed. Only when a real fix arrives do we move to it.
+        val userLocation = mapState.mapDisplay.userLocation
+        val hasUserLocation = userLocation != null
+        var hasAutoCentered by remember { mutableStateOf(false) }
+        LaunchedEffect(hasUserLocation) {
+            val target = userLocation
+            if (target != null && !hasAutoCentered) {
                 hasAutoCentered = true
                 cameraState.animateTo(
                     CameraPosition(
-                        target = firstUserLocation.toPosition(),
+                        target = target.toPosition(),
                         zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
                     ),
                     duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
@@ -228,6 +242,11 @@ private fun MapContent(
         LaunchedEffect(cameraState) {
             snapshotFlow { cameraState.position.target }
                 .debounce(NearbyStopsConfig.CAMERA_PAN_DEBOUNCE_MS)
+                // Defensive: during an iOS resize transient MapLibre can briefly report a
+                // projected target outside valid lat/lon bounds. Dropping those stops the
+                // runaway nearby-stops query (and its "Invalid longitude" errors) instead of
+                // feeding garbage coordinates downstream.
+                .filter { it.latitude in -90.0..90.0 && it.longitude in -180.0..180.0 }
                 .collect { target ->
                     onEvent(
                         SearchStopUiEvent.MapCenterChanged(
@@ -238,46 +257,15 @@ private fun MapContent(
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            MaplibreMap(
-                modifier = Modifier.fillMaxSize(),
+            MapSurface(
+                mapState = mapState,
                 cameraState = cameraState,
-                baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
-                options = MapOptions(
-                    ornamentOptions = OrnamentOptions(
-                        padding = PaddingValues(top = ornamentTopPadding),
-                        isLogoEnabled = LOGO_ENABLED,
-                        isAttributionEnabled = ATTRIBUTION_ENABLED,
-                        attributionAlignment = Alignment.BottomEnd,
-                        isCompassEnabled = mapState.mapDisplay.showCompass,
-                        compassAlignment = Alignment.TopEnd,
-                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
-                        scaleBarAlignment = Alignment.TopStart,
-                    ),
-                ),
-            ) {
-                // Render nearby stops
-                if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
-                    log(
-                        "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
-                            "stops on map",
-                    )
-                    NearbyStopsLayer(
-                        stops = mapState.mapDisplay.nearbyStops,
-                        onStopClick = { stop ->
-                            log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
-                            selectedStop = stop
-                            onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
-                        },
-                    )
-                } else {
-                    log("[NEARBY_STOPS_UI] No stops to render")
-                }
-
-                // Render user location as red circle (always on top)
-                UserLocationLayer(
-                    userLocation = mapState.mapDisplay.userLocation,
-                )
-            }
+                ornamentTopPadding = ornamentTopPadding,
+                onStopSelected = { stop ->
+                    selectedStop = stop
+                    onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                },
+            )
 
             // Bottom left action buttons (Options and Location).
             // All location business logic lives here, not inside MapActionButtons.
@@ -292,29 +280,16 @@ private fun MapContent(
                         SearchStopUiEvent.LocationButtonClicked(hadLocation = mapState.mapDisplay.userLocation != null),
                     )
                     scope.launch {
-                        val userLoc = mapState.mapDisplay.userLocation
-                        if (userLoc != null) {
-                            // Tracking is running — re-center camera on latest known position
-                            cameraState.animateTo(
-                                CameraPosition(
-                                    target = userLoc.toPosition(),
-                                    zoom = UserLocationConfig.RECENTER_ZOOM,
-                                ),
-                                duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
-                            )
-                        } else {
-                            val status = userLocationManager.checkPermissionStatus()
-                            if (status is PermissionStatus.Denied) {
-                                // Cannot request — direct user to Settings instead
+                        handleLocationButtonClick(
+                            userLoc = mapState.mapDisplay.userLocation,
+                            cameraState = cameraState,
+                            userLocationManager = userLocationManager,
+                            onPermissionDenied = { status ->
                                 permissionStatus = status
                                 showPermissionBanner = true
-                            } else {
-                                // Flip the flag: TrackUserLocation's LifecycleStartEffect
-                                // relaunches immediately (key changed) and calls locationUpdates(),
-                                // which triggers the system permission dialog if not yet determined.
-                                allowPermissionRequest = true
-                            }
-                        }
+                            },
+                            onRequestPermission = { allowPermissionRequest = true },
+                        )
                     }
                 },
                 modifier = Modifier.align(Alignment.BottomStart),
@@ -414,7 +389,117 @@ private fun MapContent(
     }
 }
 
+/**
+ * The MapLibre GL surface plus its on-map layers (nearby stops, user location).
+ *
+ * iOS UIKitView interop: if [MaplibreMap] is instantiated while EITHER axis of the container
+ * is 0, the native MLNMapView is created with a degenerate frame. With both axes 0 the Metal
+ * layer fails to allocate a drawable ("CAMetalLayer ... width=0 height=0" / "nextDrawable
+ * returning nil") and the map is blank. With one axis 0 (the adaptive window reports a
+ * transient `840×0dp` / `0×480dp` during rotation) MapLibre projects camera moves against a
+ * zero-area viewport and the camera target runs away to invalid coords (e.g. longitude > 180,
+ * mid-Pacific), so the map pans off the world AND the nearby-stops query errors out.
+ *
+ * Gate creation until BOTH width and height are non-zero so the native view always initialises
+ * with a valid frame. Android is unaffected (AndroidView re-lays-out cleanly) but the gate is
+ * harmless there.
+ */
+@Composable
+private fun MapSurface(
+    mapState: MapUiState.Ready,
+    cameraState: org.maplibre.compose.camera.CameraState,
+    ornamentTopPadding: Dp,
+    onStopSelected: (NearbyStopFeature) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // LATCH the "has had a real size" flag — never reset it to false. During a rotation the
+    // container momentarily reports a 0 axis (the adaptive window flips through 840×0dp);
+    // tearing the map down on that transient and recreating it leaves the right pane blank
+    // until a SECOND rotation. Once we've seen a valid size we keep the map mounted; MapLibre
+    // resizes its own surface as the container settles.
+    var hasHadValidSize by remember { mutableStateOf(false) }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onSizeChanged {
+                if (it.width > 0 && it.height > 0) hasHadValidSize = true
+            },
+    ) {
+        if (hasHadValidSize) {
+            MaplibreMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraState = cameraState,
+                baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
+                options = MapOptions(
+                    ornamentOptions = OrnamentOptions(
+                        padding = PaddingValues(top = ornamentTopPadding),
+                        isLogoEnabled = LOGO_ENABLED,
+                        isAttributionEnabled = ATTRIBUTION_ENABLED,
+                        attributionAlignment = Alignment.BottomEnd,
+                        isCompassEnabled = mapState.mapDisplay.showCompass,
+                        compassAlignment = Alignment.TopEnd,
+                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
+                        scaleBarAlignment = Alignment.TopStart,
+                    ),
+                ),
+            ) {
+                if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
+                    log(
+                        "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
+                            "stops on map",
+                    )
+                    NearbyStopsLayer(
+                        stops = mapState.mapDisplay.nearbyStops,
+                        onStopClick = { stop ->
+                            log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
+                            onStopSelected(stop)
+                        },
+                    )
+                }
+
+                // Render user location as red circle (always on top)
+                UserLocationLayer(
+                    userLocation = mapState.mapDisplay.userLocation,
+                )
+            }
+        }
+    }
+}
+
 private fun LatLng.toPosition(): Position = Position(latitude = latitude, longitude = longitude)
+
+private suspend fun handleLocationButtonClick(
+    userLoc: LatLng?,
+    cameraState: org.maplibre.compose.camera.CameraState,
+    userLocationManager: xyz.ksharma.krail.core.maps.data.location.UserLocationManager,
+    onPermissionDenied: (xyz.ksharma.aagya.permission.PermissionStatus) -> Unit,
+    onRequestPermission: () -> Unit,
+) {
+    if (userLoc != null) {
+        cameraState.animateTo(
+            CameraPosition(target = userLoc.toPosition(), zoom = UserLocationConfig.RECENTER_ZOOM),
+            duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
+        )
+    } else {
+        val status = userLocationManager.checkPermissionStatus()
+        if (status is xyz.ksharma.aagya.permission.PermissionStatus.Denied) {
+            onPermissionDenied(status)
+        } else {
+            onRequestPermission()
+        }
+    }
+}
+
+private fun initialCameraPosition(knownLocation: LatLng?): CameraPosition =
+    knownLocation?.let {
+        CameraPosition(target = it.toPosition(), zoom = UserLocationConfig.AUTO_CENTER_ZOOM)
+    } ?: CameraPosition(
+        target = Position(
+            latitude = NearbyStopsConfig.DEFAULT_CENTER_LAT,
+            longitude = NearbyStopsConfig.DEFAULT_CENTER_LON,
+        ),
+        zoom = NearbyStopsConfig.DEFAULT_ZOOM,
+    )
 
 // region Previews
 

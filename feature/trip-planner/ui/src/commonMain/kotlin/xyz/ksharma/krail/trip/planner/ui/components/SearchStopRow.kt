@@ -19,17 +19,23 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,14 +49,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
@@ -61,8 +65,6 @@ import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private val SearchRowTopRadius = 36.dp
@@ -79,6 +81,7 @@ fun SearchStopRow(
     isExpanded: Boolean = false,
     isFromHighlighted: Boolean = false,
     onExpandRequest: () -> Unit = {},
+    onCollapseRequest: (() -> Unit)? = null,
     onReverseButtonClick: () -> Unit = {},
     onSearchButtonClick: () -> Unit = {},
 ) {
@@ -135,6 +138,7 @@ fun SearchStopRow(
                 isFromHighlighted = isFromHighlighted,
                 fromButtonClick = fromButtonClick,
                 toButtonClick = toButtonClick,
+                onCollapseRequest = onCollapseRequest,
                 onReverseButtonClick = onReverseButtonClick,
                 onSearchButtonClick = onSearchButtonClick,
             )
@@ -189,6 +193,7 @@ private fun CollapsedPill(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
             .padding(
                 bottom = with(LocalDensity.current) { navBarPadding.dp } + dim.spacingXL,
                 start = dim.pageHorizontalPadding,
@@ -233,6 +238,7 @@ private fun ExpandedSearchRow(
     onReverseButtonClick: () -> Unit,
     onSearchButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onCollapseRequest: (() -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
@@ -249,216 +255,187 @@ private fun ExpandedSearchRow(
         label = "fromBorderAlpha",
     )
 
-    Row(
+    // Cutout inset on the outer box so the background itself doesn't draw behind
+    // the camera notch/punch-hole in landscape. Content and background are both
+    // constrained to the safe horizontal area.
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                color = themeColorHex.hexToComposeColor(),
-                shape = RoundedCornerShape(
-                    topStart = SearchRowTopRadius,
-                    topEnd = SearchRowTopRadius,
-                ),
-            )
-            .padding(vertical = SearchRowVerticalPadding, horizontal = dim.pageHorizontalPadding)
-            .padding(
-                bottom = with(LocalDensity.current) { navBarPadding.dp },
-                top = dim.spacingM,
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
     ) {
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = themeColorHex.hexToComposeColor(),
+                    shape = RoundedCornerShape(
+                        topStart = SearchRowTopRadius,
+                        topEnd = SearchRowTopRadius,
+                    ),
+                ),
         ) {
-            // From field — animates in when opened via a label pill tap
-            AnimatedVisibility(
-                visible = showFromField,
-                enter = expandVertically(
-                    expandFrom = Alignment.Top,
-                    animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
-                ) + fadeIn(animationSpec = tween(350)),
+            if (onCollapseRequest != null) {
+                CollapseHandle(onClick = onCollapseRequest)
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = if (onCollapseRequest != null) 0.dp else SearchRowVerticalPadding + dim.spacingM,
+                        bottom = SearchRowVerticalPadding + with(LocalDensity.current) { navBarPadding.dp },
+                        start = dim.pageHorizontalPadding,
+                        end = dim.pageHorizontalPadding,
+                    ),
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                val fromFieldShape = RoundedCornerShape(50)
-                TextFieldButton(
-                    onClick = fromButtonClick,
-                    modifier = if (isFromHighlighted) {
-                        Modifier.border(
-                            width = dim.strokeRegular,
-                            color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
-                            shape = fromFieldShape,
-                        )
-                    } else {
-                        Modifier
-                    },
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
                 ) {
-                    AnimatedContent(
-                        targetState = fromStopItem?.stopName ?: "Starting from",
-                        transitionSpec = {
-                            fadeIn(animationSpec = tween(200)) +
-                                slideInVertically(
-                                    initialOffsetY = { it / 2 },
-                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
-                                ) togetherWith fadeOut(animationSpec = tween(200)) +
-                                slideOutVertically(
-                                    targetOffsetY = { -it / 2 },
-                                    animationSpec = tween(500),
+                    // From field — animates in when opened via a label pill tap
+                    AnimatedVisibility(
+                        visible = showFromField,
+                        enter = expandVertically(
+                            expandFrom = Alignment.Top,
+                            animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+                        ) + fadeIn(animationSpec = tween(350)),
+                    ) {
+                        val fromFieldShape = RoundedCornerShape(50)
+                        TextFieldButton(
+                            onClick = fromButtonClick,
+                            modifier = if (isFromHighlighted) {
+                                Modifier.border(
+                                    width = dim.strokeRegular,
+                                    color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
+                                    shape = fromFieldShape,
                                 )
-                        },
-                        contentAlignment = Alignment.CenterStart,
-                        label = "startingFromText",
-                    ) { targetText ->
-                        ThemeTextFieldPlaceholderText(
-                            text = targetText,
-                            isActive = fromStopItem != null,
-                        )
+                            } else {
+                                Modifier
+                            },
+                        ) {
+                            AnimatedContent(
+                                targetState = fromStopItem?.stopName ?: "Starting from",
+                                transitionSpec = {
+                                    fadeIn(animationSpec = tween(200)) +
+                                        slideInVertically(
+                                            initialOffsetY = { it / 2 },
+                                            animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                        ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                        slideOutVertically(
+                                            targetOffsetY = { -it / 2 },
+                                            animationSpec = tween(500),
+                                        )
+                                },
+                                contentAlignment = Alignment.CenterStart,
+                                label = "startingFromText",
+                            ) { targetText ->
+                                ThemeTextFieldPlaceholderText(
+                                    text = targetText,
+                                    isActive = fromStopItem != null,
+                                )
+                            }
+                        }
+                    }
+
+                    // A small spacer replaces the From field gap when From is hidden,
+                    // so the To field doesn't jump when From animates in.
+                    if (!showFromField) {
+                        Spacer(modifier = Modifier.height(0.dp))
+                    }
+
+                    // To field — always visible when expanded
+                    TextFieldButton(onClick = toButtonClick) {
+                        AnimatedContent(
+                            targetState = toStopItem?.stopName ?: "Destination",
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(200)) +
+                                    slideInVertically(
+                                        initialOffsetY = { -it / 2 },
+                                        animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                    ) togetherWith fadeOut(animationSpec = tween(200)) +
+                                    slideOutVertically(
+                                        targetOffsetY = { it / 2 },
+                                        animationSpec = tween(500),
+                                    )
+                            },
+                            contentAlignment = Alignment.CenterStart,
+                            label = "destinationText",
+                        ) { targetText ->
+                            ThemeTextFieldPlaceholderText(
+                                text = targetText,
+                                isActive = toStopItem != null,
+                            )
+                        }
                     }
                 }
-            }
 
-            // A small spacer replaces the From field gap when From is hidden,
-            // so the To field doesn't jump when From animates in.
-            if (!showFromField) {
-                Spacer(modifier = Modifier.height(0.dp))
-            }
+                // Action buttons (reverse + search)
+                Column(
+                    modifier = Modifier.padding(start = dim.spacingXL),
+                    verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
+                ) {
+                    val rotation by animateFloatAsState(
+                        targetValue = if (isReverseButtonRotated) 180f else 0f,
+                        animationSpec = tween(durationMillis = 300),
+                        label = "reverseRotation",
+                    )
 
-            // To field — always visible when expanded
-            TextFieldButton(onClick = toButtonClick) {
-                AnimatedContent(
-                    targetState = toStopItem?.stopName ?: "Destination",
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(200)) +
-                            slideInVertically(
-                                initialOffsetY = { -it / 2 },
-                                animationSpec = tween(500, easing = FastOutSlowInEasing),
-                            ) togetherWith fadeOut(animationSpec = tween(200)) +
-                            slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(500),
+                    RoundIconButton(
+                        content = {
+                            Image(
+                                painter = painterResource(Res.drawable.ic_reverse),
+                                contentDescription = "Reverse",
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                                modifier = Modifier.size(dim.iconDefault),
                             )
-                    },
-                    contentAlignment = Alignment.CenterStart,
-                    label = "destinationText",
-                ) { targetText ->
-                    ThemeTextFieldPlaceholderText(
-                        text = targetText,
-                        isActive = toStopItem != null,
+                        },
+                        onClick = {
+                            isReverseButtonRotated = !isReverseButtonRotated
+                            onReverseButtonClick()
+                        },
+                        modifier = Modifier.graphicsLayer { rotationZ = rotation },
+                    )
+
+                    RoundIconButton(
+                        content = {
+                            Image(
+                                painter = painterResource(Res.drawable.ic_search),
+                                contentDescription = "Search",
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                                modifier = Modifier.size(dim.iconDefault),
+                            )
+                        },
+                        onClick = onSearchButtonClick,
                     )
                 }
             }
         }
-
-        // Action buttons (reverse + search)
-        Column(
-            modifier = Modifier.padding(start = dim.spacingXL),
-            verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
-        ) {
-            val rotation by animateFloatAsState(
-                targetValue = if (isReverseButtonRotated) 180f else 0f,
-                animationSpec = tween(durationMillis = 300),
-                label = "reverseRotation",
-            )
-
-            RoundIconButton(
-                content = {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_reverse),
-                        contentDescription = "Reverse",
-                        colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(dim.iconDefault),
-                    )
-                },
-                onClick = {
-                    isReverseButtonRotated = !isReverseButtonRotated
-                    onReverseButtonClick()
-                },
-                modifier = Modifier.graphicsLayer { rotationZ = rotation },
-            )
-
-            RoundIconButton(
-                content = {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_search),
-                        contentDescription = "Search",
-                        colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(dim.iconDefault),
-                    )
-                },
-                onClick = onSearchButtonClick,
-            )
-        }
-    }
+    } // closes cutout Box
 }
 
-// region Previews
-
-@ScreenshotTest
-@Preview(name = "1. Collapsed pill - Train theme")
 @Composable
-private fun PreviewSearchStopRow_Collapsed_Train() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = false,
+private fun CollapseHandle(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = 36.dp, height = 4.dp)
+                .background(
+                    color = KrailTheme.colors.surface,
+                    shape = RoundedCornerShape(2.dp),
+                ),
         )
     }
 }
 
-@ScreenshotTest
-@Preview(name = "2. Expanded - both fields empty")
-@Composable
-private fun PreviewSearchStopRow_Expanded_Empty() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = true,
-            isFromHighlighted = false,
-        )
-    }
-}
-
-@ScreenshotTest
-@Preview(name = "3. Expanded - To pre-filled, From highlighted (label pill flow)")
-@Composable
-private fun PreviewSearchStopRow_Expanded_LabelPill() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Bus) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = true,
-            isFromHighlighted = true,
-            toStopItem = StopItem(stopId = "2000001", stopName = "Central Station"),
-        )
-    }
-}
-
-@ScreenshotTest
-@Preview(name = "4. Expanded - both stops set")
-@Composable
-private fun PreviewSearchStopRow_Expanded_BothSet() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = true,
-            fromStopItem = StopItem(stopId = "2000002", stopName = "Town Hall Station"),
-            toStopItem = StopItem(stopId = "2000001", stopName = "Central Station"),
-        )
-    }
-}
-
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
-@Preview(name = "5. Collapsed pill - Ferry theme")
-@Composable
-private fun PreviewSearchStopRow_Collapsed_Ferry() {
-    PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
-        SearchStopRow(
-            fromButtonClick = {},
-            toButtonClick = {},
-            isExpanded = false,
-        )
-    }
-}
-
-// endregion
+// Previews live in SearchStopRowPreviews.kt (kept separate to stay under TooManyFunctions limit)

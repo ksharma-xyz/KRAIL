@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toPersistentSet
-import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.core.maps.state.SearchRadius
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
@@ -260,21 +260,20 @@ private fun SearchRadiusChips(
     onRadiusSelect: (Double) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val radiusOptions = remember { listOf(1.0, 3.0, 5.0) }
     val themeColor = LocalThemeColor.current.value.hexToComposeColor()
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM),
     ) {
-        radiusOptions.forEach { radius ->
+        SearchRadius.entries.forEach { radius ->
             FilterChip(
-                selected = selectedRadiusKm == radius,
-                onClick = { onRadiusSelect(radius) },
+                selected = selectedRadiusKm == radius.km,
+                onClick = { onRadiusSelect(radius.km) },
                 label = {
                     Text(
-                        text = "${radius.toInt()}km",
-                        color = if (selectedRadiusKm == radius) {
+                        text = radius.label,
+                        color = if (selectedRadiusKm == radius.km) {
                             KrailTheme.colors.surface
                         } else {
                             KrailTheme.colors.onSurface
@@ -361,7 +360,7 @@ private fun MapControlToggle(
 private fun PreviewMapOptionsBottomSheet() {
     PreviewTheme {
         MapOptionsBottomSheet(
-            searchRadiusKm = NearbyStopsConfig.DEFAULT_RADIUS_KM,
+            searchRadiusKm = SearchRadius.DEFAULT.km,
             selectedTransportModes = NswTransportConfig.allProductClasses().toPersistentSet(),
             showDistanceScale = false,
             showCompass = true,

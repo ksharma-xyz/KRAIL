@@ -15,6 +15,7 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.DepartureBoardViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
@@ -121,6 +122,13 @@ val viewModelsModule = module {
             repository = get(),
             ioDispatcher = get(named(IODispatcher)),
         )
+    }
+
+    // Per-entry map ViewModel — each nav entry (SavedTrips, SearchStop) gets its own
+    // instance so screens never share state or compete for NearbyStopsManager queries.
+    // NearbyStopsManager itself is a single so network/cache work is still deduplicated.
+    viewModel {
+        MapStopSelectionViewModel(nearbyStopsManager = get())
     }
 
     viewModelOf(::DepartureBoardViewModel)

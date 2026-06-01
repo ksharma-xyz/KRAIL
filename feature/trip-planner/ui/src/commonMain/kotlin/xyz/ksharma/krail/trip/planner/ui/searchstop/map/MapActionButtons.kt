@@ -44,7 +44,7 @@ internal fun MapActionButtons(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = dim.spacingXL, vertical = dim.spacingM),
+            .padding(horizontal = dim.spacingXL, vertical = dim.spacingXL),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

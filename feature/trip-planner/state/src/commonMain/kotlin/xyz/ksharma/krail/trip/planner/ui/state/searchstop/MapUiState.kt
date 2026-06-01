@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.RouteFeature
+import xyz.ksharma.krail.core.maps.state.SearchRadius
 import xyz.ksharma.krail.core.maps.state.SelectedStopUi
 import xyz.ksharma.krail.core.maps.state.StopFeature
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -49,7 +50,7 @@ data class MapDisplay(
         NearbyStopsConfig.DEFAULT_CENTER_LON,
     ),
     val userLocation: LatLng? = null, // User's current GPS location (null if unknown)
-    val searchRadiusKm: Double = NearbyStopsConfig.DEFAULT_RADIUS_KM,
+    val searchRadiusKm: Double = SearchRadius.DEFAULT.km,
     val showDistanceScale: Boolean = false,
     val showCompass: Boolean = true,
 )

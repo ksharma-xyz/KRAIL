@@ -19,6 +19,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -179,29 +181,41 @@ private fun JourneyMapContent(
         },
     )
 
-    Box(modifier = modifier.fillMaxSize()) {
-        MaplibreMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraState = cameraState,
-            baseStyle = BaseStyle.Uri(MapTileProvider.DEFAULT),
-            options = MapOptions(
-                ornamentOptions = OrnamentOptions(
-                    padding = PaddingValues(MapConfig.Ornaments.DEFAULT_PADDING_DP.dp),
-                    isLogoEnabled = MapConfig.Ornaments.LOGO_ENABLED,
-                    isAttributionEnabled = MapConfig.Ornaments.ATTRIBUTION_ENABLED,
-                    attributionAlignment = Alignment.BottomEnd,
-                    isCompassEnabled = MapConfig.Ornaments.COMPASS_ENABLED,
-                    compassAlignment = Alignment.TopEnd,
-                    isScaleBarEnabled = MapConfig.Ornaments.SCALE_BAR_ENABLED,
+    // Gate MaplibreMap creation until the container has a real non-zero size.
+    // On iOS (dual-pane / rotation transients) instantiating it at a 0x0 frame makes the
+    // native MLNMapView's Metal layer fail to allocate a drawable ("CAMetalLayer ... width=0" /
+    // "nextDrawable returning nil") and the camera projects against a dead viewport, leaving it
+    // zoomed all the way out (whole-of-Australia). Same gate as MapContent in SearchStopMap.
+    var mapContainerSize by remember { mutableStateOf(IntSize.Zero) }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onSizeChanged { mapContainerSize = it },
+    ) {
+        if (mapContainerSize.width > 0 && mapContainerSize.height > 0) {
+            MaplibreMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraState = cameraState,
+                baseStyle = BaseStyle.Uri(MapTileProvider.DEFAULT),
+                options = MapOptions(
+                    ornamentOptions = OrnamentOptions(
+                        padding = PaddingValues(MapConfig.Ornaments.DEFAULT_PADDING_DP.dp),
+                        isLogoEnabled = MapConfig.Ornaments.LOGO_ENABLED,
+                        isAttributionEnabled = MapConfig.Ornaments.ATTRIBUTION_ENABLED,
+                        attributionAlignment = Alignment.BottomEnd,
+                        isCompassEnabled = MapConfig.Ornaments.COMPASS_ENABLED,
+                        compassAlignment = Alignment.TopEnd,
+                        isScaleBarEnabled = MapConfig.Ornaments.SCALE_BAR_ENABLED,
+                    ),
                 ),
-            ),
-        ) {
-            JourneyMapLayers(
-                mapState = mapState,
-                userLocation = userLocation,
-                onStopSelect = { selectedStop = it },
-            )
-            extraMapContent()
+            ) {
+                JourneyMapLayers(
+                    mapState = mapState,
+                    userLocation = userLocation,
+                    onStopSelect = { selectedStop = it },
+                )
+                extraMapContent()
+            }
         }
 
         // User location button (bottom-end corner)

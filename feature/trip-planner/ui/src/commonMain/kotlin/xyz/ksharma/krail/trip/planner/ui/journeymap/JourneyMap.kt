@@ -20,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -186,13 +185,20 @@ private fun JourneyMapContent(
     // native MLNMapView's Metal layer fail to allocate a drawable ("CAMetalLayer ... width=0" /
     // "nextDrawable returning nil") and the camera projects against a dead viewport, leaving it
     // zoomed all the way out (whole-of-Australia). Same gate as MapContent in SearchStopMap.
-    var mapContainerSize by remember { mutableStateOf(IntSize.Zero) }
+    //
+    // LATCH the flag — never reset it to false. During a rotation the container momentarily
+    // reports a 0 axis (the adaptive window flips through 840×0dp); tearing the map down on that
+    // transient and recreating it leaves the pane blank until a SECOND rotation. Once we've seen
+    // a valid size we keep the map mounted; MapLibre resizes its own surface as it settles.
+    var hasHadValidSize by remember { mutableStateOf(false) }
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onSizeChanged { mapContainerSize = it },
+            .onSizeChanged {
+                if (it.width > 0 && it.height > 0) hasHadValidSize = true
+            },
     ) {
-        if (mapContainerSize.width > 0 && mapContainerSize.height > 0) {
+        if (hasHadValidSize) {
             MaplibreMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraState = cameraState,

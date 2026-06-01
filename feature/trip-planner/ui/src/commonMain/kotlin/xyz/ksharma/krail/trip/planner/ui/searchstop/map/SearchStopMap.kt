@@ -24,7 +24,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -415,13 +414,20 @@ private fun MapSurface(
     onStopSelected: (NearbyStopFeature) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var mapContainerSize by remember { mutableStateOf(IntSize.Zero) }
+    // LATCH the "has had a real size" flag — never reset it to false. During a rotation the
+    // container momentarily reports a 0 axis (the adaptive window flips through 840×0dp);
+    // tearing the map down on that transient and recreating it leaves the right pane blank
+    // until a SECOND rotation. Once we've seen a valid size we keep the map mounted; MapLibre
+    // resizes its own surface as the container settles.
+    var hasHadValidSize by remember { mutableStateOf(false) }
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onSizeChanged { mapContainerSize = it },
+            .onSizeChanged {
+                if (it.width > 0 && it.height > 0) hasHadValidSize = true
+            },
     ) {
-        if (mapContainerSize.width > 0 && mapContainerSize.height > 0) {
+        if (hasHadValidSize) {
             MaplibreMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraState = cameraState,

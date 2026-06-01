@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -37,7 +36,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -66,13 +64,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -92,6 +87,7 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
+import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -808,42 +804,23 @@ private fun SearchStopScreenDualPane(
     // precisely because it never auto-shows the keyboard. The map is the primary interaction
     // here; the user taps the search field when they actually want to type.
 
-    // Split view: List on left (fixed width), Map on right (fills the rest).
-    // CRITICAL (iOS): the map must NOT be a descendant of CloudGradientBackground. That
-    // component paints via Modifier.drawBehind; on iOS a MaplibreMap (a UIKitView interop
-    // node) nested under a drawBehind ancestor is composited BEHIND that draw layer and
-    // never becomes visible — blank forever, even across rotation. SavedTrips keeps its map
-    // outside the gradient for exactly this reason, which is why its map always worked.
-    // So the gradient wraps ONLY the left list pane; the map pane is a sibling under the Row.
-    // See docs/TABLET_FOLDABLE_UX.md §2 for the ratio rationale.
-    Column(
-        modifier = modifier.fillMaxSize(),
-    ) {
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-        ) {
-            // Left pane: FIXED width when right pane is present (mirrors SavedTrips dual-pane).
-            // A flexible widthIn() sibling next to the map's weight(1f) gives the iOS UIKitView
-            // interop unstable constraints. A fixed width makes the map's weight(1f) deterministic
-            // in a single measure pass. Gradient spans full width when the shared map VM has no
-            // state yet (no blank right gap).
+    // Dual-pane split via the shared DualPaneScaffold so SavedTrips and SearchStop can't drift.
+    // The scaffold owns the fixed-width-list / weighted-right-pane contract AND the invariant
+    // that the right-pane map is a SIBLING of the list — never nested under the list's
+    // CloudGradientBackground. The gradient uses an offscreen graphicsLayer; on iOS a UIKitView
+    // (MapLibre's MLNMapView) can't composite into an offscreen buffer and renders blank, so the
+    // gradient must wrap ONLY the list. See DualPaneScaffold + docs/TABLET_FOLDABLE_UX.md §2.
+    DualPaneScaffold(
+        modifier = modifier,
+        logTag = "SearchStop",
+        listPane = {
             CloudGradientBackground(
                 modifier = Modifier
-                    .then(
-                        if (dualPaneMapUiState != null) {
-                            Modifier.width(SEARCH_STOP_LIST_PANE_MAX_WIDTH)
-                        } else {
-                            Modifier.fillMaxWidth()
-                        },
-                    )
-                    .fillMaxHeight()
+                    .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
                 themeColor = themeColor.hexToComposeColor(),
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // Search top bar only spans the list width
                     SearchTopBar(
                         placeholderText = placeholderText,
                         initialText = initialText,
@@ -882,35 +859,17 @@ private fun SearchStopScreenDualPane(
                     )
                 }
             }
-
-            // Right pane: shared MapStopSelectionPane (same VM as SavedTrips dual-pane).
-            // Sibling of the gradient, NOT a child — see the iOS note above. The
-            // weight(1f).fillMaxHeight() lives on a wrapper Box (pane gets default Modifier),
-            // mirroring SavedTrips' dual-pane exactly.
-            if (dualPaneMapUiState != null) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .onSizeChanged {
-                            log("[PANE_DIAG] SearchStop rightPane size=${it.width}x${it.height}")
-                        }
-                        .onGloballyPositioned {
-                            log(
-                                "[PANE_DIAG] SearchStop rightPane " +
-                                    "pos=${it.positionInWindow()} size=${it.size}",
-                            )
-                        },
-                ) {
-                    MapStopSelectionPane(
-                        mapUiState = dualPaneMapUiState,
-                        onEvent = onDualPaneMapEvent,
-                        onStopSelected = onStopSelect,
-                    )
-                }
+        },
+        rightPane = dualPaneMapUiState?.let { mapState ->
+            {
+                MapStopSelectionPane(
+                    mapUiState = mapState,
+                    onEvent = onDualPaneMapEvent,
+                    onStopSelected = onStopSelect,
+                )
             }
-        }
-    }
+        },
+    )
 }
 
 /**
@@ -1664,11 +1623,6 @@ private fun MapAutoInitEffect(
         }
     }
 }
-
-// Dual-pane list-column width bounds. Keeps the stops list at ≈ phone-width so
-// StopSearchListItem rows stay readable; map fills the remainder. See
-// docs/TABLET_FOLDABLE_UX.md §2 for the ratio table.
-private val SEARCH_STOP_LIST_PANE_MAX_WIDTH = 480.dp
 
 // Pill scale factors used by LabelShortcutsRow's graphicsLayer transform — extracted
 // here so the call site reads as intent, not magic numbers.

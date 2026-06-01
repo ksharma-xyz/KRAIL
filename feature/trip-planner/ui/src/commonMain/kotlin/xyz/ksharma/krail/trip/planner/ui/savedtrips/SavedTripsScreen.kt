@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,9 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -77,6 +74,7 @@ import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.feature.track.TrackedJourney
@@ -366,35 +364,14 @@ fun SavedTripsScreen(
                 "isTablet=$isTablet isPhoneLandscape=$isPhoneLandscape",
         )
         if (dualPane) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onSizeChanged { log("[MAP_STOP_SEL] Row size=${it.width}x${it.height}") },
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(SAVED_TRIPS_PANE_MAX_WIDTH)
-                        .fillMaxHeight()
-                        .onSizeChanged { log("[MAP_STOP_SEL] leftPane size=${it.width}x${it.height}") },
-                ) {
-                    body()
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .onSizeChanged {
-                            log("[PANE_DIAG] SavedTrips rightPane size=${it.width}x${it.height}")
-                        }
-                        .onGloballyPositioned {
-                            log(
-                                "[PANE_DIAG] SavedTrips rightPane " +
-                                    "pos=${it.positionInWindow()} size=${it.size}",
-                            )
-                        },
-                    content = rightPane,
-                )
-            }
+            // Shared dual-pane split — same component SearchStop uses, so the two screens'
+            // two-pane layouts can't drift. Right pane (map) is a sibling of the list, never
+            // nested under it; see DualPaneScaffold for the iOS compositing invariant.
+            DualPaneScaffold(
+                logTag = "SavedTrips",
+                listPane = { body() },
+                rightPane = rightPane,
+            )
         } else {
             body()
         }
@@ -709,7 +686,6 @@ private const val WIGGLE_OFFSET_MAX_MS = 200
 // Left-pane width cap when SavedTrips is rendered in dual-pane (≥ 600 dp width).
 // Keeps the saved-trips list at phone-width proportions; map fills the rest.
 // See docs/TABLET_FOLDABLE_UX.md §4.
-private val SAVED_TRIPS_PANE_MAX_WIDTH = 480.dp
 
 // region Previews
 

@@ -135,37 +135,24 @@ private fun JourneyMapContent(
     val initialCameraPosition = remember { calculateInitialCameraPosition(mapState) }
     val cameraState = rememberCameraState(firstPosition = initialCameraPosition)
 
-    // Smooth camera animation when the displayed journey changes (different card
-    // expanded, journey collapsed back to empty). Reads userLocation at the moment
-    // the state changes — for the empty state, flies to user location if GPS is
-    // available, else falls back to Sydney default coordinates.
-    LaunchedEffect(mapState.cameraFocus, mapState.mapDisplay.stops) {
+    // Single source of truth for the camera target. ONE effect, so the journey-change case
+    // and the empty-state user-location case can't race two competing animateTo calls (the
+    // bug where the empty TimeTable map landed on Sydney sometimes and the user location other
+    // times, depending on which effect won).
+    //
+    // Keyed on:
+    //  - cameraFocus + stops → re-fit when the displayed journey changes.
+    //  - hasUserLocation (a STABLE boolean, NOT the churning LatLng) → re-evaluate once a fix
+    //    first arrives. Keying on the boolean (not the value) means GPS jitter can't re-launch
+    //    and cancel the in-flight animateTo.
+    //
+    // Priority inside cameraTargetForState: a selected journey wins; otherwise (empty) it flies
+    // to the user location if known, else the Sydney default. So with no location permission the
+    // empty map stays at Sydney; with a fix it centres on the user — deterministically, no race.
+    val hasUserLocation = userLocation != null
+    LaunchedEffect(mapState.cameraFocus, mapState.mapDisplay.stops, hasUserLocation) {
         val target = cameraTargetForState(mapState, userLocation)
         cameraState.animateTo(target, duration = CAMERA_TRANSITION_MS.milliseconds)
-    }
-
-    // Empty-state (no journey) auto-centre on the user's first location fix.
-    // The effect above is keyed on cameraFocus + stops, NOT userLocation, so on a fresh
-    // load where the GPS fix arrives AFTER it runs, the camera stayed at the Sydney default
-    // until a rotation re-ran composition. Key this one on a STABLE boolean (flips
-    // false->true once) so GPS jitter can't re-launch and cancel the animateTo. Only acts
-    // while empty so it never yanks the camera off a selected journey; no location
-    // permission -> userLocation stays null -> camera stays at the Sydney default.
-    val hasUserLocation = userLocation != null
-    var hasCenteredOnUser by remember { mutableStateOf(false) }
-    LaunchedEffect(hasUserLocation) {
-        val loc = userLocation
-        val isEmpty = mapState.mapDisplay.stops.isEmpty() && mapState.cameraFocus == null
-        if (loc != null && isEmpty && !hasCenteredOnUser) {
-            hasCenteredOnUser = true
-            cameraState.animateTo(
-                CameraPosition(
-                    target = Position(latitude = loc.latitude, longitude = loc.longitude),
-                    zoom = UserLocationConfig.RECENTER_ZOOM,
-                ),
-                duration = CAMERA_TRANSITION_MS.milliseconds,
-            )
-        }
     }
 
     TrackUserLocation(

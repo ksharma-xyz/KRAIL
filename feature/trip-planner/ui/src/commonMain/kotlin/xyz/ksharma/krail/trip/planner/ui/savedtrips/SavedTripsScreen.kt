@@ -131,29 +131,21 @@ fun SavedTripsScreen(
         }.random()
     }
 
-    // Pill (phone-portrait only) is shown when there's enough saved content above
-    // to justify collapsing the search row out of the way:
-    //   • 2+ saved trips, OR
-    //   • 1 saved trip + at least one Park & Ride entry.
-    // Anything less and the expanded row stays — first-time and lightly-used
-    // accounts still get the full search affordance front-and-centre.
-    val savedTripsCount = savedTripsState.savedTrips.size
-    val hasParkRide = savedTripsState.parkRideUiState.isNotEmpty()
-
-    // Adaptive layout:
-    //   - Tablet / foldable-unfolded (isTablet): SearchStopRow always expanded.
-    //   - Phone portrait + phone landscape: pill collapses SearchStopRow when
-    //     enough content is present. Same behaviour in both orientations.
+    // Adaptive search-row presentation:
+    //   - Phone portrait, tablet, foldable-unfolded: SearchStopRow is ALWAYS expanded —
+    //     these form factors have the vertical room, so the full search affordance stays
+    //     front-and-centre.
+    //   - Phone landscape (compact height): vertical space is scarce, so the row collapses
+    //     to a "Plan a trip" button. Tapping it expands the full SearchStopRow; the
+    //     collapse handle returns to the button.
     // See docs/TABLET_FOLDABLE_UX.md §4.
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val dualPane = adaptiveLayoutInfo.shouldShowDualPane
     val isPhoneLandscape = adaptiveLayoutInfo.isPhoneLandscape
     val isTablet = adaptiveLayoutInfo.isTablet
 
-    val showPill = when {
-        isTablet -> false
-        else -> savedTripsCount >= 2 || (savedTripsCount >= 1 && hasParkRide)
-    }
+    // Collapse to the button only in phone-landscape; everything else stays expanded.
+    val showPill = isPhoneLandscape
 
     // Search row expand / from-highlight state — rememberSaveable survives rotation.
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }

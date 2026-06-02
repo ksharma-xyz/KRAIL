@@ -121,16 +121,18 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   `MapStopSelectionPane` (singleton `MapStopSelectionViewModel`). Users can
   explore nearby stops and view stop details; tapping a stop has no
   trip-planning side-effect. The right pane is purely contextual.
-- Trip planning is done via the SearchStopRow pill at the bottom of the left
-  pane (same flow as portrait — pill collapses/expands SearchStopRow).
+- Trip planning is done via the SearchStopRow at the bottom of the left pane.
+  On tablet and foldable-unfolded the row is **always expanded**; only
+  phone-landscape collapses it to a button (see compact-height rules below).
 
 ### Compact-height rules (`isCompactHeight`, height < 480 dp)
 
-Phone landscape uses the **same pill + expand-SearchStopRow** behaviour as
-portrait. No special single-line collapsed bar is needed — the pill already
-collapses the row to a single button, and expanding it fills the remaining
-height acceptably. `showPill` logic is the same in both orientations
-(collapses when ≥ 2 saved trips, or 1 trip + Park & Ride).
+Phone landscape is the **only** form factor that collapses SearchStopRow to a
+"Plan a trip" button — vertical space is too scarce to keep the full row open.
+Tapping the button expands the full SearchStopRow; the collapse handle returns
+to the button. Phone portrait, tablet, and foldable-unfolded always show the
+expanded row. The rule is simply `showPill = isPhoneLandscape` — it no longer
+depends on saved-trip count or Park & Ride.
 
 ---
 

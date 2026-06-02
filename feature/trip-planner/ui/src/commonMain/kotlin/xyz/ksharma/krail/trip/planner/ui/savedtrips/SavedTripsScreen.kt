@@ -57,7 +57,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -67,7 +66,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
@@ -91,15 +89,12 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
-import xyz.ksharma.krail.trip.planner.ui.departureboard.departureBoardAccordionSection
-import xyz.ksharma.krail.trip.planner.ui.state.departureboard.DepartureBoardUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
@@ -123,15 +118,11 @@ fun SavedTripsScreen(
     onEvent: (SavedTripUiEvent) -> Unit = {},
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
-    departureBoardEntries: ImmutableList<StopDepartureBoardEntry> = persistentListOf(),
-    expandedDepartureBoardStopId: String? = null,
-    onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
     // Slot for the dual-pane right side. SavedTrips knows nothing about its content —
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
-    val iconColor = if (isAppInDarkMode().not()) themeColor() else KrailTheme.colors.onSurface
     val emptyStateTip = remember {
         buildList {
             add("Tap ★ on a trip to save it here.")
@@ -295,15 +286,11 @@ fun SavedTripsScreen(
                             savedTripsContent(
                                 savedTripsState = savedTripsState,
                                 trackedJourney = trackedJourney,
-                                iconColor = iconColor,
                                 onEvent = onEvent,
                                 onSavedTripCardClick = onSavedTripCardClick,
                                 onTrackingCardClick = onTrackingCardClick,
                                 onStopTracking = onStopTracking,
                                 expandedMap = expandedMap,
-                                departureBoardEntries = departureBoardEntries,
-                                expandedDepartureBoardStopId = expandedDepartureBoardStopId,
-                                onDepartureBoardEvent = onDepartureBoardEvent,
                                 editing = editing,
                                 reorderState = reorderState,
                                 onEnterEditing = { editing = true },
@@ -413,15 +400,11 @@ private fun LazyListScope.infoTiles(
 private fun LazyListScope.savedTripsContent(
     savedTripsState: SavedTripsState,
     trackedJourney: TrackedJourney?,
-    iconColor: Color,
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
     expandedMap: SnapshotStateMap<String, Boolean>,
-    departureBoardEntries: ImmutableList<StopDepartureBoardEntry>,
-    expandedDepartureBoardStopId: String?,
-    onDepartureBoardEvent: (DepartureBoardUiEvent) -> Unit = {},
     editing: Boolean,
     reorderState: ReorderableLazyListState,
     onEnterEditing: () -> Unit,
@@ -582,28 +565,6 @@ private fun LazyListScope.savedTripsContent(
             )
 
             Spacer(modifier = Modifier.height(dim.spacingXL))
-        }
-    }
-
-    if (departureBoardEntries.isNotEmpty()) {
-        stickyHeader(key = "departure_board_title") {
-            SavedTripsTitle {
-                Text(text = "Departure Board")
-            }
-        }
-
-        departureBoardEntries.forEach { entry ->
-            departureBoardAccordionSection(
-                entry = entry,
-                isExpanded = expandedDepartureBoardStopId == entry.stopId,
-                iconColor = iconColor,
-                onEvent = onDepartureBoardEvent,
-            )
-        }
-
-        item(key = "departure_board_bottom_spacer") {
-            val dim = KrailTheme.dimensions
-            Spacer(modifier = Modifier.height(dim.pageSectionGap))
         }
     }
 }

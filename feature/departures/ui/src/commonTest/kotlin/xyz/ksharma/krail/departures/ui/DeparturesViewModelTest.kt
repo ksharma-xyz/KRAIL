@@ -31,9 +31,6 @@ import kotlin.test.assertTrue
  * [DeparturesUiEvent] interface: `LoadDepartures`, `Refresh`, `StopPolling`, and
  * `LoadPreviousDepartures`.
  *
- * For the saved-trips screen that shows an accordion of multiple stops, see
- * [DepartureBoardViewModelTest] in the `feature:trip-planner:ui` module.
- *
  * ## Coroutine-test conventions (read before editing)
  *
  * [DeparturesViewModel] gates its repository [DepartureBoardRepository.pollStop] collection on

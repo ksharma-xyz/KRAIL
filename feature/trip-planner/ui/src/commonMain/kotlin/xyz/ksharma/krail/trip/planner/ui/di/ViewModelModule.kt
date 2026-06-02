@@ -16,7 +16,6 @@ import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewMo
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.DepartureBoardViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -130,8 +129,6 @@ val viewModelsModule = module {
     viewModel {
         MapStopSelectionViewModel(nearbyStopsManager = get())
     }
-
-    viewModelOf(::DepartureBoardViewModel)
 
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
 

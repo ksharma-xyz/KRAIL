@@ -46,6 +46,21 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
+    /**
+     * User taps Retry after an API/load failure. Unified across surfaces to stay within the
+     * Firebase 500-event budget: [source] identifies where the retry happened rather than
+     * minting a per-screen event.
+     */
+    data class RetryApiEvent(val source: Source) :
+        AnalyticsEvent(
+            name = "retry_api",
+            properties = mapOf(PROP_SOURCE to source.value),
+        ) {
+        enum class Source(val value: String) {
+            TIMETABLE("timetable"),
+        }
+    }
+
     data object SettingsClickEvent : AnalyticsEvent(name = "settings_click")
 
     data object FromFieldClickEvent : AnalyticsEvent(name = "from_field_click")

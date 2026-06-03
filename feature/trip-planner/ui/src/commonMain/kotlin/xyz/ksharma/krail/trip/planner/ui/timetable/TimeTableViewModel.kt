@@ -252,7 +252,14 @@ class TimeTableViewModel(
 
             TimeTableUiEvent.ReverseTripButtonClicked -> onReverseTripButtonClicked()
 
-            TimeTableUiEvent.RetryButtonClicked -> onLoadTimeTable(tripInfo!!)
+            TimeTableUiEvent.RetryButtonClicked -> {
+                analytics.track(
+                    AnalyticsEvent.RetryApiEvent(
+                        source = AnalyticsEvent.RetryApiEvent.Source.TIMETABLE,
+                    ),
+                )
+                onLoadTimeTable(tripInfo!!)
+            }
 
             is TimeTableUiEvent.DateTimeSelectionChanged -> {
                 onDateTimeSelectionChanged(item = event.dateTimeSelectionItem)
@@ -426,6 +433,11 @@ class TimeTableViewModel(
                     // 30s refresh flips the whole screen to the error state. Only surface the
                     // full error screen when there is nothing to show.
                     val hasData = _uiState.value.journeyList.isNotEmpty()
+                    // Track the error screen as a screen view, but only on the transition
+                    // into the error state (not on every failed auto-refresh while errored).
+                    if (!hasData && !_uiState.value.isError) {
+                        analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTableError)
+                    }
                     updateUiState { copy(isLoading = false, isError = !hasData) }
                 }
             }

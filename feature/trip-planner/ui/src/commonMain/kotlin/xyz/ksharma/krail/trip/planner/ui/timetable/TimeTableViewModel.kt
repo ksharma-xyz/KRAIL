@@ -420,7 +420,13 @@ class TimeTableViewModel(
                     updateTripsCache(response)
                     updateUiStateWithFilteredTrips()
                 }.onFailure {
-                    updateUiState { copy(isLoading = false, isError = true) }
+                    // fetchTrip() runs on every screen-visible (onStart) and every auto-refresh.
+                    // A failure on one of those silent/background refreshes must NOT blow away
+                    // journeys already on screen, otherwise returning to the app or a flaky
+                    // 30s refresh flips the whole screen to the error state. Only surface the
+                    // full error screen when there is nothing to show.
+                    val hasData = _uiState.value.journeyList.isNotEmpty()
+                    updateUiState { copy(isLoading = false, isError = !hasData) }
                 }
             }
         }

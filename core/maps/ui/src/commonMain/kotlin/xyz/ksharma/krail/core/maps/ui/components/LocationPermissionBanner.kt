@@ -3,6 +3,7 @@ package xyz.ksharma.krail.core.maps.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +34,7 @@ fun LocationPermissionBanner(
 ) {
     Box(
         modifier = modifier
+            .statusBarsPadding()
             .clip(RoundedCornerShape(24.dp))
             .background(color = KrailTheme.colors.surface.copy(alpha = 0.9f))
             .klickable(onClick = onGoToSettings)
@@ -40,7 +42,7 @@ fun LocationPermissionBanner(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "Location off, tap to open Settings",
+            text = "Location permission required",
             style = KrailTheme.typography.bodySmall,
             color = KrailTheme.colors.onSurface,
         )

@@ -229,6 +229,48 @@ class TimeTableViewModelTest {
             }
         }
 
+    @Test
+    fun `GIVEN loaded journeys WHEN a later refresh fails THEN error screen is not shown and journeys are preserved`() =
+        runTest {
+            // GIVEN a trip whose first load succeeds and populates the list
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2"
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                viewModel.fetchTrip()
+
+                // Drain until journeys are loaded.
+                var loaded = awaitItem()
+                while (loaded.journeyList.isEmpty()) loaded = awaitItem()
+                assertFalse(loaded.isError)
+                assertTrue(loaded.journeyList.isNotEmpty())
+
+                // WHEN a later (silent/auto) refresh fails
+                tripPlanningService.isSuccess = false
+                viewModel.fetchTrip()
+
+                // THEN no emission flips to the error screen while data is present,
+                // and the loaded journeys survive the failed refresh.
+                var settled = awaitItem()
+                while (settled.silentLoading) {
+                    assertFalse(settled.isError)
+                    settled = awaitItem()
+                }
+                settled.run {
+                    assertFalse(isError)
+                    assertTrue(journeyList.isNotEmpty())
+                }
+
+                cancelAndConsumeRemainingEvents()
+            }
+        }
+
     // endregion
 
     // region Test for updateTripsCache

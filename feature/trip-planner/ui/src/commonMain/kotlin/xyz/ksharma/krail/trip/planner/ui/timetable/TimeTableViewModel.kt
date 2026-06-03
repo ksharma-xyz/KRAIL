@@ -521,16 +521,38 @@ class TimeTableViewModel(
         }
     }
 
+    /**
+     * Drops journeys that use any de-selected transport mode.
+     *
+     * The NSW trip API does not reliably honour the `exclMOT` exclusion params we send — it
+     * still returns excluded modes (e.g. de-selecting Train still yields train journeys). We
+     * therefore filter defensively on the client so the user's mode selection is always
+     * respected. A multi-modal journey is dropped if ANY of its legs uses an excluded mode.
+     *
+     * Footpath/walk (productClass 99) is not a selectable mode and never appears in
+     * [TimeTableState.JourneyCardInfo.transportModeLines], so it is never excluded.
+     */
+    private fun List<TimeTableState.JourneyCardInfo>.excludeUnselectedModes(): List<TimeTableState.JourneyCardInfo> =
+        if (unselectedModes.isEmpty()) {
+            this
+        } else {
+            filterNot { journey ->
+                journey.transportModeLines.any { it.transportMode.productClass in unselectedModes }
+            }
+        }
+
     private fun updateUiStateWithFilteredTrips() {
         // Main list = current-window journeys + load-more (future) journeys, sorted chronologically.
         val mergedJourneys = (journeys.values + loadMoreJourneys.values)
             .distinctBy { it.journeyId }
         val journeyList = updateJourneyCardInfoTimeText(mergedJourneys)
+            .excludeUnselectedModes()
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
         // Previous list = past journeys fetched via "Show Previous".
         val previousJourneyList = updateJourneyCardInfoTimeText(previousJourneysCache.values.toList())
+            .excludeUnselectedModes()
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
@@ -555,12 +577,19 @@ class TimeTableViewModel(
         }
         log("[SHARE] deep link URLs computed — ${deepLinkUrls?.size ?: 0} journeys encoded for sharing")
 
+        // The API returned journeys but the user's mode selection filtered them all out.
+        // Distinct from "API returned nothing" so the UI can show a mode-specific hint
+        // instead of the generic "no route found" message.
+        val emptyDueToModeFilter = unselectedModes.isNotEmpty() &&
+            mergedJourneys.isNotEmpty() && journeyList.isEmpty()
+
         updateUiState {
             copy(
                 isLoading = false,
                 journeyList = journeyList,
                 previousJourneyList = previousJourneyList,
                 isError = false,
+                emptyDueToModeFilter = emptyDueToModeFilter,
                 deepLinkUrls = deepLinkUrls ?: this.deepLinkUrls,
                 canLoadMore = PAGINATION_ENABLED && journeyList.isNotEmpty() &&
                     loadMoreCount < MAX_LOAD_MORE_COUNT,

@@ -24,6 +24,11 @@ data class TimeTableState(
     val previousJourneyList: ImmutableList<JourneyCardInfo> = persistentListOf(),
     val trip: Trip? = null,
     val isError: Boolean = false,
+    /**
+     * True when the API returned journeys but the user's mode selection filtered all of them
+     * out. Lets the screen show a mode-specific hint instead of the generic "no route found".
+     */
+    val emptyDueToModeFilter: Boolean = false,
     val unselectedModes: ImmutableSet<Int> = persistentSetOf(),
     // has to be null, otherwise it will switch from default to a festival.
     // It should load only once whether it is a festival or not.

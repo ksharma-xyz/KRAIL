@@ -784,6 +784,37 @@ class TimeTableViewModelTest {
             assertEquals(initialUnselectedModes, viewModel.uiState.value.unselectedModes)
             assertTrue((fakeAnalytics as FakeAnalytics).isEventTracked("mode_selection_done"))
         }
+
+    @Test
+    fun `GIVEN train-only journeys WHEN Train is de-selected THEN journeys are filtered out client-side and emptyDueToModeFilter is true`() =
+        runTest {
+            // GIVEN a loaded trip — the fake builder returns train-only journeys (productClass 1).
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2"
+            )
+            tripPlanningService.isSuccess = true
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
+            assertFalse(viewModel.uiState.value.emptyDueToModeFilter)
+
+            // WHEN Train (productClass 1) is de-selected and the trip re-fetches. The NSW API
+            // still returns train journeys, so the client-side filter must drop them.
+            viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(setOf(1)))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // THEN all train journeys are filtered out and the mode-specific empty hint is set.
+            viewModel.uiState.value.run {
+                assertTrue(journeyList.isEmpty())
+                assertTrue(emptyDueToModeFilter)
+                assertFalse(isError)
+            }
+        }
     // endregion
 
     // region Test for ShareJourneyClicked

@@ -78,7 +78,7 @@ class RealFestivalManagerTest {
         val result = manager.festivalOnDate(LocalDate.parse("2024-06-05"))
         assertNotNull(result)
         assertTrue(result is VariableDateFestival)
-        assertEquals("Ongoing Festival", (result as VariableDateFestival).greeting)
+        assertEquals("Ongoing Festival", result.greeting)
     }
 
     @Test

@@ -144,7 +144,7 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
             NavDisplay(
                 entries = entries,
                 onBack = { navigator.pop() },
-                sceneStrategy = listDetailStrategy,
+                sceneStrategies = listOf(listDetailStrategy),
                 modifier = modifier.fillMaxSize(),
             )
         } else {

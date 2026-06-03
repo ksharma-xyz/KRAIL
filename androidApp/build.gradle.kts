@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "xyz.ksharma.krail"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "xyz.ksharma.krail"

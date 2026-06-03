@@ -289,7 +289,7 @@ object DateTimeHelper {
                         .take(DATE_LABEL_ABBREV_LENGTH)
                         .lowercase()
                         .replaceFirstChar { it.uppercase() }
-                    "$day ${departureDate.dayOfMonth} $month"
+                    "$day ${departureDate.day} $month"
                 }
             }
         }.getOrDefault("")

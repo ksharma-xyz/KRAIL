@@ -258,7 +258,7 @@ class TimeTableViewModel(
                         source = AnalyticsEvent.RetryApiEvent.Source.TIMETABLE,
                     ),
                 )
-                onLoadTimeTable(tripInfo!!)
+                onRetry()
             }
 
             is TimeTableUiEvent.DateTimeSelectionChanged -> {
@@ -834,6 +834,19 @@ class TimeTableViewModel(
             legCount = legCount,
             transportModes = transportModes,
         )
+    }
+
+    /**
+     * Re-runs the current request after a failure. Unlike [onLoadTimeTable], retry must NOT
+     * reset trip params: it preserves the selected date/time (Leave at / Arrive by) and the
+     * mode filter, then simply re-fetches. Routing retry through onLoadTimeTable used to null
+     * dateTimeSelectionItem whenever the VM had no previousTripId yet (e.g. a fresh VM after
+     * process death or re-navigation), so retry silently fell back to "now".
+     */
+    private fun onRetry() {
+        if (tripInfo == null) return
+        updateUiState { copy(isLoading = true, isError = false) }
+        fetchTrip()
     }
 
     private fun onLoadTimeTable(trip: Trip) {

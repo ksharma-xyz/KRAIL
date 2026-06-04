@@ -29,6 +29,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
+import xyz.ksharma.krail.trip.planner.network.api.service.DepArr
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -1265,6 +1266,39 @@ class TimeTableViewModelTest {
 
             assertEquals("0915", tripPlanningService.lastCalledTime)
             assertNotNull(tripPlanningService.lastCalledDate)
+        }
+
+    @Test
+    fun `GIVEN a selected Arrive-by time WHEN Retry is clicked THEN the re-fetch keeps that time`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+
+            @OptIn(ExperimentalTime::class)
+            val selection = DateTimeSelectionItem(
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+                option = JourneyTimeOptions.ARRIVE,
+                hour = 9,
+                minute = 15,
+            )
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(selection))
+
+            // First fetch fails -> error screen.
+            tripPlanningService.isSuccess = false
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isError)
+
+            // WHEN Retry is clicked
+            tripPlanningService.isSuccess = true
+            viewModel.onEvent(TimeTableUiEvent.RetryButtonClicked)
+            advanceUntilIdle()
+
+            // THEN the retried request keeps the selected Arrive-by time, not "now".
+            assertEquals("0915", tripPlanningService.lastCalledTime)
+            assertEquals(DepArr.ARR, tripPlanningService.lastCalledDepArr)
+            assertNotNull(viewModel.dateTimeSelectionItem)
         }
 
     // endregion

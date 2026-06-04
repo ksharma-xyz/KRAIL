@@ -11,16 +11,12 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,12 +56,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import app.krail.taj.resources.ic_close
@@ -80,10 +72,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.withTimeoutOrNull
 import krail.feature.trip_planner.ui.generated.resources.ic_map
 import org.jetbrains.compose.resources.painterResource
-import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
@@ -104,15 +94,10 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.AddLabelBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
-import xyz.ksharma.krail.trip.planner.ui.components.LabelConflictSheet
-import xyz.ksharma.krail.trip.planner.ui.components.SaveStopAsLabelSheet
-import xyz.ksharma.krail.trip.planner.ui.components.SetLabelPill
 import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
-import xyz.ksharma.krail.trip.planner.ui.components.UnsetLabelPill
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
@@ -127,11 +112,6 @@ import app.krail.taj.resources.Res as TajRes
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-@Suppress("LongMethod", "CyclomaticComplexMethod")
-// Length and branching are dominated by orchestration state for the screen
-// (assigning mode, edit mode, three save-flow sheets, pending conflict, plus their
-// saver wiring + LaunchedEffect chains). Pulling them apart hurts readability —
-// every state piece is plumbed back into the same single AdaptiveScreenContent.
 @Composable
 fun SearchStopScreen(
     searchStopState: SearchStopState,
@@ -314,133 +294,36 @@ fun SearchStopScreen(
         },
     )
 
-    if (showAddLabelSheet) {
-        AddLabelBottomSheet(
-            stopName = null,
-            existingLabels = searchStopState.stopLabels,
-            onDismiss = {
-                showAddLabelSheet = false
-                // If the user backed out without saving, hand the stop back to the
-                // save-sheet flow so they're not stranded.
-                stopBeingSaved = pendingStopForNewLabel
-                pendingStopForNewLabel = null
-            },
-            onSave = { emoji, name ->
-                showAddLabelSheet = false
-                val cleaned = xyz.ksharma.krail.trip.planner.ui.components
-                    .normaliseLabelName(name)
-                if (cleaned.isNotBlank() &&
-                    searchStopState.stopLabels.none {
-                        xyz.ksharma.krail.trip.planner.ui.components
-                            .labelNamesMatch(it.label, cleaned)
-                    }
-                ) {
-                    onEvent(SearchStopUiEvent.CreateLabel(name = cleaned, emoji = emoji))
-                    val pending = pendingStopForNewLabel
-                    pendingStopForNewLabel = null
-                    if (pending != null) {
-                        // Came from "+ New label" inside SaveStopAsLabelSheet —
-                        // auto-attach the stop to the freshly created label so the
-                        // user's original intent ("save this stop as a new label")
-                        // completes in one go.
-                        onEvent(SearchStopUiEvent.AssignLabelStop(cleaned, pending))
-                    } else {
-                        // Came from the standalone "+ Add" pill — drop into assigning
-                        // mode so the user knows what to do next.
-                        assigningLabel = StopLabel(emoji = emoji, label = cleaned)
-                    }
-                } else {
-                    // Save was blocked (blank or duplicate). Restore the save-sheet
-                    // flow so the user can pick a different option.
-                    stopBeingSaved = pendingStopForNewLabel
-                    pendingStopForNewLabel = null
-                }
-            },
-        )
-    }
+    SearchStopAddLabelDialog(
+        show = showAddLabelSheet,
+        stopLabels = searchStopState.stopLabels,
+        pendingStopForNewLabel = pendingStopForNewLabel,
+        onEvent = onEvent,
+        onShowAddLabelSheetChange = { showAddLabelSheet = it },
+        onStopBeingSavedChange = { stopBeingSaved = it },
+        onPendingStopForNewLabelChange = { pendingStopForNewLabel = it },
+        onAssigningLabelChange = { assigningLabel = it },
+    )
 
-    stopBeingSaved?.let { stop ->
-        SaveStopAsLabelSheet(
-            stopName = stop.stopName,
-            labels = searchStopState.stopLabels,
-            onLabelClick = { label ->
-                val stopOnAnotherLabel = searchStopState.stopLabels.firstOrNull { other ->
-                    other.stopId == stop.stopId && other.label != label.label
-                }
-                val labelHasDifferentStop = label.takeIf {
-                    it.isSet && it.stopId != stop.stopId
-                }
-                when {
-                    stopOnAnotherLabel != null -> {
-                        pendingConflict = LabelConflict.StopAlreadyOnAnotherLabel(
-                            target = label,
-                            stop = stop,
-                            existingLabel = stopOnAnotherLabel,
-                        )
-                        stopBeingSaved = null
-                    }
-                    labelHasDifferentStop != null -> {
-                        pendingConflict = LabelConflict.LabelHasDifferentStop(
-                            target = label,
-                            stop = stop,
-                            existingStopName = labelHasDifferentStop.stopName.orEmpty(),
-                        )
-                        stopBeingSaved = null
-                    }
-                    else -> {
-                        onEvent(SearchStopUiEvent.AssignLabelStop(label.label, stop))
-                        stopBeingSaved = null
-                    }
-                }
-            },
-            onCreateNewLabel = {
-                // Carry the stop into the AddLabel flow so that creating the label
-                // can auto-assign it on save, instead of dropping the user back at
-                // step one.
-                pendingStopForNewLabel = stop
-                stopBeingSaved = null
-                showAddLabelSheet = true
-            },
-            onDismiss = { stopBeingSaved = null },
-        )
-    }
+    SearchStopSaveLabelDialog(
+        stopBeingSaved = stopBeingSaved,
+        stopLabels = searchStopState.stopLabels,
+        onEvent = onEvent,
+        onShowAddLabelSheetChange = { showAddLabelSheet = it },
+        onStopBeingSavedChange = { stopBeingSaved = it },
+        onPendingConflictChange = { pendingConflict = it },
+        onPendingStopForNewLabelChange = { pendingStopForNewLabel = it },
+    )
 
-    pendingConflict?.let { conflict ->
-        // Cancelling a conflict warning hands the stop back to SaveStopAsLabelSheet so
-        // the user can pick a different label instead of being stranded on the screen.
-        val onConflictCancel = {
-            stopBeingSaved = conflict.stop
-            pendingConflict = null
-        }
-        when (conflict) {
-            is LabelConflict.StopAlreadyOnAnotherLabel -> LabelConflictSheet(
-                title = "Already saved",
-                message = "${conflict.stop.stopName} is currently saved as " +
-                    "${conflict.existingLabel.label}. Move it to ${conflict.target.label}?",
-                confirmLabel = "Move",
-                onConfirm = {
-                    onEvent(SearchStopUiEvent.ClearLabelStop(conflict.existingLabel.label))
-                    onEvent(SearchStopUiEvent.AssignLabelStop(conflict.target.label, conflict.stop))
-                    pendingConflict = null
-                },
-                onCancel = onConflictCancel,
-            )
-            is LabelConflict.LabelHasDifferentStop -> LabelConflictSheet(
-                title = "Already in use",
-                message = "${conflict.target.label} is currently saved as " +
-                    "${conflict.existingStopName}. Replace with ${conflict.stop.stopName}?",
-                confirmLabel = "Replace",
-                onConfirm = {
-                    onEvent(SearchStopUiEvent.AssignLabelStop(conflict.target.label, conflict.stop))
-                    pendingConflict = null
-                },
-                onCancel = onConflictCancel,
-            )
-        }
-    }
+    SearchStopConflictDialog(
+        pendingConflict = pendingConflict,
+        onEvent = onEvent,
+        onStopBeingSavedChange = { stopBeingSaved = it },
+        onPendingConflictChange = { pendingConflict = it },
+    )
 }
 
-private sealed interface LabelConflict {
+internal sealed interface LabelConflict {
     val target: StopLabel
     val stop: StopItem
 
@@ -1318,12 +1201,7 @@ private fun LazyListScope.emptyStateStopsList(
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
-// All callbacks below are forwarded from SearchStopScreen, and the body is one
-// LazyRow whose items each carry a fair amount of gesture wiring (longPressDraggable
-// + custom awaitEachGesture for tap/long-press/drag distinction + DeleteOverlay).
-// Extracting either further fragments the row's gesture state across composables,
-// which previously led to subtle bugs (see the rotation/SaveAsLabelStar fix).
+@Suppress("LongParameterList")
 @Composable
 private fun LabelShortcutsRow(
     labels: ImmutableList<StopLabel>,
@@ -1339,7 +1217,6 @@ private fun LabelShortcutsRow(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val haptic = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
         val key = from.key as? String ?: return@rememberReorderableLazyListState
@@ -1363,105 +1240,16 @@ private fun LabelShortcutsRow(
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         items(items = labels, key = { it.label }) { label ->
-            val isAssigning = assigningLabel?.label == label.label
-            ReorderableItem(reorderState, key = label.label) { isDragging ->
-                val rotation = rememberWiggleRotation(
-                    active = editing && !isDragging,
-                    seed = label.label.hashCode(),
-                )
-                // Scale up the pill when it's the assigning target — same visual
-                // language as the departure-board chips. We don't tint the pill
-                // here because the screen background is already themeColor and a
-                // colour change would blend the pill in.
-                val targetScale = when {
-                    isDragging -> PILL_DRAG_SCALE
-                    isAssigning -> PILL_ASSIGNING_SCALE
-                    else -> PILL_RESTING_SCALE
-                }
-                val scale by animateFloatAsState(
-                    targetValue = targetScale,
-                    label = "pill-scale",
-                )
-                Box(
-                    modifier = Modifier.graphicsLayer {
-                        rotationZ = rotation
-                        scaleX = scale
-                        scaleY = scale
-                    },
-                ) {
-                    // clip BEFORE the gesture detector so the ripple is contained inside
-                    // the rounded shape. longPressDraggableHandle (active only while
-                    // editing) handles long-press + drag for reordering. The custom
-                    // awaitEachGesture below distinguishes tap (release inside long-press
-                    // timeout) from long-press (timeout reached) without competing with
-                    // the drag handle for events the way combinedClickable did.
-                    val pillModifier = Modifier
-                        .clip(RoundedCornerShape(dim.radiusFull))
-                        .longPressDraggableHandle(
-                            enabled = editing,
-                            onDragStarted = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            },
-                        )
-                        .pointerInput(label.label, editing) {
-                            awaitEachGesture {
-                                awaitFirstDown(requireUnconsumed = false)
-                                val tappedQuickly = withTimeoutOrNull(
-                                    viewConfiguration.longPressTimeoutMillis,
-                                ) {
-                                    waitForUpOrCancellation() != null
-                                }
-                                when (tappedQuickly) {
-                                    true -> {
-                                        // Released within the long-press window → tap.
-                                        // In edit mode, taps are suppressed entirely so an
-                                        // accidental brush against a pill mid-reorder can't
-                                        // navigate away or enter assigning mode. Only drag
-                                        // and the ✕ delete chip work while editing.
-                                        if (!editing) {
-                                            if (label.isSet) {
-                                                label.toStopItem()?.let(onSetLabelClick)
-                                            } else {
-                                                onUnsetLabelClick(label)
-                                            }
-                                        }
-                                    }
-                                    null -> {
-                                        // Long-press timeout reached without release.
-                                        if (!editing) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            onEnterEditing()
-                                        }
-                                        // Wait for release; null return means another
-                                        // detector (the drag handle) took over.
-                                        waitForUpOrCancellation()
-                                    }
-                                    false -> {
-                                        // Cancellation inside timeout (e.g. drag detector
-                                        // consumed the events) — let the drag handle run.
-                                    }
-                                }
-                            }
-                        }
-
-                    if (label.isSet) {
-                        SetLabelPill(label = label, modifier = pillModifier)
-                    } else {
-                        UnsetLabelPill(
-                            label = label,
-                            isAssigning = isAssigning,
-                            modifier = pillModifier,
-                        )
-                    }
-
-                    if (editing && !label.isProtected) {
-                        DeleteOverlay(
-                            onClick = { onDeleteLabel(label) },
-                            modifier = Modifier.align(Alignment.TopEnd),
-                        )
-                    }
-                }
-            }
+            LabelShortcutPill(
+                label = label,
+                isAssigning = assigningLabel?.label == label.label,
+                editing = editing,
+                reorderState = reorderState,
+                onSetLabelClick = onSetLabelClick,
+                onUnsetLabelClick = onUnsetLabelClick,
+                onEnterEditing = onEnterEditing,
+                onDeleteLabel = onDeleteLabel,
+            )
         }
         // Trailing slot: "+ Add" while idle, "Done" while editing. Putting Done at
         // the END (not the front) keeps the reorder UX smooth — front-anchored Done
@@ -1494,7 +1282,7 @@ private fun LabelShortcutsRow(
 }
 
 @Composable
-private fun DeleteOverlay(
+internal fun DeleteOverlay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1521,7 +1309,7 @@ private fun DeleteOverlay(
 }
 
 @Composable
-private fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
+internal fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
     val transition = rememberInfiniteTransition(label = "wiggle")
     val seedAbs = kotlin.math.abs(seed)
     val angle by transition.animateFloat(
@@ -1625,9 +1413,9 @@ private fun MapAutoInitEffect(
 
 // Pill scale factors used by LabelShortcutsRow's graphicsLayer transform — extracted
 // here so the call site reads as intent, not magic numbers.
-private const val PILL_RESTING_SCALE = 1f
-private const val PILL_DRAG_SCALE = 1.05f
-private const val PILL_ASSIGNING_SCALE = 1.10f
+internal const val PILL_RESTING_SCALE = 1f
+internal const val PILL_DRAG_SCALE = 1.05f
+internal const val PILL_ASSIGNING_SCALE = 1.10f
 
 // Wiggle animation in edit mode. Per-pill randomisation prevents the row from
 // looking mechanically synchronised — every pill has its own duration bucket and

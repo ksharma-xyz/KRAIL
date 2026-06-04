@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber", "CyclomaticComplexMethod")
+@file:Suppress("MagicNumber")
 
 package xyz.ksharma.krail.trip.planner.ui.components
 
@@ -19,8 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
+import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
@@ -96,95 +98,142 @@ internal fun DepartureBoardBody(
 
             state.isError -> DeparturesErrorContent(onRetry = onRetry)
 
-            else -> {
-                if (state.departures.isNotEmpty()) {
-                    LinesServedRow(
-                        departures = state.departures,
-                        selectedLine = selectedLine,
-                        onLineSelect = { newLine ->
-                            // Capture the previously selected line BEFORE updating state so
-                            // we can report it when the filter is being cleared (deselected).
-                            val previousLine = selectedLine
-                            selectedLineKey = newLine ?: ""
-                            val affectedLine = newLine ?: previousLine
-                            val transportMode = affectedLine?.let { line ->
-                                state.departures.firstOrNull { it.lineNumber == line }?.transportModeName
-                            }
-                            onLineFilterChange?.invoke(affectedLine, transportMode, newLine != null)
-                        },
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = dim.spacingM, bottom = dim.spacingL),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    TextButton(
-                        onClick = {
-                            showPrevious = !showPrevious
-                            onShowPreviousToggle?.invoke(showPrevious)
-                            if (showPrevious &&
-                                state.previousDepartures.isEmpty() &&
-                                !state.isPreviousLoading
-                            ) {
-                                previousRequested = true
-                                onLoadPreviousDepartures()
-                            }
-                        },
+            else -> DepartureBoardSuccessContent(
+                state = state,
+                selectedLine = selectedLine,
+                showPrevious = showPrevious,
+                previousRequested = previousRequested,
+                filteredDepartures = filteredDepartures,
+                filteredPreviousDepartures = filteredPreviousDepartures,
+                maxItems = maxItems,
+                onLineSelect = { newLine ->
+                    // Capture the previously selected line BEFORE updating state so
+                    // we can report it when the filter is being cleared (deselected).
+                    val previousLine = selectedLine
+                    selectedLineKey = newLine ?: ""
+                    val affectedLine = newLine ?: previousLine
+                    val transportMode = affectedLine?.let { line ->
+                        state.departures.firstOrNull { it.lineNumber == line }?.transportModeName
+                    }
+                    onLineFilterChange?.invoke(affectedLine, transportMode, newLine != null)
+                },
+                onTogglePrevious = {
+                    showPrevious = !showPrevious
+                    onShowPreviousToggle?.invoke(showPrevious)
+                    if (showPrevious &&
+                        state.previousDepartures.isEmpty() &&
+                        !state.isPreviousLoading
                     ) {
-                        Text(
-                            text = if (showPrevious) {
-                                "Hide previous departures"
-                            } else {
-                                "Show previous departures"
-                            },
-                        )
+                        previousRequested = true
+                        onLoadPreviousDepartures()
                     }
-                }
-
-                when {
-                    // Previous fetch in-flight (or requested but not yet acknowledged) —
-                    // show inline loader above any upcoming departures.
-                    showPrevious && (state.isPreviousLoading || previousRequested) -> {
-                        DepartureBoardLoadingContent()
-                        when {
-                            filteredDepartures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = true)
-                            else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                        }
-                    }
-
-                    // Previous fetched but none match the current filter —
-                    // show message then the upcoming list.
-                    showPrevious && filteredPreviousDepartures.isEmpty() -> {
-                        Text(
-                            text = "No previous departures in the last ${state.previousWindowMinutes} minutes.",
-                            style = KrailTheme.typography.bodyMedium,
-                            color = KrailTheme.colors.softLabel,
-                            modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingL),
-                        )
-                        when {
-                            filteredDepartures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = true)
-                            else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                        }
-                    }
-
-                    // Previous + upcoming combined as one unified list with date labels.
-                    showPrevious -> DepartureRowList(
-                        departures = remember(filteredPreviousDepartures, filteredDepartures) {
-                            (filteredPreviousDepartures + filteredDepartures).toImmutableList()
-                        },
-                        maxItems = maxItems,
-                    )
-
-                    state.departures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = false)
-                    filteredDepartures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = true)
-                    else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
-                }
-            }
+                },
+            )
         }
         Spacer(modifier = Modifier.height(dim.spacingM))
+    }
+}
+
+@Composable
+private fun DepartureBoardSuccessContent(
+    state: DeparturesState,
+    selectedLine: String?,
+    showPrevious: Boolean,
+    previousRequested: Boolean,
+    filteredDepartures: ImmutableList<StopDeparture>,
+    filteredPreviousDepartures: ImmutableList<StopDeparture>,
+    maxItems: Int?,
+    onLineSelect: (String?) -> Unit,
+    onTogglePrevious: () -> Unit,
+) {
+    val dim = KrailTheme.dimensions
+    if (state.departures.isNotEmpty()) {
+        LinesServedRow(
+            departures = state.departures,
+            selectedLine = selectedLine,
+            onLineSelect = onLineSelect,
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = dim.spacingM, bottom = dim.spacingL),
+        contentAlignment = Alignment.Center,
+    ) {
+        TextButton(onClick = onTogglePrevious) {
+            Text(
+                text = if (showPrevious) {
+                    "Hide previous departures"
+                } else {
+                    "Show previous departures"
+                },
+            )
+        }
+    }
+
+    DepartureBoardDeparturesSection(
+        state = state,
+        showPrevious = showPrevious,
+        previousRequested = previousRequested,
+        filteredDepartures = filteredDepartures,
+        filteredPreviousDepartures = filteredPreviousDepartures,
+        maxItems = maxItems,
+    )
+}
+
+@Composable
+private fun DepartureBoardDeparturesSection(
+    state: DeparturesState,
+    showPrevious: Boolean,
+    previousRequested: Boolean,
+    filteredDepartures: ImmutableList<StopDeparture>,
+    filteredPreviousDepartures: ImmutableList<StopDeparture>,
+    maxItems: Int?,
+) {
+    val dim = KrailTheme.dimensions
+    when {
+        // Previous fetch in-flight (or requested but not yet acknowledged) —
+        // show inline loader above any upcoming departures.
+        showPrevious && (state.isPreviousLoading || previousRequested) -> {
+            DepartureBoardLoadingContent()
+            UpcomingDeparturesOrEmpty(filteredDepartures = filteredDepartures, maxItems = maxItems)
+        }
+
+        // Previous fetched but none match the current filter —
+        // show message then the upcoming list.
+        showPrevious && filteredPreviousDepartures.isEmpty() -> {
+            Text(
+                text = "No previous departures in the last ${state.previousWindowMinutes} minutes.",
+                style = KrailTheme.typography.bodyMedium,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingL),
+            )
+            UpcomingDeparturesOrEmpty(filteredDepartures = filteredDepartures, maxItems = maxItems)
+        }
+
+        // Previous + upcoming combined as one unified list with date labels.
+        showPrevious -> DepartureRowList(
+            departures = remember(filteredPreviousDepartures, filteredDepartures) {
+                (filteredPreviousDepartures + filteredDepartures).toImmutableList()
+            },
+            maxItems = maxItems,
+        )
+
+        state.departures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = false)
+        filteredDepartures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = true)
+        else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
+    }
+}
+
+@Composable
+private fun UpcomingDeparturesOrEmpty(
+    filteredDepartures: ImmutableList<StopDeparture>,
+    maxItems: Int?,
+) {
+    when {
+        filteredDepartures.isEmpty() -> DepartureBoardEmptyContent(hasActiveFilter = true)
+        else -> DepartureRowList(departures = filteredDepartures, maxItems = maxItems)
     }
 }
 

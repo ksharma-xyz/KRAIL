@@ -31,10 +31,7 @@
     <ID>ComposableParamOrder:JourneyTimeOptionsGroup.kt$JourneyTimeOptionsGroup</ID>
     <ID>ComposableParamOrder:TagLineWithEmoji.kt$TagLineWithEmoji</ID>
     <ID>ComposableParamOrder:TimeTableScreen.kt$JourneyCardItem</ID>
-    <ID>CyclomaticComplexMethod:JourneyCard.kt$@Composable private fun ResponsiveJourneyInfoRow( destinationTime: String, totalTravelTime: String, totalWalkTime: String?, departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation?, )</ID>
     <ID>CyclomaticComplexMethod:SearchStopScreen.kt$@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class) @Composable fun SearchStopScreen( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
-    <ID>CyclomaticComplexMethod:ThemeSelectionRadioButton.kt$@Composable fun ThemeSelectionRadioButton( themeStyle: KrailThemeStyle, onClick: (KrailThemeStyle) -&gt; Unit, modifier: Modifier = Modifier, selected: Boolean = false, )</ID>
-    <ID>CyclomaticComplexMethod:TripResponseMapper.kt$@Suppress("ComplexCondition") private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg?</ID>
     <ID>FinalNewline:DiscoverScreen.kt$xyz.ksharma.krail.trip.planner.ui.discover.DiscoverScreen.kt</ID>
     <ID>FinalNewline:IntroContentPlanTrip.kt$xyz.ksharma.krail.trip.planner.ui.intro.IntroContentPlanTrip.kt</ID>
     <ID>FinalNewline:ParkRideCard.kt$xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard.kt</ID>

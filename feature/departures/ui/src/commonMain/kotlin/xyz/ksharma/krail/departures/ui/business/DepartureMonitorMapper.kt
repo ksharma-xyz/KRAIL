@@ -113,7 +113,7 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
 //     return the raw platform code only  (e.g. "F1").
 //   unknown:
 //     try regex on platformName, then disassembledName.
-@Suppress("MagicNumber", "CyclomaticComplexMethod")
+@Suppress("MagicNumber")
 private fun DepartureMonitorResponse.Location.resolvePlatformText(productClass: Int?): String? {
     // Without a parent, this location IS the stop itself — no platform sub-label.
     parent ?: return null
@@ -127,29 +127,12 @@ private fun DepartureMonitorResponse.Location.resolvePlatformText(productClass: 
         TransportMode.Train.productClass,
         TransportMode.Metro.productClass,
         TransportMode.Coach.productClass,
-        -> {
-            if (pName != null && pName != pCode) {
-                // Normal case: "Platform 17", "Platform 26"
-                extractPlatformText(pName)
-            } else if (pCode != null) {
-                // Bad case: platformName == "THL6" → derive "Platform 6" from code
-                val num = Regex("\\d+").find(pCode)?.value
-                num?.let { "Platform $it" }
-            } else {
-                // No properties at all — fall back to regex on disassembledName
-                disassembledName?.let { extractPlatformText(it) }
-            }
-        }
+        -> resolveNumberedPlatform(pName, pCode, disassembledName)
 
         // ── Light Rail (4) ───────────────────────────────────────────────────────
         // Show code AND name: "LR1 · Central Chalmers Street Light Rail"
         // If the platform field is absent, just show the name.
-        TransportMode.LightRail.productClass -> when {
-            pCode != null && pName != null && pCode != pName -> "$pCode · $pName"
-            pName != null -> pName
-            pCode != null -> pCode
-            else -> null
-        }
+        TransportMode.LightRail.productClass -> resolveLightRailPlatform(pName, pCode)
 
         // ── Bus (5), School Bus (11) ─────────────────────────────────────────────
         // Extract "Stand X" from compound platformName:
@@ -162,10 +145,38 @@ private fun DepartureMonitorResponse.Location.resolvePlatformText(productClass: 
         TransportMode.Ferry.productClass -> pCode
 
         // ── Unknown / fallback ───────────────────────────────────────────────────
-        else -> pName?.let { extractPlatformText(it) ?: it }
-            ?: disassembledName?.let { extractPlatformText(it) }
+        else -> resolveFallbackPlatform(pName, disassembledName)
     }
 }
+
+// Train / Metro / Coach: prefer "Platform N" name, else derive number from a code that
+// echoes the raw API value, else fall back to regex on disassembledName.
+@Suppress("MagicNumber")
+private fun resolveNumberedPlatform(pName: String?, pCode: String?, disassembledName: String?): String? =
+    if (pName != null && pName != pCode) {
+        // Normal case: "Platform 17", "Platform 26"
+        extractPlatformText(pName)
+    } else if (pCode != null) {
+        // Bad case: platformName == "THL6" → derive "Platform 6" from code
+        val num = Regex("\\d+").find(pCode)?.value
+        num?.let { "Platform $it" }
+    } else {
+        // No properties at all — fall back to regex on disassembledName
+        disassembledName?.let { extractPlatformText(it) }
+    }
+
+// Light Rail: show code AND name when both present and differ, else whichever exists.
+private fun resolveLightRailPlatform(pName: String?, pCode: String?): String? = when {
+    pCode != null && pName != null && pCode != pName -> "$pCode · $pName"
+    pName != null -> pName
+    pCode != null -> pCode
+    else -> null
+}
+
+// Unknown mode: try regex on platformName (keep raw on miss), then disassembledName.
+private fun resolveFallbackPlatform(pName: String?, disassembledName: String?): String? =
+    pName?.let { extractPlatformText(it) ?: it }
+        ?: disassembledName?.let { extractPlatformText(it) }
 
 // Resolves the hex colour for a line badge via NswTransportConfig:
 // line-specific lookup first, then product-class fallback, then Bus colour.

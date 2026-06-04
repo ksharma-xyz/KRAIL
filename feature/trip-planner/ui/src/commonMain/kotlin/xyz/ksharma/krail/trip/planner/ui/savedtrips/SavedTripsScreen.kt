@@ -1,9 +1,8 @@
-@file:Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
+@file:Suppress("LongMethod", "LongParameterList")
 
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
@@ -16,7 +15,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -58,18 +56,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
-import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
@@ -79,26 +71,15 @@ import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
-import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextStyle
-import xyz.ksharma.krail.taj.components.Button
-import xyz.ksharma.krail.taj.components.ButtonDefaults
-import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
-import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
-import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
-import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
-import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
@@ -189,36 +170,14 @@ fun SavedTripsScreen(
                         Text(text = "KRAIL", color = themeColor())
                     },
                     actions = {
-                        if (editing) {
-                            Button(
-                                onClick = { editing = false },
-                                colors = ButtonDefaults.monochromeButtonColors(),
-                                dimensions = ButtonDefaults.chipButtonSize(),
-                                modifier = Modifier.padding(horizontal = dim.spacingM),
-                            ) {
-                                Text(text = "Done")
-                            }
-                        } else {
-                            if (savedTripsState.isDiscoverAvailable) {
-                                RoundIconButton(
-                                    showBadge = savedTripsState.displayDiscoverBadge,
-                                    onClick = onDiscoverButtonClick,
-                                ) {
-                                    CityCodeText("SYD")
-                                }
-                            }
-
-                            RoundIconButton(
-                                onClick = onSettingsButtonClick,
-                            ) {
-                                Image(
-                                    painter = painterResource(Res.drawable.ic_settings),
-                                    contentDescription = "Settings",
-                                    colorFilter = ColorFilter.tint(LocalContentColor.current),
-                                    modifier = Modifier.size(dim.spacingXXXL),
-                                )
-                            }
-                        }
+                        SavedTripsTitleBarActions(
+                            editing = editing,
+                            isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
+                            displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
+                            onDoneClick = { editing = false },
+                            onDiscoverButtonClick = onDiscoverButtonClick,
+                            onSettingsButtonClick = onSettingsButtonClick,
+                        )
                     },
                 )
 
@@ -228,67 +187,20 @@ fun SavedTripsScreen(
                     state = lazyListState,
                     contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
                 ) {
-                    when {
-                        savedTripsState.isSavedTripsLoading -> Unit
-
-                        savedTripsState.savedTrips.isEmpty() -> {
-                            savedTripsState.infoTiles?.let { infoTiles ->
-                                infoTiles(
-                                    infoTiles = infoTiles,
-                                    onCtaClick = { tileData ->
-                                        onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
-                                    },
-                                    onDismissClick = { tileData ->
-                                        onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
-                                    },
-                                    onTileExpand = {
-                                        onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
-                                    },
-                                )
-                            }
-
-                            item(key = "empty_state") {
-                                ErrorMessage(
-                                    emoji = "🌟",
-                                    title = "Let's Go! Sydney",
-                                    message = emptyStateTip,
-                                    modifier = Modifier
-                                        .padding(horizontal = dim.pageHorizontalPadding)
-                                        .animateItem(),
-                                )
-                            }
-                        }
-
-                        savedTripsState.savedTrips.isNotEmpty() -> {
-                            savedTripsState.infoTiles?.let { infoTiles ->
-                                infoTiles(
-                                    infoTiles = infoTiles,
-                                    onCtaClick = { tileData ->
-                                        onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData))
-                                    },
-                                    onDismissClick = { tileData ->
-                                        onEvent(SavedTripUiEvent.DismissInfoTile(tileData))
-                                    },
-                                    onTileExpand = {
-                                        onEvent(SavedTripUiEvent.InfoTileExpand(it.key))
-                                    },
-                                )
-                            }
-
-                            savedTripsContent(
-                                savedTripsState = savedTripsState,
-                                trackedJourney = trackedJourney,
-                                onEvent = onEvent,
-                                onSavedTripCardClick = onSavedTripCardClick,
-                                onTrackingCardClick = onTrackingCardClick,
-                                onStopTracking = onStopTracking,
-                                expandedMap = expandedMap,
-                                editing = editing,
-                                reorderState = reorderState,
-                                onEnterEditing = { editing = true },
-                            )
-                        }
-                    }
+                    savedTripsListBody(
+                        savedTripsState = savedTripsState,
+                        trackedJourney = trackedJourney,
+                        emptyStateTip = emptyStateTip,
+                        pageHorizontalPadding = dim.pageHorizontalPadding,
+                        onEvent = onEvent,
+                        onSavedTripCardClick = onSavedTripCardClick,
+                        onTrackingCardClick = onTrackingCardClick,
+                        onStopTracking = onStopTracking,
+                        expandedMap = expandedMap,
+                        editing = editing,
+                        reorderState = reorderState,
+                        onEnterEditing = { editing = true },
+                    )
                 }
             }
 
@@ -301,42 +213,30 @@ fun SavedTripsScreen(
             // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
             // itself — keeping the row-level reveal calm avoids stacking two bouncy
             // animations (parent scale + child pulse) on top of each other.
-            AnimatedVisibility(
+            SavedTripsBottomSearchRow(
                 visible = !savedTripsState.isSavedTripsLoading && !editing,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                ) + fadeIn(animationSpec = tween(durationMillis = 200)),
+                fromStopItem = savedTripsState.fromStop,
+                toStopItem = savedTripsState.toStop,
+                isExpanded = effectiveIsExpanded,
+                isFromHighlighted = isFromHighlighted,
+                showPill = showPill,
+                onExpandRequest = {
+                    isSearchExpanded = true
+                    isFromHighlighted = false
+                },
+                onCollapseRequest = {
+                    isSearchExpanded = false
+                    isFromHighlighted = false
+                },
+                fromButtonClick = {
+                    isFromHighlighted = false
+                    fromButtonClick()
+                },
+                toButtonClick = toButtonClick,
+                onReverseButtonClick = { onEvent(SavedTripUiEvent.ReverseStopClick) },
+                onSearchButtonClick = { onSearchButtonClick() },
                 modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
-                SearchStopRow(
-                    fromStopItem = savedTripsState.fromStop,
-                    toStopItem = savedTripsState.toStop,
-                    isExpanded = effectiveIsExpanded,
-                    isFromHighlighted = isFromHighlighted,
-                    onExpandRequest = {
-                        isSearchExpanded = true
-                        isFromHighlighted = false
-                    },
-                    onCollapseRequest = if (showPill) {
-                        {
-                            isSearchExpanded = false
-                            isFromHighlighted = false
-                        }
-                    } else {
-                        null
-                    },
-                    fromButtonClick = {
-                        isFromHighlighted = false
-                        fromButtonClick()
-                    },
-                    toButtonClick = toButtonClick,
-                    onReverseButtonClick = {
-                        onEvent(SavedTripUiEvent.ReverseStopClick)
-                    },
-                    onSearchButtonClick = { onSearchButtonClick() },
-                )
-            }
+            )
         }
         log(
             "[MAP_STOP_SEL] SavedTripsScreen dualPane=$dualPane " +
@@ -356,7 +256,7 @@ fun SavedTripsScreen(
     }
 }
 
-private fun LazyListScope.infoTiles(
+internal fun LazyListScope.infoTiles(
     infoTiles: ImmutableList<InfoTileData>,
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
@@ -389,7 +289,7 @@ private fun LazyListScope.infoTiles(
     }
 }
 
-private fun LazyListScope.savedTripsContent(
+internal fun LazyListScope.savedTripsContent(
     savedTripsState: SavedTripsState,
     trackedJourney: TrackedJourney?,
     onEvent: (SavedTripUiEvent) -> Unit,
@@ -470,99 +370,26 @@ private fun LazyListScope.savedTripsContent(
         items = savedTripsState.savedTrips,
         key = { trip -> trip.tripId },
     ) { trip ->
-        val dim = KrailTheme.dimensions
-        val haptic = LocalHapticFeedback.current
-
-        ReorderableItem(reorderState, key = trip.tripId) { isDragging ->
-            val rotation = rememberWiggleRotation(
-                active = editing && !isDragging,
-                seed = trip.tripId.hashCode(),
-            )
-
-            Column(modifier = Modifier.padding(top = if (editing) dim.spacingS else dim.spacingNone)) {
-                Box(
-                    modifier = Modifier
-                        .graphicsLayer { rotationZ = rotation }
-                        .padding(horizontal = dim.pageHorizontalPadding),
-                ) {
-                    SavedTripCard(
-                        fromDisplay = trip.fromStopDisplay(savedTripsState.stopLabels),
-                        toDisplay = trip.toStopDisplay(savedTripsState.stopLabels),
-                        onCardClick = {
-                            if (!editing) {
-                                onSavedTripCardClick(
-                                    StopItem(stopId = trip.fromStopId, stopName = trip.fromStopName),
-                                    StopItem(stopId = trip.toStopId, stopName = trip.toStopName),
-                                )
-                            }
-                        },
-                        editing = editing,
-                        onLongClick = if (!editing) {
-                            {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onEnterEditing()
-                            }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.longPressDraggableHandle(
-                            enabled = editing,
-                            onDragStarted = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            },
-                        ),
-                    )
-
-                    if (editing) {
-                        TripDeleteOverlay(
-                            onClick = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
-                            modifier = Modifier.align(Alignment.TopEnd),
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(dim.spacingXL))
-            }
-        }
+        SavedTripItem(
+            trip = trip,
+            stopLabels = savedTripsState.stopLabels,
+            editing = editing,
+            reorderState = reorderState,
+            onSavedTripCardClick = onSavedTripCardClick,
+            onEnterEditing = onEnterEditing,
+            onDelete = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
+        )
     }
 
-    if (savedTripsState.parkRideUiState.isNotEmpty()) {
-        stickyHeader(key = "park_ride_title") {
-            SavedTripsTitle {
-                Text(text = "Park & Ride")
-            }
-        }
-
-        items(
-            items = savedTripsState.parkRideUiState,
-            key = { parkRide -> parkRide.stopId },
-        ) { parkRide ->
-            val dim = KrailTheme.dimensions
-            val isExpanded = expandedMap[parkRide.stopId] ?: false
-
-            ParkRideCard(
-                isExpanded = isExpanded,
-                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-                onClick = {
-                    val newExpanded = !isExpanded
-                    expandedMap[parkRide.stopId] = newExpanded
-                    onEvent(
-                        SavedTripUiEvent.ParkRideCardClick(
-                            parkRideState = parkRide,
-                            isExpanded = newExpanded,
-                        ),
-                    )
-                },
-                parkRideUiState = parkRide,
-            )
-
-            Spacer(modifier = Modifier.height(dim.spacingXL))
-        }
-    }
+    parkRideSection(
+        savedTripsState = savedTripsState,
+        expandedMap = expandedMap,
+        onEvent = onEvent,
+    )
 }
 
 @Composable
-private fun TripDeleteOverlay(
+internal fun TripDeleteOverlay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -586,7 +413,7 @@ private fun TripDeleteOverlay(
 }
 
 @Composable
-private fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
+internal fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
     val transition = rememberInfiniteTransition(label = "trip-wiggle")
     val seedAbs = kotlin.math.abs(seed)
     val angle by transition.animateFloat(
@@ -610,7 +437,7 @@ private fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
 }
 
 @Composable
-private fun SavedTripsTitle(
+internal fun SavedTripsTitle(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {

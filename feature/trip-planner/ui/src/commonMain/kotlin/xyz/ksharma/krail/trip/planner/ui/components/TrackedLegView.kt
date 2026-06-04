@@ -9,9 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -38,7 +35,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@Suppress("CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class)
 @Composable
 internal fun TrackedLegView(
@@ -49,40 +45,28 @@ internal fun TrackedLegView(
     stopDelays: Map<String, Int> = emptyMap(),
 ) {
     val dim = KrailTheme.dimensions
-    val circleRadius = dim.spacingM
-    val strokeWidth = dim.strokeThick
     val lineColor = remember(leg.lineColorCode) { leg.lineColorCode.hexToComposeColor() }
     val pendingColor = KrailTheme.colors.softLabel
 
-    // Compute the authoritative real-time instant for a stop.
-    // When GTFS-RT delay is available, apply it to the scheduled time — this is the most
-    // up-to-date signal between trip API re-polls. Falls back to the trip API estimated time.
-    fun effectiveInstant(stop: TrackedStop): Instant? {
-        val delay = stopDelays[stop.stopId]
-        return if (delay != null) {
-            runCatching {
-                Instant.parse(stop.scheduledUtcTime) + delay.seconds
-            }.getOrNull()
-        } else {
-            runCatching { Instant.parse(stop.utcTime) }.getOrNull()
-        }
+    val effectiveInstants: List<Instant?> = remember(leg.stops, stopDelays) {
+        leg.stops.map { stop -> effectiveInstant(stop, stopDelays) }
     }
 
     // Last stop index whose real-time adjusted arrival is <= now.
     // Using GTFS-RT delay means we only advance past a stop when the API confirms it.
-    val currentStopIndex: Int? = remember(leg.stops, stopDelays, now) {
-        leg.stops.indexOfLast { stop ->
-            (effectiveInstant(stop) ?: return@indexOfLast false) <= now
+    val currentStopIndex: Int? = remember(effectiveInstants, now) {
+        effectiveInstants.indexOfLast { instant ->
+            (instant ?: return@indexOfLast false) <= now
         }.takeIf { it >= 0 }
     }
 
     // How far (0..1) through the active segment (from currentStopIndex to currentStopIndex+1)
-    val currentSegmentFraction: Float? = remember(currentStopIndex, stopDelays, now) {
+    val currentSegmentFraction: Float? = remember(currentStopIndex, effectiveInstants, now) {
         currentStopIndex?.let { idx ->
             val nextIdx = idx + 1
-            if (nextIdx < leg.stops.size) {
-                val prev = effectiveInstant(leg.stops[idx])
-                val next = effectiveInstant(leg.stops[nextIdx])
+            if (nextIdx < effectiveInstants.size) {
+                val prev = effectiveInstants[idx]
+                val next = effectiveInstants[nextIdx]
                 if (prev != null && next != null) {
                     val total = (next - prev).inWholeMilliseconds.toFloat()
                     val elapsed = (now - prev).inWholeMilliseconds.toFloat()
@@ -109,39 +93,16 @@ internal fun TrackedLegView(
         label = "pulseScale",
     )
 
-    // A segment starting at fromIdx is "completed" when the vehicle has left that stop
-    // Using >= so the current stop's BELOW line also flows in lineColor, matching the split spacer
-    fun segmentColor(fromIdx: Int): Color = when {
-        currentStopIndex == null -> pendingColor
-        currentStopIndex >= fromIdx -> lineColor
-        else -> pendingColor
-    }
-
-    fun stopCircleColor(stopIdx: Int): Color = when {
-        currentStopIndex == null -> pendingColor
-        stopIdx <= currentStopIndex -> lineColor
-        else -> pendingColor
-    }
-
-    fun stopCircleRadius(stopIdx: Int): Dp =
-        if (currentStopIndex == stopIdx) circleRadius * pulseScale else circleRadius
-
-    fun isActiveSegment(fromIdx: Int) =
-        currentStopIndex == fromIdx && currentSegmentFraction != null
-
-    fun approachingText(stop: TrackedStop): String? {
-        val stopInstant = effectiveInstant(stop) ?: return null
-        val secs = (stopInstant - now).inWholeSeconds
-        return when {
-            secs <= 0L -> "arriving now"
-            secs < 60L -> "in ${secs}s"
-            else -> {
-                val mins = secs / 60L
-                val rem = secs % 60L
-                if (rem > 0L) "in ${mins}m ${rem}s" else "in ${mins}m"
-            }
-        }
-    }
+    val timeline = TrackedLegTimeline(
+        currentStopIndex = currentStopIndex,
+        currentSegmentFraction = currentSegmentFraction,
+        nextStopIndex = nextStopIndex,
+        pulseScale = pulseScale,
+        lineColor = lineColor,
+        pendingColor = pendingColor,
+        circleRadius = dim.spacingM,
+        strokeWidth = dim.strokeThick,
+    )
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Route header: badge + headsign
@@ -166,129 +127,54 @@ internal fun TrackedLegView(
 
         Column(modifier = Modifier.fillMaxWidth().padding(start = dim.spacingXS)) {
             // First stop (always prominent — origin)
-            val firstStop = leg.stops.first()
-            TrackedStopRow(
-                time = firstStop.estimatedTime ?: firstStop.scheduledTime,
-                scheduledTime = firstStop.estimatedTime?.let { firstStop.scheduledTime },
-                stopName = firstStop.name,
-                isPast = currentStopIndex != null,
-                isApproaching = false,
+            TrackedLegFirstStop(
+                timeline = timeline,
+                firstStop = leg.stops.first(),
                 isArrived = isArrived,
-                lineColor = lineColor,
-                modifier = Modifier
-                    .timeLineTop(
-                        color = segmentColor(0),
-                        strokeWidth = strokeWidth,
-                        circleRadius = stopCircleRadius(0),
-                        circleColor = stopCircleColor(0),
-                    )
-                    .padding(start = dim.spacingXL),
             )
-
-            if (isActiveSegment(0)) {
-                Spacer(
-                    modifier = Modifier.height(dim.spacingXL)
-                        .timeLineCenterSplit(
-                            completedColor = lineColor,
-                            pendingColor = pendingColor,
-                            strokeWidth = strokeWidth,
-                            fraction = currentSegmentFraction ?: 0f,
-                        ),
-                )
-            } else {
-                Spacer(
-                    modifier = Modifier.height(dim.spacingL)
-                        .timeLineCenter(color = segmentColor(0), strokeWidth = strokeWidth),
-                )
-            }
 
             // Intermediate stops
             leg.stops.drop(1).dropLast(1).forEachIndexed { idx, stop ->
                 val stopIdx = idx + 1
-                val isPast = currentStopIndex != null && stopIdx <= currentStopIndex
-                val isApproaching = stopIdx == nextStopIndex
-
-                // The approaching stop's ABOVE line must be pendingColor so it connects
-                // flush with the split spacer's pendingColor tail, not a jarring lineColor flash.
-                val aboveColor = if (isApproaching) pendingColor else segmentColor(stopIdx - 1)
-
-                TrackedStopRow(
-                    time = stop.estimatedTime ?: stop.scheduledTime,
-                    scheduledTime = stop.estimatedTime?.let { stop.scheduledTime },
-                    stopName = stop.name,
-                    isPast = isPast,
-                    isApproaching = isApproaching,
+                TrackedLegIntermediateStop(
+                    timeline = timeline,
+                    stop = stop,
+                    stopIdx = stopIdx,
                     isArrived = isArrived,
-                    lineColor = lineColor,
-                    approachingTimeText = if (isApproaching) approachingText(stop) else null,
-                    modifier = Modifier
-                        .timeLineCenterWithStop(
-                            color = aboveColor,
-                            strokeWidth = strokeWidth,
-                            circleRadius = stopCircleRadius(stopIdx),
-                            circleColor = stopCircleColor(stopIdx),
-                        )
-                        .timeLineTop(
-                            color = segmentColor(stopIdx),
-                            strokeWidth = strokeWidth,
-                            circleRadius = stopCircleRadius(stopIdx),
-                            circleColor = stopCircleColor(stopIdx),
-                        )
-                        .padding(start = dim.spacingXL),
+                    approachingTimeText = approachingText(effectiveInstants[stopIdx], now),
                 )
-
-                if (isActiveSegment(stopIdx)) {
-                    Spacer(
-                        modifier = Modifier.height(dim.spacingXL)
-                            .timeLineCenterSplit(
-                                lineColor,
-                                pendingColor,
-                                strokeWidth,
-                                currentSegmentFraction ?: 0f,
-                            ),
-                    )
-                } else {
-                    Spacer(
-                        modifier = Modifier.height(dim.spacingXL).timeLineCenter(
-                            color = segmentColor(stopIdx),
-                            strokeWidth = strokeWidth,
-                        ),
-                    )
-                }
             }
 
             // Last stop (always prominent — destination)
             val lastIdx = leg.stops.size - 1
-            val lastStop = leg.stops.last()
-            val isLastApproaching = lastIdx == nextStopIndex
-            // Same rule: if last stop is approaching, its incoming line must be pendingColor
-            val lastIncomingColor =
-                if (isLastApproaching) pendingColor else segmentColor(lastIdx - 1)
-            TrackedStopRow(
-                time = lastStop.estimatedTime ?: lastStop.scheduledTime,
-                scheduledTime = lastStop.estimatedTime?.let { lastStop.scheduledTime },
-                stopName = lastStop.name,
-                isPast = currentStopIndex != null && lastIdx <= currentStopIndex,
-                isApproaching = isLastApproaching,
+            TrackedLegLastStop(
+                timeline = timeline,
+                lastStop = leg.stops.last(),
+                lastIdx = lastIdx,
                 isArrived = isArrived,
-                isDestination = true,
-                lineColor = lineColor,
-                approachingTimeText = if (isLastApproaching) approachingText(lastStop) else null,
-                modifier = Modifier
-                    .timeLineBottom(
-                        color = lastIncomingColor,
-                        strokeWidth = strokeWidth,
-                        circleRadius = stopCircleRadius(lastIdx),
-                        circleColor = stopCircleColor(lastIdx),
-                    )
-                    .padding(start = dim.spacingXL),
+                approachingTimeText = approachingText(effectiveInstants[lastIdx], now),
             )
         }
     }
 }
 
+// Compute the authoritative real-time instant for a stop.
+// When GTFS-RT delay is available, apply it to the scheduled time — this is the most
+// up-to-date signal between trip API re-polls. Falls back to the trip API estimated time.
+@OptIn(ExperimentalTime::class)
+private fun effectiveInstant(stop: TrackedStop, stopDelays: Map<String, Int>): Instant? {
+    val delay = stopDelays[stop.stopId]
+    return if (delay != null) {
+        runCatching {
+            Instant.parse(stop.scheduledUtcTime) + delay.seconds
+        }.getOrNull()
+    } else {
+        runCatching { Instant.parse(stop.utcTime) }.getOrNull()
+    }
+}
+
 @Composable
-private fun TrackedStopRow(
+internal fun TrackedStopRow(
     time: String,
     scheduledTime: String?,
     stopName: String,

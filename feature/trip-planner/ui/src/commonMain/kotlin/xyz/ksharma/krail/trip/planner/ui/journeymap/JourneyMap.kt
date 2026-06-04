@@ -31,6 +31,7 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
@@ -90,9 +91,6 @@ fun JourneyMap(
 /**
  * The actual map content when data is ready.
  */
-@Suppress("CyclomaticComplexMethod")
-// Complexity is dominated by Compose state wiring (location/permission/freshness/camera effects
-// + the map's stop and route layers); splitting it fragments shared map state across composables.
 @Composable
 private fun JourneyMapContent(
     mapState: JourneyMapUiState.Ready,
@@ -216,25 +214,13 @@ private fun JourneyMapContent(
             onClick = {
                 onLocationButtonClick(userLocation != null)
                 scope.launch {
-                    val userLoc = userLocation
-                    if (userLoc != null) {
-                        // Re-center camera on latest known position
-                        cameraState.animateTo(
-                            CameraPosition(
-                                target = Position(latitude = userLoc.latitude, longitude = userLoc.longitude),
-                                zoom = UserLocationConfig.RECENTER_ZOOM,
-                            ),
-                            duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
-                        )
-                    } else {
-                        val status = userLocationManager.checkPermissionStatus()
-                        if (status is PermissionStatus.Denied) {
-                            showPermissionBanner = true
-                        } else {
-                            // Trigger system permission dialog via TrackUserLocation
-                            allowPermissionRequest = true
-                        }
-                    }
+                    onUserLocationButtonClick(
+                        userLocation = userLocation,
+                        userLocationManager = userLocationManager,
+                        cameraState = cameraState,
+                        onShowPermissionBanner = { showPermissionBanner = true },
+                        onRequestPermission = { allowPermissionRequest = true },
+                    )
                 }
             },
             isActive = userLocation != null,
@@ -244,38 +230,17 @@ private fun JourneyMapContent(
                 .padding(KrailTheme.dimensions.spacingXL),
         )
 
-        // Top overlays — permission banner (if shown) then freshness badge directly below it.
-        // fillMaxWidth + horizontal padding here so both children get consistent spacingXL screen
-        // margins without each child needing to specify it individually.
-        if (showPermissionBanner || (showFreshnessBadge && badgeText != null)) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = KrailTheme.dimensions.spacingXL)
-                    .padding(top = KrailTheme.dimensions.spacingM),
-            ) {
-                if (showPermissionBanner) {
-                    LocationPermissionBanner(
-                        onGoToSettings = {
-                            onPermissionSettingsClick()
-                            userLocationManager.openAppSettings()
-                        },
-                    )
-                }
-                if (showFreshnessBadge) {
-                    badgeText?.let { text ->
-                        MapTimetableDataBadge(
-                            text = text,
-                            isStale = isStale,
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(vertical = KrailTheme.dimensions.spacingM),
-                        )
-                    }
-                }
-            }
-        }
+        JourneyMapTopOverlays(
+            showPermissionBanner = showPermissionBanner,
+            showFreshnessBadge = showFreshnessBadge,
+            badgeText = badgeText,
+            isStale = isStale,
+            onGoToSettings = {
+                onPermissionSettingsClick()
+                userLocationManager.openAppSettings()
+            },
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
 
         // Stop Details Bottom Sheet
         selectedStop?.let { stop ->
@@ -283,6 +248,75 @@ private fun JourneyMapContent(
                 stop = stop,
                 onDismiss = { selectedStop = null },
             )
+        }
+    }
+}
+
+/**
+ * Top overlays — permission banner (if shown) then freshness badge directly below it.
+ * fillMaxWidth + horizontal padding here so both children get consistent spacingXL screen
+ * margins without each child needing to specify it individually.
+ */
+@Composable
+private fun JourneyMapTopOverlays(
+    showPermissionBanner: Boolean,
+    showFreshnessBadge: Boolean,
+    badgeText: String?,
+    isStale: Boolean,
+    onGoToSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (!showPermissionBanner && !(showFreshnessBadge && badgeText != null)) return
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = KrailTheme.dimensions.spacingXL)
+            .padding(top = KrailTheme.dimensions.spacingM),
+    ) {
+        if (showPermissionBanner) {
+            LocationPermissionBanner(onGoToSettings = onGoToSettings)
+        }
+        if (showFreshnessBadge) {
+            badgeText?.let { text ->
+                MapTimetableDataBadge(
+                    text = text,
+                    isStale = isStale,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = KrailTheme.dimensions.spacingM),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Handles a tap on the user-location button: re-centre on a known fix, otherwise resolve
+ * permission state (show banner when denied, else request).
+ */
+private suspend fun onUserLocationButtonClick(
+    userLocation: LatLng?,
+    userLocationManager: UserLocationManager,
+    cameraState: org.maplibre.compose.camera.CameraState,
+    onShowPermissionBanner: () -> Unit,
+    onRequestPermission: () -> Unit,
+) {
+    if (userLocation != null) {
+        // Re-center camera on latest known position
+        cameraState.animateTo(
+            CameraPosition(
+                target = Position(latitude = userLocation.latitude, longitude = userLocation.longitude),
+                zoom = UserLocationConfig.RECENTER_ZOOM,
+            ),
+            duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
+        )
+    } else {
+        val status = userLocationManager.checkPermissionStatus()
+        if (status is PermissionStatus.Denied) {
+            onShowPermissionBanner()
+        } else {
+            // Trigger system permission dialog via TrackUserLocation
+            onRequestPermission()
         }
     }
 }

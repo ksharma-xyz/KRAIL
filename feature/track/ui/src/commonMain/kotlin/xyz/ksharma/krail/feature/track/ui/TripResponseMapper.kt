@@ -12,13 +12,11 @@ import xyz.ksharma.krail.core.transport.nsw.NswTransportLine
 import xyz.ksharma.krail.feature.track.DepartureDeviation
 import xyz.ksharma.krail.feature.track.TrackedJourneyDisplay
 import xyz.ksharma.krail.feature.track.TrackedLeg
-import xyz.ksharma.krail.feature.track.TrackedStop
 import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.departureDeviationMinutes
 import xyz.ksharma.krail.trip.planner.network.api.model.isWalkingLeg
 import kotlin.math.absoluteValue
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -46,7 +44,6 @@ internal object TripResponseMapper {
      * (rather than restructuring it), this function returns null and the state transitions
      * to [xyz.ksharma.krail.feature.track.TrackTripState.NotFound].
      */
-    @Suppress("CyclomaticComplexMethod")
     @OptIn(ExperimentalTime::class)
     fun TripResponse.findMatchingJourney(deepLink: TripDeepLink): TripResponse.Journey? {
         val deepLinkInstant = runCatching { Instant.parse(deepLink.departureUtcDateTime) }.getOrNull()
@@ -57,29 +54,7 @@ internal object TripResponseMapper {
         )
 
         val match = journeys?.firstOrNull { journey ->
-            val publicLegs = journey.legs
-                ?.filter { it.transportation != null && !it.isWalkingLeg() }
-                ?: return@firstOrNull false
-
-            val legIds = publicLegs.mapNotNull { it.transportation?.id }
-            val firstDep = publicLegs.firstOrNull()?.origin?.departureTimePlanned
-
-            // All deep-link transportation IDs must appear in the journey legs.
-            val idsMatch = deepLink.legs.all { dl -> legIds.contains(dl.transportationId) }
-            if (!idsMatch) return@firstOrNull false
-
-            // Departure time: parse both as Instant so string-format differences don't break the
-            // match (e.g. "2026-04-22T22:35:00Z" vs "2026-04-22T22:35:00.000Z").
-            // Allow 60 s tolerance for any minor rounding in the API response.
-            val timeMatch = if (deepLinkInstant != null && firstDep != null) {
-                val legInstant = runCatching { Instant.parse(firstDep) }.getOrNull()
-                legInstant != null && (legInstant - deepLinkInstant).absoluteValue < 60.seconds
-            } else {
-                firstDep == deepLink.departureUtcDateTime
-            }
-
-            log("TrackTrip:   journey ids=$legIds firstDep=$firstDep → idsMatch=$idsMatch timeMatch=$timeMatch")
-            timeMatch
+            journey.matchesDeepLinkStrict(deepLink, deepLinkInstant)
         }
 
         if (match != null) {
@@ -96,28 +71,7 @@ internal object TripResponseMapper {
         // and terminating at the same destination are the same trip, just restructured.
         log("TrackTrip: findMatchingJourney — strict match failed, trying fallback (time + destination)")
         val fallback = journeys?.firstOrNull { journey ->
-            val publicLegs = journey.legs
-                ?.filter { it.transportation != null && !it.isWalkingLeg() }
-                ?: return@firstOrNull false
-
-            val firstDep = publicLegs.firstOrNull()?.origin?.departureTimePlanned
-            val lastDestId = publicLegs.lastOrNull()?.destination?.parent?.id
-                ?: publicLegs.lastOrNull()?.destination?.id
-
-            val timeMatch = if (deepLinkInstant != null && firstDep != null) {
-                val legInstant = runCatching { Instant.parse(firstDep) }.getOrNull()
-                legInstant != null && (legInstant - deepLinkInstant).absoluteValue < 60.seconds
-            } else {
-                false
-            }
-
-            val destMatch = lastDestId == deepLink.toStopId
-
-            log(
-                "TrackTrip:   fallback journey firstDep=$firstDep " +
-                    "lastDestId=$lastDestId → time=$timeMatch dest=$destMatch",
-            )
-            timeMatch && destMatch
+            journey.matchesDeepLinkFallback(deepLink, deepLinkInstant)
         }
 
         if (fallback == null) {
@@ -174,7 +128,6 @@ internal object TripResponseMapper {
         )
     }
 
-    @Suppress("CyclomaticComplexMethod")
     fun TripResponse.Leg.toTrackedTransportLeg(): TrackedLeg.Transport? {
         val productClass = transportation?.product?.productClass?.toInt() ?: return null
         val mode = NswTransportConfig.modeFromProductClass(productClass) ?: return null
@@ -183,23 +136,7 @@ internal object TripResponseMapper {
             ?: mode.colorCode
 
         val stops = stopSequence?.mapNotNull { stop ->
-            val name = stop.disassembledName ?: stop.name ?: return@mapNotNull null
-            val scheduledUtc = stop.departureTimePlanned ?: stop.arrivalTimePlanned
-            val estimatedUtc = stop.departureTimeEstimated ?: stop.arrivalTimeEstimated
-            val timeUtc = estimatedUtc ?: scheduledUtc ?: return@mapNotNull null
-            TrackedStop(
-                stopId = stop.id.orEmpty(),
-                name = name,
-                scheduledTime = (scheduledUtc ?: timeUtc).utcToDisplayTime(),
-                estimatedTime = estimatedUtc
-                    ?.takeIf { it != scheduledUtc }
-                    ?.utcToDisplayTime(),
-                utcTime = timeUtc,
-                scheduledUtcTime = scheduledUtc ?: timeUtc,
-                // API coord is [latitude, longitude]
-                lat = stop.coord?.getOrNull(0),
-                lon = stop.coord?.getOrNull(1),
-            )
+            stop.toTrackedStop()
         }?.toImmutableList() ?: return null
 
         val routePathCoordinates = coords

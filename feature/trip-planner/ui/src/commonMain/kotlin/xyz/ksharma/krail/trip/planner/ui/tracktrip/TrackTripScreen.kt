@@ -1,4 +1,4 @@
-@file:Suppress("LongMethod", "TooManyFunctions", "CyclomaticComplexMethod", "StringLiteralDuplication")
+@file:Suppress("LongMethod", "TooManyFunctions", "StringLiteralDuplication")
 
 package xyz.ksharma.krail.trip.planner.ui.tracktrip
 
@@ -139,30 +139,13 @@ fun TrackTripScreen(
                 title = { Text(text = "Track Trip") },
                 onNavActionClick = onBack,
                 actions = {
-                    AnimatedVisibility(
-                        visible = isRefreshing,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                    ) {
-                        val dim = KrailTheme.dimensions
-                        AnimatedDots(modifier = Modifier.size(dim.buttonRoundSize, dim.iconXS))
-                    }
-                    if (isJourneyActive) {
-                        TextButton(onClick = { mapExpanded = !mapExpanded }) {
-                            Text(text = if (mapExpanded) "Hide Map" else "Map")
-                        }
-                        ActionButton(
-                            onClick = { triggerShare = true },
-                            contentDescription = "Share journey",
-                        ) {
-                            Image(
-                                painter = rememberShareIconPainter(),
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                modifier = Modifier.size(KrailTheme.dimensions.iconM),
-                            )
-                        }
-                    }
+                    TrackTripActions(
+                        isRefreshing = isRefreshing,
+                        isJourneyActive = isJourneyActive,
+                        mapExpanded = mapExpanded,
+                        onToggleMap = { mapExpanded = !mapExpanded },
+                        onShare = { triggerShare = true },
+                    )
                 },
             )
 
@@ -216,59 +199,95 @@ fun TrackTripScreen(
                     },
                 )
 
-                TrackTripState.NotFound -> Column(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    val dim = KrailTheme.dimensions
-                    ErrorMessage(
-                        title = "Service not found",
-                        message = "This service wasn't found. It may have been cancelled or\u00A0changed.",
-                        emoji = "\uD83D\uDEAB",
-                        actionData = ActionData("Retry") { viewModel.retry() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dim.spacingXL),
-                    )
-                    Button(
-                        onClick = {
-                            viewModel.onStopTracking()
-                            onBack()
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = dim.spacingXL),
-                    ) {
-                        Text("Stop Tracking")
-                    }
-                }
+                TrackTripState.NotFound -> TrackTripErrorContent(
+                    title = "Service not found",
+                    message = "This service wasn't found. It may have been cancelled or\u00A0changed.",
+                    emoji = "\uD83D\uDEAB",
+                    onRetry = { viewModel.retry() },
+                    onStopTracking = {
+                        viewModel.onStopTracking()
+                        onBack()
+                    },
+                )
 
-                TrackTripState.Error -> Column(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    val dim = KrailTheme.dimensions
-                    ErrorMessage(
-                        title = "Something went wrong",
-                        message = "Couldn't reach transport services. Check your connection and try\u00A0again.",
-                        actionData = ActionData("Retry") { viewModel.retry() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dim.spacingXL),
-                    )
-                    Button(
-                        onClick = {
-                            viewModel.onStopTracking()
-                            onBack()
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = dim.spacingXL),
-                    ) {
-                        Text("Stop Tracking")
-                    }
-                }
+                TrackTripState.Error -> TrackTripErrorContent(
+                    title = "Something went wrong",
+                    message = "Couldn't reach transport services. Check your connection and try\u00A0again.",
+                    emoji = null,
+                    onRetry = { viewModel.retry() },
+                    onStopTracking = {
+                        viewModel.onStopTracking()
+                        onBack()
+                    },
+                )
 
                 is TrackTripState.AlreadyTracking -> Unit // unreachable — deep link tap clears old tracking
             }
+        }
+    }
+}
+
+@Composable
+private fun TrackTripActions(
+    isRefreshing: Boolean,
+    isJourneyActive: Boolean,
+    mapExpanded: Boolean,
+    onToggleMap: () -> Unit,
+    onShare: () -> Unit,
+) {
+    AnimatedVisibility(
+        visible = isRefreshing,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        val dim = KrailTheme.dimensions
+        AnimatedDots(modifier = Modifier.size(dim.buttonRoundSize, dim.iconXS))
+    }
+    if (isJourneyActive) {
+        TextButton(onClick = onToggleMap) {
+            Text(text = if (mapExpanded) "Hide Map" else "Map")
+        }
+        ActionButton(
+            onClick = onShare,
+            contentDescription = "Share journey",
+        ) {
+            Image(
+                painter = rememberShareIconPainter(),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                modifier = Modifier.size(KrailTheme.dimensions.iconM),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrackTripErrorContent(
+    title: String,
+    message: String,
+    emoji: String?,
+    onRetry: () -> Unit,
+    onStopTracking: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        val dim = KrailTheme.dimensions
+        ErrorMessage(
+            title = title,
+            message = message,
+            emoji = emoji ?: "🐶",
+            actionData = ActionData("Retry") { onRetry() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dim.spacingXL),
+        )
+        Button(
+            onClick = onStopTracking,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = dim.spacingXL),
+        ) {
+            Text("Stop Tracking")
         }
     }
 }
@@ -391,7 +410,6 @@ private fun JourneyContent(
             Box(modifier = Modifier.fillMaxHeight(0.45f)) {
                 JourneyMap(
                     journeyMapState = journeyMapState,
-                    showFreshnessBadge = false,
                     modifier = Modifier.fillMaxSize(),
                     extraMapContent = {
                         liveOverlay?.let {
@@ -610,46 +628,21 @@ private fun TrackTripScreenPreview(state: TrackTripState) {
                     isArrived = true,
                 )
 
-                TrackTripState.NotFound -> Column(modifier = Modifier.fillMaxWidth()) {
-                    val dim = KrailTheme.dimensions
-                    ErrorMessage(
-                        title = "Service not found",
-                        message = "This service wasn't found. It may have been cancelled or\u00A0changed.",
-                        emoji = "\uD83D\uDEAB",
-                        actionData = ActionData("Retry") { },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dim.spacingXL),
-                    )
-                    Button(
-                        onClick = {},
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = dim.spacingXL),
-                    ) {
-                        Text("Stop Tracking")
-                    }
-                }
+                TrackTripState.NotFound -> TrackTripErrorContent(
+                    title = "Service not found",
+                    message = "This service wasn't found. It may have been cancelled or\u00A0changed.",
+                    emoji = "\uD83D\uDEAB",
+                    onRetry = {},
+                    onStopTracking = {},
+                )
 
-                TrackTripState.Error -> Column(modifier = Modifier.fillMaxWidth()) {
-                    val dim = KrailTheme.dimensions
-                    ErrorMessage(
-                        title = "Something went wrong",
-                        message = "Couldn't reach transport services. Check your connection and try\u00A0again.",
-                        actionData = ActionData("Retry") { },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = dim.spacingXL),
-                    )
-                    Button(
-                        onClick = {},
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(bottom = dim.spacingXL),
-                    ) {
-                        Text("Stop Tracking")
-                    }
-                }
+                TrackTripState.Error -> TrackTripErrorContent(
+                    title = "Something went wrong",
+                    message = "Couldn't reach transport services. Check your connection and try\u00A0again.",
+                    emoji = null,
+                    onRetry = {},
+                    onStopTracking = {},
+                )
 
                 is TrackTripState.AlreadyTracking -> Unit // unreachable — deep link tap clears old tracking
 

@@ -32,6 +32,10 @@ fun LocationPermissionBanner(
     modifier: Modifier = Modifier,
 ) {
     Box(
+        // No window-inset padding here: the pill is positioned by the call site
+        // (ornamentTopPadding already clears the search bar / status bar in every pane and
+        // orientation). Adding statusBarsPadding here double-counted the status bar — fine in
+        // landscape where the top inset is ~0, but a large gap in portrait.
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
             .background(color = KrailTheme.colors.surface.copy(alpha = 0.9f))
@@ -40,7 +44,7 @@ fun LocationPermissionBanner(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "Location off, tap to open Settings",
+            text = "Location permission required",
             style = KrailTheme.typography.bodySmall,
             color = KrailTheme.colors.onSurface,
         )

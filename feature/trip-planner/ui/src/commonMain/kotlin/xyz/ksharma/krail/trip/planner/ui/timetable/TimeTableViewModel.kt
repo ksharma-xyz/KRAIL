@@ -258,7 +258,7 @@ class TimeTableViewModel(
                         source = AnalyticsEvent.RetryApiEvent.Source.TIMETABLE,
                     ),
                 )
-                onLoadTimeTable(tripInfo!!)
+                onRetry()
             }
 
             is TimeTableUiEvent.DateTimeSelectionChanged -> {
@@ -422,25 +422,33 @@ class TimeTableViewModel(
             }.catch { e ->
                 log("Error while fetching trip: $e")
             }.collectLatest { result ->
-                updateUiState { copy(silentLoading = false) }
-                result.onSuccess { response ->
-                    updateTripsCache(response)
-                    updateUiStateWithFilteredTrips()
-                }.onFailure {
-                    // fetchTrip() runs on every screen-visible (onStart) and every auto-refresh.
-                    // A failure on one of those silent/background refreshes must NOT blow away
-                    // journeys already on screen, otherwise returning to the app or a flaky
-                    // 30s refresh flips the whole screen to the error state. Only surface the
-                    // full error screen when there is nothing to show.
-                    val hasData = _uiState.value.journeyList.isNotEmpty()
-                    // Track the error screen as a screen view, but only on the transition
-                    // into the error state (not on every failed auto-refresh while errored).
-                    if (!hasData && !_uiState.value.isError) {
-                        analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTableError)
-                    }
-                    updateUiState { copy(isLoading = false, isError = !hasData) }
-                }
+                handleTripResult(result)
             }
+        }
+    }
+
+    /**
+     * Applies a [loadTrip] result to UI state. Shared by the rate-limited [fetchTrip] auto-refresh
+     * path and the immediate [onRetry] path.
+     */
+    private suspend fun handleTripResult(result: Result<TripResponse>) {
+        updateUiState { copy(silentLoading = false) }
+        result.onSuccess { response ->
+            updateTripsCache(response)
+            updateUiStateWithFilteredTrips()
+        }.onFailure {
+            // fetchTrip() runs on every screen-visible (onStart) and every auto-refresh.
+            // A failure on one of those silent/background refreshes must NOT blow away
+            // journeys already on screen, otherwise returning to the app or a flaky
+            // 30s refresh flips the whole screen to the error state. Only surface the
+            // full error screen when there is nothing to show.
+            val hasData = _uiState.value.journeyList.isNotEmpty()
+            // Track the error screen as a screen view, but only on the transition
+            // into the error state (not on every failed auto-refresh while errored).
+            if (!hasData && !_uiState.value.isError) {
+                analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTableError)
+            }
+            updateUiState { copy(isLoading = false, isError = !hasData) }
         }
     }
 
@@ -521,16 +529,38 @@ class TimeTableViewModel(
         }
     }
 
+    /**
+     * Drops journeys that use any de-selected transport mode.
+     *
+     * The NSW trip API does not reliably honour the `exclMOT` exclusion params we send — it
+     * still returns excluded modes (e.g. de-selecting Train still yields train journeys). We
+     * therefore filter defensively on the client so the user's mode selection is always
+     * respected. A multi-modal journey is dropped if ANY of its legs uses an excluded mode.
+     *
+     * Footpath/walk (productClass 99) is not a selectable mode and never appears in
+     * [TimeTableState.JourneyCardInfo.transportModeLines], so it is never excluded.
+     */
+    private fun List<TimeTableState.JourneyCardInfo>.excludeUnselectedModes(): List<TimeTableState.JourneyCardInfo> =
+        if (unselectedModes.isEmpty()) {
+            this
+        } else {
+            filterNot { journey ->
+                journey.transportModeLines.any { it.transportMode.productClass in unselectedModes }
+            }
+        }
+
     private fun updateUiStateWithFilteredTrips() {
         // Main list = current-window journeys + load-more (future) journeys, sorted chronologically.
         val mergedJourneys = (journeys.values + loadMoreJourneys.values)
             .distinctBy { it.journeyId }
         val journeyList = updateJourneyCardInfoTimeText(mergedJourneys)
+            .excludeUnselectedModes()
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
         // Previous list = past journeys fetched via "Show Previous".
         val previousJourneyList = updateJourneyCardInfoTimeText(previousJourneysCache.values.toList())
+            .excludeUnselectedModes()
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
@@ -555,12 +585,19 @@ class TimeTableViewModel(
         }
         log("[SHARE] deep link URLs computed — ${deepLinkUrls?.size ?: 0} journeys encoded for sharing")
 
+        // The API returned journeys but the user's mode selection filtered them all out.
+        // Distinct from "API returned nothing" so the UI can show a mode-specific hint
+        // instead of the generic "no route found" message.
+        val emptyDueToModeFilter = unselectedModes.isNotEmpty() &&
+            mergedJourneys.isNotEmpty() && journeyList.isEmpty()
+
         updateUiState {
             copy(
                 isLoading = false,
                 journeyList = journeyList,
                 previousJourneyList = previousJourneyList,
                 isError = false,
+                emptyDueToModeFilter = emptyDueToModeFilter,
                 deepLinkUrls = deepLinkUrls ?: this.deepLinkUrls,
                 canLoadMore = PAGINATION_ENABLED && journeyList.isNotEmpty() &&
                     loadMoreCount < MAX_LOAD_MORE_COUNT,
@@ -805,6 +842,28 @@ class TimeTableViewModel(
             legCount = legCount,
             transportModes = transportModes,
         )
+    }
+
+    /**
+     * Re-runs the current request after a failure. Unlike [onLoadTimeTable], retry must NOT
+     * reset trip params: it preserves the selected date/time (Leave at / Arrive by) and the
+     * mode filter, then simply re-fetches. Routing retry through onLoadTimeTable used to null
+     * dateTimeSelectionItem whenever the VM had no previousTripId yet (e.g. a fresh VM after
+     * process death or re-navigation), so retry silently fell back to "now".
+     */
+    private fun onRetry() {
+        if (tripInfo == null) return
+        log("onRetry: immediate fetch, bypassing rate limiter")
+        // Show the loading screen right away.
+        updateUiState { copy(isLoading = true, isError = false) }
+        // Retry must hit the API IMMEDIATELY. Routing through fetchTrip()'s rateLimitFlow
+        // debounces the call against the shared 30s auto-refresh trigger, so the user could
+        // wait up to a full refresh interval before anything happens. Call loadTrip() directly.
+        fetchTripJob?.cancel()
+        fetchTripJob = viewModelScope.launch(ioDispatcher) {
+            updateUiState { copy(silentLoading = true) }
+            handleTripResult(loadTrip())
+        }
     }
 
     private fun onLoadTimeTable(trip: Trip) {

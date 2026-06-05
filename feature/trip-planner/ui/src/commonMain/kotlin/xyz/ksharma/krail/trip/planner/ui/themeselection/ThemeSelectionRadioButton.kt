@@ -26,9 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalDensity
@@ -114,35 +116,12 @@ fun ThemeSelectionRadioButton(
             .scalingKlickable { onClick(themeStyle) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(COLOR_SWATCH_OUTER_SIZE)
-                .then(
-                    if (selected) {
-                        Modifier.drawBehind {
-                            val color = themeStyle.hexColorCode.hexToComposeColor()
-                            withTransform({
-                                scale(pulseScale, pulseScale, pivot = center)
-                            }) {
-                                drawCircle(
-                                    color = color.copy(alpha = pulseAlpha),
-                                    radius = size.minDimension / 2,
-                                )
-                            }
-                        }
-                    } else {
-                        Modifier
-                    },
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(dim.iconL)
-                    .clip(CircleShape)
-                    .background(color = themeStyle.hexColorCode.hexToComposeColor()),
-            )
-        }
+        ThemeColorSwatch(
+            themeStyle = themeStyle,
+            selected = selected,
+            pulseScale = pulseScale,
+            pulseAlpha = pulseAlpha,
+        )
 
         Box(
             modifier = Modifier
@@ -155,54 +134,11 @@ fun ThemeSelectionRadioButton(
                         .width(textWidth)
                         .padding(horizontal = dim.spacingL),
                 ) {
-                    val layout = textLayoutResult!!
-                    val lineCount = layout.lineCount
-                    val strokeWidth = WAVE_STROKE_WIDTH.toPx()
-                    val amplitude = WAVE_AMPLITUDE.toPx()
-                    val waveLength = WAVE_LENGTH.toPx()
-                    var remaining = currentPathLength
-
-                    for (line in 0 until lineCount) {
-                        val left = layout.getLineLeft(line)
-                        val right = layout.getLineRight(line)
-                        val lineWidth = right - left
-                        if (remaining <= 0f) break
-                        val highlightEnd = left + remaining.coerceAtMost(lineWidth)
-                        val top = layout.getLineTop(line)
-                        val bottom = layout.getLineBottom(line)
-                        val centerY = (top + bottom) / 2f
-
-                        val path = Path()
-                        var x = left
-                        var up = true
-                        path.moveTo(x, centerY)
-                        while (x < highlightEnd) {
-                            val nextX = (x + waveLength).coerceAtMost(highlightEnd)
-                            val controlX1 = x + waveLength / 3
-                            val controlX2 = x + 2 * waveLength / 3
-                            val endY = if (up) centerY - amplitude else centerY + amplitude
-                            path.cubicTo(
-                                controlX1,
-                                centerY,
-                                controlX2,
-                                endY,
-                                nextX,
-                                endY,
-                            )
-                            x = nextX
-                            up = !up
-                        }
-                        drawPath(
-                            path = path,
-                            color = highlightColor,
-                            style = Stroke(
-                                width = strokeWidth,
-                                cap = StrokeCap.Round,
-                                join = StrokeJoin.Round,
-                            ),
-                        )
-                        remaining -= lineWidth
-                    }
+                    drawWaveHighlight(
+                        layout = textLayoutResult!!,
+                        currentPathLength = currentPathLength,
+                        highlightColor = highlightColor,
+                    )
                 }
             }
 
@@ -218,6 +154,109 @@ fun ThemeSelectionRadioButton(
             )
         }
     }
+}
+
+@Composable
+private fun ThemeColorSwatch(
+    themeStyle: KrailThemeStyle,
+    selected: Boolean,
+    pulseScale: Float,
+    pulseAlpha: Float,
+) {
+    val dim = KrailTheme.dimensions
+    Box(
+        modifier = Modifier
+            .size(COLOR_SWATCH_OUTER_SIZE)
+            .then(
+                if (selected) {
+                    Modifier.drawBehind {
+                        val color = themeStyle.hexColorCode.hexToComposeColor()
+                        withTransform({
+                            scale(pulseScale, pulseScale, pivot = center)
+                        }) {
+                            drawCircle(
+                                color = color.copy(alpha = pulseAlpha),
+                                radius = size.minDimension / 2,
+                            )
+                        }
+                    }
+                } else {
+                    Modifier
+                },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(dim.iconL)
+                .clip(CircleShape)
+                .background(color = themeStyle.hexColorCode.hexToComposeColor()),
+        )
+    }
+}
+
+private fun DrawScope.drawWaveHighlight(
+    layout: TextLayoutResult,
+    currentPathLength: Float,
+    highlightColor: Color,
+) {
+    val strokeWidth = WAVE_STROKE_WIDTH.toPx()
+    val amplitude = WAVE_AMPLITUDE.toPx()
+    val waveLength = WAVE_LENGTH.toPx()
+    var remaining = currentPathLength
+
+    for (line in 0 until layout.lineCount) {
+        val left = layout.getLineLeft(line)
+        val lineWidth = layout.getLineRight(line) - left
+        if (remaining <= 0f) break
+        val highlightEnd = left + remaining.coerceAtMost(lineWidth)
+        val centerY = (layout.getLineTop(line) + layout.getLineBottom(line)) / 2f
+
+        drawPath(
+            path = buildWavePath(
+                left = left,
+                highlightEnd = highlightEnd,
+                centerY = centerY,
+                amplitude = amplitude,
+                waveLength = waveLength,
+            ),
+            color = highlightColor,
+            style = Stroke(
+                width = strokeWidth,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+        )
+        remaining -= lineWidth
+    }
+}
+
+private fun buildWavePath(
+    left: Float,
+    highlightEnd: Float,
+    centerY: Float,
+    amplitude: Float,
+    waveLength: Float,
+): Path {
+    val path = Path()
+    var x = left
+    var up = true
+    path.moveTo(x, centerY)
+    while (x < highlightEnd) {
+        val nextX = (x + waveLength).coerceAtMost(highlightEnd)
+        val endY = if (up) centerY - amplitude else centerY + amplitude
+        path.cubicTo(
+            x + waveLength / 3,
+            centerY,
+            x + 2 * waveLength / 3,
+            endY,
+            nextX,
+            endY,
+        )
+        x = nextX
+        up = !up
+    }
+    return path
 }
 
 @Preview

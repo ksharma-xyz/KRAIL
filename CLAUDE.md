@@ -35,7 +35,24 @@ If a module is missing `testAndroidHostTest`, add `withHostTest {}` inside its `
 Suppression rules:
 - Break long lines instead of suppressing `MaximumLineLength` / `MaxLineLength`
 - Extract constants instead of suppressing `MagicNumber` (unless truly no reuse value)
-- Only suppress `CyclomaticComplexMethod` / `LongMethod` when refactoring is genuinely not possible
+
+### `CyclomaticComplexMethod` — zero tolerance for suppression
+
+**Never** suppress `CyclomaticComplexMethod`. Not via `@Suppress`, not via `detekt.yml`
+config, and not via a `baseline.xml` entry (baselining is suppression). When a method
+trips the rule, **refactor it** until it passes:
+- Extract cohesive blocks into well-named private functions. If the file is also at its
+  `TooManyFunctions` limit, extract to a **separate file** so neither limit grows (note:
+  detekt counts branches inside nested/local functions toward the enclosing function, so a
+  local `fun` does **not** reduce complexity — a top-level function in another file does).
+- Replace if/else-if ladders with `when`, polymorphism, or a lookup map.
+- Split a Composable that renders many conditional sections into smaller Composables.
+
+If you genuinely believe a method cannot be refactored, stop and raise it with the
+maintainer rather than suppressing. There is no "genuinely not possible" escape hatch here.
+
+`LongMethod` is exempt only on `@Composable` functions (already configured); never suppress
+it elsewhere — refactor instead.
 
 ## LazyColumn / LazyRow item keys
 

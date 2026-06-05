@@ -398,11 +398,13 @@ fun TimeTableScreen(
                     ),
                     onPlanTripClick = dateTimeSelectorClicked,
                 )
-            } else { // Journey list is empty or null
+            } else { // Journey list is empty — either no results, or mode filter removed them all.
                 item(key = "no-results") {
+                    val (title, message) =
+                        timeTableEmptyResultMessage(timeTableState.emptyDueToModeFilter)
                     ErrorMessage(
-                        title = "No route found!",
-                        message = "Search for another stop or check back later.",
+                        title = title,
+                        message = message,
                         modifier = Modifier.fillMaxWidth().animateItem(),
                     )
                 }

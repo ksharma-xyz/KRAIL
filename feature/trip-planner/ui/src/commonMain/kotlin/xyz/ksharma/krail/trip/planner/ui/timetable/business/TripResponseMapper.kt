@@ -17,7 +17,6 @@ import xyz.ksharma.krail.trip.planner.network.api.model.isWalkingLeg
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import kotlin.math.absoluteValue
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -162,65 +161,10 @@ private fun List<TripResponse.Leg>.getLegsList() = mapNotNull { it.toUiModel() }
 @OptIn(ExperimentalTime::class)
 private fun String.getTimeText() = toDepartureRelativeString()
 
-@OptIn(ExperimentalTime::class)
-@Suppress("ComplexCondition", "CyclomaticComplexMethod")
-private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? {
-    val transportMode =
-        transportation?.product?.productClass?.toInt()
-            ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
-    val lineName = transportation?.disassembledName
-
-    val displayText = NswTransportConfig.resolveServiceDisplayText(
-        productClass = transportation?.product?.productClass?.toInt(),
-        destinationName = transportation?.destination?.name,
-        description = transportation?.description,
-    )
-    val numberOfStops = stopSequence?.size
-    // duration can be null for some legs (e.g. first bus leg in a multi-leg journey).
-    // Fall back to calculating duration from departure/arrival times via resolveDurationSeconds().
-    val displayDuration = resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
-    val stops = stopSequence?.mapNotNull { it.toUiModel() }?.toImmutableList()
-    val alerts = infos?.mapNotNull { it.toAlert() }?.toImmutableList()
-
-    return when {
-        // Walking Leg - Always check before public transport leg
-        isWalkingLeg() -> if (displayDuration != null && this.footPathInfoRedundant != true) {
-            TimeTableState.JourneyCardInfo.Leg.WalkingLeg(duration = displayDuration)
-        } else {
-            null
-        }
-
-        else -> { // Public Transport Leg
-            if (transportMode != null && lineName != null && displayText != null &&
-                numberOfStops != null && stops != null && displayDuration != null
-            ) {
-                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
-                    transportModeLine = TransportModeLine(
-                        transportMode = transportMode,
-                        lineName = lineName,
-                    ),
-                    displayText = displayText,
-                    totalDuration = displayDuration,
-                    stops = stops,
-                    serviceAlertList = alerts,
-                    walkInterchange = footPathInfo?.firstOrNull()?.run {
-                        duration?.seconds?.toFormattedDurationTimeString()
-                            ?.let { formattedDuration -> toWalkInterchange(formattedDuration) }
-                    },
-                    tripId = transportation?.id + transportation?.properties?.realtimeTripId,
-                    transportationId = transportation?.id,
-                )
-            } else {
-                logError(
-                    "Something is null - NOT adding Transport LEG: " +
-                        "TransportMode: $transportMode, lineName: $lineName, displayText: $displayText, " +
-                        "numberOfStops: $numberOfStops, stops: $stops, displayDuration: $displayDuration",
-                )
-                null
-            }
-        }
-    }
-}
+private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? =
+    // Walking Leg - Always check before public transport leg. Both builders compute their
+    // own fields from this leg; see TripResponseLegMapper.kt.
+    if (isWalkingLeg()) toWalkingLegUiModel() else toTransportLegUiModel()
 
 /**
  * Resolves the duration of a leg in seconds.
@@ -280,7 +224,7 @@ internal fun TripResponse.FootPathInfo.toWalkInterchange(
     }
 }
 
-private fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInfo.Stop? {
+internal fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInfo.Stop? {
     val stopName = disassembledName ?: name
     // For last leg there is no departure time, so using arrival time
     // For first leg there is no arrival time, so using departure time.

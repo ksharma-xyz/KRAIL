@@ -24,6 +24,13 @@ sealed class TransportMode(
     /** Human-readable label shown in filter chips and UI strings. Defaults to [name]. */
     val displayName: String = name,
 ) {
+    /**
+     * Hex color for the icon border ring. Defaults to white (#FFFFFF) — subtle against
+     * solid dark-colored icon backgrounds. Override for light-background modes (e.g. School Bus)
+     * so the ring provides contrast against the icon fill instead of blending in.
+     */
+    open val iconBorderColorCode: String get() = "#FFFFFF"
+
     @Serializable object Train : TransportMode("#F6891F", "Train", 1, 1, 1)
 
     @Serializable object Metro : TransportMode("#009B77", "Metro", 2, 3, 2)
@@ -36,15 +43,17 @@ sealed class TransportMode(
 
     @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6, 5)
 
-    // Same blue and icon letter as Bus — NSW school buses share bus color palette.
+    // Light blue fill + blue ring + black "B" — matches TfNSW school bus icon style.
     @Serializable object SchoolBus : TransportMode(
-        colorCode = "#00B5EF",
+        colorCode = "#9FD7F7",
         name = "Bus",
         productClass = 11,
         priority = 7,
         searchPriority = 7,
         displayName = "School Bus",
-    )
+    ) {
+        override val iconBorderColorCode: String get() = "#00B5EF"
+    }
 
     companion object {
         const val SCHOOL_BUS_PRODUCT_CLASS = 11

@@ -26,7 +26,6 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.toAdaptiveDecorativeIconSize
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 
@@ -40,7 +39,7 @@ fun TransportModeIcon(
 ) {
     val bgColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor()
     CompositionLocalProvider(
-        LocalTextColor provides getForegroundColor(bgColor),
+        LocalTextColor provides transportMode.iconLetterColorCode.hexToComposeColor(),
         // should be same as StopsRow and TransportModeInfo
         LocalTextStyle provides KrailTheme.typography.titleSmall,
         // Alpha is intentionally always 100% — the mode icon circle must remain fully opaque
@@ -228,6 +227,29 @@ private fun FerryWithBackgroundPreview() {
     PreviewTheme {
         TransportModeIcon(
             transportMode = TransportMode.Ferry,
+            displayBorder = true,
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun SchoolBusPreview() {
+    PreviewTheme {
+        TransportModeIcon(
+            transportMode = TransportMode.SchoolBus,
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun SchoolBusWithBackgroundPreview() {
+    PreviewTheme {
+        TransportModeIcon(
+            transportMode = TransportMode.SchoolBus,
             displayBorder = true,
         )
     }

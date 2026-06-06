@@ -31,6 +31,9 @@ sealed class TransportMode(
      */
     open val iconBorderColorCode: String get() = "#FFFFFF"
 
+    /** Hex color for the letter inside the icon circle. White for dark backgrounds, black for light. */
+    open val iconLetterColorCode: String get() = "#FFFFFF"
+
     @Serializable object Train : TransportMode("#F6891F", "Train", 1, 1, 1)
 
     @Serializable object Metro : TransportMode("#009B77", "Metro", 2, 3, 2)
@@ -53,6 +56,7 @@ sealed class TransportMode(
         displayName = "School Bus",
     ) {
         override val iconBorderColorCode: String get() = "#00B5EF"
+        override val iconLetterColorCode: String get() = "#000000"
     }
 
     companion object {

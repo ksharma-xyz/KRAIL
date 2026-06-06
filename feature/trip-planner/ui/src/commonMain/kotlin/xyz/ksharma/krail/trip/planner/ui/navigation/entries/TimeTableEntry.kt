@@ -16,7 +16,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import kotlinx.collections.immutable.persistentSetOf
@@ -66,12 +69,18 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
         val timeTableState by viewModel.uiState.collectAsStateWithLifecycle()
         val expandedJourneyId by viewModel.expandedJourneyId.collectAsStateWithLifecycle()
 
-        // Collect these flows to trigger their onStart side-effects (polling, lifecycle
-        // gating) without exposing the values as unused local variables.
-        LaunchedEffect(viewModel) {
-            launch { viewModel.isLoading.collect {} }
-            launch { viewModel.isActive.collect {} }
-            launch { viewModel.autoRefreshTimeTable.collect {} }
+        // Collect these flows to trigger their WhileSubscribed side-effects (polling, time
+        // text refresh). Must use repeatOnLifecycle(STARTED) so collection stops when the
+        // Activity goes to background — a plain LaunchedEffect is Composition-scoped and
+        // would keep subscribers alive through lock-screen/background, preventing
+        // WhileSubscribed from ever seeing 0 collectors and halting the poll loop.
+        val lifecycleOwner = LocalLifecycleOwner.current
+        LaunchedEffect(viewModel, lifecycleOwner) {
+            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { viewModel.isLoading.collect {} }
+                launch { viewModel.isActive.collect {} }
+                launch { viewModel.autoRefreshTimeTable.collect {} }
+            }
         }
 
         // Modal visibility state

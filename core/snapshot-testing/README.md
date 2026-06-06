@@ -100,6 +100,8 @@ be re-annotated with `@ScreenshotTest` until the underlying composables learn to
 - `feature/trip-planner/ui/components/loading/LoadingEmojiAnim.kt` — `Preview` (rocket emoji animation)
 - `feature/trip-planner/ui/components/DepartureBoardStopCard.kt` — `DepartureBoardStopCardLoadingPreview`
   (passes `isLoading = true`, which renders `LoadingDotsPill`)
+- `feature/trip-planner/ui/components/TrackedLegView.kt` — `TrackedLegViewPreview`, `TrackedStopRowPreview`
+  (`rememberInfiniteTransition` called unconditionally in `TrackedLegView` — pulse animation always active)
 
 If you add a new preview that uses any of `LoadingDotsPill`, `LoadingEmojiAnim`, `AnimatedDots`,
 `Animatable.animateTo` in a loop, or `LaunchedEffect { while (true) … }`, do not add `@ScreenshotTest`

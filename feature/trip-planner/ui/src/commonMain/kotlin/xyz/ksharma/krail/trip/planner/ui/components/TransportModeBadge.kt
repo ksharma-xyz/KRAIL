@@ -129,7 +129,7 @@ private fun TransportModeBadgeBusPreview() {
     PreviewTheme {
         TransportModeBadge(
             badgeText = "700",
-            backgroundColor = "00B5EF".hexToComposeColor(),
+            backgroundColor = "#00B5EF".hexToComposeColor(),
         )
     }
 }

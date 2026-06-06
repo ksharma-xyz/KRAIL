@@ -88,12 +88,12 @@ fun SearchTopBar(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            // Single-pane: the top bar floats in a Box over the content, so ime padding keeps it
-            // clear of the keyboard. Dual-pane: the top bar is the FIRST child of the left Column,
-            // so ime padding inflates its height by the keyboard height and shoves the list content
-            // down (severe on iOS landscape where the keyboard is ~50% of the height). The keyboard
-            // is at the bottom and the top bar at the top — they never overlap — so dual-pane opts
-            // out via applyImePadding = false.
+            // The top bar is at the TOP of the screen; the keyboard is at the BOTTOM — they never
+            // overlap. IME padding on this Row inflates the bar's measured height by the keyboard
+            // height, which then double-counts it in the content's top-padding offset. Both
+            // single-pane (floating Box) and dual-pane (Column first child) must pass
+            // applyImePadding = false; keyboard avoidance is the caller's responsibility via
+            // imePadding() on the root container.
             .then(if (applyImePadding) Modifier.windowInsetsPadding(WindowInsets.ime) else Modifier)
             .padding(horizontal = dim.spacingXL, vertical = dim.spacingL)
             .background(

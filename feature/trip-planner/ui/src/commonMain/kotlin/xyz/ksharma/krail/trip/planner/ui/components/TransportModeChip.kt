@@ -91,7 +91,7 @@ fun TransportModeChip(
                 displayBorder = true,
             )
 
-            Text(text = NswTransportConfig.nameFor(transportMode), color = textColor)
+            Text(text = transportMode.displayName, color = textColor)
         }
     }
 }

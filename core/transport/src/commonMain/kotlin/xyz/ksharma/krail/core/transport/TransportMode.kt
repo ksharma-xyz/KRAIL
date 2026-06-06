@@ -16,10 +16,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class TransportMode(
     val colorCode: String,
+    /** Single-word name used for the icon letter (e.g. "Bus" → "B"). */
     val name: String,
     val productClass: Int,
     val priority: Int,
     val searchPriority: Int,
+    /** Human-readable label shown in filter chips and UI strings. Defaults to [name]. */
+    val displayName: String = name,
 ) {
     @Serializable object Train : TransportMode("#F6891F", "Train", 1, 1, 1)
 
@@ -33,8 +36,15 @@ sealed class TransportMode(
 
     @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6, 5)
 
-    // Same blue as Bus — NSW school buses share the bus color palette.
-    @Serializable object SchoolBus : TransportMode("#00B5EF", "School Bus", 11, 7, 7)
+    // Same blue and icon letter as Bus — NSW school buses share bus color palette.
+    @Serializable object SchoolBus : TransportMode(
+        colorCode = "#00B5EF",
+        name = "Bus",
+        productClass = 11,
+        priority = 7,
+        searchPriority = 7,
+        displayName = "School Bus",
+    )
 
     companion object {
         const val SCHOOL_BUS_PRODUCT_CLASS = 11

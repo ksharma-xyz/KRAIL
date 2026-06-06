@@ -162,6 +162,10 @@ data class TimeTableState(
 
                 /** Stable timetable identifier (transportation.id only). Used for trip tracking deep links. */
                 val transportationId: String? = null,
+
+                /** True when the leg's product class is 11 (School Bus). Rendered as a bus leg
+                 *  with a "School service" tag so users know the service is not public. */
+                val isSchoolBus: Boolean = false,
             ) : Leg()
         }
 

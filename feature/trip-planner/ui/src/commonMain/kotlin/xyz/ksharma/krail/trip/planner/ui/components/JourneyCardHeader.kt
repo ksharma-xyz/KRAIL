@@ -10,11 +10,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.SeparatorIcon
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
@@ -39,6 +41,7 @@ internal fun JourneyCardHeader(
     platformText: String?,
     timeToDeparture: String,
     modifier: Modifier = Modifier,
+    isSchoolBus: Boolean = false,
 ) {
     val isPast by remember(timeToDeparture) {
         mutableStateOf(timeToDeparture.contains(other = "ago", ignoreCase = true))
@@ -64,6 +67,7 @@ internal fun JourneyCardHeader(
                 TransportModesRow(
                     transportModeLineList = transportModeLineList,
                     showBadge = { it.transportMode is TransportMode.Bus },
+                    isSchoolBus = isSchoolBus,
                 )
             }
         }
@@ -74,6 +78,7 @@ internal fun JourneyCardHeader(
             TransportModesRow(
                 transportModeLineList = transportModeLineList,
                 showBadge = { it.transportMode is TransportMode.Bus },
+                isSchoolBus = isSchoolBus,
                 modifier = Modifier.padding(top = dim.journeyCardLegSpacing),
             )
         }
@@ -93,6 +98,7 @@ internal fun TransportModesRow(
     transportModeLineList: ImmutableList<TransportModeLine>,
     showBadge: (TransportModeLine) -> Boolean,
     modifier: Modifier = Modifier,
+    isSchoolBus: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     FlowRow(
@@ -115,6 +121,13 @@ internal fun TransportModesRow(
             if (index != transportModeLineList.lastIndex) {
                 SeparatorIcon(modifier = Modifier.align(Alignment.CenterVertically))
             }
+        }
+        if (isSchoolBus) {
+            Text(
+                text = "School Bus",
+                style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                color = KrailTheme.colors.onSurface,
+            )
         }
     }
 }

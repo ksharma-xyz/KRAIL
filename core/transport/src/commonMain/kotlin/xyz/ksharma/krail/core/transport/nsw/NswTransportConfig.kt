@@ -12,15 +12,8 @@ import xyz.ksharma.krail.core.transport.TransportModeSortOrder
  */
 object NswTransportConfig : TransportConfig {
 
-    // School Bus (class 11) is not a TransportMode subclass — it shares Bus UI and API behaviour.
-    // Mapping it here means all callers get TransportMode.Bus automatically; no per-callsite guard needed.
-    // Add future product-class aliases here if another class maps to an existing mode.
     override fun modeFromProductClass(productClass: Int): TransportMode? =
-        if (productClass == TransportMode.SCHOOL_BUS_PRODUCT_CLASS) {
-            TransportMode.Bus
-        } else {
-            TransportMode.fromProductClass(productClass)
-        }
+        TransportMode.fromProductClass(productClass)
 
     override fun colorFor(mode: TransportMode): String = mode.colorCode
 

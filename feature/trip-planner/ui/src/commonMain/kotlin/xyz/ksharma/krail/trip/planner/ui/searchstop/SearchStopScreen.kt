@@ -638,6 +638,12 @@ private fun SearchStopScreenSinglePane(
                 }
                 onTextChange(value)
             },
+            // The top bar floats at the TOP of the screen; the keyboard is at the BOTTOM.
+            // They never overlap, so IME padding on the bar is wrong: it inflates topBarHeightDp
+            // by the keyboard height, which pushes SearchStopListContent down by the same amount
+            // even though the root Box's imePadding() already shrinks the layout area.
+            // The root Box handles keyboard avoidance for all children.
+            applyImePadding = false,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopStart)

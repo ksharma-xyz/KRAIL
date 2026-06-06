@@ -201,6 +201,14 @@ Always use the project's custom preview annotations — never bare `@Preview`.
 
 Both are defined in `xyz.ksharma.krail.taj.preview`. They expand to multiple device/theme combinations automatically. Using `@Preview` directly produces a single-config preview and misses dark mode, font scale, etc.
 
+## Background polling — WhileSubscribed lifecycle rule
+
+See `docs/POLLING_LIFECYCLE.md` for full rules and patterns.
+
+**TL;DR:** Use `repeatOnLifecycle(STARTED)` inside `LaunchedEffect` to activate
+side-effect flows — never plain `LaunchedEffect { launch { flow.collect {} } }`.
+Always collect `uiState` with `collectAsStateWithLifecycle()`.
+
 ## Per-feature UX rule docs
 
 Some features have a markdown file capturing their UX invariants and outstanding test
@@ -211,3 +219,5 @@ that contradicts the doc should also update the doc in the same change.
   edit mode, conflict warnings, contextual banner, state persistence).
 - `docs/TABLET_FOLDABLE_UX.md` — adaptive layout rules for tablets, foldables, and phone
   landscape (per-screen dual-pane behaviour, compact-height adaptations, breakpoint contract).
+- `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`
+  pattern, why plain `LaunchedEffect` breaks background gating, all polling flows listed.

@@ -119,26 +119,8 @@ internal class RealTripPlanningService(
         parameters: ParametersBuilder,
     ) {
         log("Exclude transport mode - $excludeProductClassSet")
-        parameters.append(TripRequestParams.excludedMeans, "checkbox")
-
-        if (excludeProductClassSet.contains(1)) {
-            parameters.append(TripRequestParams.exclMOT1, "1")
-        }
-        if (excludeProductClassSet.contains(2)) {
-            parameters.append(TripRequestParams.exclMOT2, "2")
-        }
-        if (excludeProductClassSet.contains(4)) {
-            parameters.append(TripRequestParams.exclMOT4, "4")
-        }
-        if (excludeProductClassSet.contains(5) || excludeProductClassSet.contains(11)) {
-            parameters.append(TripRequestParams.exclMOT5, "5")
-            parameters.append(TripRequestParams.exclMOT11, "11")
-        }
-        if (excludeProductClassSet.contains(7)) {
-            parameters.append(TripRequestParams.exclMOT7, "7")
-        }
-        if (excludeProductClassSet.contains(9)) {
-            parameters.append(TripRequestParams.exclMOT9, "9")
+        buildExclusionParams(excludeProductClassSet).forEach { (key, value) ->
+            parameters.append(key, value)
         }
     }
 
@@ -164,6 +146,45 @@ internal class RealTripPlanningService(
                 parameters.append(StopFinderRequestParams.tfNSWSF, "true")
             }
         }.body()
+    }
+}
+
+private const val PRODUCT_CLASS_TRAIN = 1
+private const val PRODUCT_CLASS_METRO = 2
+private const val PRODUCT_CLASS_LIGHT_RAIL = 4
+private const val PRODUCT_CLASS_BUS = 5
+private const val PRODUCT_CLASS_COACH = 7
+private const val PRODUCT_CLASS_FERRY = 9
+private const val PRODUCT_CLASS_SCHOOL_BUS = 11
+
+/**
+ * Builds the NSW API query params required to exclude specific transport modes.
+ *
+ * NSW API rules (verified against official docs):
+ * - `excludedMeans=checkbox` MUST NOT be sent when the set is empty. Sending it with no
+ *   accompanying `exclMOT_*` params causes the API to return only default/fallback modes
+ *   (typically bus), silently dropping trains and other modes.
+ * - Each `exclMOT_<N>` param name uses an underscore before the number (`exclMOT_5`, not
+ *   `exclMOT5`). The API silently ignores params with the wrong name — no error returned.
+ * - Each `exclMOT_<N>` value must be `"1"` (boolean flag). The mode number itself (e.g. `"5"`)
+ *   is not a valid value and is silently ignored by the API.
+ * - Bus and school bus share a single exclusion toggle — excluding either excludes both.
+ */
+internal fun buildExclusionParams(excludeProductClassSet: Set<Int>): Map<String, String> {
+    if (excludeProductClassSet.isEmpty()) return emptyMap()
+    val excludeBus = excludeProductClassSet.contains(PRODUCT_CLASS_BUS) ||
+        excludeProductClassSet.contains(PRODUCT_CLASS_SCHOOL_BUS)
+    return buildMap {
+        put(TripRequestParams.excludedMeans, "checkbox")
+        if (excludeProductClassSet.contains(PRODUCT_CLASS_TRAIN)) put(TripRequestParams.exclMOT1, "1")
+        if (excludeProductClassSet.contains(PRODUCT_CLASS_METRO)) put(TripRequestParams.exclMOT2, "1")
+        if (excludeProductClassSet.contains(PRODUCT_CLASS_LIGHT_RAIL)) put(TripRequestParams.exclMOT4, "1")
+        if (excludeBus) {
+            put(TripRequestParams.exclMOT5, "1")
+            put(TripRequestParams.exclMOT11, "1")
+        }
+        if (excludeProductClassSet.contains(PRODUCT_CLASS_COACH)) put(TripRequestParams.exclMOT7, "1")
+        if (excludeProductClassSet.contains(PRODUCT_CLASS_FERRY)) put(TripRequestParams.exclMOT9, "1")
     }
 }
 

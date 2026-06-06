@@ -276,7 +276,7 @@ enum class TripSearchListItemState {
 
 // region Previews
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview
 @Composable
 private fun TripSearchListItemCollapsedPreview() {
@@ -324,7 +324,7 @@ private fun TripSearchListItemCollapsedPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview
 @Composable
 private fun TripSearchListItemExpandedPreview() {

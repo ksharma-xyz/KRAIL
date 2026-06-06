@@ -125,7 +125,7 @@ fun DiscoverChip(
 
 // region Previews
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Selected Light Mode")
 @Composable
 private fun DiscoverChipPreview_BarbiePink_Selected() {
@@ -139,7 +139,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Unselected Light Mode")
 @Preview
 @Composable
@@ -154,7 +154,7 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Selected Dark Mode")
 @Preview
 @Composable
@@ -170,7 +170,7 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Unselected Dark Mode")
 @Preview
 @Composable

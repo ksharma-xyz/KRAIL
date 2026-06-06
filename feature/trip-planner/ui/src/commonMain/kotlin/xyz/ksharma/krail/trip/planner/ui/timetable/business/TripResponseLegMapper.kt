@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeString
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -32,7 +33,9 @@ internal fun TripResponse.Leg.toWalkingLegUiModel(): TimeTableState.JourneyCardI
 @OptIn(ExperimentalTime::class)
 @Suppress("ComplexCondition")
 internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCardInfo.Leg? {
-    val transportMode = transportation?.product?.productClass?.toInt()
+    val rawProductClass = transportation?.product?.productClass?.toInt()
+    val isSchoolBus = rawProductClass == TransportMode.SCHOOL_BUS_PRODUCT_CLASS
+    val transportMode = rawProductClass
         ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
     val lineName = transportation?.disassembledName
     val displayText = NswTransportConfig.resolveServiceDisplayText(
@@ -71,5 +74,6 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
         },
         tripId = transportation?.id + transportation?.properties?.realtimeTripId,
         transportationId = transportation?.id,
+        isSchoolBus = isSchoolBus,
     )
 }

@@ -60,6 +60,7 @@ fun LegView(
     stops: ImmutableList<TimeTableState.JourneyCardInfo.Stop>,
     modifier: Modifier = Modifier,
     displayAllStops: Boolean = false,
+    isSchoolBus: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
@@ -137,6 +138,7 @@ fun LegView(
                         StopsRow(
                             stops = "$stopsCount stops",
                             line = transportModeLine,
+                            isSchoolBus = isSchoolBus,
                             onClick = {
                                 onClick()
                             },
@@ -216,23 +218,23 @@ private fun RouteSummary(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        TransportModeBadge(
-            backgroundColor = badgeColor,
-            badgeText = badgeText,
-            modifier = Modifier.padding(end = KrailTheme.dimensions.spacingML),
-        )
-
-        routeText?.let {
-            Text(
-                text = routeText,
-                style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal), // token todo
-                modifier = Modifier
-                    .align(Alignment.CenterVertically),
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TransportModeBadge(
+                backgroundColor = badgeColor,
+                badgeText = badgeText,
+                modifier = Modifier.padding(end = dim.spacingML),
             )
+
+            routeText?.let {
+                Text(
+                    text = routeText,
+                    style = KrailTheme.typography.labelLarge.copy(fontWeight = FontWeight.Normal),
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                )
+            }
         }
     }
 }
@@ -314,6 +316,7 @@ private fun StopsRow(
     stops: String,
     line: TransportModeLine,
     modifier: Modifier = Modifier,
+    isSchoolBus: Boolean = false,
     onClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
@@ -342,6 +345,14 @@ private fun StopsRow(
             transportMode = line.transportMode,
             modifier = Modifier.align(Alignment.CenterVertically),
         )
+
+        if (isSchoolBus) {
+            Text(
+                text = "School Bus",
+                style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                color = KrailTheme.colors.onSurface,
+            )
+        }
     }
 }
 
@@ -484,6 +495,35 @@ private fun PreviewLegViewLightRail() {
                 TimeTableState.JourneyCardInfo.Stop(
                     time = "01:00 am",
                     name = "DEF Station, Platform 3",
+                    isWheelchairAccessible = false,
+                ),
+            ).toImmutableList(),
+            modifier = Modifier.background(KrailTheme.colors.surface),
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewLegViewSchoolBus() {
+    PreviewTheme {
+        LegView(
+            routeText = "towards Parramatta via Great Western Hwy",
+            transportModeLine = TransportModeLine(
+                transportMode = TransportMode.Bus,
+                lineName = "8550",
+            ),
+            isSchoolBus = true,
+            stops = listOf(
+                TimeTableState.JourneyCardInfo.Stop(
+                    time = "8:05 am",
+                    name = "Penrith Station, Stop A",
+                    isWheelchairAccessible = false,
+                ),
+                TimeTableState.JourneyCardInfo.Stop(
+                    time = "8:35 am",
+                    name = "Parramatta Station, Stop B",
                     isWheelchairAccessible = false,
                 ),
             ).toImmutableList(),

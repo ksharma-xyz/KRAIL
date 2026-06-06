@@ -137,8 +137,11 @@ private fun DepartureMonitorResponse.Location.resolvePlatformText(productClass: 
         // ── Bus (5), School Bus (11) ─────────────────────────────────────────────
         // Extract "Stand X" from compound platformName:
         //   "Central Station, Eddy Ave, Stand A" → "Stand A"
-        // Note: School Bus (11) is not yet a TransportMode subclass — kept as literal.
-        TransportMode.Bus.productClass, 11 -> (pName ?: disassembledName)?.let { extractPlatformText(it) }
+        TransportMode.Bus.productClass, TransportMode.SCHOOL_BUS_PRODUCT_CLASS -> (pName ?: disassembledName)?.let {
+            extractPlatformText(
+                it,
+            )
+        }
 
         // ── Ferry (9) ────────────────────────────────────────────────────────────
         // Wharf name is the stop name itself; raw code ("F1") is the useful label.

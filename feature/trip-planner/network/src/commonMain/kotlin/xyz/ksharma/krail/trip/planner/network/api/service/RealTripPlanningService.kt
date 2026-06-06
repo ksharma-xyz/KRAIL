@@ -16,6 +16,7 @@ import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.core.network.NetworkUpstream
 import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.core.network.toNetworkUpstream
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.network.api.mapper.journeyListToTripResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
@@ -149,14 +150,6 @@ internal class RealTripPlanningService(
     }
 }
 
-private const val PRODUCT_CLASS_TRAIN = 1
-private const val PRODUCT_CLASS_METRO = 2
-private const val PRODUCT_CLASS_LIGHT_RAIL = 4
-private const val PRODUCT_CLASS_BUS = 5
-private const val PRODUCT_CLASS_COACH = 7
-private const val PRODUCT_CLASS_FERRY = 9
-private const val PRODUCT_CLASS_SCHOOL_BUS = 11
-
 /**
  * Builds the NSW API query params required to exclude specific transport modes.
  *
@@ -172,19 +165,19 @@ private const val PRODUCT_CLASS_SCHOOL_BUS = 11
  */
 internal fun buildExclusionParams(excludeProductClassSet: Set<Int>): Map<String, String> {
     if (excludeProductClassSet.isEmpty()) return emptyMap()
-    val excludeBus = excludeProductClassSet.contains(PRODUCT_CLASS_BUS) ||
-        excludeProductClassSet.contains(PRODUCT_CLASS_SCHOOL_BUS)
+    val excludeBus = excludeProductClassSet.contains(TransportMode.Bus.productClass) ||
+        excludeProductClassSet.contains(TransportMode.SCHOOL_BUS_PRODUCT_CLASS)
     return buildMap {
         put(TripRequestParams.excludedMeans, "checkbox")
-        if (excludeProductClassSet.contains(PRODUCT_CLASS_TRAIN)) put(TripRequestParams.exclMOT1, "1")
-        if (excludeProductClassSet.contains(PRODUCT_CLASS_METRO)) put(TripRequestParams.exclMOT2, "1")
-        if (excludeProductClassSet.contains(PRODUCT_CLASS_LIGHT_RAIL)) put(TripRequestParams.exclMOT4, "1")
+        if (excludeProductClassSet.contains(TransportMode.Train.productClass)) put(TripRequestParams.exclMOT1, "1")
+        if (excludeProductClassSet.contains(TransportMode.Metro.productClass)) put(TripRequestParams.exclMOT2, "1")
+        if (excludeProductClassSet.contains(TransportMode.LightRail.productClass)) put(TripRequestParams.exclMOT4, "1")
         if (excludeBus) {
             put(TripRequestParams.exclMOT5, "1")
             put(TripRequestParams.exclMOT11, "1")
         }
-        if (excludeProductClassSet.contains(PRODUCT_CLASS_COACH)) put(TripRequestParams.exclMOT7, "1")
-        if (excludeProductClassSet.contains(PRODUCT_CLASS_FERRY)) put(TripRequestParams.exclMOT9, "1")
+        if (excludeProductClassSet.contains(TransportMode.Coach.productClass)) put(TripRequestParams.exclMOT7, "1")
+        if (excludeProductClassSet.contains(TransportMode.Ferry.productClass)) put(TripRequestParams.exclMOT9, "1")
     }
 }
 

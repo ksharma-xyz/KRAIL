@@ -41,6 +41,7 @@ kotlin {
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.network)
+                implementation(projects.core.transport)
                 implementation(projects.io.bffApi)
 
                 implementation(libs.kotlinx.serialization.json)

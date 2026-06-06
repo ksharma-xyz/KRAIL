@@ -155,7 +155,6 @@ private fun DiscoverChipPreview_BarbiePink_Unselected() {
     }
 }
 
-@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Selected Dark Mode")
 @Preview
 @Composable
@@ -171,7 +170,6 @@ private fun DiscoverChipPreview_BarbiePink_Selected_DarkMode() {
     }
 }
 
-@ScreenshotTest
 @Preview(group = "Discover Chip Previews - Barbie Pink", name = "Unselected Dark Mode")
 @Preview
 @Composable

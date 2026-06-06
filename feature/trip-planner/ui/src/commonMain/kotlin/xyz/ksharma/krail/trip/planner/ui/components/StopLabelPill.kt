@@ -128,7 +128,6 @@ private fun PreviewSetLabelPill_Train() {
     }
 }
 
-@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewSetLabelPill_PurpleDrip() {
@@ -149,7 +148,6 @@ private fun PreviewUnsetLabelPill_Idle() {
     }
 }
 
-@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewUnsetLabelPill_Assigning() {

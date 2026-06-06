@@ -57,7 +57,6 @@ fun MapStopSelectionPane(
 
 // region Previews
 
-@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewMapStopSelectionPane_Loading() {

@@ -34,6 +34,10 @@ sealed class TransportMode(
     @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6, 5)
 
     companion object {
+        // School Bus is not a selectable mode in the app UI but shares the Bus exclusion toggle
+        // in the NSW trip-planning API. Not a sealed subclass to keep `all` accurate.
+        const val SCHOOL_BUS_PRODUCT_CLASS = 11
+
         val all: List<TransportMode> by lazy { listOf(Train, Metro, Bus, LightRail, Ferry, Coach) }
 
         private val byProductClass: Map<Int, TransportMode> by lazy { all.associateBy { it.productClass } }

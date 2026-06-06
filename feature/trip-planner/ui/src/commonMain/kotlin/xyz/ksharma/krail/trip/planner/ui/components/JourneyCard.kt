@@ -115,6 +115,12 @@ fun JourneyCard(
         )
     }
 
+    val hasSchoolBus by remember(legList) {
+        mutableStateOf(
+            legList.filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
+                .any { it.isSchoolBus },
+        )
+    }
     val coroutineScope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
     val cardBackground =
@@ -150,6 +156,7 @@ fun JourneyCard(
             transportModeLineList = transportModeLineList,
             platformText = platformText,
             timeToDeparture = timeToDeparture,
+            isSchoolBus = hasSchoolBus,
         )
 
         // Always visible content
@@ -178,9 +185,7 @@ fun JourneyCard(
 
         // Expandable content - only leg details
         when (cardState) {
-            JourneyCardState.DEFAULT -> {
-                // No additional content in default state
-            }
+            JourneyCardState.DEFAULT -> Unit
 
             JourneyCardState.EXPANDED -> ExpandedJourneyCardContent(
                 legList = legList,
@@ -345,6 +350,7 @@ fun ExpandedJourneyCardContent(
                             transportModeLine = leg.transportModeLine,
                             stops = leg.stops,
                             displayAllStops = displayAllStops,
+                            isSchoolBus = leg.isSchoolBus,
                             modifier = Modifier.padding(
                                 top = if (index > 0) {
                                     getPaddingValue(
@@ -400,9 +406,9 @@ private fun ResponsiveJourneyInfoRow(
     isPast: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
-    Row(
+    FlowRow(
         horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
     ) {
         Text(
             text = destinationTime,
@@ -756,6 +762,43 @@ private fun Preview_JourneyCard_Expanded_NoAlerts() {
 @ScreenshotTest
 @PreviewComponent
 @Composable
+private fun Preview_Expanded_SchoolBusLeg() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 5 mins",
+            originTime = "8:05am",
+            destinationTime = "8:45am",
+            totalTravelTime = "40 mins",
+            platformNumber = null,
+            platformText = null,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "8550"),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Parramatta via Great Western Hwy",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "8550",
+                    ),
+                    totalDuration = "30 mins",
+                    tripId = "8550",
+                    isSchoolBus = true,
+                ),
+            ),
+            cardState = JourneyCardState.EXPANDED,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
 private fun Preview_Default_WithWalkTime() {
     PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
         JourneyCard(
@@ -1002,6 +1045,80 @@ private fun JourneyCardCollapsedOnTimePreview() {
             cardState = JourneyCardState.DEFAULT,
             totalWalkTime = null,
             totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun Preview_Default_SchoolBus() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 6 mins",
+            originTime = "8:05am",
+            destinationTime = "8:50am",
+            totalTravelTime = "45 mins",
+            platformNumber = null,
+            platformText = null,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "8550"),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Parramatta via Great Western Hwy",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "8550",
+                    ),
+                    totalDuration = "30 mins",
+                    tripId = "8550",
+                    isSchoolBus = true,
+                ),
+            ),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun Preview_Default_SchoolBus_WithAlerts() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 6 mins",
+            originTime = "8:05am",
+            destinationTime = "8:55am",
+            totalTravelTime = "50 mins",
+            platformNumber = null,
+            platformText = null,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "8550"),
+            ),
+            legList = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    stops = PREVIEW_STOPS,
+                    displayText = "towards Parramatta via Great Western Hwy",
+                    transportModeLine = TransportModeLine(
+                        transportMode = TransportMode.Bus,
+                        lineName = "8550",
+                    ),
+                    totalDuration = "30 mins",
+                    tripId = "8550",
+                    isSchoolBus = true,
+                ),
+            ),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = null,
+            totalUniqueServiceAlerts = 2,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
         )

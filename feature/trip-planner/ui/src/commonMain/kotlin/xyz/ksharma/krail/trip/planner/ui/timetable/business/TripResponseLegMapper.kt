@@ -37,7 +37,6 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
     val isSchoolBus = rawProductClass == TransportMode.SCHOOL_BUS_PRODUCT_CLASS
     val transportMode = rawProductClass
         ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
-        ?: if (isSchoolBus) TransportMode.Bus else null
     val lineName = transportation?.disassembledName
     val displayText = NswTransportConfig.resolveServiceDisplayText(
         productClass = transportation?.product?.productClass?.toInt(),

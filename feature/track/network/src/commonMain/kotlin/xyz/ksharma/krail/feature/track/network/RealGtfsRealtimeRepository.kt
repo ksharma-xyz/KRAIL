@@ -215,6 +215,7 @@ internal class RealGtfsRealtimeRepository(
             "lightrail/innerwest",
         )
         TransportMode.Bus -> listOf("buses")
+        TransportMode.SchoolBus -> listOf("buses")
         TransportMode.Ferry -> listOf("ferries/sydneyferries", "ferries/MFF")
         TransportMode.Coach -> emptyList()
     }

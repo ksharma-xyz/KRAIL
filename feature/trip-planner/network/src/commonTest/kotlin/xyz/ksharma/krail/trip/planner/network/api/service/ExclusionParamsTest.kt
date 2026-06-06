@@ -26,15 +26,22 @@ class ExclusionParamsTest {
     }
 
     @Test
-    fun `Given bus excluded Then exclMOT_5 and exclMOT_11 both set to 1`() {
+    fun `Given bus excluded Then only exclMOT_5 set`() {
         val params = buildExclusionParams(setOf(5))
         assertEquals("1", params["exclMOT_5"])
-        assertEquals("1", params["exclMOT_11"])
+        assertFalse(params.containsKey("exclMOT_11"), "Excluding bus must not auto-exclude school bus")
     }
 
     @Test
-    fun `Given school bus excluded Then exclMOT_5 and exclMOT_11 both set to 1`() {
+    fun `Given school bus excluded Then only exclMOT_11 set`() {
         val params = buildExclusionParams(setOf(11))
+        assertEquals("1", params["exclMOT_11"])
+        assertFalse(params.containsKey("exclMOT_5"), "Excluding school bus must not auto-exclude regular bus")
+    }
+
+    @Test
+    fun `Given both bus and school bus excluded Then both exclMOT_5 and exclMOT_11 set`() {
+        val params = buildExclusionParams(setOf(5, 11))
         assertEquals("1", params["exclMOT_5"])
         assertEquals("1", params["exclMOT_11"])
     }
@@ -75,7 +82,7 @@ class ExclusionParamsTest {
         assertEquals("checkbox", params["excludedMeans"])
         assertEquals("1", params["exclMOT_1"])
         assertEquals("1", params["exclMOT_5"])
-        assertEquals("1", params["exclMOT_11"])
+        assertFalse(params.containsKey("exclMOT_11"), "School bus not in exclusion set — must not be excluded")
         assertEquals("1", params["exclMOT_9"])
         assertFalse(params.containsKey("exclMOT_2"))
         assertFalse(params.containsKey("exclMOT_4"))

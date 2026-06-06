@@ -165,17 +165,13 @@ internal class RealTripPlanningService(
  */
 internal fun buildExclusionParams(excludeProductClassSet: Set<Int>): Map<String, String> {
     if (excludeProductClassSet.isEmpty()) return emptyMap()
-    val excludeBus = excludeProductClassSet.contains(TransportMode.Bus.productClass) ||
-        excludeProductClassSet.contains(TransportMode.SCHOOL_BUS_PRODUCT_CLASS)
     return buildMap {
         put(TripRequestParams.excludedMeans, "checkbox")
         if (excludeProductClassSet.contains(TransportMode.Train.productClass)) put(TripRequestParams.exclMOT1, "1")
         if (excludeProductClassSet.contains(TransportMode.Metro.productClass)) put(TripRequestParams.exclMOT2, "1")
         if (excludeProductClassSet.contains(TransportMode.LightRail.productClass)) put(TripRequestParams.exclMOT4, "1")
-        if (excludeBus) {
-            put(TripRequestParams.exclMOT5, "1")
-            put(TripRequestParams.exclMOT11, "1")
-        }
+        if (excludeProductClassSet.contains(TransportMode.Bus.productClass)) put(TripRequestParams.exclMOT5, "1")
+        if (excludeProductClassSet.contains(TransportMode.SchoolBus.productClass)) put(TripRequestParams.exclMOT11, "1")
         if (excludeProductClassSet.contains(TransportMode.Coach.productClass)) put(TripRequestParams.exclMOT7, "1")
         if (excludeProductClassSet.contains(TransportMode.Ferry.productClass)) put(TripRequestParams.exclMOT9, "1")
     }

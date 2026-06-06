@@ -4,6 +4,8 @@ package xyz.ksharma.krail.core.transport
 
 import kotlinx.serialization.Serializable
 
+private const val BUS_BLUE = "#00B5EF"
+
 /**
  * Transport mode with all display and lookup data baked in.
  *
@@ -31,14 +33,14 @@ sealed class TransportMode(
      */
     open val iconBorderColorCode: String get() = "#FFFFFF"
 
-    /** Hex color for the letter inside the icon circle. White for dark backgrounds, black for light. */
+    /** Hex color for the letter inside the icon circle. Defaults to white. */
     open val iconLetterColorCode: String get() = "#FFFFFF"
 
     @Serializable object Train : TransportMode("#F6891F", "Train", 1, 1, 1)
 
     @Serializable object Metro : TransportMode("#009B77", "Metro", 2, 3, 2)
 
-    @Serializable object Bus : TransportMode("#00B5EF", "Bus", 5, 2, 6)
+    @Serializable object Bus : TransportMode(BUS_BLUE, "Bus", 5, 2, 6)
 
     @Serializable object LightRail : TransportMode("#E4022D", "Light Rail", 4, 4, 3)
 
@@ -46,7 +48,7 @@ sealed class TransportMode(
 
     @Serializable object Coach : TransportMode("#742282", "Coach", 7, 6, 5)
 
-    // Light blue fill + blue ring + black "B" — matches TfNSW school bus icon style.
+    // Light blue fill + blue ring + bus-blue "B" — matches TfNSW school bus icon style.
     @Serializable object SchoolBus : TransportMode(
         colorCode = "#9FD7F7",
         name = "Bus",
@@ -55,8 +57,8 @@ sealed class TransportMode(
         searchPriority = 7,
         displayName = "School Bus",
     ) {
-        override val iconBorderColorCode: String get() = "#00B5EF"
-        override val iconLetterColorCode: String get() = "#000000"
+        override val iconBorderColorCode: String get() = BUS_BLUE
+        override val iconLetterColorCode: String get() = BUS_BLUE
     }
 
     companion object {

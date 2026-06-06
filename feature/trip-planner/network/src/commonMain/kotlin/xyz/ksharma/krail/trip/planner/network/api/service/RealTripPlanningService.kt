@@ -114,31 +114,44 @@ internal class RealTripPlanningService(
         val excludeProductClassSet: Set<Int>,
     )
 
+    /**
+     * Appends mode-exclusion params to the trip request.
+     *
+     * NSW API rules (verified against official docs):
+     * - `excludedMeans=checkbox` MUST NOT be sent when the set is empty. Sending it with no
+     *   accompanying `exclMOT_*` params causes the API to return only default/fallback modes
+     *   (typically bus), silently dropping trains and other modes.
+     * - Each `exclMOT_<N>` param name uses an underscore before the number (`exclMOT_5`, not
+     *   `exclMOT5`). The API silently ignores params with the wrong name — no error returned.
+     * - Each `exclMOT_<N>` value must be `"1"` (boolean flag). The mode number itself (e.g. `"5"`)
+     *   is not a valid value and is silently ignored by the API.
+     */
     private fun addExcludedTransportModes(
         excludeProductClassSet: Set<Int>,
         parameters: ParametersBuilder,
     ) {
         log("Exclude transport mode - $excludeProductClassSet")
+        if (excludeProductClassSet.isEmpty()) return
         parameters.append(TripRequestParams.excludedMeans, "checkbox")
 
         if (excludeProductClassSet.contains(1)) {
             parameters.append(TripRequestParams.exclMOT1, "1")
         }
         if (excludeProductClassSet.contains(2)) {
-            parameters.append(TripRequestParams.exclMOT2, "2")
+            parameters.append(TripRequestParams.exclMOT2, "1")
         }
         if (excludeProductClassSet.contains(4)) {
-            parameters.append(TripRequestParams.exclMOT4, "4")
+            parameters.append(TripRequestParams.exclMOT4, "1")
         }
         if (excludeProductClassSet.contains(5) || excludeProductClassSet.contains(11)) {
-            parameters.append(TripRequestParams.exclMOT5, "5")
-            parameters.append(TripRequestParams.exclMOT11, "11")
+            parameters.append(TripRequestParams.exclMOT5, "1")
+            parameters.append(TripRequestParams.exclMOT11, "1")
         }
         if (excludeProductClassSet.contains(7)) {
-            parameters.append(TripRequestParams.exclMOT7, "7")
+            parameters.append(TripRequestParams.exclMOT7, "1")
         }
         if (excludeProductClassSet.contains(9)) {
-            parameters.append(TripRequestParams.exclMOT9, "9")
+            parameters.append(TripRequestParams.exclMOT9, "1")
         }
     }
 

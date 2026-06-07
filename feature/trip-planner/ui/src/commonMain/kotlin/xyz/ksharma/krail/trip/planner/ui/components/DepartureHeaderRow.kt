@@ -260,7 +260,7 @@ private fun Preview_Upcoming_MultiMode_LineColorPlatform() {
                     TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
                     TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
                 ),
-                showBadge = { it.transportMode is TransportMode.Bus },
+                showBadge = { it.transportMode is TransportMode.Bus || it.transportMode is TransportMode.SchoolBus },
             )
         }
     }
@@ -283,7 +283,7 @@ private fun Preview_Past_MultiMode_LineColorPlatform() {
                     TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
                     TransportModeLine(transportMode = TransportMode.Bus, lineName = "700"),
                 ),
-                showBadge = { it.transportMode is TransportMode.Bus },
+                showBadge = { it.transportMode is TransportMode.Bus || it.transportMode is TransportMode.SchoolBus },
             )
         }
     }

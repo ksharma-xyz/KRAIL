@@ -66,7 +66,9 @@ internal fun JourneyCardHeader(
             if (!isAdaptive) {
                 TransportModesRow(
                     transportModeLineList = transportModeLineList,
-                    showBadge = { it.transportMode is TransportMode.Bus },
+                    showBadge = {
+                        it.transportMode is TransportMode.Bus || it.transportMode is TransportMode.SchoolBus
+                    },
                     isSchoolBus = isSchoolBus,
                 )
             }
@@ -77,7 +79,7 @@ internal fun JourneyCardHeader(
             // crowd the platform label.
             TransportModesRow(
                 transportModeLineList = transportModeLineList,
-                showBadge = { it.transportMode is TransportMode.Bus },
+                showBadge = { it.transportMode is TransportMode.Bus || it.transportMode is TransportMode.SchoolBus },
                 isSchoolBus = isSchoolBus,
                 modifier = Modifier.padding(top = dim.journeyCardLegSpacing),
             )

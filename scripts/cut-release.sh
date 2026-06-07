@@ -39,21 +39,16 @@ if [[ -z "$CURRENT_VERSION" ]]; then
   exit 1
 fi
 
-# Compute next version if not supplied
-if [[ -z "$NEXT_VERSION" ]]; then
-  MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
-  MINOR=$(echo "$CURRENT_VERSION" | cut -d. -f2)
-  NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0"
-fi
+NEXT_DISPLAY="${NEXT_VERSION:-auto}"
 
 echo ""
 echo "  Release branch : prod/${CURRENT_VERSION}  (from ${BASE_BRANCH})"
-echo "  Next on main   : ${NEXT_VERSION}"
+echo "  Next on main   : ${NEXT_DISPLAY} (workflow handles bump)"
 echo ""
 read -r -p "Proceed? [y/N] " CONFIRM
 [[ "$CONFIRM" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
-# Build gh workflow run args — only pass next-version if we have one
+# Only pass next-version if explicitly provided — workflow auto-increments otherwise
 EXTRA_FIELDS=()
 if [[ -n "$NEXT_VERSION" ]]; then
   EXTRA_FIELDS+=(--field "next-version=${NEXT_VERSION}")

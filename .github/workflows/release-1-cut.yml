@@ -113,7 +113,7 @@ jobs:
 
       - name: Commit and open version bump PR into main
         env:
-          GH_TOKEN: ${{ secrets.PAT_KRAIL_GITHUB }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           git add androidApp/build.gradle.kts iosApp/Configuration/Config.xcconfig
           if git diff --staged --quiet; then

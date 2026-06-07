@@ -33,7 +33,7 @@ import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 fun TransportModeIcon(
     transportMode: TransportMode,
     modifier: Modifier = Modifier,
-    borderColor: Color = transportMode.iconBorderColorCode.hexToComposeColor(),
+    borderColor: Color = Color.White,
     displayBorder: Boolean = false,
     size: TransportModeIconSize = TransportModeIconSize.Medium,
 ) {

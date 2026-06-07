@@ -33,7 +33,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Read current version from the base branch (local checkout must be up-to-date)
-CURRENT_VERSION=$(grep -oP '(?<=versionName = ")[^"]+' "$ROOT/androidApp/build.gradle.kts")
+CURRENT_VERSION=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' "$ROOT/androidApp/build.gradle.kts")
 if [[ -z "$CURRENT_VERSION" ]]; then
   echo "error: could not read versionName from androidApp/build.gradle.kts" >&2
   exit 1

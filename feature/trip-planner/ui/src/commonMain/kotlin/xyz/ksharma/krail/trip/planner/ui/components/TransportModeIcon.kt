@@ -37,9 +37,8 @@ fun TransportModeIcon(
     displayBorder: Boolean = false,
     size: TransportModeIconSize = TransportModeIconSize.Medium,
 ) {
-    val bgColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor()
     CompositionLocalProvider(
-        LocalTextColor provides transportMode.iconLetterColorCode.hexToComposeColor(),
+        LocalTextColor provides Color.White,
         // should be same as StopsRow and TransportModeInfo
         LocalTextStyle provides KrailTheme.typography.titleSmall,
         // Alpha is intentionally always 100% — the mode icon circle must remain fully opaque
@@ -54,7 +53,7 @@ fun TransportModeIcon(
                 .heightIn(min = size.dpSize)
                 .clip(CircleShape)
                 .background(
-                    color = bgColor,
+                    color = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
                     shape = CircleShape,
                 )
                 .borderIfEnabled(

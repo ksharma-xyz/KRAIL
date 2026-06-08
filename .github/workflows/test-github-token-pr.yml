@@ -1,0 +1,45 @@
+name: "TEST: github.token PR creation"
+
+# One-shot test — verifies github.token can open a PR.
+# Run manually, check it passes, then delete this workflow.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-pr-create:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create throwaway branch and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="test/token-pr-$(date +%s)"
+          git checkout -b "$BRANCH"
+          echo "# token test $(date)" >> .github/TOKEN_TEST_DELETE_ME.txt
+          git add .github/TOKEN_TEST_DELETE_ME.txt
+          git commit -m "test: github.token PR creation smoke test"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "test: github.token PR smoke test (auto-close me)" \
+            --body "Smoke test for github.token PR creation. Close and delete this PR + branch.")
+          echo "::notice::PR created: ${PR_URL}"
+
+          # Immediately close it — this is just a smoke test
+          gh pr close "$PR_URL" --comment "Smoke test passed. Closing."
+          git push origin --delete "$BRANCH"

@@ -24,23 +24,38 @@ When the user invokes this skill:
 | **iOS** | App Store | 4000 chars (but keep it short — match the examples) | More formal, numbered bullets, **no emoji whatsoever** |
 
 Both must start with the version number on its own line: `v1.20.0` (or whatever the version is).
-Both must end with **"Let's KRAIL."** (Android) or **"Let's KRAIL."** (iOS). Never "Let's KRAIL Sydney." on iOS unless it's a big feature launch.
+Android ends with **`Let's KRAIL. 🚀`**. iOS ends with **`Let's KRAIL.`** (no emoji). Never "Let's KRAIL Sydney." unless it's a major city-wide feature launch.
 
 ---
 
 ## Voice & style rules
 
-- Write like a Sydney local who built the app for themselves — warm, direct, zero corporate fluff.
-- Features first, bug fixes second. Lead with what users gain, not what broke.
+- Write like a Sydney local who built the app for themselves — warm, direct, zero corporate fluff. Use "we" for personal voice ("We rebuilt...", "We've got you.").
+- Features first, bug fixes second. Lead with what users can **do**, not what was built. Every point must answer: **what** the feature is, **where** to find it, **what** the user gains.
 - Never use the word "experience". Never say "we are pleased to announce". Never say "improvements".
-- Bug fixes get one line max: "Fixed: [what users were seeing]."
+- **Bug fixes: one warm summary line for all bugs combined** — e.g. "Plenty of bug fixes for a smoother ride." Never itemise individual fixes as separate bullet points.
 - Don't list every commit — synthesise into user-facing changes.
-- Every point must answer three things: **what** the feature is, **where** the user finds it, **what** they gain. Never write a vague cool-sounding line — make it concrete and actionable.
 - Short sentences. Present tense. Active voice.
 - Em dashes are OK in release notes (this is not user-facing UI copy).
 - Numbers (1, 2, 3) for iOS bullet lists. **No emoji on iOS — ever.**
-- Android: emoji are allowed as bullet points only if they genuinely add character (e.g. 🏷️ 🕐 🛠️). Use sparingly — 0–3 per release max. Never force them.
+- **Android emoji header format**: emoji + title on its own line, descriptive text on the next line. No colon. Example:
+  ```
+  🚌 School Bus
+  School Bus trips now show in your timetable. Tap Mode to filter to them.
+  ```
+  NOT: `🚌 School Bus: School Bus trips now show...`
+- Android: emoji used sparingly — 0–3 per release. Never force them.
+- **Android always ends with: `Let's KRAIL. 🚀`**
+- iOS always ends with: `Let's KRAIL.` (no emoji)
 - If it's a small patch/maintenance release, keep it to 2–3 lines. Don't pad.
+
+## Before writing — verify UI label text
+
+If a feature involves a label, button, badge, or screen name visible in the app, **grep the source before writing**. Never trust the commit message text — it often differs from the actual UI string. Example: a commit titled "show School service label" may use the string `"School Bus"` in the code.
+
+```bash
+grep -r "LabelText\|\"School\|badgeText" feature/ --include="*.kt" | grep -v build
+```
 
 ---
 
@@ -57,7 +72,23 @@ Both must end with **"Let's KRAIL."** (Android) or **"Let's KRAIL."** (iOS). Nev
 
 ## Historical examples — learn the pattern from these
 
-Use these as the sole style reference. Match the voice, length, and structure.
+Use these as the sole style reference. Match the voice, length, and structure. **v1.23.0 is the most current and preferred Android style.**
+
+---
+
+### v1.23.0 — Android (Play Store) ⭐ canonical modern style
+
+```
+🚌 School Bus
+School Bus trips now show in your timetable. Tap Mode to filter to them, or spot the School Bus badge on your journey card.
+
+📱 Built for big screens
+Using a Foldable or Tablet? We rebuilt the whole experience from the ground up. Maps now sit on the right with handy info, alongside everything you'd normally do on your phone.
+
+Plenty of bug fixes for a smoother ride.
+
+Let's KRAIL. 🚀
+```
 
 ---
 

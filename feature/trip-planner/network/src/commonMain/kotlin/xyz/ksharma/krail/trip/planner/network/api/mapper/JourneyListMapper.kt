@@ -128,6 +128,10 @@ private fun TransportLeg.toTransportTripLeg(
         transportation = transport_mode_line?.toTransportation(displayText = display_text),
         coords = coords.toLatLngList(),
         interchange = walk_interchange?.toInterchange(),
+        // Proto carries the render-ready duration string; without this the
+        // UI leg mapper derives duration from per-leg UTC times the proto
+        // doesn't have and drops the leg entirely.
+        bffDisplayDuration = total_duration.takeIf { it.isNotEmpty() },
         infos = service_alert_list
             .map { alert ->
                 TripResponse.Info(
@@ -152,6 +156,7 @@ private fun WalkingLeg.toWalkingTripLeg(): TripResponse.Leg {
         transportation = TripResponse.Transportation(
             product = TripResponse.Product(productClass = WALKING_LEG_PRODUCT_CLASS),
         ),
+        bffDisplayDuration = duration.takeIf { it.isNotEmpty() },
     )
 }
 
@@ -179,6 +184,9 @@ private fun Stop.toStopSequence(
         departureTimeEstimated = plannedDeparture,
         arrivalTimePlanned = plannedArrival,
         arrivalTimeEstimated = plannedArrival,
+        // Proto stop times are render-ready display strings ("12:05pm");
+        // without this, stops lacking UTC times vanish from the timeline.
+        bffDisplayTime = time.takeIf { it.isNotEmpty() },
     )
 }
 

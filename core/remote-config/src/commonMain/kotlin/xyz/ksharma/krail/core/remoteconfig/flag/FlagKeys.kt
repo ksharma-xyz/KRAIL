@@ -47,4 +47,15 @@ enum class FlagKeys(val key: String) {
      * value.
      */
     ENABLE_PROTO_BFF("enable_proto_bff"),
+
+    /**
+     * Per-feature kill switch for the BFF live-tracking path
+     * (`POST /api/v1/track/snapshot`). Only consulted when the endpoint
+     * already resolves to the BFF (see [ENABLE_PROTO_BFF] + the arming
+     * gate): `true`/unset → tracking polls the BFF snapshot endpoint;
+     * `false` → tracking falls back to direct GTFS-RT polling even while
+     * the rest of the app uses the BFF. Defaults to enabled so debug
+     * `BFF_LOCAL` testing needs no RC change.
+     */
+    BFF_USE_FOR_TRACK("bff_use_for_track"),
 }

@@ -125,7 +125,14 @@ private fun TransportLeg.toTransportTripLeg(
         origin = originStop,
         destination = destinationStop,
         stopSequence = stopSequence,
-        transportation = transport_mode_line?.toTransportation(displayText = display_text),
+        transportation = transport_mode_line?.toTransportation(
+            displayText = display_text,
+            // v0.4.1 split ids: journey identity/dedupe + the live-tracking
+            // lock key. Without them every proto journey deduped onto one
+            // card ("nullnull" trip codes).
+            transportationId = transportation_id,
+            realtimeTripId = realtime_trip_id,
+        ),
         coords = coords.toLatLngList(),
         interchange = walk_interchange?.toInterchange(),
         // Proto carries the render-ready duration string; without this the
@@ -160,8 +167,13 @@ private fun WalkingLeg.toWalkingTripLeg(): TripResponse.Leg {
     )
 }
 
-private fun TransportModeLine.toTransportation(displayText: String?): TripResponse.Transportation {
+private fun TransportModeLine.toTransportation(
+    displayText: String?,
+    transportationId: String? = null,
+    realtimeTripId: String? = null,
+): TripResponse.Transportation {
     return TripResponse.Transportation(
+        id = transportationId,
         disassembledName = line_name.takeIf { it.isNotEmpty() },
         name = line_name.takeIf { it.isNotEmpty() },
         description = displayText,
@@ -169,6 +181,7 @@ private fun TransportModeLine.toTransportation(displayText: String?): TripRespon
             productClass = transport_mode_type.toLong(),
             name = line_name.takeIf { it.isNotEmpty() },
         ),
+        properties = realtimeTripId?.let { TripResponse.TransportationProperties(realtimeTripId = it) },
     )
 }
 

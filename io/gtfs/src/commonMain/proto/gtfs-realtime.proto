@@ -151,7 +151,9 @@ message EntitySelector {
 message TripDescriptor {
   optional string trip_id = 1;
   optional string route_id = 5;
-  optional string direction_id = 6;
+  // uint32 per the GTFS-Realtime spec. Was wrongly declared `string`,
+  // which breaks Wire decoding on feeds that populate it (metro does).
+  optional uint32 direction_id = 6;
   optional string start_time = 2;
   optional string start_date = 3;
   optional ScheduleRelationship schedule_relationship = 4;

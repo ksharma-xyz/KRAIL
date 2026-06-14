@@ -412,6 +412,9 @@ internal class TripPoller(
                 transportMode = leg.transportMode,
                 lineName = leg.lineName,
                 realtimeTripId = leg.realtimeTripId,
+                originStopId = leg.stops.firstOrNull()?.stopId.orEmpty(),
+                destinationStopId = leg.stops.lastOrNull()?.stopId.orEmpty(),
+                plannedDepartureUtc = leg.stops.firstOrNull()?.scheduledUtcTime.orEmpty(),
             )
         }
         if (legInfos.isEmpty()) {

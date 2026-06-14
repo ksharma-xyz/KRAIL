@@ -37,4 +37,13 @@ data class LegTrackingInfo(
     val lineName: String,
     /** GTFS-RT RealtimeTripId from the TfNSW API. Enables exact trip_id matching. */
     val realtimeTripId: String?,
+    /**
+     * Boarding / alighting stop ids and the leg's planned departure
+     * (ISO-8601 UTC). Used by the BFF tracking path (`TrackRequest.TrackLeg`)
+     * to slice the trip to the user's journey segment and detect expiry.
+     * Defaults keep the legacy GTFS-RT direct path source-compatible.
+     */
+    val originStopId: String = "",
+    val destinationStopId: String = "",
+    val plannedDepartureUtc: String = "",
 )

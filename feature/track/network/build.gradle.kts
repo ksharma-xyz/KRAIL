@@ -24,8 +24,10 @@ kotlin {
                 implementation(projects.core.dateTime)
                 implementation(projects.core.log)
                 implementation(projects.core.network)
+                implementation(projects.core.remoteConfig)
                 implementation(projects.core.transport)
                 implementation(projects.feature.track.state)
+                implementation(projects.io.bffApi)
                 implementation(projects.io.gtfs)
 
                 implementation(libs.ktor.client.core)

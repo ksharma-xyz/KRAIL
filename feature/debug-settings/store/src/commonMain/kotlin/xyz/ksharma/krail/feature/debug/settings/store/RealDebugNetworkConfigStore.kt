@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.feature.debug.settings.store
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,7 +36,7 @@ internal class RealDebugNetworkConfigStore(
     private val _state: MutableStateFlow<DebugSettingsState> =
         MutableStateFlow(hydrate())
 
-    override val state: Flow<DebugSettingsState> = _state.asStateFlow()
+    override val state: StateFlow<DebugSettingsState> = _state.asStateFlow()
 
     override suspend fun source(): NetworkSource = _state.value.source
 

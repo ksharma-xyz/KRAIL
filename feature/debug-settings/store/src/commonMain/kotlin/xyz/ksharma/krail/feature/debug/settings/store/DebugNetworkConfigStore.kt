@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.feature.debug.settings.store
 
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsState
 import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
@@ -23,7 +23,7 @@ interface DebugNetworkConfigStore {
      * Hot flow of the current settings snapshot. Emits the latest value on
      * subscription and on every successful [set].
      */
-    val state: Flow<DebugSettingsState>
+    val state: StateFlow<DebugSettingsState>
 
     /** Current [NetworkSource] selection. */
     suspend fun source(): NetworkSource

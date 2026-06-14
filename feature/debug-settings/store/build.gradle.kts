@@ -27,7 +27,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(projects.feature.debugSettings.state)
+                api(projects.feature.debugSettings.state)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.sandook)

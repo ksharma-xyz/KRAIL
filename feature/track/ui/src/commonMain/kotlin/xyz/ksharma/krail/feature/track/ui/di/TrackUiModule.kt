@@ -14,9 +14,10 @@ import xyz.ksharma.krail.feature.track.ui.TrackTripViewModel
 val trackUiModule = module {
     viewModel { params ->
         val appInfo = get<AppInfoProvider>().getAppInfo()
-        val isTripTrackingEnabled =
-            (!appInfo.isDebug || get<DebugNetworkConfigStore>().state.value.tripTrackingEnabled) &&
-                get<Flag>().getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(true)
+        val isTripTrackingEnabled = when {
+            appInfo.isDebug -> get<DebugNetworkConfigStore>().state.value.tripTrackingEnabled
+            else -> get<Flag>().getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(true)
+        }
         TrackTripViewModel(
             encodedData = params.getOrNull<String>(),
             tripPlanningService = get(),

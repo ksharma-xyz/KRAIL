@@ -95,22 +95,7 @@ internal object TripResponseMapper {
             ?: lastLeg.destination?.arrivalTimePlanned ?: return null
 
         val travelDuration = calculateTimeDifference(originUtc, destinationUtc)
-        val scheduledOriginTime = if (originEstimated != null && originPlanned != null &&
-            originEstimated != originPlanned
-        ) {
-            originPlanned.utcToDisplayTime()
-        } else {
-            null
-        }
-
-        val trackedLegs = legs?.mapNotNull { leg ->
-            if (leg.isWalkingLeg()) {
-                val durationSecs = leg.duration ?: return@mapNotNull null
-                TrackedLeg.Walk(durationText = durationSecs.toFormattedSecondsString())
-            } else {
-                leg.toTrackedTransportLeg()
-            }
-        }?.toImmutableList() ?: return null
+        val trackedLegs = legs?.mapNotNull { it.toTrackedLeg() }?.toImmutableList() ?: return null
 
         return TrackedJourneyDisplay(
             fromStopId = deepLink.fromStopId,
@@ -118,7 +103,7 @@ internal object TripResponseMapper {
             fromStopName = deepLink.fromStopName,
             toStopName = deepLink.toStopName,
             originTime = originUtc.utcToDisplayTime(),
-            scheduledOriginTime = scheduledOriginTime,
+            scheduledOriginTime = resolveScheduledOriginTime(originEstimated, originPlanned),
             destinationTime = destinationUtc.utcToDisplayTime(),
             originUtcDateTime = originUtc,
             destinationUtcDateTime = destinationUtc,
@@ -128,6 +113,20 @@ internal object TripResponseMapper {
         )
     }
 
+    private fun resolveScheduledOriginTime(originEstimated: String?, originPlanned: String?): String? {
+        if (originEstimated == null || originPlanned == null || originEstimated == originPlanned) return null
+        return originPlanned.utcToDisplayTime()
+    }
+
+    @Suppress("ReturnCount")
+    private fun TripResponse.Leg.toTrackedLeg(): TrackedLeg? {
+        if (!isWalkingLeg()) return toTrackedTransportLeg()
+        val durationText = bffDisplayDuration
+            ?: duration?.toFormattedSecondsString()
+            ?: return null
+        return TrackedLeg.Walk(durationText = durationText)
+    }
+
     fun TripResponse.Leg.toTrackedTransportLeg(): TrackedLeg.Transport? {
         val productClass = transportation?.product?.productClass?.toInt() ?: return null
         val mode = NswTransportConfig.modeFromProductClass(productClass) ?: return null
@@ -135,9 +134,11 @@ internal object TripResponseMapper {
         val lineColor = NswTransportLine.entries.firstOrNull { it.key == lineName }?.hexColor
             ?: mode.colorCode
 
-        val stops = stopSequence?.mapNotNull { stop ->
-            stop.toTrackedStop()
-        }?.toImmutableList() ?: return null
+        val stops = stopSequence
+            ?.mapNotNull { stop -> stop.toTrackedStop() }
+            ?.takeIf { it.isNotEmpty() }
+            ?.toImmutableList()
+            ?: return null
 
         val routePathCoordinates = coords
             ?.mapNotNull { pair ->

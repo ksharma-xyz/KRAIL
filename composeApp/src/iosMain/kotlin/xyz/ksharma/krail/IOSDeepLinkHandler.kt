@@ -2,12 +2,14 @@ package xyz.ksharma.krail
 
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_HOST
 import xyz.ksharma.krail.core.deeplink.KRAIL_DEEP_LINK_PATH
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
+import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 
 /**
  * iOS entry point for deep link handling.
@@ -28,6 +30,8 @@ class IOSDeepLinkHandler : KoinComponent {
 
     private val pendingDeepLinkManager: PendingDeepLinkManager by inject()
     private val flag: Flag by inject()
+    private val appInfoProvider: AppInfoProvider by inject()
+    private val debugNetworkConfigStore: DebugNetworkConfigStore by inject()
 
     /**
      * Handle a URL string delivered by the OS (Universal Link or custom scheme).
@@ -37,7 +41,11 @@ class IOSDeepLinkHandler : KoinComponent {
      * land on the website instead of opening the track-trip screen.
      */
     fun handle(urlString: String?) {
-        if (!flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)) return
+        val trackingEnabled = when {
+            appInfoProvider.getAppInfo().isDebug -> debugNetworkConfigStore.state.value.tripTrackingEnabled
+            else -> flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
+        }
+        if (!trackingEnabled) return
         urlString
             ?.extractEncodedData()
             ?.let { pendingDeepLinkManager.dispatchHot(it) }

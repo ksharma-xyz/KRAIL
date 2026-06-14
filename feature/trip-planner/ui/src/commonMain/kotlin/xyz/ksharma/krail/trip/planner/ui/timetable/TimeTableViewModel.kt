@@ -565,8 +565,7 @@ class TimeTableViewModel(
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
-        val trackingEnabled = tripTrackingDebugOverride &&
-            flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(true)
+        val trackingEnabled = tripTrackingDebugOverride
         val deepLinkUrls = tripInfo?.let { trip ->
             journeyList.mapNotNull { journey ->
                 val url = if (trackingEnabled) {

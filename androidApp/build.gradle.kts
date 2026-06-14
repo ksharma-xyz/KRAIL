@@ -95,9 +95,11 @@ kotlin {
 dependencies {
     // Depend on the KMP library
     implementation(projects.composeApp)
+    implementation(projects.core.appInfo)
     implementation(projects.core.deeplink)
     implementation(projects.core.log)
     implementation(projects.core.remoteConfig)
+    implementation(projects.feature.debugSettings.store)
 
     // Android-specific dependencies
     implementation(libs.activity.compose)

@@ -189,12 +189,17 @@ private fun Stop.toStopSequence(
     plannedDeparture: String? = null,
     plannedArrival: String? = null,
 ): TripResponse.StopSequence {
+    val stopUtc = utc_time?.takeIf { it.isNotEmpty() }
     return TripResponse.StopSequence(
+        id = stop_id?.takeIf { it.isNotEmpty() },
         name = name.takeIf { it.isNotEmpty() },
         disassembledName = name.takeIf { it.isNotEmpty() },
         coord = coord?.toLatLngArray(),
-        departureTimePlanned = plannedDeparture,
-        departureTimeEstimated = plannedDeparture,
+        // Journey-level UTC (origin of first leg / arrival of last leg) takes
+        // priority; per-stop utc_time fills in intermediate stops that the
+        // journey-level fields don't cover.
+        departureTimePlanned = plannedDeparture ?: stopUtc,
+        departureTimeEstimated = plannedDeparture ?: stopUtc,
         arrivalTimePlanned = plannedArrival,
         arrivalTimeEstimated = plannedArrival,
         // Proto stop times are render-ready display strings ("12:05pm");

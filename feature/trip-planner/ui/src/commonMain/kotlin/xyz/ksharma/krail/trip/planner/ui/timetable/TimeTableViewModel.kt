@@ -44,6 +44,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
@@ -75,6 +76,7 @@ class TimeTableViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val festivalManager: FestivalManager,
     val flag: Flag,
+    private val debugStore: DebugNetworkConfigStore,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
@@ -564,7 +566,8 @@ class TimeTableViewModel(
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
-        val trackingEnabled = flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
+        val trackingEnabled = debugStore.state.value.tripTrackingEnabled &&
+            flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(true)
         val deepLinkUrls = tripInfo?.let { trip ->
             journeyList.mapNotNull { journey ->
                 val url = if (trackingEnabled) {

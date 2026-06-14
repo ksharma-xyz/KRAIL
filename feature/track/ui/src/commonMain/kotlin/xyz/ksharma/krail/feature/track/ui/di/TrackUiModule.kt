@@ -18,6 +18,7 @@ val trackUiModule = module {
             sandook = get(),
             shareManager = get(),
             flag = get(),
+            debugStore = get(),
         )
     }
 }

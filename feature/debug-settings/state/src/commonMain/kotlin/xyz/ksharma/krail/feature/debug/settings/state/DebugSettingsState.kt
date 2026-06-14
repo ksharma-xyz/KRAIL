@@ -14,14 +14,15 @@ package xyz.ksharma.krail.feature.debug.settings.state
  */
 data class DebugSettingsState(
     val source: NetworkSource = DEFAULT_SOURCE,
+    val tripTrackingEnabled: Boolean = DEFAULT_TRIP_TRACKING_ENABLED,
 ) {
     companion object {
-        /** Default source for fresh installs. Matches the release cohort. */
         val DEFAULT_SOURCE: NetworkSource = NetworkSource.FOLLOW_RC
+        const val DEFAULT_TRIP_TRACKING_ENABLED: Boolean = true
 
-        /**
-         * Initial state for a fresh install (or after [DebugSettingsEvent.Reset]).
-         */
-        fun default(): DebugSettingsState = DebugSettingsState(source = DEFAULT_SOURCE)
+        fun default(): DebugSettingsState = DebugSettingsState(
+            source = DEFAULT_SOURCE,
+            tripTrackingEnabled = DEFAULT_TRIP_TRACKING_ENABLED,
+        )
     }
 }

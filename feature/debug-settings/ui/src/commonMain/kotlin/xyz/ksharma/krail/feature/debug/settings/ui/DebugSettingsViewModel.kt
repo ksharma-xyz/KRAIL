@@ -51,6 +51,10 @@ class DebugSettingsViewModel(
         onEvent(DebugSettingsEvent.SetSource(source))
     }
 
+    fun setTripTrackingEnabled(enabled: Boolean) {
+        onEvent(DebugSettingsEvent.SetTripTrackingEnabled(enabled))
+    }
+
     fun reset() {
         onEvent(DebugSettingsEvent.Reset)
     }

@@ -82,6 +82,7 @@ val viewModelsModule = module {
             festivalManager = get(),
             flag = get(),
             shareManager = get(),
+            debugStore = get(),
         )
     }
 

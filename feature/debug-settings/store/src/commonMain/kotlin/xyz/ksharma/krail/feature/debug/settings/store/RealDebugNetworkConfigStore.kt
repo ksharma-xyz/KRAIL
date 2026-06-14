@@ -21,16 +21,10 @@ import xyz.ksharma.krail.sandook.SandookPreferences
  * | Key                         | Type    | Meaning                          |
  * |-----------------------------|---------|----------------------------------|
  * | `KEY_DEBUG_NETWORK_SOURCE`  | String  | `NetworkSource.name` selection   |
+ * | `KEY_TRIP_TRACKING_ENABLED` | String  | "true"/"false" override          |
  *
  * Missing rows hydrate to [DebugSettingsState.default]. Unknown / corrupt
- * enum strings (e.g. an enum value removed in a later app version) fall
- * back to the default rather than throwing.
- *
- * The store is a singleton, held in Koin as `single`. Hydration runs once
- * on construction (synchronous via `SandookPreferences`); subsequent reads
- * come from the in-memory `MutableStateFlow`. Writes serialise through a
- * mutex to prevent the read-modify-write race when two events fire
- * back-to-back.
+ * values fall back to the default rather than throwing.
  */
 internal class RealDebugNetworkConfigStore(
     private val preferences: SandookPreferences,
@@ -51,6 +45,9 @@ internal class RealDebugNetworkConfigStore(
             writeMutex.withLock {
                 val next = when (event) {
                     is DebugSettingsEvent.SetSource -> _state.value.copy(source = event.source)
+                    is DebugSettingsEvent.SetTripTrackingEnabled -> _state.value.copy(
+                        tripTrackingEnabled = event.enabled,
+                    )
                     DebugSettingsEvent.Reset -> DebugSettingsState.default()
                 }
 
@@ -66,22 +63,29 @@ internal class RealDebugNetworkConfigStore(
         val source = preferences.getString(KEY_DEBUG_NETWORK_SOURCE)
             ?.let { runCatching { NetworkSource.valueOf(it) }.getOrNull() }
             ?: defaults.source
-        return DebugSettingsState(source = source)
+        val tripTrackingEnabled = preferences.getString(KEY_TRIP_TRACKING_ENABLED)
+            ?.toBooleanStrictOrNull()
+            ?: defaults.tripTrackingEnabled
+        return DebugSettingsState(source = source, tripTrackingEnabled = tripTrackingEnabled)
     }
 
     private fun persist(next: DebugSettingsState, event: DebugSettingsEvent) {
         when (event) {
-            is DebugSettingsEvent.SetSource -> {
+            is DebugSettingsEvent.SetSource ->
                 preferences.setString(KEY_DEBUG_NETWORK_SOURCE, next.source.name)
-            }
+
+            is DebugSettingsEvent.SetTripTrackingEnabled ->
+                preferences.setString(KEY_TRIP_TRACKING_ENABLED, next.tripTrackingEnabled.toString())
 
             DebugSettingsEvent.Reset -> {
                 preferences.deletePreference(KEY_DEBUG_NETWORK_SOURCE)
+                preferences.deletePreference(KEY_TRIP_TRACKING_ENABLED)
             }
         }
     }
 
     companion object {
         const val KEY_DEBUG_NETWORK_SOURCE = "KEY_DEBUG_NETWORK_SOURCE"
+        const val KEY_TRIP_TRACKING_ENABLED = "KEY_TRIP_TRACKING_ENABLED"
     }
 }

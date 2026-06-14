@@ -30,6 +30,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
+import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
@@ -53,10 +54,12 @@ class TrackTripViewModel(
     sandook: Sandook,
     private val shareManager: ShareManager,
     flag: Flag,
+    debugStore: DebugNetworkConfigStore,
 ) : ViewModel() {
 
     val isTripTrackingEnabled: Boolean =
-        flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
+        debugStore.state.value.tripTrackingEnabled &&
+            flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(true)
 
     private val loadingEmoji: String by lazy {
         (festivalManager.festivalOnDate() ?: NoFestival()).greetingAndEmoji.second

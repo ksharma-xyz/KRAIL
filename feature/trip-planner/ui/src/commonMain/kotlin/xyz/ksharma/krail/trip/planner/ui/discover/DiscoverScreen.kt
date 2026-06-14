@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -34,7 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import xyz.ksharma.krail.core.adaptiveui.AdaptiveBreakpoints
+import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.discover.state.Button
@@ -65,8 +64,7 @@ fun DiscoverScreen(
     resetAllSeenCards: () -> Unit,
     onChipSelected: (DiscoverCardType) -> Unit,
 ) {
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    val isCompactWidth = windowSizeClass.minWidthDp < AdaptiveBreakpoints.COMPACT_WIDTH
+    val isCompactWidth = rememberAdaptiveLayoutInfo().isCompactWidth
     if (isCompactWidth) {
         DiscoverScreenCompact(
             modifier = modifier,

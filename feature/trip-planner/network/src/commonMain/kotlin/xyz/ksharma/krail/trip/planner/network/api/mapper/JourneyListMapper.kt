@@ -125,9 +125,20 @@ private fun TransportLeg.toTransportTripLeg(
         origin = originStop,
         destination = destinationStop,
         stopSequence = stopSequence,
-        transportation = transport_mode_line?.toTransportation(displayText = display_text),
+        transportation = transport_mode_line?.toTransportation(
+            displayText = display_text,
+            // v0.4.1 split ids: journey identity/dedupe + the live-tracking
+            // lock key. Without them every proto journey deduped onto one
+            // card ("nullnull" trip codes).
+            transportationId = transportation_id,
+            realtimeTripId = realtime_trip_id,
+        ),
         coords = coords.toLatLngList(),
         interchange = walk_interchange?.toInterchange(),
+        // Proto carries the render-ready duration string; without this the
+        // UI leg mapper derives duration from per-leg UTC times the proto
+        // doesn't have and drops the leg entirely.
+        bffDisplayDuration = total_duration.takeIf { it.isNotEmpty() },
         infos = service_alert_list
             .map { alert ->
                 TripResponse.Info(
@@ -152,11 +163,17 @@ private fun WalkingLeg.toWalkingTripLeg(): TripResponse.Leg {
         transportation = TripResponse.Transportation(
             product = TripResponse.Product(productClass = WALKING_LEG_PRODUCT_CLASS),
         ),
+        bffDisplayDuration = duration.takeIf { it.isNotEmpty() },
     )
 }
 
-private fun TransportModeLine.toTransportation(displayText: String?): TripResponse.Transportation {
+private fun TransportModeLine.toTransportation(
+    displayText: String?,
+    transportationId: String? = null,
+    realtimeTripId: String? = null,
+): TripResponse.Transportation {
     return TripResponse.Transportation(
+        id = transportationId,
         disassembledName = line_name.takeIf { it.isNotEmpty() },
         name = line_name.takeIf { it.isNotEmpty() },
         description = displayText,
@@ -164,6 +181,7 @@ private fun TransportModeLine.toTransportation(displayText: String?): TripRespon
             productClass = transport_mode_type.toLong(),
             name = line_name.takeIf { it.isNotEmpty() },
         ),
+        properties = realtimeTripId?.let { TripResponse.TransportationProperties(realtimeTripId = it) },
     )
 }
 
@@ -171,14 +189,22 @@ private fun Stop.toStopSequence(
     plannedDeparture: String? = null,
     plannedArrival: String? = null,
 ): TripResponse.StopSequence {
+    val stopUtc = utc_time?.takeIf { it.isNotEmpty() }
     return TripResponse.StopSequence(
+        id = stop_id?.takeIf { it.isNotEmpty() },
         name = name.takeIf { it.isNotEmpty() },
         disassembledName = name.takeIf { it.isNotEmpty() },
         coord = coord?.toLatLngArray(),
-        departureTimePlanned = plannedDeparture,
-        departureTimeEstimated = plannedDeparture,
+        // Journey-level UTC (origin of first leg / arrival of last leg) takes
+        // priority; per-stop utc_time fills in intermediate stops that the
+        // journey-level fields don't cover.
+        departureTimePlanned = plannedDeparture ?: stopUtc,
+        departureTimeEstimated = plannedDeparture ?: stopUtc,
         arrivalTimePlanned = plannedArrival,
         arrivalTimeEstimated = plannedArrival,
+        // Proto stop times are render-ready display strings ("12:05pm");
+        // without this, stops lacking UTC times vanish from the timeline.
+        bffDisplayTime = time.takeIf { it.isNotEmpty() },
     )
 }
 

@@ -22,8 +22,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import xyz.ksharma.krail.core.festival.FestivalManager
 import xyz.ksharma.krail.core.festival.model.Festival
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
-import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LegTrackingInfo
@@ -437,14 +435,14 @@ class TrackTripViewModelTest {
     @Test
     fun `GIVEN flag is false WHEN ViewModel created THEN isTripTrackingEnabled is false`() =
         runTrackingTest {
-            val vm = makeViewModel(encodedData = null, flag = FakeFlag(trackingEnabled = false))
+            val vm = makeViewModel(encodedData = null, isTripTrackingEnabled = false)
             assertTrue(!vm.isTripTrackingEnabled)
         }
 
     @Test
     fun `GIVEN flag is true WHEN ViewModel created THEN isTripTrackingEnabled is true`() =
         runTrackingTest {
-            val vm = makeViewModel(encodedData = null, flag = FakeFlag(trackingEnabled = true))
+            val vm = makeViewModel(encodedData = null, isTripTrackingEnabled = true)
             assertTrue(vm.isTripTrackingEnabled)
         }
 
@@ -454,7 +452,7 @@ class TrackTripViewModelTest {
 
     private fun makeViewModel(
         encodedData: String?,
-        flag: Flag = FakeFlag(trackingEnabled = false),
+        isTripTrackingEnabled: Boolean = false,
     ) = TrackTripViewModel(
         encodedData = encodedData,
         tripPlanningService = tripService,
@@ -464,7 +462,7 @@ class TrackTripViewModelTest {
         gtfsRealtimeRepository = FakeGtfsRealtimeRepository(),
         sandook = FakeSandook(),
         shareManager = NoopShareManager,
-        flag = flag,
+        isTripTrackingEnabled = isTripTrackingEnabled,
     ).also { currentVm = it }
 
     private fun futureIso(duration: kotlin.time.Duration) =
@@ -632,7 +630,3 @@ private object NoopShareManager : xyz.ksharma.krail.core.share.ShareManager {
     ): Result<Unit> = Result.success(Unit)
 }
 
-private class FakeFlag(private val trackingEnabled: Boolean) : Flag {
-    override fun getFlagValue(key: String): FlagValue =
-        FlagValue.BooleanValue(trackingEnabled)
-}

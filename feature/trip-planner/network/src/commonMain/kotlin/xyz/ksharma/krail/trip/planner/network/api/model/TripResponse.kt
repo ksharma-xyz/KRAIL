@@ -103,6 +103,16 @@ data class TripResponse(
          * Each element is a 2-element array: [latitude, longitude]
          */
         @SerialName("coords") val coords: List<List<Double>>? = null,
+
+        /**
+         * Render-ready duration string ("5 mins"). Populated only by the
+         * BFF proto path (JourneyListMapper) — the proto carries display
+         * strings while this NSW shape carries [duration] seconds. Never
+         * present in NSW JSON (kotlin-only field, excluded from
+         * serialization), so the JSON path keeps deriving display text
+         * from [duration] / UTC times.
+         */
+        @kotlinx.serialization.Transient val bffDisplayDuration: String? = null,
     )
 
     @Serializable
@@ -187,6 +197,15 @@ data class TripResponse(
          * Example: -2 for Town Hall underground platform
          */
         @SerialName("niveau") val niveau: Int? = null,
+
+        /**
+         * Render-ready stop time ("12:05pm"). Populated only by the BFF
+         * proto path — the proto carries per-stop display strings, not the
+         * UTC timestamps this NSW shape uses. Kotlin-only field, excluded
+         * from serialization; the NSW JSON path keeps formatting from the
+         * UTC fields above.
+         */
+        @kotlinx.serialization.Transient val bffDisplayTime: String? = null,
 
         /**
          * List of transport mode IDs available at this stop

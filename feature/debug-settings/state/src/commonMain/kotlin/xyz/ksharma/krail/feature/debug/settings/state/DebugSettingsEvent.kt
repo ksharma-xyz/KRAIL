@@ -9,6 +9,9 @@ sealed interface DebugSettingsEvent {
     /** Pick the [NetworkSource] used by the resolver. */
     data class SetSource(val source: NetworkSource) : DebugSettingsEvent
 
+    /** Override the TRIP_TRACKING_ENABLED RC flag locally for this debug build. */
+    data class SetTripTrackingEnabled(val enabled: Boolean) : DebugSettingsEvent
+
     /** Restore the entire state to [DebugSettingsState.default]. */
     data object Reset : DebugSettingsEvent
 }

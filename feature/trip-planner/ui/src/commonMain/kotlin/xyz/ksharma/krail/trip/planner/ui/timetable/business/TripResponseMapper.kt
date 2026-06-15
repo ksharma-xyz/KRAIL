@@ -228,13 +228,16 @@ internal fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardIn
     val stopName = disassembledName ?: name
     // For last leg there is no departure time, so using arrival time
     // For first leg there is no arrival time, so using departure time.
-    val time =
+    val utcTime =
         departureTimeEstimated ?: departureTimePlanned ?: arrivalTimeEstimated
             ?: arrivalTimePlanned
-    return if (stopName != null && time != null) {
+    // BFF proto path ships render-ready display times; the NSW JSON path
+    // formats from the UTC timestamps.
+    val displayTime = bffDisplayTime ?: utcTime?.fromUTCToDisplayTimeString()
+    return if (stopName != null && displayTime != null) {
         TimeTableState.JourneyCardInfo.Stop(
             name = stopName,
-            time = time.fromUTCToDisplayTimeString(),
+            time = displayTime,
             isWheelchairAccessible = properties?.wheelchairAccess.toBoolean(),
         )
     } else {

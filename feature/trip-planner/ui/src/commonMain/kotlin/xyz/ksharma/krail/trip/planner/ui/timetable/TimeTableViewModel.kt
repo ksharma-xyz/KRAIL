@@ -75,6 +75,7 @@ class TimeTableViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val festivalManager: FestivalManager,
     val flag: Flag,
+    private val tripTrackingDebugOverride: Boolean = true,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
@@ -564,7 +565,7 @@ class TimeTableViewModel(
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 
-        val trackingEnabled = flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
+        val trackingEnabled = tripTrackingDebugOverride
         val deepLinkUrls = tripInfo?.let { trip ->
             journeyList.mapNotNull { journey ->
                 val url = if (trackingEnabled) {

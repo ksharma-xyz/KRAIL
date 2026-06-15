@@ -55,6 +55,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.appInfo)
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.core.maps.state)
@@ -66,6 +67,7 @@ kotlin {
                 implementation(projects.core.share)
                 implementation(projects.core.transport)
                 implementation(projects.core.uiTooling)
+                implementation(projects.feature.debugSettings.store)
                 implementation(projects.feature.track.state)
                 implementation(projects.feature.tripPlanner.network)
                 implementation(projects.sandook)

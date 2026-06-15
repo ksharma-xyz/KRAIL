@@ -31,7 +31,11 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
     entry<DebugConfigHomeRoute>(
         metadata = ListDetailSceneStrategy.detailPane(),
     ) {
+        val viewModel: DebugSettingsViewModel = koinViewModel()
+        val state by viewModel.state.collectAsStateWithLifecycle()
         DebugConfigScreen(
+            tripTrackingEnabled = state.tripTrackingEnabled,
+            onTripTrackingToggle = viewModel::setTripTrackingEnabled,
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,
         )

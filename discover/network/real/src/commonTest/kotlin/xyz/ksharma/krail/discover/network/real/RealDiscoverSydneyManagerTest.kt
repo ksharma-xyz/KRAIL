@@ -188,7 +188,7 @@ class RealDiscoverSydneyManagerTest {
                 "title": "Complex Card",
                 "description": "Test description with special chars: @#$%",
                 "startDate": "2026-05-22",
-                "endDate": "2026-06-13",
+                "endDate": "2099-12-31",
                 "disclaimer": "Test disclaimer",
                 "imageList": ["https://example.com/img1.jpg", "https://example.com/img2.jpg"],
                 "buttons": [
@@ -214,7 +214,7 @@ class RealDiscoverSydneyManagerTest {
         val returnedCard = result[0]
         assertEquals("Complex Card", returnedCard.title)
         assertEquals("2026-05-22", returnedCard.startDate)
-        assertEquals("2026-06-13", returnedCard.endDate)
+        assertEquals("2099-12-31", returnedCard.endDate)
         assertEquals("Test disclaimer", returnedCard.disclaimer)
         assertEquals(2, returnedCard.imageList.size)
         assertNotNull(returnedCard.buttons)

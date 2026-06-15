@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.core.network
 
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
 import xyz.ksharma.krail.core.appinfo.AppInfo
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
@@ -265,7 +265,7 @@ private class FakeFlag(private val bffEnabled: Boolean) : Flag {
 private class FakeDebugStore(
     private val source: NetworkSource,
 ) : DebugNetworkConfigStore {
-    override val state: Flow<DebugSettingsState> = MutableStateFlow(
+    override val state: StateFlow<DebugSettingsState> = MutableStateFlow(
         DebugSettingsState(source = source),
     )
 

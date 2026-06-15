@@ -17,8 +17,10 @@ import kotlin.time.ExperimentalTime
  */
 @OptIn(ExperimentalTime::class)
 internal fun TripResponse.Leg.toWalkingLegUiModel(): TimeTableState.JourneyCardInfo.Leg? {
-    // duration can be null for some legs; resolveDurationSeconds() falls back to dep/arr times.
-    val displayDuration = resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
+    // BFF proto path ships a render-ready duration string; the NSW JSON path
+    // derives it from duration seconds / dep-arr times.
+    val displayDuration = bffDisplayDuration
+        ?: resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
     return if (displayDuration != null && footPathInfoRedundant != true) {
         TimeTableState.JourneyCardInfo.Leg.WalkingLeg(duration = displayDuration)
     } else {
@@ -44,7 +46,8 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
         description = transportation?.description,
     )
     val numberOfStops = stopSequence?.size
-    val displayDuration = resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
+    val displayDuration = bffDisplayDuration
+        ?: resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
     val stops = stopSequence?.mapNotNull { it.toUiModel() }?.toImmutableList()
     val alerts = infos?.mapNotNull { it.toAlert() }?.toImmutableList()
 

@@ -150,7 +150,7 @@ object RemoteConfigDefaults {
             ),
             Pair(
                 first = FlagKeys.TRIP_TRACKING_ENABLED.key,
-                second = false,
+                second = true,
             ),
             Pair(
                 first = FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key,

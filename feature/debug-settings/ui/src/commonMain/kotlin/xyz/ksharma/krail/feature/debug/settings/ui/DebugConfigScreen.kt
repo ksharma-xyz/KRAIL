@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +33,8 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 @Composable
 fun DebugConfigScreen(
     modifier: Modifier = Modifier,
+    tripTrackingEnabled: Boolean = true,
+    onTripTrackingToggle: (Boolean) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
 ) {
@@ -56,6 +59,14 @@ fun DebugConfigScreen(
                         title = "Network",
                         subtitle = "Pick where BFF-eligible calls are routed.",
                         onClick = onNetworkClick,
+                    )
+                }
+                item(key = "tile-trip-tracking") {
+                    DebugConfigToggleTile(
+                        title = "Trip Tracking",
+                        subtitle = "Override TRIP_TRACKING_ENABLED RC flag.",
+                        checked = tripTrackingEnabled,
+                        onCheckedChange = onTripTrackingToggle,
                     )
                 }
             }
@@ -104,6 +115,41 @@ internal fun DebugConfigTile(
                     color = KrailTheme.colors.softLabel,
                 )
             }
+        }
+        Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
+    }
+}
+
+@Composable
+internal fun DebugConfigToggleTile(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .klickable(onClick = { onCheckedChange(!checked) })
+            .semantics(mergeDescendants = true) {},
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingXL),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, style = KrailTheme.typography.bodyLarge)
+                Text(
+                    text = subtitle,
+                    style = KrailTheme.typography.body,
+                    color = KrailTheme.colors.softLabel,
+                )
+            }
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
         Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
     }

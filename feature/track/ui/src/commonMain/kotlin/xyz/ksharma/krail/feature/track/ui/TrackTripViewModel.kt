@@ -1,10 +1,3 @@
-@file:Suppress(
-    "LongMethod",
-    "TooManyFunctions",
-    "CyclomaticComplexMethod",
-    "ForbiddenComment",
-)
-
 package xyz.ksharma.krail.feature.track.ui
 
 import androidx.compose.ui.graphics.ImageBitmap
@@ -26,13 +19,11 @@ import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
-import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
-import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
+import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.feature.track.TripDeepLinkDecoder
@@ -52,11 +43,8 @@ class TrackTripViewModel(
     gtfsRealtimeRepository: GtfsRealtimeRepository,
     sandook: Sandook,
     private val shareManager: ShareManager,
-    flag: Flag,
+    val isTripTrackingEnabled: Boolean,
 ) : ViewModel() {
-
-    val isTripTrackingEnabled: Boolean =
-        flag.getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(false)
 
     private val loadingEmoji: String by lazy {
         (festivalManager.festivalOnDate() ?: NoFestival()).greetingAndEmoji.second
@@ -162,32 +150,27 @@ class TrackTripViewModel(
                 "hasExistingDisplay=${existingTracked?.display != null}",
         )
 
-        // Expire any stale existing trip before evaluating the new deep link.
         if (existingTracked != null && tripPoller.isTripExpired(existingTracked.deepLink)) {
             log("[TRACK_RESOLVE] existing trip expired → ArrivedAndFinished")
             tripPoller.transitionToArrivedAndFinished()
             return
         }
 
+        resolveFromState(existingTracked, newDeepLink)
+    }
+
+    private fun resolveFromState(existingTracked: TrackedJourney?, newDeepLink: TripDeepLink?) {
         when {
-            // New expired deep link → nothing to show, clean up and go back immediately.
             newDeepLink != null && tripPoller.isTripExpired(newDeepLink) -> {
                 log("[TRACK_RESOLVE] new deep link expired → ArrivedAndFinished")
                 tripPoller.transitionToArrivedAndFinished()
             }
-
-            // Existing trip already finished AND new trip requested → auto-clear and
-            // show Prompt. No need to ask the user; the old trip is done.
             newDeepLink != null && existingTracked != null &&
                 existingTracked.deepLink != newDeepLink && existingTracked.isArrived -> {
                 log("[TRACK_RESOLVE] existing trip already arrived, clearing → Prompt for new trip")
                 trackingManager.stop()
                 _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
-
-            // New deep link + actively tracking a DIFFERENT trip → clear old and prompt
-            // for new. A deep link tap is explicit user intent to switch trips, so we
-            // don't need confirmation.
             newDeepLink != null && existingTracked != null && existingTracked.deepLink != newDeepLink -> {
                 log(
                     "[TRACK_RESOLVE] → Prompt (different trip requested, clearing previous: " +
@@ -197,43 +180,38 @@ class TrackTripViewModel(
                 trackingManager.stop()
                 _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
-
-            // Resume existing tracking (same trip or opened from SavedTrips card with no
-            // encoded data).
-            existingTracked != null -> {
-                existingTracked.display?.let { display ->
-                    if (existingTracked.isArrived) {
-                        log("[TRACK_RESOLVE] → Arrived (restored from cache)")
-                        _uiState.value = TrackTripState.Arrived(display)
-                    } else {
-                        log(
-                            "[TRACK_RESOLVE] → Tracking (resumed) — " +
-                                "${existingTracked.deepLink.fromStopName} → " +
-                                "${existingTracked.deepLink.toStopName}",
-                        )
-                        _uiState.value = TrackTripState.Tracking(display)
-                        tripPoller.startPolling(existingTracked.deepLink)
-                    }
-                } ?: run {
-                    log(
-                        "[TRACK_RESOLVE] → Loading (no display yet, starting poll for " +
-                            "${existingTracked.deepLink.fromStopName})",
-                    )
-                    _uiState.value = TrackTripState.Loading(existingTracked.deepLink, loadingEmoji)
-                    tripPoller.startPolling(existingTracked.deepLink)
-                }
-            }
-
-            // New deep link, nothing tracked yet → show prompt.
+            existingTracked != null -> handleResumeExistingTrip(existingTracked)
             newDeepLink != null -> {
                 log("[TRACK_RESOLVE] → Prompt (${newDeepLink.fromStopName} → ${newDeepLink.toStopName})")
                 _uiState.value = TrackTripState.Prompt(newDeepLink)
             }
-
             else -> {
                 logError("[TRACK_RESOLVE] → Error (no encodedData, no existing tracking)")
                 _uiState.value = TrackTripState.Error
             }
+        }
+    }
+
+    private fun handleResumeExistingTrip(existingTracked: TrackedJourney) {
+        existingTracked.display?.let { display ->
+            if (existingTracked.isArrived) {
+                log("[TRACK_RESOLVE] → Arrived (restored from cache)")
+                _uiState.value = TrackTripState.Arrived(display)
+            } else {
+                log(
+                    "[TRACK_RESOLVE] → Tracking (resumed) — " +
+                        "${existingTracked.deepLink.fromStopName} → ${existingTracked.deepLink.toStopName}",
+                )
+                _uiState.value = TrackTripState.Tracking(display)
+                tripPoller.startPolling(existingTracked.deepLink)
+            }
+        } ?: run {
+            log(
+                "[TRACK_RESOLVE] → Loading (no display yet, starting poll for " +
+                    "${existingTracked.deepLink.fromStopName})",
+            )
+            _uiState.value = TrackTripState.Loading(existingTracked.deepLink, loadingEmoji)
+            tripPoller.startPolling(existingTracked.deepLink)
         }
     }
 

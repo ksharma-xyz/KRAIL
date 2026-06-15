@@ -3,8 +3,8 @@ package xyz.ksharma.krail.feature.debug.settings.ui
 import app.cash.turbine.test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -115,7 +115,7 @@ private class FakeFlag(private val bffEnabled: Boolean) : Flag {
 
 private class FakeDebugStore : DebugNetworkConfigStore {
     private val _state = MutableStateFlow(DebugSettingsState.default())
-    override val state: Flow<DebugSettingsState> = _state.asStateFlow()
+    override val state: StateFlow<DebugSettingsState> = _state.asStateFlow()
     var lastEvent: DebugSettingsEvent? = null
         private set
 
@@ -125,6 +125,7 @@ private class FakeDebugStore : DebugNetworkConfigStore {
         lastEvent = event
         _state.value = when (event) {
             is DebugSettingsEvent.SetSource -> _state.value.copy(source = event.source)
+            is DebugSettingsEvent.SetTripTrackingEnabled -> _state.value.copy(tripTrackingEnabled = event.enabled)
             DebugSettingsEvent.Reset -> DebugSettingsState.default()
         }
     }

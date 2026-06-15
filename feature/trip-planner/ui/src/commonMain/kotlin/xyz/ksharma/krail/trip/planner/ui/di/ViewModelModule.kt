@@ -7,8 +7,13 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.DefaultDispatcher
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
+import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
@@ -73,6 +78,11 @@ val viewModelsModule = module {
     }
 
     viewModel {
+        val isDebug = get<AppInfoProvider>().getAppInfo().isDebug
+        val tripTrackingDebugOverride = when {
+            isDebug -> get<DebugNetworkConfigStore>().state.value.tripTrackingEnabled
+            else -> get<Flag>().getFlagValue(FlagKeys.TRIP_TRACKING_ENABLED.key).asBoolean(true)
+        }
         TimeTableViewModel(
             tripPlanningService = get(),
             rateLimiter = get(),
@@ -82,6 +92,7 @@ val viewModelsModule = module {
             festivalManager = get(),
             flag = get(),
             shareManager = get(),
+            tripTrackingDebugOverride = tripTrackingDebugOverride,
         )
     }
 

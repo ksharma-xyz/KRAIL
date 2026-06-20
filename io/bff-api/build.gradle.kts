@@ -10,7 +10,7 @@ plugins {
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    android {
+    androidLibrary {
         namespace = "xyz.ksharma.krail.io.bffapi"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK

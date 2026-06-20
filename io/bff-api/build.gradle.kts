@@ -41,23 +41,20 @@ kotlin {
     }
 }
 
-// The .proto contract is shared with KRAIL-BFF via a public submodule
-// pinned to a SemVer git tag (currently v0.1.0). Wire codegen reads from
-// the submodule path; we never copy generated Kotlin into the repo.
-//
-// Submodule: https://github.com/ksharma-xyz/KRAIL-API-PROTO
-// Layout:
-//   krail-api-proto/proto/api/   contains app.krail.bff.proto (JourneyList, JourneyCardInfo, ...)
-//   krail-api-proto/proto/data/  contains app.krail.bff.proto.data (StopsDataset, RoutesDataset)
+// Proto sources JAR from GitHub Packages — published by KRAIL-API-PROTO on each tag.
+// Version in gradle/libs.versions.toml (krail-api-proto). Renovate opens bump PRs.
+// Must be populated BEFORE wire{} reads krailProto.singleFile (Kotlin DSL eval order).
+val krailProto: Configuration by configurations.creating { isTransitive = false }
+dependencies {
+    krailProto(libs.krailApiProto) { artifact { classifier = "proto" } }
+}
+
 wire {
     kotlin {
         javaInterop = true
         out = "$projectDir/build/generated/source/wire"
     }
-    protoPath {
-        srcDir("$rootDir/krail-api-proto/proto")
-    }
     sourcePath {
-        srcDir("$rootDir/krail-api-proto/proto")
+        srcJar(krailProto.singleFile.absolutePath)
     }
 }

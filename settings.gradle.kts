@@ -1,3 +1,5 @@
+import java.util.Properties
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
@@ -20,6 +22,11 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+// Read local.properties for dev credentials (git-ignored, never committed).
+val localProps = Properties().apply {
+    rootProject.projectDir.resolve("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+
 dependencyResolutionManagement {
     repositories {
         google {
@@ -30,6 +37,19 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+        // KRAIL-API-PROTO proto sources JAR — published on each proto release tag.
+        // CI: GITHUB_TOKEN env var is set automatically (has read:packages scope).
+        // Local dev: add gpr.token=<github-pat-with-read:packages> to local.properties.
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/ksharma-xyz/KRAIL-API-PROTO")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                    ?: localProps.getProperty("gpr.user") ?: "token"
+                password = System.getenv("GITHUB_TOKEN")
+                    ?: localProps.getProperty("gpr.token") ?: ""
+            }
+        }
     }
 }
 

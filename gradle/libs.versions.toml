@@ -51,6 +51,7 @@ reorderable = "2.5.1"
 # KRAIL-extracted libraries (published as separate KMP libs)
 aagya = "0.1.1"
 dhruva = "0.1.1"
+krail-api-proto = "0.4.2"
 
 [libraries]
 # KRAIL-extracted libraries
@@ -58,6 +59,7 @@ aagya-state = { module = "io.github.ksharma-xyz:aagya-state", version.ref = "aag
 aagya-data = { module = "io.github.ksharma-xyz:aagya-data", version.ref = "aagya" }
 dhruva-state = { module = "io.github.ksharma-xyz:dhruva-state", version.ref = "dhruva" }
 dhruva-data = { module = "io.github.ksharma-xyz:dhruva-data", version.ref = "dhruva" }
+krail-api-proto = { module = "xyz.ksharma.krail:api-proto", version.ref = "krail-api-proto" }
 
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }

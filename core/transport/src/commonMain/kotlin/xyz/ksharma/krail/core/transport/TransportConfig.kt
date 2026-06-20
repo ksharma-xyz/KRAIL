@@ -24,6 +24,15 @@ interface TransportConfig {
     /** All modes supported by this city, sorted by [order]. */
     fun sortedModes(order: TransportModeSortOrder = TransportModeSortOrder.PRIORITY): List<TransportMode>
 
+    /** Modes available on [surface], sorted by [order]. */
+    fun modesFor(
+        surface: ModeSelectionSurface,
+        order: TransportModeSortOrder = TransportModeSortOrder.PRIORITY,
+    ): List<TransportMode>
+
+    /** API product-class codes available on [surface]. */
+    fun productClassesFor(surface: ModeSelectionSurface): Set<Int>
+
     /** All API product-class codes supported by this city. */
     fun allProductClasses(): Set<Int>
 

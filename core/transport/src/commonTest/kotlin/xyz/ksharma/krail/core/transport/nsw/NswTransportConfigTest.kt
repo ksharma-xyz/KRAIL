@@ -1,8 +1,12 @@
 package xyz.ksharma.krail.core.transport.nsw
 
+import xyz.ksharma.krail.core.transport.ModeSelectionSurface
+import xyz.ksharma.krail.core.transport.TransportMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class NswTransportConfigTest {
 
@@ -126,6 +130,49 @@ class NswTransportConfigTest {
             description = null,
         )
         assertEquals("Liverpool", result)
+    }
+
+    // region: per-surface mode availability
+
+    @Test
+    fun `Given NEARBY_STOPS surface When resolving product classes Then School Bus is excluded`() {
+        val result = NswTransportConfig.productClassesFor(ModeSelectionSurface.NEARBY_STOPS)
+
+        assertFalse(result.contains(TransportMode.SchoolBus.productClass))
+        assertTrue(
+            result.containsAll(
+                listOf(
+                    TransportMode.Train.productClass,
+                    TransportMode.Metro.productClass,
+                    TransportMode.Bus.productClass,
+                    TransportMode.LightRail.productClass,
+                    TransportMode.Ferry.productClass,
+                    TransportMode.Coach.productClass,
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `Given TRIP_PLANNER surface When resolving product classes Then all modes including School Bus are present`() {
+        val result = NswTransportConfig.productClassesFor(ModeSelectionSurface.TRIP_PLANNER)
+
+        assertEquals(NswTransportConfig.allProductClasses(), result)
+        assertTrue(result.contains(TransportMode.SchoolBus.productClass))
+    }
+
+    @Test
+    fun `Given NEARBY_STOPS surface When resolving modes Then School Bus is not in the list`() {
+        val result = NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS)
+
+        assertFalse(result.contains(TransportMode.SchoolBus))
+    }
+
+    @Test
+    fun `Given TRIP_PLANNER surface When resolving modes Then School Bus is in the list`() {
+        val result = NswTransportConfig.modesFor(ModeSelectionSurface.TRIP_PLANNER)
+
+        assertTrue(result.contains(TransportMode.SchoolBus))
     }
 }
 

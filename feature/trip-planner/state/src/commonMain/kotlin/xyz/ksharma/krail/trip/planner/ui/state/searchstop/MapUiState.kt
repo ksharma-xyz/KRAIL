@@ -10,6 +10,7 @@ import xyz.ksharma.krail.core.maps.state.RouteFeature
 import xyz.ksharma.krail.core.maps.state.SearchRadius
 import xyz.ksharma.krail.core.maps.state.SelectedStopUi
 import xyz.ksharma.krail.core.maps.state.StopFeature
+import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 
@@ -44,7 +45,8 @@ data class MapDisplay(
     val stops: ImmutableList<StopFeature> = persistentListOf(),
     val selectedStop: SelectedStopUi? = null,
     val nearbyStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
-    val selectedTransportModes: ImmutableSet<Int> = NswTransportConfig.allProductClasses().toImmutableSet(),
+    val selectedTransportModes: ImmutableSet<Int> =
+        NswTransportConfig.productClassesFor(ModeSelectionSurface.NEARBY_STOPS).toImmutableSet(),
     val mapCenter: LatLng = LatLng(
         NearbyStopsConfig.DEFAULT_CENTER_LAT,
         NearbyStopsConfig.DEFAULT_CENTER_LON,

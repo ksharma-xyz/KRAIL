@@ -19,10 +19,6 @@ jobs:
       passed: ${{ steps.detekt.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          # Wire codegen for :io:bff-api reads protos from the krail-api-proto submodule.
-          # Without this, CI checkout would skip the submodule and the build would fail.
-          submodules: true
 
       - name: Setup environment variables
         run: |
@@ -47,6 +43,7 @@ jobs:
         env:
           CI: true
           GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
           ./gradlew
           verifyTestWiring verifyTestingModuleUsage verifyNoAdHocBoundaryFakes
@@ -62,6 +59,7 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           CI: true
           GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew detekt -PciQuality=true
 
       # Run all KMP host tests (Compose UI tests via Robolectric live in
@@ -75,6 +73,7 @@ jobs:
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
           CI: true
           GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew testAndroidHostTest --continue -PciQuality=true
 
       - name: Upload Detekt reports

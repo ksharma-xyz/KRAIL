@@ -11,10 +11,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
-        with:
-          # Wire codegen for :io:bff-api reads protos from the krail-api-proto submodule.
-          # Without this, CI checkout would skip the submodule and the build would fail.
-          submodules: true
 
       # -----------------------------------------------------------
       # Debug: Xcode Version Listing
@@ -74,6 +70,8 @@ jobs:
       # Build SPM & Final iOS App
       # -----------------------------------------------------------
       - name: Pre-build SPM for MapLibre (Gradle)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosSimulatorArm64 --no-daemon --stacktrace
 

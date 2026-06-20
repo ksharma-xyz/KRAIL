@@ -33,10 +33,6 @@ jobs:
       FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: 120
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Wire codegen for :io:bff-api reads protos from the krail-api-proto submodule.
-          # Without this, CI checkout would skip the submodule and the build would fail.
-          submodules: true
 
       # Select Xcode before anything else runs.
       # xcversion is not used — relies on the sunsetted xcode-install gem
@@ -76,6 +72,8 @@ jobs:
       # Without this, fastlane's build_app (archive) fails to resolve the framework.
       # Uses IosArm64 (real device target) unlike build-ios.yml which uses IosSimulatorArm64.
       - name: Pre-build SPM for MapLibre (Gradle - device)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosArm64 --no-daemon --stacktrace
 

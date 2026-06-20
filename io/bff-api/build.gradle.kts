@@ -10,7 +10,7 @@ plugins {
 kotlin {
     applyDefaultHierarchyTemplate()
 
-    androidLibrary {
+    android {
         namespace = "xyz.ksharma.krail.io.bffapi"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
@@ -46,7 +46,7 @@ kotlin {
 // Must be populated BEFORE wire{} reads krailProto.singleFile (Kotlin DSL eval order).
 val krailProto: Configuration by configurations.creating { isTransitive = false }
 dependencies {
-    krailProto(libs.krailApiProto) { artifact { classifier = "proto" } }
+    krailProto(libs.krail.api.proto) { artifact { classifier = "proto" } }
 }
 
 wire {

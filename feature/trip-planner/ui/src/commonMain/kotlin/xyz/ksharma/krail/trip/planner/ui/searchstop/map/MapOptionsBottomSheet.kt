@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toPersistentSet
 import xyz.ksharma.krail.core.maps.state.SearchRadius
+import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -298,7 +298,7 @@ private fun TransportModeFilterRow(
     modifier: Modifier = Modifier,
 ) {
     val allModes = remember {
-        NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY)
+        NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS)
     }
     val dim = KrailTheme.dimensions
 
@@ -361,7 +361,9 @@ private fun PreviewMapOptionsBottomSheet() {
     PreviewTheme {
         MapOptionsBottomSheet(
             searchRadiusKm = SearchRadius.DEFAULT.km,
-            selectedTransportModes = NswTransportConfig.allProductClasses().toPersistentSet(),
+            selectedTransportModes = NswTransportConfig
+                .productClassesFor(ModeSelectionSurface.NEARBY_STOPS)
+                .toPersistentSet(),
             showDistanceScale = false,
             showCompass = true,
             onDismiss = {},

@@ -64,8 +64,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.core.transport.TransportModeSortOrder
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.departures.ui.DeparturesViewModel
@@ -298,7 +298,7 @@ fun TimeTableScreen(
                             .animateItem(),
                     ) {
                         items(
-                            items = NswTransportConfig.sortedModes(TransportModeSortOrder.PRIORITY),
+                            items = NswTransportConfig.modesFor(ModeSelectionSurface.TRIP_PLANNER),
                             key = { item -> NswTransportConfig.productClassFor(item) },
                         ) {
                             TransportModeChip(

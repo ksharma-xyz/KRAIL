@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.core.transport.nsw
 
+import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportConfig
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.TransportModeSortOrder
@@ -27,6 +28,14 @@ object NswTransportConfig : TransportConfig {
             TransportModeSortOrder.PRIORITY -> TransportMode.all.sortedBy { it.priority }
             TransportModeSortOrder.PRODUCT_CLASS -> TransportMode.all.sortedBy { it.productClass }
         }
+
+    override fun modesFor(
+        surface: ModeSelectionSurface,
+        order: TransportModeSortOrder,
+    ): List<TransportMode> = sortedModes(order).filter { it.isAvailableOn(surface) }
+
+    override fun productClassesFor(surface: ModeSelectionSurface): Set<Int> =
+        TransportMode.all.filter { it.isAvailableOn(surface) }.map { it.productClass }.toSet()
 
     override fun allProductClasses(): Set<Int> =
         TransportMode.all.map { it.productClass }.toSet()

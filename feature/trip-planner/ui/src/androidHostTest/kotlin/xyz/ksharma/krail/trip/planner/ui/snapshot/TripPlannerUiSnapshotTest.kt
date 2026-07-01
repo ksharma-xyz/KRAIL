@@ -27,6 +27,12 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
 
     override val packageToScan = "xyz.ksharma.krail.trip.planner.ui"
 
+    // Infinite animations — Robolectric never sees a stable frame and hangs.
+    override val excludedPreviewNames = setOf(
+        "Preview",                              // LoadingEmojiAnim.kt
+        "DepartureBoardStopCardLoadingPreview", // DepartureBoardStopCard.kt (isLoading=true shimmer)
+    )
+
     @Test
     fun generateTripPlannerUiScreenshots() {
         generateSnapshots()

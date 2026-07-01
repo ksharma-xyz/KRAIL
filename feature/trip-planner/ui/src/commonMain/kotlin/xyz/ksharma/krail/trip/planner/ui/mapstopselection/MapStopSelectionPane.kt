@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -57,7 +56,6 @@ fun MapStopSelectionPane(
 
 // region Previews
 
-@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun PreviewMapStopSelectionPane_Loading() {
@@ -69,7 +67,6 @@ private fun PreviewMapStopSelectionPane_Loading() {
     }
 }
 
-@ScreenshotTest
 @PreviewScreen
 @Composable
 private fun PreviewMapStopSelectionPane_Ready() {

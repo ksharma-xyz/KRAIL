@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -33,7 +34,7 @@ fun TransportModeInfo(
 
 // region Previews
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TransportModeInfoPreview() {

@@ -33,12 +33,13 @@ import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens
 fun TransportModeIcon(
     transportMode: TransportMode,
     modifier: Modifier = Modifier,
-    borderColor: Color = Color.White,
+    borderColor: Color = transportMode.iconBorderColorCode.hexToComposeColor(),
     displayBorder: Boolean = false,
     size: TransportModeIconSize = TransportModeIconSize.Medium,
 ) {
+    val bgColor = NswTransportConfig.colorFor(transportMode).hexToComposeColor()
     CompositionLocalProvider(
-        LocalTextColor provides Color.White,
+        LocalTextColor provides transportMode.iconLetterColorCode.hexToComposeColor(),
         // should be same as StopsRow and TransportModeInfo
         LocalTextStyle provides KrailTheme.typography.titleSmall,
         // Alpha is intentionally always 100% — the mode icon circle must remain fully opaque
@@ -53,7 +54,7 @@ fun TransportModeIcon(
                 .heightIn(min = size.dpSize)
                 .clip(CircleShape)
                 .background(
-                    color = NswTransportConfig.colorFor(transportMode).hexToComposeColor(),
+                    color = bgColor,
                     shape = CircleShape,
                 )
                 .borderIfEnabled(
@@ -97,7 +98,7 @@ enum class TransportModeIconSize(val dpSize: Dp) {
 
 private const val previewGroupName = "Transport Mode Icons"
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun TrainPreview() {
@@ -109,7 +110,7 @@ private fun TrainPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TrainPreviewLarge() {
@@ -123,7 +124,7 @@ private fun TrainPreviewLarge() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun BusPreview() {
@@ -135,7 +136,7 @@ private fun BusPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun MetroPreview() {
@@ -147,7 +148,7 @@ private fun MetroPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun LightRailPreview() {
@@ -159,7 +160,7 @@ private fun LightRailPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(group = previewGroupName)
 @Composable
 private fun FerryPreview() {
@@ -171,7 +172,7 @@ private fun FerryPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TrainWithBackgroundPreview() {
@@ -183,7 +184,7 @@ private fun TrainWithBackgroundPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun BusWithBackgroundPreview() {
@@ -195,7 +196,7 @@ private fun BusWithBackgroundPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun MetroWithBackgroundPreview() {
@@ -207,7 +208,7 @@ private fun MetroWithBackgroundPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun LightRailWithBackgroundPreview() {
@@ -219,7 +220,7 @@ private fun LightRailWithBackgroundPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun FerryWithBackgroundPreview() {

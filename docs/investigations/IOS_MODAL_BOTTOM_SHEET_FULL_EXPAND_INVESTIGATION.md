@@ -92,5 +92,29 @@ layer, not from `taj` or feature call sites.
    `ModalBottomSheet` call site and confirm background peek is visible at the top, same as
    Android, before shipping a fix.
 
-No code changes have been made in this branch — this is investigation + documentation only,
-per request.
+## Fix attempt log (branch `fix/ios-bottom-sheet-peek`)
+
+**Attempt 1 (wrong): cap the outer `modifier`.** Applied `modifier.heightIn(max = ...)` to the
+`modifier` passed into `Material3ModalBottomSheet` in `ModalBottomSheet.ios.kt`. This made the
+symptom *worse in a different way*: the sheet still opened flush to the top (no peek), but now
+left a gap of background visible at the **bottom** instead.
+
+Root cause of the failed attempt, found by reading the `material3` `1.9.0` sources
+(`ModalBottomSheet.kt`, `internal/AnchoredDraggable.kt`): the `modifier` param is applied
+*upstream* of the framework's own `draggableAnchors` layout modifier. That modifier's measure
+function receives `constraints` and uses `constraints.maxHeight` as `fullHeight` — the exact
+same value the Expanded anchor is computed from (`fullHeight - sheetSize.height`). Capping the
+outer modifier caps `constraints.maxHeight` too, so it caps *both sides* of that subtraction at
+once. Content on iOS saturates to fill whatever max height it's handed, so `sheetSize.height`
+converged on the same capped value as `fullHeight`, the subtraction stayed ~0, and the sheet
+kept anchoring flush to the top of its own (now-smaller) box — the "missing" space just moved to
+below the sheet instead of above it.
+
+**Attempt 2 (current): cap only the content**, wrapped in a `Box(Modifier.heightIn(max = ...))`
+around the `content()` call, *inside* the trailing lambda passed to `Material3ModalBottomSheet` —
+downstream of `draggableAnchors`, so it never touches the `constraints` that lambda sees. This
+keeps `fullHeight` equal to the true, uncapped screen height while still bounding
+`sheetSize.height` below it, so the anchor math produces a genuine positive offset and the peek
+shows at the top, matching Android.
+
+Not yet manually verified on-device/simulator — do that before considering this closed.

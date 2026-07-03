@@ -55,17 +55,21 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
-        val maxSheetHeight = LocalWindowInfo.current.containerDpSize.height * EXPANDED_HEIGHT_FRACTION
+        val maxContentHeight = LocalWindowInfo.current.containerDpSize.height * EXPANDED_HEIGHT_FRACTION
 
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
-            // Caps Expanded height so a top peek gap always shows (docs/investigations)
-            modifier = modifier.heightIn(max = maxSheetHeight),
+            modifier = modifier,
             sheetGesturesEnabled = sheetGesturesEnabled,
             containerColor = containerColor,
             contentWindowInsets = contentWindowInsets,
         ) {
-            content()
+            // Capping only the content (not the sheet's own modifier) keeps the anchor math's
+            // fullHeight reference intact - capping the outer modifier instead corrupts that
+            // same reference, moving the gap to the bottom of the sheet rather than the top.
+            Box(modifier = Modifier.heightIn(max = maxContentHeight)) {
+                content()
+            }
         }
     }
 }

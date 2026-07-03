@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -20,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
@@ -53,9 +55,12 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
+        val maxSheetHeight = LocalWindowInfo.current.containerDpSize.height * EXPANDED_HEIGHT_FRACTION
+
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
-            modifier = modifier,
+            // Caps Expanded height so a top peek gap always shows (docs/investigations)
+            modifier = modifier.heightIn(max = maxSheetHeight),
             sheetGesturesEnabled = sheetGesturesEnabled,
             containerColor = containerColor,
             contentWindowInsets = contentWindowInsets,
@@ -64,6 +69,8 @@ actual fun ModalBottomSheet(
         }
     }
 }
+
+private const val EXPANDED_HEIGHT_FRACTION = 0.92f
 
 const val scrimTransparencyAlpha = 0.6f
 

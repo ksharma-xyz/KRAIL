@@ -221,3 +221,7 @@ that contradicts the doc should also update the doc in the same change.
   landscape (per-screen dual-pane behaviour, compact-height adaptations, breakpoint contract).
 - `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`
   pattern, why plain `LaunchedEffect` breaks background gating, all polling flows listed.
+- `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s
+  `collapseSameRouteQuickWalks()` merges same-route-number legs split by a trivial walk;
+  read before changing leg-merge/split logic in `TripResponseMapper.kt` or
+  `TripResponseLegMapper.kt`.

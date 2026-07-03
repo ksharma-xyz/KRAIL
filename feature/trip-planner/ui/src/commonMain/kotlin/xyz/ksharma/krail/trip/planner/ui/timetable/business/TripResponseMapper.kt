@@ -113,7 +113,74 @@ private fun TripResponse.Leg?.getDepartureTime() =
 private fun TripResponse.Leg?.getArrivalTime() =
     this?.destination?.arrivalTimeEstimated ?: this?.destination?.arrivalTimePlanned
 
-private fun TripResponse.Journey.getFilteredValidLegs() = legs?.filter { it.transportation != null }
+private fun TripResponse.Journey.getFilteredValidLegs() =
+    legs?.collapseSameRouteQuickWalks()?.filter { it.transportation != null }
+
+private const val QUICK_WALK_MAX_SECONDS = 120L
+private const val COLLAPSE_WINDOW_SIZE = 3
+
+/**
+ * The NSW API sometimes represents a route continuing on a different scheduled trip (e.g. a
+ * bus that reverses at a nearby stop and continues under a new trip ID) as three separate legs:
+ * a transport leg, a trivial standalone walk (crossing the road), then another transport leg on
+ * the *same route number*. Google Maps and Opal both display this as a single bus leg, so we
+ * collapse the same pattern here rather than surfacing a confusing 3-leg detour to the user.
+ *
+ * Deliberately does not check trip/vehicle IDs for equality - those legitimately differ in this
+ * scenario (different scheduled trip, sometimes opposite-direction description), which is
+ * exactly the case this heuristic needs to handle. Route number + a trivial walk is the same
+ * signal a passenger sees in person: the bus that pulls up is signed with the same number.
+ *
+ * Full investigation, the real API response that motivated this, and what was deliberately
+ * left out of scope: `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md`. Regression tests
+ * (including one against a real captured response) live in `TripResponseMapperTest.kt` under
+ * `//region collapseSameRouteQuickWalks`. If you're changing this function, read that doc
+ * first - the "What NOT to do" section explains why trip-ID/direction checks were rejected.
+ */
+private fun List<TripResponse.Leg>.collapseSameRouteQuickWalks(): List<TripResponse.Leg> {
+    if (size < COLLAPSE_WINDOW_SIZE) return this
+    val result = mutableListOf<TripResponse.Leg>()
+    var index = 0
+    while (index < size) {
+        val current = this[index]
+        val walk = getOrNull(index + 1)
+        val next = getOrNull(index + 2)
+        if (current.canCollapseAcross(walk, next)) {
+            result += current.collapseAcrossQuickWalk(requireNotNull(next))
+            index += COLLAPSE_WINDOW_SIZE
+        } else {
+            result += current
+            index += 1
+        }
+    }
+    return result
+}
+
+private fun TripResponse.Leg.canCollapseAcross(walk: TripResponse.Leg?, next: TripResponse.Leg?): Boolean {
+    val walkPosition = walk?.footPathInfo?.firstOrNull()?.position
+    val walkDuration = walk?.duration
+    val thisRouteNumber = transportation?.number
+    return walk != null &&
+        next != null &&
+        walk.isWalkingLeg() &&
+        walkPosition == TimeTableState.JourneyCardInfo.WalkPosition.IDEST.position &&
+        walkDuration != null &&
+        walkDuration <= QUICK_WALK_MAX_SECONDS &&
+        thisRouteNumber != null &&
+        thisRouteNumber == next.transportation?.number
+}
+
+private fun TripResponse.Leg.collapseAcrossQuickWalk(next: TripResponse.Leg): TripResponse.Leg = copy(
+    destination = next.destination,
+    stopSequence = stopSequence.orEmpty() + next.stopSequence.orEmpty(),
+    // Force recalculation from the (now-merged) origin/destination timestamps via
+    // resolveDurationSeconds() instead of summing the two legs' durations, so the real
+    // door-to-door time - including the walk gap - stays accurate.
+    duration = null,
+    infos = (infos.orEmpty() + next.infos.orEmpty()).ifEmpty { null },
+    footPathInfo = null,
+    interchange = next.interchange,
+)
 
 private fun List<TripResponse.Leg>.getTotalStops() = sumOf { leg -> leg.stopSequence?.size ?: 0 }
 

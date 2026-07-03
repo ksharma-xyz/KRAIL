@@ -3,8 +3,10 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures
 /**
  * Fixture for a real NSW Transport API trip response: Oran Park → Seven Hills.
  *
- * Source: real API response captured 2026-04-18 (see `/feature/trip-planner/network/src/commonTest/assets/trip_oranpark_sevenhills.json`
- * for the full response).
+ * Source: real API response captured 2026-04-18. The full untrimmed response was not committed
+ * to the repo (checked 2026-07-03 while investigating `Redfern715BacktrackFixture` — no
+ * `trip_oranpark_sevenhills.json` exists under `network/src/commonTest/assets/`); only the
+ * trimmed JSON below survives. If you need to re-trim this fixture, re-capture from the API.
  *
  * This fixture captures the **null-duration bug** observed in production logs:
  * the first bus leg (Bus 858, 2 stops, ~1 min) sometimes returns `"duration": null`

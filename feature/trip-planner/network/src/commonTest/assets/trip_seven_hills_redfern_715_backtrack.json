@@ -1,0 +1,2626 @@
+{
+  "version": "10.6.21.17",
+  "journeys": [
+    {
+      "rating": 0,
+      "isAdditional": false,
+      "interchanges": 2,
+      "legs": [
+        {
+          "duration": 60,
+          "isRealtimeControlled": true,
+          "realtimeStatus": [
+            "MONITORED"
+          ],
+          "origin": {
+            "isGlobalId": true,
+            "id": "214758",
+            "name": "Seven Hills Rd opp Monaro St, Seven Hills",
+            "disassembledName": "Seven Hills Rd opp Monaro St",
+            "type": "platform",
+            "coord": [
+              -33.762677,
+              150.950347
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "G214758",
+              "name": "Seven Hills Rd opp Monaro St, Seven Hills",
+              "disassembledName": "Seven Hills Rd opp Monaro St",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308035:1",
+                "name": "Seven Hills",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10118709"
+              },
+              "coord": [
+                -33.762677,
+                150.950347
+              ],
+              "niveau": 0
+            },
+            "departureTimeBaseTimetable": "2026-07-03T00:03:00Z",
+            "departureTimePlanned": "2026-07-03T00:03:00Z",
+            "departureTimeEstimated": "2026-07-03T00:03:00Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "stoppingPointPlanned": "Seven Hills Rd opp Monaro St",
+              "areaGid": "G214758",
+              "area": "0",
+              "platform": "X1",
+              "platformName": "Seven Hills Rd opp Monaro St",
+              "plannedPlatformName": "Seven Hills Rd opp Monaro St"
+            },
+            "modes": [
+              5,
+              11
+            ]
+          },
+          "destination": {
+            "isGlobalId": true,
+            "id": "214759",
+            "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+            "disassembledName": "Seven Hills Rd after Solander Rd",
+            "type": "platform",
+            "coord": [
+              -33.761156,
+              150.952262
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "G214759",
+              "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+              "disassembledName": "Seven Hills Rd after Solander Rd",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308018:1",
+                "name": "Kings Langley",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10118774"
+              },
+              "coord": [
+                -33.761156,
+                150.952262
+              ],
+              "niveau": 0
+            },
+            "arrivalTimeBaseTimetable": "2026-07-03T00:04:00Z",
+            "arrivalTimePlanned": "2026-07-03T00:04:00Z",
+            "arrivalTimeEstimated": "2026-07-03T00:04:00Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "stoppingPointPlanned": "Seven Hills Rd after Solander Rd",
+              "areaGid": "G214759",
+              "area": "0",
+              "platform": "X1",
+              "platformName": "Seven Hills Rd after Solander Rd",
+              "plannedPlatformName": "Seven Hills Rd after Solander Rd"
+            },
+            "modes": [
+              5,
+              11
+            ]
+          },
+          "transportation": {
+            "id": "nsw:14715: :H:sj2",
+            "name": "Sydney Buses Network 715",
+            "disassembledName": "715",
+            "number": "715",
+            "description": "Seven Hills to Rouse Hill Station via Norwest & Kellyville",
+            "product": {
+              "id": 5,
+              "class": 5,
+              "name": "Sydney Buses Network",
+              "iconId": 5
+            },
+            "operator": {
+              "id": "2504",
+              "name": "CDC NSW R4"
+            },
+            "destination": {
+              "id": "10101501",
+              "name": "Rouse Hill Station",
+              "type": "stop"
+            },
+            "properties": {
+              "isTTB": true,
+              "tripCode": 77,
+              "timetablePeriod": "NSW JP",
+              "lineDisplay": "LINE",
+              "globalId": "3002",
+              "AVMSTripID": "2647807",
+              "RealtimeTripId": "2647807",
+              "gtfsTripId": "3002.nsw-14-715.1.TA.81.sj2"
+            },
+            "iconId": 5
+          },
+          "stopSequence": [
+            {
+              "isGlobalId": true,
+              "id": "214758",
+              "name": "Seven Hills Rd opp Monaro St, Seven Hills",
+              "disassembledName": "Seven Hills Rd opp Monaro St",
+              "type": "platform",
+              "coord": [
+                -33.762677,
+                150.950347
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G214758",
+                "name": "Seven Hills Rd opp Monaro St, Seven Hills",
+                "disassembledName": "Seven Hills Rd opp Monaro St",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118709"
+                },
+                "coord": [
+                  -33.762677,
+                  150.950347
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Rd opp Monaro St",
+                "areaGid": "G214758",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Seven Hills Rd opp Monaro St",
+                "plannedPlatformName": "Seven Hills Rd opp Monaro St"
+              },
+              "departureTimePlanned": "2026-07-03T00:03:00Z",
+              "departureTimeEstimated": "2026-07-03T00:03:00Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "214759",
+              "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+              "disassembledName": "Seven Hills Rd after Solander Rd",
+              "type": "platform",
+              "coord": [
+                -33.761156,
+                150.952262
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G214759",
+                "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+                "disassembledName": "Seven Hills Rd after Solander Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308018:1",
+                  "name": "Kings Langley",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118774"
+                },
+                "coord": [
+                  -33.761156,
+                  150.952262
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Rd after Solander Rd",
+                "areaGid": "G214759",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Seven Hills Rd after Solander Rd",
+                "plannedPlatformName": "Seven Hills Rd after Solander Rd"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:04:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:04:00Z",
+              "modes": [
+                5,
+                11
+              ]
+            }
+          ],
+          "infos": [],
+          "properties": {
+            "vehicleAccess": [
+              {
+                "height": 0,
+                "halfWidth": 0,
+                "doorWidth": 2000,
+                "attributes": 1073741824,
+                "areaToStay": 0,
+                "areaToMove": 0,
+                "equipments": [
+                  {
+                    "vehicleEquipment": {
+                      "equipmentType": 1,
+                      "length": 0,
+                      "width": 0,
+                      "lengthAtPl": 0,
+                      "widthAtPl": 0,
+                      "maxWeight": 0
+                    }
+                  }
+                ]
+              }
+            ],
+            "PlanLowFloorVehicle": "1",
+            "PlanWheelChairAccess": "1"
+          }
+        },
+        {
+          "duration": 60,
+          "origin": {
+            "isGlobalId": true,
+            "id": "214759",
+            "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+            "disassembledName": "Seven Hills Rd after Solander Rd",
+            "type": "platform",
+            "coord": [
+              -33.761156,
+              150.952262
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "G214759",
+              "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+              "disassembledName": "Seven Hills Rd after Solander Rd",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308018:1",
+                "name": "Kings Langley",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10118774"
+              },
+              "coord": [
+                -33.761156,
+                150.952262
+              ],
+              "niveau": 0
+            },
+            "departureTimeBaseTimetable": "2026-07-03T00:08:00Z",
+            "departureTimePlanned": "2026-07-03T00:08:00Z",
+            "departureTimeEstimated": "2026-07-03T00:04:48Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "stoppingPointPlanned": "Seven Hills Rd after Solander Rd",
+              "areaGid": "G214759",
+              "area": "0",
+              "platform": "X1",
+              "platformName": "Seven Hills Rd after Solander Rd",
+              "plannedPlatformName": "Seven Hills Rd after Solander Rd"
+            },
+            "modes": [
+              5,
+              11
+            ]
+          },
+          "destination": {
+            "isGlobalId": true,
+            "id": "2147213",
+            "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+            "disassembledName": "Seven Hills Rd before Solander Rd",
+            "type": "platform",
+            "coord": [
+              -33.761221,
+              150.952492
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "G2147213",
+              "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+              "disassembledName": "Seven Hills Rd before Solander Rd",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308035:1",
+                "name": "Seven Hills",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10118708"
+              },
+              "coord": [
+                -33.761221,
+                150.952492
+              ],
+              "niveau": 0
+            },
+            "arrivalTimeBaseTimetable": "2026-07-03T00:09:00Z",
+            "arrivalTimePlanned": "2026-07-03T00:09:00Z",
+            "arrivalTimeEstimated": "2026-07-03T00:05:48Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "stoppingPointPlanned": "Seven Hills Rd before Solander Rd",
+              "areaGid": "G2147213",
+              "area": "0",
+              "platform": "X1",
+              "platformName": "Seven Hills Rd before Solander Rd",
+              "plannedPlatformName": "Seven Hills Rd before Solander Rd"
+            },
+            "modes": [
+              5,
+              11
+            ]
+          },
+          "transportation": {
+            "product": {
+              "class": 99,
+              "name": "footpath",
+              "iconId": 99
+            },
+            "properties": {
+              "tripCode": 0,
+              "lineDisplay": "LINE"
+            }
+          },
+          "stopSequence": [
+            {
+              "isGlobalId": true,
+              "id": "214759",
+              "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+              "disassembledName": "Seven Hills Rd after Solander Rd",
+              "type": "platform",
+              "coord": [
+                -33.761156,
+                150.952262
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G214759",
+                "name": "Seven Hills Rd after Solander Rd, Kings Langley",
+                "disassembledName": "Seven Hills Rd after Solander Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308018:1",
+                  "name": "Kings Langley",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118774"
+                },
+                "coord": [
+                  -33.761156,
+                  150.952262
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "areaGid": "G214759",
+                "area": "0",
+                "platform": "X1"
+              },
+              "departureTimePlanned": "2026-07-03T00:08:00Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147213",
+              "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+              "disassembledName": "Seven Hills Rd before Solander Rd",
+              "type": "platform",
+              "coord": [
+                -33.761221,
+                150.952492
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147213",
+                "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+                "disassembledName": "Seven Hills Rd before Solander Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118708"
+                },
+                "coord": [
+                  -33.761221,
+                  150.952492
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "areaGid": "G2147213",
+                "area": "0",
+                "platform": "X1"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:09:00Z",
+              "modes": [
+                5,
+                11
+              ]
+            }
+          ],
+          "footPathInfo": [
+            {
+              "position": "IDEST",
+              "duration": 60,
+              "footPathElem": [
+                {
+                  "description": "",
+                  "type": "LEVEL",
+                  "levelFrom": 0,
+                  "levelTo": 0,
+                  "level": "LEVEL",
+                  "origin": {
+                    "location": {
+                      "id": "G214759",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Rd after Solander Rd",
+                      "coord": [
+                        -33.761156,
+                        150.952262
+                      ],
+                      "properties": {
+                        "area": "0",
+                        "georef": "503750110:129:GDAV:100",
+                        "areaGid": "",
+                        "areaType": 97
+                      }
+                    },
+                    "area": "0",
+                    "georef": "503750110:129:GDAV:100"
+                  },
+                  "destination": {
+                    "location": {
+                      "id": "G2147213",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Rd before Solander Rd",
+                      "coord": [
+                        -33.761221,
+                        150.952492
+                      ],
+                      "properties": {
+                        "area": "0",
+                        "georef": "1003836595:157:GDAV:100",
+                        "areaGid": "",
+                        "areaType": 33
+                      }
+                    }
+                  },
+                  "attributes": {
+                    "duration": 4,
+                    "distance": 31,
+                    "narrowestWidth": -1,
+                    "elevLength": 0,
+                    "elevWidth": 0,
+                    "elevDoorWidth": 0,
+                    "rampLength": 0,
+                    "rampWidth": 0,
+                    "rampInclination": 0,
+                    "numberSteps": 0,
+                    "maxStepHeight": 0
+                  },
+                  "openingHours": []
+                }
+              ]
+            }
+          ],
+          "infos": []
+        },
+        {
+          "duration": 234,
+          "isRealtimeControlled": true,
+          "realtimeStatus": [
+            "MONITORED"
+          ],
+          "origin": {
+            "isGlobalId": true,
+            "id": "2147213",
+            "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+            "disassembledName": "Seven Hills Rd before Solander Rd",
+            "type": "platform",
+            "coord": [
+              -33.761221,
+              150.952492
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "G2147213",
+              "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+              "disassembledName": "Seven Hills Rd before Solander Rd",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308035:1",
+                "name": "Seven Hills",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10118708"
+              },
+              "coord": [
+                -33.761221,
+                150.952492
+              ],
+              "niveau": 0
+            },
+            "departureTimeBaseTimetable": "2026-07-03T00:09:00Z",
+            "departureTimePlanned": "2026-07-03T00:09:00Z",
+            "departureTimeEstimated": "2026-07-03T00:05:48Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "stoppingPointPlanned": "Seven Hills Rd before Solander Rd",
+              "occupancy": "MANY_SEATS",
+              "areaGid": "G2147213",
+              "area": "0",
+              "platform": "X1",
+              "platformName": "Seven Hills Rd before Solander Rd",
+              "plannedPlatformName": "Seven Hills Rd before Solander Rd"
+            },
+            "modes": [
+              5,
+              11
+            ]
+          },
+          "destination": {
+            "isGlobalId": true,
+            "id": "214732",
+            "name": "Seven Hills Station, Stand A, Seven Hills",
+            "disassembledName": "Seven Hills Station, Stand A",
+            "type": "platform",
+            "coord": [
+              -33.773761,
+              150.936268
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "214710",
+              "name": "Seven Hills Station, Stand A, Seven Hills",
+              "disassembledName": "Seven Hills Station, Stand A",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308035:1",
+                "name": "Seven Hills",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10101234"
+              },
+              "coord": [
+                -33.774351,
+                150.936123
+              ],
+              "niveau": 0
+            },
+            "arrivalTimeBaseTimetable": "2026-07-03T00:15:00Z",
+            "arrivalTimePlanned": "2026-07-03T00:15:00Z",
+            "arrivalTimeEstimated": "2026-07-03T00:09:42Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "stoppingPointPlanned": "Seven Hills Station, Stand A",
+              "occupancy": "MANY_SEATS",
+              "area": "11",
+              "platform": "A",
+              "platformName": "Seven Hills Station, Stand A",
+              "plannedPlatformName": "Seven Hills Station, Stand A",
+              "accessArray": [
+                {
+                  "stoppointAccess": {
+                    "equipment": 0,
+                    "maxWeight": 0,
+                    "distanceTrack": 0,
+                    "lengthAvail": 0,
+                    "widthAvail": 0,
+                    "attributes": 0,
+                    "stepFromStreet": 0
+                  }
+                }
+              ]
+            },
+            "modes": [
+              1,
+              5,
+              11
+            ]
+          },
+          "transportation": {
+            "id": "nsw:14715: :R:sj2",
+            "name": "Sydney Buses Network 715",
+            "disassembledName": "715",
+            "number": "715",
+            "description": "Rouse Hill Station to Seven Hills via Kellyville & Norwest",
+            "product": {
+              "id": 5,
+              "class": 5,
+              "name": "Sydney Buses Network",
+              "iconId": 5
+            },
+            "operator": {
+              "id": "2504",
+              "name": "CDC NSW R4"
+            },
+            "destination": {
+              "id": "10101234",
+              "name": "Seven Hills Station",
+              "type": "stop"
+            },
+            "properties": {
+              "isTTB": true,
+              "tripCode": 15,
+              "timetablePeriod": "NSW JP",
+              "lineDisplay": "LINE",
+              "globalId": "3002",
+              "AVMSTripID": "2648028",
+              "RealtimeTripId": "2648028",
+              "gtfsTripId": "3002.nsw-14-715.1.TA.49.sj2"
+            },
+            "iconId": 5
+          },
+          "stopSequence": [
+            {
+              "isGlobalId": true,
+              "id": "2147213",
+              "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+              "disassembledName": "Seven Hills Rd before Solander Rd",
+              "type": "platform",
+              "coord": [
+                -33.761221,
+                150.952492
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147213",
+                "name": "Seven Hills Rd before Solander Rd, Seven Hills",
+                "disassembledName": "Seven Hills Rd before Solander Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118708"
+                },
+                "coord": [
+                  -33.761221,
+                  150.952492
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Rd before Solander Rd",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147213",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Seven Hills Rd before Solander Rd",
+                "plannedPlatformName": "Seven Hills Rd before Solander Rd"
+              },
+              "departureTimePlanned": "2026-07-03T00:09:00Z",
+              "departureTimeEstimated": "2026-07-03T00:05:48Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147214",
+              "name": "Seven Hills Rd at Monaro St, Seven Hills",
+              "disassembledName": "Seven Hills Rd at Monaro St",
+              "type": "platform",
+              "coord": [
+                -33.762781,
+                150.950492
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147214",
+                "name": "Seven Hills Rd at Monaro St, Seven Hills",
+                "disassembledName": "Seven Hills Rd at Monaro St",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10124398"
+                },
+                "coord": [
+                  -33.76279,
+                  150.950471
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Rd at Monaro St",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147214",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Seven Hills Rd at Monaro St",
+                "plannedPlatformName": "Seven Hills Rd at Monaro St"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:09:00Z",
+              "departureTimePlanned": "2026-07-03T00:09:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:06:00Z",
+              "departureTimeEstimated": "2026-07-03T00:06:06Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147215",
+              "name": "Seven Hills Rd after Nattai St, Seven Hills",
+              "disassembledName": "Seven Hills Rd after Nattai St",
+              "type": "platform",
+              "coord": [
+                -33.764459,
+                150.948724
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147215",
+                "name": "Seven Hills Rd after Nattai St, Seven Hills",
+                "disassembledName": "Seven Hills Rd after Nattai St",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118710"
+                },
+                "coord": [
+                  -33.764459,
+                  150.948724
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Rd after Nattai St",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147215",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Seven Hills Rd after Nattai St",
+                "plannedPlatformName": "Seven Hills Rd after Nattai St"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:10:00Z",
+              "departureTimePlanned": "2026-07-03T00:10:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:06:12Z",
+              "departureTimeEstimated": "2026-07-03T00:06:24Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147216",
+              "name": "Seven Hills Rd opp Marnpar Rd, Seven Hills",
+              "disassembledName": "Seven Hills Rd opp Marnpar Rd",
+              "type": "platform",
+              "coord": [
+                -33.766457,
+                150.94627
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147216",
+                "name": "Seven Hills Rd opp Marnpar Rd, Seven Hills",
+                "disassembledName": "Seven Hills Rd opp Marnpar Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10124028"
+                },
+                "coord": [
+                  -33.766458,
+                  150.946259
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Rd opp Marnpar Rd",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147216",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Seven Hills Rd opp Marnpar Rd",
+                "plannedPlatformName": "Seven Hills Rd opp Marnpar Rd"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:11:00Z",
+              "departureTimePlanned": "2026-07-03T00:11:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:06:36Z",
+              "departureTimeEstimated": "2026-07-03T00:06:36Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147241",
+              "name": "Prospect Hwy after Station Rd, Seven Hills",
+              "disassembledName": "Prospect Hwy after Station Rd",
+              "type": "platform",
+              "coord": [
+                -33.769387,
+                150.942013
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147241",
+                "name": "Prospect Hwy after Station Rd, Seven Hills",
+                "disassembledName": "Prospect Hwy after Station Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118732"
+                },
+                "coord": [
+                  -33.769387,
+                  150.942013
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Prospect Hwy after Station Rd",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147241",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Prospect Hwy after Station Rd",
+                "plannedPlatformName": "Prospect Hwy after Station Rd"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:13:00Z",
+              "departureTimePlanned": "2026-07-03T00:13:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:08:36Z",
+              "departureTimeEstimated": "2026-07-03T00:08:42Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147242",
+              "name": "Prospect Hwy opp Lucas Rd, Seven Hills",
+              "disassembledName": "Prospect Hwy opp Lucas Rd",
+              "type": "platform",
+              "coord": [
+                -33.770724,
+                150.939949
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147242",
+                "name": "Prospect Hwy opp Lucas Rd, Seven Hills",
+                "disassembledName": "Prospect Hwy opp Lucas Rd",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10132311"
+                },
+                "coord": [
+                  -33.770724,
+                  150.939949
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Prospect Hwy opp Lucas Rd",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147242",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Prospect Hwy opp Lucas Rd",
+                "plannedPlatformName": "Prospect Hwy opp Lucas Rd"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:13:00Z",
+              "departureTimePlanned": "2026-07-03T00:13:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:08:54Z",
+              "departureTimeEstimated": "2026-07-03T00:09:00Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2147243",
+              "name": "Prospect Hwy opp Hope St, Seven Hills",
+              "disassembledName": "Prospect Hwy opp Hope St",
+              "type": "platform",
+              "coord": [
+                -33.771566,
+                150.938131
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "G2147243",
+                "name": "Prospect Hwy opp Hope St, Seven Hills",
+                "disassembledName": "Prospect Hwy opp Hope St",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10118734"
+                },
+                "coord": [
+                  -33.771574,
+                  150.938143
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Prospect Hwy opp Hope St",
+                "occupancy": "MANY_SEATS",
+                "areaGid": "G2147243",
+                "area": "0",
+                "platform": "X1",
+                "platformName": "Prospect Hwy opp Hope St",
+                "plannedPlatformName": "Prospect Hwy opp Hope St"
+              },
+              "arrivalTimePlanned": "2026-07-03T00:14:00Z",
+              "departureTimePlanned": "2026-07-03T00:14:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:09:12Z",
+              "departureTimeEstimated": "2026-07-03T00:09:12Z",
+              "modes": [
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "214732",
+              "name": "Seven Hills Station, Stand A, Seven Hills",
+              "disassembledName": "Seven Hills Station, Stand A",
+              "type": "platform",
+              "coord": [
+                -33.773761,
+                150.936268
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214710",
+                "name": "Seven Hills Station, Stand A, Seven Hills",
+                "disassembledName": "Seven Hills Station, Stand A",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101234"
+                },
+                "coord": [
+                  -33.774351,
+                  150.936123
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Seven Hills Station, Stand A",
+                "occupancy": "MANY_SEATS",
+                "area": "11",
+                "platform": "A",
+                "platformName": "Seven Hills Station, Stand A",
+                "plannedPlatformName": "Seven Hills Station, Stand A",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "distanceTrack": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0,
+                      "stepFromStreet": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:15:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:09:42Z",
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            }
+          ],
+          "footPathInfo": [
+            {
+              "position": "AFTER",
+              "duration": 240,
+              "footPathElem": [
+                {
+                  "description": "",
+                  "type": "LEVEL",
+                  "levelFrom": 0,
+                  "levelTo": 0,
+                  "level": "LEVEL",
+                  "origin": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.773761,
+                        150.936268
+                      ],
+                      "properties": {
+                        "area": "11",
+                        "georef": "503757050:6:GDAV:100",
+                        "areaGid": "",
+                        "areaType": 65
+                      }
+                    },
+                    "area": "11",
+                    "georef": "503757050:6:GDAV:100"
+                  },
+                  "destination": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774078,
+                        150.935927
+                      ],
+                      "properties": {
+                        "area": "28",
+                        "georef": "505390600:0:GDAV:100",
+                        "areaGid": "",
+                        "areaType": 32
+                      }
+                    }
+                  },
+                  "attributes": {
+                    "duration": 15,
+                    "distance": 0,
+                    "narrowestWidth": -1,
+                    "elevLength": 0,
+                    "elevWidth": 0,
+                    "elevDoorWidth": 0,
+                    "rampLength": 0,
+                    "rampWidth": 0,
+                    "rampInclination": 0,
+                    "numberSteps": 0,
+                    "maxStepHeight": 0
+                  },
+                  "openingHours": []
+                },
+                {
+                  "description": "",
+                  "type": "RAMP",
+                  "levelFrom": 0,
+                  "levelTo": 1,
+                  "level": "UP",
+                  "origin": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774078,
+                        150.935927
+                      ],
+                      "properties": {
+                        "area": "28",
+                        "georef": "505390600:0:GDAV:100",
+                        "areaGid": "",
+                        "areaType": 32
+                      }
+                    },
+                    "area": "28",
+                    "georef": "505390600:0:GDAV:100"
+                  },
+                  "destination": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774134,
+                        150.936156
+                      ],
+                      "properties": {
+                        "area": "27",
+                        "georef": "0:0::100",
+                        "areaGid": "",
+                        "areaType": 4096
+                      }
+                    }
+                  },
+                  "attributes": {
+                    "duration": 8,
+                    "distance": 0,
+                    "narrowestWidth": -1,
+                    "elevLength": 0,
+                    "elevWidth": 0,
+                    "elevDoorWidth": 0,
+                    "rampLength": 0,
+                    "rampWidth": 0,
+                    "rampInclination": 0,
+                    "numberSteps": 0,
+                    "maxStepHeight": 0
+                  },
+                  "openingHours": []
+                },
+                {
+                  "description": "",
+                  "type": "LEVEL",
+                  "levelFrom": 1,
+                  "levelTo": 1,
+                  "level": "LEVEL",
+                  "origin": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774134,
+                        150.936156
+                      ],
+                      "properties": {
+                        "area": "27",
+                        "georef": "0:0::100",
+                        "areaGid": "",
+                        "areaType": 4096
+                      }
+                    },
+                    "area": "27",
+                    "georef": "0:0::100"
+                  },
+                  "destination": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774269,
+                        150.93614
+                      ],
+                      "properties": {
+                        "area": "26",
+                        "georef": "0:0::100",
+                        "areaGid": "",
+                        "areaType": 4096
+                      }
+                    }
+                  },
+                  "attributes": {
+                    "duration": 3,
+                    "distance": 0,
+                    "narrowestWidth": -1,
+                    "elevLength": 0,
+                    "elevWidth": 0,
+                    "elevDoorWidth": 0,
+                    "rampLength": 0,
+                    "rampWidth": 0,
+                    "rampInclination": 0,
+                    "numberSteps": 0,
+                    "maxStepHeight": 0
+                  },
+                  "openingHours": []
+                },
+                {
+                  "description": "",
+                  "type": "STAIRS",
+                  "levelFrom": 1,
+                  "levelTo": 0,
+                  "level": "DOWN",
+                  "origin": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774269,
+                        150.93614
+                      ],
+                      "properties": {
+                        "area": "26",
+                        "georef": "0:0::100",
+                        "areaGid": "",
+                        "areaType": 4096
+                      }
+                    },
+                    "area": "26",
+                    "georef": "0:0::100"
+                  },
+                  "destination": {
+                    "location": {
+                      "id": "214710",
+                      "isGlobalId": true,
+                      "type": "stop",
+                      "name": "Seven Hills Station",
+                      "coord": [
+                        -33.774284,
+                        150.935968
+                      ],
+                      "properties": {
+                        "area": "1",
+                        "georef": "1002097582:2:GDAV:100",
+                        "areaGid": "",
+                        "areaType": 81
+                      }
+                    }
+                  },
+                  "attributes": {
+                    "duration": 5,
+                    "distance": 0,
+                    "narrowestWidth": -1,
+                    "elevLength": 0,
+                    "elevWidth": 0,
+                    "elevDoorWidth": 0,
+                    "rampLength": 0,
+                    "rampWidth": 0,
+                    "rampInclination": 0,
+                    "numberSteps": 0,
+                    "maxStepHeight": 0
+                  },
+                  "openingHours": []
+                }
+              ]
+            }
+          ],
+          "footPathInfoRedundant": true,
+          "infos": [],
+          "interchange": {
+            "desc": "Fussweg",
+            "type": 100
+          },
+          "properties": {
+            "vehicleAccess": [
+              {
+                "height": 0,
+                "halfWidth": 0,
+                "doorWidth": 2000,
+                "attributes": 1342177280,
+                "areaToStay": 0,
+                "areaToMove": 0,
+                "equipments": [
+                  {
+                    "vehicleEquipment": {
+                      "equipmentType": 1,
+                      "length": 0,
+                      "width": 0,
+                      "lengthAtPl": 0,
+                      "widthAtPl": 0,
+                      "maxWeight": 0
+                    }
+                  }
+                ]
+              }
+            ],
+            "AVMLowFloorVeh": "1",
+            "PlanLowFloorVehicle": "1",
+            "PlanWheelChairAccess": "1"
+          }
+        },
+        {
+          "duration": 2130,
+          "isRealtimeControlled": true,
+          "realtimeStatus": [
+            "MONITORED"
+          ],
+          "origin": {
+            "isGlobalId": true,
+            "id": "2147422",
+            "name": "Seven Hills Station, Platform 2, Seven Hills",
+            "disassembledName": "Seven Hills Station, Platform 2",
+            "type": "platform",
+            "coord": [
+              -33.774284,
+              150.935968
+            ],
+            "niveau": 0,
+            "parent": {
+              "isGlobalId": true,
+              "id": "214710",
+              "name": "Seven Hills Station, Platform 2, Seven Hills",
+              "disassembledName": "Seven Hills Station, Platform 2",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95308035:1",
+                "name": "Seven Hills",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10101234"
+              },
+              "coord": [
+                -33.774351,
+                150.936123
+              ],
+              "niveau": 0
+            },
+            "departureTimeBaseTimetable": "2026-07-03T00:18:30Z",
+            "departureTimePlanned": "2026-07-03T00:18:30Z",
+            "departureTimeEstimated": "2026-07-03T00:18:30Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "0",
+              "NumberOfCars": "8",
+              "TravelInCarsFrom": "1",
+              "TravelInCarsTo": "8",
+              "TravelInCarsMessage": "any",
+              "stoppingPointPlanned": "Platform 2",
+              "occupancy": "MANY_SEATS",
+              "area": "1",
+              "platform": "SVH2",
+              "platformName": "Platform 2",
+              "plannedPlatformName": "Platform 2",
+              "accessArray": [
+                {
+                  "stoppointAccess": {
+                    "height": 780,
+                    "equipment": 0,
+                    "maxWeight": 0,
+                    "lengthAvail": 0,
+                    "widthAvail": 0,
+                    "attributes": 0,
+                    "stepFromStreet": 0
+                  }
+                }
+              ]
+            },
+            "modes": [
+              1,
+              5,
+              11
+            ]
+          },
+          "destination": {
+            "isGlobalId": true,
+            "id": "2000336",
+            "name": "Central Station, Platform 16, Sydney",
+            "disassembledName": "Central Station, Platform 16",
+            "type": "platform",
+            "coord": [
+              -33.883967,
+              151.206838
+            ],
+            "niveau": 1,
+            "parent": {
+              "isGlobalId": true,
+              "id": "200060",
+              "name": "Central Station, Platform 16, Sydney",
+              "disassembledName": "Central Station, Platform 16",
+              "type": "stop",
+              "parent": {
+                "id": "placeID:95301001:1",
+                "name": "Sydney",
+                "type": "locality"
+              },
+              "properties": {
+                "stopId": "10101100"
+              },
+              "coord": [
+                -33.884024,
+                151.206203
+              ],
+              "niveau": 0
+            },
+            "arrivalTimeBaseTimetable": "2026-07-03T00:54:00Z",
+            "arrivalTimePlanned": "2026-07-03T00:54:00Z",
+            "arrivalTimeEstimated": "2026-07-03T00:54:00Z",
+            "properties": {
+              "WheelchairAccess": "true",
+              "AREA_NIVEAU_DIVA": "1",
+              "stoppingPointPlanned": "Platform 16",
+              "occupancy": "FEW_SEATS",
+              "area": "9",
+              "platform": "CE16",
+              "platformName": "Platform 16",
+              "plannedPlatformName": "Platform 16",
+              "callType": [
+                "NOBOARDING"
+              ],
+              "accessArray": [
+                {
+                  "stoppointAccess": {
+                    "height": 780,
+                    "equipment": 0,
+                    "maxWeight": 0,
+                    "distanceTrack": 0,
+                    "lengthAvail": 0,
+                    "widthAvail": 0,
+                    "attributes": 0,
+                    "stepFromStreet": 0
+                  }
+                }
+              ]
+            },
+            "modes": [
+              1,
+              2,
+              4,
+              5,
+              7,
+              11
+            ]
+          },
+          "transportation": {
+            "id": "nsw:020T1:W:R:sj2",
+            "name": "Sydney Trains Network T1 North Shore & Western Line",
+            "disassembledName": "T1",
+            "number": "T1 North Shore & Western Line",
+            "description": "Emu Plains or Richmond to City",
+            "product": {
+              "id": 1,
+              "class": 1,
+              "name": "Sydney Trains Network",
+              "iconId": 1
+            },
+            "operator": {
+              "id": "x0001",
+              "name": "Sydney Trains"
+            },
+            "destination": {
+              "id": "10101100",
+              "name": "Berowra via Gordon",
+              "type": "stop"
+            },
+            "properties": {
+              "isTTB": true,
+              "tripCode": 541,
+              "timetablePeriod": "NSW JP",
+              "lineDisplay": "LINE",
+              "globalId": "3001",
+              "AVMSTripID": "145F.424.146.64.A.8.90146738",
+              "RealtimeTripId": "145F.424.146.64.A.8.90146738",
+              "OperatorURL": "http://www.sydneytrains.info/",
+              "gtfsTripId": "3001.nsw-2-T1-W.1.TA.1840.sj2"
+            },
+            "iconId": 1
+          },
+          "stopSequence": [
+            {
+              "isGlobalId": true,
+              "id": "2147422",
+              "name": "Seven Hills Station, Platform 2, Seven Hills",
+              "disassembledName": "Seven Hills Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.774284,
+                150.935968
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214710",
+                "name": "Seven Hills Station, Platform 2, Seven Hills",
+                "disassembledName": "Seven Hills Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308035:1",
+                  "name": "Seven Hills",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101234"
+                },
+                "coord": [
+                  -33.774351,
+                  150.936123
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 2",
+                "occupancy": "MANY_SEATS",
+                "area": "1",
+                "platform": "SVH2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0,
+                      "stepFromStreet": 0
+                    }
+                  }
+                ]
+              },
+              "departureTimePlanned": "2026-07-03T00:18:30Z",
+              "departureTimeEstimated": "2026-07-03T00:18:30Z",
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2146112",
+              "name": "Toongabbie Station, Platform 2, Toongabbie",
+              "disassembledName": "Toongabbie Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.78725,
+                150.951466
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214610",
+                "name": "Toongabbie Station, Platform 2, Toongabbie",
+                "disassembledName": "Toongabbie Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95308040:1",
+                  "name": "Toongabbie",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101233"
+                },
+                "coord": [
+                  -33.787386,
+                  150.95144
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "TGB2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2145642",
+              "name": "Pendle Hill Station, Platform 2, Pendle Hill",
+              "disassembledName": "Pendle Hill Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.801323,
+                150.956313
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214530",
+                "name": "Pendle Hill Station, Platform 2, Pendle Hill",
+                "disassembledName": "Pendle Hill Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346014:1",
+                  "name": "Pendle Hill",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101232"
+                },
+                "coord": [
+                  -33.801204,
+                  150.95608
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "PDH2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2145652",
+              "name": "Wentworthville Station, Platform 2, Wentworthville",
+              "disassembledName": "Wentworthville Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.80709,
+                150.972543
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214520",
+                "name": "Wentworthville Station, Platform 2, Wentworthville",
+                "disassembledName": "Wentworthville Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346019:1",
+                  "name": "Wentworthville",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101231"
+                },
+                "coord": [
+                  -33.807069,
+                  150.97237
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "WVL2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2145662",
+              "name": "Westmead Station, Platform 2, Westmead",
+              "disassembledName": "Westmead Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.808365,
+                150.987747
+              ],
+              "niveau": -1,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214510",
+                "name": "Westmead Station, Platform 2, Westmead",
+                "disassembledName": "Westmead Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346020:1",
+                  "name": "Westmead",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101230"
+                },
+                "coord": [
+                  -33.808478,
+                  150.987892
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-1",
+                "stoppingPointPlanned": "Platform 2",
+                "occupancy": "MANY_SEATS",
+                "area": "1",
+                "platform": "WMD2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0,
+                      "stepFromStreet": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:24:00Z",
+              "departureTimePlanned": "2026-07-03T00:24:30Z",
+              "arrivalTimeEstimated": "2026-07-03T00:24:00Z",
+              "departureTimeEstimated": "2026-07-03T00:24:30Z",
+              "modes": [
+                1,
+                4,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2150411",
+              "name": "Parramatta Station, Platform 1, Parramatta",
+              "disassembledName": "Parramatta Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.817277,
+                151.005239
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "215020",
+                "name": "Parramatta Station, Platform 1, Parramatta",
+                "disassembledName": "Parramatta Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346013:1",
+                  "name": "Parramatta",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101229"
+                },
+                "coord": [
+                  -33.81749,
+                  151.005325
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "occupancy": "FEW_SEATS",
+                "area": "1",
+                "platform": "PTA1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0,
+                      "stepFromStreet": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:27:00Z",
+              "departureTimePlanned": "2026-07-03T00:28:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:27:00Z",
+              "departureTimeEstimated": "2026-07-03T00:28:00Z",
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2150401",
+              "name": "Harris Park Station, Platform 1, Harris Park",
+              "disassembledName": "Harris Park Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.823568,
+                151.007692
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "215010",
+                "name": "Harris Park Station, Platform 1, Harris Park",
+                "disassembledName": "Harris Park Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346008:1",
+                  "name": "Harris Park",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101228"
+                },
+                "coord": [
+                  -33.823353,
+                  151.00765
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "HPK1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1"
+              },
+              "modes": [
+                1
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2142321",
+              "name": "Granville Station, Platform 1, Granville",
+              "disassembledName": "Granville Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.832818,
+                151.012239
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214240",
+                "name": "Granville Station, Platform 1, Granville",
+                "disassembledName": "Granville Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346007:1",
+                  "name": "Granville",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101227"
+                },
+                "coord": [
+                  -33.832758,
+                  151.011869
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "GVL1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2142312",
+              "name": "Clyde Station, Platform 2, Granville",
+              "disassembledName": "Clyde Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.835929,
+                151.017135
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214230",
+                "name": "Clyde Station, Platform 2, Granville",
+                "disassembledName": "Clyde Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95346007:1",
+                  "name": "Granville",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101220"
+                },
+                "coord": [
+                  -33.835953,
+                  151.016942
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "CLJ2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2"
+              },
+              "modes": [
+                1
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2144241",
+              "name": "Auburn Station, Platform 1, Auburn",
+              "disassembledName": "Auburn Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.849225,
+                151.032964
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214410",
+                "name": "Auburn Station, Platform 1, Auburn",
+                "disassembledName": "Auburn Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95304001:1",
+                  "name": "Auburn",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101219"
+                },
+                "coord": [
+                  -33.84943,
+                  151.033017
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "AUB1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2141311",
+              "name": "Lidcombe Station, Platform 1, Lidcombe",
+              "disassembledName": "Lidcombe Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.863606,
+                151.045036
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214110",
+                "name": "Lidcombe Station, Platform 1, Lidcombe",
+                "disassembledName": "Lidcombe Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95304004:1",
+                  "name": "Lidcombe",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101218"
+                },
+                "coord": [
+                  -33.863756,
+                  151.04513
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "occupancy": "FEW_SEATS",
+                "area": "1",
+                "platform": "LCE1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "distanceTrack": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:34:00Z",
+              "departureTimePlanned": "2026-07-03T00:34:30Z",
+              "arrivalTimeEstimated": "2026-07-03T00:34:00Z",
+              "departureTimeEstimated": "2026-07-03T00:34:30Z",
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "214061",
+              "name": "Flemington Station, Platform 1, Homebush West",
+              "disassembledName": "Flemington Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.864775,
+                151.069967
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214020",
+                "name": "Flemington Station, Platform 1, Homebush West",
+                "disassembledName": "Flemington Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95356002:1",
+                  "name": "Homebush West",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101217"
+                },
+                "coord": [
+                  -33.864912,
+                  151.070178
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "FLM1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1"
+              },
+              "modes": [
+                1,
+                5
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "214072",
+              "name": "Homebush Station, Platform 2, Homebush",
+              "disassembledName": "Homebush Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.866646,
+                151.086376
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "214010",
+                "name": "Homebush Station, Platform 2, Homebush",
+                "disassembledName": "Homebush Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95356001:1",
+                  "name": "Homebush",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101216"
+                },
+                "coord": [
+                  -33.866688,
+                  151.086195
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "HOM2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2135234",
+              "name": "Strathfield Station, Platform 4, Strathfield",
+              "disassembledName": "Strathfield Station, Platform 4",
+              "type": "platform",
+              "coord": [
+                -33.871464,
+                151.094027
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "213510",
+                "name": "Strathfield Station, Platform 4, Strathfield",
+                "disassembledName": "Strathfield Station, Platform 4",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95356003:1",
+                  "name": "Strathfield",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101206"
+                },
+                "coord": [
+                  -33.871672,
+                  151.094286
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 4",
+                "occupancy": "FEW_SEATS",
+                "area": "2",
+                "platform": "STR4",
+                "platformName": "Platform 4",
+                "plannedPlatformName": "Platform 4",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0,
+                      "stepFromStreet": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:40:00Z",
+              "departureTimePlanned": "2026-07-03T00:41:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:40:00Z",
+              "departureTimeEstimated": "2026-07-03T00:41:00Z",
+              "modes": [
+                1,
+                5,
+                7,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "213493",
+              "name": "Burwood Station, Platform 3, Burwood",
+              "disassembledName": "Burwood Station, Platform 3",
+              "type": "platform",
+              "coord": [
+                -33.877125,
+                151.104226
+              ],
+              "niveau": 1,
+              "parent": {
+                "isGlobalId": true,
+                "id": "213410",
+                "name": "Burwood Station, Platform 3, Burwood",
+                "disassembledName": "Burwood Station, Platform 3",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95311001:1",
+                  "name": "Burwood",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101207"
+                },
+                "coord": [
+                  -33.877102,
+                  151.103857
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "1",
+                "stoppingPointPlanned": "Platform 3",
+                "area": "2",
+                "platform": "BWD3",
+                "platformName": "Platform 3",
+                "plannedPlatformName": "Platform 3"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "213282",
+              "name": "Croydon Station, Platform 2, Croydon",
+              "disassembledName": "Croydon Station, Platform 2",
+              "type": "platform",
+              "coord": [
+                -33.88311,
+                151.115489
+              ],
+              "niveau": -1,
+              "parent": {
+                "isGlobalId": true,
+                "id": "213210",
+                "name": "Croydon Station, Platform 2, Croydon",
+                "disassembledName": "Croydon Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95311003:1",
+                  "name": "Croydon",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101208"
+                },
+                "coord": [
+                  -33.883075,
+                  151.115206
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "-1",
+                "AREA_NIVEAU_GIS": "-1.00",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "CYD2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2131121",
+              "name": "Ashfield Station, Platform 1, Ashfield",
+              "disassembledName": "Ashfield Station, Platform 1",
+              "type": "platform",
+              "coord": [
+                -33.887438,
+                151.125626
+              ],
+              "niveau": 0,
+              "parent": {
+                "isGlobalId": true,
+                "id": "213110",
+                "name": "Ashfield Station, Platform 1, Ashfield",
+                "disassembledName": "Ashfield Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95303001:1",
+                  "name": "Ashfield",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101209"
+                },
+                "coord": [
+                  -33.887638,
+                  151.125851
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "ASH1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1"
+              },
+              "modes": [
+                1,
+                5,
+                11
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2015133",
+              "name": "Redfern Station, Platform 3, Eveleigh",
+              "disassembledName": "Redfern Station, Platform 3",
+              "type": "platform",
+              "coord": [
+                -33.891999,
+                151.198276
+              ],
+              "niveau": -1,
+              "parent": {
+                "isGlobalId": true,
+                "id": "201510",
+                "name": "Redfern Station, Platform 3, Eveleigh",
+                "disassembledName": "Redfern Station, Platform 3",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95301014:1",
+                  "name": "Eveleigh",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101421"
+                },
+                "coord": [
+                  -33.892048,
+                  151.198419
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-1",
+                "AREA_NIVEAU_GIS": "-1.00",
+                "stoppingPointPlanned": "Platform 3",
+                "occupancy": "FEW_SEATS",
+                "area": "2",
+                "platform": "RD03",
+                "platformName": "Platform 3",
+                "plannedPlatformName": "Platform 3",
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "distanceTrack": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:51:42Z",
+              "departureTimePlanned": "2026-07-03T00:52:12Z",
+              "arrivalTimeEstimated": "2026-07-03T00:51:42Z",
+              "departureTimeEstimated": "2026-07-03T00:52:12Z",
+              "modes": [
+                1,
+                5
+              ]
+            },
+            {
+              "isGlobalId": true,
+              "id": "2000336",
+              "name": "Central Station, Platform 16, Sydney",
+              "disassembledName": "Central Station, Platform 16",
+              "type": "platform",
+              "coord": [
+                -33.883967,
+                151.206838
+              ],
+              "niveau": 1,
+              "parent": {
+                "isGlobalId": true,
+                "id": "200060",
+                "name": "Central Station, Platform 16, Sydney",
+                "disassembledName": "Central Station, Platform 16",
+                "type": "stop",
+                "parent": {
+                  "id": "placeID:95301001:1",
+                  "name": "Sydney",
+                  "type": "locality"
+                },
+                "properties": {
+                  "stopId": "10101100"
+                },
+                "coord": [
+                  -33.884024,
+                  151.206203
+                ],
+                "niveau": 0
+              },
+              "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "1",
+                "stoppingPointPlanned": "Platform 16",
+                "occupancy": "FEW_SEATS",
+                "area": "9",
+                "platform": "CE16",
+                "platformName": "Platform 16",
+                "plannedPlatformName": "Platform 16",
+                "callType": [
+                  "NOBOARDING"
+                ],
+                "accessArray": [
+                  {
+                    "stoppointAccess": {
+                      "height": 780,
+                      "equipment": 0,
+                      "maxWeight": 0,
+                      "distanceTrack": 0,
+                      "lengthAvail": 0,
+                      "widthAvail": 0,
+                      "attributes": 0,
+                      "stepFromStreet": 0
+                    }
+                  }
+                ]
+              },
+              "arrivalTimePlanned": "2026-07-03T00:54:00Z",
+              "arrivalTimeEstimated": "2026-07-03T00:54:00Z",
+              "modes": [
+                1,
+                2,
+                4,
+                5,
+                7,
+                11
+              ]
+            }
+          ],
+          "infos": [],
+          "coupledTripsInfo": [
+            {
+              "positionInTrain": "-1",
+              "usableForLeg": true,
+              "infoOnCarLevel": true,
+              "transportation": {
+                "id": "nsw:020T1:W:R:sj2",
+                "name": "Sydney Trains Network T1 North Shore & Western Line",
+                "disassembledName": "T1",
+                "number": "T1 North Shore & Western Line",
+                "product": {
+                  "id": 1,
+                  "class": 1,
+                  "name": "Sydney Trains Network",
+                  "iconId": 1
+                },
+                "destination": {
+                  "name": "Berowra via Gordon",
+                  "type": "stop"
+                },
+                "properties": {
+                  "lineDisplay": "LINE",
+                  "globalId": "3001"
+                }
+              },
+              "properties": {
+                "tripId": "541"
+              }
+            }
+          ],
+          "properties": {
+            "vehicleAccess": [
+              {
+                "height": 0,
+                "halfWidth": 0,
+                "doorWidth": 0,
+                "attributes": 1073741824,
+                "areaToStay": 0,
+                "areaToMove": 0,
+                "equipments": [
+                  {
+                    "vehicleEquipment": {
+                      "equipmentType": 1,
+                      "length": 0,
+                      "width": 0,
+                      "lengthAtPl": 0,
+                      "widthAtPl": 0,
+                      "maxWeight": 0
+                    }
+                  }
+                ]
+              }
+            ],
+            "PlanLowFloorVehicle": "1",
+            "PlanWheelChairAccess": "1"
+          }
+        }
+      ],
+      "fare": {
+        "tickets": []
+      },
+      "daysOfService": {
+        "rvb": "00000004000000000000000000000000"
+      }
+    }
+  ]
+}

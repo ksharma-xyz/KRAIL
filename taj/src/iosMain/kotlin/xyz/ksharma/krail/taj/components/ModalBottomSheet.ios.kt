@@ -64,6 +64,7 @@ actual fun ModalBottomSheet(
             sheetGesturesEnabled = sheetGesturesEnabled,
             containerColor = containerColor,
             contentWindowInsets = contentWindowInsets,
+            dragHandle = { WideDragHandle() },
         ) {
             // Capping only the content (not the sheet's own modifier) keeps the anchor math's
             // fullHeight reference intact - capping the outer modifier instead corrupts that

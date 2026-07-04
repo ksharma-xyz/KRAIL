@@ -1,10 +1,15 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /**
  * Platform-aware Modal Bottom Sheet component for the Taj design system.
@@ -30,3 +35,17 @@ expect fun ModalBottomSheet(
     contentWindowInsets: @Composable () -> WindowInsets = { WindowInsets(0, 0, 0, 0) },
     content: @Composable () -> Unit,
 )
+
+// Widens the tappable/draggable area beyond M3's default 32.dp visual pill width.
+private val DragHandleTouchWidth = 64.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun WideDragHandle(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.width(DragHandleTouchWidth),
+        contentAlignment = Alignment.Center,
+    ) {
+        BottomSheetDefaults.DragHandle()
+    }
+}

@@ -27,6 +27,7 @@ actual fun ModalBottomSheet(
         sheetGesturesEnabled = sheetGesturesEnabled,
         containerColor = containerColor,
         contentWindowInsets = contentWindowInsets,
+        dragHandle = { WideDragHandle() },
     ) {
         content()
     }

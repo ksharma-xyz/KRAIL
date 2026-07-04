@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
@@ -55,9 +53,6 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
-        val maxContentHeight = LocalWindowInfo.current.containerDpSize.height *
-            EXPANDED_HEIGHT_FRACTION - EXTRA_TOP_PEEK
-
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
             modifier = modifier,
@@ -66,18 +61,10 @@ actual fun ModalBottomSheet(
             contentWindowInsets = contentWindowInsets,
             dragHandle = { WideDragHandle() },
         ) {
-            // Capping only the content (not the sheet's own modifier) keeps the anchor math's
-            // fullHeight reference intact - capping the outer modifier instead corrupts that
-            // same reference, moving the gap to the bottom of the sheet rather than the top.
-            Box(modifier = Modifier.heightIn(max = maxContentHeight)) {
-                content()
-            }
+            CappedSheetContent(content)
         }
     }
 }
-
-private const val EXPANDED_HEIGHT_FRACTION = 0.92f
-private val EXTRA_TOP_PEEK = 10.dp
 
 const val scrimTransparencyAlpha = 0.6f
 

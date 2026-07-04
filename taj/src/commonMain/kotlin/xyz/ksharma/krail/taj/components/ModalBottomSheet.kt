@@ -2,6 +2,7 @@ package xyz.ksharma.krail.taj.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 
 /**
@@ -47,5 +49,19 @@ internal fun WideDragHandle(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         BottomSheetDefaults.DragHandle()
+    }
+}
+
+private const val EXPANDED_HEIGHT_FRACTION = 0.92f
+private val EXTRA_TOP_PEEK = 10.dp
+
+// Caps content (not the sheet's outer modifier, which would corrupt the anchor math's fullHeight
+// reference - see docs/investigations) so a top peek always shows on both platforms.
+@Composable
+internal fun CappedSheetContent(content: @Composable () -> Unit) {
+    val maxContentHeight = LocalWindowInfo.current.containerDpSize.height *
+        EXPANDED_HEIGHT_FRACTION - EXTRA_TOP_PEEK
+    Box(modifier = Modifier.heightIn(max = maxContentHeight)) {
+        content()
     }
 }

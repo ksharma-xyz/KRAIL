@@ -29,6 +29,6 @@ actual fun ModalBottomSheet(
         contentWindowInsets = contentWindowInsets,
         dragHandle = { WideDragHandle() },
     ) {
-        content()
+        CappedSheetContent(content)
     }
 }

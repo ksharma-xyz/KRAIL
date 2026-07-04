@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures.OranParkToSevenHillsFixture
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures.Redfern715BacktrackFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,8 +20,15 @@ import kotlin.test.assertNull
  */
 class TripResponseMapperTest {
 
-    // Lenient JSON parser — mirrors how Ktor deserialises API responses in production
-    private val json = Json { ignoreUnknownKeys = true }
+    // Mirrors the Json config Ktor actually uses in production (core/network/HttpClient.kt,
+    // core/remote-config/JsonConfig.kt) - isLenient is required because NSW sends some
+    // String-typed fields (e.g. Transportation.properties.tripCode) as unquoted JSON numbers.
+    // Without it, a real captured response (see Redfern715BacktrackFixture) fails to parse
+    // here even though the app decodes it fine, which would be a false test failure.
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
 
     //region resolveDurationSeconds
 
@@ -511,6 +519,170 @@ class TripResponseMapperTest {
 
     //endregion
 
+    //region collapseSameRouteQuickWalks (715 / walk / 715 backtrack)
+    //
+    // Full background: docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md
+    //
+    // User complaint: a trip shows as "715 bus / walk / 715 bus / T1 train" (3 transit legs)
+    // instead of "715 bus / T1 train", while Google Maps and Opal both show it as the latter.
+    // Root cause, confirmed from a real captured API response: NSW splits a 715 that reverses
+    // direction one stop from the origin into two separate scheduled trips (different tripCode,
+    // opposite-direction description) connected by a genuine but trivial (60s) road-crossing
+    // walk. [collapseSameRouteQuickWalks] in TripResponseMapper.kt collapses that pattern back
+    // into one displayed leg, matching what other apps show, without claiming to prove it's the
+    // same physical vehicle (it deliberately does NOT compare tripCode/RealtimeTripId/direction —
+    // those legitimately differ here, which is exactly the case being handled).
+    //
+    // The first test below decodes the real captured JSON (Redfern715BacktrackFixture) so it
+    // also catches API shape drift, not just mapper logic regressions. The other two tests pin
+    // the heuristic's boundaries (walk too long / route number differs) with synthetic data,
+    // since the real capture doesn't happen to contain those variants.
+
+    /**
+     * Regression test for the "715 / walk / 715 / T1" complaint, using the real API response
+     * that reproduces it (see [Redfern715BacktrackFixture] for full provenance/background).
+     * Decoding real JSON rather than hand-building a [TripResponse.Leg] tree also means this
+     * test breaks if NSW's field shape changes in a way the mapper doesn't handle, not just if
+     * the collapse logic itself regresses.
+     */
+    @Test
+    fun `buildJourneyList collapses same-route legs separated by a quick walk`() {
+        // Arrange: real captured response — leg0 715 tripCode 77 (outbound) -> 60s IDEST walk
+        // across the road -> leg2 715 tripCode 15 (inbound) -> leg3 T1.
+        val response = json.decodeFromString<TripResponse>(Redfern715BacktrackFixture.JSON)
+
+        // Act
+        val journey = response.buildJourneyList()?.firstOrNull()
+        val legs = journey?.legs
+
+        // Assert
+        assertEquals(2, legs?.size, "The two 715 legs and the quick walk must collapse into one leg")
+        val mergedLeg = legs?.getOrNull(0) as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+        assertEquals("715", mergedLeg?.transportModeLine?.lineName)
+        assertEquals(
+            "6 mins",
+            mergedLeg?.totalDuration,
+            "Merged duration must span the real door-to-door window (00:03:00 -> 00:09:42 " +
+                "estimated), not just the first leg's own 60s ride",
+        )
+        assertEquals(
+            10,
+            mergedLeg?.stops?.size,
+            "Stops from both real 715 legs (2 + 8) must be combined",
+        )
+        assertEquals(
+            null,
+            journey?.totalWalkTime,
+            "The collapsed quick walk must not be counted as walking time",
+        )
+    }
+
+    /**
+     * Synthetic edge case (not present in the real capture): pins the 120s quick-walk cutoff.
+     * A longer walk is a real interchange a user needs to know about — e.g. enough time to
+     * actually leave the stop precinct — and must never silently disappear into a merged leg.
+     */
+    @Test
+    fun `buildJourneyList does not collapse same-route legs when the walk exceeds the quick-walk threshold`() {
+        val response = TripResponse(
+            journeys = listOf(
+                TripResponse.Journey(
+                    legs = listOf(
+                        buildRouteLeg(
+                            routeNumber = "715",
+                            realtimeTripId = "trip-outbound-77",
+                            depTime = "2026-04-18T22:00:00Z",
+                            arrTime = "2026-04-18T22:01:00Z",
+                        ),
+                        buildQuickWalkLeg(
+                            depTime = "2026-04-18T22:01:00Z",
+                            arrTime = "2026-04-18T22:03:30Z",
+                            durationSeconds = 150L, // exceeds the 120s quick-walk threshold
+                        ),
+                        buildRouteLeg(
+                            routeNumber = "715",
+                            realtimeTripId = "trip-inbound-15",
+                            depTime = "2026-04-18T22:03:30Z",
+                            arrTime = "2026-04-18T22:06:00Z",
+                        ),
+                        buildRouteLeg(
+                            routeNumber = "T1",
+                            realtimeTripId = "trip-t1",
+                            depTime = "2026-04-18T22:10:00Z",
+                            arrTime = "2026-04-18T22:40:00Z",
+                            productClass = 1L,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(
+            4,
+            journey?.legs?.size,
+            "A walk longer than the quick-walk threshold is a real interchange and must stay separate",
+        )
+        assertEquals(
+            true,
+            journey?.totalWalkTime != null,
+            "A real (non-collapsed) walking leg must still be counted as walking time",
+        )
+    }
+
+    /**
+     * Synthetic edge case (not present in the real capture): pins that route number is the
+     * *only* merge signal, not a coincidence of this fixture. A genuine route change (e.g.
+     * transferring from a 715 to a 718) must always render as two legs even if the connecting
+     * walk happens to be trivially short.
+     */
+    @Test
+    fun `buildJourneyList does not collapse legs on different route numbers even with a quick walk`() {
+        val response = TripResponse(
+            journeys = listOf(
+                TripResponse.Journey(
+                    legs = listOf(
+                        buildRouteLeg(
+                            routeNumber = "715",
+                            realtimeTripId = "trip-715",
+                            depTime = "2026-04-18T22:00:00Z",
+                            arrTime = "2026-04-18T22:01:00Z",
+                        ),
+                        buildQuickWalkLeg(
+                            depTime = "2026-04-18T22:01:00Z",
+                            arrTime = "2026-04-18T22:02:00Z",
+                            durationSeconds = 60L,
+                        ),
+                        buildRouteLeg(
+                            routeNumber = "718", // different route number - must not collapse
+                            realtimeTripId = "trip-718",
+                            depTime = "2026-04-18T22:02:00Z",
+                            arrTime = "2026-04-18T22:05:00Z",
+                        ),
+                        buildRouteLeg(
+                            routeNumber = "T1",
+                            realtimeTripId = "trip-t1",
+                            depTime = "2026-04-18T22:10:00Z",
+                            arrTime = "2026-04-18T22:40:00Z",
+                            productClass = 1L,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(
+            4,
+            journey?.legs?.size,
+            "A route change (715 -> 718) is a real interchange and must never be collapsed",
+        )
+    }
+
+    //endregion
+
     //region helpers
 
     /**
@@ -599,4 +771,84 @@ class TripResponseMapperTest {
     )
 
     // endregion
+
+    //region collapseSameRouteQuickWalks helpers
+
+    /**
+     * Builds a [TripResponse.Leg] for a transport leg identified by [routeNumber], with two
+     * stops spanning [depTime] to [arrTime]. Mirrors the shape a same-numbered bus leg has in
+     * the real NSW response (see `home-redfern-investigate.json`, journey index 1).
+     */
+    private fun buildRouteLeg(
+        routeNumber: String,
+        realtimeTripId: String,
+        depTime: String,
+        arrTime: String,
+        productClass: Long = 5L,
+    ) = TripResponse.Leg(
+        origin = TripResponse.StopSequence(
+            name = "$routeNumber origin",
+            departureTimePlanned = depTime,
+            departureTimeEstimated = depTime,
+        ),
+        destination = TripResponse.StopSequence(
+            name = "$routeNumber destination",
+            arrivalTimePlanned = arrTime,
+            arrivalTimeEstimated = arrTime,
+        ),
+        stopSequence = listOf(
+            TripResponse.StopSequence(
+                name = "$routeNumber origin",
+                departureTimePlanned = depTime,
+                departureTimeEstimated = depTime,
+            ),
+            TripResponse.StopSequence(
+                name = "$routeNumber destination",
+                arrivalTimePlanned = arrTime,
+                arrivalTimeEstimated = arrTime,
+            ),
+        ),
+        transportation = TripResponse.Transportation(
+            id = "nsw:$routeNumber:$realtimeTripId",
+            number = routeNumber,
+            disassembledName = routeNumber,
+            description = "$routeNumber towards somewhere",
+            destination = TripResponse.OperatorClass(name = "Terminus"),
+            product = TripResponse.Product(productClass = productClass, name = "Sydney Buses Network"),
+            properties = TripResponse.TransportationProperties(realtimeTripId = realtimeTripId),
+        ),
+    )
+
+    /**
+     * Builds a standalone walking [TripResponse.Leg] (`productClass = 99`, `position = IDEST`)
+     * of [durationSeconds] — the shape of the "cross the road" leg between two same-numbered
+     * bus trips in the real NSW response.
+     */
+    private fun buildQuickWalkLeg(
+        depTime: String,
+        arrTime: String,
+        durationSeconds: Long,
+    ) = TripResponse.Leg(
+        duration = durationSeconds,
+        origin = TripResponse.StopSequence(
+            departureTimePlanned = depTime,
+            departureTimeEstimated = depTime,
+        ),
+        destination = TripResponse.StopSequence(
+            arrivalTimePlanned = arrTime,
+            arrivalTimeEstimated = arrTime,
+        ),
+        stopSequence = listOf(
+            TripResponse.StopSequence(departureTimePlanned = depTime, departureTimeEstimated = depTime),
+            TripResponse.StopSequence(arrivalTimePlanned = arrTime, arrivalTimeEstimated = arrTime),
+        ),
+        transportation = TripResponse.Transportation(
+            product = TripResponse.Product(productClass = 99L, name = "footpath"),
+        ),
+        footPathInfo = listOf(
+            TripResponse.FootPathInfo(duration = durationSeconds, position = "IDEST"),
+        ),
+    )
+
+    //endregion
 }

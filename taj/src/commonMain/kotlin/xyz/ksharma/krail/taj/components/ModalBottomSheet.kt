@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -52,16 +52,13 @@ internal fun WideDragHandle(modifier: Modifier = Modifier) {
     }
 }
 
-private const val EXPANDED_HEIGHT_FRACTION = 0.92f
-private val EXTRA_TOP_PEEK = 10.dp
-
 // Caps content (not the sheet's outer modifier, which would corrupt the anchor math's fullHeight
-// reference - see docs/investigations) so a top peek always shows on both platforms.
+// reference - see docs/investigations) so a top peek always shows. Each platform computes its
+// own maxHeight - iOS estimates a fraction of the window, Android measures the actual status bar
+// inset - since the two platforms need different top-peek strategies.
 @Composable
-internal fun CappedSheetContent(content: @Composable () -> Unit) {
-    val maxContentHeight = LocalWindowInfo.current.containerDpSize.height *
-        EXPANDED_HEIGHT_FRACTION - EXTRA_TOP_PEEK
-    Box(modifier = Modifier.heightIn(max = maxContentHeight)) {
+internal fun CappedSheetContent(maxHeight: Dp, content: @Composable () -> Unit) {
+    Box(modifier = Modifier.heightIn(max = maxHeight)) {
         content()
     }
 }

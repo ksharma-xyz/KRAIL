@@ -55,7 +55,8 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
-        val maxContentHeight = LocalWindowInfo.current.containerDpSize.height * EXPANDED_HEIGHT_FRACTION
+        val maxContentHeight = LocalWindowInfo.current.containerDpSize.height *
+            EXPANDED_HEIGHT_FRACTION - EXTRA_TOP_PEEK
 
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
@@ -75,6 +76,7 @@ actual fun ModalBottomSheet(
 }
 
 private const val EXPANDED_HEIGHT_FRACTION = 0.92f
+private val EXTRA_TOP_PEEK = 10.dp
 
 const val scrimTransparencyAlpha = 0.6f
 

@@ -1,10 +1,20 @@
 package xyz.ksharma.krail.taj.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /**
  * Platform-aware Modal Bottom Sheet component for the Taj design system.
@@ -30,3 +40,51 @@ expect fun ModalBottomSheet(
     contentWindowInsets: @Composable () -> WindowInsets = { WindowInsets(0, 0, 0, 0) },
     content: @Composable () -> Unit,
 )
+
+// Widens the tappable/draggable area beyond M3's default 32.dp visual pill width.
+private val DragHandleTouchWidth = 64.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun WideDragHandle(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.width(DragHandleTouchWidth),
+        contentAlignment = Alignment.Center,
+    ) {
+        BottomSheetDefaults.DragHandle()
+    }
+}
+
+private val EXTRA_TOP_MARGIN = 16.dp
+
+// Floor for the measured status bar inset. Guards against the inset reading as 0 (seen in
+// practice inside the Dialog's own composition on both platforms) while still using the real,
+// larger value on devices with a notch/Dynamic Island.
+private val MIN_STATUS_BAR_HEIGHT = 32.dp
+
+// BottomSheetDefaults.DragHandle(): 4.dp pill + 22.dp vertical padding (top and bottom) = 48.dp
+// total, rendered above our content and not itself capped - must be subtracted here too, or its
+// height silently eats the whole peek margin.
+private val DRAG_HANDLE_HEIGHT = 48.dp
+
+// The sheet's guaranteed top peek: real status bar inset (same API, backed by actual platform
+// data on both Android and iOS) plus a fixed margin, so the sheet never sits behind the status
+// bar and the peek looks identical on both platforms. Returns the CONTENT cap (drag handle height
+// already subtracted) since the drag handle renders above content and isn't itself constrained.
+@Composable
+internal fun rememberSheetMaxContentHeight(): Dp {
+    val density = LocalDensity.current
+    val statusBarHeight = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
+        .coerceAtLeast(MIN_STATUS_BAR_HEIGHT)
+    val maxSheetHeight = LocalWindowInfo.current.containerDpSize.height - statusBarHeight - EXTRA_TOP_MARGIN
+    return maxSheetHeight - DRAG_HANDLE_HEIGHT
+}
+
+// Caps content (not the sheet's outer modifier, which would corrupt the anchor math's fullHeight
+// reference - see docs/investigations) so the peek gap from rememberSheetMaxContentHeight() actually shows.
+@Composable
+internal fun CappedSheetContent(maxHeight: Dp, content: @Composable () -> Unit) {
+    Box(modifier = Modifier.heightIn(max = maxHeight)) {
+        content()
+    }
+}

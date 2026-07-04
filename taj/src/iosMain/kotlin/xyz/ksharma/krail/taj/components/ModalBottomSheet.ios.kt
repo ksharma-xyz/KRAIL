@@ -53,14 +53,17 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
+        val maxContentHeight = rememberSheetMaxContentHeight()
+
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
             modifier = modifier,
             sheetGesturesEnabled = sheetGesturesEnabled,
             containerColor = containerColor,
             contentWindowInsets = contentWindowInsets,
+            dragHandle = { WideDragHandle() },
         ) {
-            content()
+            CappedSheetContent(maxContentHeight, content)
         }
     }
 }

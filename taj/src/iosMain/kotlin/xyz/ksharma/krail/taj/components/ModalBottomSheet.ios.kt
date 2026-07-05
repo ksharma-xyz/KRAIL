@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
@@ -54,8 +53,7 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
-        val maxContentHeight = LocalWindowInfo.current.containerDpSize.height *
-            EXPANDED_HEIGHT_FRACTION - EXTRA_TOP_PEEK
+        val maxContentHeight = rememberSheetMaxHeight()
 
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
@@ -69,9 +67,6 @@ actual fun ModalBottomSheet(
         }
     }
 }
-
-private const val EXPANDED_HEIGHT_FRACTION = 0.92f
-private val EXTRA_TOP_PEEK = 10.dp
 
 const val scrimTransparencyAlpha = 0.6f
 

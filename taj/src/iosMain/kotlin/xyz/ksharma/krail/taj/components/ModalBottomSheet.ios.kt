@@ -53,7 +53,7 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
-        val maxContentHeight = rememberSheetMaxHeight()
+        val maxContentHeight = rememberSheetMaxContentHeight()
 
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,

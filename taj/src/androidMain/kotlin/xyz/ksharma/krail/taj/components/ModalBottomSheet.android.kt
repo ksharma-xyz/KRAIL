@@ -21,7 +21,7 @@ actual fun ModalBottomSheet(
     contentWindowInsets: @Composable () -> WindowInsets,
     content: @Composable () -> Unit,
 ) {
-    val maxContentHeight = rememberSheetMaxHeight()
+    val maxContentHeight = rememberSheetMaxContentHeight()
 
     Material3ModalBottomSheet(
         onDismissRequest = onDismissRequest,

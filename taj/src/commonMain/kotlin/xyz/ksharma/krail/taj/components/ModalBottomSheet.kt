@@ -62,19 +62,26 @@ private val EXTRA_TOP_MARGIN = 16.dp
 // larger value on devices with a notch/Dynamic Island.
 private val MIN_STATUS_BAR_HEIGHT = 32.dp
 
+// BottomSheetDefaults.DragHandle(): 4.dp pill + 22.dp vertical padding (top and bottom) = 48.dp
+// total, rendered above our content and not itself capped - must be subtracted here too, or its
+// height silently eats the whole peek margin.
+private val DRAG_HANDLE_HEIGHT = 48.dp
+
 // The sheet's guaranteed top peek: real status bar inset (same API, backed by actual platform
 // data on both Android and iOS) plus a fixed margin, so the sheet never sits behind the status
-// bar and the peek looks identical on both platforms.
+// bar and the peek looks identical on both platforms. Returns the CONTENT cap (drag handle height
+// already subtracted) since the drag handle renders above content and isn't itself constrained.
 @Composable
-internal fun rememberSheetMaxHeight(): Dp {
+internal fun rememberSheetMaxContentHeight(): Dp {
     val density = LocalDensity.current
     val statusBarHeight = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
         .coerceAtLeast(MIN_STATUS_BAR_HEIGHT)
-    return LocalWindowInfo.current.containerDpSize.height - statusBarHeight - EXTRA_TOP_MARGIN
+    val maxSheetHeight = LocalWindowInfo.current.containerDpSize.height - statusBarHeight - EXTRA_TOP_MARGIN
+    return maxSheetHeight - DRAG_HANDLE_HEIGHT
 }
 
 // Caps content (not the sheet's outer modifier, which would corrupt the anchor math's fullHeight
-// reference - see docs/investigations) so the peek gap from rememberSheetMaxHeight() actually shows.
+// reference - see docs/investigations) so the peek gap from rememberSheetMaxContentHeight() actually shows.
 @Composable
 internal fun CappedSheetContent(maxHeight: Dp, content: @Composable () -> Unit) {
     Box(modifier = Modifier.heightIn(max = maxHeight)) {

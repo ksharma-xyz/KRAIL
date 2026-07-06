@@ -55,7 +55,12 @@ internal fun WideDragHandle(modifier: Modifier = Modifier) {
     }
 }
 
-private val EXTRA_TOP_MARGIN = 10.dp
+private val EXTRA_TOP_MARGIN = 16.dp
+
+// Floor for the measured status bar inset. Guards against the inset reading as 0 (seen in
+// practice inside the Dialog's own composition on both platforms) while still using the real,
+// larger value on devices with a notch/Dynamic Island.
+private val MIN_STATUS_BAR_HEIGHT = 32.dp
 
 // The sheet's guaranteed top peek: real status bar inset (same API, backed by actual platform
 // data on both Android and iOS) plus a fixed margin, so the sheet never sits behind the status
@@ -64,6 +69,7 @@ private val EXTRA_TOP_MARGIN = 10.dp
 internal fun rememberSheetMaxHeight(): Dp {
     val density = LocalDensity.current
     val statusBarHeight = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
+        .coerceAtLeast(MIN_STATUS_BAR_HEIGHT)
     return LocalWindowInfo.current.containerDpSize.height - statusBarHeight - EXTRA_TOP_MARGIN
 }
 

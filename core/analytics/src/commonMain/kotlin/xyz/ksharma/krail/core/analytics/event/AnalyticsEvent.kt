@@ -504,9 +504,13 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         )
 
     /**
-     * Fired when the user taps the origin or destination label in the timetable
-     * sticky header — the gesture that opens stop search scoped to that leg
-     * ("Change origin" / "Change destination").
+     * Fired when the user taps either affordance on a stop row in the timetable
+     * sticky header: the stop name (opens leg-scoped stop search, "Change
+     * origin" / "Change destination") or the departures icon (opens the
+     * departure-board sheet). One event, split by [action] — same surface and
+     * identical params, so a second event name would only burn a slot of the
+     * Firebase 500-event budget and force dashboards to UNION two names to
+     * trace the departures sheet across the A3 change.
      *
      * The single most useful field is [isOrigin]: it answers
      * "are users more curious about where they're leaving from, or where they're
@@ -525,9 +529,9 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      *                       without re-deriving it from [stopId]).
      * @param tripToStopId   Destination of the trip the click happened inside.
      * @param action        What the tap did. Historical events (pre stop-edit)
-     *                      carry no `action`; new events send
-     *                      [ACTION_EDIT_SEARCH] so the dashboard can split
-     *                      behaviour before/after the change.
+     *                      carry no `action` and were departures-sheet opens,
+     *                      so the sheet's full usage timeline is
+     *                      `action IS NULL OR action = open_departures`.
      */
     data class TimeTableStopHeaderClickEvent(
         val stopId: String,
@@ -548,28 +552,13 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         ),
     ) {
         companion object {
-            /** Tap opened stop search pre-scoped to the tapped leg. */
+            /** Stop-name tap opened stop search pre-scoped to the tapped leg. */
             const val ACTION_EDIT_SEARCH = "edit_search"
+
+            /** Departures-icon tap opened the departure-board sheet. */
+            const val ACTION_OPEN_DEPARTURES = "open_departures"
         }
     }
-
-    /**
-     * Fired when the user taps the departures icon next to a stop name in the
-     * timetable header. Opens the departure-board sheet that used to be bound
-     * to the stop-name tap itself (see [TimeTableStopHeaderClickEvent]).
-     */
-    data class TimeTableDeparturesIconClickEvent(
-        val stopId: String,
-        val stopName: String,
-        val isOrigin: Boolean,
-    ) : AnalyticsEvent(
-        name = "timetable_departures_icon_click",
-        properties = mapOf(
-            PROP_STOP_ID to stopId,
-            PROP_STOP_NAME to stopName,
-            "isOrigin" to isOrigin,
-        ),
-    )
 
     /**
      * Fired when the user taps "Load more" at the bottom of the timetable list to

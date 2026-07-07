@@ -321,24 +321,39 @@ class TimeTableViewModel(
     }
 
     private fun trackStopHeaderClick(event: TimeTableUiEvent.OriginDestinationStopHeaderClicked) {
-        analytics.track(
-            AnalyticsEvent.TimeTableStopHeaderClickEvent(
-                stopId = event.stopId,
-                stopName = event.stopName,
-                isOrigin = event.isOrigin,
-                tripFromStopId = tripInfo?.fromStopId.orEmpty(),
-                tripToStopId = tripInfo?.toStopId.orEmpty(),
-                action = AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_EDIT_SEARCH,
-            ),
+        trackStopHeaderClick(
+            stopId = event.stopId,
+            stopName = event.stopName,
+            isOrigin = event.isOrigin,
+            action = AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_EDIT_SEARCH,
         )
     }
 
     private fun trackDeparturesIconClick(event: TimeTableUiEvent.DeparturesIconClicked) {
+        // Same surface and params as the stop-name tap — folded into the same
+        // event as action=open_departures instead of a separate event name.
+        trackStopHeaderClick(
+            stopId = event.stopId,
+            stopName = event.stopName,
+            isOrigin = event.isOrigin,
+            action = AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_OPEN_DEPARTURES,
+        )
+    }
+
+    private fun trackStopHeaderClick(
+        stopId: String,
+        stopName: String,
+        isOrigin: Boolean,
+        action: String,
+    ) {
         analytics.track(
-            AnalyticsEvent.TimeTableDeparturesIconClickEvent(
-                stopId = event.stopId,
-                stopName = event.stopName,
-                isOrigin = event.isOrigin,
+            AnalyticsEvent.TimeTableStopHeaderClickEvent(
+                stopId = stopId,
+                stopName = stopName,
+                isOrigin = isOrigin,
+                tripFromStopId = tripInfo?.fromStopId.orEmpty(),
+                tripToStopId = tripInfo?.toStopId.orEmpty(),
+                action = action,
             ),
         )
     }

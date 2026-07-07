@@ -1807,7 +1807,7 @@ class TimeTableViewModelTest {
     // that now owns the stop-details sheet (moved off the stop-name tap).
 
     @Test
-    fun `GIVEN trip loaded WHEN departures icon is clicked THEN departures icon click event is tracked`() =
+    fun `GIVEN trip loaded WHEN departures icon is clicked THEN header click event is tracked with open_departures action`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics
 
@@ -1820,12 +1820,18 @@ class TimeTableViewModelTest {
             )
             advanceUntilIdle()
 
-            val tracked = analytics.getTrackedEvent("timetable_departures_icon_click")
+            // Same event name as the stop-name tap — split by action so the
+            // departures sheet's usage timeline stays a single-event query.
+            val tracked = analytics.getTrackedEvent("timetable_stop_header_click")
             assertNotNull(tracked)
-            val event = assertIs<AnalyticsEvent.TimeTableDeparturesIconClickEvent>(tracked)
+            val event = assertIs<AnalyticsEvent.TimeTableStopHeaderClickEvent>(tracked)
             assertEquals("FROM_STOP_ID_1", event.stopId)
             assertEquals("STOP_NAME_1", event.stopName)
             assertTrue(event.isOrigin)
+            assertEquals(
+                AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_OPEN_DEPARTURES,
+                event.action,
+            )
         }
 
     // endregion

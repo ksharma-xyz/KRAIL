@@ -51,6 +51,13 @@ data class TimeTableState(
      * the timetable header shows the user's nickname for a stop when set.
      */
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
+    /**
+     * True when the one-tap "Save this trip?" prompt should render below the
+     * timetable header. Set after a successful load of an unsaved pair,
+     * subject to the frequency rules in TimeTableViewModel (once per app
+     * session, max 2 dismissals per pair, never for saved pairs).
+     */
+    val showSaveTripPrompt: Boolean = false,
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable

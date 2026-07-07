@@ -370,6 +370,11 @@ fun TimeTableScreen(
                 }
             }
 
+            saveTripPromptItem(
+                showSaveTripPrompt = timeTableState.showSaveTripPrompt,
+                onEvent = onEvent,
+            )
+
             item(key = "spacer-top") {
                 Spacer(modifier = Modifier.height(dim.spacingL))
             }

@@ -17,6 +17,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.fakes.FakeShareManager
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
 import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder
@@ -28,6 +29,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.service.DepArr
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -61,6 +63,7 @@ import kotlin.time.ExperimentalTime
 class TimeTableViewModelTest {
 
     private val sandook: Sandook = FakeSandook()
+    private val fakePreferences = FakeSandookPreferences()
     private val fakeAnalytics: Analytics = FakeAnalytics()
     private val fakeShareManager = FakeShareManager()
     private val tripPlanningService = FakeTripPlanningService()
@@ -75,10 +78,12 @@ class TimeTableViewModelTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        TimeTableViewModel.resetSavePromptSessionFlagForTest()
         viewModel = TimeTableViewModel(
             tripPlanningService = tripPlanningService,
             rateLimiter = rateLimiter,
             sandook = sandook,
+            preferences = fakePreferences,
             analytics = fakeAnalytics,
             shareManager = fakeShareManager,
             ioDispatcher = testDispatcher,
@@ -2126,6 +2131,150 @@ class TimeTableViewModelTest {
 
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    // endregion
+
+    // region Save-trip prompt (story A2) — one-tap save nudge after loading an
+    // unsaved pair. Frequency rules: once per app session, never for saved
+    // pairs, gone forever after MAX_SAVE_TRIP_PROMPT_DISMISSALS dismissals.
+
+    private val promptTrip = Trip(
+        fromStopId = "FROM_STOP_ID_1",
+        fromStopName = "STOP_NAME_1",
+        toStopId = "TO_STOP_ID_1",
+        toStopName = "STOP_NAME_2",
+    )
+
+    private fun loadPromptTrip() {
+        tripPlanningService.isSuccess = true
+        viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(promptTrip))
+        viewModel.fetchTrip()
+    }
+
+    @Test
+    fun `GIVEN unsaved pair WHEN timetable loads THEN save prompt is shown and shown event fires once`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+            val tracked = analytics.getTrackedEvent("save_trip_prompt_shown")
+            assertNotNull(tracked)
+            val event = assertIs<AnalyticsEvent.SaveTripPromptShownEvent>(tracked)
+            assertEquals(AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN, event.variant)
+        }
+
+    @Test
+    fun `GIVEN already-saved pair WHEN timetable loads THEN no prompt is shown`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            sandook.insertOrReplaceTrip(
+                tripId = promptTrip.tripId,
+                fromStopId = promptTrip.fromStopId,
+                fromStopName = promptTrip.fromStopName,
+                toStopId = promptTrip.toStopId,
+                toStopName = promptTrip.toStopName,
+            )
+
+            loadPromptTrip()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            assertFalse(analytics.isEventTracked("save_trip_prompt_shown"))
+        }
+
+    @Test
+    fun `GIVEN prompt visible WHEN accepted THEN trip saved and accepted plus save click events fire`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptAccepted)
+            advanceUntilIdle()
+
+            viewModel.uiState.value.run {
+                assertTrue(isTripSaved)
+                assertFalse(showSaveTripPrompt)
+            }
+            assertNotNull(sandook.selectTripById(promptTrip.tripId))
+
+            val saveClick = analytics.getTrackedEvent("save_trip_click")
+            val saveClickEvent = assertIs<AnalyticsEvent.SaveTripClickEvent>(assertNotNull(saveClick))
+            assertEquals(AnalyticsEvent.SaveTripClickEvent.SOURCE_PROMPT, saveClickEvent.source)
+
+            val accepted = analytics.getTrackedEvent("save_trip_prompt_accepted")
+            val acceptedEvent = assertIs<AnalyticsEvent.SaveTripPromptAcceptedEvent>(assertNotNull(accepted))
+            assertEquals(AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN, acceptedEvent.variant)
+        }
+
+    @Test
+    fun `GIVEN prompt visible WHEN dismissed THEN prompt hides and dismissal is persisted with count`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDismissed)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            assertEquals(
+                1L,
+                fakePreferences.getLong(
+                    SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + promptTrip.tripId,
+                ),
+            )
+            val dismissed = analytics.getTrackedEvent("save_trip_prompt_dismissed")
+            val dismissedEvent =
+                assertIs<AnalyticsEvent.SaveTripPromptDismissedEvent>(assertNotNull(dismissed))
+            assertEquals(1, dismissedEvent.dismissCount)
+        }
+
+    @Test
+    fun `GIVEN pair dismissed twice before WHEN timetable loads in a new session THEN prompt never returns for that pair`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            fakePreferences.setLong(
+                SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + promptTrip.tripId,
+                TimeTableViewModel.MAX_SAVE_TRIP_PROMPT_DISMISSALS,
+            )
+
+            loadPromptTrip()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            assertFalse(analytics.isEventTracked("save_trip_prompt_shown"))
+        }
+
+    @Test
+    fun `GIVEN prompt already shown this session WHEN another unsaved pair loads THEN prompt is not shown again`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDismissed)
+            advanceUntilIdle()
+            analytics.clear()
+
+            // Change to a different unsaved pair and let it load.
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = "OTHER_STOP_ID",
+                    stopName = "OTHER_STOP_NAME",
+                    isOrigin = false,
+                ),
+            )
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            assertFalse(analytics.isEventTracked("save_trip_prompt_shown"))
         }
 
     // endregion

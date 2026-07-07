@@ -6,6 +6,7 @@ import kotlin.time.ExperimentalTime
 
 private const val PROP_STOP_ID = "stopId"
 private const val PROP_ACTION = "action"
+private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
 private const val PROP_STOP_NAME = "stopName"
@@ -315,9 +316,66 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
-    data class SaveTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
+    /**
+     * @param source Where the save was triggered from: [SOURCE_STAR] for the
+     * title-bar star button, [SOURCE_PROMPT] for the "Save this trip?" prompt.
+     * Historical events (pre-prompt) carry no `source` — treat null as star.
+     */
+    data class SaveTripClickEvent(
+        val fromStopId: String,
+        val toStopId: String,
+        val source: String = SOURCE_STAR,
+    ) : AnalyticsEvent(
         name = "save_trip_click",
-        properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
+        properties = mapOf(
+            PROP_FROM_STOP_ID to fromStopId,
+            PROP_TO_STOP_ID to toStopId,
+            PROP_SOURCE to source,
+        ),
+    ) {
+        companion object {
+            const val SOURCE_STAR = "star"
+            const val SOURCE_PROMPT = "prompt"
+        }
+    }
+
+    /**
+     * "Save this trip?" prompt shown on the timetable after loading an unsaved
+     * origin-destination pair (the aha-moment save nudge).
+     *
+     * @param variant `plain` for the simple save prompt; `commute` for the
+     * Home/Work label-assigning variant.
+     */
+    data class SaveTripPromptShownEvent(val variant: String) : AnalyticsEvent(
+        name = "save_trip_prompt_shown",
+        properties = mapOf(PROP_VARIANT to variant),
+    ) {
+        companion object {
+            const val VARIANT_PLAIN = "plain"
+        }
+    }
+
+    /** User tapped Save on the "Save this trip?" prompt. */
+    data class SaveTripPromptAcceptedEvent(val variant: String) : AnalyticsEvent(
+        name = "save_trip_prompt_accepted",
+        properties = mapOf(PROP_VARIANT to variant),
+    )
+
+    /**
+     * User dismissed the "Save this trip?" prompt.
+     *
+     * @param dismissCount Total dismissals for this origin-destination pair
+     * including this one — the prompt stops appearing for the pair at 2.
+     */
+    data class SaveTripPromptDismissedEvent(
+        val variant: String,
+        val dismissCount: Int,
+    ) : AnalyticsEvent(
+        name = "save_trip_prompt_dismissed",
+        properties = mapOf(
+            PROP_VARIANT to variant,
+            "dismissCount" to dismissCount,
+        ),
     )
 
     data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(

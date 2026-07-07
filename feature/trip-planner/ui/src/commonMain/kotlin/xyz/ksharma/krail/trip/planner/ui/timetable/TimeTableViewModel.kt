@@ -297,18 +297,35 @@ class TimeTableViewModel(
 
             TimeTableUiEvent.LoadPreviousTrips -> onLoadPreviousTrips()
 
-            is TimeTableUiEvent.OriginDestinationStopHeaderClicked -> {
-                analytics.track(
-                    AnalyticsEvent.TimeTableStopHeaderClickEvent(
-                        stopId = event.stopId,
-                        stopName = event.stopName,
-                        isOrigin = event.isOrigin,
-                        tripFromStopId = tripInfo?.fromStopId.orEmpty(),
-                        tripToStopId = tripInfo?.toStopId.orEmpty(),
-                    ),
-                )
-            }
+            is TimeTableUiEvent.OriginDestinationStopHeaderClicked -> trackStopHeaderClick(event)
+
+            is TimeTableUiEvent.DeparturesIconClicked -> trackDeparturesIconClick(event)
+
+            is TimeTableUiEvent.TripStopChanged -> onTripStopChanged(event)
         }
+    }
+
+    private fun trackStopHeaderClick(event: TimeTableUiEvent.OriginDestinationStopHeaderClicked) {
+        analytics.track(
+            AnalyticsEvent.TimeTableStopHeaderClickEvent(
+                stopId = event.stopId,
+                stopName = event.stopName,
+                isOrigin = event.isOrigin,
+                tripFromStopId = tripInfo?.fromStopId.orEmpty(),
+                tripToStopId = tripInfo?.toStopId.orEmpty(),
+                action = AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_EDIT_SEARCH,
+            ),
+        )
+    }
+
+    private fun trackDeparturesIconClick(event: TimeTableUiEvent.DeparturesIconClicked) {
+        analytics.track(
+            AnalyticsEvent.TimeTableDeparturesIconClickEvent(
+                stopId = event.stopId,
+                stopName = event.stopName,
+                isOrigin = event.isOrigin,
+            ),
+        )
     }
 
     private fun observeStopLabels() {
@@ -923,22 +940,51 @@ class TimeTableViewModel(
             toStopId = tripInfo!!.fromStopId,
             toStopName = tripInfo!!.fromStopName,
         )
-        tripInfo = reverseTrip
-        journeys.clear() // Clear cache trips when reverse trip is clicked.
-        resetPaginationCaches()
-        sandook.clearAlerts() // Clear alerts cache when reverse trip is clicked.
 
         analytics.track(
             AnalyticsEvent.ReverseTimeTableClickEvent(
-                fromStopId = tripInfo!!.fromStopId,
-                toStopId = tripInfo!!.toStopId,
+                fromStopId = reverseTrip.fromStopId,
+                toStopId = reverseTrip.toStopId,
             ),
         )
 
-        val savedTrip = sandook.selectTripById(tripId = reverseTrip.tripId)
+        reloadWithNewTrip(reverseTrip)
+    }
+
+    /**
+     * User picked a replacement origin/destination from the leg-scoped stop search
+     * opened via the timetable header. Rebuilds the trip with the changed leg and
+     * reloads in place — same cache-clearing mechanics as reverse trip.
+     */
+    private fun onTripStopChanged(event: TimeTableUiEvent.TripStopChanged) {
+        val currentTrip = tripInfo ?: return
+        log("Trip stop changed -- isOrigin: ${event.isOrigin}, stopId: ${event.stopId}")
+        val newTrip = if (event.isOrigin) {
+            currentTrip.copy(fromStopId = event.stopId, fromStopName = event.stopName)
+        } else {
+            currentTrip.copy(toStopId = event.stopId, toStopName = event.stopName)
+        }
+        if (newTrip == currentTrip) {
+            log("Trip stop changed -- same stop picked, nothing to reload")
+            return
+        }
+        reloadWithNewTrip(newTrip)
+    }
+
+    /**
+     * Swaps [tripInfo] for [newTrip], clears every journey cache built for the old
+     * trip and triggers a fresh fetch. Shared by reverse-trip and stop-edit paths.
+     */
+    private fun reloadWithNewTrip(newTrip: Trip) {
+        tripInfo = newTrip
+        journeys.clear() // Clear cached trips — they belong to the old trip pair.
+        resetPaginationCaches()
+        sandook.clearAlerts() // Alerts cache is keyed to the old trip pair too.
+
+        val savedTrip = sandook.selectTripById(tripId = newTrip.tripId)
         updateUiState {
             copy(
-                trip = reverseTrip,
+                trip = newTrip,
                 isTripSaved = savedTrip != null,
                 isLoading = true,
                 isError = false,

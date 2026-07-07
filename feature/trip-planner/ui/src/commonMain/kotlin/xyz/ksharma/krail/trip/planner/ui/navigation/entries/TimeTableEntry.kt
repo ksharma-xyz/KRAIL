@@ -30,13 +30,16 @@ import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapMapper.toJourneyMapState
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TimetableStopChangedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.dateTimeSelectionSaver
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.serviceAlertSaver
@@ -121,6 +124,19 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             )
         }
 
+        // Stop picked from the leg-scoped search opened via the timetable header
+        // ("Change origin" / "Change destination"). Reloads the timetable in
+        // place — same mechanics as the Reverse button, no back-stack rebuild.
+        ResultEffect<TimetableStopChangedResult> { result ->
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = result.stopId,
+                    stopName = result.stopName,
+                    isOrigin = result.isOrigin,
+                ),
+            )
+        }
+
         // Adaptive layout — dual-pane on ≥ 600 dp width
         val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
         val dualPane = adaptiveLayoutInfo.shouldShowDualPane
@@ -183,6 +199,16 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                     tripPlannerNavigator.navigateToJourneyMap(journeyId)
                 },
                 hideMapButton = hideMapBtn,
+                onEditStopClick = { isOrigin ->
+                    tripPlannerNavigator.navigateToSearchStop(
+                        fieldType = if (isOrigin) {
+                            SearchStopFieldType.FROM
+                        } else {
+                            SearchStopFieldType.TO
+                        },
+                        editTripLeg = true,
+                    )
+                },
                 modifier = mod,
             )
         }

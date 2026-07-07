@@ -5,6 +5,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private const val PROP_STOP_ID = "stopId"
+private const val PROP_ACTION = "action"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
 private const val PROP_STOP_NAME = "stopName"
@@ -244,7 +245,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "stop_label_removed",
         properties = mapOf(
             PROP_LABEL_NAME to labelName,
-            "action" to action.value,
+            PROP_ACTION to action.value,
             "hadStop" to hadStop,
         ),
     ) {
@@ -447,7 +448,8 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     /**
      * Fired when the user taps the origin or destination label in the timetable
-     * sticky header — the gesture that opens the stop-details bottom sheet.
+     * sticky header — the gesture that opens stop search scoped to that leg
+     * ("Change origin" / "Change destination").
      *
      * The single most useful field is [isOrigin]: it answers
      * "are users more curious about where they're leaving from, or where they're
@@ -465,6 +467,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      *                       a single dashboard query can join on the trip pair
      *                       without re-deriving it from [stopId]).
      * @param tripToStopId   Destination of the trip the click happened inside.
+     * @param action        What the tap did. Historical events (pre stop-edit)
+     *                      carry no `action`; new events send
+     *                      [ACTION_EDIT_SEARCH] so the dashboard can split
+     *                      behaviour before/after the change.
      */
     data class TimeTableStopHeaderClickEvent(
         val stopId: String,
@@ -472,6 +478,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val isOrigin: Boolean,
         val tripFromStopId: String,
         val tripToStopId: String,
+        val action: String,
     ) : AnalyticsEvent(
         name = "timetable_stop_header_click",
         properties = mapOf(
@@ -480,6 +487,30 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "isOrigin" to isOrigin,
             PROP_FROM_STOP_ID to tripFromStopId,
             PROP_TO_STOP_ID to tripToStopId,
+            PROP_ACTION to action,
+        ),
+    ) {
+        companion object {
+            /** Tap opened stop search pre-scoped to the tapped leg. */
+            const val ACTION_EDIT_SEARCH = "edit_search"
+        }
+    }
+
+    /**
+     * Fired when the user taps the departures icon next to a stop name in the
+     * timetable header. Opens the departure-board sheet that used to be bound
+     * to the stop-name tap itself (see [TimeTableStopHeaderClickEvent]).
+     */
+    data class TimeTableDeparturesIconClickEvent(
+        val stopId: String,
+        val stopName: String,
+        val isOrigin: Boolean,
+    ) : AnalyticsEvent(
+        name = "timetable_departures_icon_click",
+        properties = mapOf(
+            PROP_STOP_ID to stopId,
+            PROP_STOP_NAME to stopName,
+            "isOrigin" to isOrigin,
         ),
     )
 
@@ -1074,7 +1105,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "dep_board_status",
         properties = mapOf(
             PROP_STOP_ID to stopId,
-            "action" to action.value,
+            PROP_ACTION to action.value,
             PROP_SOURCE to source.value,
         ),
     ) {

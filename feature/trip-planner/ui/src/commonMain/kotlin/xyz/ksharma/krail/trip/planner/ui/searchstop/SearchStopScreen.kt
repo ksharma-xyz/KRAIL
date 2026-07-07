@@ -123,14 +123,13 @@ fun SearchStopScreen(
     onEvent: (SearchStopUiEvent) -> Unit = {},
     dualPaneMapUiState: MapUiState? = null,
     onDualPaneMapEvent: (MapStopSelectionEvent) -> Unit = {},
+    // True when opened from the timetable header to replace one leg of the
+    // current trip — scopes the copy to "Change origin" / "Change destination".
+    editTripLeg: Boolean = false,
 ) {
     SideEffect { log("[SEARCH_STOP_SCREEN] recomposed") }
 
-    val placeholderText = when (fieldType) {
-        SearchStopFieldType.FROM -> "Choose starting point"
-        SearchStopFieldType.TO -> "Choose destination"
-        SearchStopFieldType.LABEL -> "Choose a stop"
-    }
+    val placeholderText = searchFieldPlaceholder(fieldType = fieldType, editTripLeg = editTripLeg)
 
     val themeColor by LocalThemeColor.current
     // rememberSaveable so text survives rotation and dark/light mode config changes.
@@ -345,6 +344,20 @@ internal sealed interface LabelConflict {
 // Saver<T?, Any> shape (rather than mapSaver which requires `Original : Any`) so we can
 // hold nullable MutableState backed by a Saver. Returning null from save tells the
 // framework "nothing to persist"; restore is only called when there IS something saved.
+
+/**
+ * Search-field placeholder. Doubles as the screen's scope label: when
+ * [editTripLeg] is true the search replaces one leg of the trip shown in the
+ * timetable, so the copy switches to "Change origin" / "Change destination".
+ */
+private fun searchFieldPlaceholder(
+    fieldType: SearchStopFieldType,
+    editTripLeg: Boolean,
+): String = when (fieldType) {
+    SearchStopFieldType.FROM -> if (editTripLeg) "Change origin" else "Choose starting point"
+    SearchStopFieldType.TO -> if (editTripLeg) "Change destination" else "Choose destination"
+    SearchStopFieldType.LABEL -> "Choose a stop"
+}
 
 private val StopLabelSaver: Saver<StopLabel?, Any> = Saver(
     save = { label ->

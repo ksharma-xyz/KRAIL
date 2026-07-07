@@ -9,8 +9,10 @@ import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.navigation.LocalResultEventBusObj
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
+import xyz.ksharma.krail.trip.planner.ui.navigation.TimetableStopChangedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
@@ -55,16 +57,30 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
         SearchStopScreen(
             searchStopState = searchStopState,
             fieldType = key.fieldType,
+            editTripLeg = key.editTripLeg,
             onStopSelect = { stopItem ->
-                // Send result using captured bus reference
-                val result = StopSelectedResult(
-                    fieldType = key.fieldType,
-                    stopId = stopItem.stopId,
-                    stopName = stopItem.stopName,
-                    labelKey = key.labelKey,
-                )
-
-                resultEventBus.sendResult(result = result)
+                if (key.editTripLeg) {
+                    // Leg-scoped edit from the timetable header — deliver on a
+                    // dedicated channel so SavedTrips' StopSelectedResult
+                    // listener never consumes it.
+                    resultEventBus.sendResult(
+                        result = TimetableStopChangedResult(
+                            isOrigin = key.fieldType == SearchStopFieldType.FROM,
+                            stopId = stopItem.stopId,
+                            stopName = stopItem.stopName,
+                        ),
+                    )
+                } else {
+                    // Send result using captured bus reference
+                    resultEventBus.sendResult(
+                        result = StopSelectedResult(
+                            fieldType = key.fieldType,
+                            stopId = stopItem.stopId,
+                            stopName = stopItem.stopName,
+                            labelKey = key.labelKey,
+                        ),
+                    )
+                }
 
                 // Navigate back
                 tripPlannerNavigator.goBack()

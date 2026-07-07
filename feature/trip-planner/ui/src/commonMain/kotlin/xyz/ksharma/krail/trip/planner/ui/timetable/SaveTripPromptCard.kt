@@ -60,7 +60,10 @@ internal fun LazyListScope.saveTripPromptItem(
                 // Horizontal inset matches the OriginDestination header and the
                 // trip-actions row above, so all timetable cards share one edge.
                 .padding(horizontal = KrailTheme.dimensions.spacingL)
-                .padding(top = KrailTheme.dimensions.spacingL)
+                // OriginDestination to trip-actions gap is spacingM (card's own
+                // bottom padding) + spacingL (actions row top padding) = 20dp.
+                // Match it here so both gaps around the actions row are equal.
+                .padding(top = KrailTheme.dimensions.spacingL + KrailTheme.dimensions.spacingM)
                 .animateItem(),
         )
     }

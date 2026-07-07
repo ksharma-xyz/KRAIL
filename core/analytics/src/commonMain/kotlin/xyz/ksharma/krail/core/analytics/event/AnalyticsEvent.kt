@@ -355,24 +355,23 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         }
     }
 
-    /** User tapped Save on the "Save this trip?" prompt. */
-    data class SaveTripPromptAcceptedEvent(val variant: String) : AnalyticsEvent(
-        name = "save_trip_prompt_accepted",
-        properties = mapOf(PROP_VARIANT to variant),
-    )
-
     /**
-     * User dismissed the "Save this trip?" prompt.
+     * User acted on the "Save this trip?" prompt. One event for both outcomes
+     * (accept and dismiss) to stay within the Firebase 500-event budget.
      *
+     * @param accepted true when the user tapped Save, false when dismissed.
      * @param dismissCount Total dismissals for this origin-destination pair
      * including this one — the prompt stops appearing for the pair at 2.
+     * Always 0 when [accepted] is true.
      */
-    data class SaveTripPromptDismissedEvent(
+    data class SaveTripPromptActionEvent(
+        val accepted: Boolean,
         val variant: String,
-        val dismissCount: Int,
+        val dismissCount: Int = 0,
     ) : AnalyticsEvent(
-        name = "save_trip_prompt_dismissed",
+        name = "save_trip_prompt_action",
         properties = mapOf(
+            "accepted" to accepted,
             PROP_VARIANT to variant,
             "dismissCount" to dismissCount,
         ),

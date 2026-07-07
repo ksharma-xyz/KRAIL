@@ -680,7 +680,8 @@ class TimeTableViewModel(
                 ),
             )
             analytics.track(
-                AnalyticsEvent.SaveTripPromptAcceptedEvent(
+                AnalyticsEvent.SaveTripPromptActionEvent(
+                    accepted = true,
                     variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
                 ),
             )
@@ -706,7 +707,8 @@ class TimeTableViewModel(
                 value = newCount,
             )
             analytics.track(
-                AnalyticsEvent.SaveTripPromptDismissedEvent(
+                AnalyticsEvent.SaveTripPromptActionEvent(
+                    accepted = false,
                     variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
                     dismissCount = newCount.toInt(),
                 ),

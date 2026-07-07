@@ -2237,9 +2237,10 @@ class TimeTableViewModelTest {
             val saveClickEvent = assertIs<AnalyticsEvent.SaveTripClickEvent>(assertNotNull(saveClick))
             assertEquals(AnalyticsEvent.SaveTripClickEvent.SOURCE_PROMPT, saveClickEvent.source)
 
-            val accepted = analytics.getTrackedEvent("save_trip_prompt_accepted")
-            val acceptedEvent = assertIs<AnalyticsEvent.SaveTripPromptAcceptedEvent>(assertNotNull(accepted))
-            assertEquals(AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN, acceptedEvent.variant)
+            val action = analytics.getTrackedEvent("save_trip_prompt_action")
+            val actionEvent = assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(assertNotNull(action))
+            assertTrue(actionEvent.accepted)
+            assertEquals(AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN, actionEvent.variant)
         }
 
     @Test
@@ -2260,9 +2261,10 @@ class TimeTableViewModelTest {
                     SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + promptTrip.tripId,
                 ),
             )
-            val dismissed = analytics.getTrackedEvent("save_trip_prompt_dismissed")
+            val dismissed = analytics.getTrackedEvent("save_trip_prompt_action")
             val dismissedEvent =
-                assertIs<AnalyticsEvent.SaveTripPromptDismissedEvent>(assertNotNull(dismissed))
+                assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(assertNotNull(dismissed))
+            assertFalse(dismissedEvent.accepted)
             assertEquals(1, dismissedEvent.dismissCount)
         }
 

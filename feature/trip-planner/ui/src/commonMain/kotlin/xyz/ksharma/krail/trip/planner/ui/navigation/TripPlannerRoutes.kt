@@ -16,11 +16,17 @@ data object SavedTripsRoute : TripPlannerRoute
 
 /**
  * Detail route: Search for a stop
+ *
+ * @param editTripLeg When true, the search was opened from the timetable header
+ * to replace one leg of the current trip ("Change origin" / "Change destination").
+ * The selected stop is delivered as a `TimetableStopChangedResult` so the
+ * timetable reloads in place instead of updating the SavedTrips fields.
  */
 @Serializable
 data class SearchStopRoute(
     val fieldType: SearchStopFieldType,
     val labelKey: String? = null,
+    val editTripLeg: Boolean = false,
 ) : TripPlannerRoute
 
 @Serializable

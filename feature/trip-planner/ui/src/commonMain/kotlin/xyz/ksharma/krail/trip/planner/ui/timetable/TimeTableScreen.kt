@@ -118,6 +118,7 @@ fun TimeTableScreen(
     // When true, the per-card "Maps" button is suppressed because a persistent map pane
     // is rendered alongside this screen (see docs/TABLET_FOLDABLE_UX.md §3).
     hideMapButton: Boolean = false,
+    onEditStopClick: (isOrigin: Boolean) -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
@@ -219,7 +220,6 @@ fun TimeTableScreen(
                         destination = trip.toStopDisplay(timeTableState.stopLabels),
                         timeLineColor = KrailTheme.colors.onSurface,
                         onOriginClick = { display ->
-                            selectedStop = display
                             onEvent(
                                 TimeTableUiEvent.OriginDestinationStopHeaderClicked(
                                     stopId = display.stopId,
@@ -227,11 +227,32 @@ fun TimeTableScreen(
                                     isOrigin = true,
                                 ),
                             )
+                            onEditStopClick(true)
                         },
                         onDestinationClick = { display ->
-                            selectedStop = display
                             onEvent(
                                 TimeTableUiEvent.OriginDestinationStopHeaderClicked(
+                                    stopId = display.stopId,
+                                    stopName = display.name,
+                                    isOrigin = false,
+                                ),
+                            )
+                            onEditStopClick(false)
+                        },
+                        onOriginDeparturesClick = { display ->
+                            selectedStop = display
+                            onEvent(
+                                TimeTableUiEvent.DeparturesIconClicked(
+                                    stopId = display.stopId,
+                                    stopName = display.name,
+                                    isOrigin = true,
+                                ),
+                            )
+                        },
+                        onDestinationDeparturesClick = { display ->
+                            selectedStop = display
+                            onEvent(
+                                TimeTableUiEvent.DeparturesIconClicked(
                                     stopId = display.stopId,
                                     stopName = display.name,
                                     isOrigin = false,

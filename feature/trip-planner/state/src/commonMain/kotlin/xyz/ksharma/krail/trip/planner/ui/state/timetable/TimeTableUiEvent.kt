@@ -50,13 +50,38 @@ sealed interface TimeTableUiEvent {
 
     /**
      * Fired when the user taps the origin or destination label in the timetable
-     * sticky header (the gesture that opens the stop-details bottom sheet).
+     * sticky header (the gesture that opens stop search scoped to that leg).
      *
-     * Analytics-only — the sheet itself is opened by local Compose state in
-     * `TimeTableScreen`. Routing this through the VM keeps analytics calls in
-     * one place and makes the path testable with `FakeAnalytics`.
+     * Analytics-only — navigation to search is wired at the entry level.
+     * Routing this through the VM keeps analytics calls in one place and makes
+     * the path testable with `FakeAnalytics`.
      */
     data class OriginDestinationStopHeaderClicked(
+        val stopId: String,
+        val stopName: String,
+        val isOrigin: Boolean,
+    ) : TimeTableUiEvent
+
+    /**
+     * Fired when the user taps the departures icon next to a stop name in the
+     * timetable header (the gesture that opens the stop-details bottom sheet).
+     *
+     * Analytics-only — the sheet itself is opened by local Compose state in
+     * `TimeTableScreen`.
+     */
+    data class DeparturesIconClicked(
+        val stopId: String,
+        val stopName: String,
+        val isOrigin: Boolean,
+    ) : TimeTableUiEvent
+
+    /**
+     * Fired when the user picked a replacement stop from the leg-scoped search
+     * opened via [OriginDestinationStopHeaderClicked]. Reloads the timetable in
+     * place with the changed leg (no back-stack rebuild), reusing the
+     * reverse-trip reload mechanics.
+     */
+    data class TripStopChanged(
         val stopId: String,
         val stopName: String,
         val isOrigin: Boolean,

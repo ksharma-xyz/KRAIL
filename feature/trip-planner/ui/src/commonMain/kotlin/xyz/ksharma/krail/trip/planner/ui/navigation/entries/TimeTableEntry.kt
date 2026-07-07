@@ -30,13 +30,16 @@ import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapMapper.toJourneyMapState
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.TimetableStopChangedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.dateTimeSelectionSaver
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.serviceAlertSaver
@@ -110,6 +113,16 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
         }
 
+        // False only on the FIRST composition of a freshly pushed nav entry;
+        // rememberSaveable restores true across rotation, back-from-map and
+        // process death. Lets us tell fresh navigation (route key wins — force
+        // the VM back to the key's trip even if a surviving VM still holds an
+        // edited/reversed trip for the same key) apart from a restored
+        // composition (preserve the VM's current trip).
+        var hasInitializedTrip by rememberSaveable(key.fromStopId, key.toStopId) {
+            mutableStateOf(false)
+        }
+
         // Initialize trip when route changes
         LaunchedEffect(key.fromStopId, key.toStopId) {
             log("🗺️ TimeTableEntry - LaunchedEffect triggered, initializing trip")
@@ -118,6 +131,21 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 fromStopName = key.fromStopName,
                 toStopId = key.toStopId,
                 toStopName = key.toStopName,
+                forceReload = !hasInitializedTrip,
+            )
+            hasInitializedTrip = true
+        }
+
+        // Stop picked from the leg-scoped search opened via the timetable header
+        // ("Change origin" / "Change destination"). Reloads the timetable in
+        // place — same mechanics as the Reverse button, no back-stack rebuild.
+        ResultEffect<TimetableStopChangedResult> { result ->
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = result.stopId,
+                    stopName = result.stopName,
+                    isOrigin = result.isOrigin,
+                ),
             )
         }
 
@@ -183,6 +211,16 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                     tripPlannerNavigator.navigateToJourneyMap(journeyId)
                 },
                 hideMapButton = hideMapBtn,
+                onEditStopClick = { isOrigin ->
+                    tripPlannerNavigator.navigateToSearchStop(
+                        fieldType = if (isOrigin) {
+                            SearchStopFieldType.FROM
+                        } else {
+                            SearchStopFieldType.TO
+                        },
+                        editTripLeg = true,
+                    )
+                },
                 modifier = mod,
             )
         }

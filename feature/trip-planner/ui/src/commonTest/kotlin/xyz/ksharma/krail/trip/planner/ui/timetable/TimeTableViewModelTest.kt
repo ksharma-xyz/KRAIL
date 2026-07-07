@@ -1699,7 +1699,7 @@ class TimeTableViewModelTest {
     }
 
     // region OriginDestinationStopHeaderClicked — analytics for the gesture that
-    // opens the stop-details sheet. The trip context (tripFromStopId / tripToStopId)
+    // opens the leg-scoped stop search. The trip context (tripFromStopId / tripToStopId)
     // comes from the VM's `tripInfo` field, which is set by LoadTimeTable.
 
     @Test
@@ -1741,6 +1741,12 @@ class TimeTableViewModelTest {
                 // PlanTripClickEvent / LoadTimeTableClickEvent.
                 assertEquals("FROM_STOP_ID_1", event.tripFromStopId)
                 assertEquals("TO_STOP_ID_1", event.tripToStopId)
+                // Post-A3 the tap opens the leg-scoped edit search — action lets the
+                // dashboard split behaviour before/after the change.
+                assertEquals(
+                    AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_EDIT_SEARCH,
+                    event.action,
+                )
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -1781,6 +1787,342 @@ class TimeTableViewModelTest {
                 assertFalse(event.isOrigin)
                 assertEquals("FROM_STOP_ID_1", event.tripFromStopId)
                 assertEquals("TO_STOP_ID_1", event.tripToStopId)
+                assertEquals(
+                    AnalyticsEvent.TimeTableStopHeaderClickEvent.ACTION_EDIT_SEARCH,
+                    event.action,
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion
+
+    // region DeparturesIconClicked — analytics for the explicit departures icon
+    // that now owns the stop-details sheet (moved off the stop-name tap).
+
+    @Test
+    fun `GIVEN trip loaded WHEN departures icon is clicked THEN departures icon click event is tracked`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.onEvent(
+                TimeTableUiEvent.DeparturesIconClicked(
+                    stopId = "FROM_STOP_ID_1",
+                    stopName = "STOP_NAME_1",
+                    isOrigin = true,
+                ),
+            )
+            advanceUntilIdle()
+
+            val tracked = analytics.getTrackedEvent("timetable_departures_icon_click")
+            assertNotNull(tracked)
+            val event = assertIs<AnalyticsEvent.TimeTableDeparturesIconClickEvent>(tracked)
+            assertEquals("FROM_STOP_ID_1", event.stopId)
+            assertEquals("STOP_NAME_1", event.stopName)
+            assertTrue(event.isOrigin)
+        }
+
+    // endregion
+
+    // region TripStopChanged — stop picked from the leg-scoped edit search reloads
+    // the timetable in place with the changed leg, keeping the other leg untouched.
+
+    @Test
+    fun `GIVEN trip loaded WHEN origin stop is changed THEN timetable reloads with new origin and destination untouched`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    TimeTableUiEvent.TripStopChanged(
+                        stopId = "NEW_FROM_STOP_ID",
+                        stopName = "NEW_FROM_STOP_NAME",
+                        isOrigin = true,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                assertEquals("NEW_FROM_STOP_ID", state.trip?.fromStopId)
+                assertEquals("NEW_FROM_STOP_NAME", state.trip?.fromStopName)
+                assertEquals("TO_STOP_ID_1", state.trip?.toStopId)
+                assertEquals("STOP_NAME_2", state.trip?.toStopName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN trip loaded WHEN destination stop is changed THEN timetable reloads with new destination and origin untouched`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    TimeTableUiEvent.TripStopChanged(
+                        stopId = "NEW_TO_STOP_ID",
+                        stopName = "NEW_TO_STOP_NAME",
+                        isOrigin = false,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                assertEquals("FROM_STOP_ID_1", state.trip?.fromStopId)
+                assertEquals("STOP_NAME_1", state.trip?.fromStopName)
+                assertEquals("NEW_TO_STOP_ID", state.trip?.toStopId)
+                assertEquals("NEW_TO_STOP_NAME", state.trip?.toStopName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN trip loaded WHEN same stop is picked as replacement THEN nothing reloads`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                advanceUntilIdle()
+                expectMostRecentItem()
+
+                viewModel.onEvent(
+                    TimeTableUiEvent.TripStopChanged(
+                        stopId = "FROM_STOP_ID_1",
+                        stopName = "STOP_NAME_1",
+                        isOrigin = true,
+                    ),
+                )
+                advanceUntilIdle()
+
+                // Same stop picked — handler bails before touching state, so no
+                // new UI state is emitted.
+                expectNoEvents()
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN stop changed WHEN LoadTimeTable fires again for the original pair THEN original pair reloads fresh`() =
+        runTest {
+            // Regression: an in-place stop edit must update the VM's trip-identity
+            // tracking. Re-opening the original saved trip (same nav key) used to
+            // hit the "same trip, preserve state" branch and show the edited pair.
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = "NEW_FROM_STOP_ID",
+                    stopName = "NEW_FROM_STOP_NAME",
+                    isOrigin = true,
+                ),
+            )
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
+
+            // User goes back and taps the original saved trip again.
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.run {
+                assertEquals("FROM_STOP_ID_1", this.trip?.fromStopId)
+                assertEquals("TO_STOP_ID_1", this.trip?.toStopId)
+                // The old "same trip, preserve state" branch left isLoading false
+                // and never refetched. isLoading=true proves the original pair is
+                // being reloaded fresh (the screen shows the loading state, not
+                // the edited pair's journeys).
+                assertTrue(isLoading)
+            }
+        }
+
+    @Test
+    fun `GIVEN trip reversed WHEN LoadTimeTable fires again for the original pair THEN original pair reloads fresh`() =
+        runTest {
+            // Reverse shares reloadWithNewTrip with the stop edit — the same
+            // stale-VM bug applied: reopening the original saved trip after a
+            // reverse used to hit the "same trip, preserve state" branch.
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            viewModel.onEvent(TimeTableUiEvent.ReverseTripButtonClicked)
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertEquals("TO_STOP_ID_1", viewModel.uiState.value.trip?.fromStopId)
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.run {
+                assertEquals("FROM_STOP_ID_1", this.trip?.fromStopId)
+                assertEquals("TO_STOP_ID_1", this.trip?.toStopId)
+                assertTrue(isLoading)
+            }
+        }
+
+    @Test
+    fun `GIVEN stop changed WHEN initializeTrip is forced for the same nav key THEN key pair wins`() =
+        runTest {
+            // Fresh navigation onto a surviving VM: the route key is the source
+            // of truth, even though the key equals lastInitializedRouteFromTo.
+            tripPlanningService.isSuccess = true
+            viewModel.initializeTrip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            advanceUntilIdle()
+
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = "NEW_TO_STOP_ID",
+                    stopName = "NEW_TO_STOP_NAME",
+                    isOrigin = false,
+                ),
+            )
+            advanceUntilIdle()
+            assertEquals("NEW_TO_STOP_ID", viewModel.uiState.value.trip?.toStopId)
+
+            viewModel.initializeTrip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+                forceReload = true,
+            )
+            advanceUntilIdle()
+
+            viewModel.uiState.value.run {
+                assertEquals("TO_STOP_ID_1", this.trip?.toStopId)
+                assertTrue(isLoading)
+            }
+        }
+
+    @Test
+    fun `GIVEN stop changed WHEN initializeTrip is not forced for the same nav key THEN edited trip is preserved`() =
+        runTest {
+            // Restored composition (rotation / back-from-map): the VM's current
+            // trip wins; the stale nav key must not clobber the edit.
+            tripPlanningService.isSuccess = true
+            viewModel.initializeTrip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            advanceUntilIdle()
+
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = "NEW_TO_STOP_ID",
+                    stopName = "NEW_TO_STOP_NAME",
+                    isOrigin = false,
+                ),
+            )
+            advanceUntilIdle()
+
+            viewModel.initializeTrip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            advanceUntilIdle()
+
+            assertEquals("NEW_TO_STOP_ID", viewModel.uiState.value.trip?.toStopId)
+        }
+
+    @Test
+    fun `GIVEN changed trip matches a saved trip WHEN stop is changed THEN isTripSaved reflects the new pair`() =
+        runTest {
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            val savedTrip = Trip(
+                fromStopId = "NEW_FROM_STOP_ID",
+                fromStopName = "NEW_FROM_STOP_NAME",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            sandook.insertOrReplaceTrip(
+                tripId = savedTrip.tripId,
+                fromStopId = savedTrip.fromStopId,
+                fromStopName = savedTrip.fromStopName,
+                toStopId = savedTrip.toStopId,
+                toStopName = savedTrip.toStopName,
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    TimeTableUiEvent.TripStopChanged(
+                        stopId = "NEW_FROM_STOP_ID",
+                        stopName = "NEW_FROM_STOP_NAME",
+                        isOrigin = true,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                assertEquals("NEW_FROM_STOP_ID", state.trip?.fromStopId)
+                assertTrue(state.isTripSaved)
 
                 cancelAndIgnoreRemainingEvents()
             }

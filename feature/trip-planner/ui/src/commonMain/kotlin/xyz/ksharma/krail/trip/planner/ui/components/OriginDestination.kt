@@ -26,9 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -55,6 +58,8 @@ internal fun OriginDestination(
     modifier: Modifier = Modifier,
     onOriginClick: ((StopDisplay) -> Unit)? = null,
     onDestinationClick: ((StopDisplay) -> Unit)? = null,
+    onOriginDeparturesClick: ((StopDisplay) -> Unit)? = null,
+    onDestinationDeparturesClick: ((StopDisplay) -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     val cardShape = CardShape
@@ -70,6 +75,7 @@ internal fun OriginDestination(
             isOrigin = true,
             timeLineColor = timeLineColor,
             onClick = onOriginClick,
+            onDeparturesClick = onOriginDeparturesClick,
         )
         Divider(
             modifier = Modifier.padding(
@@ -82,6 +88,7 @@ internal fun OriginDestination(
             isOrigin = false,
             timeLineColor = timeLineColor,
             onClick = onDestinationClick,
+            onDeparturesClick = onDestinationDeparturesClick,
         )
     }
 }
@@ -93,6 +100,7 @@ private fun StopRow(
     timeLineColor: Color,
     onClick: ((StopDisplay) -> Unit)?,
     modifier: Modifier = Modifier,
+    onDeparturesClick: ((StopDisplay) -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     val clickModifier = onClick?.let { handler ->
@@ -154,6 +162,7 @@ private fun StopRow(
             },
             contentAlignment = Alignment.CenterStart,
             label = if (isOrigin) "originStopName" else "destinationStopName",
+            modifier = Modifier.weight(1f),
         ) { targetDisplay ->
             targetDisplay.label?.let { label ->
                 FlowRow(
@@ -173,6 +182,28 @@ private fun StopRow(
                 Text(
                     text = targetDisplay.name,
                     style = KrailTheme.typography.titleMedium,
+                )
+            }
+        }
+
+        onDeparturesClick?.let { handler ->
+            // Explicit affordance for the departure-board sheet, which used to
+            // open on stop-name tap (that tap now edits the stop instead).
+            Box(
+                modifier = Modifier
+                    .size(dim.iconL)
+                    .clip(CircleShape)
+                    .klickable { handler(display) }
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = "Departures from ${display.name}"
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.ic_clock),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                    modifier = Modifier.size(dim.iconS),
                 )
             }
         }

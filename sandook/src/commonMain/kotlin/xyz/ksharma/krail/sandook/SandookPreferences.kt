@@ -42,5 +42,12 @@ interface SandookPreferences {
         const val KEY_HAS_SEEN_MAP_OPTIONS_SHEET = "KEY_HAS_SEEN_MAP_OPTIONS_SHEET"
 
         const val KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP = "KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP"
+
+        /**
+         * Prefix for per-trip "Save this trip?" prompt dismissal counters.
+         * Full key is this prefix + tripId; value is the number of times the
+         * user dismissed the prompt for that origin-destination pair.
+         */
+        const val KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX = "KEY_SAVE_TRIP_PROMPT_DISMISSALS_"
     }
 }

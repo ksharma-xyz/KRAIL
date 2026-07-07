@@ -46,6 +46,7 @@ import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.ratelimit.RateLimiter
@@ -70,6 +71,7 @@ class TimeTableViewModel(
     private val tripPlanningService: TripPlanningService,
     private val rateLimiter: RateLimiter,
     private val sandook: Sandook,
+    private val preferences: SandookPreferences,
     private val analytics: Analytics,
     private val shareManager: ShareManager,
     private val ioDispatcher: CoroutineDispatcher,
@@ -311,6 +313,10 @@ class TimeTableViewModel(
             is TimeTableUiEvent.DeparturesIconClicked -> trackDeparturesIconClick(event)
 
             is TimeTableUiEvent.TripStopChanged -> onTripStopChanged(event)
+
+            TimeTableUiEvent.SaveTripPromptAccepted -> onSaveTripPromptAccepted()
+
+            TimeTableUiEvent.SaveTripPromptDismissed -> onSaveTripPromptDismissed()
         }
     }
 
@@ -633,6 +639,83 @@ class TimeTableViewModel(
         }
     }
 
+    /**
+     * Resolves whether the one-tap "Save this trip?" prompt should be visible
+     * for the trip being loaded. Returns the value for the load's own state
+     * update; also fires the shown event and burns the per-session allowance
+     * the first time it resolves true.
+     *
+     * Only users with ZERO saved trips ever see the prompt — once any trip is
+     * saved the user has discovered the feature and the nudge is pointless.
+     * Frequency rules (story A2): at most once per app session, and stop after
+     * [MAX_SAVE_TRIP_PROMPT_DISMISSALS] dismissals for the same pair.
+     */
+    private fun resolveSavePromptOnLoad(tripId: String): Boolean {
+        // Already on screen (e.g. same-trip re-init) — keep it there.
+        if (_uiState.value.showSaveTripPrompt) return true
+        val eligible = !savePromptShownInSession &&
+            sandook.selectAllTrips().isEmpty() &&
+            promptDismissCount(tripId) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
+        if (!eligible) return false
+        savePromptShownInSession = true
+        analytics.track(
+            AnalyticsEvent.SaveTripPromptShownEvent(
+                variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
+            ),
+        )
+        return true
+    }
+
+    private fun promptDismissCount(tripId: String): Long =
+        preferences.getLong(SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + tripId) ?: 0L
+
+    private fun onSaveTripPromptAccepted() {
+        val trip = tripInfo ?: return
+        viewModelScope.launch(ioDispatcher) {
+            analytics.track(
+                AnalyticsEvent.SaveTripClickEvent(
+                    fromStopId = trip.fromStopId,
+                    toStopId = trip.toStopId,
+                    source = AnalyticsEvent.SaveTripClickEvent.SOURCE_PROMPT,
+                ),
+            )
+            analytics.track(
+                AnalyticsEvent.SaveTripPromptActionEvent(
+                    accepted = true,
+                    variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
+                ),
+            )
+            sandook.insertOrReplaceTrip(
+                tripId = trip.tripId,
+                fromStopId = trip.fromStopId,
+                fromStopName = trip.fromStopName,
+                toStopId = trip.toStopId,
+                toStopName = trip.toStopName,
+            )
+            log("Saved Trip (Prompt): $trip")
+            updateUiState { copy(isTripSaved = true, showSaveTripPrompt = false) }
+        }
+    }
+
+    private fun onSaveTripPromptDismissed() {
+        val trip = tripInfo ?: return
+        updateUiState { copy(showSaveTripPrompt = false) }
+        viewModelScope.launch(ioDispatcher) {
+            val newCount = promptDismissCount(trip.tripId) + 1
+            preferences.setLong(
+                key = SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + trip.tripId,
+                value = newCount,
+            )
+            analytics.track(
+                AnalyticsEvent.SaveTripPromptActionEvent(
+                    accepted = false,
+                    variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
+                    dismissCount = newCount.toInt(),
+                ),
+            )
+        }
+    }
+
     private suspend fun loadTrip(): Result<TripResponse> = withContext(ioDispatcher) {
         log("loadTrip API Call")
         require(
@@ -844,7 +927,8 @@ class TimeTableViewModel(
                         toStopName = trip.toStopName,
                     )
                     log("Saved Trip (Pref): $trip")
-                    updateUiState { copy(isTripSaved = true) }
+                    // Saving via the star makes the prompt redundant — drop it.
+                    updateUiState { copy(isTripSaved = true, showSaveTripPrompt = false) }
                 }
             }
         }
@@ -907,6 +991,10 @@ class TimeTableViewModel(
 
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
+        // Resolved at load time so the prompt shows while journeys are still
+        // loading; results simply render below it when they arrive. Folded into
+        // the same state update as the load itself (single emission).
+        val showSavePrompt = resolveSavePromptOnLoad(currentTripId)
 
         if (!isSameTrip) {
             // Different trip - clear state and fetch new data
@@ -922,6 +1010,7 @@ class TimeTableViewModel(
                     trip = trip,
                     isTripSaved = savedTrip != null,
                     isError = false,
+                    showSaveTripPrompt = showSavePrompt,
                 )
             }
 
@@ -933,6 +1022,7 @@ class TimeTableViewModel(
                 copy(
                     trip = trip,
                     isTripSaved = savedTrip != null,
+                    showSaveTripPrompt = showSavePrompt,
                 )
             }
         }
@@ -1001,6 +1091,8 @@ class TimeTableViewModel(
                 isTripSaved = savedTrip != null,
                 isLoading = true,
                 isError = false,
+                // Prompt eligibility is re-evaluated after the new pair loads.
+                showSaveTripPrompt = false,
             )
         }
         rateLimiter.triggerEvent()
@@ -1197,6 +1289,19 @@ class TimeTableViewModel(
          * Replace with a remote flag lookup when ready.
          */
         const val PAGINATION_ENABLED = true
+
+        /** Dismissals per pair after which the "Save this trip?" prompt never returns. */
+        @VisibleForTesting
+        const val MAX_SAVE_TRIP_PROMPT_DISMISSALS = 2L
+
+        // "Save this trip?" prompt is shown at most once per app session
+        // (process lifetime), across all TimeTableViewModel instances.
+        private var savePromptShownInSession = false
+
+        @VisibleForTesting
+        fun resetSavePromptSessionFlagForTest() {
+            savePromptShownInSession = false
+        }
     }
 }
 

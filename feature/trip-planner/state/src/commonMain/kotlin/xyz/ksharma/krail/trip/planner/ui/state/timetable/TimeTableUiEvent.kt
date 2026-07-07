@@ -86,4 +86,10 @@ sealed interface TimeTableUiEvent {
         val stopName: String,
         val isOrigin: Boolean,
     ) : TimeTableUiEvent
+
+    /** User tapped Save on the "Save this trip?" prompt. */
+    data object SaveTripPromptAccepted : TimeTableUiEvent
+
+    /** User dismissed the "Save this trip?" prompt. */
+    data object SaveTripPromptDismissed : TimeTableUiEvent
 }

@@ -87,6 +87,7 @@ val viewModelsModule = module {
             tripPlanningService = get(),
             rateLimiter = get(),
             sandook = get(),
+            preferences = get(),
             analytics = get(),
             ioDispatcher = get(named(IODispatcher)),
             festivalManager = get(),

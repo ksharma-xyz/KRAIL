@@ -29,6 +29,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.fakes.FakeShareManager
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
 import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder
@@ -74,10 +75,12 @@ class TimeTableViewModelCacheTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        TimeTableViewModel.resetSavePromptSessionFlagForTest()
         viewModel = TimeTableViewModel(
             tripPlanningService = tripPlanningService,
             rateLimiter = rateLimiter,
             sandook = FakeSandook(),
+            preferences = FakeSandookPreferences(),
             analytics = FakeAnalytics(),
             shareManager = FakeShareManager(),
             ioDispatcher = testDispatcher,

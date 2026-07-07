@@ -1977,6 +1977,39 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN trip reversed WHEN LoadTimeTable fires again for the original pair THEN original pair reloads fresh`() =
+        runTest {
+            // Reverse shares reloadWithNewTrip with the stop edit — the same
+            // stale-VM bug applied: reopening the original saved trip after a
+            // reverse used to hit the "same trip, preserve state" branch.
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_STOP_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            viewModel.onEvent(TimeTableUiEvent.ReverseTripButtonClicked)
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+            assertEquals("TO_STOP_ID_1", viewModel.uiState.value.trip?.fromStopId)
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            advanceUntilIdle()
+
+            viewModel.uiState.value.run {
+                assertEquals("FROM_STOP_ID_1", this.trip?.fromStopId)
+                assertEquals("TO_STOP_ID_1", this.trip?.toStopId)
+                assertTrue(isLoading)
+            }
+        }
+
+    @Test
     fun `GIVEN stop changed WHEN initializeTrip is forced for the same nav key THEN key pair wins`() =
         runTest {
             // Fresh navigation onto a surviving VM: the route key is the source

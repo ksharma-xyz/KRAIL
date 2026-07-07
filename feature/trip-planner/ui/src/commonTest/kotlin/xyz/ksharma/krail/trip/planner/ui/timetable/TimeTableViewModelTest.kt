@@ -2186,6 +2186,27 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN a different trip is already saved WHEN timetable loads THEN no prompt is shown`() =
+        runTest {
+            // The prompt only targets users with ZERO saved trips — once any
+            // trip is saved the user has discovered the save feature.
+            val analytics = fakeAnalytics as FakeAnalytics
+            sandook.insertOrReplaceTrip(
+                tripId = "OTHER_TRIP_ID",
+                fromStopId = "OTHER_FROM",
+                fromStopName = "Other From",
+                toStopId = "OTHER_TO",
+                toStopName = "Other To",
+            )
+
+            loadPromptTrip()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            assertFalse(analytics.isEventTracked("save_trip_prompt_shown"))
+        }
+
+    @Test
     fun `GIVEN prompt visible WHEN accepted THEN trip saved and accepted plus save click events fire`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics

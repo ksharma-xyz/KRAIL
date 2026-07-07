@@ -642,18 +642,19 @@ class TimeTableViewModel(
     }
 
     /**
-     * Shows the one-tap "Save this trip?" prompt after a successful load of an
-     * unsaved pair. Frequency rules (story A2): at most once per app session,
-     * never for already-saved pairs, and stop after
+     * Shows the one-tap "Save this trip?" prompt after a successful load.
+     * Only users with ZERO saved trips ever see it — once any trip is saved
+     * the user has discovered the feature and the nudge is pointless.
+     * Frequency rules (story A2): at most once per app session, and stop after
      * [MAX_SAVE_TRIP_PROMPT_DISMISSALS] dismissals for the same pair.
      */
     private fun maybeShowSaveTripPrompt() {
         val trip = tripInfo ?: return
         val state = _uiState.value
-        val alreadyShownOrSaved =
-            savePromptShownInSession || state.showSaveTripPrompt || state.isTripSaved
-        val eligible = !alreadyShownOrSaved &&
+        val alreadyShown = savePromptShownInSession || state.showSaveTripPrompt
+        val eligible = !alreadyShown &&
             state.journeyList.isNotEmpty() &&
+            sandook.selectAllTrips().isEmpty() &&
             promptDismissCount(trip.tripId) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
         if (!eligible) return
         savePromptShownInSession = true

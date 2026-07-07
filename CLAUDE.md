@@ -5,6 +5,14 @@
 Compose Multiplatform app targeting Android + iOS.
 Android is the primary testable target from the command line. iOS tests are not run.
 
+## Analytics events
+
+Firebase caps the app at **500 unique event names, forever**. Before adding or
+changing anything in `AnalyticsEvent.kt`, read `docs/ANALYTICS_EVENTS.md` — it has the
+new-event-vs-param decision checklist, aggregation patterns (`action`/`source`/boolean
+params), the double-counting check, and the EVENT_REGISTRY.md registration gate.
+Never mint an event name without passing that checklist.
+
 ## Test Commands
 
 | Scope | Command |

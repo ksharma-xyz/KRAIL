@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
@@ -40,10 +42,14 @@ internal fun LazyListScope.saveTripPromptItem(
 ) {
     if (!showSaveTripPrompt) return
     item(key = "save-trip-prompt") {
+        val haptic = LocalHapticFeedback.current
         InfoTile(
             infoTileData = saveTripPromptTileData,
             initialState = InfoTileState.EXPANDED,
             onCtaClick = {
+                // First save deserves a physical tick alongside the star
+                // celebration so the moment lands.
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 onEvent(TimeTableUiEvent.SaveTripPromptAccepted)
                 // Kick off the title-bar star celebration so the user sees
                 // where the save control permanently lives.

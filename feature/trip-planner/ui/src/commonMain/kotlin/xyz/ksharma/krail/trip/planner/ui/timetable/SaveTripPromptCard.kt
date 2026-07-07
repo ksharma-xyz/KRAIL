@@ -36,13 +36,19 @@ private val saveTripPromptTileData = InfoTileData(
 internal fun LazyListScope.saveTripPromptItem(
     showSaveTripPrompt: Boolean,
     onEvent: (TimeTableUiEvent) -> Unit,
+    onSaveAccepted: () -> Unit = {},
 ) {
     if (!showSaveTripPrompt) return
     item(key = "save-trip-prompt") {
         InfoTile(
             infoTileData = saveTripPromptTileData,
             initialState = InfoTileState.EXPANDED,
-            onCtaClick = { onEvent(TimeTableUiEvent.SaveTripPromptAccepted) },
+            onCtaClick = {
+                onEvent(TimeTableUiEvent.SaveTripPromptAccepted)
+                // Kick off the title-bar star celebration so the user sees
+                // where the save control permanently lives.
+                onSaveAccepted()
+            },
             onDismissClick = { onEvent(TimeTableUiEvent.SaveTripPromptDismissed) },
             modifier = Modifier
                 // Horizontal inset matches the OriginDestination header and the

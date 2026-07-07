@@ -58,8 +58,6 @@ import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_check
 import krail.feature.trip_planner.ui.generated.resources.ic_filter
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
-import krail.feature.trip_planner.ui.generated.resources.ic_star
-import krail.feature.trip_planner.ui.generated.resources.ic_star_filled
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
@@ -132,6 +130,9 @@ fun TimeTableScreen(
     // Tracks which stop's details sheet is open. Tap on a stop in the
     // OriginDestination header sets this; the sheet is dismissed back to null.
     var selectedStop by remember { mutableStateOf<StopDisplay?>(null) }
+    // One-shot: true while the title-bar star plays its first-save celebration
+    // (triggered by the "Save this trip?" tile's Save button).
+    var celebrateSaveStar by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.fillMaxSize().background(color = KrailTheme.colors.surface),
@@ -191,25 +192,12 @@ fun TimeTableScreen(
                                 modifier = Modifier.size(dim.iconM),
                             )
                         }
-                        ActionButton(
+                        SaveTripStarButton(
+                            isTripSaved = timeTableState.isTripSaved,
+                            celebrate = celebrateSaveStar,
+                            onCelebrateEnd = { celebrateSaveStar = false },
                             onClick = { onEvent(TimeTableUiEvent.SaveTripButtonClicked) },
-                            contentDescription = if (timeTableState.isTripSaved) {
-                                "Remove Saved Trip"
-                            } else {
-                                "Save Trip"
-                            },
-                        ) {
-                            Image(
-                                painter = if (timeTableState.isTripSaved) {
-                                    painterResource(Res.drawable.ic_star_filled)
-                                } else {
-                                    painterResource(Res.drawable.ic_star)
-                                },
-                                contentDescription = null,
-                                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                                modifier = Modifier.size(dim.iconM),
-                            )
-                        }
+                        )
                     },
                 )
             }
@@ -373,6 +361,7 @@ fun TimeTableScreen(
             saveTripPromptItem(
                 showSaveTripPrompt = timeTableState.showSaveTripPrompt,
                 onEvent = onEvent,
+                onSaveAccepted = { celebrateSaveStar = true },
             )
 
             item(key = "spacer-top") {

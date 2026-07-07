@@ -5,6 +5,40 @@
 Compose Multiplatform app targeting Android + iOS.
 Android is the primary testable target from the command line. iOS tests are not run.
 
+## Analytics events — design before you add
+
+Firebase Analytics hard-caps the app at **500 unique event names, forever** — GA never
+lets a name be reclaimed from history. Event definitions live in
+`core/analytics/.../AnalyticsEvent.kt`. Before adding an event, apply this checklist:
+
+**A new event NAME is justified only when ALL of these hold:**
+1. It captures a new user intent (not a new gesture/surface for an existing intent).
+2. It shares no surface AND no param set with an existing event.
+3. It would be charted standalone on a dashboard.
+
+**Otherwise extend an existing event with a param** — params are free (limit is 25 per
+event, nowhere near it):
+- Different gesture, same surface, same params: add an `action` value.
+  Example: departures icon fires `timetable_stop_header_click` with
+  `action = open_departures`, not a separate `timetable_departures_icon_click`.
+- Outcomes of one interaction (accept/dismiss, on/off, success/failure): ONE event
+  with a boolean or enum param. Example: `save_trip_prompt_action(accepted: Boolean)`,
+  not `_accepted` + `_dismissed`.
+- Same event across surfaces: `source` param (see `DepartureBoardSource`,
+  `SaveTripClickEvent.source`).
+
+Also check the sheet/screen you are instrumenting doesn't already fire an equivalent
+event (e.g. opening the departure board already fires `dep_board_screen_view` with
+`source` — a click event for the same open may be double counting).
+
+Folding beats splitting analytically too: a feature that moves between gestures keeps
+a single-event query timeline (`action IS NULL OR action = 'x'`) instead of forcing
+dashboards to UNION event names.
+
+Every new event or param must be registered in `docs/EVENT_REGISTRY.md` in the
+KRAIL-Analytics repo before the app PR merges (params, trigger description, owner
+story link).
+
 ## Test Commands
 
 | Scope | Command |

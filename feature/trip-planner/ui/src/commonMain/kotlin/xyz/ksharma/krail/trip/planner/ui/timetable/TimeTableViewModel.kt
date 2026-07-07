@@ -213,10 +213,19 @@ class TimeTableViewModel(
         fromStopName: String,
         toStopId: String,
         toStopName: String,
+        forceReload: Boolean = false,
     ) {
         val currentRoute = Pair(fromStopId, toStopId)
-        // Check if this is the EXACT SAME route we just initialized
-        if (lastInitializedRouteFromTo == currentRoute) {
+        // Check if this is the EXACT SAME route we just initialized.
+        //
+        // forceReload distinguishes a FRESH navigation (new nav entry pushed —
+        // the route key is the source of truth, even when a surviving VM still
+        // holds an in-place edited/reversed trip for the same key) from a
+        // RESTORED composition (rotation / back-from-map — preserve whatever
+        // trip the VM currently holds). Without it, a VM that outlives its nav
+        // entry briefly shows the edited trip when the user re-opens the same
+        // saved trip from SavedTrips.
+        if (!forceReload && lastInitializedRouteFromTo == currentRoute) {
             log("🗺️ initializeTrip: SKIPPING - Same route already initialized, preserving state!")
             // Don't reinitialize - this is likely navigation back from map
             // State is already correct, no need to call onLoadTimeTable
@@ -977,6 +986,10 @@ class TimeTableViewModel(
      */
     private fun reloadWithNewTrip(newTrip: Trip) {
         tripInfo = newTrip
+        // Keep trip-identity tracking honest: a later LoadTimeTable /
+        // initializeTrip(forceReload) for the pre-edit pair must be treated as
+        // a DIFFERENT trip (clear + refetch), not "same trip, preserve state".
+        previousTripId = newTrip.tripId
         journeys.clear() // Clear cached trips — they belong to the old trip pair.
         resetPaginationCaches()
         sandook.clearAlerts() // Alerts cache is keyed to the old trip pair too.

@@ -113,6 +113,16 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
         }
 
+        // False only on the FIRST composition of a freshly pushed nav entry;
+        // rememberSaveable restores true across rotation, back-from-map and
+        // process death. Lets us tell fresh navigation (route key wins — force
+        // the VM back to the key's trip even if a surviving VM still holds an
+        // edited/reversed trip for the same key) apart from a restored
+        // composition (preserve the VM's current trip).
+        var hasInitializedTrip by rememberSaveable(key.fromStopId, key.toStopId) {
+            mutableStateOf(false)
+        }
+
         // Initialize trip when route changes
         LaunchedEffect(key.fromStopId, key.toStopId) {
             log("🗺️ TimeTableEntry - LaunchedEffect triggered, initializing trip")
@@ -121,7 +131,9 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 fromStopName = key.fromStopName,
                 toStopId = key.toStopId,
                 toStopName = key.toStopName,
+                forceReload = !hasInitializedTrip,
             )
+            hasInitializedTrip = true
         }
 
         // Stop picked from the leg-scoped search opened via the timetable header

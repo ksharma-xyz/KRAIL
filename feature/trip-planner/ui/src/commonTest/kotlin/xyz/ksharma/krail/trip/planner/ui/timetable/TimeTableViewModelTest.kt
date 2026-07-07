@@ -2156,7 +2156,17 @@ class TimeTableViewModelTest {
     fun `GIVEN unsaved pair WHEN timetable loads THEN save prompt is shown and shown event fires once`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics
-            loadPromptTrip()
+
+            // Prompt shows at load time, while journeys are still loading.
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(promptTrip))
+            viewModel.uiState.value.run {
+                assertTrue(showSaveTripPrompt)
+                assertTrue(isLoading)
+            }
+
+            // Journeys arriving must keep the prompt visible.
+            tripPlanningService.isSuccess = true
+            viewModel.fetchTrip()
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.showSaveTripPrompt)

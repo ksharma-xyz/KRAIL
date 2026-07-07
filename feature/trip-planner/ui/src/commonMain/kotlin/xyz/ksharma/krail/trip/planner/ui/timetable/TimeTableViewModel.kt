@@ -637,33 +637,33 @@ class TimeTableViewModel(
                 paginationEnabled = PAGINATION_ENABLED,
             )
         }
-
-        maybeShowSaveTripPrompt()
     }
 
     /**
-     * Shows the one-tap "Save this trip?" prompt after a successful load.
-     * Only users with ZERO saved trips ever see it — once any trip is saved
-     * the user has discovered the feature and the nudge is pointless.
+     * Resolves whether the one-tap "Save this trip?" prompt should be visible
+     * for the trip being loaded. Returns the value for the load's own state
+     * update; also fires the shown event and burns the per-session allowance
+     * the first time it resolves true.
+     *
+     * Only users with ZERO saved trips ever see the prompt — once any trip is
+     * saved the user has discovered the feature and the nudge is pointless.
      * Frequency rules (story A2): at most once per app session, and stop after
      * [MAX_SAVE_TRIP_PROMPT_DISMISSALS] dismissals for the same pair.
      */
-    private fun maybeShowSaveTripPrompt() {
-        val trip = tripInfo ?: return
-        val state = _uiState.value
-        val alreadyShown = savePromptShownInSession || state.showSaveTripPrompt
-        val eligible = !alreadyShown &&
-            state.journeyList.isNotEmpty() &&
+    private fun resolveSavePromptOnLoad(tripId: String): Boolean {
+        // Already on screen (e.g. same-trip re-init) — keep it there.
+        if (_uiState.value.showSaveTripPrompt) return true
+        val eligible = !savePromptShownInSession &&
             sandook.selectAllTrips().isEmpty() &&
-            promptDismissCount(trip.tripId) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
-        if (!eligible) return
+            promptDismissCount(tripId) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
+        if (!eligible) return false
         savePromptShownInSession = true
-        updateUiState { copy(showSaveTripPrompt = true) }
         analytics.track(
             AnalyticsEvent.SaveTripPromptShownEvent(
                 variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
             ),
         )
+        return true
     }
 
     private fun promptDismissCount(tripId: String): Long =
@@ -989,6 +989,10 @@ class TimeTableViewModel(
 
         tripInfo = trip
         val savedTrip = sandook.selectTripById(tripId = trip.tripId)
+        // Resolved at load time so the prompt shows while journeys are still
+        // loading; results simply render below it when they arrive. Folded into
+        // the same state update as the load itself (single emission).
+        val showSavePrompt = resolveSavePromptOnLoad(currentTripId)
 
         if (!isSameTrip) {
             // Different trip - clear state and fetch new data
@@ -1004,8 +1008,7 @@ class TimeTableViewModel(
                     trip = trip,
                     isTripSaved = savedTrip != null,
                     isError = false,
-                    // Prompt eligibility is re-evaluated after the new pair loads.
-                    showSaveTripPrompt = false,
+                    showSaveTripPrompt = showSavePrompt,
                 )
             }
 
@@ -1017,6 +1020,7 @@ class TimeTableViewModel(
                 copy(
                     trip = trip,
                     isTripSaved = savedTrip != null,
+                    showSaveTripPrompt = showSavePrompt,
                 )
             }
         }

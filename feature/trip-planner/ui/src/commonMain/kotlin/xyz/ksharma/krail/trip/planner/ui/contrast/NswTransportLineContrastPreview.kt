@@ -63,7 +63,7 @@ import xyz.ksharma.krail.taj.theme.md_theme_light_surface
  *   • light_xlarge  (2.0× font scale — accessibility)
  *   • dark_normal   (1.0× font scale)
  */
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(name = "Trains - Light", showBackground = true, widthDp = 420)
 @Preview(name = "Trains - Dark", showBackground = true, widthDp = 420, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
 @Composable
@@ -79,7 +79,7 @@ private fun NswTransportLineTrainContrastPreview() {
 /**
  * Visual WCAG AA catalog for all NSW **ferry** lines.
  */
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(name = "Ferries - Light", showBackground = true, widthDp = 420)
 @Preview(name = "Ferries - Dark", showBackground = true, widthDp = 420, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
 @Composable
@@ -95,7 +95,7 @@ private fun NswTransportLineFerryContrastPreview() {
 /**
  * Visual WCAG AA catalog for all NSW **light rail** lines.
  */
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(name = "Light Rail - Light", showBackground = true, widthDp = 420)
 @Preview(name = "Light Rail - Dark", showBackground = true, widthDp = 420, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
 @Composable
@@ -111,7 +111,7 @@ private fun NswTransportLineLightRailContrastPreview() {
 /**
  * Trains that need contrast fixing — shown in both light and dark surfaces.
  */
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(name = "Train Fixes - Light", showBackground = true, widthDp = 420)
 @Preview(name = "Train Fixes - Dark", showBackground = true, widthDp = 420, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
 @Composable
@@ -127,7 +127,7 @@ private fun NswTransportLineTrainFixesPreview() {
 /**
  * Ferries that need contrast fixing — shown in both light and dark surfaces.
  */
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview(name = "Ferry Fixes - Light", showBackground = true, widthDp = 420)
 @Preview(name = "Ferry Fixes - Dark", showBackground = true, widthDp = 420, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
 @Composable

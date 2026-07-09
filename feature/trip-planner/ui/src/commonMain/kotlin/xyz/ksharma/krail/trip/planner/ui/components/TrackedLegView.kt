@@ -255,7 +255,6 @@ private fun ApproachingTimeText(
 // region Previews
 
 @OptIn(ExperimentalTime::class)
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun TrackedLegViewPreview() {
@@ -308,7 +307,6 @@ private fun TrackedLegViewPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
 @PreviewComponent
 @Composable
 private fun TrackedStopRowPreview() {

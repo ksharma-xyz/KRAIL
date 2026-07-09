@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -121,19 +122,19 @@ fun TransportModeBadge(
 
 // region Previews
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview
 @Composable
 private fun TransportModeBadgeBusPreview() {
     PreviewTheme {
         TransportModeBadge(
             badgeText = "700",
-            backgroundColor = "00B5EF".hexToComposeColor(),
+            backgroundColor = "#00B5EF".hexToComposeColor(),
         )
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @Preview
 @Composable
 private fun TransportModeBadgeTrainPreview() {
@@ -145,7 +146,7 @@ private fun TransportModeBadgeTrainPreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TransportModeBadgeLargePreview() {
@@ -158,7 +159,7 @@ private fun TransportModeBadgeLargePreview() {
     }
 }
 
-// @ScreenshotTest disabled: missing baseline (recording timed out, see README)
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun TransportModeBadgeLargeSelectedPreview() {

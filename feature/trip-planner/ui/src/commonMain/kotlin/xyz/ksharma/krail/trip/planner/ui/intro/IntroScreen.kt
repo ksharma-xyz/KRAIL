@@ -9,10 +9,12 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -22,20 +24,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -43,10 +49,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
@@ -66,6 +74,7 @@ fun IntroScreen(
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
+    val scope = rememberCoroutineScope()
 
     // Determine the start page and target page based on drag direction.
     val startPage = pagerState.currentPage
@@ -185,6 +194,35 @@ fun IntroScreen(
                     }
                 }
             }
+
+            IntroPageIndicator(
+                pageCount = state.pages.size,
+                currentPage = startPage,
+                activeColor = animatedButtonColor,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = dim.spacingL),
+            )
+        }
+
+        AnimatedVisibility(
+            visible = displayKRAILButton,
+            enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)),
+            exit = fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding(),
+        ) {
+            if (IntroPageType.INVITE_FRIENDS != state.pages[startPage].type) {
+                TextButton(
+                    onClick = {
+                        onIntroComplete(state.pages[startPage].type, startPage + 1)
+                    },
+                    modifier = Modifier.padding(horizontal = dim.spacingXXL, vertical = dim.spacingML),
+                ) {
+                    Text(text = "Skip")
+                }
+            }
         }
 
         Column(
@@ -201,12 +239,14 @@ fun IntroScreen(
                 Button(
                     onClick = {
                         if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
-                            onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_BUTTON))
-                        } else {
                             onIntroComplete(
                                 state.pages[pagerState.currentPage].type,
                                 pagerState.currentPage + 1,
                             )
+                        } else {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -224,6 +264,35 @@ fun IntroScreen(
         }
     }
 }
+
+@Composable
+private fun IntroPageIndicator(
+    pageCount: Int,
+    currentPage: Int,
+    activeColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(DOT_SPACING, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(pageCount) { page ->
+            val isActive = page == currentPage
+            Box(
+                modifier = Modifier
+                    .size(if (isActive) DOT_SIZE_ACTIVE else DOT_SIZE_INACTIVE)
+                    .clip(CircleShape)
+                    .background(activeColor.copy(alpha = if (isActive) 1f else DOT_INACTIVE_ALPHA)),
+            )
+        }
+    }
+}
+
+private val DOT_SIZE_ACTIVE = 8.dp
+private val DOT_SIZE_INACTIVE = 6.dp
+private val DOT_SPACING = 6.dp
+private const val DOT_INACTIVE_ALPHA = 0.3f
 
 @Suppress("LongParameterList")
 @Composable

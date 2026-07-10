@@ -6,15 +6,14 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -24,13 +23,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -194,15 +190,6 @@ fun IntroScreen(
                     }
                 }
             }
-
-            IntroPageIndicator(
-                pageCount = state.pages.size,
-                currentPage = startPage,
-                activeColor = animatedButtonColor,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = dim.spacingL),
-            )
         }
 
         AnimatedVisibility(
@@ -245,7 +232,10 @@ fun IntroScreen(
                             )
                         } else {
                             scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                pagerState.animateScrollToPage(
+                                    page = pagerState.currentPage + 1,
+                                    animationSpec = tween(durationMillis = NEXT_PAGE_ANIM_DURATION_MS),
+                                )
                             }
                         }
                     },
@@ -264,35 +254,6 @@ fun IntroScreen(
         }
     }
 }
-
-@Composable
-private fun IntroPageIndicator(
-    pageCount: Int,
-    currentPage: Int,
-    activeColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(DOT_SPACING, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(pageCount) { page ->
-            val isActive = page == currentPage
-            Box(
-                modifier = Modifier
-                    .size(if (isActive) DOT_SIZE_ACTIVE else DOT_SIZE_INACTIVE)
-                    .clip(CircleShape)
-                    .background(activeColor.copy(alpha = if (isActive) 1f else DOT_INACTIVE_ALPHA)),
-            )
-        }
-    }
-}
-
-private val DOT_SIZE_ACTIVE = 8.dp
-private val DOT_SIZE_INACTIVE = 6.dp
-private val DOT_SPACING = 6.dp
-private const val DOT_INACTIVE_ALPHA = 0.3f
 
 @Suppress("LongParameterList")
 @Composable
@@ -398,3 +359,4 @@ private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
 }
 
 private val PAGER_HORIZONTAL_PADDING = 64.dp
+private const val NEXT_PAGE_ANIM_DURATION_MS = 600

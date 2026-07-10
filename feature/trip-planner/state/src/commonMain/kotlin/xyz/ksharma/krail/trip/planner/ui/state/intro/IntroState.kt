@@ -134,7 +134,7 @@ data class IntroState(
                     title = "Invite Your Friends",
                     tagline = "LET'S\nKRAIL\nTOGETHER",
                     emoji = "\uD83D\uDC95",
-                    ctaText = "Get Started",
+                    ctaText = "Let's KRAIL",
                     primaryStyle = KrailThemeStyle.BarbiePink.hexColorCode,
                     type = IntroPageType.INVITE_FRIENDS,
                 ),

@@ -50,7 +50,6 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
@@ -188,26 +187,6 @@ fun IntroScreen(
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
-                }
-            }
-        }
-
-        AnimatedVisibility(
-            visible = displayKRAILButton,
-            enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)),
-            exit = fadeOut(),
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding(),
-        ) {
-            if (IntroPageType.INVITE_FRIENDS != state.pages[startPage].type) {
-                TextButton(
-                    onClick = {
-                        onIntroComplete(state.pages[startPage].type, startPage + 1)
-                    },
-                    modifier = Modifier.padding(horizontal = dim.spacingXXL, vertical = dim.spacingML),
-                ) {
-                    Text(text = "Skip")
                 }
             }
         }

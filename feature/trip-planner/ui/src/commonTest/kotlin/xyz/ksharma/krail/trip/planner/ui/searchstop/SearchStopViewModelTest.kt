@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeRemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
@@ -42,6 +43,7 @@ class SearchStopViewModelTest {
     private val tripPlanningService = FakeTripPlanningService()
     private lateinit var viewModel: SearchStopViewModel
     private val fakeStopResultsManager = FakeStopResultsManager()
+    private val fakeRemoteAddressResultsManager = FakeRemoteAddressResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
     private val fakePreferences = FakeSandookPreferences()
@@ -55,6 +57,7 @@ class SearchStopViewModelTest {
         viewModel = SearchStopViewModel(
             analytics = fakeAnalytics,
             stopResultsManager = fakeStopResultsManager,
+            remoteAddressResultsManager = fakeRemoteAddressResultsManager,
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
@@ -289,6 +292,7 @@ class SearchStopViewModelTest {
             val vm = SearchStopViewModel(
                 analytics = fakeAnalytics,
                 stopResultsManager = fakeStopResultsManager,
+                remoteAddressResultsManager = fakeRemoteAddressResultsManager,
                 flag = fakeFlag,
                 nearbyStopsManager = fakeNearbyStopsManager,
                 ioDispatcher = testDispatcher,

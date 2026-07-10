@@ -160,6 +160,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.ENABLE_PROTO_BFF.key,
                 second = false,
             ),
+            Pair(
+                first = FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key,
+                second = false,
+            ),
         )
     }
 }

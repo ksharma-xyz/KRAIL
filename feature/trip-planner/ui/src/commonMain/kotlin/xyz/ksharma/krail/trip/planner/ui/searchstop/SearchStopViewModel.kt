@@ -50,6 +50,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 class SearchStopViewModel(
     private val analytics: Analytics,
     private val stopResultsManager: StopResultsManager,
+    private val remoteAddressResultsManager: RemoteAddressResultsManager,
     private val nearbyStopsManager: NearbyStopsManager,
     val flag: Flag,
     private val ioDispatcher: CoroutineDispatcher,
@@ -81,7 +82,13 @@ class SearchStopViewModel(
             .asBoolean(fallback = false)
     }
 
+    private val isAddressSearchEnabled: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key)
+            .asBoolean(fallback = false)
+    }
+
     private var searchJob: Job? = null
+    private var addressSearchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
 
     @Suppress("LongMethod", "ReturnCount")
@@ -426,7 +433,14 @@ class SearchStopViewModel(
         // Blank query -> show recent stops and cancel any ongoing search
         if (query.isBlank()) {
             searchJob?.cancel()
-            updateUiState { copy(listState = ListState.Recent) }
+            addressSearchJob?.cancel()
+            updateUiState {
+                copy(
+                    listState = ListState.Recent,
+                    addressResults = persistentListOf(),
+                    isAddressSearchLoading = false,
+                )
+            }
 
             // ensure recentStops are loaded
             fetchRecentStopsJob?.cancel()
@@ -455,6 +469,35 @@ class SearchStopViewModel(
             }.getOrElse {
                 updateUiState { displayError() }
                 analytics.track(AnalyticsEvent.SearchStopQuery(query = query, isError = true))
+            }
+        }
+
+        // Independent pipeline: own debounce, own job, own state fields. Local search
+        // above is untouched by any of this — a slow/failed remote call can never
+        // delay or affect it. When the flag is off, no job is launched at all.
+        onAddressSearchTextChanged(query)
+    }
+
+    private fun onAddressSearchTextChanged(query: String) {
+        addressSearchJob?.cancel()
+        if (!isAddressSearchEnabled) {
+            updateUiState { copy(addressResults = persistentListOf(), isAddressSearchLoading = false) }
+            return
+        }
+        addressSearchJob = viewModelScope.launch {
+            delay(ADDRESS_SEARCH_DEBOUNCE_MS)
+            updateUiState { copy(isAddressSearchLoading = true) }
+            val addressResults = runCatching {
+                remoteAddressResultsManager.fetchAddressResults(query)
+            }.getOrElse {
+                log("Address search failed for query=\"$query\": ${it.message}")
+                emptyList()
+            }
+            updateUiState {
+                copy(
+                    addressResults = addressResults.toImmutableList(),
+                    isAddressSearchLoading = false,
+                )
             }
         }
     }
@@ -606,5 +649,11 @@ class SearchStopViewModel(
 
     private fun updateUiState(block: SearchStopState.() -> SearchStopState) {
         _uiState.update(block)
+    }
+
+    private companion object {
+        // Longer than local search's 100ms debounce - network round-trip is inherently
+        // slower, and there's no benefit to firing it as eagerly as the local DB query.
+        const val ADDRESS_SEARCH_DEBOUNCE_MS = 350L
     }
 }

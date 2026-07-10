@@ -143,7 +143,7 @@ internal class RealTripPlanningService(
                 parameters.append(StopFinderRequestParams.typeSf, stopType.type)
                 parameters.append(StopFinderRequestParams.coordOutputFormat, "EPSG:4326")
                 parameters.append(StopFinderRequestParams.outputFormat, "rapidJSON")
-//                parameters.append(StopFinderRequestParams.version, "10.2.1.42")
+                parameters.append(StopFinderRequestParams.version, "10.2.1.42")
                 parameters.append(StopFinderRequestParams.tfNSWSF, "true")
             }
         }.body()

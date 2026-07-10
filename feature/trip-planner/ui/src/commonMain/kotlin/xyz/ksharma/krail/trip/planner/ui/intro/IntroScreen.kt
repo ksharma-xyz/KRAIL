@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -31,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -66,6 +69,7 @@ fun IntroScreen(
     onEvent: (IntroUiEvent) -> Unit = {},
 ) {
     val pagerState = rememberPagerState(pageCount = { state.pages.size })
+    val scope = rememberCoroutineScope()
 
     // Determine the start page and target page based on drag direction.
     val startPage = pagerState.currentPage
@@ -201,12 +205,17 @@ fun IntroScreen(
                 Button(
                     onClick = {
                         if (IntroPageType.INVITE_FRIENDS == state.pages[startPage].type) {
-                            onEvent(IntroUiEvent.ReferFriend(AnalyticsEvent.ReferFriend.EntryPoint.INTRO_BUTTON))
-                        } else {
                             onIntroComplete(
                                 state.pages[pagerState.currentPage].type,
                                 pagerState.currentPage + 1,
                             )
+                        } else {
+                            scope.launch {
+                                pagerState.animateScrollToPage(
+                                    page = pagerState.currentPage + 1,
+                                    animationSpec = tween(durationMillis = NEXT_PAGE_ANIM_DURATION_MS),
+                                )
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -329,3 +338,4 @@ private fun PagerState.calculateCurrentOffsetForPage(page: Int): Float {
 }
 
 private val PAGER_HORIZONTAL_PADDING = 64.dp
+private const val NEXT_PAGE_ANIM_DURATION_MS = 600

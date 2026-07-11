@@ -95,30 +95,62 @@ coord branch, no BFF dependency. The one exception (raw GPS "current
 location") is a separate, already-solved case. **The blocker is 100%
 client-side.**
 
-## Where the real bug likely is (not yet confirmed)
+## Full client-side trace (static code review)
 
-Since the API itself is proven to work, the break is somewhere in the
-client's selection → navigation → `TimeTableViewModel` path. Candidates,
-in rough order of suspicion, **none confirmed yet**:
+Traced the entire path end to end against the real captured JSON from the
+API tests above. Selection → `SearchStopEntry` (event bus, not a serialized
+nav route — `StopSelectedResult` is a plain in-memory data class) →
+`SavedTripsEntry.ResultEffect<StopSelectedResult>` → `SavedTripsViewModel
+.onFromStopChanged/onToStopChanged` (`StopItem.toJsonString()` /
+`fromJsonString()` round-trip — plain JSON, colons need no escaping, no
+length limit hit) → `RealStopResultsManager.setSelectedFromStop/ToStop` →
+`SavedTripsEntry.triggerTripSearch` / `onSavedTripCardClick` →
+`navigateToTimeTable` (`TimeTableRoute` is a plain `@Serializable` data
+class of four strings, in-memory navigation3 backstack, not URL-encoded) →
+`TimeTableEntry` → `TimeTableViewModel.initializeTrip` → `onLoadTimeTable` →
+`fetchTrip`/`loadTrip` → `tripPlanningService.trip()` (proven working, see
+above) → `TripResponseMapper.buildJourneyListWithRawData` →
+`TripResponseLegMapper` → `journeyId` generation (derived purely from
+`Leg.TransportLeg.tripId`, never touches origin/destination `stopId`, so
+address-shaped IDs can't collide or break it).
 
-1. **Nav-arg length/encoding** — `StopItem` is serialized to JSON
-   (`toJsonString()`) and passed as a navigation argument. A `streetID:...`
-   value is much longer (~140 chars, many colons) than a normal stop ID
-   (≤32 chars, alphanumeric) — worth checking whether the nav route encoding
-   truncates, mis-escapes, or otherwise mangles a string this shape/length.
-2. **Local-DB name re-lookup** — if `TimeTableViewModel` (or anything on the
-   way to it) calls something like `fetchLocalStopName(stopId)` /
-   `sandook.selectStops(...)` to redisplay the origin's name, that lookup
-   will find nothing for an address ID (it only exists in the local GTFS
-   stops table for real transit stops) and may null out / blank the screen
-   instead of falling back to the name already carried on the `StopItem`.
-3. ~~JourneyMap polyline dependency on BFF proto~~ — **ruled out**, see the
-   capability matrix above. The `coords` polyline is present in the
-   NSW-direct JSON response and already deserialized into
-   `TripResponse.Leg.coords`. If JourneyMap still doesn't draw the walk path
-   once a journey does render, that would be a separate JourneyMap-rendering
-   bug (e.g. UI code not reading `coords` for a footpath-only leg), not a
-   missing-data problem.
+**Nothing in that chain rejects, truncates, or mishandles a `streetID:...`
+value** — checked against the actual 2-leg (footpath + train) response
+captured earlier. `isWalkingLeg()` correctly identifies the footpath leg via
+`productClass == 99 || 100` (confirmed `class: 100` in the real response) so
+`getFirstPublicTransportLeg()` correctly skips it and picks the train leg —
+this is pre-existing, address-agnostic behavior (any walk-then-transfer
+journey works the same way).
+
+### Confirmed bug (real, but likely NOT the Timetable blocker)
+
+`RecentSearchStops.stopId` has `FOREIGN KEY REFERENCES NswStops(stopId)`
+(`sandook/.../RecentSearchStops.sq`), but no `PRAGMA foreign_keys=ON` exists
+anywhere in the codebase (grepped, zero hits) — SQLite defaults FK
+enforcement to **off**, so the `INSERT` when saving an address to Recents
+(`RealStopResultsManager.saveRecentSearchStop`) almost certainly succeeds
+without throwing. But `selectRecentSearchStops` uses `INNER JOIN NswStops`
+— an address's orphaned row will never match that join, so **an
+address-selected stop silently never appears in Recents**, forever. Real
+bug, worth fixing, but doesn't explain a blank/broken Timetable screen.
+
+### Ruled out
+
+- ~~JourneyMap polyline dependency on BFF proto~~ — the `coords` polyline is
+  present in the NSW-direct JSON and already deserialized into
+  `TripResponse.Leg.coords`.
+- ~~Nav-arg encoding~~ — no route/URL encoding is involved anywhere in this
+  path; everything is in-memory (event bus + navigation3 backstack), so
+  string length/shape can't be the break.
+
+### Still open
+
+Static review found nothing else that would blank or break the Timetable
+screen. The symptom needs a live repro to pin down — next time it's
+reproduced, capturing what's actually on screen (blank list? error state?
+app crash? stuck loading?) plus logcat (`log("🗺️ ...")` lines are already
+threaded through `TimeTableViewModel`/`TimeTableEntry`) would narrow it
+immediately.
 
 ## Next step
 

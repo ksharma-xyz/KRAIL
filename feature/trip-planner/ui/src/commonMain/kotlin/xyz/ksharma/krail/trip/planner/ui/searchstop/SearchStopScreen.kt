@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -80,6 +79,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.AddressSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
@@ -732,27 +732,32 @@ private fun SearchStopListContent(
 
         ListState.NoMatch -> {
             // Local list has no match, but the remote address/POI section is
-            // independent of local match state - it still renders below when the
-            // API found something for the same query.
-            LazyColumn(
-                modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = KrailTheme.dimensions.spacingXXXXL),
-            ) {
-                item(key = "no-match-message") {
-                    ErrorMessage(
-                        title = "No match found!",
-                        message = "Try something else. \uD83D\uDD0D✨",
-                        modifier = Modifier.fillMaxWidth(),
+            // independent of local match state. "No match found" only makes sense
+            // when BOTH local and remote have nothing - if the address section has
+            // results (or is still loading), skip the error message entirely so the
+            // user never sees "No match" sitting above real results.
+            val hasAddressContent = searchStopState.addressResults.isNotEmpty() ||
+                searchStopState.isAddressSearchLoading
+            if (hasAddressContent) {
+                LazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = KrailTheme.dimensions.spacingXXXXL),
+                ) {
+                    addressResultsSection(
+                        addressResults = searchStopState.addressResults,
+                        isLoading = searchStopState.isAddressSearchLoading,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        searchQuery = searchStopState.searchQuery,
+                        onStopSelect = onStopSelect,
+                        onEvent = onEvent,
                     )
                 }
-                addressResultsSection(
-                    addressResults = searchStopState.addressResults,
-                    isLoading = searchStopState.isAddressSearchLoading,
-                    keyboard = keyboard,
-                    focusRequester = focusRequester,
-                    searchQuery = searchStopState.searchQuery,
-                    onStopSelect = onStopSelect,
-                    onEvent = onEvent,
+            } else {
+                ErrorMessage(
+                    title = "No match found!",
+                    message = "Try something else. \uD83D\uDD0D✨",
+                    modifier = modifier.fillMaxWidth(),
                 )
             }
         }
@@ -914,30 +919,35 @@ private fun LazyListScope.addressResultsSection(
 ) {
     if (addressResults.isEmpty() && !isLoading) return
     item(key = "address-results-header") {
-        Text(
-            text = "Addresses & places",
-            style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
-            color = KrailTheme.colors.label,
+        val dim = KrailTheme.dimensions
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = KrailTheme.dimensions.pageHorizontalPadding,
-                    end = KrailTheme.dimensions.pageHorizontalPadding,
-                    top = KrailTheme.dimensions.spacingXL,
-                    bottom = KrailTheme.dimensions.spacingS,
-                ),
-        )
+                    horizontal = dim.pageHorizontalPadding,
+                    vertical = dim.spacingL,
+                )
+                .clip(RoundedCornerShape(dim.radiusL))
+                .background(KrailTheme.colors.discoverChipBackground)
+                .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
+        ) {
+            Text(
+                text = "Addresses & places",
+                style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = KrailTheme.colors.label,
+            )
+        }
     }
     items(
         items = addressResults,
         key = { "address_${it.addressId}" },
     ) { address ->
-        StopSearchListItem(
-            stopId = address.addressId,
-            stopName = address.displayName,
-            transportModeSet = persistentSetOf(),
+        AddressSearchListItem(
+            displayName = address.displayName,
+            addressType = address.addressType,
             textColor = KrailTheme.colors.label,
-            onClick = { stopItem ->
+            onClick = {
+                val stopItem = StopItem(stopId = address.addressId, stopName = address.displayName)
                 keyboard?.hide()
                 focusRequester.freeFocus()
                 onStopSelect(stopItem)

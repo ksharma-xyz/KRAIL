@@ -61,6 +61,40 @@ direct — the same path the curl test above exercised. So a BFF backend that
 doesn't understand `streetID:...` origins is not the explanation either
 (worth re-checking only if someone *has* explicitly selected a BFF source).
 
+## Extended capability matrix — what NSW's API can and can't do
+
+All tested against the live NSW API, same param shape the app already sends
+(`type_origin=any` / `type_destination=any`, no branching). Everything below
+**works**, first try, no special-casing required:
+
+| Origin/destination type | Result |
+|---|---|
+| `singlehouse` (full "number + street + suburb") | ✅ walk leg + transit leg(s), correct |
+| `street` (no house number, e.g. "Example St, Parramatta") | ✅ resolves to a street-midpoint coord, same behavior |
+| `poi` (e.g. "Sydney Opera House") | ✅ resolves fine, walk leg to nearest stop correct |
+| **address → address** (both origin AND destination are addresses, no real stop on either end) | ✅ first-mile walk + multi-modal transit (train + light rail) + last-mile walk, all correct, 6 journeys returned |
+| Raw GPS coord ("current location", no `stop_finder` involved) | ✅ but **needs a different param shape**: `type_origin=coord` + `name_origin=<lon>:<lat>:EPSG:4326` (confirmed separately, still the only case that needs branching) |
+
+**Walk-leg polyline is already present and already mapped client-side.** The
+raw NSW-direct JSON leg for every footpath leg above includes a `coords`
+array (confirmed: 30 lat/lng points for the Example St → Parramatta Station
+walk) — full turn-by-turn geometry, elevation info, stairs/accessibility
+detail (`footPathInfo`). `TripResponse.Leg.coords` (network model,
+`TripResponse.kt:105`) already deserializes this field. **This rules out
+hypothesis #3 below** — JourneyMap does not need BFF-proto data to draw a
+walk leg; the geometry is already flowing through the NSW-direct JSON path
+the app uses by default.
+
+### Bottom line
+
+Nothing tested is an API limitation. Every location type `stop_finder` can
+return (`singlehouse`, `street`, `poi`) resolves correctly through `/trip`
+under the exact param shape already hardcoded in
+`RealTripPlanningService.appendTripQueryParams()` — no new params, no
+coord branch, no BFF dependency. The one exception (raw GPS "current
+location") is a separate, already-solved case. **The blocker is 100%
+client-side.**
+
 ## Where the real bug likely is (not yet confirmed)
 
 Since the API itself is proven to work, the break is somewhere in the
@@ -78,13 +112,13 @@ in rough order of suspicion, **none confirmed yet**:
    will find nothing for an address ID (it only exists in the local GTFS
    stops table for real transit stops) and may null out / blank the screen
    instead of falling back to the name already carried on the `StopItem`.
-3. **JourneyMap polyline dependency on BFF proto** — `RealTripPlanningService`
-   comments that the BFF proto path "carries the polyline data the
-   journey-map needs." If JourneyMap's walk-leg rendering assumes proto-shaped
-   data that only the BFF path provides, a walk leg arriving via the NSW-direct
-   JSON path (the one actually exercised for addresses, per BFF routing above)
-   might have no polyline to draw even once the journey itself displays
-   correctly in the Timetable list.
+3. ~~JourneyMap polyline dependency on BFF proto~~ — **ruled out**, see the
+   capability matrix above. The `coords` polyline is present in the
+   NSW-direct JSON response and already deserialized into
+   `TripResponse.Leg.coords`. If JourneyMap still doesn't draw the walk path
+   once a journey does render, that would be a separate JourneyMap-rendering
+   bug (e.g. UI code not reading `coords` for a footpath-only leg), not a
+   missing-data problem.
 
 ## Next step
 

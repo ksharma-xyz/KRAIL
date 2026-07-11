@@ -55,6 +55,10 @@ class DebugSettingsViewModel(
         onEvent(DebugSettingsEvent.SetTripTrackingEnabled(enabled))
     }
 
+    fun setAddressSearchEnabled(enabled: Boolean) {
+        onEvent(DebugSettingsEvent.SetAddressSearchEnabled(enabled))
+    }
+
     fun reset() {
         onEvent(DebugSettingsEvent.Reset)
     }

@@ -20,8 +20,9 @@ import xyz.ksharma.krail.sandook.SandookPreferences
  *
  * | Key                         | Type    | Meaning                          |
  * |-----------------------------|---------|----------------------------------|
- * | `KEY_DEBUG_NETWORK_SOURCE`  | String  | `NetworkSource.name` selection   |
- * | `KEY_TRIP_TRACKING_ENABLED` | String  | "true"/"false" override          |
+ * | `KEY_DEBUG_NETWORK_SOURCE`   | String  | `NetworkSource.name` selection   |
+ * | `KEY_TRIP_TRACKING_ENABLED`  | String  | "true"/"false" override          |
+ * | `KEY_ADDRESS_SEARCH_ENABLED` | String  | "true"/"false" override          |
  *
  * Missing rows hydrate to [DebugSettingsState.default]. Unknown / corrupt
  * values fall back to the default rather than throwing.
@@ -48,6 +49,9 @@ internal class RealDebugNetworkConfigStore(
                     is DebugSettingsEvent.SetTripTrackingEnabled -> _state.value.copy(
                         tripTrackingEnabled = event.enabled,
                     )
+                    is DebugSettingsEvent.SetAddressSearchEnabled -> _state.value.copy(
+                        addressSearchEnabled = event.enabled,
+                    )
                     DebugSettingsEvent.Reset -> DebugSettingsState.default()
                 }
 
@@ -66,7 +70,14 @@ internal class RealDebugNetworkConfigStore(
         val tripTrackingEnabled = preferences.getString(KEY_TRIP_TRACKING_ENABLED)
             ?.toBooleanStrictOrNull()
             ?: defaults.tripTrackingEnabled
-        return DebugSettingsState(source = source, tripTrackingEnabled = tripTrackingEnabled)
+        val addressSearchEnabled = preferences.getString(KEY_ADDRESS_SEARCH_ENABLED)
+            ?.toBooleanStrictOrNull()
+            ?: defaults.addressSearchEnabled
+        return DebugSettingsState(
+            source = source,
+            tripTrackingEnabled = tripTrackingEnabled,
+            addressSearchEnabled = addressSearchEnabled,
+        )
     }
 
     private fun persist(next: DebugSettingsState, event: DebugSettingsEvent) {
@@ -77,9 +88,13 @@ internal class RealDebugNetworkConfigStore(
             is DebugSettingsEvent.SetTripTrackingEnabled ->
                 preferences.setString(KEY_TRIP_TRACKING_ENABLED, next.tripTrackingEnabled.toString())
 
+            is DebugSettingsEvent.SetAddressSearchEnabled ->
+                preferences.setString(KEY_ADDRESS_SEARCH_ENABLED, next.addressSearchEnabled.toString())
+
             DebugSettingsEvent.Reset -> {
                 preferences.deletePreference(KEY_DEBUG_NETWORK_SOURCE)
                 preferences.deletePreference(KEY_TRIP_TRACKING_ENABLED)
+                preferences.deletePreference(KEY_ADDRESS_SEARCH_ENABLED)
             }
         }
     }
@@ -87,5 +102,6 @@ internal class RealDebugNetworkConfigStore(
     companion object {
         const val KEY_DEBUG_NETWORK_SOURCE = "KEY_DEBUG_NETWORK_SOURCE"
         const val KEY_TRIP_TRACKING_ENABLED = "KEY_TRIP_TRACKING_ENABLED"
+        const val KEY_ADDRESS_SEARCH_ENABLED = "KEY_ADDRESS_SEARCH_ENABLED"
     }
 }

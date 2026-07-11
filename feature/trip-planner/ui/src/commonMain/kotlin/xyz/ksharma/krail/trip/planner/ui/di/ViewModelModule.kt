@@ -154,6 +154,11 @@ val viewModelsModule = module {
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
 
     viewModel {
+        val isDebug = get<AppInfoProvider>().getAppInfo().isDebug
+        val addressSearchDebugOverride = when {
+            isDebug -> get<DebugNetworkConfigStore>().state.value.addressSearchEnabled
+            else -> get<Flag>().getFlagValue(FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key).asBoolean(false)
+        }
         SearchStopViewModel(
             analytics = get(),
             stopResultsManager = get(),
@@ -163,6 +168,7 @@ val viewModelsModule = module {
             ioDispatcher = get(named(IODispatcher)),
             preferences = get(),
             sandook = get(),
+            addressSearchDebugOverride = addressSearchDebugOverride,
         )
     }
 }

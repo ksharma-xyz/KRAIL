@@ -12,6 +12,9 @@ sealed interface DebugSettingsEvent {
     /** Override the TRIP_TRACKING_ENABLED RC flag locally for this debug build. */
     data class SetTripTrackingEnabled(val enabled: Boolean) : DebugSettingsEvent
 
+    /** Override the SEARCH_STOP_ADDRESS_SEARCH_ENABLED RC flag locally for this debug build. */
+    data class SetAddressSearchEnabled(val enabled: Boolean) : DebugSettingsEvent
+
     /** Restore the entire state to [DebugSettingsState.default]. */
     data object Reset : DebugSettingsEvent
 }

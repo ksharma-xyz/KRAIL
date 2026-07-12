@@ -144,6 +144,16 @@ data class TimeTableState(
         sealed class Leg {
             data class WalkingLeg(
                 val duration: String, // "10mins"
+
+                // Set only when this is the journey's very first leg AND its origin is a
+                // searched address (not a transit stop) - e.g. "123 Example St". Drives the
+                // "pin row" shown above the walk row.
+                val originPinName: String? = null,
+
+                // Set only when this is the journey's very last leg AND its destination is a
+                // searched address (not a transit stop). Drives the "pin row" shown below the
+                // walk row.
+                val destinationPinName: String? = null,
             ) : Leg()
 
             data class TransportLeg(
@@ -173,6 +183,10 @@ data class TimeTableState(
                 /** True when the leg's product class is 11 (School Bus). Rendered as a bus leg
                  *  with a "School service" tag so users know the service is not public. */
                 val isSchoolBus: Boolean = false,
+
+                /** True when the leg's product class is 10 (NSW on-demand/flexible-zone
+                 *  shuttle). Rendered with an "On Demand" tag next to the mode icon. */
+                val isOnDemand: Boolean = false,
             ) : Leg()
         }
 

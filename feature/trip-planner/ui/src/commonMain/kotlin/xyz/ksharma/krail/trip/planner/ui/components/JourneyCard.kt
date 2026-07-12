@@ -59,6 +59,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.icons.rememberShareIconPainter
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
+import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
@@ -317,68 +318,94 @@ fun ExpandedJourneyCardContent(
         )
 
         legList.forEachIndexed { index, leg ->
-            when (leg) {
-                is TimeTableState.JourneyCardInfo.Leg.WalkingLeg -> {
+            JourneyLegItem(leg = leg, index = index, legList = legList, dim = dim, onLegClick = onLegClick)
+        }
+    }
+}
+
+/** Renders a single leg row: a [WalkingLeg] (standalone or interchange-attached) or a [LegView]. */
+@Composable
+private fun JourneyLegItem(
+    leg: TimeTableState.JourneyCardInfo.Leg,
+    index: Int,
+    legList: ImmutableList<TimeTableState.JourneyCardInfo.Leg>,
+    dim: KrailDimensions,
+    onLegClick: (expanded: Boolean, transportMode: String, lineName: String) -> Unit,
+) {
+    when (leg) {
+        is TimeTableState.JourneyCardInfo.Leg.WalkingLeg -> {
+            // A pin row (address) adds a distinct piece of info above/below the walk
+            // text - give this leg more room against the neighboring LegView than a
+            // plain transfer walk gets.
+            val hasPinRow = leg.originPinName != null || leg.destinationPinName != null
+            WalkingLeg(
+                duration = leg.duration,
+                originPinName = leg.originPinName,
+                destinationPinName = leg.destinationPinName,
+                drawConnectorLine = true,
+                modifier = Modifier.padding(
+                    vertical = if (hasPinRow) dim.spacingL else dim.spacingM,
+                    horizontal = dim.spacingXXS,
+                ),
+            )
+        }
+
+        is TimeTableState.JourneyCardInfo.Leg.TransportLeg -> {
+            val interchange = leg.walkInterchange
+            if (interchange?.position == TimeTableState.JourneyCardInfo.WalkPosition.BEFORE) {
+                interchange.duration.let { duration ->
                     WalkingLeg(
-                        duration = leg.duration,
-                        modifier = Modifier
-                            .padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
+                        duration = duration,
+                        drawConnectorLine = true,
+                        modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
                     )
                 }
+            }
 
-                is TimeTableState.JourneyCardInfo.Leg.TransportLeg -> {
-                    if (leg.walkInterchange?.position == TimeTableState.JourneyCardInfo.WalkPosition.BEFORE) {
-                        leg.walkInterchange?.duration?.let { duration ->
-                            WalkingLeg(
-                                duration = duration,
-                                modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
+            if (interchange?.position == TimeTableState.JourneyCardInfo.WalkPosition.IDEST) {
+                interchange.duration.let { duration ->
+                    WalkingLeg(
+                        duration = duration,
+                        drawConnectorLine = true,
+                        modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
+                    )
+                }
+            } else {
+                var displayAllStops by rememberSaveable { mutableStateOf(false) }
+                LegView(
+                    routeText = leg.displayText,
+                    transportModeLine = leg.transportModeLine,
+                    stops = leg.stops,
+                    displayAllStops = displayAllStops,
+                    isSchoolBus = leg.isSchoolBus,
+                    isOnDemand = leg.isOnDemand,
+                    modifier = Modifier.padding(
+                        top = if (index > 0) {
+                            getPaddingValue(
+                                lastLeg = legList[(index - 1).coerceAtLeast(0)],
                             )
-                        }
-                    }
-
-                    if (leg.walkInterchange?.position == TimeTableState.JourneyCardInfo.WalkPosition.IDEST) {
-                        leg.walkInterchange?.duration?.let { duration ->
-                            WalkingLeg(
-                                duration = duration,
-                                modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
-                            )
-                        }
-                    } else {
-                        var displayAllStops by rememberSaveable { mutableStateOf(false) }
-                        LegView(
-                            routeText = leg.displayText,
-                            transportModeLine = leg.transportModeLine,
-                            stops = leg.stops,
-                            displayAllStops = displayAllStops,
-                            isSchoolBus = leg.isSchoolBus,
-                            modifier = Modifier.padding(
-                                top = if (index > 0) {
-                                    getPaddingValue(
-                                        lastLeg = legList[(index - 1).coerceAtLeast(0)],
-                                    )
-                                } else {
-                                    0.dp
-                                },
-                            ),
-                            onClick = {
-                                displayAllStops = !displayAllStops
-                                onLegClick(
-                                    displayAllStops,
-                                    leg.transportModeLine.transportMode.name,
-                                    leg.transportModeLine.lineName,
-                                )
-                            },
+                        } else {
+                            0.dp
+                        },
+                    ),
+                    onClick = {
+                        displayAllStops = !displayAllStops
+                        onLegClick(
+                            displayAllStops,
+                            leg.transportModeLine.transportMode.name,
+                            leg.transportModeLine.lineName,
                         )
-                    }
+                    },
+                )
+            }
 
-                    if (leg.walkInterchange?.position == TimeTableState.JourneyCardInfo.WalkPosition.AFTER) {
-                        leg.walkInterchange?.duration?.let { duration ->
-                            WalkingLeg(
-                                duration = duration,
-                                modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
-                            )
-                        }
-                    }
+            if (interchange?.position == TimeTableState.JourneyCardInfo.WalkPosition.AFTER) {
+                interchange.duration.let { duration ->
+                    WalkingLeg(
+                        duration = duration,
+                        drawConnectorLine = true,
+                        modifier = Modifier.padding(vertical = dim.spacingM, horizontal = dim.spacingXXS),
+                    )
                 }
             }
         }

@@ -348,7 +348,13 @@ class RealStopResultsManager(
     }
 
     private fun saveRecentSearchStop(stopItem: StopItem) {
-        sandook.insertOrReplaceRecentSearchStop(stopId = stopItem.stopId)
+        // Temporary safety net while investigating whether the FK constraint on
+        // RecentSearchStops(stopId -> NswStops.stopId) is actually enforced for non-GTFS
+        // (address/POI) stopIds on this platform's driver - swallow rather than let an
+        // unexpected DB exception take down the selection flow.
+        runCatching {
+            sandook.insertOrReplaceRecentSearchStop(stopId = stopItem.stopId)
+        }
     }
 
     override fun clearRecentSearchStops() {

@@ -61,6 +61,7 @@ fun LegView(
     modifier: Modifier = Modifier,
     displayAllStops: Boolean = false,
     isSchoolBus: Boolean = false,
+    isOnDemand: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
@@ -68,6 +69,13 @@ fun LegView(
     val strokeWidth = dim.journeyLegStrokeWidth
     val timelineColor =
         remember(transportModeLine) { transportModeLine.lineColorCode.hexToComposeColor() }
+    // Same icon as their base mode (Bus / On Demand's own color) — differentiated by this
+    // label next to the mode icon, mirroring the "School Bus" tag pattern.
+    val modeLabel = when {
+        isSchoolBus -> "School Bus"
+        isOnDemand -> "On Demand"
+        else -> null
+    }
 
     // Content alpha to be 100% always, as it's only visible in the expanded state.
     // If it's visible, it should be full alpha
@@ -138,15 +146,21 @@ fun LegView(
                         StopsRow(
                             stops = "$stopsCount stops",
                             line = transportModeLine,
-                            isSchoolBus = isSchoolBus,
+                            modeLabel = modeLabel,
                             onClick = {
                                 onClick()
                             },
                         )
                     } else {
-                        TransportModeInfo(
-                            transportMode = transportModeLine.transportMode,
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            TransportModeInfo(
+                                transportMode = transportModeLine.transportMode,
+                            )
+                            modeLabel?.let { ModeLabelText(it) }
+                        }
                     }
                 }
 
@@ -316,7 +330,7 @@ private fun StopsRow(
     stops: String,
     line: TransportModeLine,
     modifier: Modifier = Modifier,
-    isSchoolBus: Boolean = false,
+    modeLabel: String? = null,
     onClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
@@ -346,14 +360,18 @@ private fun StopsRow(
             modifier = Modifier.align(Alignment.CenterVertically),
         )
 
-        if (isSchoolBus) {
-            Text(
-                text = "School Bus",
-                style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                color = KrailTheme.colors.onSurface,
-            )
-        }
+        modeLabel?.let { ModeLabelText(it) }
     }
+}
+
+@Composable
+private fun ModeLabelText(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+        color = KrailTheme.colors.onSurface,
+        modifier = modifier,
+    )
 }
 
 // region Previews

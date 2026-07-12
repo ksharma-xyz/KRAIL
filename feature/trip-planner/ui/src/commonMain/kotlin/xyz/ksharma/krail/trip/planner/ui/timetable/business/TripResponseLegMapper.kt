@@ -14,15 +14,46 @@ import kotlin.time.ExperimentalTime
 /**
  * Builds a [TimeTableState.JourneyCardInfo.Leg.WalkingLeg] for a walking leg, or null when the
  * walking leg has no display duration or its footpath info is redundant.
+ *
+ * [isFirstLeg]/[isLastLeg] identify this leg's position in the journey's raw leg list - the
+ * true first-mile (origin) and last-mile (destination) walk legs get a "pin row" name so the
+ * rider always knows exactly where they're walking from/to, whether that endpoint is a
+ * searched address or a named transit stop (e.g. "Town Hall Station") - a rider unfamiliar
+ * with the city shouldn't be left guessing where the final walk leads just because the
+ * destination happens to be a stop rather than a street address.
+ *
+ * EXPERIMENT (see WalkingLeg.kt pin-row work): NSW flags some first/last-mile footpath legs
+ * `footPathInfoRedundant = true` (e.g. Town Hall Station -> QVB, Stand C), which previously
+ * dropped the leg entirely - even though it's the only text telling the rider they need to
+ * walk before boarding. Ignoring the redundant flag for first/last legs surfaces that info;
+ * interior/interchange legs still respect it, since those are genuinely covered elsewhere.
+ * Revert to `footPathInfoRedundant != true` (drop the `isFirstLeg || isLastLeg` clause) if
+ * this turns out noisier than useful.
  */
 @OptIn(ExperimentalTime::class)
-internal fun TripResponse.Leg.toWalkingLegUiModel(): TimeTableState.JourneyCardInfo.Leg? {
+internal fun TripResponse.Leg.toWalkingLegUiModel(
+    isFirstLeg: Boolean = false,
+    isLastLeg: Boolean = false,
+): TimeTableState.JourneyCardInfo.Leg? {
     // BFF proto path ships a render-ready duration string; the NSW JSON path
     // derives it from duration seconds / dep-arr times.
     val displayDuration = bffDisplayDuration
         ?: resolveDurationSeconds()?.seconds?.toFormattedDurationTimeString()
-    return if (displayDuration != null && footPathInfoRedundant != true) {
-        TimeTableState.JourneyCardInfo.Leg.WalkingLeg(duration = displayDuration)
+    val footPathInfoShown = footPathInfoRedundant != true || isFirstLeg || isLastLeg
+    return if (displayDuration != null && footPathInfoShown) {
+        TimeTableState.JourneyCardInfo.Leg.WalkingLeg(
+            duration = displayDuration,
+            originPinName = if (isFirstLeg) {
+                origin?.disassembledName ?: origin?.name
+            } else {
+                null
+            },
+            destinationPinName = if (isLastLeg) {
+                destination?.disassembledName ?: destination?.name
+            } else {
+                null
+            },
+        )
     } else {
         null
     }
@@ -39,6 +70,7 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
     val isSchoolBus = rawProductClass == TransportMode.SCHOOL_BUS_PRODUCT_CLASS
     val transportMode = rawProductClass
         ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
+    val isOnDemand = transportMode is TransportMode.OnDemand
     val lineName = transportation?.disassembledName
     val displayText = NswTransportConfig.resolveServiceDisplayText(
         productClass = transportation?.product?.productClass?.toInt(),
@@ -72,11 +104,13 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
         stops = stops,
         serviceAlertList = alerts,
         walkInterchange = footPathInfo?.firstOrNull()?.run {
-            duration?.seconds?.toFormattedDurationTimeString()
-                ?.let { formattedDuration -> toWalkInterchange(formattedDuration) }
+            duration?.seconds?.toFormattedDurationTimeString()?.let { formattedDuration ->
+                toWalkInterchange(formattedDuration)
+            }
         },
         tripId = transportation?.id + transportation?.properties?.realtimeTripId,
         transportationId = transportation?.id,
         isSchoolBus = isSchoolBus,
+        isOnDemand = isOnDemand,
     )
 }

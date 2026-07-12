@@ -155,20 +155,28 @@ val viewModelsModule = module {
 
     viewModel {
         val isDebug = get<AppInfoProvider>().getAppInfo().isDebug
-        val addressSearchDebugOverride = when {
-            isDebug -> get<DebugNetworkConfigStore>().state.value.addressSearchEnabled
-            else -> get<Flag>().getFlagValue(FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key).asBoolean(false)
+        val debugNetworkConfigStore = get<DebugNetworkConfigStore>()
+        val flag = get<Flag>()
+        // Read live, not once: the debug toggle can flip while this ViewModel is
+        // already alive (Debug Settings -> back, same nav entry), so a snapshot
+        // Boolean captured at construction time would silently stay stale forever.
+        val isAddressSearchEnabled = {
+            if (isDebug) {
+                debugNetworkConfigStore.state.value.addressSearchEnabled
+            } else {
+                flag.getFlagValue(FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key).asBoolean(false)
+            }
         }
         SearchStopViewModel(
             analytics = get(),
             stopResultsManager = get(),
             remoteAddressResultsManager = get(),
             nearbyStopsManager = get(),
-            flag = get(),
+            flag = flag,
             ioDispatcher = get(named(IODispatcher)),
             preferences = get(),
             sandook = get(),
-            addressSearchDebugOverride = addressSearchDebugOverride,
+            isAddressSearchEnabled = isAddressSearchEnabled,
         )
     }
 }

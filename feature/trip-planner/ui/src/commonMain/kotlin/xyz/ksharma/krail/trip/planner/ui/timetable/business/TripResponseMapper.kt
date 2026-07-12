@@ -34,7 +34,6 @@ internal fun TripResponse.buildJourneyList(): ImmutableList<TimeTableState.Journ
 internal fun TripResponse.buildJourneyListWithRawData():
     Pair<ImmutableList<TimeTableState.JourneyCardInfo>?, Map<String, TripResponse.Journey>> {
     val rawDataMap = mutableMapOf<String, TripResponse.Journey>()
-
     val journeyList = journeys?.mapNotNull { journey ->
         val firstPublicTransportLeg = journey.getFirstPublicTransportLeg()
         val lastPublicTransportLeg = journey.getLastPublicTransportLeg()
@@ -53,11 +52,15 @@ internal fun TripResponse.buildJourneyListWithRawData():
         ) {
             // A walking leg consists of walking leg
             // + footpath info from public transport leg (if footPathInfoRedundant is true)
-            val totalWalkingDuration = legs.sumOf { leg ->
-                if (leg.isWalkingLeg() && leg.footPathInfoRedundant != true) {
-                    leg.duration ?: 0L
+            // EXPERIMENT: mirrors toWalkingLegUiModel's isFirstLeg/isLastLeg override - a
+            // redundant-flagged first/last-mile walk is now shown, so it should count towards
+            // the total too. See TripResponseLegMapper.kt for the revert note.
+            val totalWalkingDuration = legs.foldIndexed(0L) { index, acc, leg ->
+                val isFirstOrLastLeg = index == 0 || index == legs.lastIndex
+                if (leg.isWalkingLeg() && (leg.footPathInfoRedundant != true || isFirstOrLastLeg)) {
+                    acc + (leg.duration ?: 0L)
                 } else {
-                    0L
+                    acc
                 }
             }
 
@@ -88,7 +91,6 @@ internal fun TripResponse.buildJourneyListWithRawData():
                 departureDeviation = firstPublicTransportLeg.getDepartureDeviation(),
                 scheduledOriginTime = firstPublicTransportLeg.getScheduledOriginTime(),
             ).also {
-                log("\tJourneyId: ${it.journeyId}")
                 // Store raw journey data for map visualization
                 rawDataMap[it.journeyId] = journey
             }
@@ -96,9 +98,9 @@ internal fun TripResponse.buildJourneyListWithRawData():
             null
         }
     }?.toImmutableList()
-
     return Pair(journeyList, rawDataMap)
 }
+
 private fun TripResponse.Journey.getFirstPublicTransportLeg() = legs?.firstOrNull { leg ->
     !leg.isWalkingLeg()
 }
@@ -223,15 +225,24 @@ private fun List<TripResponse.Leg>.getTransportModeLines() = mapNotNull { leg ->
     }
 }.toImmutableList()
 
-private fun List<TripResponse.Leg>.getLegsList() = mapNotNull { it.toUiModel() }.toImmutableList()
+private fun List<TripResponse.Leg>.getLegsList() = mapIndexedNotNull { index, leg ->
+    leg.toUiModel(isFirstLeg = index == 0, isLastLeg = index == lastIndex)
+}.toImmutableList()
 
 @OptIn(ExperimentalTime::class)
 private fun String.getTimeText() = toDepartureRelativeString()
 
-private fun TripResponse.Leg.toUiModel(): TimeTableState.JourneyCardInfo.Leg? =
+private fun TripResponse.Leg.toUiModel(
+    isFirstLeg: Boolean = false,
+    isLastLeg: Boolean = false,
+): TimeTableState.JourneyCardInfo.Leg? =
     // Walking Leg - Always check before public transport leg. Both builders compute their
     // own fields from this leg; see TripResponseLegMapper.kt.
-    if (isWalkingLeg()) toWalkingLegUiModel() else toTransportLegUiModel()
+    if (isWalkingLeg()) {
+        toWalkingLegUiModel(isFirstLeg = isFirstLeg, isLastLeg = isLastLeg)
+    } else {
+        toTransportLegUiModel()
+    }
 
 /**
  * Resolves the duration of a leg in seconds.
@@ -263,32 +274,13 @@ internal fun TripResponse.Leg.resolveDurationSeconds(): Long? {
 internal fun TripResponse.FootPathInfo.toWalkInterchange(
     displayDuration: String,
 ): TimeTableState.JourneyCardInfo.WalkInterchange? {
-    return position?.let { position ->
-        when (position) {
-            TimeTableState.JourneyCardInfo.WalkPosition.BEFORE.position -> {
-                TimeTableState.JourneyCardInfo.WalkInterchange(
-                    duration = displayDuration,
-                    position = TimeTableState.JourneyCardInfo.WalkPosition.BEFORE,
-                )
-            }
-
-            TimeTableState.JourneyCardInfo.WalkPosition.AFTER.position -> {
-                TimeTableState.JourneyCardInfo.WalkInterchange(
-                    duration = displayDuration,
-                    position = TimeTableState.JourneyCardInfo.WalkPosition.AFTER,
-                )
-            }
-
-            TimeTableState.JourneyCardInfo.WalkPosition.IDEST.position -> {
-                TimeTableState.JourneyCardInfo.WalkInterchange(
-                    duration = displayDuration,
-                    position = TimeTableState.JourneyCardInfo.WalkPosition.IDEST,
-                )
-            }
-
-            else -> null
-        }
-    }
+    val walkPosition = TimeTableState.JourneyCardInfo.WalkPosition.entries
+        .firstOrNull { it.position == position }
+        ?: return null
+    return TimeTableState.JourneyCardInfo.WalkInterchange(
+        duration = displayDuration,
+        position = walkPosition,
+    )
 }
 
 internal fun TripResponse.StopSequence.toUiModel(): TimeTableState.JourneyCardInfo.Stop? {

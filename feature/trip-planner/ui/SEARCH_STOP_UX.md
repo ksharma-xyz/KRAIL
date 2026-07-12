@@ -1,6 +1,12 @@
 # SearchStopScreen — UX rules
 
-The screen is built around three ideas: **search for a stop**, **save stops as labels**, and **reorder/delete labels**. Most rules below are covered by tests. Anything not yet tested is in the [TODO](#todo--future-work) section so the gap is explicit.
+The screen is built around three ideas: **search for a stop**, **save stops as labels**
+(assigned inline, no picker sheet), and **manage labels** (rename/remove-assignment/
+delete/reorder, via the full-screen `ManageStopLabelsScreen`). This is the **v4**
+shipped design — see `STOP_LABEL_UX_REDESIGN_PROPOSAL.md` for the history of how it
+got here (v2 sheet-based → v3 tap-to-expand → v4 external review pack). Most rules
+below are covered by tests. Anything not yet tested is in the
+[TODO](#todo--future-work) section so the gap is explicit.
 
 ---
 
@@ -8,30 +14,87 @@ The screen is built around three ideas: **search for a stop**, **save stops as l
 
 ### Defaults & lifecycle
 - On first install, `Home` and `Work` are seeded (both unset).
-- `Home.isProtected == true` — the ✕ delete chip is hidden on Home and the `DeleteLabel` ViewModel handler early-returns for it. So the labels list can never be empty, which means `observeStopLabels`' empty-rows branch only ever runs once (on a truly fresh install).
-- Sort order in the DB query: `(stop_id IS NULL) ASC, sort_order ASC, label ASC` — labels with stops appear before unset labels; manual drag order is preserved within each group.
+- `Home.isProtected == true` (`StopLabel.PROTECTED_LABEL`) — Delete and Rename are both
+  hidden for Home in `ManageStopLabelRow`; `DeleteLabel`'s and `RenameLabel`'s
+  ViewModel handlers also early-return for it as a second line of defence. Home *can*
+  still be cleared
+  (Remove assignment) — `isProtected` only blocks deletion and renaming, not clearing.
+  So the labels list can never be empty, which means `observeStopLabels`'s empty-rows
+  branch only ever runs once (on a truly fresh install).
+- Sort order in the DB query (`StopLabels.sq`): `(stop_id IS NULL) ASC, sort_order ASC,
+  label ASC` — labels with stops appear before unset labels; manual drag order
+  (`MoveLabelToIndex`, Manage screen's Reorder mode) is preserved within the "has a
+  stop" group only — unset labels aren't reorderable (see below).
 
-### Tap behaviour (outside edit mode)
-- Tap a **set pill** → selects that stop as From / To (also dismisses keyboard + clears focus).
-- Tap an **unset pill** → toggles assigning mode for that label. Tapping the same pill again exits assigning mode.
-- Tap **+ Add** → opens `AddLabelBottomSheet` for creating a new label.
+### Top pill row (`LabelShortcutsRow`) — set labels only, tap-only
+The row shows **only labels that already have a stop attached** (`labels.filter {
+it.isSet }`) as tappable pills, plus a trailing **Manage** button. Unset labels render
+nothing here — there is no "+", no unset pill, no way to start an assignment from this
+row. (This is a deliberate v4 change from the earlier long-press-to-edit /
+tap-unset-pill-to-choose-mode designs — see
+[Retired: choose-mode](#retired-choose-mode-and-star-conflict-flow) below.)
 
-### Long-press
-- Long-press any pill → enters edit mode. Pills wiggle, `✕` overlays appear (except on Home), `+ Add` is replaced with a `Done` action button. The long-press ripple is contained inside the rounded shape (clip applied before clickable).
-- Long-press triggers via a custom `awaitEachGesture`, *not* `combinedClickable`, so it doesn't compete with the reorderable library's `longPressDraggableHandle` for events.
+- Tap a **set pill** → selects that stop as From / To (`onSetLabelClick`).
+- Tap the trailing **Manage** button → hides the keyboard and clears search-field
+  focus (same order as the back button's `NavActionButton`), then navigates to
+  `ManageStopLabelsScreen` (a real nav destination, `ManageStopLabelsRoute` — not a
+  sheet).
 
-### Edit mode (drag-to-reorder + inline delete)
-- Drag a pill (long-press first, then keep finger down) → reorders via `MoveLabelToIndex` event.
-- Tap **✕** on a pill → `DeleteLabel` event for that label.
-- Tap the **Done** pill → exit edit mode.
-- Tap a pill body in edit mode → still selects as From/To (consistent with "tap = select" rule).
+### Assigning a stop to a label (`StopLabelAssignRow`)
+Every stop row (recents, search results, empty-state stops) is a `StopLabelAssignRow`.
+It expands in place (`animateContentSize`, same pattern as `JourneyCard`/
+`TripSearchListItem`) — there's no separate picker sheet.
+
+A stop row has exactly two states, with no path between them from this row:
+- **Unassigned** — shows a plain "+" (`AssignToLabelIcon`, bare rotating chevron, no
+  circle background). Tap → expands to a wall of every **unset** label
+  (`stopLabels.filterNot { it.isSet }`) as outlined pills, plus a trailing
+  **"+ New label"** chip.
+  - Tap an outlined pill → assigns this stop to it instantly (`AssignLabelStop`), no
+    confirmation, row collapses. Because the wall only ever lists unset labels, there
+    is no reassign-by-tapping-a-pill flow and no conflict to resolve here — a stop can
+    only ever be on one label and a label on one stop, satisfied by construction.
+  - Tap "+ New label" → opens `AssignNewLabelSheet` ("Save and assign" — creates the
+    label AND assigns this stop to it in one step). Duplicate names are blocked with
+    `ConfirmLabelActionSheet` instead of silently no-oping.
+- **Assigned** — shows the label as a small, solid, non-interactive pill inline next to
+  the transport-mode icons. No icon, no expand, no way to change or remove the label
+  from this row — reassignment/removal only happens in Manage (see below).
+
+### Managing labels (`ManageStopLabelsScreen`)
+A real nav destination (`ManageStopLabelsRoute`), not a sheet — Google Maps
+"Your Places" / Uber Settings > Saved Places shape. Title bar: "Manage your labels" +
+a "Reorder"/"Done" toggle action.
+
+- **Normal mode**: description text, then set labels (with stops) followed by a "Not
+  Assigned" section for unset labels. Tap any row (`ManageStopLabelRow`) to expand it
+  in place:
+  - **Rename** field + **Save changes** button — hidden entirely for the protected
+    Home label (renaming it would also un-protect it, silently making it deletable).
+  - **Remove** (outlined button, only shown when the label has a stop) — fires
+    `ClearLabelStop`.
+  - **Delete** (destructive-tinted button, hidden for protected labels) — fires
+    `onDeleteLabel`, which shows a `ConfirmLabelActionSheet` ("Delete "X" label?")
+    before the ViewModel's `DeleteLabel` actually fires.
+- **Reorder mode**: description hides, a banner appears ("Long press and then drag ⋮⋮
+  to reorder your labels"), only **set** labels get a drag handle
+  (`longPressDraggableHandle`, via `sh.calvin.reorderable`) — unset labels have no
+  meaningful order (they don't drive the top pill row) so dragging them is a no-op and
+  they render without a handle. Reorder fires `MoveLabelToIndex(labelKey,
+  targetLabelKey)` per drop — keyed off the target label rather than a raw list index,
+  since the LazyColumn also holds non-draggable rows (the banner, the "Not Assigned"
+  header/rows) that would otherwise offset a plain index.
+- There is currently **no "reassign to a different stop" action in Manage** — to move
+  a label to a different stop, the only path is Remove (clears it) then assign it
+  again from wherever the new stop is shown. (The original redesign proposal sketched
+  a "Replace" sheet with this built in; it wasn't part of what shipped.)
 
 ---
 
 ### Pill row visibility (`shouldShowPillRow`)
 
-The whole pill row + assigning banner only render when there's something below for
-the user to act on:
+The whole top pill row (+ trailing Manage button) only renders when there's something
+below for the user to act on:
 
 | List state | Pill row |
 |---|---|
@@ -42,9 +105,8 @@ the user to act on:
 | NoMatch | hidden |
 | Error | hidden |
 
-Reasoning: tapping an unset Home pill enters assigning mode, which expects at least
-one stop with a star button below. Showing pills against an empty canvas would let
-users tap into a dead-end state.
+Note: since the row only ever shows *set* labels as pills now, "visible" can still mean
+zero label pills + just the Manage button, if every label is currently unset.
 
 ---
 
@@ -67,81 +129,77 @@ Rules:
   "Suggested" label (product decision).
 - **Replace, never coexist.** They are a first-open fallback only. The instant the
   user has any recent stop, recents take over and the curated list disappears.
-- **Same tap path as recents.** Tapping one calls `onStopSelect` → the stop is saved
-  to recents, so next open it appears under Recents (and the curated list is gone).
+- **Same tap path as recents.** Each renders as a `StopLabelAssignRow` too, so tapping
+  the stop name selects it as From/To, and its "+" works the same as any other row.
   Fires `TrackStopSelected(isRecentSearch = false)` — not a recent, not a search.
-- **Pill row stays hidden here** (unchanged): `shouldShowPillRow` still returns false
-  with zero recents, so a first-open user sees only the curated stops, not label
-  pills. Reaching assigning mode still requires a recent first.
 
 ---
 
 ## Stops & saving
 
 ### Saving auto-pins to recents
-When a stop is attached to a label (via the save sheet or the "Set as From/To then
-assign" flow), the same stop is also written to the recent search stops table —
-that way the saved stop shows up in Recents next time the screen opens, so users
-can reach it again quickly even if they remove the label later.
+When a stop is attached to a label (via `StopLabelAssignRow`'s wall or "+ New label"),
+the same stop is also written to the recent search stops table — that way the saved
+stop shows up in Recents next time the screen opens, so users can reach it again
+quickly even if they remove the label later.
 
-
-
-### Star button (StopSearchListItem)
-- Outlined `ic_star` when the stop isn't saved against any label. Tap → opens `SaveStopAsLabelSheet`.
-- Filled `ic_star_filled` (themeColor) when the stop matches an existing label's stopId. Tap → fires `ClearLabelStop` for the matching label directly (no sheet).
-
-### Save sheet
-- Lists existing labels as chips; tapping a chip fires `AssignLabelStop`.
-  - Chip is **solid** when the label is already set, **outlined** when unset (so you can see at a glance which labels still need a stop).
-- Includes a `+ New label` chip that chains into `AddLabelBottomSheet`.
-
-### 1:1 invariant + conflict warnings
-A stop is associated with at most one label, and a label is associated with at most one stop. `conflictForAssign(target, stop, allLabels)` (in `SearchStopRules.kt`) returns:
-- `StopAlreadyOnAnotherLabel` if `stop` is already saved on a different label → user is shown "Already saved … Move to Y?" sheet.
-- `LabelHasDifferentStop` if `target` already has a different stop attached → "Already in use … Replace with Y?" sheet.
-- `null` otherwise — assignment proceeds silently.
-
-Stop-side conflict takes precedence when both apply.
-
-### Add label sheet
-- Title: "Add a new label".
-- Sections: Title → (optional Stop chip) → Preview heading + pill → Suggestions chips → Name TextField → Save.
-- Suggestions filter out names that already exist (case-insensitive, emoji-stripped via `labelNamesMatch`).
-- Live-typed name is normalised through `normaliseLabelName`: leading/trailing/embedded emoji stripped, whitespace collapsed.
-- Inline error + disabled Save when the typed name (after normalisation) duplicates an existing label.
+### Add label sheet (`AssignNewLabelSheet`)
+- Only ever opened from "+ New label" inside an expanded `StopLabelAssignRow` — the
+  stop is always known going in, so there's no "no stop yet" branch and no suggestion
+  chips (unlike the old, now-retired `AddLabelBottomSheet`).
+- Title + stop name (with its mode roundel underneath) + a single "Label name" field +
+  "Save and assign".
+- Live-typed name is normalised through `normaliseLabelName`: leading/trailing/embedded
+  emoji stripped, whitespace collapsed. A duplicate (case-insensitive, after
+  normalisation) blocks Save with a `ConfirmLabelActionSheet`, not a silent no-op.
 
 ---
 
-## Contextual hint banner
+## Retired: choose-mode and star/conflict flow
 
-Decided by `pillRowBannerText(editing, assigningLabel, stopLabels)` in `SearchStopRules.kt`. Wrapped in `Modifier.animateContentSize` so show/hide is smooth.
+The following existed in earlier iterations (v2/v3):
 
-| State | Banner |
-|---|---|
-| Editing | `Long press and then drag the pill to reorder and select Done to save.` |
-| Assigning, label still unset | `Tap the ⭐ next to a stop to save it as <name>` |
-| Assigning, label became set | (collapsed — banner clears automatically) |
-| Idle | (collapsed) |
-
-A `LaunchedEffect` watching `(assigningLabel, stopLabels)` clears `assigningLabel` once the target label transitions to set, so there's no leftover state and no manual Cancel button.
+- **Choose-mode.** Deleted. `SearchStopScreen`'s `assigningLabel` state, the
+  `onUnsetLabelClick` callback, the "Choose your ‹label› stop" placeholder swap, and
+  the contextual hint banner (`pillRowBannerText`) were unreachable — `LabelShortcutsRow`'s
+  `LazyRow` only ever iterates `isSet` labels (see
+  [Top pill row](#top-pill-row-labelshortcutsrow--set-labels-only-tap-only) above), so
+  the branch that called `onUnsetLabelClick` could never fire. Removed entirely, along
+  with `LabelShortcutPill`'s now-unreachable unset-pill branch and `UnsetLabelPill`'s
+  scale-animation parameter.
+- **Star-button / conflict-sheet flow.** Deleted. `conflictForAssign`/`AssignConflict`/
+  `savedStopIds` in `SearchStopRules.kt`, and the `StopSearchListItem` component
+  (star icon, `ic_star`/`ic_star_filled`) had no production callers left —
+  `StopSearchListItem` wasn't used in `SearchStopScreen.kt` at all any more, fully
+  replaced by `StopLabelAssignRow`. Removed entirely.
 
 ---
 
 ## Layout / search status
 
-- Recent header text and "Clear all" both use `KrailColors.label` (not `softLabel`) for readability across themes.
-- `+ Add` pill border + text use `label` colour.
-- `Done` pill uses `onSurface`/`surface` (inverse) so it reads as an action button distinct from the label pills.
+- Recent header text and "Clear all" both use `KrailColors.label` (not `softLabel`) for
+  readability across themes.
+- Trailing **Manage** button uses `ButtonDefaults.monochromeButtonColors()` so it reads
+  as an action distinct from the label pills.
 - Stop-row dividers respect `pageHorizontalPadding` (don't go edge-to-edge).
-- The "searching…" indicator is a small floating `LoadingDotsPill` (taj component), positioned at top-center on the z-axis above the LazyColumn — does not claim vertical layout space, so the pill row stays anchored when typing.
+- The "searching…" indicator is a small floating `LoadingDotsPill` (taj component),
+  positioned at top-center on the z-axis above the LazyColumn — does not claim vertical
+  layout space, so the pill row stays anchored when typing.
 
 ---
 
 ## State management
 
-- All UI orchestration state in `SearchStopScreen` is `rememberSaveable`, with `mapSaver`-style `Saver`s for complex types (`StopLabel?`, `StopItem?`, `LabelConflict?`). Rotation, dark-mode toggle, locale change and process death do not drop in-flight sheets / edit mode / assigning state.
-- The DB observer is launched in `init {}` rather than `_uiState.onStart {}` so it runs for the VM's lifetime, surviving brief UI subscription gaps.
-- All label mutations (`AssignLabelStop` / `CreateLabel` / `ClearLabelStop` / `DeleteLabel` / `MoveLabelToIndex`) are **optimistic**: the in-memory state updates synchronously inside `updateUiState { … }` before the IO write fires. The DB observer's later emission is a no-op in the happy path.
+- All UI orchestration state in `SearchStopScreen` is `rememberSaveable`, with
+  `mapSaver`-style `Saver`s for complex types (`StopLabel?`, `NewLabelTarget?`).
+  Rotation, dark-mode toggle, locale change and process death do not drop in-flight
+  sheets / expand state.
+- The DB observer is launched in `init {}` rather than `_uiState.onStart {}` so it runs
+  for the VM's lifetime, surviving brief UI subscription gaps.
+- All label mutations (`AssignLabelStop` / `CreateLabel` / `ClearLabelStop` /
+  `DeleteLabel` / `RenameLabel` / `MoveLabelToIndex`) are **optimistic**: the in-memory
+  state updates synchronously inside `updateUiState { … }` before the IO write fires.
+  The DB observer's later emission is a no-op in the happy path.
 
 ---
 
@@ -149,57 +207,57 @@ A `LaunchedEffect` watching `(assigningLabel, stopLabels)` clears `assigningLabe
 
 Tracked here so we can crank through the gaps without losing them.
 
+### Cleanup
+All dead code described in [Retired](#retired-choose-mode-and-star-conflict-flow)
+above — choose-mode (`assigningLabel`/`onUnsetLabelClick`/`pillRowBannerText`) and the
+star/conflict-sheet flow (`conflictForAssign`/`AssignConflict`/`savedStopIds`/
+`StopSearchListItem`) — has been deleted.
+
 ### Compose UI tests
-Covered on `test/search-stop-compose-ui-tests`:
+Covered in `SearchStopScreenInteractionTest.kt` (`src/androidHostTest`):
 - ✅ `pillRow_isHidden_onFreshInstallWithNoRecents`
 - ✅ `pillRow_isShown_whenAtLeastOneRecentExists`
 - ✅ `recentHeader_isHidden_onFreshInstall`
-- ✅ `savedStop_showsRemoveFromLabelsStar`
-- ✅ `tappingFilledStar_firesClearLabelStopWithMatchingLabel`
+- ✅ `assignedStop_hidesAssignIcon`
+- ✅ `assignedStop_showsLabelPillInline`
 - ✅ `tappingSetPill_invokesOnStopSelectWithUnderlyingStop`
-- ✅ `tappingUnsetPill_showsAssigningBanner`
-- ✅ `tappingUnsetPillTwice_togglesAssigningModeOff`
-- ✅ `tappingUnsetPill_doesNotInvokeOnStopSelect`
-- ✅ `addLabelPill_isVisible_inIdleMode`
+- ✅ `manageButton_isVisible_wheneverPillRowRenders`
+- ✅ `tappingManageButton_invokesOnManageLabelsClick`
+- ✅ `tappingManageButton_hidesKeyboardBeforeInvokingCallback`
 - ✅ `clearAllButton_firesClearRecentSearchStopsEventWithCount`
 - ✅ `recentHeader_showsRecentAndClearAllLabelsWhenRecentsExist`
 
 Outstanding (gesture-heavy or sheet-based — held back to keep CI deterministic):
-- `longPressOnPill_entersEditMode` — long-press timing is flaky in Robolectric.
-- `dragging_pill_in_edit_mode_fires_MoveLabelToIndex` — drag gesture racing with
-  the reorderable lib's longPressDraggableHandle is not portable to Robolectric.
-- `home_pill_has_no_delete_overlay_in_edit_mode` — gated on entering edit mode
-  programmatically; would need a hoisted-state test surface.
-- `addingDuplicateLabel_isBlockedWithInlineError` — needs ModalBottomSheet to
-  open in test, which requires advancing the animation clock through to settle.
-- `assigningLabel_clearsAfterStopSelected` — needs mutable searchStopState so
-  the AssignLabelStop emission can flow back. Pure-rule version is covered in
-  `pillRowBannerText` ("banner clears once the assigning label has been satisfied").
+- `dragging_row_in_ManageStopLabelsScreen_fires_MoveLabelToIndex` — drag gesture racing
+  with the reorderable lib's `longPressDraggableHandle` is not portable to Robolectric;
+  covered by snapshot tests visually instead.
+- `addingDuplicateLabel_isBlockedWithInlineError` (`AssignNewLabelSheet`) — needs
+  `ModalBottomSheet` to open in test, which requires advancing the animation clock
+  through to settle.
+- `ManageStopLabelRow` Save/Remove/Delete button taps — not yet covered by a Compose UI
+  test (only VM-level `RenameLabel`/`ClearLabelStop`/`DeleteLabel` handlers are
+  tested); would need the row's expand state driven from a hoisted test surface.
 
 ### ViewModel tests
-Covered on `test/search-stop-vm-label-handlers`
-(`SearchStopViewModelLabelHandlersTest`):
+Covered in `SearchStopViewModelLabelHandlersTest.kt`:
 - AssignLabelStop: state + sandook + recents pinning.
 - CreateLabel: append, case-insensitive duplicate skip, blank skip, surrounding-emoji
   normalisation.
 - ClearLabelStop: detaches in state and DB.
+- RenameLabel: renames, blocks duplicates.
 - DeleteLabel: removes non-protected, preserves Home (incl. mixed case).
-- MoveLabelToIndex: reorders + re-numbers sort_order; same-slot and unknown-key
-  no-ops.
+- MoveLabelToIndex: reorders by target label key + re-numbers sort_order; same-key and
+  unknown-key no-ops.
 - observeStopLabels: empty-DB seeds defaults; populated DB mirrors into state.
 
 ### Snapshot coverage
 Add `@PreviewScreen` for states we don't render today:
-- `EditMode_Wiggling` (pills wiggling, ✕ visible, Done pill, Home with no ✕)
-- `AssigningModeWithBanner` (banner expanded, target pill highlighted)
-- `LabelConflictSheet_StopSide` (already covered as Sheet preview but not screen-level)
-- `LabelConflictSheet_LabelSide` (same)
-- `SaveStopAsLabelSheet_OutlinedAndSolidChips` (mix of set + unset labels)
-- `AddLabelBottomSheet_DuplicateError`
-
-### Refactor
-- Replace `LabelConflict` (sealed interface inside `SearchStopScreen.kt`) with `AssignConflict` from `SearchStopRules.kt` to remove the duplicate type.
-- Extract more screen logic into `SearchStopRules.kt` as it grows — anything purely state-derived belongs there.
+- `ManageStopLabelsScreen` in Reorder mode with a mix of set/unset labels
+- `StopLabelAssignRow` with a long unset-label wall that wraps/scrolls
+- `AssignNewLabelSheet_DuplicateError`
 
 ### Documentation
-- Add a short "SearchStopScreen rules" section to `CLAUDE.md` linking to this file so future agent runs know the invariants.
+- Keep this file in sync with `STOP_LABEL_UX_REDESIGN_PROPOSAL.md`'s Status line as
+  further wiring PRs land, and delete the proposal doc entirely once nothing in it is
+  still aspirational (i.e. once the [Cleanup](#cleanup) items above are done and the
+  "Replace sheet" gap is either shipped or dropped from scope).

@@ -52,6 +52,8 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.ConfirmLabelActionSheet
+import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
+import xyz.ksharma.krail.trip.planner.ui.components.filterLabelNameInput
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
 import xyz.ksharma.krail.trip.planner.ui.components.stopLabelColor
 import xyz.ksharma.krail.trip.planner.ui.components.stopLabelIcon
@@ -206,6 +208,33 @@ internal fun ManageStopLabelRow(
 
 private const val DRAG_SCALE = 1.02f
 
+/** Result of tapping "Save changes" in [ExpandedRenameContent]'s rename field. */
+internal sealed interface RenameSaveAction {
+    /** Blank or unchanged — nothing to save, just collapse the row. */
+    data object CollapseOnly : RenameSaveAction
+
+    /** Normalises to the same name as another existing label — block with a sheet. */
+    data class Duplicate(val cleanedName: String) : RenameSaveAction
+
+    /** A genuinely new, non-duplicate name — proceed with the rename. */
+    data class Save(val trimmedName: String) : RenameSaveAction
+}
+
+internal fun resolveRenameSaveAction(
+    typedName: String,
+    currentName: String,
+    existingLabelNames: List<String>,
+): RenameSaveAction {
+    val trimmed = typedName.trim()
+    if (trimmed.isBlank() || trimmed == currentName) return RenameSaveAction.CollapseOnly
+    val cleaned = normaliseLabelName(trimmed)
+    val duplicate = existingLabelNames.any {
+        !it.equals(currentName, ignoreCase = true) &&
+            normaliseLabelName(it).equals(cleaned, ignoreCase = true)
+    }
+    return if (duplicate) RenameSaveAction.Duplicate(cleaned) else RenameSaveAction.Save(trimmed)
+}
+
 @Composable
 private fun ExpandedRenameContent(
     currentName: String,
@@ -244,6 +273,11 @@ private fun ExpandedRenameContent(
             TextField(
                 placeholder = "e.g. Home, Gym, School…",
                 state = textFieldState,
+                // Same allowlist as AssignNewLabelSheet's create field — blocks
+                // emoji/punctuation at keystroke time instead of silently stripping
+                // them later, so raw and normalised never diverge here either.
+                filter = ::filterLabelNameInput,
+                maxLength = LABEL_NAME_MAX_LENGTH,
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
@@ -263,27 +297,31 @@ private fun ExpandedRenameContent(
             if (!isProtected) {
                 Button(
                     onClick = {
-                        val trimmed = textFieldState.text.toString().trim()
-                        if (trimmed.isBlank() || trimmed == currentName) {
-                            focusManager.clearFocus()
-                            onCollapse()
-                            return@Button
-                        }
-                        val cleaned = normaliseLabelName(trimmed)
-                        val duplicate = existingLabelNames.any {
-                            !it.equals(currentName, ignoreCase = true) &&
-                                normaliseLabelName(it).equals(cleaned, ignoreCase = true)
-                        }
-                        if (duplicate) {
-                            // Don't collapse — the ViewModel's own dedupe check is a
-                            // silent no-op, so collapsing here would close the row
-                            // while implying the rename succeeded when nothing was
-                            // saved.
-                            duplicateName = cleaned
-                        } else {
-                            focusManager.clearFocus()
-                            onRename(trimmed)
-                            onCollapse()
+                        when (
+                            val action = resolveRenameSaveAction(
+                                typedName = textFieldState.text.toString(),
+                                currentName = currentName,
+                                existingLabelNames = existingLabelNames,
+                            )
+                        ) {
+                            RenameSaveAction.CollapseOnly -> {
+                                focusManager.clearFocus()
+                                onCollapse()
+                            }
+
+                            is RenameSaveAction.Duplicate -> {
+                                // Don't collapse — the ViewModel's own dedupe check is
+                                // a silent no-op, so collapsing here would close the
+                                // row while implying the rename succeeded when
+                                // nothing was saved.
+                                duplicateName = action.cleanedName
+                            }
+
+                            is RenameSaveAction.Save -> {
+                                focusManager.clearFocus()
+                                onRename(action.trimmedName)
+                                onCollapse()
+                            }
                         }
                     },
                     colors = ButtonDefaults.monochromeButtonColors(),

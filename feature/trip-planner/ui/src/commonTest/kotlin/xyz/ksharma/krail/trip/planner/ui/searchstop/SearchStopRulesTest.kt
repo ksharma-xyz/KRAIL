@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import kotlin.test.Test
@@ -23,37 +24,62 @@ class SearchStopRulesTest {
         stopId = "stop_central",
         transportModeType = persistentListOf(TransportMode.Train),
     )
+    private val homeUnset = StopLabel(emoji = "🏠", label = "Home")
+    private val homeSet = StopLabel(
+        emoji = "🏠",
+        label = "Home",
+        stopId = "stop_central",
+        stopName = "Central Station",
+    )
 
     @Test
     fun `pill row hidden on fresh Recent state with no recents`() {
-        assertFalse(shouldShowPillRow(ListState.Recent, recentStops = emptyList()))
+        assertFalse(shouldShowPillRow(ListState.Recent, recentStops = emptyList(), stopLabels = listOf(homeSet)))
     }
 
     @Test
-    fun `pill row visible in Recent state once at least one recent exists`() {
-        assertTrue(shouldShowPillRow(ListState.Recent, recentStops = listOf(centralRecent)))
+    fun `pill row visible in Recent state once at least one recent exists and a label is set`() {
+        assertTrue(
+            shouldShowPillRow(ListState.Recent, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)),
+        )
     }
 
     @Test
     fun `pill row hidden during Results loading with no results yet`() {
         val state = ListState.Results(results = persistentListOf(), isLoading = true)
-        assertFalse(shouldShowPillRow(state, recentStops = listOf(centralRecent)))
+        assertFalse(shouldShowPillRow(state, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)))
     }
 
     @Test
-    fun `pill row visible when Results state has at least one result`() {
+    fun `pill row visible when Results state has at least one result and a label is set`() {
         val state = ListState.Results(results = persistentListOf(centralResult), isLoading = false)
-        assertTrue(shouldShowPillRow(state, recentStops = emptyList()))
+        assertTrue(shouldShowPillRow(state, recentStops = emptyList(), stopLabels = listOf(homeSet)))
     }
 
     @Test
     fun `pill row hidden in NoMatch state`() {
-        assertFalse(shouldShowPillRow(ListState.NoMatch, recentStops = listOf(centralRecent)))
+        assertFalse(shouldShowPillRow(ListState.NoMatch, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)))
     }
 
     @Test
     fun `pill row hidden in Error state`() {
-        assertFalse(shouldShowPillRow(ListState.Error, recentStops = listOf(centralRecent)))
+        assertFalse(shouldShowPillRow(ListState.Error, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)))
+    }
+
+    @Test
+    fun `pill row hidden when no label is set yet, even with recents`() {
+        // Fresh install: Home/Work are seeded but unset. No pills to show, so no
+        // point showing the trailing Manage button either.
+        assertFalse(
+            shouldShowPillRow(ListState.Recent, recentStops = listOf(centralRecent), stopLabels = listOf(homeUnset)),
+        )
+    }
+
+    @Test
+    fun `pill row hidden when stopLabels is empty`() {
+        assertFalse(
+            shouldShowPillRow(ListState.Recent, recentStops = listOf(centralRecent), stopLabels = emptyList()),
+        )
     }
 
     // endregion

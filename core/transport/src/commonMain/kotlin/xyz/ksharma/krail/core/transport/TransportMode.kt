@@ -52,10 +52,23 @@ sealed class TransportMode(
         displayName = "School Bus",
     )
 
+    // NSW's on-demand / flexible-zone shuttle service (e.g. "The Ponds" DRT zone) — a real
+    // booked vehicle leg, not a footpath. Own color+letter since it isn't a fixed-route bus.
+    @Serializable object OnDemand : TransportMode(
+        colorCode = "#8E6E53",
+        name = "On Demand",
+        productClass = 10,
+        priority = 8,
+        searchPriority = 8,
+        displayName = "On Demand",
+    )
+
     companion object {
         const val SCHOOL_BUS_PRODUCT_CLASS = 11
 
-        val all: List<TransportMode> by lazy { listOf(Train, Metro, Bus, LightRail, Ferry, Coach, SchoolBus) }
+        val all: List<TransportMode> by lazy {
+            listOf(Train, Metro, Bus, LightRail, Ferry, Coach, SchoolBus, OnDemand)
+        }
 
         private val byProductClass: Map<Int, TransportMode> by lazy { all.associateBy { it.productClass } }
 

@@ -56,7 +56,7 @@ class SearchStopViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val preferences: SandookPreferences,
     private val sandook: Sandook,
-    private val addressSearchDebugOverride: Boolean = false,
+    private val isAddressSearchEnabled: () -> Boolean = { false },
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -476,7 +476,7 @@ class SearchStopViewModel(
 
     private fun onAddressSearchTextChanged(query: String) {
         addressSearchJob?.cancel()
-        if (!addressSearchDebugOverride) {
+        if (!isAddressSearchEnabled()) {
             updateUiState { copy(addressResults = persistentListOf(), isAddressSearchLoading = false) }
             return
         }

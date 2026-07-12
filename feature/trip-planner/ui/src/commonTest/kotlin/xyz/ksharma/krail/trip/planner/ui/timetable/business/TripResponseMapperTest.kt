@@ -258,6 +258,98 @@ class TripResponseMapperTest {
 
     //endregion
 
+    //region first/last-leg footPathInfoRedundant override (see TripResponseLegMapperTest for the
+    // leg-level unit tests; these cover the same behaviour end-to-end through buildJourneyList,
+    // including that totalWalkTime stays consistent with what actually renders as a leg)
+
+    /**
+     * End-to-end version of the reported bug: a journey's first leg is a footpath NSW flags
+     * `footPathInfoRedundant = true` (e.g. Town Hall Station -> QVB, Stand C). Before the fix
+     * this leg vanished entirely - both from the rendered leg list and from the walk-time total
+     * - leaving the rider with no indication they needed to walk before boarding.
+     */
+    @Test
+    fun `buildJourneyList shows first leg walk and counts it in totalWalkTime even when footPathInfoRedundant is true`() {
+        val response = TripResponse(
+            journeys = listOf(
+                TripResponse.Journey(
+                    legs = listOf(
+                        redundantFootpathLeg(
+                            depTime = "2026-04-18T22:00:00Z",
+                            arrTime = "2026-04-18T22:02:00Z",
+                            durationSeconds = 120L,
+                        ),
+                        buildRouteLeg(
+                            routeNumber = "607X",
+                            realtimeTripId = "trip-607x",
+                            depTime = "2026-04-18T22:05:00Z",
+                            arrTime = "2026-04-18T22:35:00Z",
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        val walkingLeg = journey?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.WalkingLeg
+        assertEquals(true, walkingLeg != null, "The redundant-flagged first-mile walk must still render as a leg")
+        assertEquals(
+            "2 mins",
+            journey?.totalWalkTime,
+            "totalWalkTime must include the shown first-mile walk, not just non-redundant walks",
+        )
+    }
+
+    /**
+     * Interior/interchange redundant footpath legs are unaffected: still dropped, still
+     * excluded from the walk-time total, since those are genuinely covered elsewhere.
+     */
+    @Test
+    fun `buildJourneyList still drops interior footPathInfoRedundant leg and excludes it from totalWalkTime`() {
+        val response = TripResponse(
+            journeys = listOf(
+                TripResponse.Journey(
+                    legs = listOf(
+                        buildRouteLeg(
+                            routeNumber = "715",
+                            realtimeTripId = "trip-outbound",
+                            depTime = "2026-04-18T22:00:00Z",
+                            arrTime = "2026-04-18T22:10:00Z",
+                        ),
+                        redundantFootpathLeg(
+                            depTime = "2026-04-18T22:10:00Z",
+                            arrTime = "2026-04-18T22:11:00Z",
+                            durationSeconds = 60L,
+                        ),
+                        buildRouteLeg(
+                            routeNumber = "T1",
+                            realtimeTripId = "trip-t1",
+                            depTime = "2026-04-18T22:15:00Z",
+                            arrTime = "2026-04-18T22:45:00Z",
+                            productClass = 1L,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val journey = response.buildJourneyList()?.firstOrNull()
+
+        assertEquals(
+            2,
+            journey?.legs?.size,
+            "The interior redundant walk must still be dropped - only the two transport legs remain",
+        )
+        assertEquals(
+            null,
+            journey?.totalWalkTime,
+            "An interior redundant walk must not be counted towards totalWalkTime",
+        )
+    }
+
+    //endregion
+
     //region journeyId uniqueness
 
     /**
@@ -847,6 +939,36 @@ class TripResponseMapperTest {
         ),
         footPathInfo = listOf(
             TripResponse.FootPathInfo(duration = durationSeconds, position = "IDEST"),
+        ),
+    )
+
+    /**
+     * Builds a standalone walking [TripResponse.Leg] with `footPathInfoRedundant = true` - the
+     * shape NSW uses for e.g. Town Hall Station -> QVB, Stand C, where the walk is real but
+     * flagged as redundant. Named/typed so tests reflect exactly the field under test, unlike
+     * [buildQuickWalkLeg] which is about the 715-backtrack quick-walk collapse heuristic.
+     */
+    private fun redundantFootpathLeg(
+        depTime: String,
+        arrTime: String,
+        durationSeconds: Long,
+    ) = TripResponse.Leg(
+        duration = durationSeconds,
+        footPathInfoRedundant = true,
+        origin = TripResponse.StopSequence(
+            departureTimePlanned = depTime,
+            departureTimeEstimated = depTime,
+        ),
+        destination = TripResponse.StopSequence(
+            arrivalTimePlanned = arrTime,
+            arrivalTimeEstimated = arrTime,
+        ),
+        stopSequence = listOf(
+            TripResponse.StopSequence(departureTimePlanned = depTime, departureTimeEstimated = depTime),
+            TripResponse.StopSequence(arrivalTimePlanned = arrTime, arrivalTimeEstimated = arrTime),
+        ),
+        transportation = TripResponse.Transportation(
+            product = TripResponse.Product(productClass = 99L, name = "footpath"),
         ),
     )
 

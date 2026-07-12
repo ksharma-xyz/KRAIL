@@ -158,3 +158,43 @@ Confirm which of the above (or something else) is the actual client-side
 break — needs stepping through the real selection → navigation →
 `TimeTableViewModel` flow with a debugger/logcat rather than more API testing,
 since the API side is now cleared.
+
+Temporary `[ADDR_DEBUG]`-tagged `log(...)` lines were added along the full
+traced path (`SearchStopScreen` selection → `SearchStopEntry` →
+`SavedTripsEntry` → `SavedTripsViewModel` → `RealStopResultsManager` →
+`TripPlannerNavigatorImpl.navigateToTimeTable` → `TimeTableEntry` →
+`TimeTableViewModel.initializeTrip/onLoadTimeTable/fetchTrip/loadTrip` →
+`TripResponseMapper.buildJourneyListWithRawData`, including a per-journey
+reason log when `mapNotNull` drops one). Filter with
+`adb logcat | grep ADDR_DEBUG`. These are throwaway — strip them all before
+this branch is PR-ready, they're only here to catch the live repro.
+
+## BFF hand-off notes (for later — app is NSW-direct only right now)
+
+`BFF_ROLLOUT_ARMED = false` (`core/network/BffEndpointResolver.kt`), so today
+the app always talks to NSW directly regardless of the live `enable_proto_bff`
+RC flag — a developer has to explicitly pick `BFF_LOCAL`/`BFF_PROD` in Debug
+Config to route through the BFF at all. Everything in this doc was tested and
+confirmed against the NSW-direct path only. When BFF integration for trip
+planning is picked back up, whoever does that work needs to know:
+
+- **The BFF must resolve `stop_finder`-sourced location IDs, not just GTFS
+  stop IDs.** This doc confirms NSW itself resolves `streetID:...` (address),
+  `poiID:...` (POI), and street-only IDs under `type_origin=any` /
+  `type_destination=any` with zero special-casing. If the BFF's trip-plan
+  endpoint (proto or JSON pass-through) only recognizes real GTFS stop IDs,
+  address/POI search (issue #1697) will silently break the moment BFF routing
+  is armed for any cohort — this needs an explicit test pass against the BFF
+  before rollout, not an assumption that "it already works against NSW so
+  it'll work against BFF."
+- **Walk-leg polyline (`coords`) must round-trip through the BFF too.**
+  Confirmed present in the NSW-direct JSON and already deserialized into
+  `TripResponse.Leg.coords`. If the BFF's proto `JourneyList` schema
+  (`journeyListToTripResponse` mapper) doesn't carry an equivalent field,
+  JourneyMap will regress for walk-first/walk-last journeys once BFF is
+  armed, even though it works fine today.
+- **The raw address/coord ID formats aren't validated or sanitized anywhere**
+  client-side (see the full trace above) — they're passed straight through
+  as opaque strings. Any BFF-side ID parsing/validation needs to tolerate the
+  same shapes NSW does: plain stop IDs, `streetID:...`, `poiID:...`, and
+  (separately, for current-location) `<lon>:<lat>:EPSG:4326` coords.

@@ -218,6 +218,8 @@ internal class RealGtfsRealtimeRepository(
         TransportMode.SchoolBus -> listOf("buses")
         TransportMode.Ferry -> listOf("ferries/sydneyferries", "ferries/MFF")
         TransportMode.Coach -> emptyList()
+        // Booked on-demand shuttles have no GTFS-realtime feed to poll.
+        TransportMode.OnDemand -> emptyList()
     }
 
     private fun logPollStart(departureAest: String, startDate: String) {

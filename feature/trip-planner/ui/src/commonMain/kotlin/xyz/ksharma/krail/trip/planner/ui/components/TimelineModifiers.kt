@@ -4,8 +4,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /**
  * Draws a vertical line and a circle at the top start of the composable,
@@ -109,6 +112,39 @@ internal fun Modifier.timeLineCenterWithStop(
             color = circleColor,
             radius = circleRadius.toPx(),
             center = Offset(0f, this.size.height / 2),
+        )
+    }
+}
+
+private val DASH_LENGTH = 4.dp
+private val DASH_GAP = 4.dp
+
+private fun DrawScope.dashEffect(): PathEffect = PathEffect.dashPathEffect(
+    intervals = floatArrayOf(DASH_LENGTH.toPx(), DASH_GAP.toPx()),
+    phase = 0f,
+)
+
+/**
+ * Dashed vertical line through the full height of the composable - the "informal segment"
+ * equivalent of [timeLineCenter], used to connect a walking leg row to the LegView cards
+ * above/below it (or to bridge the gap between two rows of the same walking leg). Dashed (vs
+ * the solid, mode-colored line used between scheduled stops) signals "you're walking, not
+ * riding a scheduled service", matching the convention used by Google Maps/Citymapper.
+ *
+ * @param xOffset Horizontal offset of the line from this composable's own left edge - use this
+ * (rather than a nested `.padding(start = ...)`) when the composable draws the full-height line
+ * itself instead of relying on an ancestor's padding to position it, as [LegView]'s stop rows do.
+ */
+internal fun Modifier.dashedTimeLine(color: Color, strokeWidth: Dp, xOffset: Dp = 0.dp): Modifier {
+    return this.drawBehind {
+        val x = xOffset.toPx()
+        drawLine(
+            color = color,
+            start = Offset(x = x, y = 0f),
+            end = Offset(x = x, y = this.size.height),
+            strokeWidth = strokeWidth.toPx(),
+            cap = StrokeCap.Round,
+            pathEffect = dashEffect(),
         )
     }
 }

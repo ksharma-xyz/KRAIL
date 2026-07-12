@@ -20,6 +20,7 @@ interface TripPlannerNavigator {
     fun navigateToJourneyMap(journeyId: String)
     fun navigateToSettings()
     fun navigateToDiscover()
+    fun navigateToManageStopLabels()
     fun navigateToThemeSelection()
     fun navigateToAlerts(journeyId: String)
     fun navigateToDateTimeSelector(json: String?)

@@ -151,6 +151,136 @@ class SearchStopViewModelLabelHandlersTest {
 
     // endregion
 
+    // region RenameLabel
+
+    @Test
+    fun `Given new unique name When RenameLabel fires Then label is renamed in state and DB`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = "Work", newName = "Office"))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                assertTrue(state.stopLabels.none { it.label == "Work" })
+                assertNotNull(state.stopLabels.firstOrNull { it.label == "Office" })
+
+                val rows = fakeSandook.observeStopLabels().first()
+                assertTrue(rows.none { it.label == "Work" })
+                assertTrue(rows.any { it.label == "Office" })
+            }
+        }
+
+    @Test
+    fun `Given name already used by another label When RenameLabel fires Then nothing changes`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                expectMostRecentItem()
+
+                // "home" collides with the seeded "Home" case-insensitively after
+                // normaliseLabelName — must silently no-op, same as CreateLabel's
+                // dedupe. The row-level UI is responsible for surfacing this to the
+                // user via a confirm sheet before ever sending the event.
+                viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = "Work", newName = "home"))
+                advanceUntilIdle()
+
+                expectNoEvents()
+                val labels = viewModel.uiState.value.stopLabels
+                assertNotNull(labels.firstOrNull { it.label == "Work" })
+                assertNotNull(labels.firstOrNull { it.label == "Home" })
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given blank new name When RenameLabel fires Then nothing changes`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            expectMostRecentItem()
+
+            viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = "Work", newName = "   "))
+            advanceUntilIdle()
+
+            expectNoEvents()
+            assertNotNull(viewModel.uiState.value.stopLabels.firstOrNull { it.label == "Work" })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given new name equal to current name When RenameLabel fires Then nothing changes`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                expectMostRecentItem()
+
+                viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = "Work", newName = "Work"))
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given unknown label key When RenameLabel fires Then nothing changes`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            val before = expectMostRecentItem().stopLabels
+
+            viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = "Ghost", newName = "Whatever"))
+            advanceUntilIdle()
+
+            expectNoEvents()
+            assertEquals(before, viewModel.uiState.value.stopLabels)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given protected Home label When RenameLabel fires Then label is preserved`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            expectMostRecentItem()
+
+            viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = StopLabel.PROTECTED_LABEL, newName = "Casa"))
+            advanceUntilIdle()
+
+            // Handler early-returns; existing state still contains Home, untouched.
+            // Defence in depth — the UI also hides the rename field for Home.
+            expectNoEvents()
+            val state = viewModel.uiState.value
+            assertTrue(state.stopLabels.any { it.label == "Home" })
+            assertTrue(state.stopLabels.none { it.label == "Casa" })
+
+            // DB row also preserved.
+            val rows = fakeSandook.observeStopLabels().first()
+            assertTrue(rows.any { it.label == "Home" })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given home key with mixed case When RenameLabel fires Then label is preserved`() = runTest {
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            expectMostRecentItem()
+
+            viewModel.onEvent(SearchStopUiEvent.RenameLabel(labelKey = "home", newName = "Casa"))
+            advanceUntilIdle()
+
+            expectNoEvents()
+            val state = viewModel.uiState.value
+            assertTrue(state.stopLabels.any { it.label == "Home" })
+            assertTrue(state.stopLabels.none { it.label == "Casa" })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    // endregion
+
     // region CreateLabel
 
     @Test
@@ -318,7 +448,7 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 1))
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", "Work"))
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -342,7 +472,7 @@ class SearchStopViewModelLabelHandlersTest {
             advanceUntilIdle()
 
             // No-op path: dragging onto the same slot should not re-emit or re-write.
-            viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 0))
+            viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", "Home"))
             advanceUntilIdle()
 
             assertEquals("Home", expectMostRecentItem().stopLabels[0].label)
@@ -356,7 +486,7 @@ class SearchStopViewModelLabelHandlersTest {
 
             // Defensive: a stale label key (e.g. one deleted between the drag start
             // and drag end) should be a no-op rather than crash.
-            viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("DoesNotExist", 0))
+            viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("DoesNotExist", "Home"))
             advanceUntilIdle()
 
             val state = expectMostRecentItem()
@@ -490,6 +620,35 @@ class SearchStopViewModelLabelHandlersTest {
                 assertEquals("Central Station", event.stopName)
                 assertFalse(event.isReassignment, "first pin should not be a reassignment")
                 assertTrue(event.isProtectedLabel, "Home is the protected label")
+                assertEquals(
+                    AnalyticsEvent.StopLabelStopAssignedEvent.SOURCE_STAR_SHEET,
+                    event.source,
+                    "default source is the star -> sheet flow",
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given choose-mode source When AssignLabelStop fires Then assigned event carries it through`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(
+                    SearchStopUiEvent.AssignLabelStop(
+                        labelKey = "Home",
+                        stopItem = central,
+                        source = SearchStopUiEvent.AssignLabelStop.SOURCE_CHOOSE_MODE,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(
+                    fakeAnalytics.getTrackedEvent("stop_label_stop_assigned"),
+                )
+                assertEquals(AnalyticsEvent.StopLabelStopAssignedEvent.SOURCE_CHOOSE_MODE, event.source)
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -588,7 +747,7 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 1))
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", "Work"))
                 advanceUntilIdle()
 
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_reordered")
@@ -614,7 +773,7 @@ class SearchStopViewModelLabelHandlersTest {
                 // The handler returns early when source == target, so no analytics
                 // should fire either — otherwise drop-in-place drags would inflate
                 // the reorder counts.
-                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", 0))
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", "Home"))
                 advanceUntilIdle()
 
                 assertFalse(fakeAnalytics.isEventTracked("stop_label_reordered"))
@@ -628,7 +787,7 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("DoesNotExist", 0))
+                viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("DoesNotExist", "Home"))
                 advanceUntilIdle()
 
                 assertFalse(fakeAnalytics.isEventTracked("stop_label_reordered"))

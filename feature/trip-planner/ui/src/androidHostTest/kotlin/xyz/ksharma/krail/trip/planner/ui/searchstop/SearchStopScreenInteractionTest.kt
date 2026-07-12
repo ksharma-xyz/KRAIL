@@ -1,8 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -24,19 +30,18 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * the rules actually drive the rendering.
  *
  * What's intentionally NOT tested here:
- * - Drag-to-reorder (gesture coordination with reorderable lib is brittle in
- *   Robolectric; covered by snapshot tests visually instead).
- * - Long-press timing-based assertions (Compose's clock advancement makes them
- *   flaky in CI). Long-press is exercised at the pure-function layer
- *   (`pillRowBannerText` editing branch) so the rule is locked in regardless.
+ * - Drag-to-reorder inside `ManageStopLabelsScreen` (gesture coordination with the
+ *   reorderable lib is brittle in Robolectric; covered by snapshot tests visually
+ *   instead).
  * - The save / add-label sheet flows that require ModalBottomSheet animation
  *   completion — those are ViewModel-side and covered by the upcoming VM tests
  *   in a sibling branch.
  *
  * What IS covered: visibility of the pill row + Home/Work pills under different
- * SearchStopState shapes, the protection-from-deletion invariant on Home, the
- * star-icon state on stop rows, and direct-tap callbacks (`onStopSelect` for set
- * pills, `ClearLabelStop` for filled-star taps).
+ * SearchStopState shapes, the protection-from-deletion invariant on Home,
+ * `StopLabelAssignRow`'s icon state (only unassigned rows get a "+"), and
+ * direct-tap callbacks (`onStopSelect` for set pills). The pill row itself is
+ * tap-only — long-press/edit-mode was removed in favour of `ManageStopLabelsScreen`.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -74,23 +79,30 @@ class SearchStopScreenInteractionTest {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    // The pill row's LazyRow only iterates `isSet` labels (v4 — unset
+                    // labels are assigned via each stop's own inline "+ New label"
+                    // wall now, not a tap on a top-row pill), so an all-unset fixture
+                    // like recentWithDefaults() would render zero label pills here.
+                    searchStopState = SearchStopFixtures.recentWithHomeSet(),
                     onEvent = {},
                 )
             }
         }
 
-        // The pill row should be visible because we have recent stops.
-        composeRule.onNodeWithText("Home").assertIsDisplayed()
-        composeRule.onNodeWithText("Work").assertIsDisplayed()
+        // The pill row should be visible because we have recent stops, showing the
+        // one set label (Home) plus the trailing Manage button. Work stays hidden
+        // because it's unset. "Home" renders twice total (pill row + Central
+        // Station's own inline pill) — see assignedStop_showsLabelPillInline.
+        composeRule.onAllNodesWithText("Home").assertCountEquals(2)
+        composeRule.onNodeWithText("Manage").assertIsDisplayed()
     }
 
     // endregion
 
-    // region Star icon state on stop rows
+    // region StopLabelAssignRow icon state
 
     @Test
-    fun savedStop_showsRemoveFromLabelsStar() {
+    fun assignedStop_hidesAssignIcon() {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
@@ -100,44 +112,34 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // Central Station is saved as Home (homeSet stopId == stop_central), so
-        // its star should advertise "Remove from labels" rather than "Save as
-        // label". onAllNodes is used because Town Hall's star advertises the
-        // "Save as label" variant — we only want to assert at least one of each.
-        composeRule.onAllNodesWithContentDescription("Remove from labels")
-            .assertCountAtLeast(1)
-        composeRule.onAllNodesWithContentDescription("Save as label")
-            .assertCountAtLeast(1)
+        // Central Station is saved as Home; Town Hall isn't. v4: once a stop is
+        // assigned its row shows no icon at all (not even a tick) — only the unset
+        // Town Hall row gets the "+". recentWithHomeSet has exactly one unset recent
+        // stop, so exactly one icon should exist.
+        composeRule.onAllNodesWithContentDescription("Assign to a label")
+            .assertCountEquals(1)
+    }
+
+    @Test
+    fun assignedStop_showsLabelPillInline() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithHomeSet(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // "Home" renders twice: the top pill row's shortcut, and Central Station's
+        // own inline small pill next to its transport-mode icon — v4 shows the label
+        // right there instead of a separate summary block or a tick.
+        composeRule.onAllNodesWithText("Home").assertCountEquals(2)
     }
 
     // endregion
 
     // region Direct-action callbacks
-
-    @Test
-    fun tappingFilledStar_firesClearLabelStopWithMatchingLabel() {
-        val captured = mutableListOf<SearchStopUiEvent>()
-        composeRule.setContent {
-            PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithHomeSet(),
-                    onEvent = { captured += it },
-                )
-            }
-        }
-
-        composeRule.onNodeWithContentDescription("Remove from labels").performClick()
-
-        // Tapping the filled star should clear the matching label directly — no
-        // sheet opens, no SaveStopAsLabelSheet detour.
-        val cleared = captured.filterIsInstance<SearchStopUiEvent.ClearLabelStop>()
-        assert(cleared.isNotEmpty()) {
-            "expected at least one ClearLabelStop event, got: $captured"
-        }
-        assert(cleared.first().labelKey == "Home") {
-            "expected ClearLabelStop for Home, got ${cleared.first().labelKey}"
-        }
-    }
 
     @Test
     fun tappingSetPill_invokesOnStopSelectWithUnderlyingStop() {
@@ -152,15 +154,16 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        composeRule.onNodeWithText("Home").performClick()
+        // "Home" now also appears inside Central Station's own row (its
+        // AssignedStopSummary pill, EX-B) — the top pill row's "Home" is first in the
+        // LazyColumn (pillRowSection is added before recentSearchStopsList).
+        composeRule.onAllNodesWithText("Home").onFirst().performClick()
 
         // Tapping the set Home pill is the fast-path for "use this saved stop as
         // From/To" — onStopSelect should fire with Home's underlying stop.
-        assert(selected != null) { "expected onStopSelect to fire" }
-        assert(selected!!.stopId == "stop_central") {
-            "expected stop_central, got ${selected?.stopId}"
-        }
-        assert(selected!!.stopName == "Central Station")
+        val result = checkNotNull(selected) { "expected onStopSelect to fire" }
+        assert(result.stopId == "stop_central") { "expected stop_central, got ${result.stopId}" }
+        assert(result.stopName == "Central Station")
     }
 
     // endregion
@@ -225,10 +228,18 @@ class SearchStopScreenInteractionTest {
 
     // endregion
 
-    // region Assigning mode banner
+    // NOTE: the old "tap an unset pill in the top row to enter choose-mode" flow
+    // (story A1) tests used to live here. LabelShortcutsRow (SearchStopScreen.kt)
+    // filters its LazyRow to `labels.filter { it.isSet }` — unset labels never
+    // render as pills there, assignment moved to each stop's own inline
+    // "+ New label" wall (v4, StopLabelAssignRow). The choose-mode plumbing
+    // (assigningLabel, onUnsetLabelClick, effectiveOnStopSelect) was unreachable
+    // dead code and has been removed.
+
+    // region Manage labels affordance
 
     @Test
-    fun tappingUnsetPill_showsAssigningBanner() {
+    fun manageButton_isVisible_wheneverPillRowRenders() {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
@@ -238,87 +249,68 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // Both Home and Work are unset. Tapping Home should flip the screen into
-        // assigning mode and the banner copy from `pillRowBannerText` should appear.
-        composeRule.onNodeWithText("Home").performClick()
-
-        composeRule
-            .onNodeWithText("Tap the ⭐ next to a stop to save it as Home")
-            .assertIsDisplayed()
+        // The trailing "Manage" button is the sole entry point to
+        // ManageStopLabelsSheet (change/remove/delete/reorder). It must be present
+        // whenever the pill row renders.
+        composeRule.onNodeWithText("Manage").assertIsDisplayed()
     }
 
     @Test
-    fun tappingUnsetPillTwice_togglesAssigningModeOff() {
+    fun tappingManageButton_invokesOnManageLabelsClick() {
+        var manageClicked = false
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
                     searchStopState = SearchStopFixtures.recentWithDefaults(),
                     onEvent = {},
+                    onManageLabelsClick = { manageClicked = true },
                 )
             }
         }
 
-        // First tap -> assigning. Second tap on the same pill -> idle. The banner
-        // should disappear once we toggle out, otherwise users can't dismiss
-        // assigning mode without picking a stop.
-        composeRule.onNodeWithText("Home").performClick()
-        composeRule.onNodeWithText("Home").performClick()
+        // ManageStopLabelsScreen is a real nav destination owned by the caller
+        // (ManageStopLabelsEntry), not rendered inline here — this screen only owns
+        // firing the callback.
+        composeRule.onNodeWithText("Manage").performClick()
 
-        composeRule
-            .onNodeWithText("Tap the ⭐ next to a stop to save it as Home")
-            .assertDoesNotExist()
+        assert(manageClicked) { "expected onManageLabelsClick to fire" }
     }
 
     @Test
-    fun tappingUnsetPill_doesNotInvokeOnStopSelect() {
-        var selected: StopItem? = null
+    fun tappingManageButton_hidesKeyboardBeforeInvokingCallback() {
+        val events = mutableListOf<String>()
+        val spyKeyboardController = object : SoftwareKeyboardController {
+            override fun show() {}
+            override fun hide() {
+                events += "hide"
+            }
+        }
         composeRule.setContent {
             PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults(),
-                    onStopSelect = { selected = it },
-                    onEvent = {},
-                )
+                CompositionLocalProvider(LocalSoftwareKeyboardController provides spyKeyboardController) {
+                    SearchStopScreen(
+                        searchStopState = SearchStopFixtures.recentWithDefaults(),
+                        onEvent = {},
+                        onManageLabelsClick = { events += "manageClicked" },
+                    )
+                }
             }
         }
 
-        // Tapping an unset pill enters assigning mode — it must NOT navigate the
-        // search field back with a stop, because there is no stop attached yet.
-        composeRule.onNodeWithText("Home").performClick()
+        // Same "close keyboard before navigating" order as the back button
+        // (SearchTopBar's NavActionButton) — the keyboard must hide before the nav
+        // callback fires, otherwise it stays up mid-navigation.
+        composeRule.onNodeWithText("Manage").performClick()
 
-        assert(selected == null) {
-            "expected onStopSelect not to fire for an unset pill, got $selected"
+        // The screen also hides the keyboard once on first composition (the
+        // showMap LaunchedEffect, unrelated to this click), so assert ordering
+        // rather than an exact call count: a "hide" must precede "manageClicked".
+        val manageIndex = events.indexOf("manageClicked")
+        assert(manageIndex > 0) { "expected onManageLabelsClick to fire, got $events" }
+        assert(events.subList(0, manageIndex).contains("hide")) {
+            "expected keyboard to hide before onManageLabelsClick fired, got $events"
         }
     }
 
     // endregion
-
-    // region Add label affordance
-
-    @Test
-    fun addLabelPill_isVisible_inIdleMode() {
-        composeRule.setContent {
-            PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults(),
-                    onEvent = {},
-                )
-            }
-        }
-
-        // The "+ Add" trailing chip is the entry point to AddLabelBottomSheet. It
-        // must be present whenever the pill row renders and we're not editing.
-        composeRule.onNodeWithText("+ Add").assertIsDisplayed()
-    }
-
-    // endregion
-}
-
-private fun androidx.compose.ui.test.SemanticsNodeInteractionCollection.assertCountAtLeast(
-    minimum: Int,
-) {
-    val actual = fetchSemanticsNodes().size
-    assert(actual >= minimum) {
-        "expected at least $minimum nodes, found $actual"
-    }
 }

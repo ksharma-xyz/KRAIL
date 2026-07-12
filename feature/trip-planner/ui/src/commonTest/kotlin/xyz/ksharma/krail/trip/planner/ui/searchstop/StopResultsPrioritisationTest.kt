@@ -209,6 +209,7 @@ private object NoOpSandook : Sandook {
     override fun observeStopLabels(): Flow<List<StopLabels>> = emptyFlow()
     override fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) = error("not used")
     override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) = error("not used")
+    override fun renameStopLabel(label: String, newLabel: String) = error("not used")
     override fun deleteStopLabel(label: String) = error("not used")
     override fun clearStopLabels() = error("not used")
     override fun insertOrReplaceTheme(productClass: Long) = error("not used")

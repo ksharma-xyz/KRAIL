@@ -253,6 +253,7 @@ class SearchStopViewModel(
                         isReassignment = isReassignment,
                         isProtectedLabel = event.labelKey
                             .equals(StopLabel.PROTECTED_LABEL, ignoreCase = true),
+                        source = event.source,
                     ),
                 )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
@@ -322,6 +323,32 @@ class SearchStopViewModel(
                 }
             }
 
+            is SearchStopUiEvent.RenameLabel -> {
+                // Home can't be renamed — isProtected is name-derived, so renaming it
+                // away from "Home" would silently un-protect it. Defence in depth: the
+                // UI also hides the rename field for protected labels.
+                if (event.labelKey.equals(StopLabel.PROTECTED_LABEL, ignoreCase = true)) {
+                    return
+                }
+                val cleanedName = normaliseLabelName(event.newName)
+                val currentLabels = _uiState.value.stopLabels
+                val target = currentLabels.firstOrNull { it.label == event.labelKey }
+                val duplicate = currentLabels.any {
+                    it.label != event.labelKey && normaliseLabelName(it.label).equals(cleanedName, ignoreCase = true)
+                }
+                if (cleanedName.isBlank() || target == null) return
+                if (duplicate || cleanedName == target.label) return
+                updateUiState {
+                    val updated = stopLabels.map { label ->
+                        if (label.label == event.labelKey) label.copy(label = cleanedName) else label
+                    }.toImmutableList()
+                    copy(stopLabels = updated)
+                }
+                viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+                    sandook.renameStopLabel(event.labelKey, cleanedName)
+                }
+            }
+
             is SearchStopUiEvent.DeleteLabel -> {
                 // Home is non-deletable. Defence in depth: the UI also hides the ✕ on
                 // protected pills.
@@ -351,8 +378,13 @@ class SearchStopViewModel(
                 val current = _uiState.value.stopLabels.toMutableList()
                 val sourceIndex = current.indexOfFirst { it.label == event.labelKey }
                 if (sourceIndex == -1) return
-                val target = event.targetIndex.coerceIn(0, current.size - 1)
-                if (target == sourceIndex) return
+                // Resolve the target's index against the list *before* removing the
+                // dragged item — inserting at that raw index afterwards is what makes
+                // adjacent-item drags swap correctly, and it's immune to any
+                // non-draggable rows (banner, headers) the caller's LazyColumn mixes
+                // in, since we key off the target label rather than a raw list index.
+                val target = current.indexOfFirst { it.label == event.targetLabelKey }
+                if (target == -1 || target == sourceIndex) return
                 val moved = current.removeAt(sourceIndex)
                 current.add(target, moved)
                 val reordered = current.toImmutableList()
@@ -368,14 +400,19 @@ class SearchStopViewModel(
                     ),
                 )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
-                    reordered.forEachIndexed { index, label ->
-                        sandook.upsertStopLabel(
-                            label.label,
-                            label.emoji,
-                            label.stopId,
-                            label.stopName,
-                            index.toLong(),
-                        )
+                    // One transaction per firing, not one write per label — onMove fires
+                    // per swap mid-drag, not just once on drop, so an unbatched loop here
+                    // is a DB write storm during a single drag gesture.
+                    sandook.insertTransaction {
+                        reordered.forEachIndexed { index, label ->
+                            sandook.upsertStopLabel(
+                                label.label,
+                                label.emoji,
+                                label.stopId,
+                                label.stopName,
+                                index.toLong(),
+                            )
+                        }
                     }
                 }
             }

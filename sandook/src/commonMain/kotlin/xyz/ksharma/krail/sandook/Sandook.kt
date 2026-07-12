@@ -11,6 +11,8 @@ interface Sandook {
 
     fun updateStopLabelStop(label: String, stopId: String?, stopName: String?)
 
+    fun renameStopLabel(label: String, newLabel: String)
+
     fun deleteStopLabel(label: String)
 
     fun clearStopLabels()

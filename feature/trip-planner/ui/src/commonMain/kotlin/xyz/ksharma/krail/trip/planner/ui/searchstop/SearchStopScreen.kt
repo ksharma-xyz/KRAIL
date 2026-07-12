@@ -4,19 +4,10 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.StartOffset
-import androidx.compose.animation.core.StartOffsetType
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +19,6 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,8 +27,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,11 +48,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
-import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -74,7 +60,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapLatest
 import krail.feature.trip_planner.ui.generated.resources.ic_map
 import org.jetbrains.compose.resources.painterResource
-import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
@@ -94,8 +79,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
-import xyz.ksharma.krail.trip.planner.ui.components.StopSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItemState
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
@@ -108,7 +93,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import app.krail.taj.resources.Res as TajRes
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -126,10 +110,11 @@ fun SearchStopScreen(
     // True when opened from the timetable header to replace one leg of the
     // current trip — scopes the copy to "Change origin" / "Change destination".
     editTripLeg: Boolean = false,
+    // Manage is a real nav destination (ManageStopLabelsRoute), not a sheet owned by
+    // this screen — the caller (SearchStopEntry) wires this to actual navigation.
+    onManageLabelsClick: () -> Unit = {},
 ) {
     SideEffect { log("[SEARCH_STOP_SCREEN] recomposed") }
-
-    val placeholderText = searchFieldPlaceholder(fieldType = fieldType, editTripLeg = editTripLeg)
 
     val themeColor by LocalThemeColor.current
     // rememberSaveable so text survives rotation and dark/light mode config changes.
@@ -140,43 +125,26 @@ fun SearchStopScreen(
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }
 
-    // Label assignment state: non-null when user is selecting a stop to assign to a label.
-    // All four pieces of UI orchestration state below use rememberSaveable so rotation,
-    // dark-mode toggles and process death don't drop sheets/edit mode/in-flight conflicts.
-    var assigningLabel by rememberSaveable(stateSaver = StopLabelSaver) {
-        mutableStateOf<StopLabel?>(null)
-    }
-    var showAddLabelSheet by rememberSaveable { mutableStateOf(false) }
-    var stopBeingSaved by rememberSaveable(stateSaver = StopItemSaver) {
-        mutableStateOf<StopItem?>(null)
-    }
-    // Edit mode for the pill row — long-press a pill to enter; pills wiggle and can
-    // be drag-reordered (via longPressDraggableHandle). The ✕ overlay lets you delete
-    // a label inline. Tap "Done" to exit.
-    var editingLabels by rememberSaveable { mutableStateOf(false) }
-    // Conflict surfaced when assigning a stop to a label triggers either a stop-side
-    // (stop already on another label) or label-side (label already has a different stop)
-    // 1:1 invariant violation.
-    var pendingConflict by rememberSaveable(stateSaver = LabelConflictSaver) {
-        mutableStateOf<LabelConflict?>(null)
-    }
-    // Set when the user enters AddLabelBottomSheet from the "+ New label" chip in
-    // SaveStopAsLabelSheet. Holds the stop they wanted to save, so once the new
-    // label is created we can auto-assign the stop to it instead of dropping the
-    // user back at square one.
-    var pendingStopForNewLabel by rememberSaveable(stateSaver = StopItemSaver) {
-        mutableStateOf<StopItem?>(null)
+    // v4 inline assign (StopLabelAssignRow, see STOP_LABEL_UX_REDESIGN_PROPOSAL.md):
+    // the stop currently creating a brand-new label via the "+ New label" pill. Assign
+    // is otherwise instant/no-confirm from this row — Remove/Replace/Delete only exist
+    // in Manage now, not on the search row.
+    var newLabelTarget by rememberSaveable(stateSaver = NewLabelTargetSaver) {
+        mutableStateOf<NewLabelTarget?>(null)
     }
 
-    // Wraps onStopSelect to persist the stop as a label assignment when in assigning mode.
-    val effectiveOnStopSelect: (StopItem) -> Unit = { stopItem ->
-        val labeling = assigningLabel
-        if (labeling != null) {
-            assigningLabel = null
-            onEvent(SearchStopUiEvent.AssignLabelStop(labeling.label, stopItem))
-        }
-        onStopSelect(stopItem)
+    // Only one StopLabelAssignRow can be expanded (its "+ New label" wall open) at a
+    // time, across recents/empty-state/search-results — keyed by stopId since that's
+    // stable across all three lists.
+    var expandedStopKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val onToggleExpandStop: (String) -> Unit = { stopId ->
+        expandedStopKey = if (expandedStopKey == stopId) null else stopId
     }
+
+    val placeholderText = searchFieldPlaceholder(
+        fieldType = fieldType,
+        editTripLeg = editTripLeg,
+    )
 
     LaunchedEffect(backClicked) {
         if (backClicked) {
@@ -184,15 +152,13 @@ fun SearchStopScreen(
         }
     }
 
-    // When the label being assigned is itself satisfied (a stop got attached either via
-    // tapping a row or via the save sheet), clear assigningLabel so the contextual hint
-    // banner collapses and the row goes back to its idle visuals.
-    LaunchedEffect(assigningLabel, searchStopState.stopLabels) {
-        val current = assigningLabel ?: return@LaunchedEffect
-        val updated = searchStopState.stopLabels.firstOrNull { it.label == current.label }
-        if (updated?.isSet == true) {
-            assigningLabel = null
-        }
+    // Same "close keyboard before navigating" order as the back button (SearchTopBar's
+    // NavActionButton) — otherwise the keyboard stays up mid-navigation and dismisses
+    // itself awkwardly once ManageStopLabelsScreen is already on screen.
+    val effectiveOnManageLabelsClick: () -> Unit = {
+        keyboard?.hide()
+        focusRequester.freeFocus()
+        onManageLabelsClick()
     }
 
     LaunchedEffect(textFieldText) {
@@ -204,6 +170,16 @@ fun SearchStopScreen(
                 onEvent(SearchStopUiEvent.SearchTextChanged(text))
             }
             .collectLatest {}
+    }
+
+    // v4 inline assign handler, shared by every StopLabelAssignRow (search results,
+    // recents, empty-state stops). The row's wall only ever shows unset labels, so
+    // there's no conflict to classify here — every tap is a direct, no-confirm assign.
+    val onLabelPillClick: (StopItem, StopLabel) -> Unit = { stopItem, label ->
+        onEvent(SearchStopUiEvent.AssignLabelStop(labelKey = label.label, stopItem = stopItem))
+    }
+    val onNewLabelClick: (StopItem, List<TransportMode>) -> Unit = { stopItem, modes ->
+        newLabelTarget = NewLabelTarget(stop = stopItem, transportModeSet = modes)
     }
 
     AdaptiveScreenContent(
@@ -224,28 +200,12 @@ fun SearchStopScreen(
                     log("value: $value")
                     textFieldText = value
                 },
-                assigningLabel = assigningLabel,
-                editingLabels = editingLabels,
-                onStopSelect = effectiveOnStopSelect,
-                onSaveAsLabel = { stopItem -> stopBeingSaved = stopItem },
-                onUnsaveLabel = { stopItem ->
-                    val match = searchStopState.stopLabels.firstOrNull { it.stopId == stopItem.stopId }
-                    if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
-                },
-                onUnsetLabelClick = { label ->
-                    // Toggle: tap an unset pill to enter assigning mode, tap the same
-                    // (or another unset) pill again to exit / switch.
-                    assigningLabel = if (assigningLabel?.label == label.label) null else label
-                },
-                onEnterEditing = { editingLabels = true },
-                onDeleteLabel = { label ->
-                    onEvent(SearchStopUiEvent.DeleteLabel(label.label))
-                },
-                onMoveLabel = { labelKey, toIndex ->
-                    onEvent(SearchStopUiEvent.MoveLabelToIndex(labelKey, toIndex))
-                },
-                onAddLabelClick = { showAddLabelSheet = true },
-                onDoneEditing = { editingLabels = false },
+                expandedStopKey = expandedStopKey,
+                onToggleExpandStop = onToggleExpandStop,
+                onStopSelect = onStopSelect,
+                onLabelPillClick = onLabelPillClick,
+                onNewLabelClick = onNewLabelClick,
+                onManageClick = effectiveOnManageLabelsClick,
                 onEvent = onEvent,
             )
         },
@@ -264,28 +224,12 @@ fun SearchStopScreen(
                     log("value: $value")
                     textFieldText = value
                 },
-                assigningLabel = assigningLabel,
-                editingLabels = editingLabels,
-                onStopSelect = effectiveOnStopSelect,
-                onSaveAsLabel = { stopItem -> stopBeingSaved = stopItem },
-                onUnsaveLabel = { stopItem ->
-                    val match = searchStopState.stopLabels.firstOrNull { it.stopId == stopItem.stopId }
-                    if (match != null) onEvent(SearchStopUiEvent.ClearLabelStop(match.label))
-                },
-                onUnsetLabelClick = { label ->
-                    // Toggle: tap an unset pill to enter assigning mode, tap the same
-                    // (or another unset) pill again to exit / switch.
-                    assigningLabel = if (assigningLabel?.label == label.label) null else label
-                },
-                onEnterEditing = { editingLabels = true },
-                onDeleteLabel = { label ->
-                    onEvent(SearchStopUiEvent.DeleteLabel(label.label))
-                },
-                onMoveLabel = { labelKey, toIndex ->
-                    onEvent(SearchStopUiEvent.MoveLabelToIndex(labelKey, toIndex))
-                },
-                onAddLabelClick = { showAddLabelSheet = true },
-                onDoneEditing = { editingLabels = false },
+                expandedStopKey = expandedStopKey,
+                onToggleExpandStop = onToggleExpandStop,
+                onStopSelect = onStopSelect,
+                onLabelPillClick = onLabelPillClick,
+                onNewLabelClick = onNewLabelClick,
+                onManageClick = effectiveOnManageLabelsClick,
                 onEvent = onEvent,
                 dualPaneMapUiState = dualPaneMapUiState,
                 onDualPaneMapEvent = onDualPaneMapEvent,
@@ -293,51 +237,31 @@ fun SearchStopScreen(
         },
     )
 
-    SearchStopAddLabelDialog(
-        show = showAddLabelSheet,
-        stopLabels = searchStopState.stopLabels,
-        pendingStopForNewLabel = pendingStopForNewLabel,
-        onEvent = onEvent,
-        onShowAddLabelSheetChange = { showAddLabelSheet = it },
-        onStopBeingSavedChange = { stopBeingSaved = it },
-        onPendingStopForNewLabelChange = { pendingStopForNewLabel = it },
-        onAssigningLabelChange = { assigningLabel = it },
-    )
-
-    SearchStopSaveLabelDialog(
-        stopBeingSaved = stopBeingSaved,
-        stopLabels = searchStopState.stopLabels,
-        onEvent = onEvent,
-        onShowAddLabelSheetChange = { showAddLabelSheet = it },
-        onStopBeingSavedChange = { stopBeingSaved = it },
-        onPendingConflictChange = { pendingConflict = it },
-        onPendingStopForNewLabelChange = { pendingStopForNewLabel = it },
-    )
-
-    SearchStopConflictDialog(
-        pendingConflict = pendingConflict,
-        onEvent = onEvent,
-        onStopBeingSavedChange = { stopBeingSaved = it },
-        onPendingConflictChange = { pendingConflict = it },
-    )
+    val newLabelStop = newLabelTarget
+    if (newLabelStop != null) {
+        AssignNewLabelSheet(
+            stopName = newLabelStop.stop.stopName,
+            transportModeSet = newLabelStop.transportModeSet,
+            existingLabelNames = searchStopState.stopLabels.map { it.label }.toImmutableList(),
+            onDismiss = { newLabelTarget = null },
+            onSave = { name ->
+                newLabelTarget = null
+                // AssignNewLabelSheet already ran name through normaliseLabelName before
+                // calling onSave, so CreateLabel's stored key and this AssignLabelStop's
+                // labelKey are guaranteed to match — see AssignNewLabelSheetContent.
+                if (name.isNotBlank()) {
+                    onEvent(SearchStopUiEvent.CreateLabel(name = name, emoji = NEW_LABEL_DEFAULT_EMOJI))
+                    onEvent(SearchStopUiEvent.AssignLabelStop(labelKey = name, stopItem = newLabelStop.stop))
+                }
+            },
+        )
+    }
 }
 
-internal sealed interface LabelConflict {
-    val target: StopLabel
-    val stop: StopItem
+private const val NEW_LABEL_DEFAULT_EMOJI = "📍"
 
-    data class StopAlreadyOnAnotherLabel(
-        override val target: StopLabel,
-        override val stop: StopItem,
-        val existingLabel: StopLabel,
-    ) : LabelConflict
-
-    data class LabelHasDifferentStop(
-        override val target: StopLabel,
-        override val stop: StopItem,
-        val existingStopName: String,
-    ) : LabelConflict
-}
+/** The stop (+ its transport modes, for the sheet's mode roundel) creating a brand-new label. */
+internal data class NewLabelTarget(val stop: StopItem, val transportModeSet: List<TransportMode>)
 
 // region Savers — keep UI orchestration state alive across rotation / process death.
 //
@@ -346,9 +270,9 @@ internal sealed interface LabelConflict {
 // framework "nothing to persist"; restore is only called when there IS something saved.
 
 /**
- * Search-field placeholder. Doubles as the screen's scope label: when
- * [editTripLeg] is true the search replaces one leg of the trip shown in the
- * timetable, so the copy switches to "Change origin" / "Change destination".
+ * Search-field placeholder. Doubles as the screen's scope label: when [editTripLeg] is
+ * true the search replaces one leg of the trip shown in the timetable, so the copy
+ * switches to "Change origin" / "Change destination".
  */
 private fun searchFieldPlaceholder(
     fieldType: SearchStopFieldType,
@@ -359,114 +283,28 @@ private fun searchFieldPlaceholder(
     SearchStopFieldType.LABEL -> "Choose a stop"
 }
 
-private val StopLabelSaver: Saver<StopLabel?, Any> = Saver(
-    save = { label ->
-        label?.let {
+private val NewLabelTargetSaver: Saver<NewLabelTarget?, Any> = Saver(
+    save = { target ->
+        target?.let {
             mapOf<String, Any?>(
-                "emoji" to it.emoji,
-                "label" to it.label,
-                "stopId" to it.stopId,
-                "stopName" to it.stopName,
+                "stopId" to it.stop.stopId,
+                "stopName" to it.stop.stopName,
+                "productClasses" to it.transportModeSet.map { mode -> mode.productClass },
             )
         }
     },
     restore = { saved ->
         @Suppress("UNCHECKED_CAST")
         val map = saved as Map<String, Any?>
-        StopLabel(
-            emoji = map["emoji"] as String,
-            label = map["label"] as String,
-            stopId = map["stopId"] as String?,
-            stopName = map["stopName"] as String?,
+        NewLabelTarget(
+            stop = StopItem(
+                stopId = map["stopId"] as String,
+                stopName = map["stopName"] as String,
+            ),
+            transportModeSet = (map["productClasses"] as List<Int>).mapNotNull { productClass ->
+                TransportMode.fromProductClass(productClass)
+            },
         )
-    },
-)
-
-private val StopItemSaver: Saver<StopItem?, Any> = Saver(
-    save = { item ->
-        item?.let {
-            mapOf<String, Any?>(
-                "stopId" to it.stopId,
-                "stopName" to it.stopName,
-            )
-        }
-    },
-    restore = { saved ->
-        @Suppress("UNCHECKED_CAST")
-        val map = saved as Map<String, Any?>
-        StopItem(
-            stopId = map["stopId"] as String,
-            stopName = map["stopName"] as String,
-        )
-    },
-)
-
-private val LabelConflictSaver: Saver<LabelConflict?, Any> = Saver(
-    save = { conflict ->
-        when (conflict) {
-            null -> null
-            is LabelConflict.StopAlreadyOnAnotherLabel -> mapOf<String, Any?>(
-                "kind" to "stop",
-                "targetEmoji" to conflict.target.emoji,
-                "targetLabel" to conflict.target.label,
-                "targetStopId" to conflict.target.stopId,
-                "targetStopName" to conflict.target.stopName,
-                "stopId" to conflict.stop.stopId,
-                "stopName" to conflict.stop.stopName,
-                "existingEmoji" to conflict.existingLabel.emoji,
-                "existingLabel" to conflict.existingLabel.label,
-                "existingStopId" to conflict.existingLabel.stopId,
-                "existingStopName" to conflict.existingLabel.stopName,
-            )
-            is LabelConflict.LabelHasDifferentStop -> mapOf<String, Any?>(
-                "kind" to "label",
-                "targetEmoji" to conflict.target.emoji,
-                "targetLabel" to conflict.target.label,
-                "targetStopId" to conflict.target.stopId,
-                "targetStopName" to conflict.target.stopName,
-                "stopId" to conflict.stop.stopId,
-                "stopName" to conflict.stop.stopName,
-                "existingStopName" to conflict.existingStopName,
-            )
-        }
-    },
-    restore = { saved ->
-        @Suppress("UNCHECKED_CAST")
-        val map = saved as Map<String, Any?>
-        when (map["kind"] as String) {
-            "stop" -> LabelConflict.StopAlreadyOnAnotherLabel(
-                target = StopLabel(
-                    emoji = map["targetEmoji"] as String,
-                    label = map["targetLabel"] as String,
-                    stopId = map["targetStopId"] as String?,
-                    stopName = map["targetStopName"] as String?,
-                ),
-                stop = StopItem(
-                    stopId = map["stopId"] as String,
-                    stopName = map["stopName"] as String,
-                ),
-                existingLabel = StopLabel(
-                    emoji = map["existingEmoji"] as String,
-                    label = map["existingLabel"] as String,
-                    stopId = map["existingStopId"] as String?,
-                    stopName = map["existingStopName"] as String?,
-                ),
-            )
-            "label" -> LabelConflict.LabelHasDifferentStop(
-                target = StopLabel(
-                    emoji = map["targetEmoji"] as String,
-                    label = map["targetLabel"] as String,
-                    stopId = map["targetStopId"] as String?,
-                    stopName = map["targetStopName"] as String?,
-                ),
-                stop = StopItem(
-                    stopId = map["stopId"] as String,
-                    stopName = map["stopName"] as String,
-                ),
-                existingStopName = map["existingStopName"] as String,
-            )
-            else -> null
-        }
     },
 )
 
@@ -488,17 +326,12 @@ private fun SearchStopScreenSinglePane(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     onBackClick: () -> Unit,
     onTextChange: (String) -> Unit,
-    assigningLabel: StopLabel?,
-    editingLabels: Boolean,
+    expandedStopKey: String?,
+    onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onSaveAsLabel: (StopItem) -> Unit,
-    onUnsaveLabel: (StopItem) -> Unit,
-    onUnsetLabelClick: (StopLabel) -> Unit,
-    onEnterEditing: () -> Unit,
-    onDeleteLabel: (StopLabel) -> Unit,
-    onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
-    onAddLabelClick: () -> Unit,
-    onDoneEditing: () -> Unit,
+    onLabelPillClick: (StopItem, StopLabel) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
+    onManageClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -601,17 +434,12 @@ private fun SearchStopScreenSinglePane(
                     searchStopState = searchStopState,
                     keyboard = keyboard,
                     focusRequester = focusRequester,
-                    assigningLabel = assigningLabel,
-                    editingLabels = editingLabels,
+                    expandedStopKey = expandedStopKey,
+                    onToggleExpandStop = onToggleExpandStop,
                     onStopSelect = onStopSelect,
-                    onSaveAsLabel = onSaveAsLabel,
-                    onUnsaveLabel = onUnsaveLabel,
-                    onUnsetLabelClick = onUnsetLabelClick,
-                    onEnterEditing = onEnterEditing,
-                    onDeleteLabel = onDeleteLabel,
-                    onMoveLabel = onMoveLabel,
-                    onAddLabelClick = onAddLabelClick,
-                    onDoneEditing = onDoneEditing,
+                    onLabelPillClick = onLabelPillClick,
+                    onNewLabelClick = onNewLabelClick,
+                    onManageClick = onManageClick,
                     onEvent = onEvent,
                     isMapsAvailable = searchStopState.isMapsAvailable,
                     onOpenMap = {
@@ -681,17 +509,12 @@ private fun SearchStopScreenDualPane(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     onBackClick: () -> Unit,
     onTextChange: (String) -> Unit,
-    assigningLabel: StopLabel?,
-    editingLabels: Boolean,
+    expandedStopKey: String?,
+    onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onSaveAsLabel: (StopItem) -> Unit,
-    onUnsaveLabel: (StopItem) -> Unit,
-    onUnsetLabelClick: (StopLabel) -> Unit,
-    onEnterEditing: () -> Unit,
-    onDeleteLabel: (StopLabel) -> Unit,
-    onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
-    onAddLabelClick: () -> Unit,
-    onDoneEditing: () -> Unit,
+    onLabelPillClick: (StopItem, StopLabel) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
+    onManageClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     dualPaneMapUiState: MapUiState? = null,
@@ -743,17 +566,12 @@ private fun SearchStopScreenDualPane(
                         searchStopState = searchStopState,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
-                        assigningLabel = assigningLabel,
-                        editingLabels = editingLabels,
+                        expandedStopKey = expandedStopKey,
+                        onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onSaveAsLabel = onSaveAsLabel,
-                        onUnsaveLabel = onUnsaveLabel,
-                        onUnsetLabelClick = onUnsetLabelClick,
-                        onEnterEditing = onEnterEditing,
-                        onDeleteLabel = onDeleteLabel,
-                        onMoveLabel = onMoveLabel,
-                        onAddLabelClick = onAddLabelClick,
-                        onDoneEditing = onDoneEditing,
+                        onLabelPillClick = onLabelPillClick,
+                        onNewLabelClick = onNewLabelClick,
+                        onManageClick = onManageClick,
                         onEvent = onEvent,
                         isMapsAvailable = false, // map already visible in right pane
                         onOpenMap = {},
@@ -782,25 +600,17 @@ private fun SearchStopListContent(
     searchStopState: SearchStopState,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
-    assigningLabel: StopLabel?,
-    editingLabels: Boolean,
+    expandedStopKey: String?,
+    onToggleExpandStop: (String) -> Unit,
     isMapsAvailable: Boolean,
     onOpenMap: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onSaveAsLabel: (StopItem) -> Unit,
-    onUnsaveLabel: (StopItem) -> Unit,
-    onUnsetLabelClick: (StopLabel) -> Unit,
-    onEnterEditing: () -> Unit,
-    onDeleteLabel: (StopLabel) -> Unit,
-    onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
-    onAddLabelClick: () -> Unit,
-    onDoneEditing: () -> Unit,
+    onLabelPillClick: (StopItem, StopLabel) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
+    onManageClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val savedStopIds = remember(searchStopState.stopLabels) {
-        searchStopState.stopLabels.mapNotNull { it.stopId }.toSet()
-    }
     val isLoading = listState is ListState.Results && listState.isLoading
     val showPillRow = remember(listState, searchStopState.recentStops) {
         shouldShowPillRow(listState, searchStopState.recentStops)
@@ -823,39 +633,36 @@ private fun SearchStopListContent(
                     pillRowSection(
                         showPillRow = showPillRow,
                         stopLabels = searchStopState.stopLabels,
-                        assigningLabel = assigningLabel,
-                        editingLabels = editingLabels,
                         onSetLabelClick = { stopItem ->
                             keyboard?.hide()
                             focusRequester.freeFocus()
                             onStopSelect(stopItem)
                         },
-                        onUnsetLabelClick = onUnsetLabelClick,
-                        onEnterEditing = onEnterEditing,
-                        onDeleteLabel = onDeleteLabel,
-                        onMoveLabel = onMoveLabel,
-                        onAddLabelClick = onAddLabelClick,
-                        onDoneEditing = onDoneEditing,
+                        onManageClick = onManageClick,
                     )
                     selectOnMapItem(isMapsAvailable = isMapsAvailable, onOpenMap = onOpenMap)
                     recentSearchStopsList(
                         recentStops = searchStopState.recentStops,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
-                        savedStopIds = savedStopIds,
+                        stopLabels = searchStopState.stopLabels,
+                        expandedStopKey = expandedStopKey,
+                        onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onSaveAsLabel = onSaveAsLabel,
-                        onUnsaveLabel = onUnsaveLabel,
+                        onLabelPillClick = onLabelPillClick,
+                        onNewLabelClick = onNewLabelClick,
                         onEvent = onEvent,
                     )
                     emptyStateStopsList(
                         show = showEmptyStateStops,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
-                        savedStopIds = savedStopIds,
+                        stopLabels = searchStopState.stopLabels,
+                        expandedStopKey = expandedStopKey,
+                        onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onSaveAsLabel = onSaveAsLabel,
-                        onUnsaveLabel = onUnsaveLabel,
+                        onLabelPillClick = onLabelPillClick,
+                        onNewLabelClick = onNewLabelClick,
                         onEvent = onEvent,
                     )
                     publicTransportNoteItem()
@@ -881,29 +688,24 @@ private fun SearchStopListContent(
                     pillRowSection(
                         showPillRow = showPillRow,
                         stopLabels = searchStopState.stopLabels,
-                        assigningLabel = assigningLabel,
-                        editingLabels = editingLabels,
                         onSetLabelClick = { stopItem ->
                             keyboard?.hide()
                             focusRequester.freeFocus()
                             onStopSelect(stopItem)
                         },
-                        onUnsetLabelClick = onUnsetLabelClick,
-                        onEnterEditing = onEnterEditing,
-                        onDeleteLabel = onDeleteLabel,
-                        onMoveLabel = onMoveLabel,
-                        onAddLabelClick = onAddLabelClick,
-                        onDoneEditing = onDoneEditing,
+                        onManageClick = onManageClick,
                     )
                     selectOnMapItem(isMapsAvailable = isMapsAvailable, onOpenMap = onOpenMap)
                     searchResultsList(
                         searchResults = listState.results,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
-                        savedStopIds = savedStopIds,
+                        stopLabels = searchStopState.stopLabels,
+                        expandedStopKey = expandedStopKey,
+                        onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onSaveAsLabel = onSaveAsLabel,
-                        onUnsaveLabel = onUnsaveLabel,
+                        onLabelPillClick = onLabelPillClick,
+                        onNewLabelClick = onNewLabelClick,
                         onEvent = onEvent,
                         searchQuery = searchStopState.searchQuery,
                     )
@@ -937,52 +739,22 @@ private fun SearchStopListContent(
 }
 
 /**
- * Pill row, contextual hint banner. Keyed identically across every list state so the
- * row stays mounted (and its drag state survives) when the user transitions between
- * Recent, Loading and Results.
+ * Pill row. Keyed identically across every list state so the row stays mounted (and its
+ * drag state survives) when the user transitions between Recent, Loading and Results.
  */
-@Suppress("LongParameterList")
 private fun LazyListScope.pillRowSection(
     showPillRow: Boolean,
     stopLabels: kotlinx.collections.immutable.ImmutableList<StopLabel>,
-    assigningLabel: StopLabel?,
-    editingLabels: Boolean,
     onSetLabelClick: (StopItem) -> Unit,
-    onUnsetLabelClick: (StopLabel) -> Unit,
-    onEnterEditing: () -> Unit,
-    onDeleteLabel: (StopLabel) -> Unit,
-    onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
-    onAddLabelClick: () -> Unit,
-    onDoneEditing: () -> Unit,
+    onManageClick: () -> Unit,
 ) {
     if (!showPillRow || stopLabels.isEmpty()) return
     item(key = "label-shortcuts") {
         LabelShortcutsRow(
             labels = stopLabels,
-            assigningLabel = assigningLabel,
-            editing = editingLabels,
             onSetLabelClick = onSetLabelClick,
-            onUnsetLabelClick = onUnsetLabelClick,
-            onEnterEditing = onEnterEditing,
-            onDeleteLabel = onDeleteLabel,
-            onMoveLabel = onMoveLabel,
-            onAddLabelClick = onAddLabelClick,
-            onDoneEditing = onDoneEditing,
+            onManageClick = onManageClick,
         )
-    }
-    item(key = "assigning-banner") {
-        // animateContentSize gives a smooth height collapse/expand when the
-        // contextual banner appears or disappears.
-        val bannerText = pillRowBannerText(
-            editing = editingLabels,
-            assigningLabel = assigningLabel,
-            stopLabels = stopLabels,
-        )
-        Box(modifier = Modifier.animateContentSize()) {
-            if (bannerText != null) {
-                PillRowInfoBanner(text = bannerText)
-            }
-        }
     }
 }
 
@@ -1008,10 +780,12 @@ private fun LazyListScope.searchResultsList(
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
     searchQuery: String,
-    savedStopIds: Set<String>,
+    stopLabels: ImmutableList<StopLabel>,
+    expandedStopKey: String?,
+    onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onSaveAsLabel: (StopItem) -> Unit,
-    onUnsaveLabel: (StopItem) -> Unit,
+    onLabelPillClick: (StopItem, StopLabel) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     items(
@@ -1025,13 +799,16 @@ private fun LazyListScope.searchResultsList(
     ) { result ->
         when (result) {
             is SearchStopState.SearchResult.Stop -> {
-                val isSaved = result.stopId in savedStopIds
-                StopSearchListItem(
-                    stopId = result.stopId,
+                val stopItem = StopItem(stopId = result.stopId, stopName = result.stopName)
+                val assignedLabel = stopLabels.firstOrNull { it.stopId == result.stopId }
+                StopLabelAssignRow(
                     stopName = result.stopName,
-                    transportModeSet = result.transportModeType.toImmutableSet(),
-                    textColor = KrailTheme.colors.label,
-                    onClick = { stopItem ->
+                    transportModeSet = result.transportModeType,
+                    stopLabels = stopLabels,
+                    assignedLabel = assignedLabel,
+                    expanded = expandedStopKey == result.stopId,
+                    onExpandToggle = { onToggleExpandStop(result.stopId) },
+                    onRowClick = {
                         keyboard?.hide()
                         focusRequester.freeFocus()
                         onStopSelect(stopItem)
@@ -1042,9 +819,8 @@ private fun LazyListScope.searchResultsList(
                             ),
                         )
                     },
-                    isSaved = isSaved,
-                    onSaveAsLabel = if (!isSaved) onSaveAsLabel else null,
-                    onUnsaveLabel = if (isSaved) onUnsaveLabel else null,
+                    onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
+                    onNewLabelClick = { onNewLabelClick(stopItem, result.transportModeType) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Divider(
@@ -1089,10 +865,12 @@ private fun LazyListScope.recentSearchStopsList(
     recentStops: List<SearchStopState.StopResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
-    savedStopIds: Set<String>,
+    stopLabels: ImmutableList<StopLabel>,
+    expandedStopKey: String?,
+    onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onSaveAsLabel: (StopItem) -> Unit,
-    onUnsaveLabel: (StopItem) -> Unit,
+    onLabelPillClick: (StopItem, StopLabel) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     if (recentStops.isNotEmpty()) {
@@ -1139,13 +917,16 @@ private fun LazyListScope.recentSearchStopsList(
         items = recentStops,
         key = { it.stopId },
     ) { stop ->
-        val isSaved = stop.stopId in savedStopIds
-        StopSearchListItem(
-            stopId = stop.stopId,
+        val stopItem = StopItem(stopId = stop.stopId, stopName = stop.stopName)
+        val assignedLabel = stopLabels.firstOrNull { it.stopId == stop.stopId }
+        StopLabelAssignRow(
             stopName = stop.stopName,
-            transportModeSet = stop.transportModeType.toImmutableSet(),
-            textColor = KrailTheme.colors.label,
-            onClick = { stopItem ->
+            transportModeSet = stop.transportModeType,
+            stopLabels = stopLabels,
+            assignedLabel = assignedLabel,
+            expanded = expandedStopKey == stop.stopId,
+            onExpandToggle = { onToggleExpandStop(stop.stopId) },
+            onRowClick = {
                 keyboard?.hide()
                 focusRequester.freeFocus()
                 onStopSelect(stopItem)
@@ -1156,9 +937,8 @@ private fun LazyListScope.recentSearchStopsList(
                     ),
                 )
             },
-            isSaved = isSaved,
-            onSaveAsLabel = if (!isSaved) onSaveAsLabel else null,
-            onUnsaveLabel = if (isSaved) onUnsaveLabel else null,
+            onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
+            onNewLabelClick = { onNewLabelClick(stopItem, stop.transportModeType) },
             modifier = Modifier.fillMaxWidth(),
         )
         Divider(
@@ -1180,10 +960,12 @@ private fun LazyListScope.emptyStateStopsList(
     show: Boolean,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
-    savedStopIds: Set<String>,
+    stopLabels: ImmutableList<StopLabel>,
+    expandedStopKey: String?,
+    onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onSaveAsLabel: (StopItem) -> Unit,
-    onUnsaveLabel: (StopItem) -> Unit,
+    onLabelPillClick: (StopItem, StopLabel) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
     if (!show) return
@@ -1191,13 +973,16 @@ private fun LazyListScope.emptyStateStopsList(
         items = EMPTY_STATE_STOPS,
         key = { "empty_state_${it.stopId}" },
     ) { stop ->
-        val isSaved = stop.stopId in savedStopIds
-        StopSearchListItem(
-            stopId = stop.stopId,
+        val stopItem = StopItem(stopId = stop.stopId, stopName = stop.stopName)
+        val assignedLabel = stopLabels.firstOrNull { it.stopId == stop.stopId }
+        StopLabelAssignRow(
             stopName = stop.stopName,
-            transportModeSet = stop.transportModeType.toImmutableSet(),
-            textColor = KrailTheme.colors.label,
-            onClick = { stopItem ->
+            transportModeSet = stop.transportModeType,
+            stopLabels = stopLabels,
+            assignedLabel = assignedLabel,
+            expanded = expandedStopKey == stop.stopId,
+            onExpandToggle = { onToggleExpandStop(stop.stopId) },
+            onRowClick = {
                 keyboard?.hide()
                 focusRequester.freeFocus()
                 onStopSelect(stopItem)
@@ -1208,9 +993,8 @@ private fun LazyListScope.emptyStateStopsList(
                     ),
                 )
             },
-            isSaved = isSaved,
-            onSaveAsLabel = if (!isSaved) onSaveAsLabel else null,
-            onUnsaveLabel = if (isSaved) onUnsaveLabel else null,
+            onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
+            onNewLabelClick = { onNewLabelClick(stopItem, stop.transportModeType) },
             modifier = Modifier.fillMaxWidth(),
         )
         Divider(
@@ -1219,37 +1003,22 @@ private fun LazyListScope.emptyStateStopsList(
     }
 }
 
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-@Suppress("LongParameterList")
+/**
+ * Idle pill row — tap-only (set pills select, unset pills enter choose-mode). The
+ * trailing "Manage" button opens the full-screen `ManageStopLabelsScreen`, which owns
+ * rename / remove-assignment / delete / reorder. See `SEARCH_STOP_UX.md`.
+ */
 @Composable
 private fun LabelShortcutsRow(
     labels: ImmutableList<StopLabel>,
-    assigningLabel: StopLabel?,
-    editing: Boolean,
     onSetLabelClick: (StopItem) -> Unit,
-    onUnsetLabelClick: (StopLabel) -> Unit,
-    onEnterEditing: () -> Unit,
-    onDeleteLabel: (StopLabel) -> Unit,
-    onMoveLabel: (labelKey: String, toIndex: Int) -> Unit,
-    onAddLabelClick: () -> Unit,
-    onDoneEditing: () -> Unit,
+    onManageClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val lazyListState = rememberLazyListState()
-    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val key = from.key as? String ?: return@rememberReorderableLazyListState
-        onMoveLabel(key, to.index)
-    }
-    val pillButtonColors = ButtonDefaults.buttonColors(
-        customContainerColor = KrailTheme.colors.onStopLabelSurface,
-        customContentColor = KrailTheme.colors.stopLabelSurface,
-    )
 
     LazyRow(
-        state = lazyListState,
         modifier = modifier,
-        // Just enough top padding for the floating ✕ delete chip not to clip.
         contentPadding = PaddingValues(
             start = dim.pageHorizontalPadding,
             end = dim.pageHorizontalPadding,
@@ -1258,118 +1027,23 @@ private fun LabelShortcutsRow(
         ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        items(items = labels, key = { it.label }) { label ->
+        items(items = labels.filter { it.isSet }, key = { it.label }) { label ->
             LabelShortcutPill(
                 label = label,
-                isAssigning = assigningLabel?.label == label.label,
-                editing = editing,
-                reorderState = reorderState,
                 onSetLabelClick = onSetLabelClick,
-                onUnsetLabelClick = onUnsetLabelClick,
-                onEnterEditing = onEnterEditing,
-                onDeleteLabel = onDeleteLabel,
             )
         }
-        // Trailing slot: "+ Add" while idle, "Done" while editing. Putting Done at
-        // the END (not the front) keeps the reorder UX smooth — front-anchored Done
-        // shifted layout when items dragged toward index 0, which fought the
-        // reorderable library's drop-target calculations.
-        if (editing) {
-            item(key = "trailing-done") {
-                Button(
-                    onClick = onDoneEditing,
-                    colors = ButtonDefaults.monochromeButtonColors(),
-                    dimensions = ButtonDefaults.chipButtonSize(),
-                    modifier = Modifier.padding(start = dim.spacingM),
-                ) {
-                    Text(text = "Done")
-                }
-            }
-        } else {
-            item(key = "trailing-add") {
-                Button(
-                    onClick = onAddLabelClick,
-                    colors = pillButtonColors,
-                    dimensions = ButtonDefaults.chipButtonSize(),
-                    modifier = Modifier.padding(start = dim.spacingM),
-                ) {
-                    Text(text = "+ Add")
-                }
+        item(key = "trailing-manage") {
+            Button(
+                onClick = onManageClick,
+                colors = ButtonDefaults.monochromeButtonColors(),
+                dimensions = ButtonDefaults.chipButtonSize(),
+                modifier = Modifier.padding(start = dim.spacingM),
+            ) {
+                Text(text = "Manage")
             }
         }
     }
-}
-
-@Composable
-internal fun DeleteOverlay(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    // Pill background is always dark (stopLabelSurface), so the overlay must use the
-    // paired light token in both modes — using onSurface here would flip to dark in
-    // light mode and disappear into the pill.
-    Box(
-        modifier = modifier
-            .offset(x = dim.spacingS, y = -dim.spacingS)
-            .size(dim.spacingXXL)
-            .clip(CircleShape)
-            .background(KrailTheme.colors.onStopLabelSurface, CircleShape)
-            .klickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(TajRes.drawable.ic_close),
-            contentDescription = "Delete label",
-            colorFilter = ColorFilter.tint(KrailTheme.colors.stopLabelSurface),
-            modifier = Modifier.size(dim.spacingL),
-        )
-    }
-}
-
-@Composable
-internal fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
-    val transition = rememberInfiniteTransition(label = "wiggle")
-    val seedAbs = kotlin.math.abs(seed)
-    val angle by transition.animateFloat(
-        initialValue = -WIGGLE_ANGLE_DEGREES,
-        targetValue = WIGGLE_ANGLE_DEGREES,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = WIGGLE_BASE_DURATION_MS +
-                    (seedAbs % WIGGLE_DURATION_VARIANCE_BUCKETS) * WIGGLE_DURATION_VARIANCE_STEP_MS,
-                easing = LinearEasing,
-            ),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(
-                offsetMillis = (seedAbs * WIGGLE_OFFSET_MULTIPLIER) % WIGGLE_OFFSET_MAX_MS,
-                offsetType = StartOffsetType.Delay,
-            ),
-        ),
-        label = "wiggle-rotation",
-    )
-    return if (active) angle else 0f
-}
-
-@Composable
-private fun PillRowInfoBanner(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    Text(
-        text = text,
-        style = KrailTheme.typography.bodySmall,
-        color = KrailTheme.colors.label,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = dim.pageHorizontalPadding,
-                end = dim.pageHorizontalPadding,
-                top = dim.spacingXS,
-                bottom = dim.spacingS,
-            ),
-    )
 }
 
 @Composable
@@ -1392,7 +1066,7 @@ private fun SelectOnMapItem(
 ) {
     val dim = KrailTheme.dimensions
 
-    // Padding matches StopSearchListItem so the icon + text leading edge line up with
+    // Padding matches StopLabelAssignRow so the icon + text leading edge line up with
     // stop rows below. Title uses titleLarge (same as stop names) for the same reason.
     Row(
         modifier = modifier
@@ -1429,22 +1103,6 @@ private fun MapAutoInitEffect(
         }
     }
 }
-
-// Pill scale factors used by LabelShortcutsRow's graphicsLayer transform — extracted
-// here so the call site reads as intent, not magic numbers.
-internal const val PILL_RESTING_SCALE = 1f
-internal const val PILL_DRAG_SCALE = 1.05f
-internal const val PILL_ASSIGNING_SCALE = 1.10f
-
-// Wiggle animation in edit mode. Per-pill randomisation prevents the row from
-// looking mechanically synchronised — every pill has its own duration bucket and
-// initial offset derived from its label hash.
-private const val WIGGLE_ANGLE_DEGREES = 1.5f
-private const val WIGGLE_BASE_DURATION_MS = 150
-private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
-private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 30
-private const val WIGGLE_OFFSET_MULTIPLIER = 47
-private const val WIGGLE_OFFSET_MAX_MS = 200
 
 // region Previews — every realistic scenario has the seeded Home/Work labels at minimum,
 // since defaults are seeded on first install and Home can't be deleted.
@@ -1550,26 +1208,6 @@ private fun PreviewSearchStopScreen_RichLabels() {
             ),
             onEvent = {},
         )
-    }
-}
-
-@PreviewScreen
-@Composable
-private fun PreviewSearchStopScreen_AssigningMode() {
-    // After tapping unset Work pill — Work outline highlighted. BarbiePink style.
-    PreviewTheme(themeStyle = KrailThemeStyle.BarbiePink) {
-        SearchStopScreen(
-            searchStopState = SearchStopState(
-                listState = ListState.Recent,
-                recentStops = previewRecentStops.toImmutableList(),
-                stopLabels = previewLabelsTypical,
-                isMapsAvailable = true,
-                mapUiState = MapUiState.Ready(),
-            ),
-            onEvent = {},
-        )
-        // Note: actual assigningLabel banner renders only when assigning mode is active
-        // at runtime; static preview shows the resting layout.
     }
 }
 

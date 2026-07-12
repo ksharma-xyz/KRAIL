@@ -58,6 +58,15 @@ class FakeSandook : Sandook {
         )
     }
 
+    override fun renameStopLabel(label: String, newLabel: String) {
+        val updated = stopLabelsFlow.value.map { row ->
+            if (row.label == label) row.copy(label = newLabel) else row
+        }
+        stopLabelsFlow.value = updated.sortedWith(
+            compareBy({ it.stop_id == null }, { it.sort_order }, { it.label }),
+        )
+    }
+
     override fun deleteStopLabel(label: String) {
         stopLabelsFlow.value = stopLabelsFlow.value.filterNot { it.label == label }
     }

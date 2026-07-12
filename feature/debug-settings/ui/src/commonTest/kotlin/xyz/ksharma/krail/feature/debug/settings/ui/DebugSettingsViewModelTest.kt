@@ -126,6 +126,7 @@ private class FakeDebugStore : DebugNetworkConfigStore {
         _state.value = when (event) {
             is DebugSettingsEvent.SetSource -> _state.value.copy(source = event.source)
             is DebugSettingsEvent.SetTripTrackingEnabled -> _state.value.copy(tripTrackingEnabled = event.enabled)
+            is DebugSettingsEvent.SetAddressSearchEnabled -> _state.value.copy(addressSearchEnabled = event.enabled)
             DebugSettingsEvent.Reset -> DebugSettingsState.default()
         }
     }

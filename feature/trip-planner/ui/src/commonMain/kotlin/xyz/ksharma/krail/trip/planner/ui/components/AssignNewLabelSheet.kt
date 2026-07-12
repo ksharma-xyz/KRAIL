@@ -142,11 +142,8 @@ internal fun AssignNewLabelSheetContent(
             // Blocks emoji/punctuation at keystroke time rather than silently stripping
             // them later — keeps what the user sees in sync with the normalised name
             // that CreateLabel actually stores under.
-            filter = { input ->
-                input.filter { c ->
-                    c.isLetterOrDigit() || c.isWhitespace() || c == '-' || c == '_' || c == '\''
-                }
-            },
+            filter = ::filterLabelNameInput,
+            maxLength = LABEL_NAME_MAX_LENGTH,
             modifier = Modifier.fillMaxWidth(),
         )
 

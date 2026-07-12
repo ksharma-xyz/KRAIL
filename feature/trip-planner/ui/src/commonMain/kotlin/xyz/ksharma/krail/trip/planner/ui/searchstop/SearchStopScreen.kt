@@ -612,8 +612,8 @@ private fun SearchStopListContent(
     modifier: Modifier = Modifier,
 ) {
     val isLoading = listState is ListState.Results && listState.isLoading
-    val showPillRow = remember(listState, searchStopState.recentStops) {
-        shouldShowPillRow(listState, searchStopState.recentStops)
+    val showPillRow = remember(listState, searchStopState.recentStops, searchStopState.stopLabels) {
+        shouldShowPillRow(listState, searchStopState.recentStops, searchStopState.stopLabels)
     }
     val showEmptyStateStops = remember(listState, searchStopState.recentStops) {
         shouldShowEmptyStateStops(listState, searchStopState.recentStops)

@@ -243,7 +243,7 @@ class SearchStopScreenInteractionTest {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    searchStopState = SearchStopFixtures.recentWithHomeSet(),
                     onEvent = {},
                 )
             }
@@ -251,8 +251,24 @@ class SearchStopScreenInteractionTest {
 
         // The trailing "Manage" button is the sole entry point to
         // ManageStopLabelsSheet (change/remove/delete/reorder). It must be present
-        // whenever the pill row renders.
+        // whenever the pill row renders (i.e. at least one label is set).
         composeRule.onNodeWithText("Manage").assertIsDisplayed()
+    }
+
+    @Test
+    fun manageButton_isHidden_whenNoLabelIsSetYet() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    // Fresh install: Home/Work seeded but unset. No pills to show, so
+                    // the trailing Manage button shouldn't float there alone either.
+                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    onEvent = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Manage").assertDoesNotExist()
     }
 
     @Test
@@ -261,7 +277,7 @@ class SearchStopScreenInteractionTest {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults(),
+                    searchStopState = SearchStopFixtures.recentWithHomeSet(),
                     onEvent = {},
                     onManageLabelsClick = { manageClicked = true },
                 )
@@ -289,7 +305,7 @@ class SearchStopScreenInteractionTest {
             PreviewTheme {
                 CompositionLocalProvider(LocalSoftwareKeyboardController provides spyKeyboardController) {
                     SearchStopScreen(
-                        searchStopState = SearchStopFixtures.recentWithDefaults(),
+                        searchStopState = SearchStopFixtures.recentWithHomeSet(),
                         onEvent = {},
                         onManageLabelsClick = { events += "manageClicked" },
                     )

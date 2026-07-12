@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
@@ -16,10 +17,16 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
  */
 
 /**
- * Whether the pill row (label shortcuts) should render.
+ * Whether the pill row (label shortcuts + trailing Manage button) should render.
  *
- * Hide it on a fresh-install / empty-search canvas where there are no stops below to
- * assign — an empty pill row with nothing to act on feels broken to the user.
+ * Two independent reasons to hide it:
+ * - Fresh-install / empty-search canvas with no stops below to assign — an empty pill
+ *   row with nothing to act on feels broken to the user.
+ * - No label is actually set yet. `LabelShortcutsRow` only ever renders `isSet`
+ *   labels as pills, and Home/Work are always seeded on install (unset), so
+ *   `stopLabels` itself is never empty — without this check the row would render as
+ *   a lone floating "Manage" button with no pills next to it, which reads as broken
+ *   (nothing on screen yet to manage).
  *
  * - In Recent mode: show iff the user has at least one recent stop.
  * - In Results mode: show iff the search returned at least one result. Loading,
@@ -28,10 +35,14 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 internal fun shouldShowPillRow(
     listState: ListState,
     recentStops: List<SearchStopState.StopResult>,
-): Boolean = when (listState) {
-    ListState.Recent -> recentStops.isNotEmpty()
-    is ListState.Results -> listState.results.isNotEmpty()
-    ListState.NoMatch, ListState.Error -> false
+    stopLabels: List<StopLabel>,
+): Boolean {
+    if (stopLabels.none { it.isSet }) return false
+    return when (listState) {
+        ListState.Recent -> recentStops.isNotEmpty()
+        is ListState.Results -> listState.results.isNotEmpty()
+        ListState.NoMatch, ListState.Error -> false
+    }
 }
 
 /**

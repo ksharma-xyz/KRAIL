@@ -51,6 +51,32 @@ class LabelNameNormalizerTest {
     }
 
     @Test
+    fun `normaliseLabelName caps length at LABEL_NAME_MAX_LENGTH`() {
+        val tooLong = "A".repeat(LABEL_NAME_MAX_LENGTH + 10)
+        val result = normaliseLabelName(tooLong)
+        assertEquals(LABEL_NAME_MAX_LENGTH, result.length)
+        assertEquals("A".repeat(LABEL_NAME_MAX_LENGTH), result)
+    }
+
+    @Test
+    fun `normaliseLabelName leaves no trailing space when truncation lands on a word boundary`() {
+        // 21 'A's + space + 'B' — truncating at 20 chars alone would land exactly on
+        // the space, leaving a trailing space; the result must be re-trimmed.
+        val input = "A".repeat(LABEL_NAME_MAX_LENGTH - 1) + " B"
+        val result = normaliseLabelName(input)
+        assertEquals("A".repeat(LABEL_NAME_MAX_LENGTH - 1), result)
+        assertFalse(result.endsWith(" "))
+    }
+
+    @Test
+    fun `normaliseLabelName enforces length cap even without going through the TextField`() {
+        // This is the actual defense-in-depth case: a direct call (e.g. from a
+        // ViewModel handler) with no TextField involved must still be capped.
+        val direct = normaliseLabelName("This name is way way way too long for a pill")
+        assertTrue(direct.length <= LABEL_NAME_MAX_LENGTH)
+    }
+
+    @Test
     fun `labelNamesMatch is case-insensitive`() {
         assertTrue(labelNamesMatch("Home", "home"))
         assertTrue(labelNamesMatch("HOME", "home"))

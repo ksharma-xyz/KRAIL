@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -88,7 +89,7 @@ internal fun StopLabelAssignRow(
                     // ripple looked clipped to just the text+icons content.
                     .padding(top = dim.spacingM),
             ) {
-                xyz.ksharma.krail.taj.components.Text(
+                Text(
                     text = stopName,
                     style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
                     color = KrailTheme.colors.onSurface,
@@ -155,7 +156,7 @@ private fun NewLabelAssignChip(onClick: () -> Unit) {
             .klickable(onClick = onClick)
             .padding(horizontal = dim.chipHorizontalPadding, vertical = dim.chipVerticalPadding),
     ) {
-        xyz.ksharma.krail.taj.components.Text(
+        Text(
             text = "+ New label",
             style = KrailTheme.typography.labelLarge,
             color = KrailTheme.colors.label,

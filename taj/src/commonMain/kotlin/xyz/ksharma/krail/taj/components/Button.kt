@@ -285,6 +285,11 @@ private fun buttonTextStyle(dimensions: ButtonDimensions) =
         ButtonDefaults.smallButtonSize() -> KrailTheme.typography.titleSmall
         ButtonDefaults.mediumButtonSize() -> KrailTheme.typography.titleMedium
         ButtonDefaults.largeButtonSize() -> KrailTheme.typography.titleLarge
+        // chipButtonSize()'s own doc says it matches "the existing pill geometry...
+        // Home / Work / set + unset label pills" — those pills render at labelLarge
+        // (20sp line-height), not titleSmall (18sp). Falling through to the titleSmall
+        // default here was the actual bug behind the height mismatch.
+        ButtonDefaults.chipButtonSize() -> KrailTheme.typography.labelLarge
         else -> KrailTheme.typography.titleSmall
     }
 

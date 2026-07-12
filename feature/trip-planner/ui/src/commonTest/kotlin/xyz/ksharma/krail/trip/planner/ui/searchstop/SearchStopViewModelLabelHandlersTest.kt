@@ -16,6 +16,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -351,6 +352,29 @@ class SearchStopViewModelLabelHandlersTest {
 
                 val state = expectMostRecentItem()
                 assertNotNull(state.stopLabels.firstOrNull { it.label == "Garage" })
+            }
+        }
+
+    @Test
+    fun `Given name longer than the max length When CreateLabel fires Then name is truncated`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                // Defense in depth: the TextField already caps input at
+                // LABEL_NAME_MAX_LENGTH, but the VM must enforce it independently
+                // for any caller that skips the UI.
+                val tooLong = "A".repeat(LABEL_NAME_MAX_LENGTH + 10)
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = tooLong, emoji = "🚗"))
+                advanceUntilIdle()
+
+                val state = expectMostRecentItem()
+                val stored = state.stopLabels.firstOrNull { it.label.startsWith("A") }
+                assertNotNull(stored)
+                assertTrue(stored.label.length <= LABEL_NAME_MAX_LENGTH)
+
+                val rows = fakeSandook.observeStopLabels().first()
+                assertTrue(rows.all { it.label.length <= LABEL_NAME_MAX_LENGTH })
             }
         }
 

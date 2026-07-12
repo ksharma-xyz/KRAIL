@@ -39,6 +39,9 @@ val md_theme_light_outline_subtle = Color(0x33010101)
 // Used for past/previous departure rows and past journey cards.
 val md_theme_light_past_departure_row_surface = Color(0xFFEEEEEE)
 
+// Walking connectors are intentionally quieter than scheduled-service timelines.
+val md_theme_light_walking_connector = Color(0xFFACACAC)
+
 // Stop-label surface — intentionally dark in BOTH light and dark mode so stop-label
 // pills read as a single visual treatment regardless of theme. Pair with
 // [md_theme_on_stop_label_surface] for content drawn on top.
@@ -81,6 +84,9 @@ val md_theme_dark_outline_subtle = Color(0x33FCF6F1)
 // past departure row surface — warm dark one step above the #292929 sheet (contrast ≈ 13:1 for onSurface #FCF6F1)
 // Used for past/previous departure rows and past journey cards.
 val md_theme_dark_past_departure_row_surface = Color(0xFF2C2B2A)
+
+// Walking connectors are intentionally quieter than scheduled-service timelines.
+val md_theme_dark_walking_connector = Color(0xFF5A5755)
 
 /**
  * Intermediate colors for smooth theme transitions
@@ -149,6 +155,8 @@ data class KrailColors(
     val bottomSheetDragHandle: Color,
     /** Surface color for past/previous items — previous departure rows, past journey cards, etc. */
     val pastDepartureRowSurface: Color,
+    /** Muted dotted connector for walking and footpath legs. */
+    val walkingConnector: Color,
     /** Subtle border/stroke color for chip outlines, dividers, and UI control tracks. */
     val outlineSubtle: Color,
     /**
@@ -187,6 +195,7 @@ internal val KrailLightColors = KrailColors(
     bottomSheetBackground = md_theme_light_modal_sheet_background,
     bottomSheetDragHandle = md_theme_light_sheet_drag_handle,
     pastDepartureRowSurface = md_theme_light_past_departure_row_surface,
+    walkingConnector = md_theme_light_walking_connector,
     outlineSubtle = md_theme_light_outline_subtle,
     stopLabelSurface = md_theme_stop_label_surface,
     onStopLabelSurface = md_theme_on_stop_label_surface,
@@ -219,6 +228,7 @@ internal val KrailDarkColors = KrailColors(
     bottomSheetBackground = md_theme_dark_modal_sheet_background,
     bottomSheetDragHandle = md_theme_dark_sheet_drag_handle,
     pastDepartureRowSurface = md_theme_dark_past_departure_row_surface,
+    walkingConnector = md_theme_dark_walking_connector,
     outlineSubtle = md_theme_dark_outline_subtle,
     stopLabelSurface = md_theme_stop_label_surface,
     onStopLabelSurface = md_theme_on_stop_label_surface,
@@ -252,6 +262,7 @@ internal val LocalKrailColors = staticCompositionLocalOf {
         bottomSheetBackground = Color.Unspecified,
         bottomSheetDragHandle = Color.Unspecified,
         pastDepartureRowSurface = Color.Unspecified,
+        walkingConnector = Color.Unspecified,
         outlineSubtle = Color.Unspecified,
         stopLabelSurface = Color.Unspecified,
         onStopLabelSurface = Color.Unspecified,

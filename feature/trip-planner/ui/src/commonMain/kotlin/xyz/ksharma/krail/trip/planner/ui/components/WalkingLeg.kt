@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,11 +57,10 @@ fun WalkingLeg(
     val lineColor = KrailTheme.colors.onSurface.copy(alpha = contentAlpha * DASHED_LINE_ALPHA)
     val strokeWidth = dim.journeyLegStrokeWidth
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(color = KrailTheme.colors.surface),
-    ) {
+    // Deliberately inherit the parent surface. A past JourneyCard uses
+    // pastDepartureRowSurface; painting the normal surface here made walking and pin rows
+    // look like a separate, non-past card inside it.
+    Column(modifier = modifier.fillMaxWidth()) {
         if (originPinName != null) {
             PinRow(
                 name = originPinName,

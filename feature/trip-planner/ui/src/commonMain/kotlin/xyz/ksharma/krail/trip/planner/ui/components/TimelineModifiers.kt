@@ -116,8 +116,10 @@ internal fun Modifier.timeLineCenterWithStop(
     }
 }
 
-private val DASH_LENGTH = 4.dp
-private val DASH_GAP = 4.dp
+// A near-zero line segment plus a round cap produces a true dot. The wide gap makes walking
+// connectors recede behind scheduled-service timelines instead of appearing as a heavy dash.
+private val DASH_LENGTH = 0.5.dp
+private val DASH_GAP = 10.dp
 
 private fun DrawScope.dashEffect(): PathEffect = PathEffect.dashPathEffect(
     intervals = floatArrayOf(DASH_LENGTH.toPx(), DASH_GAP.toPx()),

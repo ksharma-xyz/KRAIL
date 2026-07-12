@@ -145,6 +145,7 @@ internal fun createLightDarkModeAnimatedColors(
         bottomSheetBackground = targetColors.bottomSheetBackground,
         bottomSheetDragHandle = targetColors.bottomSheetDragHandle,
         pastDepartureRowSurface = targetColors.pastDepartureRowSurface,
+        walkingConnector = targetColors.walkingConnector,
         walkingPath = targetColors.walkingPath,
         userLocationDot = targetColors.userLocationDot,
         outlineSubtle = targetColors.outlineSubtle,

@@ -54,7 +54,9 @@ fun WalkingLeg(
     // its own timeline dot.
     val contentStart = lineOffset + dim.spacingXL
 
-    val lineColor = KrailTheme.colors.onSurface.copy(alpha = contentAlpha * DASHED_LINE_ALPHA)
+    // Walking is supplementary context, so its connector should remain quieter than the
+    // mode-coloured transport timelines on either the regular or past-journey surface.
+    val lineColor = KrailTheme.colors.walkingConnector
     val strokeWidth = dim.journeyLegStrokeWidth
 
     // Deliberately inherit the parent surface. A past JourneyCard uses
@@ -149,8 +151,6 @@ private fun PinRow(name: String, iconSize: Dp, lineOffset: Dp, textStart: Dp) {
         )
     }
 }
-
-private const val DASHED_LINE_ALPHA = 0.6f
 
 // Visible breathing room between the icon's own bounding box and the first/last dash.
 // ic_location_on.xml's ink fills almost the whole box (path spans y=2..22 of a 24 viewBox),

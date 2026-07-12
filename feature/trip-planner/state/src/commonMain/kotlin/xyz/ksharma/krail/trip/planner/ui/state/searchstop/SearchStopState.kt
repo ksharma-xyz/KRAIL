@@ -46,6 +46,15 @@ data class SearchStopState(
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
     val showMapOptionsOnOpen: Boolean = false,
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
+    /**
+     * Address/POI hits from the NSW `stop_finder` API (`type_sf=any`, `stop`-typed
+     * results filtered out — transit stops always come from [searchResults] / local DB
+     * only). Deliberately separate from [listState] so this section's visibility never
+     * depends on the local search outcome: it renders whenever non-empty, even if
+     * [listState] is [ListState.NoMatch] for the same query.
+     */
+    val addressResults: ImmutableList<SearchResult.Address> = persistentListOf(),
+    val isAddressSearchLoading: Boolean = false,
 ) {
     /**
      * Internal sealed classes describing results / recent items.
@@ -64,6 +73,16 @@ data class SearchStopState(
             val headsign: String,
             val stops: ImmutableList<TripStop> = persistentListOf(),
             val transportMode: TransportMode,
+        ) : SearchResult()
+
+        /**
+         * An address/POI hit from `stop_finder`. [addressId] is the API's location `id`
+         * (e.g. a `streetID:...` value) — never a local transit `stopId`.
+         */
+        data class Address(
+            val addressId: String,
+            val displayName: String,
+            val addressType: String,
         ) : SearchResult()
     }
 

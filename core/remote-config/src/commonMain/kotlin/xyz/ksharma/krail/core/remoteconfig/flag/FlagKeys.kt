@@ -58,4 +58,12 @@ enum class FlagKeys(val key: String) {
      * `BFF_LOCAL` testing needs no RC change.
      */
     BFF_USE_FOR_TRACK("bff_use_for_track"),
+
+    /**
+     * Kill switch for the address/POI search section on SearchStopScreen
+     * (`stop_finder` with `type_sf=any`, filtered to non-`stop` results). `false` by
+     * default — when off, the remote search job is never launched, so local stop
+     * search is completely unaffected regardless of this flag's value.
+     */
+    SEARCH_STOP_ADDRESS_SEARCH_ENABLED("search_stop_address_search_enabled"),
 }

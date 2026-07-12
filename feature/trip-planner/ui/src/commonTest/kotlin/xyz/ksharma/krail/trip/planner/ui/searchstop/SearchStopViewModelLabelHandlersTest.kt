@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeRemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
@@ -59,6 +60,7 @@ class SearchStopViewModelLabelHandlersTest {
     private val testDispatcher = StandardTestDispatcher()
     private val fakeAnalytics = FakeAnalytics()
     private val fakeStopResultsManager = FakeStopResultsManager()
+    private val fakeRemoteAddressResultsManager = FakeRemoteAddressResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
     private val fakePreferences = FakeSandookPreferences()
@@ -78,6 +80,7 @@ class SearchStopViewModelLabelHandlersTest {
         viewModel = SearchStopViewModel(
             analytics = fakeAnalytics,
             stopResultsManager = fakeStopResultsManager,
+            remoteAddressResultsManager = fakeRemoteAddressResultsManager,
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
@@ -530,6 +533,7 @@ class SearchStopViewModelLabelHandlersTest {
         val freshVm = SearchStopViewModel(
             analytics = FakeAnalytics(),
             stopResultsManager = FakeStopResultsManager(),
+            remoteAddressResultsManager = FakeRemoteAddressResultsManager(),
             flag = FakeFlag(),
             nearbyStopsManager = FakeNearbyStopsManagerForMap(),
             ioDispatcher = testDispatcher,

@@ -35,6 +35,8 @@ fun DebugConfigScreen(
     modifier: Modifier = Modifier,
     tripTrackingEnabled: Boolean = true,
     onTripTrackingToggle: (Boolean) -> Unit = {},
+    addressSearchEnabled: Boolean = false,
+    onAddressSearchToggle: (Boolean) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
 ) {
@@ -67,6 +69,14 @@ fun DebugConfigScreen(
                         subtitle = "Override TRIP_TRACKING_ENABLED RC flag.",
                         checked = tripTrackingEnabled,
                         onCheckedChange = onTripTrackingToggle,
+                    )
+                }
+                item(key = "tile-address-search") {
+                    DebugConfigToggleTile(
+                        title = "Address Search",
+                        subtitle = "Override SEARCH_STOP_ADDRESS_SEARCH_ENABLED RC flag.",
+                        checked = addressSearchEnabled,
+                        onCheckedChange = onAddressSearchToggle,
                     )
                 }
             }

@@ -36,6 +36,8 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
         DebugConfigScreen(
             tripTrackingEnabled = state.tripTrackingEnabled,
             onTripTrackingToggle = viewModel::setTripTrackingEnabled,
+            addressSearchEnabled = state.addressSearchEnabled,
+            onAddressSearchToggle = viewModel::setAddressSearchEnabled,
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,
         )

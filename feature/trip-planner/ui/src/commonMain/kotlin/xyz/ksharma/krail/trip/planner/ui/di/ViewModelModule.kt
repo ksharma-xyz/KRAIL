@@ -24,7 +24,9 @@ import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewMo
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.searchstop.RealRemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.RemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
@@ -128,6 +130,13 @@ val viewModelsModule = module {
         )
     }
 
+    single<RemoteAddressResultsManager> {
+        RealRemoteAddressResultsManager(
+            tripPlanningService = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
     single<NearbyStopsManager> {
         createNearbyStopsManager(
             repository = get(),
@@ -145,14 +154,21 @@ val viewModelsModule = module {
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
 
     viewModel {
+        val isDebug = get<AppInfoProvider>().getAppInfo().isDebug
+        val addressSearchDebugOverride = when {
+            isDebug -> get<DebugNetworkConfigStore>().state.value.addressSearchEnabled
+            else -> get<Flag>().getFlagValue(FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key).asBoolean(false)
+        }
         SearchStopViewModel(
             analytics = get(),
             stopResultsManager = get(),
+            remoteAddressResultsManager = get(),
             nearbyStopsManager = get(),
             flag = get(),
             ioDispatcher = get(named(IODispatcher)),
             preferences = get(),
             sandook = get(),
+            addressSearchDebugOverride = addressSearchDebugOverride,
         )
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,6 +80,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.AddressSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.TripSearchListItem
@@ -709,6 +711,15 @@ private fun SearchStopListContent(
                         onEvent = onEvent,
                         searchQuery = searchStopState.searchQuery,
                     )
+                    addressResultsSection(
+                        addressResults = searchStopState.addressResults,
+                        isLoading = searchStopState.isAddressSearchLoading,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        searchQuery = searchStopState.searchQuery,
+                        onStopSelect = onStopSelect,
+                        onEvent = onEvent,
+                    )
                     publicTransportNoteItem()
                 }
                 SearchingDotsHeader(
@@ -721,11 +732,35 @@ private fun SearchStopListContent(
         }
 
         ListState.NoMatch -> {
-            ErrorMessage(
-                title = "No match found!",
-                message = "Try something else. \uD83D\uDD0D✨",
-                modifier = modifier.fillMaxWidth(),
-            )
+            // Local list has no match, but the remote address/POI section is
+            // independent of local match state. "No match found" only makes sense
+            // when BOTH local and remote have nothing - if the address section has
+            // results (or is still loading), skip the error message entirely so the
+            // user never sees "No match" sitting above real results.
+            val hasAddressContent = searchStopState.addressResults.isNotEmpty() ||
+                searchStopState.isAddressSearchLoading
+            if (hasAddressContent) {
+                LazyColumn(
+                    modifier = modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = KrailTheme.dimensions.spacingXXXXL),
+                ) {
+                    addressResultsSection(
+                        addressResults = searchStopState.addressResults,
+                        isLoading = searchStopState.isAddressSearchLoading,
+                        keyboard = keyboard,
+                        focusRequester = focusRequester,
+                        searchQuery = searchStopState.searchQuery,
+                        onStopSelect = onStopSelect,
+                        onEvent = onEvent,
+                    )
+                }
+            } else {
+                ErrorMessage(
+                    title = "No match found!",
+                    message = "Try something else. \uD83D\uDD0D✨",
+                    modifier = modifier.fillMaxWidth(),
+                )
+            }
         }
 
         ListState.Error -> {
@@ -794,6 +829,7 @@ private fun LazyListScope.searchResultsList(
             when (result) {
                 is SearchStopState.SearchResult.Stop -> result.stopId
                 is SearchStopState.SearchResult.Trip -> result.tripId
+                is SearchStopState.SearchResult.Address -> result.addressId
             }
         },
     ) { result ->
@@ -856,7 +892,78 @@ private fun LazyListScope.searchResultsList(
                         .padding(bottom = KrailTheme.dimensions.spacingL),
                 )
             }
+
+            // Local search never returns Address results — those come from
+            // [addressResultsSection] via the separate remote-search state field.
+            // Branch kept only to satisfy sealed-class exhaustiveness.
+            is SearchStopState.SearchResult.Address -> Unit
         }
+    }
+}
+
+/**
+ * Address/POI results from the `stop_finder` remote search — always rendered as a
+ * trailing section, never merged into or reordering [searchResultsList]. Visibility is
+ * driven purely by [addressResults]/[isLoading], independent of the local list's own
+ * state (so it can render even when the local list is showing `NoMatch`). See
+ * `SEARCH_STOP_LOCATION_AND_ADDRESS` plan notes on the local/remote split.
+ */
+@Suppress("LongParameterList")
+private fun LazyListScope.addressResultsSection(
+    addressResults: List<SearchStopState.SearchResult.Address>,
+    isLoading: Boolean,
+    keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    focusRequester: FocusRequester,
+    searchQuery: String,
+    onStopSelect: (StopItem) -> Unit,
+    onEvent: (SearchStopUiEvent) -> Unit,
+) {
+    if (addressResults.isEmpty() && !isLoading) return
+    item(key = "address-results-header") {
+        val dim = KrailTheme.dimensions
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = dim.pageHorizontalPadding,
+                    vertical = dim.spacingL,
+                )
+                .clip(RoundedCornerShape(dim.radiusL))
+                .background(KrailTheme.colors.discoverChipBackground)
+                .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
+        ) {
+            Text(
+                text = "Addresses & places",
+                style = KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = KrailTheme.colors.label,
+            )
+        }
+    }
+    items(
+        items = addressResults,
+        key = { "address_${it.addressId}" },
+    ) { address ->
+        AddressSearchListItem(
+            displayName = address.displayName,
+            addressType = address.addressType,
+            textColor = KrailTheme.colors.label,
+            onClick = {
+                val stopItem = StopItem(stopId = address.addressId, stopName = address.displayName)
+                keyboard?.hide()
+                focusRequester.freeFocus()
+                onStopSelect(stopItem)
+                onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        stopItem = stopItem,
+                        searchQuery = searchQuery,
+                    ),
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Divider(
+            modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
+        )
     }
 }
 

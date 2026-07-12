@@ -86,3 +86,10 @@ data class DateTimeSelectorRoute(
 
 @Serializable
 data object DiscoverRoute : TripPlannerRoute
+
+/**
+ * Detail route: Manage stop labels (rename / remove-assignment / delete / reorder).
+ * A real screen, not a sheet — Google Maps "Your Places" shape.
+ */
+@Serializable
+data object ManageStopLabelsRoute : TripPlannerRoute

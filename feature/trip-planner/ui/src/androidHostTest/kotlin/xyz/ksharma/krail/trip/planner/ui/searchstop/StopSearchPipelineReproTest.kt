@@ -68,6 +68,7 @@ class StopSearchPipelineReproTest {
             override fun observeStopLabels(): Flow<List<StopLabels>> = emptyFlow()
             override fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) = error("x")
             override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) = error("x")
+            override fun renameStopLabel(label: String, newLabel: String) = error("x")
             override fun deleteStopLabel(label: String) = error("x")
             override fun clearStopLabels() = error("x")
             override fun insertOrReplaceTheme(productClass: Long) = error("x")

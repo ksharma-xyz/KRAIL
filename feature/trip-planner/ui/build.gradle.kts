@@ -144,6 +144,10 @@ kotlin {
             resources.srcDir("src/androidHostTest/resources")
             dependencies {
                 implementation(projects.core.snapshotTesting)
+                // Robolectric's createComposeRule() launches a ComponentActivity via
+                // ActivityScenario, which needs it declared in a manifest to resolve the
+                // launch intent — this artifact ships exactly that debug-only manifest.
+                implementation(libs.test.composeUiTestManifest)
             }
         }
     }

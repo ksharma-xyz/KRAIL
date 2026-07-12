@@ -88,6 +88,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             goBack = {
                 tripPlannerNavigator.goBack()
             },
+            onManageLabelsClick = { tripPlannerNavigator.navigateToManageStopLabels() },
             onEvent = { event -> viewModel.onEvent(event) },
             dualPaneMapUiState = mapUiState,
             onDualPaneMapEvent = mapStopSelectionViewModel::onEvent,

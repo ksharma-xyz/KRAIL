@@ -200,6 +200,10 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      *                          this assignment is overwriting it.
      * @param isProtectedLabel  `true` for the protected Home label (special-cased
      *                          throughout the app — non-deletable).
+     * @param source            [SOURCE_CHOOSE_MODE] for a direct row tap while a label's
+     *                          "choose your stop" mode is active (story A1), [SOURCE_STAR_SHEET]
+     *                          for the star icon → save-as-label sheet flow. Historical events
+     *                          (pre-A1) carry no `source` — treat null as star_sheet.
      */
     data class StopLabelStopAssignedEvent(
         val labelName: String,
@@ -207,6 +211,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val stopName: String,
         val isReassignment: Boolean,
         val isProtectedLabel: Boolean,
+        val source: String = SOURCE_STAR_SHEET,
     ) : AnalyticsEvent(
         name = "stop_label_stop_assigned",
         properties = mapOf(
@@ -215,8 +220,14 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             PROP_STOP_NAME to stopName,
             "isReassignment" to isReassignment,
             "isProtectedLabel" to isProtectedLabel,
+            PROP_SOURCE to source,
         ),
-    )
+    ) {
+        companion object {
+            const val SOURCE_CHOOSE_MODE = "choose_mode"
+            const val SOURCE_STAR_SHEET = "star_sheet"
+        }
+    }
 
     /**
      * Fired when the user either deletes a label entirely or clears the stop attached

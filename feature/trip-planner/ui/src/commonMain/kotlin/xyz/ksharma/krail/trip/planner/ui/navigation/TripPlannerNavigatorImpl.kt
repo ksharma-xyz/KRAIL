@@ -62,6 +62,10 @@ internal class TripPlannerNavigatorImpl(
         baseNavigator.goTo(DiscoverRoute)
     }
 
+    override fun navigateToManageStopLabels() {
+        baseNavigator.goTo(ManageStopLabelsRoute)
+    }
+
     override fun navigateToThemeSelection() {
         baseNavigator.goTo(ThemeSelectionRoute)
     }

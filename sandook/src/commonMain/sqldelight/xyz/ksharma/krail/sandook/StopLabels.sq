@@ -18,6 +18,9 @@ ORDER BY (stop_id IS NULL) ASC, sort_order ASC, label ASC;
 updateStopLabelStop:
 UPDATE StopLabels SET stop_id = ?, stop_name = ? WHERE label = ?;
 
+renameStopLabel:
+UPDATE StopLabels SET label = ? WHERE label = ?;
+
 deleteStopLabel:
 DELETE FROM StopLabels WHERE label = ?;
 

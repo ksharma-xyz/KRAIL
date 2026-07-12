@@ -318,6 +318,25 @@ object ButtonDefaults {
         )
     }
 
+    /**
+     * Solid error-red fill with [KrailTheme.colors.onError] text — high-contrast
+     * white-on-red, unlike pairing [KrailTheme.colors.errorContainer] (pale pink)
+     * with [KrailTheme.colors.error] (also reddish), which reads as low-contrast
+     * pink-on-pink. Use for destructive confirms (Delete label, etc.) where the
+     * text must be clearly legible, not just tinted red.
+     */
+    @Composable
+    fun destructiveButtonColors(): ButtonColors {
+        val containerColor = KrailTheme.colors.error
+        val contentColor = KrailTheme.colors.onError
+        return ButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = containerColor.copy(alpha = DisabledContentAlpha),
+            disabledContentColor = contentColor.copy(alpha = DisabledContentAlpha),
+        )
+    }
+
     @Composable
     fun subtleButtonColors(): ButtonColors {
         val containerColor = themeBackgroundColor()

@@ -237,6 +237,10 @@ internal class RealSandook(
         )
     }
 
+    override fun renameStopLabel(label: String, newLabel: String) {
+        stopLabelsQueries.renameStopLabel(label = newLabel, label_ = label)
+    }
+
     override fun deleteStopLabel(label: String) {
         stopLabelsQueries.deleteStopLabel(label)
     }

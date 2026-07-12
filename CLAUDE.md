@@ -116,7 +116,7 @@ Both must be green before submitting the PR.
 
 ## Build
 
-Never run build/compile commands (assembleDebug, etc.) — ask the user to run them and share output.
+Claude may run build/compile/install commands directly (assembleDebug, installDebug, etc.) — no need to ask the user to run them instead.
 
 ## Submodules
 
@@ -166,7 +166,7 @@ If any of these are skipped the build fails with one of:
 
 ## Full Quality Checks
 
-To verify a branch compiles on both platforms and passes static analysis, ask the user to run:
+To verify a branch compiles on both platforms and passes static analysis, run:
 
 ```
 ./scripts/fullQualityChecks.sh
@@ -205,9 +205,11 @@ Always use the project's custom preview annotations — never bare `@Preview`.
 | Annotation | Use for |
 |---|---|
 | `@PreviewComponent` | Individual components / composables |
-| `@ScreenPreview` | Full screens |
+| `@PreviewScreen` | Full screens |
 
-Both are defined in `xyz.ksharma.krail.taj.preview`. They expand to multiple device/theme combinations automatically. Using `@Preview` directly produces a single-config preview and misses dark mode, font scale, etc.
+Both are defined in `xyz.ksharma.krail.taj.preview`. They expand to multiple device/theme combinations automatically. Using `@Preview` directly produces a single-config preview and misses dark mode, font scale, etc. — this includes when pairing bare `@Preview` with `@ScreenshotTest`; use `@PreviewComponent`/`@PreviewScreen` even for screenshot-tested previews.
+
+Sheets built on `ModalBottomSheet` render via a real `Dialog`/`Popup`, which the IDE's static preview surface can't show. Split the sheet's body into a separate `*Content` composable (no `ModalBottomSheet` wrapper) and preview that directly — the public `*Sheet` function still wraps it in `ModalBottomSheet` for real usage.
 
 ## Background polling — WhileSubscribed lifecycle rule
 

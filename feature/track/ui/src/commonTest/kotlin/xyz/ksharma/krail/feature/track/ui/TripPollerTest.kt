@@ -364,6 +364,7 @@ private object NoopSandook : xyz.ksharma.krail.sandook.Sandook {
     override fun observeStopLabels(): Flow<List<xyz.ksharma.krail.sandook.StopLabels>> = flowOf(emptyList())
     override fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) = Unit
     override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) = Unit
+    override fun renameStopLabel(label: String, newLabel: String) = Unit
     override fun deleteStopLabel(label: String) = Unit
     override fun clearStopLabels() = Unit
     override fun insertOrReplaceTheme(productClass: Long) = Unit

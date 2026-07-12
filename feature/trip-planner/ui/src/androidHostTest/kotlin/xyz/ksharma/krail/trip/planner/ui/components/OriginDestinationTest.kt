@@ -64,8 +64,12 @@ class OriginDestinationTest {
             }
         }
 
-        composeRule.onNodeWithText("Home (Central Station)").assertIsDisplayed()
-        composeRule.onNodeWithText("Work (Town Hall Station)").assertIsDisplayed()
+        // Label and name render as two separate Text nodes in a FlowRow (so they can
+        // wrap independently on narrow widths), not one merged string.
+        composeRule.onNodeWithText("Home").assertIsDisplayed()
+        composeRule.onNodeWithText("(Central Station)").assertIsDisplayed()
+        composeRule.onNodeWithText("Work").assertIsDisplayed()
+        composeRule.onNodeWithText("(Town Hall Station)").assertIsDisplayed()
     }
 
     @Test
@@ -80,7 +84,8 @@ class OriginDestinationTest {
             }
         }
 
-        composeRule.onNodeWithText("Home (Central Station)").assertIsDisplayed()
+        composeRule.onNodeWithText("Home").assertIsDisplayed()
+        composeRule.onNodeWithText("(Central Station)").assertIsDisplayed()
         composeRule.onNodeWithText("Town Hall Station").assertIsDisplayed()
     }
 
@@ -104,12 +109,10 @@ class OriginDestinationTest {
 
         composeRule.onNodeWithText("Central Station").performClick()
 
-        assert(clicked != null) { "expected onOriginClick to fire" }
-        assert(clicked!!.stopId == "200060") {
-            "expected stopId 200060, got ${clicked?.stopId}"
-        }
-        assert(clicked!!.name == "Central Station") {
-            "expected name Central Station, got ${clicked?.name}"
+        val result = checkNotNull(clicked) { "expected onOriginClick to fire" }
+        assert(result.stopId == "200060") { "expected stopId 200060, got ${result.stopId}" }
+        assert(result.name == "Central Station") {
+            "expected name Central Station, got ${result.name}"
         }
     }
 
@@ -129,12 +132,10 @@ class OriginDestinationTest {
 
         composeRule.onNodeWithText("Town Hall Station").performClick()
 
-        assert(clicked != null) { "expected onDestinationClick to fire" }
-        assert(clicked!!.stopId == "200070") {
-            "expected stopId 200070, got ${clicked?.stopId}"
-        }
-        assert(clicked!!.name == "Town Hall Station") {
-            "expected name Town Hall Station, got ${clicked?.name}"
+        val result = checkNotNull(clicked) { "expected onDestinationClick to fire" }
+        assert(result.stopId == "200070") { "expected stopId 200070, got ${result.stopId}" }
+        assert(result.name == "Town Hall Station") {
+            "expected name Town Hall Station, got ${result.name}"
         }
     }
 

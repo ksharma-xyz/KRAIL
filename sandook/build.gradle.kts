@@ -17,6 +17,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.sandook"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -49,6 +51,15 @@ kotlin {
                 implementation(libs.db.sqlCoroutinesExtensions)
 
                 api(libs.di.koinComposeViewmodel)
+            }
+        }
+
+        getByName("androidHostTest") {
+            kotlin.srcDir("src/androidHostTest/kotlin")
+            dependencies {
+                implementation(libs.db.sqlJdbcDriver)
+                implementation(libs.test.kotlin)
+                implementation(libs.test.robolectric)
             }
         }
 

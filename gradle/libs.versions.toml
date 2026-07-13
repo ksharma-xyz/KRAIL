@@ -133,6 +133,7 @@ composeCompiler-gradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler
 
 # Database
 db-sqlAndroidDriver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqlDelight" }
+db-sqlJdbcDriver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqlDelight" }
 db-sqlNativeDriver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqlDelight" }
 db-sqlRuntime = { module = "app.cash.sqldelight:runtime", version.ref = "sqlDelight" }
 db-sqlCoroutinesExtensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqlDelight" }

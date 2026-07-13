@@ -10,6 +10,8 @@ import kotlinx.serialization.json.Json
 data class StopItem(
     val stopName: String,
     val stopId: String,
+    val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
+    val addressType: String? = null,
 ) {
     fun toJsonString() = Json.encodeToString(serializer(), this)
 
@@ -21,3 +23,5 @@ data class StopItem(
             kotlin.runCatching { Json.decodeFromString(serializer(), json) }.getOrNull()
     }
 }
+
+enum class LocationKind { TRANSIT_STOP, ADDRESS }

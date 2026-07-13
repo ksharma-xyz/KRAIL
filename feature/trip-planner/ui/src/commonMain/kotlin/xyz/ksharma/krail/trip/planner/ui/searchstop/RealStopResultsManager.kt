@@ -17,11 +17,13 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswBusTripOptions
+import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.normalize
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 class RealStopResultsManager(
@@ -338,27 +340,31 @@ class RealStopResultsManager(
     // region Recent Search Stop
 
     override suspend fun recentSearchStops(): List<SearchStopState.StopResult> {
-        return sandook.selectRecentSearchStops().map { recentStop ->
+        return sandook.selectRecentSearchLocations().map { recentLocation ->
             SearchStopState.StopResult(
-                stopId = recentStop.stopId,
-                stopName = recentStop.stopName,
-                transportModeType = recentStop.productClasses.toTransportModeList(),
+                stopId = recentLocation.locationId,
+                stopName = recentLocation.displayName,
+                transportModeType = recentLocation.productClasses.toTransportModeList(),
+                locationKind = recentLocation.kind.toLocationKind(),
+                addressType = recentLocation.addressType,
             )
         }
     }
 
     private fun saveRecentSearchStop(stopItem: StopItem) {
-        // Temporary safety net while investigating whether the FK constraint on
-        // RecentSearchStops(stopId -> NswStops.stopId) is actually enforced for non-GTFS
-        // (address/POI) stopIds on this platform's driver - swallow rather than let an
-        // unexpected DB exception take down the selection flow.
-        runCatching {
-            sandook.insertOrReplaceRecentSearchStop(stopId = stopItem.stopId)
-        }
+        sandook.upsertRecentSearchLocation(
+            RecentSearchLocation(
+                locationId = stopItem.stopId,
+                displayName = stopItem.stopName,
+                kind = stopItem.locationKind.name,
+                addressType = stopItem.addressType,
+                productClasses = stopItem.productClasses(),
+            ),
+        )
     }
 
     override fun clearRecentSearchStops() {
-        sandook.clearRecentSearchStops()
+        sandook.clearRecentSearchLocations()
         log("StopResultsManager - clearRecentSearchStops")
     }
 
@@ -371,6 +377,17 @@ class RealStopResultsManager(
                 productClass.toIntOrNull()?.let { NswTransportConfig.modeFromProductClass(it) }
             }
             .toImmutableList()
+    }
+
+    private fun String.toLocationKind(): LocationKind =
+        LocationKind.entries.firstOrNull { it.name == this } ?: LocationKind.TRANSIT_STOP
+
+    private fun StopItem.productClasses(): String = when (locationKind) {
+        LocationKind.TRANSIT_STOP -> sandook.selectStopsByIds(listOf(stopId))
+            .firstOrNull()
+            ?.productClasses
+            .orEmpty()
+        LocationKind.ADDRESS -> ""
     }
 
     // endregion

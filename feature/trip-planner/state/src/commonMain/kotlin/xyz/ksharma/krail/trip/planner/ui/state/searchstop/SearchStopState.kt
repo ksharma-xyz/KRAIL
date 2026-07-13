@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 
 /**
  * List states for the Search Stop screen:
@@ -97,5 +98,7 @@ data class SearchStopState(
         val stopName: String,
         val stopId: String,
         val transportModeType: ImmutableList<TransportMode> = persistentListOf(),
+        val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
+        val addressType: String? = null,
     )
 }

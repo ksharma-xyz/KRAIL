@@ -31,6 +31,8 @@ import xyz.ksharma.krail.feature.track.TrackingConfig
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.feature.track.TripDeepLinkDecoder
+import xyz.ksharma.krail.sandook.RecentSearchLocation
+import xyz.ksharma.krail.sandook.RecentSearchLocations
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
@@ -616,11 +618,10 @@ private class FakeSandook : xyz.ksharma.krail.sandook.Sandook {
     override fun selectStops(stopName: String, excludeProductClassList: List<Int>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
     override fun selectStopsByIds(stopIds: List<String>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
     override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> = emptyMap()
-    override fun insertOrReplaceRecentSearchStop(stopId: String) = Unit
-    override fun selectRecentSearchStops(): List<xyz.ksharma.krail.sandook.SelectRecentSearchStops> = emptyList()
-    override fun clearRecentSearchStops() = Unit
-    override fun cleanupOrphanedRecentSearchStops() = Unit
-    override fun cleanupOldRecentSearchStops() = Unit
+    override fun upsertRecentSearchLocation(location: RecentSearchLocation) = Unit
+    override fun selectRecentSearchLocations(): List<RecentSearchLocations> = emptyList()
+    override fun clearRecentSearchLocations() = Unit
+    override fun cleanupOldRecentSearchLocations() = Unit
 }
 
 private object NoopShareManager : xyz.ksharma.krail.core.share.ShareManager {
@@ -630,4 +631,3 @@ private object NoopShareManager : xyz.ksharma.krail.core.share.ShareManager {
         text: String?,
     ): Result<Unit> = Result.success(Unit)
 }
-

@@ -78,6 +78,8 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                             stopId = stopItem.stopId,
                             stopName = stopItem.stopName,
                             labelKey = key.labelKey,
+                            locationKind = stopItem.locationKind,
+                            addressType = stopItem.addressType,
                         ),
                     )
                 }

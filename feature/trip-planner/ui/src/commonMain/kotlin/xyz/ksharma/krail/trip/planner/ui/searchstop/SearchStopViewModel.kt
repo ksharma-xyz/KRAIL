@@ -34,6 +34,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
@@ -45,6 +46,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 @Suppress("TooManyFunctions", "LongParameterList")
 class SearchStopViewModel(
@@ -263,7 +266,15 @@ class SearchStopViewModel(
                     sandook.updateStopLabelStop(event.labelKey, event.stopItem.stopId, event.stopItem.stopName)
                     // Stops the user pins to a label are also stops they "interacted
                     // with", so surface them in Recents next time the screen opens.
-                    sandook.insertOrReplaceRecentSearchStop(stopId = event.stopItem.stopId)
+                    sandook.upsertRecentSearchLocation(
+                        RecentSearchLocation(
+                            locationId = event.stopItem.stopId,
+                            displayName = event.stopItem.stopName,
+                            kind = event.stopItem.locationKind.name,
+                            addressType = event.stopItem.addressType,
+                            productClasses = event.stopItem.productClasses(),
+                        ),
+                    )
                     fetchRecentStops()
                 }
             }
@@ -497,6 +508,17 @@ class SearchStopViewModel(
             }
         }
     }
+
+    private fun StopItem.productClasses(): String =
+        when (locationKind) {
+            LocationKind.TRANSIT_STOP -> sandook.selectStopsByIds(
+                listOf(stopId),
+            )
+                .firstOrNull()
+                ?.productClasses
+                .orEmpty()
+            LocationKind.ADDRESS -> ""
+        }
 
     private suspend fun fetchRecentStops() {
         val recentStops = stopResultsManager.recentSearchStops().toImmutableList()

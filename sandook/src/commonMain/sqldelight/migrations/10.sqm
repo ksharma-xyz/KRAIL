@@ -1,0 +1,31 @@
+-- Migration 10: Retain recently selected remote addresses and places alongside GTFS stops.
+CREATE TABLE IF NOT EXISTS RecentSearchLocations (
+    locationId TEXT NOT NULL PRIMARY KEY,
+    displayName TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    addressType TEXT,
+    productClasses TEXT NOT NULL DEFAULT '',
+    timestamp TEXT DEFAULT (datetime('now'))
+);
+
+INSERT INTO RecentSearchLocations(
+    locationId,
+    displayName,
+    kind,
+    addressType,
+    productClasses,
+    timestamp
+)
+SELECT
+    rss.stopId,
+    ns.stopName,
+    'TRANSIT_STOP',
+    NULL,
+    COALESCE(GROUP_CONCAT(nspc.productClass), ''),
+    rss.timestamp
+FROM RecentSearchStops rss
+INNER JOIN NswStops ns ON rss.stopId = ns.stopId
+LEFT JOIN NswStopProductClass nspc ON ns.stopId = nspc.stopId
+GROUP BY rss.stopId, rss.timestamp, ns.stopName;
+
+DROP TABLE RecentSearchStops;

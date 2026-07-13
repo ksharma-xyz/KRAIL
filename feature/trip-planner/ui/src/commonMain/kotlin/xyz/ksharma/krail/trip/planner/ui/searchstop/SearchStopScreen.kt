@@ -94,6 +94,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 
@@ -948,7 +949,12 @@ private fun LazyListScope.addressResultsSection(
             addressType = address.addressType,
             textColor = KrailTheme.colors.label,
             onClick = {
-                val stopItem = StopItem(stopId = address.addressId, stopName = address.displayName)
+                val stopItem = StopItem(
+                    stopId = address.addressId,
+                    stopName = address.displayName,
+                    locationKind = LocationKind.ADDRESS,
+                    addressType = address.addressType,
+                )
                 keyboard?.hide()
                 focusRequester.freeFocus()
                 onStopSelect(stopItem)
@@ -1024,30 +1030,57 @@ private fun LazyListScope.recentSearchStopsList(
         items = recentStops,
         key = { it.stopId },
     ) { stop ->
-        val stopItem = StopItem(stopId = stop.stopId, stopName = stop.stopName)
-        val assignedLabel = stopLabels.firstOrNull { it.stopId == stop.stopId }
-        StopLabelAssignRow(
+        val stopItem = StopItem(
+            stopId = stop.stopId,
             stopName = stop.stopName,
-            transportModeSet = stop.transportModeType,
-            stopLabels = stopLabels,
-            assignedLabel = assignedLabel,
-            expanded = expandedStopKey == stop.stopId,
-            onExpandToggle = { onToggleExpandStop(stop.stopId) },
-            onRowClick = {
-                keyboard?.hide()
-                focusRequester.freeFocus()
-                onStopSelect(stopItem)
-                onEvent(
-                    SearchStopUiEvent.TrackStopSelected(
-                        stopItem = stopItem,
-                        isRecentSearch = true,
-                    ),
-                )
-            },
-            onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
-            onNewLabelClick = { onNewLabelClick(stopItem, stop.transportModeType) },
-            modifier = Modifier.fillMaxWidth(),
+            locationKind = stop.locationKind,
+            addressType = stop.addressType,
         )
+        when (stop.locationKind) {
+            LocationKind.ADDRESS -> AddressSearchListItem(
+                displayName = stop.stopName,
+                addressType = stop.addressType.orEmpty(),
+                textColor = KrailTheme.colors.label,
+                onClick = {
+                    keyboard?.hide()
+                    focusRequester.freeFocus()
+                    onStopSelect(stopItem)
+                    onEvent(
+                        SearchStopUiEvent.TrackStopSelected(
+                            stopItem = stopItem,
+                            isRecentSearch = true,
+                        ),
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            LocationKind.TRANSIT_STOP -> {
+                val assignedLabel = stopLabels.firstOrNull { it.stopId == stop.stopId }
+                StopLabelAssignRow(
+                    stopName = stop.stopName,
+                    transportModeSet = stop.transportModeType,
+                    stopLabels = stopLabels,
+                    assignedLabel = assignedLabel,
+                    expanded = expandedStopKey == stop.stopId,
+                    onExpandToggle = { onToggleExpandStop(stop.stopId) },
+                    onRowClick = {
+                        keyboard?.hide()
+                        focusRequester.freeFocus()
+                        onStopSelect(stopItem)
+                        onEvent(
+                            SearchStopUiEvent.TrackStopSelected(
+                                stopItem = stopItem,
+                                isRecentSearch = true,
+                            ),
+                        )
+                    },
+                    onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
+                    onNewLabelClick = { onNewLabelClick(stopItem, stop.transportModeType) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
         Divider(
             modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
         )

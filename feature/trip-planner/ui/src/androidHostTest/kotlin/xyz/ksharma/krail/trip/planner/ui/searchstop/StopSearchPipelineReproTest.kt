@@ -7,10 +7,11 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.sandook.RecentSearchLocation
+import xyz.ksharma.krail.sandook.RecentSearchLocations
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
-import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.sandook.StopLabels
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
@@ -91,11 +92,10 @@ class StopSearchPipelineReproTest {
             override fun <R> insertTransaction(block: () -> R): R = error("x")
             override fun clearNswStopsTable() = error("x")
             override fun clearNswProductClassTable() = error("x")
-            override fun insertOrReplaceRecentSearchStop(stopId: String) = error("x")
-            override fun selectRecentSearchStops(): List<SelectRecentSearchStops> = error("x")
-            override fun clearRecentSearchStops() = error("x")
-            override fun cleanupOrphanedRecentSearchStops() = error("x")
-            override fun cleanupOldRecentSearchStops() = error("x")
+            override fun upsertRecentSearchLocation(location: RecentSearchLocation) = error("x")
+            override fun selectRecentSearchLocations(): List<RecentSearchLocations> = error("x")
+            override fun clearRecentSearchLocations() = error("x")
+            override fun cleanupOldRecentSearchLocations() = error("x")
         }
         // Mirror the real prod high_priority_stop_ids so the pipeline behaves exactly
         // like the phone (these 15 major stops are seeded into the candidate pool

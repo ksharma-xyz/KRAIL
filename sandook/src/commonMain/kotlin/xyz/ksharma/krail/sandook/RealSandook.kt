@@ -15,7 +15,7 @@ internal class RealSandook(
 
     private val nswStopsQueries = sandook.nswStopsQueries
 
-    private val recentSearchStopsQueries = sandook.recentSearchStopsQueries
+    private val recentSearchLocationsQueries = sandook.recentSearchLocationsQueries
 
     private val stopLabelsQueries = sandook.stopLabelsQueries
 
@@ -182,27 +182,29 @@ internal class RealSandook(
 
     // endregion NswStops
 
-    // region RecentSearchStops
-    override fun insertOrReplaceRecentSearchStop(stopId: String) {
-        recentSearchStopsQueries.insertOrReplaceRecentSearchStop(stopId)
+    // region RecentSearchLocations
+    override fun upsertRecentSearchLocation(location: RecentSearchLocation) {
+        recentSearchLocationsQueries.upsertRecentSearchLocation(
+            locationId = location.locationId,
+            displayName = location.displayName,
+            kind = location.kind,
+            addressType = location.addressType,
+            productClasses = location.productClasses,
+        )
         // Automatically cleanup old entries to maintain max 5 items
-        recentSearchStopsQueries.cleanupOldRecentSearchStops()
+        recentSearchLocationsQueries.cleanupOldRecentSearchLocations()
     }
 
-    override fun selectRecentSearchStops(): List<SelectRecentSearchStops> {
-        return recentSearchStopsQueries.selectRecentSearchStops().executeAsList()
+    override fun selectRecentSearchLocations(): List<RecentSearchLocations> {
+        return recentSearchLocationsQueries.selectRecentSearchLocations().executeAsList()
     }
 
-    override fun clearRecentSearchStops() {
-        recentSearchStopsQueries.clearRecentSearchStops()
+    override fun clearRecentSearchLocations() {
+        recentSearchLocationsQueries.clearRecentSearchLocations()
     }
 
-    override fun cleanupOrphanedRecentSearchStops() {
-        recentSearchStopsQueries.cleanupOrphanedRecentSearchStops()
-    }
-
-    override fun cleanupOldRecentSearchStops() {
-        recentSearchStopsQueries.cleanupOldRecentSearchStops()
+    override fun cleanupOldRecentSearchLocations() {
+        recentSearchLocationsQueries.cleanupOldRecentSearchLocations()
     }
     // endregion
 

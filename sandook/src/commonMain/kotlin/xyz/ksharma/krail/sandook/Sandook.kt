@@ -100,15 +100,13 @@ interface Sandook {
     fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>>
     // endregion
 
-    // region RecentSearchStops
-    fun insertOrReplaceRecentSearchStop(stopId: String)
+    // region RecentSearchLocations
+    fun upsertRecentSearchLocation(location: RecentSearchLocation)
 
-    fun selectRecentSearchStops(): List<SelectRecentSearchStops>
+    fun selectRecentSearchLocations(): List<RecentSearchLocations>
 
-    fun clearRecentSearchStops()
+    fun clearRecentSearchLocations()
 
-    fun cleanupOrphanedRecentSearchStops()
-
-    fun cleanupOldRecentSearchStops()
+    fun cleanupOldRecentSearchLocations()
     // endregion
 }

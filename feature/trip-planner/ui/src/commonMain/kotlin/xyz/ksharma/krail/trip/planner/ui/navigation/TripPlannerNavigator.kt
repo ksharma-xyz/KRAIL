@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 
 /**
  * Navigation events for Trip Planner feature.
@@ -44,6 +45,8 @@ data class StopSelectedResult(
     val stopId: String,
     val stopName: String,
     val labelKey: String? = null,
+    val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
+    val addressType: String? = null,
 )
 
 /**

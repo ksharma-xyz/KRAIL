@@ -1,0 +1,38 @@
+-- Recent selections can be either local GTFS transit stops or remote addresses/places.
+-- Address metadata is stored because it cannot be joined from the local GTFS tables.
+CREATE TABLE IF NOT EXISTS RecentSearchLocations (
+    locationId TEXT NOT NULL PRIMARY KEY,
+    displayName TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    addressType TEXT,
+    productClasses TEXT NOT NULL DEFAULT '',
+    timestamp TEXT DEFAULT (datetime('now'))
+);
+
+upsertRecentSearchLocation:
+INSERT OR REPLACE INTO RecentSearchLocations(
+    locationId,
+    displayName,
+    kind,
+    addressType,
+    productClasses,
+    timestamp
+)
+VALUES (?, ?, ?, ?, ?, datetime('now'));
+
+selectRecentSearchLocations:
+SELECT locationId, displayName, kind, addressType, productClasses, timestamp
+FROM RecentSearchLocations
+ORDER BY timestamp DESC
+LIMIT 5;
+
+cleanupOldRecentSearchLocations:
+DELETE FROM RecentSearchLocations
+WHERE locationId NOT IN (
+    SELECT locationId FROM RecentSearchLocations
+    ORDER BY timestamp DESC
+    LIMIT 5
+);
+
+clearRecentSearchLocations:
+DELETE FROM RecentSearchLocations;

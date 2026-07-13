@@ -7,10 +7,11 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.sandook.RecentSearchLocation
+import xyz.ksharma.krail.sandook.RecentSearchLocations
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
-import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.sandook.StopLabels
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
@@ -290,9 +291,8 @@ private class RecordingSandook(
     override fun clearNswStopsTable() = error("not used")
     override fun clearNswProductClassTable() = error("not used")
     override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> = error("not used")
-    override fun insertOrReplaceRecentSearchStop(stopId: String) = error("not used")
-    override fun selectRecentSearchStops(): List<SelectRecentSearchStops> = error("not used")
-    override fun clearRecentSearchStops() = error("not used")
-    override fun cleanupOrphanedRecentSearchStops() = error("not used")
-    override fun cleanupOldRecentSearchStops() = error("not used")
+    override fun upsertRecentSearchLocation(location: RecentSearchLocation) = error("not used")
+    override fun selectRecentSearchLocations(): List<RecentSearchLocations> = error("not used")
+    override fun clearRecentSearchLocations() = error("not used")
+    override fun cleanupOldRecentSearchLocations() = error("not used")
 }

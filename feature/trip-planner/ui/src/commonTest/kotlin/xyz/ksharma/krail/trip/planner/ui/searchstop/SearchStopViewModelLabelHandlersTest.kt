@@ -123,17 +123,6 @@ class SearchStopViewModelLabelHandlersTest {
     @Test
     fun `Given AssignLabelStop When handler runs Then stop is also pinned to recents`() =
         runTest {
-            // selectRecentSearchStops in the real schema INNER JOINs NswStops, so a recent
-            // entry only surfaces if the stop exists in NswStops. FakeSandook mirrors that
-            // shape — seed the stop here so the recents pin is visible to the assertion.
-            fakeSandook.insertNswStop(
-                stopId = "stop_central",
-                stopName = "Central Station",
-                stopLat = 0.0,
-                stopLon = 0.0,
-                isParent = null,
-            )
-
             viewModel.uiState.test {
                 advanceUntilIdle()
 
@@ -144,10 +133,10 @@ class SearchStopViewModelLabelHandlersTest {
                 // Pinning to recents is the contract that means tapping a saved pill
                 // also lights up that stop in Recents next time the screen opens, so
                 // the user can still get to it after removing the label.
-                val recents = fakeSandook.selectRecentSearchStops()
+                val recents = fakeSandook.selectRecentSearchLocations()
                 assertTrue(
-                    recents.any { it.stopId == "stop_central" },
-                    "expected stop_central in recents, got ${recents.map { it.stopId }}",
+                    recents.any { it.locationId == "stop_central" },
+                    "expected stop_central in recents, got ${recents.map { it.locationId }}",
                 )
                 cancelAndIgnoreRemainingEvents()
             }

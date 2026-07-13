@@ -45,6 +45,8 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             val stopItem = StopItem(
                 stopId = result.stopId,
                 stopName = result.stopName,
+                locationKind = result.locationKind,
+                addressType = result.addressType,
             )
             when (result.fieldType) {
                 SearchStopFieldType.FROM ->

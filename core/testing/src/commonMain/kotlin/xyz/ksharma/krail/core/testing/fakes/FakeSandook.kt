@@ -4,10 +4,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import xyz.ksharma.krail.sandook.NswStops
+import xyz.ksharma.krail.sandook.RecentSearchLocation
+import xyz.ksharma.krail.sandook.RecentSearchLocations
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.sandook.SelectProductClassesForStop
-import xyz.ksharma.krail.sandook.SelectRecentSearchStops
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.sandook.StopLabels
 
@@ -20,7 +21,7 @@ class FakeSandook : Sandook {
     private val alerts = mutableMapOf<String, List<SelectServiceAlertsByJourneyId>>()
     private val stops = mutableListOf<NswStops>()
     private val stopProductClasses = mutableMapOf<String, MutableList<Int>>()
-    private val recentSearchStops = mutableListOf<SelectRecentSearchStops>()
+    private val recentSearchLocations = mutableListOf<RecentSearchLocations>()
     private val stopLabelsFlow = MutableStateFlow<List<StopLabels>>(emptyList())
 
     // region StopLabels
@@ -227,50 +228,34 @@ class FakeSandook : Sandook {
         }
     }
 
-    override fun insertOrReplaceRecentSearchStop(stopId: String) {
-        // Remove existing entry if it exists
-        recentSearchStops.removeAll { it.stopId == stopId }
-
-        // Find the corresponding stop details
-        val stop = stops.find { it.stopId == stopId }
-        if (stop != null) {
-            // Create a new recent search stop entry
-            val productClasses = stopProductClasses[stopId]?.joinToString(",") ?: ""
-            val recentStop = SelectRecentSearchStops(
-                stopId = stopId,
-                timestamp = "2028-01-01 12:00:00", // Mock timestamp
-                stopName = stop.stopName,
-                productClasses = productClasses,
-            )
-            recentSearchStops.add(0, recentStop) // Add to beginning (most recent)
-
-            // Keep only the most recent entries
-            if (recentSearchStops.size > RECENT_SEARCH_STOPS_CAP) {
-                recentSearchStops.removeAt(recentSearchStops.size - 1)
-            }
-        }
+    override fun upsertRecentSearchLocation(location: RecentSearchLocation) {
+        recentSearchLocations.removeAll { it.locationId == location.locationId }
+        recentSearchLocations.add(
+            0,
+            RecentSearchLocations(
+                locationId = location.locationId,
+                displayName = location.displayName,
+                kind = location.kind,
+                addressType = location.addressType,
+                productClasses = location.productClasses,
+                timestamp = "2028-01-01 12:00:00",
+            ),
+        )
+        cleanupOldRecentSearchLocations()
     }
 
-    override fun selectRecentSearchStops(): List<SelectRecentSearchStops> {
-        return recentSearchStops.toList()
+    override fun selectRecentSearchLocations(): List<RecentSearchLocations> = recentSearchLocations.toList()
+
+    override fun clearRecentSearchLocations() {
+        recentSearchLocations.clear()
     }
 
-    override fun clearRecentSearchStops() {
-        recentSearchStops.clear()
-    }
-
-    override fun cleanupOrphanedRecentSearchStops() {
-        // Remove recent search stops that don't have corresponding stops
-        val validStopIds = stops.map { it.stopId }.toSet()
-        recentSearchStops.removeAll { it.stopId !in validStopIds }
-    }
-
-    override fun cleanupOldRecentSearchStops() {
+    override fun cleanupOldRecentSearchLocations() {
         // Keep only the most recent entries
-        if (recentSearchStops.size > RECENT_SEARCH_STOPS_CAP) {
-            val toKeep = recentSearchStops.take(RECENT_SEARCH_STOPS_CAP)
-            recentSearchStops.clear()
-            recentSearchStops.addAll(toKeep)
+        if (recentSearchLocations.size > RECENT_SEARCH_STOPS_CAP) {
+            val toKeep = recentSearchLocations.take(RECENT_SEARCH_STOPS_CAP)
+            recentSearchLocations.clear()
+            recentSearchLocations.addAll(toKeep)
         }
     }
 

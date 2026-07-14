@@ -73,7 +73,7 @@ enum class FlagKeys(val key: String) {
      * malformed, or out-of-range value falls back to `6` client-side rather than being
      * clamped. Independent of the boolean kill switch above — this only tunes *when* an
      * already-enabled search fires, it cannot enable the feature by itself. See
-     * docs/plans/ADDRESS_SEARCH_API_CALL_POLICY.md.
+     * feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
      */
     SEARCH_STOP_ADDRESS_MIN_QUERY_LENGTH("search_stop_address_min_query_length"),
 }

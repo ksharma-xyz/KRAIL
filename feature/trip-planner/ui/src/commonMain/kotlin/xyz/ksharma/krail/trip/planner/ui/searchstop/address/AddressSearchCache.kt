@@ -6,10 +6,10 @@ import kotlin.time.ExperimentalTime
 
 /**
  * In-memory, per-`SearchStopViewModel` LRU cache for address/POI results, keyed by
- * [addressSearchCacheKey]. Never persisted to disk — see "Session cache proposal" in
- * docs/plans/ADDRESS_SEARCH_API_CALL_POLICY.md. A successful (non-empty) result and an
- * empty result get different TTLs so a broad no-match prefix isn't treated as durable
- * truth for as long as a real result would be.
+ * [addressSearchCacheKey]. Never persisted to disk — see
+ * feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md. A successful (non-empty)
+ * result and an empty result get different TTLs so a broad no-match prefix isn't
+ * treated as durable truth for as long as a real result would be.
  *
  * Not thread-safe: callers on this codebase's single-threaded ViewModel dispatch
  * pattern only, same assumption as the rest of `SearchStopViewModel`'s mutable state.

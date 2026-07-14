@@ -9,7 +9,7 @@ private val VALID_ADDRESS_SEARCH_MIN_QUERY_LENGTH_RANGE = 2L..12L
 
 /**
  * Resolves `search_stop_address_min_query_length` with the bounds contract from
- * docs/plans/ADDRESS_SEARCH_API_CALL_POLICY.md: a missing, malformed, or
+ * feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md: a missing, malformed, or
  * out-of-range remote value falls back to [DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH]
  * rather than being silently clamped into range. The range check happens in `Long`
  * space before narrowing to `Int`, so an oversized remote value can't wrap around

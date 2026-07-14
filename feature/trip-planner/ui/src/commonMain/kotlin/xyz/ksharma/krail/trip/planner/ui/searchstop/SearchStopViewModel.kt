@@ -34,6 +34,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
@@ -524,7 +525,12 @@ class SearchStopViewModel(
             if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) return@launch
 
             updateUiState { copy(isAddressSearchLoading = true) }
-            val fetchResult = runCatching { remoteAddressResultsManager.fetchAddressResults(normalizedQuery) }
+            // suspendSafeResult, not runCatching: a cancelled coroutine (e.g. this job
+            // getting replaced by the next keystroke) must propagate CancellationException
+            // rather than have it swallowed into a Result.failure.
+            val fetchResult = suspendSafeResult(ioDispatcher) {
+                remoteAddressResultsManager.fetchAddressResults(normalizedQuery)
+            }
             // A transient failure must not be cached as "no results" - that would block
             // the next identical query from retrying for the empty-result TTL. Only a
             // real response (including a genuine empty one) is cache-worthy.

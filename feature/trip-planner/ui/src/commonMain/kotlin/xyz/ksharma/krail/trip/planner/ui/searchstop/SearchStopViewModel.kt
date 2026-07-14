@@ -34,10 +34,17 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchCache
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.addressSearchCacheKey
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.normalizeAddressQuery
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -60,6 +67,7 @@ class SearchStopViewModel(
     private val preferences: SandookPreferences,
     private val sandook: Sandook,
     private val isAddressSearchEnabled: () -> Boolean = { false },
+    private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -89,6 +97,11 @@ class SearchStopViewModel(
     private var searchJob: Job? = null
     private var addressSearchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
+
+    // Per-ViewModel session cache/staleness-guard for the address pipeline only — local
+    // stop search has no equivalent because it has no remote round-trip to protect.
+    private val addressSearchCache = AddressSearchCache()
+    private var addressSearchRequestToken = 0
 
     @Suppress("LongMethod", "ReturnCount")
     fun onEvent(event: SearchStopUiEvent) {
@@ -487,19 +500,49 @@ class SearchStopViewModel(
 
     private fun onAddressSearchTextChanged(query: String) {
         addressSearchJob?.cancel()
-        if (!isAddressSearchEnabled()) {
+        val normalizedQuery = normalizeAddressQuery(query)
+
+        if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) {
             updateUiState { copy(addressResults = persistentListOf(), isAddressSearchLoading = false) }
             return
         }
+
+        val cacheKey = addressSearchCacheKey(normalizedQuery)
+        val cached = addressSearchCache.get(cacheKey)
+        if (cached != null) {
+            updateUiState {
+                copy(addressResults = cached.toImmutableList(), isAddressSearchLoading = false)
+            }
+            return
+        }
+
+        val requestToken = ++addressSearchRequestToken
         addressSearchJob = viewModelScope.launch {
             delay(ADDRESS_SEARCH_DEBOUNCE_MS)
+
+            // A flag flip or further edit during the debounce must not fire a now-stale
+            // request - re-check the same gate the caller already passed.
+            if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) return@launch
+
             updateUiState { copy(isAddressSearchLoading = true) }
-            val addressResults = runCatching {
-                remoteAddressResultsManager.fetchAddressResults(query)
-            }.getOrElse {
-                log("Address search failed for query=\"$query\": ${it.message}")
+            // suspendSafeResult, not runCatching: a cancelled coroutine (e.g. this job
+            // getting replaced by the next keystroke) must propagate CancellationException
+            // rather than have it swallowed into a Result.failure.
+            val fetchResult = suspendSafeResult(ioDispatcher) {
+                remoteAddressResultsManager.fetchAddressResults(normalizedQuery)
+            }
+            // A transient failure must not be cached as "no results" - that would block
+            // the next identical query from retrying for the empty-result TTL. Only a
+            // real response (including a genuine empty one) is cache-worthy.
+            fetchResult.onSuccess { addressSearchCache.put(cacheKey, it) }
+            val addressResults = fetchResult.getOrElse {
+                log("Address search failed for query of length ${normalizedQuery.length}: ${it.message}")
                 emptyList()
             }
+
+            // A newer keystroke may have started (and even completed) another request
+            // while this one was in flight; only the most recent request may still win.
+            if (requestToken != addressSearchRequestToken) return@launch
             updateUiState {
                 copy(
                     addressResults = addressResults.toImmutableList(),
@@ -508,6 +551,13 @@ class SearchStopViewModel(
             }
         }
     }
+
+    private fun currentAddressSearchGate(normalizedQuery: String): AddressSearchGate =
+        AddressSearchEligibility.evaluate(
+            normalizedQuery = normalizedQuery,
+            isAddressSearchEnabled = isAddressSearchEnabled(),
+            minQueryLength = addressSearchMinQueryLength(),
+        )
 
     private fun StopItem.productClasses(): String =
         when (locationKind) {

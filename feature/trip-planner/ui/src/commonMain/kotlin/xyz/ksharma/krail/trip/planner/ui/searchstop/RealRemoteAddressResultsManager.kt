@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -10,9 +9,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 /**
  * `stop_finder` always uses `type_sf=any` here — that's what unlocks address/POI hits
  * on top of transit stops. Any `stop`-typed location in the response is filtered out:
- * transit stops are local-DB only, always (see [RealStopResultsManager]). A failed or
- * slow network call resolves to an empty list rather than throwing, so a flaky remote
- * search can never surface as an error state on this optional section.
+ * transit stops are local-DB only, always (see [RealStopResultsManager]).
+ *
+ * Deliberately does **not** catch here: a failed call must propagate as an exception so
+ * the caller's `AddressSearchCache` can tell "the request failed" apart from "the
+ * request succeeded with zero results" and skip caching the former. The caller
+ * (`SearchStopViewModel`) is the single place that turns a failure into an empty list
+ * for the UI - see feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
  */
 class RealRemoteAddressResultsManager(
     private val tripPlanningService: TripPlanningService,
@@ -25,12 +28,8 @@ class RealRemoteAddressResultsManager(
         val safeQuery = query.take(MAX_QUERY_LENGTH).trim()
         if (safeQuery.length < MIN_QUERY_LENGTH) return@withContext emptyList()
 
-        runCatching {
-            tripPlanningService.stopFinder(stopSearchQuery = safeQuery, stopType = StopType.ANY)
-        }.onFailure {
-            log("RemoteAddressResultsManager - stopFinder failed for query=\"$safeQuery\": ${it.message}")
-        }.getOrNull()
-            ?.locations
+        tripPlanningService.stopFinder(stopSearchQuery = safeQuery, stopType = StopType.ANY)
+            .locations
             ?.filter { location -> location.type != STOP_TYPE && location.id != null }
             ?.map { location ->
                 SearchStopState.SearchResult.Address(

@@ -66,4 +66,14 @@ enum class FlagKeys(val key: String) {
      * search is completely unaffected regardless of this flag's value.
      */
     SEARCH_STOP_ADDRESS_SEARCH_ENABLED("search_stop_address_search_enabled"),
+
+    /**
+     * Minimum trimmed-query length (characters) before [SEARCH_STOP_ADDRESS_SEARCH_ENABLED]
+     * is allowed to fire an address/POI request. Bounded integer `2..12`; a missing,
+     * malformed, or out-of-range value falls back to `6` client-side rather than being
+     * clamped. Independent of the boolean kill switch above — this only tunes *when* an
+     * already-enabled search fires, it cannot enable the feature by itself. See
+     * feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
+     */
+    SEARCH_STOP_ADDRESS_MIN_QUERY_LENGTH("search_stop_address_min_query_length"),
 }

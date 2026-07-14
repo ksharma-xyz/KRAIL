@@ -1,10 +1,10 @@
 # Analytics registry handoff — pending KRAIL-Analytics registrations
 
 Living ledger of event/param changes shipped in this repo that still need registering
-in the **KRAIL-Analytics** repo's `EVENT_REGISTRY.md` (exact path TBC — see open item
-below). This is not a plan or a proposal doc — every row here is already merged to
-`main`. Keep it accurate the same way `feature/trip-planner/ui/SEARCH_STOP_UX.md` and
-similar per-feature docs stay accurate: **update it in the same PR** that changes
+in the **KRAIL-Analytics** repo's `docs/EVENT_REGISTRY.md` — confirmed path, see its
+"Params registry" section. This is not a plan or a proposal doc — every row here is
+already merged to `main`. Keep it accurate the same way `feature/trip-planner/ui/SEARCH_STOP_UX.md`
+and similar per-feature docs stay accurate: **update it in the same PR** that changes
 `AnalyticsEvent.kt`, not after the fact.
 
 ## How to use this file
@@ -27,15 +27,17 @@ either; most changes should be params on an existing event, not a new name.
 
 | Date | Event | Param(s) | Type / values | Trigger | PR | Status | Owner story |
 |---|---|---|---|---|---|---|---|
-| 2026-07-14 | `stop_selected` | `locationKind` | `transit_stop｜address` (default `transit_stop`) | A stop, address, or POI is selected from search results, recents, empty-state, or trip-stop click | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Pending | — |
-| 2026-07-14 | `stop_selected` | `addressType` | Allowlisted `singlehouse｜street｜poi｜unknown`; omitted for transit stops | Same as above, only present when `locationKind = address` | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Pending | — |
+| 2026-07-14 | `stop_selected` | `locationKind` | `transit_stop｜address` (default `transit_stop`) | A stop, address, or POI is selected from search results, recents, empty-state, or trip-stop click | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Registered | — |
+| 2026-07-14 | `stop_selected` | `addressType` | Allowlisted `singlehouse｜street｜poi｜unknown`; omitted for transit stops | Same as above, only present when `locationKind = address` | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Registered | — |
+
+Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
+2026-07-14.
 
 ## Open items for KRAIL-Analytics maintainers
 
-- **`EVENT_REGISTRY.md` exact path unconfirmed.** `docs/ANALYTICS_EVENTS.md` in this
-  repo says registration goes in `docs/EVENT_REGISTRY.md` "in the KRAIL-Analytics
-  repo" but doesn't link it. Please confirm the path so this ledger can link directly
-  to registry entries once created.
+- ~~`EVENT_REGISTRY.md` exact path unconfirmed~~ — **Resolved**: it already existed at
+  `docs/EVENT_REGISTRY.md`, and now has a "Params registry" table added specifically
+  for this handoff.
 - **Historical note for `stop_selected`**: rows recorded before 2026-07-14 have no
   `locationKind`/`addressType` — treat a missing value as `transit_stop`/absent, not as
   a distinct category, same convention already used for `StopLabelStopAssignedEvent`'s

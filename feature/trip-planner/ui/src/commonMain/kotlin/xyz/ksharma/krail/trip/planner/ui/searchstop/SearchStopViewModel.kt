@@ -114,6 +114,11 @@ class SearchStopViewModel(
                         stopId = event.stopItem.stopId,
                         isRecentSearch = event.isRecentSearch,
                         searchQuery = event.searchQuery,
+                        locationKind = when (event.stopItem.locationKind) {
+                            LocationKind.TRANSIT_STOP -> StopSelectedEvent.LocationKind.TRANSIT_STOP
+                            LocationKind.ADDRESS -> StopSelectedEvent.LocationKind.ADDRESS
+                        },
+                        addressType = event.stopItem.addressType?.let(StopSelectedEvent.AddressType::from),
                     ),
                 )
             }

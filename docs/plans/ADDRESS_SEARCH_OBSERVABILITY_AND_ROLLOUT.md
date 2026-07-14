@@ -33,21 +33,26 @@ outcome, and consume analytics volume without helping a product decision. The
 project has a lifetime Firebase event-name cap of 500, so a new event requires
 the checklist and registry step in `docs/ANALYTICS_EVENTS.md`.
 
-The smallest product-analytics change, if the feature is rolled out, is to
-extend the existing `stop_selected` event with bounded properties:
+**Implemented**: the existing `stop_selected` event (`AnalyticsEvent.kt`) now carries
+bounded properties:
 
 | Property | Values | Product question |
 |---|---|---|
-| `location_kind` | `transit_stop`, `address` | Are address/POI results selected at all? |
-| `address_type` | Allowlisted NSW types such as `street`, `singlehouse`, `poi`, `unknown`; omitted for transit stops | Which result category provides value? |
-| `selection_surface` | `search_results`, `recent` | Are returned results useful now and later via recents? |
+| `locationKind` | `transit_stop`, `address` | Are address/POI results selected at all? |
+| `addressType` | Allowlisted NSW types `singlehouse`, `street`, `poi`, `unknown`; omitted for transit stops | Which result category provides value? |
 
-This reuses a user-outcome event rather than minting a request event. It also
-needs a privacy review of the existing `stopId` and `searchQuery` properties for
-address selections. Prefer an allowlisted classification property over sending
-the opaque address ID or text. Any resulting parameter or event change must be
-registered in the external KRAIL Analytics `EVENT_REGISTRY.md` before merge and
-must pass the no-double-counting check.
+`selection_surface` (`search_results`/`recent`) from the original proposal was
+deliberately **not** added — `stop_selected` already carries `isRecentSearch: Boolean`,
+which answers the same recent-vs-live-search question. Adding a second field for it
+would have been a redundant param per `docs/ANALYTICS_EVENTS.md`'s own decision
+checklist.
+
+This reuses a user-outcome event rather than minting a request event, and sends only an
+allowlisted classification, never the opaque address ID or text — `AddressType.from()`
+folds any unrecognised raw NSW type to `UNKNOWN` rather than passing it through. Still
+outstanding: registering `locationKind`/`addressType` in the external KRAIL-Analytics
+`EVENT_REGISTRY.md` (see the open question on its exact location in the stop-label
+analytics handoff).
 
 ## Operational API health is separate
 

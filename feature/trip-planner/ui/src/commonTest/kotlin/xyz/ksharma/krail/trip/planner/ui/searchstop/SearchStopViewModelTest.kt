@@ -565,6 +565,44 @@ class SearchStopViewModelTest {
         }
 
     @Test
+    fun `GIVEN a failed address request WHEN the exact same query is searched again THEN a second network call is made`() =
+        runTest {
+            fakeRemoteAddressResultsManager.shouldThrowError = true
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
+                assertTrue(addressViewModel.uiState.value.addressResults.isEmpty())
+
+                // The first call failed - a failure must never be cached as "no
+                // results", or the retry below would be wrongly served from cache
+                // instead of hitting the network again.
+                fakeRemoteAddressResultsManager.shouldThrowError = false
+                fakeRemoteAddressResultsManager.results = listOf(
+                    SearchStopState.SearchResult.Address(
+                        addressId = "addr-1",
+                        displayName = "Sydney Opera House",
+                        addressType = "poi",
+                    ),
+                )
+
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged(""))
+                advanceUntilIdle()
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                assertEquals(2, fakeRemoteAddressResultsManager.callCount)
+                assertEquals(1, addressViewModel.uiState.value.addressResults.size)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `GIVEN address search disabled by default constructor WHEN query is long enough THEN no address request is made`() =
         runTest {
             fakeRemoteAddressResultsManager.results = listOf(

@@ -29,6 +29,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.resolveAddressSearchMinQueryLength
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
@@ -167,6 +168,9 @@ val viewModelsModule = module {
                 flag.getFlagValue(FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key).asBoolean(false)
             }
         }
+        // Read live, not once, same reasoning as isAddressSearchEnabled above - Remote
+        // Config can push a new threshold while this ViewModel is already alive.
+        val addressSearchMinQueryLength = { resolveAddressSearchMinQueryLength(flag) }
         SearchStopViewModel(
             analytics = get(),
             stopResultsManager = get(),
@@ -177,6 +181,7 @@ val viewModelsModule = module {
             preferences = get(),
             sandook = get(),
             isAddressSearchEnabled = isAddressSearchEnabled,
+            addressSearchMinQueryLength = addressSearchMinQueryLength,
         )
     }
 }

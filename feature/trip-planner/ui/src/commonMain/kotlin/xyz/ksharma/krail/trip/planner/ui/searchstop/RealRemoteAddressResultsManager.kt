@@ -28,7 +28,10 @@ class RealRemoteAddressResultsManager(
         runCatching {
             tripPlanningService.stopFinder(stopSearchQuery = safeQuery, stopType = StopType.ANY)
         }.onFailure {
-            log("RemoteAddressResultsManager - stopFinder failed for query=\"$safeQuery\": ${it.message}")
+            log(
+                "RemoteAddressResultsManager - stopFinder failed for query of length " +
+                    "${safeQuery.length}: ${it.message}",
+            )
         }.getOrNull()
             ?.locations
             ?.filter { location -> location.type != STOP_TYPE && location.id != null }

@@ -164,6 +164,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.SEARCH_STOP_ADDRESS_SEARCH_ENABLED.key,
                 second = false,
             ),
+            Pair(
+                first = FlagKeys.SEARCH_STOP_ADDRESS_MIN_QUERY_LENGTH.key,
+                second = 6,
+            ),
         )
     }
 }

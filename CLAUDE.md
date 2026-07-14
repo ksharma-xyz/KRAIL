@@ -227,6 +227,9 @@ that contradicts the doc should also update the doc in the same change.
 
 - `feature/trip-planner/ui/SEARCH_STOP_UX.md` — SearchStopScreen (labels, save sheet,
   edit mode, conflict warnings, contextual banner, state persistence).
+- `feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md` — address/POI search gate,
+  cache, and staleness-token classes in `searchstop/address/`; read before changing
+  `onAddressSearchTextChanged` or the `search_stop_address_*` Remote Config contract.
 - `docs/TABLET_FOLDABLE_UX.md` — adaptive layout rules for tablets, foldables, and phone
   landscape (per-screen dual-pane behaviour, compact-height adaptations, breakpoint contract).
 - `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`

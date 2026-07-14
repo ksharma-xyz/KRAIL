@@ -13,6 +13,12 @@ new-event-vs-param decision checklist, aggregation patterns (`action`/`source`/b
 params), the double-counting check, and the EVENT_REGISTRY.md registration gate.
 Never mint an event name without passing that checklist.
 
+**Every PR that adds or changes a param/event in `AnalyticsEvent.kt` must also add a
+row to `docs/ANALYTICS_REGISTRY_HANDOFF.md` in the same PR.** That file is the living
+ledger of what still needs registering in the separate KRAIL-Analytics repo's
+`EVENT_REGISTRY.md` — it only stays accurate if it's updated alongside the code change,
+not backfilled later.
+
 ## Test Commands
 
 | Scope | Command |

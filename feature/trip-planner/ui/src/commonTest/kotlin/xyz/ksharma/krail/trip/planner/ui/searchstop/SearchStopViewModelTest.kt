@@ -173,6 +173,51 @@ class SearchStopViewModelTest {
             assertIs<AnalyticsEvent.StopSelectedEvent>(event)
             assertEquals("stopID", event.stopId)
             assertEquals(false, event.isRecentSearch)
+            assertEquals(AnalyticsEvent.StopSelectedEvent.LocationKind.TRANSIT_STOP, event.locationKind)
+            assertEquals(null, event.addressType)
+        }
+
+    @Test
+    fun `GIVEN an address stop item WHEN StopSelected is triggered THEN analytics event carries location kind and address type`() =
+        runTest {
+            viewModel.onEvent(
+                SearchStopUiEvent.TrackStopSelected(
+                    StopItem(
+                        stopName = "123 Example St",
+                        stopId = "streetID:123",
+                        locationKind = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind.ADDRESS,
+                        addressType = "street",
+                    ),
+                    isRecentSearch = false,
+                ),
+            )
+
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            val event = fakeAnalytics.getTrackedEvent("stop_selected")
+            assertIs<AnalyticsEvent.StopSelectedEvent>(event)
+            assertEquals(AnalyticsEvent.StopSelectedEvent.LocationKind.ADDRESS, event.locationKind)
+            assertEquals(AnalyticsEvent.StopSelectedEvent.AddressType.STREET, event.addressType)
+        }
+
+    @Test
+    fun `GIVEN an address stop item with an unrecognised raw type WHEN StopSelected is triggered THEN address type folds to UNKNOWN`() =
+        runTest {
+            viewModel.onEvent(
+                SearchStopUiEvent.TrackStopSelected(
+                    StopItem(
+                        stopName = "Some POI",
+                        stopId = "poiID:456",
+                        locationKind = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind.ADDRESS,
+                        addressType = "some-new-nsw-type-we-dont-know-about",
+                    ),
+                    isRecentSearch = false,
+                ),
+            )
+
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            val event = fakeAnalytics.getTrackedEvent("stop_selected")
+            assertIs<AnalyticsEvent.StopSelectedEvent>(event)
+            assertEquals(AnalyticsEvent.StopSelectedEvent.AddressType.UNKNOWN, event.addressType)
         }
 
     @Test

@@ -113,14 +113,42 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val stopId: String,
         val isRecentSearch: Boolean = false,
         val searchQuery: String? = null,
+        val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
+        val addressType: AddressType? = null,
     ) : AnalyticsEvent(
         name = "stop_selected",
         properties = buildMap {
             put(PROP_STOP_ID, stopId)
             put("isRecentSearch", isRecentSearch)
             searchQuery?.let { put("searchQuery", it) }
+            put("locationKind", locationKind.value)
+            addressType?.let { put("addressType", it.value) }
         },
-    )
+    ) {
+        /** Mirrors `StopItem.LocationKind` (feature/trip-planner/state) - redefined here
+         * so `core/analytics` doesn't depend on a feature-layer model. Map at the call
+         * site instead of adding a cross-module dependency. */
+        enum class LocationKind(val value: String) {
+            TRANSIT_STOP("transit_stop"),
+            ADDRESS("address"),
+        }
+
+        /** Allowlisted NSW `stop_finder` location types - never pass the raw API string
+         * through; anything not in this set folds to [UNKNOWN]. Values match the
+         * existing UI mapping in `AddressSearchListItem.kt`'s `addressTypeLabel`. */
+        enum class AddressType(val value: String) {
+            SINGLEHOUSE("singlehouse"),
+            STREET("street"),
+            POI("poi"),
+            UNKNOWN("unknown"),
+            ;
+
+            companion object {
+                fun from(rawType: String?): AddressType =
+                    entries.find { it.value == rawType } ?: UNKNOWN
+            }
+        }
+    }
 
     data class SearchStopQuery(
         val query: String,

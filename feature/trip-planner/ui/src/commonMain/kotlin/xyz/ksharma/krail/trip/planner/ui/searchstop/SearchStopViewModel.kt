@@ -524,13 +524,15 @@ class SearchStopViewModel(
             if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) return@launch
 
             updateUiState { copy(isAddressSearchLoading = true) }
-            val addressResults = runCatching {
-                remoteAddressResultsManager.fetchAddressResults(normalizedQuery)
-            }.getOrElse {
+            val fetchResult = runCatching { remoteAddressResultsManager.fetchAddressResults(normalizedQuery) }
+            // A transient failure must not be cached as "no results" - that would block
+            // the next identical query from retrying for the empty-result TTL. Only a
+            // real response (including a genuine empty one) is cache-worthy.
+            fetchResult.onSuccess { addressSearchCache.put(cacheKey, it) }
+            val addressResults = fetchResult.getOrElse {
                 log("Address search failed for query of length ${normalizedQuery.length}: ${it.message}")
                 emptyList()
             }
-            addressSearchCache.put(cacheKey, addressResults)
 
             // A newer keystroke may have started (and even completed) another request
             // while this one was in flight; only the most recent request may still win.

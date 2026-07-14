@@ -1,8 +1,8 @@
 # Address search eligibility, cache, and staleness
 
-Implements the policy in `docs/plans/ADDRESS_SEARCH_API_CALL_POLICY.md`. Read that doc
-first for the "why" (data-backed threshold, rejected alternatives, rollout plan); this
-file documents the classes that came out of it and what they deliberately don't do.
+Documents the address/POI search call decision for SearchStopScreen: when
+`onAddressSearchTextChanged` is allowed to call the NSW `stop_finder` API, what gets
+cached, and how a late response is prevented from clobbering newer UI state.
 
 ## Classes
 
@@ -30,34 +30,47 @@ threshold -> eligible. `SearchStopViewModel.onAddressSearchTextChanged` calls th
 ## Cache
 
 Keyed by `addressSearchCacheKey` (case-folded, trimmed). Two TTLs: 120s for a non-empty
-result, 30s for an empty one (`AddressSearchCache` companion constants). Checked after
-the eligibility gate and before the debounce delay — a cache hit renders immediately
-with no loading flicker and no network call.
+result, 30s for a genuinely empty one (`AddressSearchCache` companion constants).
+Checked after the eligibility gate and before the debounce delay — a cache hit renders
+immediately with no loading flicker and no network call.
 
 The cache lives on the ViewModel instance, not behind DI — it must not outlive the
-screen or be shared across `SearchStopViewModel` instances (see "Session cache
-proposal" in the policy doc: no persistence, no cross-session sharing).
+screen or be shared across `SearchStopViewModel` instances: no persistence, no
+cross-session sharing.
+
+**A failed request is never cached.** `RealRemoteAddressResultsManager` deliberately
+does not catch its own exceptions — it lets them propagate so `SearchStopViewModel` can
+tell "the call failed" apart from "the call succeeded with zero results." Only
+`Result.success` reaches `addressSearchCache.put(...)`; a failure still resolves to an
+empty `addressResults` list for the UI (this is an optional section, so it never shows
+an error state), but the *next* identical query is free to retry immediately rather
+than being blocked by a 30s empty-result TTL that was never earned. Caching a transient
+failure as "no results" was a real bug caught late in review — the fix is
+`fetchResult.onSuccess { addressSearchCache.put(cacheKey, it) }` gating the cache write,
+not the `getOrElse { emptyList() }` that produces the UI-facing value.
 
 ## Staleness guard, not request coalescing
 
 `SearchStopViewModel` keeps a single monotonic `addressSearchRequestToken` (an `Int`
 incremented each time a request is scheduled). A response only updates UI state if the
-token it captured is still current. This satisfies the policy doc's "a late result has
-no query-version check" concern.
+token it captured is still current — this guards against a late response overwriting a
+newer query's UI state even if the underlying HTTP call doesn't cancel promptly.
 
-**Deliberately not implemented**: `Deferred`-based duplicate-request coalescing (the
-policy doc's "a request for that exact normalized query is already pending" row).
-`SearchStopViewModel` only ever has one live `addressSearchJob`, and it is cancelled
-before every new one is launched — so two concurrent in-flight requests for the same
-query cannot occur under the current architecture. Adding coalescing machinery for a
-race that can't happen would be speculative complexity. Revisit only if the ViewModel's
-single-job-cancel-and-replace invariant changes (e.g. a future multi-source merge).
+**Deliberately not implemented**: `Deferred`-based duplicate-request coalescing (i.e.
+detecting "a request for this exact normalized query is already pending" and reusing
+it). `SearchStopViewModel` only ever has one live `addressSearchJob`, and it is
+cancelled before every new one is launched — so two concurrent in-flight requests for
+the same query cannot occur under the current architecture. Adding coalescing machinery
+for a race that can't happen would be speculative complexity. Revisit only if the
+ViewModel's single-job-cancel-and-replace invariant changes (e.g. a future multi-source
+merge).
 
 ## Redaction
 
-Both the ViewModel's and `RealRemoteAddressResultsManager`'s failure logs record
-`normalizedQuery.length`, never the query text — addresses can be personal data (see
-policy doc's release gates).
+`SearchStopViewModel`'s failure log records `normalizedQuery.length`, never the query
+text — addresses can be personal data. `RealRemoteAddressResultsManager` no longer logs
+at all (see Cache section above: it propagates failures instead of catching them), so
+there is a single redacted log site, not two.
 
 ## Remote Config
 

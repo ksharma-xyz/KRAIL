@@ -112,7 +112,6 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class StopSelectedEvent(
         val stopId: String,
         val isRecentSearch: Boolean = false,
-        val searchQuery: String? = null,
         val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
         val addressType: AddressType? = null,
     ) : AnalyticsEvent(
@@ -120,7 +119,6 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         properties = buildMap {
             put(PROP_STOP_ID, stopId)
             put("isRecentSearch", isRecentSearch)
-            searchQuery?.let { put("searchQuery", it) }
             put("locationKind", locationKind.value)
             addressType?.let { put("addressType", it.value) }
         },
@@ -150,20 +148,42 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         }
     }
 
+    /**
+     * Fired when a settled search query finishes resolving. Never carries the raw
+     * typed text by default: a query can be a street address, which identifies a home
+     * or workplace, and the privacy policy promises analytics hold no personally
+     * identifiable data.
+     *
+     * [zeroResultQuery] is the single, deliberately narrow exception, kept for
+     * fuzzy-matcher diagnostics (the "townhall returned nothing" workflow). Callers
+     * must resolve it through `SearchQueryAnalyticsRedaction.zeroResultQueryOrNull`,
+     * which requires zero results everywhere, no digits, and a short length. It lands
+     * in the same "query" property historical dashboards already read.
+     *
+     * @param queryLength     Character count of the typed query - shape signal, no text.
+     * @param searchSessionId Random ID minted per settled query; joins this event to
+     *                        [StopSelectedEvent] so funnels work without query text.
+     * @param resultsCount    Result count on success.
+     * @param isError         True when the search pipeline threw.
+     * @param zeroResultQuery Raw text only under the redaction carve-out, else null.
+     */
     data class SearchStopQuery(
-        val query: String,
+        val queryLength: Int,
+        val searchSessionId: String,
         val resultsCount: Int? = null,
         val isError: Boolean = false,
+        val zeroResultQuery: String? = null,
     ) : AnalyticsEvent(
         name = "search_stop_query",
-        properties = mutableMapOf<String, Any>(
-            "query" to query,
-        ).apply {
+        properties = buildMap {
+            put("queryLength", queryLength)
+            put("searchSessionId", searchSessionId)
             if (isError) {
                 put("isError", isError)
             } else if (resultsCount != null) {
                 put("resultsCount", resultsCount)
             }
+            zeroResultQuery?.let { put("query", it) }
         },
     )
 

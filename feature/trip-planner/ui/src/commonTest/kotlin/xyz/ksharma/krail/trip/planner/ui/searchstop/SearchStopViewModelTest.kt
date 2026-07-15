@@ -465,6 +465,106 @@ class SearchStopViewModelTest {
 
     // endregion SelectOnMapButtonClicked
 
+    // region Search query analytics redaction
+
+    @Test
+    fun `GIVEN a query with results WHEN search completes THEN search_stop_query carries no raw text`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Central"))
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val event = fakeAnalytics.getTrackedEvent("search_stop_query")
+                assertIs<AnalyticsEvent.SearchStopQuery>(event)
+                assertEquals("Central".length, event.queryLength)
+                assertEquals(1, event.resultsCount)
+                assertTrue(event.searchSessionId.isNotBlank())
+                assertFalse(event.properties.orEmpty().containsKey("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN zero results and address pipeline off WHEN query has no digits THEN carve-out keeps the query`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("townhall"))
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val event = fakeAnalytics.getTrackedEvent("search_stop_query")
+                assertIs<AnalyticsEvent.SearchStopQuery>(event)
+                assertEquals(0, event.resultsCount)
+                assertEquals("townhall", event.zeroResultQuery)
+                assertEquals("townhall", event.properties?.get("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN zero results WHEN query contains digits THEN carve-out never keeps the query`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("4 fulton place"))
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val event = fakeAnalytics.getTrackedEvent("search_stop_query")
+                assertIs<AnalyticsEvent.SearchStopQuery>(event)
+                assertEquals(0, event.resultsCount)
+                assertEquals(null, event.zeroResultQuery)
+                assertFalse(event.properties.orEmpty().containsKey("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN address pipeline eligible WHEN local results are zero THEN local event defers the carve-out`() =
+        runTest {
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("townhall"))
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val event = fakeAnalytics.getTrackedEvent("search_stop_query")
+                assertIs<AnalyticsEvent.SearchStopQuery>(event)
+                assertEquals(null, event.zeroResultQuery)
+                assertFalse(event.properties.orEmpty().containsKey("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN search fails WHEN error event fires THEN it carries no raw text`() =
+        runTest {
+            fakeStopResultsManager.shouldThrowError = true
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("townhall"))
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val event = fakeAnalytics.getTrackedEvent("search_stop_query")
+                assertIs<AnalyticsEvent.SearchStopQuery>(event)
+                assertTrue(event.isError)
+                assertFalse(event.properties.orEmpty().containsKey("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion Search query analytics redaction
+
     // region Address search eligibility
 
     private fun addressAwareViewModel(minQueryLength: Int = 6) = SearchStopViewModel(

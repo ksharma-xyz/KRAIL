@@ -9,7 +9,6 @@ sealed interface SearchStopUiEvent {
     data class TrackStopSelected(
         val stopItem: StopItem,
         val isRecentSearch: Boolean = false,
-        val searchQuery: String? = null,
     ) : SearchStopUiEvent
 
     data class ClearRecentSearchStops(val recentSearchCount: Int) : SearchStopUiEvent

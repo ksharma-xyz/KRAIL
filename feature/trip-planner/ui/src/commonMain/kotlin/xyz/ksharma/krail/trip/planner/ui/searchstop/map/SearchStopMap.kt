@@ -365,7 +365,6 @@ private fun MapContent(
                                     SearchStopUiEvent.TrackStopSelected(
                                         stopItem = stopItem,
                                         isRecentSearch = false,
-                                        searchQuery = null,
                                     ),
                                 )
 

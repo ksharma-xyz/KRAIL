@@ -29,14 +29,14 @@ either; most changes should be params on an existing event, not a new name.
 |---|---|---|---|---|---|---|---|
 | 2026-07-14 | `stop_selected` | `locationKind` | `transit_stop｜address` (default `transit_stop`) | A stop, address, or POI is selected from search results, recents, empty-state, or trip-stop click | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Registered | — |
 | 2026-07-14 | `stop_selected` | `addressType` | Allowlisted `singlehouse｜street｜poi｜unknown`; omitted for transit stops | Same as above, only present when `locationKind = address` | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Registered | — |
-| 2026-07-15 | `search_stop_query` | `queryLength` | Int, character count of typed query | Settled search query resolves (success or error) | TBD | Pending | — |
-| 2026-07-15 | `search_stop_query` | `searchSessionId` | Random hex string per settled query; joins to `stop_selected` | Same as above | TBD | Pending | — |
-| 2026-07-15 | `search_stop_query` | `query` (semantics change) | Raw text now sent ONLY under the zero-result carve-out: zero results everywhere, no digits, ≤ 25 chars (`SearchQueryAnalyticsRedaction`). Previously sent on every firing | Zero-result fuzzy-diagnostics carve-out only | TBD | Pending | — |
-| 2026-07-15 | `stop_selected` | `searchQuery` (REMOVED) | Param deleted: carried raw typed text, which can be a street address (privacy policy promises no PII in analytics) | No longer fires | TBD | Pending | — |
-| 2026-07-15 | `search_stop_query` | `resultSource` | `local｜address` (default `local`) | New second firing per settled query from the address pipeline on fetch completion (cache hits excluded); join firings on `searchSessionId` | TBD | Pending | — |
-| 2026-07-15 | `stop_selected` | `searchSessionId` | Random hex string; joins to `search_stop_query` firings | Only when selection happens with a live (non-blank) query; recents/map picks omit it | TBD | Pending | — |
-| 2026-07-15 | `stop_selected` | `displayedLocalCount` | Bucket `0｜1_3｜4_10｜11_plus` | Local results on screen at selection time; omitted without a live query | TBD | Pending | — |
-| 2026-07-15 | `stop_selected` | `displayedAddressCount` | Bucket `0｜1_3｜4_10｜11_plus` | Address/POI results on screen at selection time; omitted without a live query | TBD | Pending | — |
+| 2026-07-15 | `search_stop_query` | `queryLength` | Int, character count of typed query | Settled search query resolves (success or error) | [#1715](https://github.com/ksharma-xyz/KRAIL/pull/1715) | Registered | — |
+| 2026-07-15 | `search_stop_query` | `searchSessionId` | Random hex string per settled query; joins to `stop_selected` | Same as above | [#1715](https://github.com/ksharma-xyz/KRAIL/pull/1715) | Registered | — |
+| 2026-07-15 | `search_stop_query` | `query` (semantics change) | Raw text now sent ONLY under the zero-result carve-out: zero results everywhere, no digits, ≤ 25 chars (`SearchQueryAnalyticsRedaction`). Previously sent on every firing | Zero-result fuzzy-diagnostics carve-out only | [#1715](https://github.com/ksharma-xyz/KRAIL/pull/1715) | Registered | — |
+| 2026-07-15 | `stop_selected` | `searchQuery` (REMOVED) | Param deleted: carried raw typed text, which can be a street address (privacy policy promises no PII in analytics) | No longer fires | [#1715](https://github.com/ksharma-xyz/KRAIL/pull/1715) | Registered | — |
+| 2026-07-15 | `search_stop_query` | `resultSource` | `local｜address` (default `local`) | New second firing per settled query from the address pipeline on fetch completion (cache hits excluded); join firings on `searchSessionId` | [#1716](https://github.com/ksharma-xyz/KRAIL/pull/1716) | Registered | — |
+| 2026-07-15 | `stop_selected` | `searchSessionId` | Random hex string; joins to `search_stop_query` firings | Only when selection happens with a live (non-blank) query; recents/map picks omit it | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
+| 2026-07-15 | `stop_selected` | `displayedLocalCount` | Bucket `0｜1_3｜4_10｜11_plus` | Local results on screen at selection time; omitted without a live query | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
+| 2026-07-15 | `stop_selected` | `displayedAddressCount` | Bucket `0｜1_3｜4_10｜11_plus` | Address/POI results on screen at selection time; omitted without a live query | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
 
 Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
 2026-07-14.

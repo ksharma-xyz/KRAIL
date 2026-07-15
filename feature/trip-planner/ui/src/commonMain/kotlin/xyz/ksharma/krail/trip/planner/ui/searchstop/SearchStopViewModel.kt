@@ -115,6 +115,11 @@ class SearchStopViewModel(
             is SearchStopUiEvent.SearchTextChanged -> onSearchTextChanged(event.query)
 
             is SearchStopUiEvent.TrackStopSelected -> {
+                // Selection context only makes sense mid-search: for recents,
+                // empty-state stops, and map picks the displayed result counts
+                // belong to a previous (or no) query, so send nothing.
+                val state = _uiState.value
+                val fromLiveQuery = state.searchQuery.isNotBlank()
                 analytics.track(
                     StopSelectedEvent(
                         stopId = event.stopItem.stopId,
@@ -124,6 +129,13 @@ class SearchStopViewModel(
                             LocationKind.ADDRESS -> StopSelectedEvent.LocationKind.ADDRESS
                         },
                         addressType = event.stopItem.addressType?.let(StopSelectedEvent.AddressType::from),
+                        searchSessionId = currentSearchSessionId.takeIf { fromLiveQuery },
+                        displayedLocalCount = StopSelectedEvent.CountBucket
+                            .from(state.searchResults.size)
+                            .takeIf { fromLiveQuery },
+                        displayedAddressCount = StopSelectedEvent.CountBucket
+                            .from(state.addressResults.size)
+                            .takeIf { fromLiveQuery },
                     ),
                 )
             }

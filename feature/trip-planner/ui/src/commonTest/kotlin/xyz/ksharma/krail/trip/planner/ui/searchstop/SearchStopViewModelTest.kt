@@ -565,6 +565,74 @@ class SearchStopViewModelTest {
 
     // endregion Search query analytics redaction
 
+    // region Stop selected context
+
+    @Test
+    fun `GIVEN a live query WHEN a stop is selected THEN the event joins the query session and carries buckets`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Central"))
+                advanceUntilIdle()
+                viewModel.onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        StopItem(stopName = "Central Station", stopId = "10101"),
+                    ),
+                )
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val selected = fakeAnalytics.getTrackedEvent("stop_selected")
+                assertIs<AnalyticsEvent.StopSelectedEvent>(selected)
+                val query = fakeAnalytics.getTrackedEvent("search_stop_query")
+                assertIs<AnalyticsEvent.SearchStopQuery>(query)
+                assertEquals(query.searchSessionId, selected.searchSessionId)
+                assertEquals(
+                    AnalyticsEvent.StopSelectedEvent.CountBucket.ONE_TO_THREE,
+                    selected.displayedLocalCount,
+                )
+                assertEquals(
+                    AnalyticsEvent.StopSelectedEvent.CountBucket.ZERO,
+                    selected.displayedAddressCount,
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN no live query WHEN a stop is selected THEN no session or bucket params are attached`() =
+        runTest {
+            viewModel.onEvent(
+                SearchStopUiEvent.TrackStopSelected(
+                    StopItem(stopName = "Central Station", stopId = "10101"),
+                    isRecentSearch = true,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertTrue(fakeAnalytics is FakeAnalytics)
+            val selected = fakeAnalytics.getTrackedEvent("stop_selected")
+            assertIs<AnalyticsEvent.StopSelectedEvent>(selected)
+            assertEquals(null, selected.searchSessionId)
+            assertEquals(null, selected.displayedLocalCount)
+            assertEquals(null, selected.displayedAddressCount)
+            assertFalse(selected.properties.orEmpty().containsKey("searchSessionId"))
+        }
+
+    @Test
+    fun `CountBucket boundaries`() {
+        val bucket = AnalyticsEvent.StopSelectedEvent.CountBucket.Companion::from
+        assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.ZERO, bucket(0))
+        assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.ONE_TO_THREE, bucket(1))
+        assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.ONE_TO_THREE, bucket(3))
+        assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.FOUR_TO_TEN, bucket(4))
+        assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.FOUR_TO_TEN, bucket(10))
+        assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.ELEVEN_PLUS, bucket(11))
+    }
+
+    // endregion Stop selected context
+
     // region Address search analytics
 
     private fun addressEvents(): List<AnalyticsEvent.SearchStopQuery> =

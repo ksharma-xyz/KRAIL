@@ -93,6 +93,9 @@ Key rules:
 
 **Always use Graphite (`gt submit`) to raise PRs — never `gh pr create` directly.**
 
+Exception: the automated docs gardener (single, non-stacked, docs-only PRs labeled
+`docs-gardener`, policy in `.github/docs-gardener/CHARTER.md`) may use `gh pr create`.
+
 We stack PRs. Break work into focused, layered branches and submit the full stack with `gt submit --stack --publish`.
 
 **Max 500 lines of change per PR.** If a branch exceeds this, split it before submitting:

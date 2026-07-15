@@ -84,23 +84,26 @@ sealed interface SearchStopUiEvent {
     /**
      * Saves [stopItem] as the stop for an existing label identified by [labelKey].
      *
-     * @param source [SOURCE_CHOOSE_MODE] when fired by a direct row tap while the label's
-     * "choose your stop" mode is active (story A1); [SOURCE_STAR_SHEET] for the star icon →
-     * save-as-label sheet flow (including its conflict-resolution and create-new-label paths).
+     * @param surface    Which row kind hosted the assign action; set at the UI boundary
+     *                   where the source row is known. Mapped to a bounded analytics
+     *                   value in the ViewModel - never sent as free-form text.
+     * @param isNewLabel True when this assignment immediately follows [CreateLabel]
+     *                   from the New Label sheet (analytics `assignment_mode = new_label`).
      */
     data class AssignLabelStop(
         val labelKey: String,
         val stopItem: StopItem,
-        val source: String = SOURCE_STAR_SHEET,
-    ) : SearchStopUiEvent {
-        companion object {
-            const val SOURCE_CHOOSE_MODE = "choose_mode"
-            const val SOURCE_STAR_SHEET = "star_sheet"
-        }
-    }
+        val surface: LabelAssignSurface,
+        val isNewLabel: Boolean = false,
+    ) : SearchStopUiEvent
 
-    /** Creates a new label (with no stop yet). */
-    data class CreateLabel(val name: String, val emoji: String) : SearchStopUiEvent
+    /** Creates a new label (with no stop yet). [surface] is the row kind whose
+     * "+ New label" chip opened the sheet. */
+    data class CreateLabel(
+        val name: String,
+        val emoji: String,
+        val surface: LabelAssignSurface,
+    ) : SearchStopUiEvent
 
     /** Clears the stop on a label (label name kept, stop reset to null). */
     data class ClearLabelStop(val labelKey: String) : SearchStopUiEvent
@@ -113,4 +116,17 @@ sealed interface SearchStopUiEvent {
 
     /** Moves [labelKey] to sit at [targetLabelKey]'s position; sort orders for all labels are renumbered. */
     data class MoveLabelToIndex(val labelKey: String, val targetLabelKey: String) : SearchStopUiEvent
+}
+
+/**
+ * The row kind hosting a label assign/create action. UI-boundary enum; the ViewModel
+ * maps it to the registered analytics values (`search_result` etc.). ADDRESS_RESULT
+ * is reserved for when address rows gain a label assign affordance - nothing sends
+ * it yet.
+ */
+enum class LabelAssignSurface {
+    SEARCH_RESULT,
+    RECENT,
+    EMPTY_STATE,
+    ADDRESS_RESULT,
 }

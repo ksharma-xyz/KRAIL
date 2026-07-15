@@ -37,6 +37,8 @@ either; most changes should be params on an existing event, not a new name.
 | 2026-07-15 | `stop_selected` | `searchSessionId` | Random hex string; joins to `search_stop_query` firings | Only when selection happens with a live (non-blank) query; recents/map picks omit it | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
 | 2026-07-15 | `stop_selected` | `displayedLocalCount` | Bucket `0｜1_3｜4_10｜11_plus` | Local results on screen at selection time; omitted without a live query | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
 | 2026-07-15 | `stop_selected` | `displayedAddressCount` | Bucket `0｜1_3｜4_10｜11_plus` | Address/POI results on screen at selection time; omitted without a live query | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
+| 2026-07-15 | `stop_label_created` | `creationSurface`, `labelCountBucket`; REMOVED `labelName`/`emoji`/`totalLabelsCountAfter` | `search_result｜recent｜empty_state｜address_result`; bucket `1｜2｜3_5｜6_plus` | New custom label persisted; raw label text dropped (privacy) | TBD | Pending | — |
+| 2026-07-15 | `stop_label_stop_assigned` | `assignmentSurface`, `assignmentMode`, `locationKind`, `labelKind`; REMOVED `labelName`/`stopId`/`stopName`/`source` | Surfaces as above; `existing_label｜new_label`; `transit_stop｜address`; `protected_default｜custom`. Historical `source` values (`choose_mode｜star_sheet`) refer to deleted v2/v3 flows, do not reinterpret | Location pinned to a label; raw stop identity dropped (privacy) | TBD | Pending | — |
 
 Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
 2026-07-14.

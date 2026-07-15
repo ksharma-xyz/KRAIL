@@ -249,79 +249,113 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region StopLabels
 
     /**
-     * Fired when the user creates a new custom stop label via the save / create-label sheet.
-     * Use to measure adoption: how many users actually create labels, and which semantics
-     * they reach for (e.g. "Gym", "Airport", "Mom's").
+     * Bounded classification of a label. Raw label names never leave the device:
+     * a custom label ("Mum's", "Gym") plus a pinned stop can identify a person or
+     * place, and the privacy policy promises analytics hold no PII.
+     */
+    enum class StopLabelKind(val value: String) {
+        PROTECTED_DEFAULT("protected_default"),
+        CUSTOM("custom"),
+    }
+
+    /** Which row kind hosted a label create/assign action. Registered values -
+     * `address_result` is reserved for when address rows gain label support. */
+    enum class StopLabelSurface(val value: String) {
+        SEARCH_RESULT("search_result"),
+        RECENT("recent"),
+        EMPTY_STATE("empty_state"),
+        ADDRESS_RESULT("address_result"),
+    }
+
+    /** How many labels the user has, bucketed - splits casual (1-2) from power users. */
+    enum class StopLabelCountBucket(val value: String) {
+        ONE("1"),
+        TWO("2"),
+        THREE_TO_FIVE("3_5"),
+        SIX_PLUS("6_plus"),
+        ;
+
+        companion object {
+            private const val MAX_THREE_TO_FIVE = 5
+
+            fun from(count: Int): StopLabelCountBucket = when {
+                count <= 1 -> ONE
+                count == 2 -> TWO
+                count <= MAX_THREE_TO_FIVE -> THREE_TO_FIVE
+                else -> SIX_PLUS
+            }
+        }
+    }
+
+    /**
+     * Fired when a new custom stop label is successfully persisted.
      *
      * Aggregations this enables:
-     *  - "What % of users ever create a custom label?" → distinct user count on event name.
-     *  - "Which label names are most common?" → group by [labelName].
-     *  - "Are power users emerging?" → bucket [totalLabelsCountAfter] (1, 2, 3-5, 6+).
-     *  - "What emoji do people pick?" → group by [emoji].
+     *  - "What % of users ever create a custom label?" - distinct user count on event name.
+     *  - "Where do users create labels?" - group by [creationSurface].
+     *  - "Are power users emerging?" - group by [labelCountBucket].
      *
-     * @param labelName             The normalised label text persisted to the DB
-     *                              (emoji and whitespace already stripped).
-     * @param emoji                 The emoji chosen in the picker.
-     * @param totalLabelsCountAfter Total number of labels the user has *after* this creation —
-     *                              lets us split casual users (1–2 labels) from heavy users.
+     * Historical rows (before 2026-07-15) instead carried raw `labelName`/`emoji` and a
+     * raw `totalLabelsCountAfter` int; treat missing new params as the pre-redesign era.
+     *
+     * @param creationSurface  Row kind whose "+ New label" chip opened the create sheet.
+     * @param labelCountBucket Total labels the user has *after* this creation, bucketed.
      */
     data class StopLabelCreatedEvent(
-        val labelName: String,
-        val emoji: String,
-        val totalLabelsCountAfter: Int,
+        val creationSurface: StopLabelSurface,
+        val labelCountBucket: StopLabelCountBucket,
     ) : AnalyticsEvent(
         name = "stop_label_created",
         properties = mapOf(
-            PROP_LABEL_NAME to labelName,
-            "emoji" to emoji,
-            "totalLabelsCountAfter" to totalLabelsCountAfter,
+            "creationSurface" to creationSurface.value,
+            "labelCountBucket" to labelCountBucket.value,
         ),
     )
 
     /**
-     * Fired when the user pins a stop to a label — the core "label is being used" signal.
-     * This is the moment a label transitions from empty to actionable.
+     * Fired when the user pins a location to a label - the core "label is being used"
+     * signal. This is the moment a label transitions from empty to actionable.
      *
      * Aggregations this enables:
-     *  - "Which labels actually get filled?" → group by [labelName].
-     *  - "Which stops are most pinned?" → group by [PROP_STOP_ID].
-     *  - "Are users replacing existing pins or filling empty slots?" → filter [isReassignment].
-     *  - "Does the protected Home label behave differently from custom labels?"
-     *    → filter [isProtectedLabel].
+     *  - "Which surface converts: search result, recent, or empty-state?" - group by
+     *    [assignmentSurface].
+     *  - "Do users create a label at the moment of assignment or fill Home/Work?" -
+     *    group by [assignmentMode].
+     *  - "Are users replacing existing pins or filling empty slots?" - filter
+     *    [isReassignment].
+     *  - "Does the protected Home label behave differently?" - filter [labelKind].
      *
-     * @param labelName         The label receiving the stop.
-     * @param stopId            NSW Transport stop ID being pinned.
-     * @param stopName          Human-readable stop name.
-     * @param isReassignment    `true` if the label already had a different stop pinned and
-     *                          this assignment is overwriting it.
-     * @param isProtectedLabel  `true` for the protected Home label (special-cased
-     *                          throughout the app — non-deletable).
-     * @param source            [SOURCE_CHOOSE_MODE] for a direct row tap while a label's
-     *                          "choose your stop" mode is active (story A1), [SOURCE_STAR_SHEET]
-     *                          for the star icon → save-as-label sheet flow. Historical events
-     *                          (pre-A1) carry no `source` — treat null as star_sheet.
+     * Historical rows (before 2026-07-15) carried raw `labelName`/`stopId`/`stopName`
+     * and a `source` param whose values (`choose_mode`, `star_sheet`) refer to deleted
+     * v2/v3 flows - do not reinterpret them as the new surfaces.
+     *
+     * @param assignmentSurface Row kind hosting the assign action.
+     * @param assignmentMode    [AssignmentMode.NEW_LABEL] when the assignment
+     *                          immediately follows the New Label sheet, else
+     *                          [AssignmentMode.EXISTING_LABEL].
+     * @param locationKind      Transit stop or address/POI being pinned.
+     * @param labelKind         Protected default (Home) vs custom label.
+     * @param isReassignment    `true` if the label already had a different stop pinned.
      */
     data class StopLabelStopAssignedEvent(
-        val labelName: String,
-        val stopId: String,
-        val stopName: String,
+        val assignmentSurface: StopLabelSurface,
+        val assignmentMode: AssignmentMode,
+        val locationKind: StopSelectedEvent.LocationKind,
+        val labelKind: StopLabelKind,
         val isReassignment: Boolean,
-        val isProtectedLabel: Boolean,
-        val source: String = SOURCE_STAR_SHEET,
     ) : AnalyticsEvent(
         name = "stop_label_stop_assigned",
         properties = mapOf(
-            PROP_LABEL_NAME to labelName,
-            PROP_STOP_ID to stopId,
-            PROP_STOP_NAME to stopName,
+            "assignmentSurface" to assignmentSurface.value,
+            "assignmentMode" to assignmentMode.value,
+            "locationKind" to locationKind.value,
+            "labelKind" to labelKind.value,
             "isReassignment" to isReassignment,
-            "isProtectedLabel" to isProtectedLabel,
-            PROP_SOURCE to source,
         ),
     ) {
-        companion object {
-            const val SOURCE_CHOOSE_MODE = "choose_mode"
-            const val SOURCE_STAR_SHEET = "star_sheet"
+        enum class AssignmentMode(val value: String) {
+            EXISTING_LABEL("existing_label"),
+            NEW_LABEL("new_label"),
         }
     }
 

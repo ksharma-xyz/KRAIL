@@ -20,6 +20,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LabelAssignSurface
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.test.AfterTest
@@ -103,7 +104,7 @@ class SearchStopViewModelLabelHandlersTest {
                 advanceUntilIdle()
 
                 val central = StopItem(stopId = "stop_central", stopName = "Central Station")
-                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -127,7 +128,7 @@ class SearchStopViewModelLabelHandlersTest {
                 advanceUntilIdle()
 
                 val central = StopItem(stopId = "stop_central", stopName = "Central Station")
-                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 // Pinning to recents is the contract that means tapping a saved pill
@@ -282,7 +283,7 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -304,7 +305,7 @@ class SearchStopViewModelLabelHandlersTest {
 
                 // "home" should match seeded "Home" case-insensitively after
                 // normaliseLabelName — duplicate must silently no-op.
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -319,7 +320,7 @@ class SearchStopViewModelLabelHandlersTest {
             advanceUntilIdle()
             val before = expectMostRecentItem().stopLabels.size
 
-            viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀"))
+            viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀", surface = LabelAssignSurface.SEARCH_RESULT))
             advanceUntilIdle()
 
             // Blank input is treated like no input — no new emission. expectNoEvents()
@@ -339,7 +340,7 @@ class SearchStopViewModelLabelHandlersTest {
 
                 // The save-sheet text field allows free typing; the VM is the
                 // canonicaliser. "🚗 Garage 🚗" should land as "Garage" in the DB.
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "🚗 Garage 🚗", emoji = "🚗"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "🚗 Garage 🚗", emoji = "🚗", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -357,7 +358,7 @@ class SearchStopViewModelLabelHandlersTest {
                 // LABEL_NAME_MAX_LENGTH, but the VM must enforce it independently
                 // for any caller that skips the UI.
                 val tooLong = "A".repeat(LABEL_NAME_MAX_LENGTH + 10)
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = tooLong, emoji = "🚗"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = tooLong, emoji = "🚗", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -381,7 +382,7 @@ class SearchStopViewModelLabelHandlersTest {
 
             // Set Home first so there's something to clear.
             val central = StopItem(stopId = "stop_central", stopName = "Central Station")
-            viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+            viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.SEARCH_RESULT))
             advanceUntilIdle()
 
             viewModel.onEvent(SearchStopUiEvent.ClearLabelStop("Home"))
@@ -575,16 +576,19 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_created")
                 assertNotNull(tracked, "expected stop_label_created to fire")
                 val event = assertIs<AnalyticsEvent.StopLabelCreatedEvent>(tracked)
-                assertEquals("Gym", event.labelName)
-                assertEquals("🏋", event.emoji)
+                assertEquals(AnalyticsEvent.StopLabelSurface.SEARCH_RESULT, event.creationSurface)
                 // Seeded Home + Work + new Gym = 3.
-                assertEquals(3, event.totalLabelsCountAfter)
+                assertEquals(AnalyticsEvent.StopLabelCountBucket.THREE_TO_FIVE, event.labelCountBucket)
+                assertFalse(
+                    event.properties.orEmpty().keys.any { it == "labelName" || it == "emoji" },
+                    "created event must not carry raw label text",
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -595,7 +599,7 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 // Duplicate path is a silent no-op — analytics must mirror that, otherwise
@@ -611,7 +615,7 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀"))
+                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀", surface = LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 assertFalse(fakeAnalytics.isEventTracked("stop_label_created"))
@@ -626,28 +630,36 @@ class SearchStopViewModelLabelHandlersTest {
                 advanceUntilIdle()
 
                 val central = StopItem(stopId = "stop_central", stopName = "Central Station")
-                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_stop_assigned")
                 assertNotNull(tracked)
                 val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(tracked)
-                assertEquals("Home", event.labelName)
-                assertEquals("stop_central", event.stopId)
-                assertEquals("Central Station", event.stopName)
-                assertFalse(event.isReassignment, "first pin should not be a reassignment")
-                assertTrue(event.isProtectedLabel, "Home is the protected label")
+                assertEquals(AnalyticsEvent.StopLabelSurface.SEARCH_RESULT, event.assignmentSurface)
                 assertEquals(
-                    AnalyticsEvent.StopLabelStopAssignedEvent.SOURCE_STAR_SHEET,
-                    event.source,
-                    "default source is the star -> sheet flow",
+                    AnalyticsEvent.StopLabelStopAssignedEvent.AssignmentMode.EXISTING_LABEL,
+                    event.assignmentMode,
+                )
+                assertEquals(AnalyticsEvent.StopSelectedEvent.LocationKind.TRANSIT_STOP, event.locationKind)
+                assertFalse(event.isReassignment, "first pin should not be a reassignment")
+                assertEquals(
+                    AnalyticsEvent.StopLabelKind.PROTECTED_DEFAULT,
+                    event.labelKind,
+                    "Home is the protected label",
+                )
+                assertFalse(
+                    event.properties.orEmpty().keys.any {
+                        it == "labelName" || it == "stopId" || it == "stopName"
+                    },
+                    "assigned event must not carry raw label or stop identity",
                 )
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `Given choose-mode source When AssignLabelStop fires Then assigned event carries it through`() =
+    fun `Given recent-surface new-label assign When AssignLabelStop fires Then event carries surface and mode`() =
         runTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
@@ -657,7 +669,8 @@ class SearchStopViewModelLabelHandlersTest {
                     SearchStopUiEvent.AssignLabelStop(
                         labelKey = "Home",
                         stopItem = central,
-                        source = SearchStopUiEvent.AssignLabelStop.SOURCE_CHOOSE_MODE,
+                        surface = LabelAssignSurface.RECENT,
+                        isNewLabel = true,
                     ),
                 )
                 advanceUntilIdle()
@@ -665,7 +678,11 @@ class SearchStopViewModelLabelHandlersTest {
                 val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(
                     fakeAnalytics.getTrackedEvent("stop_label_stop_assigned"),
                 )
-                assertEquals(AnalyticsEvent.StopLabelStopAssignedEvent.SOURCE_CHOOSE_MODE, event.source)
+                assertEquals(AnalyticsEvent.StopLabelSurface.RECENT, event.assignmentSurface)
+                assertEquals(
+                    AnalyticsEvent.StopLabelStopAssignedEvent.AssignmentMode.NEW_LABEL,
+                    event.assignmentMode,
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -681,19 +698,21 @@ class SearchStopViewModelLabelHandlersTest {
                 // "filling empty slots" from "swapping pins".
                 val central = StopItem(stopId = "stop_central", stopName = "Central Station")
                 val townHall = StopItem(stopId = "stop_townhall", stopName = "Town Hall")
-                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Work", central))
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Work", central, LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
                 fakeAnalytics.clear()
-                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Work", townHall))
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Work", townHall, LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
 
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_stop_assigned")
                 assertNotNull(tracked)
                 val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(tracked)
-                assertEquals("Work", event.labelName)
-                assertEquals("stop_townhall", event.stopId)
                 assertTrue(event.isReassignment, "second pin overwrote a different stop")
-                assertFalse(event.isProtectedLabel, "Work is a default but not protected")
+                assertEquals(
+                    AnalyticsEvent.StopLabelKind.CUSTOM,
+                    event.labelKind,
+                    "Work is a default but not protected",
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -705,7 +724,7 @@ class SearchStopViewModelLabelHandlersTest {
                 advanceUntilIdle()
 
                 val central = StopItem(stopId = "stop_central", stopName = "Central Station")
-                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central))
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.SEARCH_RESULT))
                 advanceUntilIdle()
                 fakeAnalytics.clear()
                 viewModel.onEvent(SearchStopUiEvent.ClearLabelStop("Home"))

@@ -90,6 +90,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LabelAssignSurface
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -178,11 +179,17 @@ fun SearchStopScreen(
     // v4 inline assign handler, shared by every StopLabelAssignRow (search results,
     // recents, empty-state stops). The row's wall only ever shows unset labels, so
     // there's no conflict to classify here — every tap is a direct, no-confirm assign.
-    val onLabelPillClick: (StopItem, StopLabel) -> Unit = { stopItem, label ->
-        onEvent(SearchStopUiEvent.AssignLabelStop(labelKey = label.label, stopItem = stopItem))
+    val onLabelPillClick: (StopItem, StopLabel, LabelAssignSurface) -> Unit = { stopItem, label, surface ->
+        onEvent(
+            SearchStopUiEvent.AssignLabelStop(
+                labelKey = label.label,
+                stopItem = stopItem,
+                surface = surface,
+            ),
+        )
     }
-    val onNewLabelClick: (StopItem, List<TransportMode>) -> Unit = { stopItem, modes ->
-        newLabelTarget = NewLabelTarget(stop = stopItem, transportModeSet = modes)
+    val onNewLabelClick: (StopItem, List<TransportMode>, LabelAssignSurface) -> Unit = { stopItem, modes, surface ->
+        newLabelTarget = NewLabelTarget(stop = stopItem, transportModeSet = modes, surface = surface)
     }
 
     AdaptiveScreenContent(
@@ -253,8 +260,21 @@ fun SearchStopScreen(
                 // calling onSave, so CreateLabel's stored key and this AssignLabelStop's
                 // labelKey are guaranteed to match — see AssignNewLabelSheetContent.
                 if (name.isNotBlank()) {
-                    onEvent(SearchStopUiEvent.CreateLabel(name = name, emoji = NEW_LABEL_DEFAULT_EMOJI))
-                    onEvent(SearchStopUiEvent.AssignLabelStop(labelKey = name, stopItem = newLabelStop.stop))
+                    onEvent(
+                        SearchStopUiEvent.CreateLabel(
+                            name = name,
+                            emoji = NEW_LABEL_DEFAULT_EMOJI,
+                            surface = newLabelStop.surface,
+                        ),
+                    )
+                    onEvent(
+                        SearchStopUiEvent.AssignLabelStop(
+                            labelKey = name,
+                            stopItem = newLabelStop.stop,
+                            surface = newLabelStop.surface,
+                            isNewLabel = true,
+                        ),
+                    )
                 }
             },
         )
@@ -263,8 +283,13 @@ fun SearchStopScreen(
 
 private const val NEW_LABEL_DEFAULT_EMOJI = "📍"
 
-/** The stop (+ its transport modes, for the sheet's mode roundel) creating a brand-new label. */
-internal data class NewLabelTarget(val stop: StopItem, val transportModeSet: List<TransportMode>)
+/** The stop (+ its transport modes, for the sheet's mode roundel) creating a brand-new label.
+ * [surface] is the row kind whose "+ New label" chip opened the sheet. */
+internal data class NewLabelTarget(
+    val stop: StopItem,
+    val transportModeSet: List<TransportMode>,
+    val surface: LabelAssignSurface,
+)
 
 // region Savers — keep UI orchestration state alive across rotation / process death.
 //
@@ -293,6 +318,7 @@ private val NewLabelTargetSaver: Saver<NewLabelTarget?, Any> = Saver(
                 "stopId" to it.stop.stopId,
                 "stopName" to it.stop.stopName,
                 "productClasses" to it.transportModeSet.map { mode -> mode.productClass },
+                "surface" to it.surface.name,
             )
         }
     },
@@ -307,6 +333,9 @@ private val NewLabelTargetSaver: Saver<NewLabelTarget?, Any> = Saver(
             transportModeSet = (map["productClasses"] as List<Int>).mapNotNull { productClass ->
                 TransportMode.fromProductClass(productClass)
             },
+            surface = (map["surface"] as? String)
+                ?.let { name -> LabelAssignSurface.entries.firstOrNull { e -> e.name == name } }
+                ?: LabelAssignSurface.SEARCH_RESULT,
         )
     },
 )
@@ -332,8 +361,8 @@ private fun SearchStopScreenSinglePane(
     expandedStopKey: String?,
     onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onLabelPillClick: (StopItem, StopLabel) -> Unit,
-    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
+    onLabelPillClick: (StopItem, StopLabel, LabelAssignSurface) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>, LabelAssignSurface) -> Unit,
     onManageClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -515,8 +544,8 @@ private fun SearchStopScreenDualPane(
     expandedStopKey: String?,
     onToggleExpandStop: (String) -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onLabelPillClick: (StopItem, StopLabel) -> Unit,
-    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
+    onLabelPillClick: (StopItem, StopLabel, LabelAssignSurface) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>, LabelAssignSurface) -> Unit,
     onManageClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -608,8 +637,8 @@ private fun SearchStopListContent(
     isMapsAvailable: Boolean,
     onOpenMap: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
-    onLabelPillClick: (StopItem, StopLabel) -> Unit,
-    onNewLabelClick: (StopItem, List<TransportMode>) -> Unit,
+    onLabelPillClick: (StopItem, StopLabel, LabelAssignSurface) -> Unit,
+    onNewLabelClick: (StopItem, List<TransportMode>, LabelAssignSurface) -> Unit,
     onManageClick: () -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -652,8 +681,20 @@ private fun SearchStopListContent(
                         expandedStopKey = expandedStopKey,
                         onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onLabelPillClick = onLabelPillClick,
-                        onNewLabelClick = onNewLabelClick,
+                        onLabelPillClick = { stopItem, label ->
+                            onLabelPillClick(
+                                stopItem,
+                                label,
+                                LabelAssignSurface.RECENT,
+                            )
+                        },
+                        onNewLabelClick = { stopItem, modes ->
+                            onNewLabelClick(
+                                stopItem,
+                                modes,
+                                LabelAssignSurface.RECENT,
+                            )
+                        },
                         onEvent = onEvent,
                     )
                     emptyStateStopsList(
@@ -664,8 +705,20 @@ private fun SearchStopListContent(
                         expandedStopKey = expandedStopKey,
                         onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onLabelPillClick = onLabelPillClick,
-                        onNewLabelClick = onNewLabelClick,
+                        onLabelPillClick = { stopItem, label ->
+                            onLabelPillClick(
+                                stopItem,
+                                label,
+                                LabelAssignSurface.EMPTY_STATE,
+                            )
+                        },
+                        onNewLabelClick = { stopItem, modes ->
+                            onNewLabelClick(
+                                stopItem,
+                                modes,
+                                LabelAssignSurface.EMPTY_STATE,
+                            )
+                        },
                         onEvent = onEvent,
                     )
                     publicTransportNoteItem()
@@ -707,8 +760,20 @@ private fun SearchStopListContent(
                         expandedStopKey = expandedStopKey,
                         onToggleExpandStop = onToggleExpandStop,
                         onStopSelect = onStopSelect,
-                        onLabelPillClick = onLabelPillClick,
-                        onNewLabelClick = onNewLabelClick,
+                        onLabelPillClick = { stopItem, label ->
+                            onLabelPillClick(
+                                stopItem,
+                                label,
+                                LabelAssignSurface.SEARCH_RESULT,
+                            )
+                        },
+                        onNewLabelClick = { stopItem, modes ->
+                            onNewLabelClick(
+                                stopItem,
+                                modes,
+                                LabelAssignSurface.SEARCH_RESULT,
+                            )
+                        },
                         onEvent = onEvent,
                     )
                     addressResultsSection(

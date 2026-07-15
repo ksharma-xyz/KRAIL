@@ -525,6 +525,7 @@ class SearchStopViewModel(
     private fun onAddressSearchTextChanged(query: String) {
         addressSearchJob?.cancel()
         val normalizedQuery = normalizeAddressQuery(query)
+        val searchSessionId = currentSearchSessionId
 
         if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) {
             updateUiState { copy(addressResults = persistentListOf(), isAddressSearchLoading = false) }
@@ -573,7 +574,41 @@ class SearchStopViewModel(
                     isAddressSearchLoading = false,
                 )
             }
+            trackAddressSearchResolved(
+                normalizedQuery = normalizedQuery,
+                searchSessionId = searchSessionId,
+                addressResults = if (fetchResult.isSuccess) addressResults else null,
+            )
         }
+    }
+
+    /**
+     * One firing per resolved (non-stale) address fetch; cache hits are excluded so
+     * `resultSource = address` counts network calls, the number the API cost model
+     * cares about. This is also the carve-out site for address-eligible queries -
+     * only here are both pipelines' result counts known (see [resolveZeroResultQuery]).
+     */
+    private fun trackAddressSearchResolved(
+        normalizedQuery: String,
+        searchSessionId: String,
+        addressResults: List<SearchStopState.SearchResult.Address>?,
+    ) {
+        analytics.track(
+            AnalyticsEvent.SearchStopQuery(
+                queryLength = normalizedQuery.length,
+                searchSessionId = searchSessionId,
+                resultSource = AnalyticsEvent.SearchStopQuery.ResultSource.ADDRESS,
+                resultsCount = addressResults?.size,
+                isError = addressResults == null,
+                zeroResultQuery = addressResults?.let {
+                    SearchQueryAnalyticsRedaction.zeroResultQueryOrNull(
+                        query = normalizedQuery,
+                        localResultsCount = _uiState.value.searchResults.size,
+                        addressResultsCount = it.size,
+                    )
+                },
+            ),
+        )
     }
 
     private fun currentAddressSearchGate(normalizedQuery: String): AddressSearchGate =

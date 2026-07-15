@@ -565,6 +565,131 @@ class SearchStopViewModelTest {
 
     // endregion Search query analytics redaction
 
+    // region Address search analytics
+
+    private fun addressEvents(): List<AnalyticsEvent.SearchStopQuery> =
+        (fakeAnalytics as FakeAnalytics).getTrackedEvents("search_stop_query")
+            .filterIsInstance<AnalyticsEvent.SearchStopQuery>()
+            .filter { it.resultSource == AnalyticsEvent.SearchStopQuery.ResultSource.ADDRESS }
+
+    @Test
+    fun `GIVEN an address fetch WHEN it resolves THEN one address-source event fires with the local session id`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = listOf(
+                SearchStopState.SearchResult.Address(
+                    addressId = "addr-1",
+                    displayName = "Sydney Opera House",
+                    addressType = "poi",
+                ),
+            )
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                val addressEvent = addressEvents().single()
+                assertEquals(1, addressEvent.resultsCount)
+                assertFalse(addressEvent.isError)
+                assertFalse(addressEvent.properties.orEmpty().containsKey("query"))
+
+                val localEvent = (fakeAnalytics as FakeAnalytics)
+                    .getTrackedEvents("search_stop_query")
+                    .filterIsInstance<AnalyticsEvent.SearchStopQuery>()
+                    .single { it.resultSource == AnalyticsEvent.SearchStopQuery.ResultSource.LOCAL }
+                assertEquals(localEvent.searchSessionId, addressEvent.searchSessionId)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN zero results in both pipelines WHEN query has no digits THEN address event carries the carve-out`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = emptyList()
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("fulton place"))
+                advanceUntilIdle()
+
+                val addressEvent = addressEvents().single()
+                assertEquals(0, addressEvent.resultsCount)
+                assertEquals("fulton place", addressEvent.zeroResultQuery)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN the address pipeline recognises the query WHEN results return THEN the carve-out stays off`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = listOf(
+                SearchStopState.SearchResult.Address(
+                    addressId = "addr-1",
+                    displayName = "Fulton Place",
+                    addressType = "street",
+                ),
+            )
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("fulton place"))
+                advanceUntilIdle()
+
+                val addressEvent = addressEvents().single()
+                assertEquals(null, addressEvent.zeroResultQuery)
+                assertFalse(addressEvent.properties.orEmpty().containsKey("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN the address fetch fails WHEN the event fires THEN it is an error with no raw text`() =
+        runTest {
+            fakeRemoteAddressResultsManager.shouldThrowError = true
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("fulton place"))
+                advanceUntilIdle()
+
+                val addressEvent = addressEvents().single()
+                assertTrue(addressEvent.isError)
+                assertEquals(null, addressEvent.zeroResultQuery)
+                assertFalse(addressEvent.properties.orEmpty().containsKey("query"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a cached query WHEN searched again THEN no second address event fires`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = emptyList()
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
+                assertEquals(1, addressEvents().size)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion Address search analytics
+
     // region Address search eligibility
 
     private fun addressAwareViewModel(minQueryLength: Int = 6) = SearchStopViewModel(

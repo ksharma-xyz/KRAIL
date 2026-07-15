@@ -166,6 +166,9 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * @param resultsCount    Result count on success.
      * @param isError         True when the search pipeline threw.
      * @param zeroResultQuery Raw text only under the redaction carve-out, else null.
+     * @param resultSource    Which pipeline resolved: local stop search or the remote
+     *                        NSW address/POI pipeline. One firing per pipeline per
+     *                        settled query; join on [searchSessionId].
      */
     data class SearchStopQuery(
         val queryLength: Int,
@@ -173,11 +176,13 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val resultsCount: Int? = null,
         val isError: Boolean = false,
         val zeroResultQuery: String? = null,
+        val resultSource: ResultSource = ResultSource.LOCAL,
     ) : AnalyticsEvent(
         name = "search_stop_query",
         properties = buildMap {
             put("queryLength", queryLength)
             put("searchSessionId", searchSessionId)
+            put("resultSource", resultSource.value)
             if (isError) {
                 put("isError", isError)
             } else if (resultsCount != null) {
@@ -185,7 +190,12 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             }
             zeroResultQuery?.let { put("query", it) }
         },
-    )
+    ) {
+        enum class ResultSource(val value: String) {
+            LOCAL("local"),
+            ADDRESS("address"),
+        }
+    }
 
     data class ClearRecentSearchClickEvent(
         val recentSearchCount: Int,

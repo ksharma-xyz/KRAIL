@@ -710,14 +710,12 @@ private fun SearchStopListContent(
                         onLabelPillClick = onLabelPillClick,
                         onNewLabelClick = onNewLabelClick,
                         onEvent = onEvent,
-                        searchQuery = searchStopState.searchQuery,
                     )
                     addressResultsSection(
                         addressResults = searchStopState.addressResults,
                         isLoading = searchStopState.isAddressSearchLoading,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
-                        searchQuery = searchStopState.searchQuery,
                         onStopSelect = onStopSelect,
                         onEvent = onEvent,
                     )
@@ -750,7 +748,6 @@ private fun SearchStopListContent(
                         isLoading = searchStopState.isAddressSearchLoading,
                         keyboard = keyboard,
                         focusRequester = focusRequester,
-                        searchQuery = searchStopState.searchQuery,
                         onStopSelect = onStopSelect,
                         onEvent = onEvent,
                     )
@@ -815,7 +812,6 @@ private fun LazyListScope.searchResultsList(
     searchResults: List<SearchStopState.SearchResult>,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
-    searchQuery: String,
     stopLabels: ImmutableList<StopLabel>,
     expandedStopKey: String?,
     onToggleExpandStop: (String) -> Unit,
@@ -850,10 +846,7 @@ private fun LazyListScope.searchResultsList(
                         focusRequester.freeFocus()
                         onStopSelect(stopItem)
                         onEvent(
-                            SearchStopUiEvent.TrackStopSelected(
-                                stopItem = stopItem,
-                                searchQuery = searchQuery,
-                            ),
+                            SearchStopUiEvent.TrackStopSelected(stopItem = stopItem),
                         )
                     },
                     onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
@@ -915,7 +908,6 @@ private fun LazyListScope.addressResultsSection(
     isLoading: Boolean,
     keyboard: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusRequester: FocusRequester,
-    searchQuery: String,
     onStopSelect: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
 ) {
@@ -959,10 +951,7 @@ private fun LazyListScope.addressResultsSection(
                 focusRequester.freeFocus()
                 onStopSelect(stopItem)
                 onEvent(
-                    SearchStopUiEvent.TrackStopSelected(
-                        stopItem = stopItem,
-                        searchQuery = searchQuery,
-                    ),
+                    SearchStopUiEvent.TrackStopSelected(stopItem = stopItem),
                 )
             },
             modifier = Modifier.fillMaxWidth(),

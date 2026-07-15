@@ -29,6 +29,10 @@ either; most changes should be params on an existing event, not a new name.
 |---|---|---|---|---|---|---|---|
 | 2026-07-14 | `stop_selected` | `locationKind` | `transit_stop｜address` (default `transit_stop`) | A stop, address, or POI is selected from search results, recents, empty-state, or trip-stop click | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Registered | — |
 | 2026-07-14 | `stop_selected` | `addressType` | Allowlisted `singlehouse｜street｜poi｜unknown`; omitted for transit stops | Same as above, only present when `locationKind = address` | [#1711](https://github.com/ksharma-xyz/KRAIL/pull/1711) | Registered | — |
+| 2026-07-15 | `search_stop_query` | `queryLength` | Int, character count of typed query | Settled search query resolves (success or error) | TBD | Pending | — |
+| 2026-07-15 | `search_stop_query` | `searchSessionId` | Random hex string per settled query; joins to `stop_selected` | Same as above | TBD | Pending | — |
+| 2026-07-15 | `search_stop_query` | `query` (semantics change) | Raw text now sent ONLY under the zero-result carve-out: zero results everywhere, no digits, ≤ 25 chars (`SearchQueryAnalyticsRedaction`). Previously sent on every firing | Zero-result fuzzy-diagnostics carve-out only | TBD | Pending | — |
+| 2026-07-15 | `stop_selected` | `searchQuery` (REMOVED) | Param deleted: carried raw typed text, which can be a street address (privacy policy promises no PII in analytics) | No longer fires | TBD | Pending | — |
 
 Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
 2026-07-14.

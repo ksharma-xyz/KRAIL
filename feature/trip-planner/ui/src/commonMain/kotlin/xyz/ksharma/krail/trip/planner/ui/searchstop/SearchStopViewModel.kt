@@ -55,6 +55,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.random.Random
 
 @Suppress("TooManyFunctions", "LongParameterList")
 class SearchStopViewModel(
@@ -103,6 +104,11 @@ class SearchStopViewModel(
     private val addressSearchCache = AddressSearchCache()
     private var addressSearchRequestToken = 0
 
+    // Random ID minted per settled query; sent on search analytics events so funnels
+    // can be joined per query instance without carrying the typed text (which can be
+    // a street address — see SearchQueryAnalyticsRedaction).
+    private var currentSearchSessionId: String = newSearchSessionId()
+
     @Suppress("LongMethod", "ReturnCount")
     fun onEvent(event: SearchStopUiEvent) {
         when (event) {
@@ -113,7 +119,6 @@ class SearchStopViewModel(
                     StopSelectedEvent(
                         stopId = event.stopItem.stopId,
                         isRecentSearch = event.isRecentSearch,
-                        searchQuery = event.searchQuery,
                         locationKind = when (event.stopItem.locationKind) {
                             LocationKind.TRANSIT_STOP -> StopSelectedEvent.LocationKind.TRANSIT_STOP
                             LocationKind.ADDRESS -> StopSelectedEvent.LocationKind.ADDRESS
@@ -479,6 +484,9 @@ class SearchStopViewModel(
         // Non-empty query -> set loading and start search
         updateUiState { displayLoading() }
 
+        currentSearchSessionId = newSearchSessionId()
+        val searchSessionId = currentSearchSessionId
+
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(100) // debounce / small throttle on VM side
@@ -487,13 +495,24 @@ class SearchStopViewModel(
                 updateUiState { displayData(stopResults) }
                 analytics.track(
                     AnalyticsEvent.SearchStopQuery(
-                        query = query,
+                        queryLength = query.length,
+                        searchSessionId = searchSessionId,
                         resultsCount = stopResults.size,
+                        zeroResultQuery = resolveZeroResultQuery(
+                            query = query,
+                            localResultsCount = stopResults.size,
+                        ),
                     ),
                 )
             }.getOrElse {
                 updateUiState { displayError() }
-                analytics.track(AnalyticsEvent.SearchStopQuery(query = query, isError = true))
+                analytics.track(
+                    AnalyticsEvent.SearchStopQuery(
+                        queryLength = query.length,
+                        searchSessionId = searchSessionId,
+                        isError = true,
+                    ),
+                )
             }
         }
 
@@ -563,6 +582,22 @@ class SearchStopViewModel(
             isAddressSearchEnabled = isAddressSearchEnabled(),
             minQueryLength = addressSearchMinQueryLength(),
         )
+
+    /**
+     * Local-pipeline carve-out site. When the address pipeline is eligible for this
+     * query, it resolves later and owns the carve-out decision (the query may be a
+     * real address the NSW API recognises), so this returns null.
+     */
+    private fun resolveZeroResultQuery(query: String, localResultsCount: Int): String? {
+        if (currentAddressSearchGate(normalizeAddressQuery(query)) == AddressSearchGate.ELIGIBLE) {
+            return null
+        }
+        return SearchQueryAnalyticsRedaction.zeroResultQueryOrNull(
+            query = query,
+            localResultsCount = localResultsCount,
+            addressResultsCount = null,
+        )
+    }
 
     private fun StopItem.productClasses(): String =
         when (locationKind) {
@@ -728,5 +763,7 @@ class SearchStopViewModel(
         // Longer than local search's 100ms debounce - network round-trip is inherently
         // slower, and there's no benefit to firing it as eagerly as the local DB query.
         const val ADDRESS_SEARCH_DEBOUNCE_MS = 350L
+
+        fun newSearchSessionId(): String = Random.nextLong().toULong().toString(radix = 16)
     }
 }

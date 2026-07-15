@@ -288,13 +288,18 @@ class SearchStopViewModel(
                 }
                 analytics.track(
                     StopLabelStopAssignedEvent(
-                        labelName = event.labelKey,
-                        stopId = event.stopItem.stopId,
-                        stopName = event.stopItem.stopName,
+                        assignmentSurface = event.surface.toAnalyticsSurface(),
+                        assignmentMode = if (event.isNewLabel) {
+                            StopLabelStopAssignedEvent.AssignmentMode.NEW_LABEL
+                        } else {
+                            StopLabelStopAssignedEvent.AssignmentMode.EXISTING_LABEL
+                        },
+                        locationKind = when (event.stopItem.locationKind) {
+                            LocationKind.TRANSIT_STOP -> StopSelectedEvent.LocationKind.TRANSIT_STOP
+                            LocationKind.ADDRESS -> StopSelectedEvent.LocationKind.ADDRESS
+                        },
+                        labelKind = labelKindOf(event.labelKey),
                         isReassignment = isReassignment,
-                        isProtectedLabel = event.labelKey
-                            .equals(StopLabel.PROTECTED_LABEL, ignoreCase = true),
-                        source = event.source,
                     ),
                 )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
@@ -334,9 +339,9 @@ class SearchStopViewModel(
                         }
                         analytics.track(
                             StopLabelCreatedEvent(
-                                labelName = cleanedName,
-                                emoji = event.emoji,
-                                totalLabelsCountAfter = _uiState.value.stopLabels.size,
+                                creationSurface = event.surface.toAnalyticsSurface(),
+                                labelCountBucket = AnalyticsEvent.StopLabelCountBucket
+                                    .from(_uiState.value.stopLabels.size),
                             ),
                         )
                         viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
@@ -510,9 +515,10 @@ class SearchStopViewModel(
                         queryLength = query.length,
                         searchSessionId = searchSessionId,
                         resultsCount = stopResults.size,
-                        zeroResultQuery = resolveZeroResultQuery(
+                        zeroResultQuery = resolveLocalZeroResultQuery(
                             query = query,
                             localResultsCount = stopResults.size,
+                            addressSearchGate = currentAddressSearchGate(normalizeAddressQuery(query)),
                         ),
                     ),
                 )
@@ -586,41 +592,13 @@ class SearchStopViewModel(
                     isAddressSearchLoading = false,
                 )
             }
-            trackAddressSearchResolved(
+            analytics.trackAddressSearchResolved(
                 normalizedQuery = normalizedQuery,
                 searchSessionId = searchSessionId,
+                localResultsCount = _uiState.value.searchResults.size,
                 addressResults = if (fetchResult.isSuccess) addressResults else null,
             )
         }
-    }
-
-    /**
-     * One firing per resolved (non-stale) address fetch; cache hits are excluded so
-     * `resultSource = address` counts network calls, the number the API cost model
-     * cares about. This is also the carve-out site for address-eligible queries -
-     * only here are both pipelines' result counts known (see [resolveZeroResultQuery]).
-     */
-    private fun trackAddressSearchResolved(
-        normalizedQuery: String,
-        searchSessionId: String,
-        addressResults: List<SearchStopState.SearchResult.Address>?,
-    ) {
-        analytics.track(
-            AnalyticsEvent.SearchStopQuery(
-                queryLength = normalizedQuery.length,
-                searchSessionId = searchSessionId,
-                resultSource = AnalyticsEvent.SearchStopQuery.ResultSource.ADDRESS,
-                resultsCount = addressResults?.size,
-                isError = addressResults == null,
-                zeroResultQuery = addressResults?.let {
-                    SearchQueryAnalyticsRedaction.zeroResultQueryOrNull(
-                        query = normalizedQuery,
-                        localResultsCount = _uiState.value.searchResults.size,
-                        addressResultsCount = it.size,
-                    )
-                },
-            ),
-        )
     }
 
     private fun currentAddressSearchGate(normalizedQuery: String): AddressSearchGate =
@@ -629,22 +607,6 @@ class SearchStopViewModel(
             isAddressSearchEnabled = isAddressSearchEnabled(),
             minQueryLength = addressSearchMinQueryLength(),
         )
-
-    /**
-     * Local-pipeline carve-out site. When the address pipeline is eligible for this
-     * query, it resolves later and owns the carve-out decision (the query may be a
-     * real address the NSW API recognises), so this returns null.
-     */
-    private fun resolveZeroResultQuery(query: String, localResultsCount: Int): String? {
-        if (currentAddressSearchGate(normalizeAddressQuery(query)) == AddressSearchGate.ELIGIBLE) {
-            return null
-        }
-        return SearchQueryAnalyticsRedaction.zeroResultQueryOrNull(
-            query = query,
-            localResultsCount = localResultsCount,
-            addressResultsCount = null,
-        )
-    }
 
     private fun StopItem.productClasses(): String =
         when (locationKind) {

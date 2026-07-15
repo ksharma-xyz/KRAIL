@@ -49,6 +49,33 @@ Separate names force every dashboard and derivation to UNION two event names to 
 one feature across a change. Missing param on historical rows = "before the change",
 which gives before/after splits for free.
 
+## Search funnel join model: `searchSessionId`
+
+Analytics never carry raw search query text (a typed query can be a street address;
+see `SearchQueryAnalyticsRedaction` in `:feature:trip-planner:ui` for the one narrow
+zero-result carve-out). The correlation the text used to provide comes from
+`searchSessionId` instead: a random 64-bit hex string minted in
+`SearchStopViewModel.onSearchTextChanged` for every settled non-blank query.
+
+Semantics:
+
+- **One ID per settled query.** Typing "cen" then "central" mints two IDs. Every
+  event describing the same query instance carries the same ID.
+- **Carried by** `search_stop_query` (both the `resultSource = local` and
+  `resultSource = address` firings) and `stop_selected`.
+- **Null when there is no live query.** Selections from recents, empty-state stops,
+  and map picks attach no ID; joining them to a search would be wrong.
+- **Meaningless by design.** Not stored on device, not derived from anything, adds
+  zero information about the user. It only links events to each other.
+- **Not `ga_session_id`.** Firebase's session ID spans a whole app sitting (many
+  searches); `searchSessionId` is per query, which is where "were the results any
+  good" lives.
+
+What it buys: joining the three events per query instance answers "N local and M
+address results were on screen, the user picked an address" without any query text.
+Rows before 2026-07-15 have no `searchSessionId`; treat missing as "pre-join era",
+only app-session-level funnels are possible there.
+
 ## Registration gate
 
 Every new event or param must be registered in `docs/EVENT_REGISTRY.md` in the

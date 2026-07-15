@@ -2,9 +2,12 @@
 
 ## Status
 
-Exploratory design only. This document defines the measurement model for the
-stop-label lifecycle: creation, assignment, removal, deletion, renaming, and
-reordering. It makes no analytics or runtime change.
+**Implemented 2026-07-15.** All four events reshaped to the bounded params below
+(raw label/stop identity dropped), reorder fires once per completed changed drag,
+and ManageStopLabelsScreen joined the screen-view taxonomy. Rename stays
+untracked per the decision below. This document remains as the measurement-model
+rationale; the registered param list lives in KRAIL-Analytics
+`docs/EVENT_REGISTRY.md`.
 
 Read `docs/ANALYTICS_EVENTS.md` and register every approved parameter in the
 KRAIL-Analytics `EVENT_REGISTRY.md` before implementation.

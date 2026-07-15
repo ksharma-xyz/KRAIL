@@ -55,6 +55,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.math.abs
 import kotlin.random.Random
 
 @Suppress("TooManyFunctions", "LongParameterList")
@@ -367,9 +368,9 @@ class SearchStopViewModel(
                 }
                 analytics.track(
                     StopLabelRemovedEvent(
-                        labelName = event.labelKey,
                         action = StopLabelRemovedEvent.Action.CLEAR,
                         hadStop = hadStop,
+                        labelKind = labelKindOf(event.labelKey),
                     ),
                 )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
@@ -418,14 +419,35 @@ class SearchStopViewModel(
                 }
                 analytics.track(
                     StopLabelRemovedEvent(
-                        labelName = event.labelKey,
                         action = StopLabelRemovedEvent.Action.DELETE,
                         hadStop = hadStop,
+                        labelKind = labelKindOf(event.labelKey),
                     ),
                 )
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     sandook.deleteStopLabel(event.labelKey)
                 }
+            }
+
+            is SearchStopUiEvent.LabelReorderDragCompleted -> {
+                // Only a drag whose final order differs is a reorder; a drag that
+                // returns to its start position is a no-op, matching the plan's
+                // "fire once per completed changed drag" rule.
+                if (event.fromIndex != event.toIndex) {
+                    analytics.track(
+                        StopLabelReorderedEvent(
+                            labelKind = labelKindOf(event.labelKey),
+                            moveDistanceBucket = StopLabelReorderedEvent.MoveDistanceBucket
+                                .from(abs(event.fromIndex - event.toIndex)),
+                            setLabelCountBucket = AnalyticsEvent.StopLabelCountBucket
+                                .from(_uiState.value.stopLabels.count { it.isSet }),
+                        ),
+                    )
+                }
+            }
+
+            SearchStopUiEvent.ManageLabelsScreenViewed -> {
+                analytics.trackScreenViewEvent(screen = AnalyticsScreen.ManageStopLabels)
             }
 
             is SearchStopUiEvent.MoveLabelToIndex -> {
@@ -443,16 +465,8 @@ class SearchStopViewModel(
                 current.add(target, moved)
                 val reordered = current.toImmutableList()
                 updateUiState { copy(stopLabels = reordered) }
-                analytics.track(
-                    StopLabelReorderedEvent(
-                        labelName = moved.label,
-                        previousIndex = sourceIndex,
-                        newIndex = target,
-                        totalCount = reordered.size,
-                        isProtectedLabel = moved.label
-                            .equals(StopLabel.PROTECTED_LABEL, ignoreCase = true),
-                    ),
-                )
+                // No analytics here: MoveLabelToIndex fires once per swap mid-drag.
+                // LabelReorderDragCompleted reports the finished gesture instead.
                 viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
                     // One transaction per firing, not one write per label — onMove fires
                     // per swap mid-drag, not just once on drop, so an unbatched loop here

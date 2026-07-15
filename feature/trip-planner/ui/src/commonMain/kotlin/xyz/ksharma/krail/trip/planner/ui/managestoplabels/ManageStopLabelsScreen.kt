@@ -61,9 +61,15 @@ internal fun ManageStopLabelsScreen(
     onRemoveAssignment: (StopLabel) -> Unit,
     onDeleteLabel: (StopLabel) -> Unit,
     onMove: (labelKey: String, targetLabelKey: String) -> Unit,
+    // Fired once when a drag gesture ends; indices are within the set-labels list.
+    // onMove already mutated state per swap - this exists so analytics can count one
+    // completed drag as one event.
+    onDragCompleted: (labelKey: String, fromIndex: Int, toIndex: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isReorderMode by remember { mutableStateOf(false) }
+    // Set-labels index captured when a drag starts; -1 when no drag is in flight.
+    var dragStartIndex by remember { mutableStateOf(-1) }
     // Screen-wide so only one row is ever open at a time — expanding a second row
     // collapses whichever was open, across both the set and not-set sections.
     var expandedLabelKey by rememberSaveable { mutableStateOf<String?>(null) }
@@ -156,7 +162,17 @@ internal fun ManageStopLabelsScreen(
                         onRemoveAssignment = { onRemoveAssignment(label) },
                         onDeleteLabel = { onDeleteLabel(label) },
                         dragHandleModifier = Modifier.longPressDraggableHandle(
-                            onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
+                            onDragStarted = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                dragStartIndex = setLabels.indexOfFirst { it.label == label.label }
+                            },
+                            onDragStopped = {
+                                val endIndex = setLabels.indexOfFirst { it.label == label.label }
+                                if (dragStartIndex >= 0 && endIndex >= 0) {
+                                    onDragCompleted(label.label, dragStartIndex, endIndex)
+                                }
+                                dragStartIndex = -1
+                            },
                         ),
                         // Without this, expanding/collapsing a row snaps the rows below
                         // into place instead of sliding — they'd flash out of order and
@@ -240,6 +256,7 @@ private fun PreviewManageStopLabelsScreen_Normal() {
             onRemoveAssignment = {},
             onDeleteLabel = {},
             onMove = { _, _ -> },
+            onDragCompleted = { _, _, _ -> },
         )
     }
 }
@@ -255,6 +272,7 @@ private fun PreviewManageStopLabelsScreen_FreshInstall() {
             onRemoveAssignment = {},
             onDeleteLabel = {},
             onMove = { _, _ -> },
+            onDragCompleted = { _, _, _ -> },
         )
     }
 }

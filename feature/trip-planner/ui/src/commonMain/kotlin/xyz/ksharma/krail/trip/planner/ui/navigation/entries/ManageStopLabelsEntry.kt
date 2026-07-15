@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
@@ -32,6 +33,15 @@ internal fun EntryProviderScope<NavKey>.ManageStopLabelsEntry(
         val viewModel: SearchStopViewModel = koinViewModel()
         val searchStopState by viewModel.uiState.collectAsStateWithLifecycle()
 
+        // rememberSaveable so rotation / process death doesn't double-count the view.
+        var screenViewTracked by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            if (!screenViewTracked) {
+                screenViewTracked = true
+                viewModel.onEvent(SearchStopUiEvent.ManageLabelsScreenViewed)
+            }
+        }
+
         // Delete needs a confirm (J7); Remove assignment fires instantly.
         var pendingDeleteLabel by rememberSaveable(stateSaver = StopLabelSaver) {
             mutableStateOf<StopLabel?>(null)
@@ -50,6 +60,15 @@ internal fun EntryProviderScope<NavKey>.ManageStopLabelsEntry(
             onMove = { labelKey, targetLabelKey ->
                 viewModel.onEvent(
                     SearchStopUiEvent.MoveLabelToIndex(labelKey = labelKey, targetLabelKey = targetLabelKey),
+                )
+            },
+            onDragCompleted = { labelKey, fromIndex, toIndex ->
+                viewModel.onEvent(
+                    SearchStopUiEvent.LabelReorderDragCompleted(
+                        labelKey = labelKey,
+                        fromIndex = fromIndex,
+                        toIndex = toIndex,
+                    ),
                 )
             },
         )

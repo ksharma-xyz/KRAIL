@@ -733,9 +733,14 @@ class SearchStopViewModelLabelHandlersTest {
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_removed")
                 assertNotNull(tracked)
                 val event = assertIs<AnalyticsEvent.StopLabelRemovedEvent>(tracked)
-                assertEquals("Home", event.labelName)
                 assertEquals(AnalyticsEvent.StopLabelRemovedEvent.Action.CLEAR, event.action)
                 assertTrue(event.hadStop, "label had a pinned stop before clear")
+                assertEquals(AnalyticsEvent.StopLabelKind.PROTECTED_DEFAULT, event.labelKind)
+                assertEquals("manage_labels", event.properties?.get("surface"))
+                assertFalse(
+                    event.properties.orEmpty().containsKey("labelName"),
+                    "removed event must not carry raw label text",
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -752,8 +757,8 @@ class SearchStopViewModelLabelHandlersTest {
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_removed")
                 assertNotNull(tracked)
                 val event = assertIs<AnalyticsEvent.StopLabelRemovedEvent>(tracked)
-                assertEquals("Work", event.labelName)
                 assertEquals(AnalyticsEvent.StopLabelRemovedEvent.Action.DELETE, event.action)
+                assertEquals(AnalyticsEvent.StopLabelKind.CUSTOM, event.labelKind)
                 // Seeded Work has no pinned stop, so hadStop must be false. This keeps
                 // the "users delete labels they never used" funnel honest.
                 assertFalse(event.hadStop)
@@ -778,24 +783,87 @@ class SearchStopViewModelLabelHandlersTest {
         }
 
     @Test
-    fun `Given two labels When MoveLabelToIndex moves Home to position 1 Then reordered event is tracked`() =
+    fun `Given MoveLabelToIndex swaps When drag is mid-flight Then no reordered event is tracked`() =
         runTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
+                // Per-swap moves fire during the drag; only the completed gesture
+                // (LabelReorderDragCompleted) may produce an analytics event,
+                // otherwise one long drag inflates the reorder count.
                 viewModel.onEvent(SearchStopUiEvent.MoveLabelToIndex("Home", "Work"))
                 advanceUntilIdle()
 
-                val tracked = fakeAnalytics.getTrackedEvent("stop_label_reordered")
-                assertNotNull(tracked)
-                val event = assertIs<AnalyticsEvent.StopLabelReorderedEvent>(tracked)
-                assertEquals("Home", event.labelName)
-                assertEquals(0, event.previousIndex)
-                assertEquals(1, event.newIndex)
-                assertEquals(2, event.totalCount)
-                // Home is the protected label; flag must be true so the dashboard can
-                // separate "user moved Home" from "user moved a custom label".
-                assertTrue(event.isProtectedLabel)
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_reordered"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given completed changed drag When LabelReorderDragCompleted fires Then one reordered event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    SearchStopUiEvent.LabelReorderDragCompleted(
+                        labelKey = "Home",
+                        fromIndex = 0,
+                        toIndex = 2,
+                    ),
+                )
+                advanceUntilIdle()
+
+                val events = fakeAnalytics.getTrackedEvents("stop_label_reordered")
+                assertEquals(1, events.size)
+                val event = assertIs<AnalyticsEvent.StopLabelReorderedEvent>(events.single())
+                assertEquals(AnalyticsEvent.StopLabelKind.PROTECTED_DEFAULT, event.labelKind)
+                assertEquals(
+                    AnalyticsEvent.StopLabelReorderedEvent.MoveDistanceBucket.TWO_TO_THREE,
+                    event.moveDistanceBucket,
+                )
+                assertFalse(
+                    event.properties.orEmpty().containsKey("labelName"),
+                    "reordered event must not carry raw label text",
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given drag returned to start When LabelReorderDragCompleted fires Then no reordered event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    SearchStopUiEvent.LabelReorderDragCompleted(
+                        labelKey = "Home",
+                        fromIndex = 1,
+                        toIndex = 1,
+                    ),
+                )
+                advanceUntilIdle()
+
+                assertFalse(fakeAnalytics.isEventTracked("stop_label_reordered"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given ManageLabelsScreenViewed When fired Then screen view event is tracked`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                fakeAnalytics.clear()
+
+                viewModel.onEvent(SearchStopUiEvent.ManageLabelsScreenViewed)
+                advanceUntilIdle()
+
+                val event = assertIs<AnalyticsEvent.ScreenViewEvent>(
+                    fakeAnalytics.getTrackedEvent("view_screen"),
+                )
+                assertEquals("ManageStopLabels", event.screen.name)
                 cancelAndIgnoreRemainingEvents()
             }
         }

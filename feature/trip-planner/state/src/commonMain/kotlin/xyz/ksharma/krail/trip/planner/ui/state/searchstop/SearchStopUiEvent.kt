@@ -116,6 +116,21 @@ sealed interface SearchStopUiEvent {
 
     /** Moves [labelKey] to sit at [targetLabelKey]'s position; sort orders for all labels are renumbered. */
     data class MoveLabelToIndex(val labelKey: String, val targetLabelKey: String) : SearchStopUiEvent
+
+    /**
+     * Fired once when a Manage Labels drag gesture ends. Analytics-only -
+     * [MoveLabelToIndex] already mutated state per swap during the drag; this reports
+     * the completed gesture so one drag is one analytics event, however many swaps it
+     * passed through. [fromIndex]/[toIndex] are positions within the set-labels list.
+     */
+    data class LabelReorderDragCompleted(
+        val labelKey: String,
+        val fromIndex: Int,
+        val toIndex: Int,
+    ) : SearchStopUiEvent
+
+    /** Fired once when ManageStopLabelsScreen becomes visible. Analytics-only. */
+    data object ManageLabelsScreenViewed : SearchStopUiEvent
 }
 
 /**

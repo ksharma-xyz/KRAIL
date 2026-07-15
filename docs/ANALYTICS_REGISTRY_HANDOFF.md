@@ -39,6 +39,9 @@ either; most changes should be params on an existing event, not a new name.
 | 2026-07-15 | `stop_selected` | `displayedAddressCount` | Bucket `0｜1_3｜4_10｜11_plus` | Address/POI results on screen at selection time; omitted without a live query | [#1717](https://github.com/ksharma-xyz/KRAIL/pull/1717) | Registered | — |
 | 2026-07-15 | `stop_label_created` | `creationSurface`, `labelCountBucket`; REMOVED `labelName`/`emoji`/`totalLabelsCountAfter` | `search_result｜recent｜empty_state｜address_result`; bucket `1｜2｜3_5｜6_plus` | New custom label persisted; raw label text dropped (privacy) | TBD | Pending | — |
 | 2026-07-15 | `stop_label_stop_assigned` | `assignmentSurface`, `assignmentMode`, `locationKind`, `labelKind`; REMOVED `labelName`/`stopId`/`stopName`/`source` | Surfaces as above; `existing_label｜new_label`; `transit_stop｜address`; `protected_default｜custom`. Historical `source` values (`choose_mode｜star_sheet`) refer to deleted v2/v3 flows, do not reinterpret | Location pinned to a label; raw stop identity dropped (privacy) | TBD | Pending | — |
+| 2026-07-15 | `stop_label_removed` | `labelKind`, `surface`; REMOVED `labelName` | `protected_default｜custom`; `surface` always `manage_labels` | Assignment cleared or label deleted in Manage Labels | TBD | Pending | — |
+| 2026-07-15 | `stop_label_reordered` | `labelKind`, `moveDistanceBucket`, `setLabelCountBucket`, `surface`; REMOVED `labelName`/`previousIndex`/`newIndex`/`totalCount` | Distance `1｜2_3｜4_plus`; set-count `1｜2｜3_5｜6_plus`; `manage_labels`. NOW FIRES ONCE PER COMPLETED CHANGED DRAG - historical rows fired per swap, counts inflated, not comparable | Drag released in Manage Labels with a different final order | TBD | Pending | — |
+| 2026-07-15 | `view_screen` | `name = ManageStopLabels` (new value) | Existing screen-view event, new screen name | ManageStopLabelsScreen becomes visible (once per entry, rotation-safe) | TBD | Pending | — |
 
 Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
 2026-07-14.
@@ -55,7 +58,7 @@ Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table
 
 ## Not yet in this ledger (scoped, not implemented)
 
-The stop-label lifecycle analytics work (`docs/plans/STOP_LABEL_ANALYTICS_PLAN.md`) has
-been scoped — 4 existing events get new params, 0 new event names — but nothing has
-shipped yet. It will get rows here once a PR actually merges, not before. See that plan
-doc for the full proposed param table in the meantime.
+Nothing at the moment. The stop-label lifecycle analytics work
+(`docs/plans/STOP_LABEL_ANALYTICS_PLAN.md`) shipped 2026-07-15 - all four events
+reshaped to bounded params, reorder moved to drag completion, Manage screen view
+added; rows above.

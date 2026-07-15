@@ -10,7 +10,9 @@ private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
 private const val PROP_STOP_NAME = "stopName"
-private const val PROP_LABEL_NAME = "labelName"
+private const val PROP_SURFACE = "surface"
+private const val PROP_LABEL_KIND = "labelKind"
+private const val SURFACE_MANAGE_LABELS = "manage_labels"
 private const val PROP_FROM_STOP_ID = "fromStopId"
 private const val PROP_TO_STOP_ID = "toStopId"
 private const val PROP_PREVIOUS_INDEX = "previousIndex"
@@ -349,7 +351,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "assignmentSurface" to assignmentSurface.value,
             "assignmentMode" to assignmentMode.value,
             "locationKind" to locationKind.value,
-            "labelKind" to labelKind.value,
+            PROP_LABEL_KIND to labelKind.value,
             "isReassignment" to isReassignment,
         ),
     ) {
@@ -365,30 +367,30 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * "label cleanup behaviour" question without joining two streams.
      *
      * Aggregations this enables:
-     *  - "Are users removing labels or just clearing them?" → group by [action].
-     *  - "Are users deleting labels they never filled?" → filter [action] = DELETE,
+     *  - "Are users removing labels or just clearing them?" - group by [action].
+     *  - "Are users deleting labels they never filled?" - filter [action] = DELETE,
      *    [hadStop] = false.
-     *  - "Do users churn through the same label name?" → join with
-     *    [StopLabelCreatedEvent] on [labelName].
      *
      * Note: protected Home label deletions are silently no-op'd by the handler, so this
-     * event does not fire for them — keeps the data clean from defensive UI calls.
+     * event does not fire for them - keeps the data clean from defensive UI calls.
+     * Historical rows (before 2026-07-15) carried a raw `labelName`.
      *
-     * @param labelName Label being removed.
      * @param action    [Action.DELETE] when the entire label is removed,
      *                  [Action.CLEAR] when only the stop is unlinked.
      * @param hadStop   Whether the label had a stop attached at the moment of removal.
+     * @param labelKind Protected default (Home) vs custom label.
      */
     data class StopLabelRemovedEvent(
-        val labelName: String,
         val action: Action,
         val hadStop: Boolean,
+        val labelKind: StopLabelKind,
     ) : AnalyticsEvent(
         name = "stop_label_removed",
         properties = mapOf(
-            PROP_LABEL_NAME to labelName,
             PROP_ACTION to action.value,
             "hadStop" to hadStop,
+            PROP_LABEL_KIND to labelKind.value,
+            PROP_SURFACE to SURFACE_MANAGE_LABELS,
         ),
     ) {
         enum class Action(val value: String) {
@@ -398,39 +400,53 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     }
 
     /**
-     * Fired when the user reorders a stop label pill by drag-and-drop.
+     * Fired once per completed drag in Manage Labels whose final order differs from
+     * the starting order - never per intermediate swap, so one long drag is one event.
      *
      * Aggregations this enables:
      *  - "Are stop labels actually being reordered, or do users leave Home/Work in
-     *    the seeded order?" → presence/count of this event.
-     *  - "Are users moving the protected Home label around?" → filter
-     *    [isProtectedLabel] = true. Useful because Home is non-deletable but is
-     *    still draggable; this answers "do users want it elsewhere".
-     *  - "Promotion vs shuffle behaviour" → [newIndex] distribution.
+     *    the seeded order?" - presence/count of this event.
+     *  - "Are users moving the protected Home label around?" - filter [labelKind].
+     *  - "Promotion vs shuffle behaviour" - [moveDistanceBucket] distribution.
      *
-     * @param labelName        Label that was moved.
-     * @param previousIndex    Index before the move.
-     * @param newIndex         Index after the move.
-     * @param totalCount       Total labels in the list at reorder time.
-     * @param isProtectedLabel `true` for the Home label (non-deletable but
-     *                         still draggable).
+     * Historical rows (before 2026-07-15) fired once per swap mid-drag with raw
+     * `labelName`/`previousIndex`/`newIndex`/`totalCount` - counts from that era are
+     * inflated and not comparable.
+     *
+     * @param labelKind          Protected default (Home) vs custom label.
+     * @param moveDistanceBucket How far the label travelled, bucketed.
+     * @param setLabelCountBucket How many set (draggable) labels existed at drag time.
      */
     data class StopLabelReorderedEvent(
-        val labelName: String,
-        val previousIndex: Int,
-        val newIndex: Int,
-        val totalCount: Int,
-        val isProtectedLabel: Boolean,
+        val labelKind: StopLabelKind,
+        val moveDistanceBucket: MoveDistanceBucket,
+        val setLabelCountBucket: StopLabelCountBucket,
     ) : AnalyticsEvent(
         name = "stop_label_reordered",
         properties = mapOf(
-            PROP_LABEL_NAME to labelName,
-            PROP_PREVIOUS_INDEX to previousIndex,
-            PROP_NEW_INDEX to newIndex,
-            PROP_TOTAL_COUNT to totalCount,
-            "isProtectedLabel" to isProtectedLabel,
+            PROP_LABEL_KIND to labelKind.value,
+            "moveDistanceBucket" to moveDistanceBucket.value,
+            "setLabelCountBucket" to setLabelCountBucket.value,
+            PROP_SURFACE to SURFACE_MANAGE_LABELS,
         ),
-    )
+    ) {
+        enum class MoveDistanceBucket(val value: String) {
+            ONE("1"),
+            TWO_TO_THREE("2_3"),
+            FOUR_PLUS("4_plus"),
+            ;
+
+            companion object {
+                private const val MAX_TWO_TO_THREE = 3
+
+                fun from(distance: Int): MoveDistanceBucket = when {
+                    distance <= 1 -> ONE
+                    distance <= MAX_TWO_TO_THREE -> TWO_TO_THREE
+                    else -> FOUR_PLUS
+                }
+            }
+        }
+    }
 
     // endregion
 

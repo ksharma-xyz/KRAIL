@@ -1,0 +1,38 @@
+name: Analytics Ledger Guard
+
+# Every PR that adds or changes a param/event in AnalyticsEvent.kt must also add a
+# row to docs/ANALYTICS_REGISTRY_HANDOFF.md in the same PR (see CLAUDE.md). This
+# turns that rule from convention into a merge gate.
+
+on:
+  pull_request:
+    paths:
+      - 'core/analytics/src/commonMain/kotlin/xyz/ksharma/krail/core/analytics/event/AnalyticsEvent.kt'
+
+permissions:
+  contents: read
+
+jobs:
+  ledger-updated:
+    name: ledger row present
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail if AnalyticsEvent.kt changed without a ledger update
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+          echo "Changed files:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -q 'docs/ANALYTICS_REGISTRY_HANDOFF.md'; then
+            echo "OK: ANALYTICS_REGISTRY_HANDOFF.md updated alongside AnalyticsEvent.kt."
+          else
+            echo "::error::AnalyticsEvent.kt changed but docs/ANALYTICS_REGISTRY_HANDOFF.md was not."
+            echo "::error::Add a ledger row for every added/changed event or param (see CLAUDE.md 'Analytics events')."
+            exit 1
+          fi

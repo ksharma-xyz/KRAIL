@@ -17,6 +17,10 @@ class FakeAnalytics : Analytics {
         return trackedEvents.find { it.name == eventName }
     }
 
+    fun getTrackedEvents(eventName: String): List<AnalyticsEvent> {
+        return trackedEvents.filter { it.name == eventName }
+    }
+
     override fun track(event: AnalyticsEvent) {
         println("Tracking event: $event")
         trackedEvents.add(event)

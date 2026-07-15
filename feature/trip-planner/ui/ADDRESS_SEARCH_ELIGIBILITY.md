@@ -72,6 +72,18 @@ text — addresses can be personal data. `RealRemoteAddressResultsManager` no lo
 at all (see Cache section above: it propagates failures instead of catching them), so
 there is a single redacted log site, not two.
 
+## Analytics
+
+Each resolved, non-stale address fetch fires `search_stop_query` with
+`resultSource = address`, `queryLength`, `resultsCount` (or `isError` on failure), and
+the same `searchSessionId` as the local pipeline's firing for that query. Cache hits do
+not fire - the event counts real network calls, which is the number the API cost model
+cares about. Raw query text is never sent, with one exception: the zero-result
+carve-out in `SearchQueryAnalyticsRedaction` (zero results in both pipelines, no
+digits, 25 chars or fewer) - the address completion site owns that decision for
+address-eligible queries because only it knows both pipelines' counts. See
+`docs/ANALYTICS_REGISTRY_HANDOFF.md` for the param registry status.
+
 ## Remote Config
 
 | Key | Type | Fallback | Valid range |

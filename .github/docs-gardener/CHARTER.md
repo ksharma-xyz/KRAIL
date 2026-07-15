@@ -156,6 +156,15 @@ report-only
 
 `ksharma-xyz/KRAIL-BFF` (charter at `.github/docs-gardener/CHARTER.md`).
 
+### Schedule (documentation only; the routine itself lives in Claude cloud, not in this repo)
+
+- Routine `docs-gardener-krail` (id `trig_011ru2PEpMea5XHwhSudy5wC`), weekly, Fridays
+  21:00 Sydney time (cron `0 11 * * 5` UTC; an hour later local during daylight saving).
+- Sibling routine `docs-gardener-krail-bff` runs an hour later against KRAIL-BFF.
+- View, edit, disable, or delete routines at https://claude.ai/code/routines
+  (also listable via the `/schedule` command in Claude Code).
+- If the schedule changes, update this section in the same run or PR.
+
 ### Style rules for any doc you write or edit
 
 - Never use the arrow character in prose; use words or a vertical list.

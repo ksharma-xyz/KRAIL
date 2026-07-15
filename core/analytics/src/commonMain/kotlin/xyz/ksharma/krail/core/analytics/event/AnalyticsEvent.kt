@@ -109,11 +109,24 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     // region SearchStop
 
+    /**
+     * @param searchSessionId      Joins the selection to its [SearchStopQuery] firings.
+     *                             Null when the selection had no live query (recents,
+     *                             empty-state stops, map picks).
+     * @param displayedLocalCount  Bucketed count of local results on screen at
+     *                             selection time; null without a live query.
+     * @param displayedAddressCount Same for the address/POI section. Together these
+     *                             answer "how many options were showing when the user
+     *                             picked" without carrying any query text.
+     */
     data class StopSelectedEvent(
         val stopId: String,
         val isRecentSearch: Boolean = false,
         val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
         val addressType: AddressType? = null,
+        val searchSessionId: String? = null,
+        val displayedLocalCount: CountBucket? = null,
+        val displayedAddressCount: CountBucket? = null,
     ) : AnalyticsEvent(
         name = "stop_selected",
         properties = buildMap {
@@ -121,8 +134,33 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             put("isRecentSearch", isRecentSearch)
             put("locationKind", locationKind.value)
             addressType?.let { put("addressType", it.value) }
+            searchSessionId?.let { put("searchSessionId", it) }
+            displayedLocalCount?.let { put("displayedLocalCount", it.value) }
+            displayedAddressCount?.let { put("displayedAddressCount", it.value) }
         },
     ) {
+        /** Bounded so dashboards group cleanly; raw counts add cardinality without
+         * answering anything the buckets can't. */
+        enum class CountBucket(val value: String) {
+            ZERO("0"),
+            ONE_TO_THREE("1_3"),
+            FOUR_TO_TEN("4_10"),
+            ELEVEN_PLUS("11_plus"),
+            ;
+
+            companion object {
+                private const val MAX_ONE_TO_THREE = 3
+                private const val MAX_FOUR_TO_TEN = 10
+
+                fun from(count: Int): CountBucket = when {
+                    count <= 0 -> ZERO
+                    count <= MAX_ONE_TO_THREE -> ONE_TO_THREE
+                    count <= MAX_FOUR_TO_TEN -> FOUR_TO_TEN
+                    else -> ELEVEN_PLUS
+                }
+            }
+        }
+
         /** Mirrors `StopItem.LocationKind` (feature/trip-planner/state) - redefined here
          * so `core/analytics` doesn't depend on a feature-layer model. Map at the call
          * site instead of adding a cross-module dependency. */

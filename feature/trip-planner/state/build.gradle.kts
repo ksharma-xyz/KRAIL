@@ -36,8 +36,6 @@ kotlin {
                 implementation(projects.core.maps.state)
                 implementation(projects.core.transport)
                 implementation(projects.infoTile.state)
-                implementation(projects.social.network.api)
-                implementation(projects.social.state)
                 implementation(projects.taj)
 
                 implementation(libs.kotlinx.collections.immutable)

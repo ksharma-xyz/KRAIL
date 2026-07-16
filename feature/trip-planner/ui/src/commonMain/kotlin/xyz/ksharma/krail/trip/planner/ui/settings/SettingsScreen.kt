@@ -34,10 +34,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
-import krail.feature.trip_planner.ui.generated.resources.ic_wifi
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.social.state.KrailSocialType
-import xyz.ksharma.krail.social.ui.SocialConnectionRow
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -58,7 +55,6 @@ fun SettingsScreen(
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
     onDebugConfigClick: () -> Unit = {},
-    onSocialLinkClick: (KrailSocialType) -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     Box(
@@ -128,21 +124,6 @@ fun SettingsScreen(
                     )
                 }
 
-                item {
-                    SettingsItem(
-                        icon = painterResource(Res.drawable.ic_wifi),
-                        text = "Stay connected",
-                        detailContent = {
-                            SocialConnectionRow(
-                                socialLinks = KrailSocialType.entries,
-                                modifier = Modifier
-                                    .padding(start = SOCIAL_ROW_START_PADDING, end = dim.spacingXL),
-                                onClick = { onSocialLinkClick(it) },
-                            )
-                        },
-                    )
-                }
-
                 if (showDebugConfig) {
                     item(key = "settings-debug-config") {
                         SettingsItem(
@@ -176,30 +157,6 @@ fun SettingsScreen(
         }
     }
 }
-
-/*
-@Composable
-private fun SocialConnectionBox(
-    type: SocialType,
-    onSocialLinkClick: (SocialType) -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit = {},
-) {
-    Box(
-        modifier = modifier
-            .size(44.dp)
-            .klickable(
-                indication = null,
-                onClick = {
-                    onSocialLinkClick(type)
-                },
-            )
-            .semantics(mergeDescendants = true) {},
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}*/
 
 @Composable
 private fun SettingsItem(
@@ -250,5 +207,4 @@ private fun SettingsItem(
 
 private val CONTENT_BOTTOM_PADDING = 104.dp
 private val SECTION_TITLE_HORIZONTAL_PADDING = 26.dp
-private val SOCIAL_ROW_START_PADDING = 46.dp
 private val FOOTER_SPACER_HEIGHT = 108.dp

@@ -91,6 +91,11 @@ Key rules:
 
 ## Pull Requests
 
+**Before writing any PR description or commit message, load the `pr-desc` skill**
+(`.claude/skills/pr-desc/SKILL.md`). This repo is public: PR bodies and commit messages
+must describe code changes only — no internal metrics, analytics numbers, or
+business/strategy context. The skill has the template and full content policy.
+
 **Always use Graphite (`gt submit`) to raise PRs — never `gh pr create` directly.**
 
 Exception: the automated docs gardener (single, non-stacked, docs-only PRs labeled

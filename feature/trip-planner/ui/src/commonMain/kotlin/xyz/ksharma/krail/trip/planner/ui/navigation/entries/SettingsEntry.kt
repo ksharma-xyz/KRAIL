@@ -14,7 +14,6 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsScreen
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
-import xyz.ksharma.krail.trip.planner.ui.state.settings.SettingsEvent
 
 /**
  * Settings Entry, Detail Screen in List-Detail pattern.
@@ -57,9 +56,6 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
             },
             onDebugConfigClick = {
                 tripPlannerNavigator.navigateToDebugConfig()
-            },
-            onSocialLinkClick = { socialType ->
-                viewModel.onEvent(SettingsEvent.SocialLinkClick(socialType))
             },
         )
     }

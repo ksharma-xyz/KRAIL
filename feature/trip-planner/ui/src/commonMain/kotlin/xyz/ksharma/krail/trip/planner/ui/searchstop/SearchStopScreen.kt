@@ -721,7 +721,6 @@ private fun SearchStopListContent(
                         },
                         onEvent = onEvent,
                     )
-                    publicTransportNoteItem()
                 }
                 SearchingDotsHeader(
                     isLoading = isLoading,
@@ -784,7 +783,6 @@ private fun SearchStopListContent(
                         onStopSelect = onStopSelect,
                         onEvent = onEvent,
                     )
-                    publicTransportNoteItem()
                 }
                 SearchingDotsHeader(
                     isLoading = listState.isLoading,
@@ -865,11 +863,6 @@ private fun LazyListScope.selectOnMapItem(
     item(key = "select-on-map") {
         SelectOnMapItem(onOpenMap = onOpenMap)
     }
-}
-
-/** Trailing PT-only-stops disclaimer at the bottom of the list. */
-private fun LazyListScope.publicTransportNoteItem() {
-    item(key = "pt-note") { PublicTransportNote() }
 }
 
 @Suppress("LongMethod", "LongParameterList")
@@ -1238,19 +1231,6 @@ private fun LabelShortcutsRow(
             }
         }
     }
-}
-
-@Composable
-private fun PublicTransportNote(modifier: Modifier = Modifier) {
-    Text(
-        text = "You can only select public transport stops on KRAIL\u00A0App.",
-        style = KrailTheme.typography.bodySmall,
-        color = KrailTheme.colors.label,
-        modifier = modifier.padding(
-            horizontal = KrailTheme.dimensions.pageHorizontalPadding,
-            vertical = KrailTheme.dimensions.spacingL,
-        ),
-    )
 }
 
 @Composable

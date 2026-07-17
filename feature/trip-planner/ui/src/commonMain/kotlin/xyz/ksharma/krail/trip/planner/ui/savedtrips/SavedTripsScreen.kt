@@ -53,7 +53,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
@@ -85,6 +87,7 @@ import app.krail.taj.resources.Res as TajRes
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
@@ -137,6 +140,9 @@ fun SavedTripsScreen(
 
     // Edit mode for trip cards — long-press enters, Done button exits.
     var editing by rememberSaveable { mutableStateOf(false) }
+
+    // While editing, the system back gesture exits edit mode instead of the app.
+    BackHandler(enabled = editing) { editing = false }
 
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->

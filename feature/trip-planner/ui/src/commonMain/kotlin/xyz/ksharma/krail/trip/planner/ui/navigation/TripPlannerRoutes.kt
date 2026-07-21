@@ -93,3 +93,9 @@ data object DiscoverRoute : TripPlannerRoute
  */
 @Serializable
 data object ManageStopLabelsRoute : TripPlannerRoute
+
+/**
+ * Detail route: pick a Park & Ride facility to follow on the home screen.
+ */
+@Serializable
+data object AddParkRideRoute : TripPlannerRoute

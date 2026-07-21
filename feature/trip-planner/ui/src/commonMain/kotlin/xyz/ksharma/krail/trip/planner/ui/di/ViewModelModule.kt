@@ -21,6 +21,9 @@ import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewMo
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
+import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -77,6 +80,26 @@ val viewModelsModule = module {
             infoTileManager = get(),
             inviteFriendsTileManager = get(),
             trackingManager = get<TrackingManager>(),
+        )
+    }
+
+    viewModel {
+        AddParkRideViewModel(
+            catalogue = ParkRideCatalogue(
+                nswParkRideFacilityManager = get(),
+                stopResultsManager = get(),
+                sandook = get(),
+                festivalManager = get(),
+            ),
+            parkRideSandook = get(),
+            availabilityLoader = ParkRideAvailabilityLoader(
+                parkRideSandook = get(),
+                parkRideService = get(),
+                flag = get(),
+            ),
+            platformOps = get(),
+            analytics = get(),
+            ioDispatcher = get(named(IODispatcher)),
         )
     }
 

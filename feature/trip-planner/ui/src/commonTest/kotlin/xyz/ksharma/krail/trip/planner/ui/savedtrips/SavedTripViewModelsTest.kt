@@ -31,6 +31,7 @@ import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISMISSED_INFO_TILES
 import xyz.ksharma.krail.feature.track.TrackingManager
@@ -916,4 +917,33 @@ class SavedTripsViewModelTest {
         }
 
     // endregion MoveSavedTrip
+
+    @Test
+    fun `a park ride card falls back to the stored stop name, never the raw stop id`() =
+        runTest(testDispatcher) {
+            // A mapping whose stop is not in the local search index. Before an availability
+            // fetch lands there is no facility detail row, so the card renders a placeholder.
+            fakeNswParkRideSandook.insertOrReplaceSavedParkRides(
+                parkRideInfoList = setOf(
+                    SavedParkRide(
+                        stopId = "2153478",
+                        facilityId = "31",
+                        stopName = "Bella Vista",
+                        facilityName = "Bella Vista",
+                        source = NswParkRideSandook.Companion.SavedParkRideSource.UserAdded.value,
+                    ),
+                ),
+                source = NswParkRideSandook.Companion.SavedParkRideSource.UserAdded,
+            )
+
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                val parkRide = expectMostRecentItem().parkRideUiState.firstOrNull()
+
+                assertNotNull(parkRide)
+                // "2153478" here would be the raw ID leaking into the UI.
+                assertEquals("Bella Vista", parkRide.stopName)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 }

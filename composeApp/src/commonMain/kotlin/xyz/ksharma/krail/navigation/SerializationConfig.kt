@@ -6,7 +6,10 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import xyz.ksharma.krail.core.navigation.AppUpgradeRoute
 import xyz.ksharma.krail.core.navigation.SplashRoute
+import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigHomeRoute
+import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigNetworkRoute
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
+import xyz.ksharma.krail.trip.planner.ui.navigation.AddParkRideRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
@@ -45,9 +48,14 @@ val krailNavSerializationConfig = SavedStateConfiguration {
             subclass(IntroRoute::class, IntroRoute.serializer())
             subclass(DiscoverRoute::class, DiscoverRoute.serializer())
             subclass(ManageStopLabelsRoute::class, ManageStopLabelsRoute.serializer())
+            subclass(AddParkRideRoute::class, AddParkRideRoute.serializer())
 
             // Track routes
             subclass(TrackTripRoute::class, TrackTripRoute.serializer())
+
+            // Debug settings routes
+            subclass(DebugConfigHomeRoute::class, DebugConfigHomeRoute.serializer())
+            subclass(DebugConfigNetworkRoute::class, DebugConfigNetworkRoute.serializer())
         }
     }
 }

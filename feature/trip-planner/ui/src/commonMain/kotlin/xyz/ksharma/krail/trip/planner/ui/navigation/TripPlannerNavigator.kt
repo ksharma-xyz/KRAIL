@@ -22,6 +22,8 @@ interface TripPlannerNavigator {
     fun navigateToSettings()
     fun navigateToDiscover()
     fun navigateToManageStopLabels()
+
+    fun navigateToAddParkRide()
     fun navigateToThemeSelection()
     fun navigateToAlerts(journeyId: String)
     fun navigateToDateTimeSelector(json: String?)

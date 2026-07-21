@@ -22,8 +22,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -63,7 +61,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Clock.System
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -498,9 +495,15 @@ class SavedTripsViewModel(
                             address = "",
                             latitude = 0.0,
                             longitude = 0.0,
+                            // The mapping row already carries a resolved stop name, written
+                            // by the same priority chain updateParkRideStopIdsInDb uses. Fall
+                            // back to it before the raw stop ID, or a card whose stop is not
+                            // in the local search index shows "2153478" instead of
+                            // "Bella Vista" until its first availability fetch lands.
                             stopName = stopResultsManager.fetchStopResults(mapping.stopId)
                                 .filterIsInstance<SearchStopState.SearchResult.Stop>()
-                                .firstOrNull()?.stopName ?: mapping.stopId,
+                                .firstOrNull()?.stopName
+                                ?: mapping.stopName.ifBlank { mapping.stopId },
                             timestamp = Instant.DISTANT_PAST.epochSeconds,
                         )
                     }
@@ -603,25 +606,10 @@ class SavedTripsViewModel(
         }
     }
 
-    /**
-     * Checks if the current time is not peak time.
-     * Peak time is defined as 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am.
-     */
-    @OptIn(ExperimentalTime::class)
-    private fun isNotPeakTime(): Boolean {
-        val now = System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val hour = now.hour
-        // Peak time: 5am (05:00) to 10am (10:00), inclusive of 5am, exclusive of 10am
-        return hour < 5 || hour >= 10
-    }
-
-    private fun getApiCooldownDuration(): Duration {
-        return if (isNotPeakTime()) {
-            nonPeakTimeCooldownSeconds.seconds
-        } else {
-            peakTimeCooldownSeconds.seconds
-        }
-    }
+    private fun getApiCooldownDuration(): Duration = parkRideApiCooldown(
+        peakTimeCooldownSeconds = peakTimeCooldownSeconds,
+        nonPeakTimeCooldownSeconds = nonPeakTimeCooldownSeconds,
+    )
 
     private suspend fun updateDiscoverState() {
         log("onStart - updateDiscoverState called")

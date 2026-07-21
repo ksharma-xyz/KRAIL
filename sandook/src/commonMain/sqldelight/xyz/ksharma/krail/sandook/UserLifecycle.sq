@@ -1,0 +1,30 @@
+-- Durable, per-install record of how often the user has done a named thing, and when
+-- they last did it. Survives app updates; it is not a cache and is never cleared.
+--
+-- This table holds STATE only (facts about what happened). The thresholds those facts
+-- are compared against (how many opens, how old an install) are POLICY and belong in
+-- Remote Config, never here. See docs/USER_LIFECYCLE_STORE.md.
+CREATE TABLE IF NOT EXISTS UserLifecycleCounter (
+    key TEXT NOT NULL PRIMARY KEY,
+    event_count INTEGER NOT NULL DEFAULT 0,
+    last_at_millis INTEGER
+);
+
+-- Bumps the counter for `key`, creating the row on first use, and stamps the time the
+-- increment happened.
+--
+-- Written as INSERT OR REPLACE + COALESCE subquery rather than an UPSERT because the
+-- configured SQLDelight dialect is sqlite_3_18, which predates ON CONFLICT DO UPDATE.
+incrementCounter:
+INSERT OR REPLACE INTO UserLifecycleCounter(key, event_count, last_at_millis)
+VALUES (
+    :key,
+    COALESCE((SELECT event_count FROM UserLifecycleCounter WHERE key = :key), 0) + 1,
+    :lastAtMillis
+);
+
+selectCounter:
+SELECT event_count, last_at_millis FROM UserLifecycleCounter WHERE key = ?;
+
+deleteCounter:
+DELETE FROM UserLifecycleCounter WHERE key = ?;

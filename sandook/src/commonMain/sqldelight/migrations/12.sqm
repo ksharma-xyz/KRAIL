@@ -1,0 +1,8 @@
+-- Migration 12: user-lifecycle counters (how many times a named thing happened, and when
+-- it last happened). The companion fact, first-install time, is a scalar and lives in the
+-- existing KrailPref key-value table instead of getting a table of its own.
+CREATE TABLE IF NOT EXISTS UserLifecycleCounter (
+    key TEXT NOT NULL PRIMARY KEY,
+    event_count INTEGER NOT NULL DEFAULT 0,
+    last_at_millis INTEGER
+);

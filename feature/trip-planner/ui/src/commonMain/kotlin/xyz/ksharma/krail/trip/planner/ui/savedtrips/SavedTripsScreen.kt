@@ -51,7 +51,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -102,19 +101,12 @@ fun SavedTripsScreen(
     onEvent: (SavedTripUiEvent) -> Unit = {},
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
+    onAddParkRideClick: () -> Unit = {},
     // Slot for the dual-pane right side. SavedTrips knows nothing about its content —
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
-    val emptyStateTip = remember {
-        buildList {
-            add("Tap ★ on a trip to save it here.")
-            add("Saved trips also show Park & Ride.")
-            add("Find nearby stops on the map.")
-        }.random()
-    }
-
     // Adaptive search-row presentation:
     //   - Phone portrait, tablet, foldable-unfolded: SearchStopRow is ALWAYS expanded —
     //     these form factors have the vertical room, so the full search affordance stays
@@ -196,7 +188,6 @@ fun SavedTripsScreen(
                     savedTripsListBody(
                         savedTripsState = savedTripsState,
                         trackedJourney = trackedJourney,
-                        emptyStateTip = emptyStateTip,
                         pageHorizontalPadding = dim.pageHorizontalPadding,
                         onEvent = onEvent,
                         onSavedTripCardClick = onSavedTripCardClick,
@@ -206,6 +197,7 @@ fun SavedTripsScreen(
                         editing = editing,
                         reorderState = reorderState,
                         onEnterEditing = { editing = true },
+                        onAddParkRideClick = onAddParkRideClick,
                     )
                 }
             }
@@ -302,7 +294,6 @@ internal fun LazyListScope.savedTripsContent(
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
-    expandedMap: SnapshotStateMap<String, Boolean>,
     editing: Boolean,
     reorderState: ReorderableLazyListState,
     onEnterEditing: () -> Unit,
@@ -386,12 +377,6 @@ internal fun LazyListScope.savedTripsContent(
             onDelete = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
         )
     }
-
-    parkRideSection(
-        savedTripsState = savedTripsState,
-        expandedMap = expandedMap,
-        onEvent = onEvent,
-    )
 }
 
 @Composable

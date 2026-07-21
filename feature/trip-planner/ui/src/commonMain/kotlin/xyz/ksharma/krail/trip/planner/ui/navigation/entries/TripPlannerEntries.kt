@@ -27,6 +27,7 @@ fun EntryProviderScope<NavKey>.TripPlannerEntries(
     IntroEntry(tripPlannerNavigator)
     DiscoverEntry(tripPlannerNavigator)
     ManageStopLabelsEntry(tripPlannerNavigator)
+    AddParkRideEntry(tripPlannerNavigator)
     TrackTripEntry(
         onBack = { tripPlannerNavigator.goBack() },
     )

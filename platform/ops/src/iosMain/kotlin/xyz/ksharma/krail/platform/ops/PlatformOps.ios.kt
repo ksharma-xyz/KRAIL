@@ -5,7 +5,12 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRect
+import platform.Foundation.NSCharacterSet
+import platform.Foundation.NSString
 import platform.Foundation.NSURL
+import platform.Foundation.URLQueryAllowedCharacterSet
+import platform.Foundation.create
+import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 import platform.UIKit.popoverPresentationController
@@ -35,6 +40,16 @@ class IosPlatformOps : PlatformOps {
                 },
             )
         }
+    }
+
+    override fun openMapDirections(latitude: Double, longitude: Double, label: String) {
+        // Apple Maps owns the `maps://` scheme, and iOS routes it to the user's default maps
+        // app where one is set.
+        val allowed = NSCharacterSet.URLQueryAllowedCharacterSet
+        val encoded = NSString.create(string = label)
+        val encodedLabel = encoded.stringByAddingPercentEncodingWithAllowedCharacters(allowed)
+            ?: label
+        openUrl("maps://?daddr=$latitude,$longitude&q=$encodedLabel")
     }
 
     @OptIn(ExperimentalForeignApi::class)

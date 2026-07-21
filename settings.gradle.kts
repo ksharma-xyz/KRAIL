@@ -60,6 +60,7 @@ include(":taj") // Design System
 include(":core:adaptive-ui")
 include(":core:analytics")
 include(":core:app-info")
+include(":core:app-review")
 include(":core:app-start")
 include(":core:app-version")
 include(":core:coroutines-ext")

@@ -5,6 +5,11 @@ on:
 
 jobs:
   build:
+    # See build-android.yml for the full explanation: Dependabot pull requests cannot
+    # read `secrets.*`, so Gradle configuration fails on the missing NSW transport API
+    # key. The gate sits on this inner job so the required status context
+    # "build-ios / build" is still reported (as skipped) on those pull requests.
+    if: github.actor != 'dependabot[bot]'
     runs-on: macos-latest
     environment: Firebase
 

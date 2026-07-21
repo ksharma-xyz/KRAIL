@@ -9,6 +9,16 @@ on:
 
 jobs:
   build:
+    # Dependabot pull requests run with the Dependabot secret store, so `secrets.*` and
+    # `vars.*` from the Actions store both resolve to empty strings. The build then dies
+    # during Gradle configuration in core/network/build.gradle.kts with "Register API key
+    # and put in local.properties as `ANDROID_NSW_TRANSPORT_API_KEY`", and there is no
+    # `vars.ANDROID_VERSION_CODE` to read either. The gate is on this inner job rather
+    # than on the caller in build.yml so the required status context
+    # "build-android-<variant> / build" is still reported (as skipped) on those pull
+    # requests. Compilation and host tests are still covered by code-quality.yml, which
+    # substitutes placeholder API keys via its CI quality-check flag.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: Firebase
     permissions:

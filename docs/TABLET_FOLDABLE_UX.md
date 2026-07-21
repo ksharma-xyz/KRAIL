@@ -136,6 +136,56 @@ depends on saved-trip count or Park & Ride.
 
 ---
 
+## 4b. AddParkRideScreen (Park & Ride picker)
+
+Files:
+- [`AddParkRideScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/parkride/AddParkRideScreen.kt)
+- [`ParkRideMapPane.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/parkride/map/ParkRideMapPane.kt)
+- [`ParkRideStationsLayer.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/parkride/map/ParkRideStationsLayer.kt)
+
+### Rules
+
+- Dual-pane at `shouldShowDualPane` (width ≥ MEDIUM), same gate as everywhere
+  else — so phone landscape, unfolded foldables and tablets all show the map.
+  Phone portrait stays list-only.
+- Uses the shared `DualPaneScaffold`, so the map is a **sibling** of the list,
+  never nested inside it. See the iOS compositing invariant in
+  `DualPaneScaffold` — a `UIKitView` map cannot composite into an offscreen
+  `graphicsLayer`.
+- Map plots one `P` marker per **station**, not per facility or per stop ID.
+  Grouping is done in `ParkRideStationGrouping.kt` (connected components over
+  stop↔facility pairs), so Tallawong's three car parks are one marker and Mona
+  Vale's two stop IDs are one marker.
+- Marker coordinates come from the **local GTFS stops table**
+  (`Sandook.selectStopCoordinatesBatch`), never from the Park & Ride
+  availability API. The map therefore triggers no network call and has no
+  bearing on the polling lifecycle in
+  [`POLLING_LIFECYCLE.md`](POLLING_LIFECYCLE.md). A station whose stop ID is
+  missing locally is simply not plotted; its list row still works.
+- Marker disc uses `LocalThemeColor`; the `P` glyph goes through
+  `getForegroundColor` so it stays legible on every theme in light and dark —
+  the same contrast guard as `ParkRideAddToggle`, covered by
+  `ThemeContrastTest`.
+- Marker tap opens the shared `StopDetailsBottomSheet` — the same sheet
+  SearchStop's map uses — with the primary action adding or removing the
+  station. Selecting from a map feels identical across both screens.
+- Marker hit target is a transparent 24 dp circle layered above the 14 dp
+  visual, matching `NearbyStopsLayer`.
+
+### Known limitation: the detail sheet is dual-pane only
+
+The station detail sheet, and with it live availability and the **Directions**
+action, is reachable only by tapping a map pin. Since the map exists only in
+dual-pane, a phone in portrait has no path to either: its Park & Ride surfaces
+are the home card (tap expands) and the picker rows (tap adds or removes),
+neither of which opens a sheet.
+
+This is deliberate for now, not an oversight. Revisit by giving the picker row a
+way to open the sheet (row body opens details, trailing control keeps the quick
+add/remove) if directions turn out to matter on phones.
+
+---
+
 ## 5. Navigation graph
 
 File: [`KrailNavHost.kt`](../composeApp/src/commonMain/kotlin/xyz/ksharma/krail/KrailNavHost.kt)

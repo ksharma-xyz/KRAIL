@@ -71,6 +71,9 @@ fun TextField(
     imeAction: ImeAction = ImeAction.Default,
     filter: (CharSequence) -> CharSequence = { it },
     maxLength: Int = Int.MAX_VALUE,
+    // Same shape as ButtonDefaults: callers override the whole colour set rather than passing
+    // one-off colours. Defaults keep every existing call site unchanged.
+    colors: TextFieldColors = TextFieldDefaults.colors(),
     onTextChange: (CharSequence) -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -82,8 +85,8 @@ fun TextField(
     // their own state so the field is not rekeyed and focus / IME are preserved.
     val textFieldState = state ?: rememberTextFieldState(initialText.orEmpty())
     val textSelectionColors = TextSelectionColors(
-        handleColor = KrailTheme.colors.onSurface,
-        backgroundColor = KrailTheme.colors.onSurface.copy(alpha = TextSelectionBackgroundOpacity),
+        handleColor = colors.cursorColor,
+        backgroundColor = colors.cursorColor.copy(alpha = TextSelectionBackgroundOpacity),
     )
 
     LaunchedEffect(textFieldState.text) {
@@ -95,7 +98,7 @@ fun TextField(
     }
 
     CompositionLocalProvider(
-        LocalTextColor provides KrailTheme.colors.onSurface,
+        LocalTextColor provides colors.contentColor,
         LocalTextStyle provides KrailTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
         LocalTextSelectionColors provides textSelectionColors,
         LocalContentAlpha provides contentAlpha,
@@ -120,7 +123,7 @@ fun TextField(
             lineLimits = TextFieldLineLimits.SingleLine,
             readOnly = readOnly,
             interactionSource = interactionSource,
-            cursorBrush = SolidColor(KrailTheme.colors.onSurface),
+            cursorBrush = SolidColor(colors.cursorColor),
             // Workaround: Using an anonymous object instead of a lambda
             // https://youtrack.jetbrains.com/projects/CMP/issues/CMP-9456/Reference-to-lambda-in-lambda-in-function-TextField-can-not-be-evaluated
             decorator = object : TextFieldDecorator {
@@ -131,7 +134,7 @@ fun TextField(
                         modifier = Modifier
                             .background(
                                 shape = RoundedCornerShape(TextFieldHeight.div(2)),
-                                color = KrailTheme.colors.surface,
+                                color = colors.containerColor,
                             )
                             .padding(vertical = SpacingTokens.XS)
                             .padding(
@@ -149,10 +152,16 @@ fun TextField(
                         if (textFieldState.text.isEmpty() && isFocused) {
                             Box {
                                 innerTextFieldContent() // Displays cursor
-                                TextFieldPlaceholder(placeholder = placeholder)
+                                TextFieldPlaceholder(
+                                    placeholder = placeholder,
+                                    color = colors.placeholderColor,
+                                )
                             }
                         } else if (textFieldState.text.isEmpty()) {
-                            TextFieldPlaceholder(placeholder = placeholder)
+                            TextFieldPlaceholder(
+                                placeholder = placeholder,
+                                color = colors.placeholderColor,
+                            )
                         } else {
                             innerTextFieldContent()
                         }
@@ -184,6 +193,47 @@ fun ThemeTextFieldPlaceholderText(
             modifier = modifier,
         )
     }
+}
+
+/**
+ * Colour set for [TextField], overridable the same way [ButtonColors] is.
+ */
+@Immutable
+data class TextFieldColors(
+    val containerColor: Color,
+    val contentColor: Color,
+    val placeholderColor: Color,
+    val cursorColor: Color,
+)
+
+object TextFieldDefaults {
+
+    private const val INVERTED_PLACEHOLDER_ALPHA = 0.7f
+
+    /** The field sits on the page surface and reads as part of it. */
+    @Composable
+    fun colors(): TextFieldColors = TextFieldColors(
+        containerColor = KrailTheme.colors.surface,
+        contentColor = KrailTheme.colors.onSurface,
+        placeholderColor = KrailTheme.colors.softLabel,
+        cursorColor = KrailTheme.colors.onSurface,
+    )
+
+    /**
+     * Flips the surface: a dark bar on a light page, a light bar on a dark one.
+     *
+     * For search fields sitting directly on the page surface, where matching that surface
+     * would leave the control with no visible edge at all. Built from `onSurface` / `surface`
+     * rather than fixed black and white, so it inverts correctly in both themes and stays
+     * legible by construction.
+     */
+    @Composable
+    fun invertedColors(): TextFieldColors = TextFieldColors(
+        containerColor = KrailTheme.colors.onSurface,
+        contentColor = KrailTheme.colors.surface,
+        placeholderColor = KrailTheme.colors.surface.copy(alpha = INVERTED_PLACEHOLDER_ALPHA),
+        cursorColor = KrailTheme.colors.surface,
+    )
 }
 
 @Immutable

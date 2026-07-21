@@ -16,6 +16,7 @@ val appStartModule = module {
             remoteConfig = get(),
             nswStopsManager = get(named(GtfsQualifiers.NSW_STOPS_MANAGER)),
             nswBusRoutesManager = get(named(GtfsQualifiers.NSW_BUS_ROUTES_MANAGER)),
+            userLifecycleStore = get(),
         )
     }
 }

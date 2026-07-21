@@ -15,9 +15,11 @@ import xyz.ksharma.krail.sandook.RealNswParkRideSandook
 import xyz.ksharma.krail.sandook.RealNswStopsSandook
 import xyz.ksharma.krail.sandook.RealSandook
 import xyz.ksharma.krail.sandook.RealSandookPreferences
+import xyz.ksharma.krail.sandook.RealUserLifecycleStore
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookDriverFactory
 import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.sandook.UserLifecycleStore
 
 val sandookModule = module {
     includes(sqlDriverModule)
@@ -38,6 +40,15 @@ val sandookModule = module {
 
     // Add the missing SandookPreferences dependency
     single<SandookPreferences> { RealSandookPreferences(get()) }
+
+    single { get<KrailSandook>().userLifecycleQueries }
+
+    single<UserLifecycleStore> {
+        RealUserLifecycleStore(
+            queries = get(),
+            preferences = get(),
+        )
+    }
 
     /**
      * Important: Expose the queries otherwise they won't be available for injection

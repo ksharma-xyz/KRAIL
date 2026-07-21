@@ -1,12 +1,16 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -20,6 +24,35 @@ import kotlin.time.Instant
  * rather than reading them from a holder object, so the unit-testable
  * surface stays a plain function call.
  */
+
+/**
+ * Peak hours are 5am to 10am, inclusive of 5am and exclusive of 10am — the window where
+ * parking fills fastest and a stale number is most misleading.
+ */
+@OptIn(ExperimentalTime::class)
+internal fun isNotPeakTime(now: Instant = Clock.System.now()): Boolean {
+    val hour = now.toLocalDateTime(TimeZone.currentSystemDefault()).hour
+    return hour < PEAK_START_HOUR || hour >= PEAK_END_HOUR
+}
+
+/**
+ * The API cooldown that applies right now.
+ *
+ * Shared by every surface that can trigger a Park & Ride fetch, so the map sheet and the home
+ * card cannot end up with different rate limits for the same facility.
+ */
+@OptIn(ExperimentalTime::class)
+internal fun parkRideApiCooldown(
+    peakTimeCooldownSeconds: Long,
+    nonPeakTimeCooldownSeconds: Long,
+): Duration = if (isNotPeakTime()) {
+    nonPeakTimeCooldownSeconds.seconds
+} else {
+    peakTimeCooldownSeconds.seconds
+}
+
+private const val PEAK_START_HOUR = 5
+private const val PEAK_END_HOUR = 10
 
 /**
  * Returns the subset of [facilityIds] that are off-cooldown and therefore

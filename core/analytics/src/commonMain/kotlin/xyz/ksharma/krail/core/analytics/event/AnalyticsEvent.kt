@@ -938,6 +938,41 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             "time" to time.toString().trim(),
         ),
     )
+
+    /**
+     * Fired when a rider adds or removes a Park & Ride facility they picked themselves.
+     *
+     * Add and remove are two outcomes of one intent (managing your own Park & Ride list), so
+     * they share a name and split on [action] rather than spending two event slots. [source]
+     * is here so a second entry point (e.g. adding from search) folds into this event too.
+     *
+     * @param facilityId The ID of the Park and Ride facility.
+     * @param stopId The ID of the stop associated with the facility.
+     */
+    data class ParkRideUserFacilityEvent(
+        val facilityId: String,
+        val stopId: String,
+        val action: Action,
+        val source: Source,
+    ) : AnalyticsEvent(
+        name = "park_ride_user_facility",
+        properties = mapOf(
+            "facilityId" to facilityId.trim(),
+            PROP_STOP_ID to stopId.trim(),
+            PROP_ACTION to action.value,
+            PROP_SOURCE to source.value,
+        ),
+    ) {
+        enum class Action(val value: String) {
+            ADD("add"),
+            REMOVE("remove"),
+        }
+
+        enum class Source(val value: String) {
+            PICKER("picker"),
+            HOME("home"),
+        }
+    }
     // endregion
 
     // region Discover

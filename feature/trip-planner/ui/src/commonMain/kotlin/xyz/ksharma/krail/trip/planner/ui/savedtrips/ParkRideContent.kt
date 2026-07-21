@@ -1,27 +1,29 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
 
+/**
+ * The availability block for one car park.
+ *
+ * Colours and type scale deliberately mirror [ParkRideCard]: the same facility shows on the
+ * home card and in the map sheet, and recolouring the text against the container made the two
+ * look like different features reporting the same numbers.
+ */
 @Composable
 fun ParkRideLoadedContent(
     parkRideFacilityDetail: ParkRideFacilityDetail,
@@ -31,8 +33,7 @@ fun ParkRideLoadedContent(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(dim.radiusM))
-            .background(color = themeBackgroundColor())
+            .cardBackground()
             .padding(horizontal = dim.spacingXL, vertical = dim.spacingL),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
@@ -42,9 +43,7 @@ fun ParkRideLoadedContent(
             // Facility Name
             Text(
                 text = parkRideFacilityDetail.facilityName,
-                style = KrailTheme.typography.displayMedium.copy(fontWeight = FontWeight.Normal),
-                color = getForegroundColor(themeBackgroundColor()),
-                modifier = Modifier,
+                style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
             )
 
             // Spots Information
@@ -55,14 +54,12 @@ fun ParkRideLoadedContent(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
                     Text(
                         text = "${parkRideFacilityDetail.spotsAvailable}",
-                        style = KrailTheme.typography.headlineLarge,
-                        color = getForegroundColor(themeBackgroundColor()),
+                        style = KrailTheme.typography.headlineMedium,
                         modifier = Modifier.alignByBaseline(),
                     )
                     Text(
-                        text = "spots empty",
+                        text = "spots available",
                         style = KrailTheme.typography.bodyMedium,
-                        color = getForegroundColor(themeBackgroundColor()),
                         modifier = Modifier.alignByBaseline(),
                     )
                 }
@@ -72,14 +69,12 @@ fun ParkRideLoadedContent(
                 ) {
                     Text(
                         text = "${parkRideFacilityDetail.percentageFull}%",
-                        style = KrailTheme.typography.headlineLarge,
-                        color = getForegroundColor(themeBackgroundColor()),
+                        style = KrailTheme.typography.headlineMedium,
                         modifier = Modifier.alignByBaseline(),
                     )
                     Text(
                         text = "full",
                         style = KrailTheme.typography.bodyMedium,
-                        color = getForegroundColor(themeBackgroundColor()),
                         modifier = Modifier.alignByBaseline(),
                     )
                 }
@@ -89,7 +84,7 @@ fun ParkRideLoadedContent(
                 Text(
                     text = "Last updated at\u00A0${parkRideFacilityDetail.timeText}",
                     style = KrailTheme.typography.bodySmall,
-                    color = getForegroundColor(themeColor()),
+                    color = KrailTheme.colors.secondaryLabel,
                 )
             }
         }

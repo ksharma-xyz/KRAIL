@@ -51,6 +51,9 @@ fun StopDetailsBottomSheet(
     modifier: Modifier = Modifier,
     additionalInfo: @Composable () -> Unit = {},
     actionButton: @Composable () -> Unit = {},
+    // Badge shown beside the stop name, so a surface with its own identity (Park & Ride)
+    // carries it into the sheet. Null for a plain stop, leaving existing callers unchanged.
+    leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     ModalBottomSheet(
@@ -64,15 +67,22 @@ fun StopDetailsBottomSheet(
                 .systemBarsPadding()
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Stop Name
-            Text(
-                text = stopName,
-                style = KrailTheme.typography.headlineMedium,
-                color = KrailTheme.colors.onSurface,
+            // Stop Name, with its badge where the surface has one.
+            Row(
                 modifier = Modifier
                     .padding(horizontal = dim.spacingXL)
                     .padding(bottom = dim.spacingM),
-            )
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                leadingIcon?.invoke()
+
+                Text(
+                    text = stopName,
+                    style = KrailTheme.typography.headlineMedium,
+                    color = KrailTheme.colors.onSurface,
+                )
+            }
 
             // Stop ID
             Text(

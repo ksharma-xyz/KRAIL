@@ -46,11 +46,40 @@ either; most changes should be params on an existing event, not a new name.
 Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
 2026-07-14.
 
+## Backfill: events that shipped before this ledger existed
+
+This ledger starts 2026-07-14. Ten event names (plus one new param on an existing event)
+shipped before that date and were never registered on the KRAIL-Analytics side, so they
+arrive in BigQuery with no label and no registry row — invisible to every dashboard that
+keys off the registry. Found by diffing `krail_defined_events` (parsed from
+`AnalyticsEvent.kt` by KRAIL-Analytics `sync-krail.ts`) against `EVENT_REGISTRY.md`.
+Listed here for the audit trail; a `defined-but-unregistered` check now runs daily on the
+analytics side so this class of gap cannot silently reopen.
+
+| Shipped | Event | Param(s) | Type / values | Trigger | Status |
+|---|---|---|---|---|---|
+| 2026-07-07 | `save_trip_prompt_shown` | `variant` | `plain｜commute` | "Save this trip?" prompt shown on the timetable for an unsaved origin-destination pair | Pending |
+| 2026-07-07 | `save_trip_prompt_action` | `accepted`, `variant`, `dismissCount` | Bool; `plain｜commute`; Int, dismissals for this OD pair including this one, always 0 when `accepted` — prompt stops at 2 | User accepted or dismissed the save prompt (one event for both outcomes) | Pending |
+| 2026-07-07 | `save_trip_click` | `source` (new param) | `star｜prompt`; historical rows carry none — treat null as `star` | Existing event, now distinguishes title-bar star from the prompt | Pending |
+| 2026-06-04 | `retry_api` | `source` | `timetable` | User taps Retry after an API/load failure; unified across surfaces rather than one event per screen | Pending |
+| 2026-05-16 | `no_entries_detected` | `topLevelRoute` | Simple class name of the active top-level route | Nav back stack produced zero entries and the `NoEntriesUI` fallback appeared. **Bug canary — should be silent; it is not.** See "Open items" below | Pending |
+| 2026-05-03 | `saved_trip_card_reordered` | `fromStopId`, `toStopId`, `previousIndex`, `newIndex`, `totalCount` | Stop IDs; Ints | Saved-trip card reordered by drag in edit mode | Pending |
+| 2026-05-03 | `timetable_stop_header_click` | `stopId`, `stopName`, `isOrigin`, `tripFromStopId`, `tripToStopId`, `action` | `action` = `edit_search｜open_departures`; historical rows carry no `action` and were departures opens, so the sheet's full timeline is `action IS NULL OR action = 'open_departures'` | Stop header tapped inside a timetable | Pending |
+| 2026-04-19 | `dep_board_show_previous` | `stopId`, `show`, `source` | Bool `show` (`true` = opened); `DepartureBoardSource` | "Show / hide previous departures" panel toggled | Pending |
+| 2026-02-22 | `search_stop_map_options_opened` | — | — | Options button tapped on the map (SearchStopMap only) | Pending |
+| 2025-09-20 | `clear_recent_search_stops` | `recentSearchCount` | Int | Recent-searches list cleared | Pending |
+| 2025-08-31 | `info_tile_interaction` | `key`, `expand`, `dismiss`, `cta_click` | Tile key; optional bools; CTA URL. Each optional param present only when that interaction happened | Info tile expanded, dismissed, or its CTA tapped | Pending |
+
 ## Open items for KRAIL-Analytics maintainers
 
 - ~~`EVENT_REGISTRY.md` exact path unconfirmed~~ — **Resolved**: it already existed at
   `docs/EVENT_REGISTRY.md`, and now has a "Params registry" table added specifically
   for this handoff.
+- **`no_entries_detected` is firing.** Its KDoc says the event should stay silent after
+  the `resetRoot()` / duplicate `toEntries()` fixes, and that the `NoEntriesUI` fallback
+  can be removed if it does. It is arriving in production data, most recently 2026-07-19.
+  The nav bug is not fully fixed — do not remove the fallback. Group by `topLevelRoute`
+  to find the path that triggers it.
 - **Historical note for `stop_selected`**: rows recorded before 2026-07-14 have no
   `locationKind`/`addressType` — treat a missing value as `transit_stop`/absent, not as
   a distinct category, same convention already used for `StopLabelStopAssignedEvent`'s

@@ -231,7 +231,7 @@ class AddParkRideViewModel(
                 } else {
                     AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD
                 },
-                source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.PICKER,
+                source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.ADD_PARK_RIDE_SCREEN,
             ),
         )
     }

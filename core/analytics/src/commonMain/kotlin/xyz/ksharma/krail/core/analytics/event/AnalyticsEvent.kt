@@ -968,9 +968,13 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
             REMOVE("remove"),
         }
 
+        /** Where the rider performed the add or remove. */
         enum class Source(val value: String) {
-            PICKER("picker"),
-            HOME("home"),
+            /** The "Add Park & Ride" screen, reached from the home screen section. */
+            ADD_PARK_RIDE_SCREEN("add_park_ride_screen"),
+
+            /** The Park & Ride section on the home screen. */
+            HOME_SCREEN("home_screen"),
         }
     }
     // endregion

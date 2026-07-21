@@ -45,6 +45,7 @@ maplibre = "0.12.1"
 spmForKmp = "1.6.1"
 maplibreNativeDistributionSpm = "6.19.1"
 material3 = "1.9.0"
+playReview = "2.0.2"
 playServicesLocation = "21.3.0"
 reorderable = "2.5.1"
 
@@ -80,6 +81,7 @@ kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collec
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "android-lifecycle" }
+play-review = { module = "com.google.android.play:review", version.ref = "playReview" }
 playServicesLocation = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 
 # Material

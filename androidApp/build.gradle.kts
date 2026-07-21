@@ -100,6 +100,7 @@ dependencies {
     implementation(projects.core.log)
     implementation(projects.core.remoteConfig)
     implementation(projects.feature.debugSettings.store)
+    implementation(projects.platform.ops)
 
     // Android-specific dependencies
     implementation(libs.activity.compose)

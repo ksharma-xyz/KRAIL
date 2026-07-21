@@ -51,6 +51,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.analytics)
             implementation(projects.core.appInfo)
+            implementation(projects.core.appReview)
             implementation(projects.core.appStart)
             implementation(projects.core.appVersion)
             implementation(projects.core.coroutinesExt)

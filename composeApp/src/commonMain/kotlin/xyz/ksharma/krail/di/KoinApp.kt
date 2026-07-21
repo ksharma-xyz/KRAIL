@@ -9,6 +9,7 @@ import org.koin.dsl.includes
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.analytics.di.analyticsModule
 import xyz.ksharma.krail.core.appinfo.di.appInfoModule
+import xyz.ksharma.krail.core.appreview.di.appReviewModule
 import xyz.ksharma.krail.core.appstart.di.appStartModule
 import xyz.ksharma.krail.core.appversion.di.appVersionModule
 import xyz.ksharma.krail.core.deeplink.di.deepLinkModule
@@ -60,6 +61,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             gtfsModule,
             appStartModule,
             opsModule,
+            appReviewModule,
             tripPlannerNetworkModule,
             departuresNetworkModule,
             departuresUiModule,

@@ -14,23 +14,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-# Dependabot pull requests run with the Dependabot secret store, so `secrets.*` and
-# `vars.*` from the Actions store both resolve to empty strings. That makes the signing
-# builds impossible: `core/network/build.gradle.kts` fails configuration with
-# "Register API key and put in local.properties as `ANDROID_NSW_TRANSPORT_API_KEY`",
-# and build-android.yml has no `vars.ANDROID_VERSION_CODE` to read. Those jobs are
-# therefore skipped for Dependabot; `code-quality` still runs (it compiles, runs host
-# tests, and substitutes placeholder API keys via the CI quality-check flag), and it is
-# the only required status check.
+# The Dependabot gate lives inside build-android.yml and build-ios.yml, not here. The
+# branch ruleset for `main` requires the contexts "build-android-debug / build",
+# "build-android-release / build" and "build-ios / build", which are named after the
+# inner job of the reusable workflow. Skipping a caller job below emits a check run
+# named only "build-android-debug", so the required context never reports and the pull
+# request stays blocked. Skipping the inner job still emits the fully qualified name
+# with a skipped conclusion, which does satisfy the requirement.
 jobs:
   code-quality:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/code-quality.yml
 
   build-android-debug:
-    if: >-
-      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
-      && github.actor != 'dependabot[bot]'
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs: code-quality
     uses: ./.github/workflows/build-android.yml
     with:
@@ -38,9 +35,7 @@ jobs:
     secrets: inherit
 
   build-android-release:
-    if: >-
-      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
-      && github.actor != 'dependabot[bot]'
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs: code-quality
     uses: ./.github/workflows/build-android.yml
     with:
@@ -48,9 +43,7 @@ jobs:
     secrets: inherit
 
   build-ios:
-    if: >-
-      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
-      && github.actor != 'dependabot[bot]'
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs: code-quality
     uses: ./.github/workflows/build-ios.yml
     secrets: inherit

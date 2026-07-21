@@ -50,13 +50,15 @@ UPDATE NSWParkRideFacilityDetail SET timestamp = ? WHERE facilityId = ?;
 
 -- SavedParkRide Table
 -- Table for mapping between stops and facilities (many-to-many relationship), with source info.
+-- A station can be held by both sources at once (saved trip + explicitly added), so source is
+-- part of the key. Display de-duplicates by facilityId, see toParkRideUiState().
 CREATE TABLE IF NOT EXISTS SavedParkRide (
-    stopId TEXT NOT NULL,                 -- Stop identifier
-    facilityId TEXT NOT NULL,             -- Facility identifier
-    stopName TEXT NOT NULL,               -- Name of the stop
-    facilityName TEXT NOT NULL,           -- Name of the facility
-    source TEXT NOT NULL,                 -- Source is saved trips or user added see SavedParkRideSource
-    PRIMARY KEY (stopId, facilityId)      -- Uniqueness only on stopId + facilityId
+    stopId TEXT NOT NULL,                     -- Stop identifier
+    facilityId TEXT NOT NULL,                 -- Facility identifier
+    stopName TEXT NOT NULL,                   -- Name of the stop
+    facilityName TEXT NOT NULL,               -- Name of the facility
+    source TEXT NOT NULL,                     -- Source is saved trips or user added see SavedParkRideSource
+    PRIMARY KEY (stopId, facilityId, source)  -- One row per stop + facility + source
 );
 
 -- Insert or update a mapping between a stop and a facility, updating source if exists
@@ -67,6 +69,14 @@ VALUES (?, ?, ?, ?, ?);
 -- Delete a specific mapping
 deleteSavedParkRide:
 DELETE FROM SavedParkRide WHERE stopId = ? AND facilityId = ?;
+
+-- Delete a specific mapping held by one source, leaving any other source's row intact
+deleteSavedParkRideBySource:
+DELETE FROM SavedParkRide WHERE stopId = ? AND facilityId = ? AND source = ?;
+
+-- Select all mappings held by a given source
+selectSavedParkRidesBySource:
+SELECT * FROM SavedParkRide WHERE source = ?;
 
 -- Delete all mappings for a given source
 clearSavedParkRidesBySource:

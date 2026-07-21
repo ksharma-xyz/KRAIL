@@ -15,4 +15,16 @@ interface PlatformOps {
      * @param url - the URL to open
      */
     fun openUrl(url: String)
+
+    /**
+     * Opens turn-by-turn directions to a coordinate in whichever maps app the device treats as
+     * default.
+     *
+     * Deliberately not a plain [openUrl] with a hardcoded provider URL: that would send every
+     * rider to Google Maps in a browser regardless of what they actually use. Each platform
+     * builds the URI its own launcher understands, so the system picks the app.
+     *
+     * @param label human-readable destination name, shown as the pin title where supported.
+     */
+    fun openMapDirections(latitude: Double, longitude: Double, label: String)
 }

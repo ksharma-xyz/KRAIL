@@ -126,7 +126,41 @@ We stack PRs. Break work into focused, layered branches and submit the full stac
    ./gradlew :module:a:testAndroidHostTest :module:b:testAndroidHostTest --continue
    ```
 
-Both must be green before submitting the PR.
+3. Device QA — see the checklist below. Static checks cannot catch runtime-only bugs.
+
+All three must be green before submitting the PR or handing the branch back.
+
+## QA checklist before handing over code
+
+Detekt and unit tests prove the code compiles and its logic holds. They prove nothing about
+what happens on a real device. **Run this before saying a change is ready** — never hand over
+a UI change verified only by `./gradlew`.
+
+For any change that touches a screen:
+
+| # | Check | Why it is not covered by detekt/tests |
+|---|---|---|
+| 1 | `./scripts/fullQualityChecks.sh` green | — |
+| 2 | `./gradlew testAndroidHostTest --continue` green | — |
+| 3 | Install and open the changed screen | Compilation says nothing about whether it renders |
+| 4 | **Rotate the device on every new/changed screen** | Activity recreation crashes are invisible to static checks. See "Configuration changes must never crash" |
+| 5 | Rotate again with data loaded AND while loading | Different code paths save different state |
+| 6 | Navigate away and back | Catches lifecycle and back-stack restore faults |
+| 7 | Check `adb logcat` for `FATAL EXCEPTION` after the run | A crash in a background coroutine may not close the app |
+| 8 | Switch theme + light/dark on the screen | Config change AND a contrast check in one pass |
+| 9 | Confirm loading, empty and error states each render | Easy to build only the happy path |
+
+Useful commands:
+
+```sh
+adb shell settings put system accelerometer_rotation 0
+adb shell settings put system user_rotation 1   # landscape
+adb shell settings put system user_rotation 0   # back to portrait
+adb logcat -d | grep -A 30 "FATAL EXCEPTION"
+```
+
+If a device is not connected, say so plainly and list which of these checks were skipped —
+do not describe a change as verified when only the static checks ran.
 
 ## Build
 
@@ -171,12 +205,35 @@ cp -R $MAIN/io/bff-api/build/generated $WORKTREE/io/bff-api/build/generated
 
 # 4. Proto submodule
 git -C $WORKTREE submodule update --init --recursive
+
+# 5. iOS Firebase config — only needed if you will build the iOS app from this worktree
+cp $MAIN/iosApp/iosApp/GoogleService-Info.plist $WORKTREE/iosApp/iosApp/GoogleService-Info.plist
 ```
 
 If any of these are skipped the build fails with one of:
 - `File google-services.json is missing` — missing Firebase config
 - `Unresolved reference 'app'` in BFF mappers — missing Wire-generated sources or empty submodule
 - `Register API key` — missing `local.properties`
+- `Build input file cannot be found: .../GoogleService-Info.plist` — missing iOS Firebase config
+
+Note: the repo no longer uses the `krail-api-proto` submodule, so step 4 is a no-op on current
+checkouts. It is kept for branches that predate its removal.
+
+### Running on an iOS simulator
+
+`compileKotlinIosSimulatorArm64` only proves the Kotlin compiles; it does not build or install
+the app. To actually run it:
+
+```sh
+xcrun simctl list devices booted        # pick the target simulator's UDID
+
+cd $WORKTREE/iosApp
+xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \
+  -destination 'id=<UDID>' -derivedDataPath <build-dir> build
+
+xcrun simctl install <UDID> "<build-dir>/Build/Products/Debug-iphonesimulator/Krail App.app"
+xcrun simctl launch <UDID> xyz.ksharma.krail
+```
 
 ## Full Quality Checks
 
@@ -192,6 +249,54 @@ This runs, in order:
 3. `detekt --continue` — static analysis (auto-corrects imports and trailing commas)
 
 Stops on first compile failure. Detekt continues on rule violations so all issues are reported at once.
+
+## Building a feature — read the checklist first
+
+Before writing code for any feature that adds a screen, a section, or a new surface for
+existing data, read **`docs/FEATURE_QUALITY_CHECKLIST.md`**.
+
+It is a pre-flight list, not a review list: reuse audit, real-data collision check, state
+survival across configuration changes, designing all four of loading/empty/error/content up
+front, visual weight, font scaling, cross-surface consistency, and shared rate limits. Every
+entry is a defect that actually shipped here and was caught by hand, so working through it
+first is the difference between one review round and five.
+
+## Configuration changes must never crash — zero tolerance
+
+Rotation, theme switch, font-size change, dark-mode toggle, split-screen and unfolding all
+destroy and recreate the Activity. A screen that works until the device rotates is a broken
+screen. **Green detekt and green unit tests do not catch this class of bug** — it only
+appears at runtime, on a real device, in code paths that compile perfectly.
+
+**Never hand over a screen without exercising a configuration change on it.**
+
+### Navigation routes: register or it will crash
+
+Navigation 3 serialises the entire back stack in `onSaveInstanceState`. A route missing from
+the polymorphic `SerializersModule` throws
+`SerializationException: Serializer for subclass 'X' is not found in the polymorphic scope of
+'NavKey'` — but **only when the Activity is recreated**, never at build time and never on
+navigation. The screen works flawlessly until the user rotates, then the app dies.
+
+Every new route MUST be added to
+`composeApp/src/commonMain/kotlin/xyz/ksharma/krail/navigation/SerializationConfig.kt`:
+
+```kotlin
+subclass(MyNewRoute::class, MyNewRoute.serializer())
+```
+
+`NavKeySerializationConfigTest` (in `:composeApp` androidHostTest) walks every sealed route
+hierarchy by reflection and fails with the exact missing route names, so this is caught by
+`./gradlew :composeApp:testAndroidHostTest` rather than by a user rotating their phone. Do
+not delete or weaken that test.
+
+### State that must survive recreation
+
+- Use `rememberSaveable`, not `remember`, for anything the user would notice losing
+  (scroll-adjacent flags, expanded/collapsed state, one-shot animation gates, text input).
+- Collect `uiState` with `collectAsStateWithLifecycle()`.
+- Anything held in a `rememberSaveable` must be `@Serializable`, `Parcelable`, or have an
+  explicit `Saver` — an unsupported type also throws only on recreation.
 
 ## Gradle Dependencies
 

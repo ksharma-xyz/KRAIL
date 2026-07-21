@@ -38,7 +38,6 @@ import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
-import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
@@ -464,41 +463,6 @@ private fun MapSurface(
         }
     }
 }
-
-private fun LatLng.toPosition(): Position = Position(latitude = latitude, longitude = longitude)
-
-private suspend fun handleLocationButtonClick(
-    userLoc: LatLng?,
-    cameraState: org.maplibre.compose.camera.CameraState,
-    userLocationManager: xyz.ksharma.krail.core.maps.data.location.UserLocationManager,
-    onPermissionDenied: (xyz.ksharma.aagya.permission.PermissionStatus) -> Unit,
-    onRequestPermission: () -> Unit,
-) {
-    if (userLoc != null) {
-        cameraState.animateTo(
-            CameraPosition(target = userLoc.toPosition(), zoom = UserLocationConfig.RECENTER_ZOOM),
-            duration = UserLocationConfig.RECENTER_ANIMATION_MS.milliseconds,
-        )
-    } else {
-        val status = userLocationManager.checkPermissionStatus()
-        if (status is xyz.ksharma.aagya.permission.PermissionStatus.Denied) {
-            onPermissionDenied(status)
-        } else {
-            onRequestPermission()
-        }
-    }
-}
-
-private fun initialCameraPosition(knownLocation: LatLng?): CameraPosition =
-    knownLocation?.let {
-        CameraPosition(target = it.toPosition(), zoom = UserLocationConfig.AUTO_CENTER_ZOOM)
-    } ?: CameraPosition(
-        target = Position(
-            latitude = NearbyStopsConfig.DEFAULT_CENTER_LAT,
-            longitude = NearbyStopsConfig.DEFAULT_CENTER_LON,
-        ),
-        zoom = NearbyStopsConfig.DEFAULT_ZOOM,
-    )
 
 // region Previews
 

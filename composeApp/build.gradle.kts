@@ -22,6 +22,8 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
             freeCompilerArgs.add("-Xannotation-default-target=param-property")
         }
+
+        withHostTest {}
     }
 
     listOf(
@@ -111,6 +113,13 @@ kotlin {
         iosMain {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+            }
+        }
+
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.test.kotlin)
+                implementation(libs.test.kotlinReflect)
             }
         }
     }

@@ -19,7 +19,24 @@ interface NswParkRideSandook {
 
     fun observeSavedParkRides(): Flow<List<SavedParkRide>>
 
+    /**
+     * Observes only the park rides held by [source]. Used by the home screen to know which
+     * cards the user added explicitly, since only those are theirs to remove.
+     */
+    fun observeSavedParkRidesBySource(source: SavedParkRideSource): Flow<List<SavedParkRide>>
+
     suspend fun deleteSavedParkRide(stopId: String, facilityId: String)
+
+    /**
+     * Deletes only the [source] row for this stop + facility. Any row held by the other
+     * source survives, so removing a user-added station keeps it visible while a saved trip
+     * still needs it (and vice versa).
+     */
+    suspend fun deleteSavedParkRide(
+        stopId: String,
+        facilityId: String,
+        source: SavedParkRideSource,
+    )
 
     fun getFacilitiesByStopIdAndSource(
         stopId: String,
@@ -126,6 +143,11 @@ internal class RealNswParkRideSandook(
     override fun observeSavedParkRides(): Flow<List<SavedParkRide>> =
         parkRideQueries.selectAllSavedParkRides().asFlow().mapToList(ioDispatcher)
 
+    override fun observeSavedParkRidesBySource(
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
+    ): Flow<List<SavedParkRide>> =
+        parkRideQueries.selectSavedParkRidesBySource(source.value).asFlow().mapToList(ioDispatcher)
+
     override fun getFacilitiesByStopIdAndSource(
         stopId: String,
         source: NswParkRideSandook.Companion.SavedParkRideSource,
@@ -152,6 +174,14 @@ internal class RealNswParkRideSandook(
 
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
         parkRideQueries.deleteSavedParkRide(stopId, facilityId)
+    }
+
+    override suspend fun deleteSavedParkRide(
+        stopId: String,
+        facilityId: String,
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
+    ) {
+        parkRideQueries.deleteSavedParkRideBySource(stopId, facilityId, source.value)
     }
 
     override suspend fun clearAllSavedParkRidesBySource(source: NswParkRideSandook.Companion.SavedParkRideSource) {

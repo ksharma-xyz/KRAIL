@@ -1,0 +1,35 @@
+-- Migration 11: key SavedParkRide by source as well as (stopId, facilityId).
+--
+-- The same station can be reached two ways: derived from a saved trip
+-- ('saved_trip') or added explicitly by the user ('user'). With source outside the
+-- primary key those two are the same row, so writing one silently overwrites the
+-- other's source, and deleting either drops the station the other source still
+-- needs. Including source in the key lets both coexist; de-duplication for display
+-- happens by facilityId in the UI mapper.
+-- Guard: SavedParkRide is created in migration 4, so it always exists on a real device.
+-- Recreating it defensively (same approach as migration 9) keeps the rewrite below
+-- runnable against a partial fixture, and is a no-op for existing users.
+CREATE TABLE IF NOT EXISTS SavedParkRide (
+    stopId TEXT NOT NULL,
+    facilityId TEXT NOT NULL,
+    stopName TEXT NOT NULL,
+    facilityName TEXT NOT NULL,
+    source TEXT NOT NULL,
+    PRIMARY KEY (stopId, facilityId)
+);
+
+CREATE TABLE SavedParkRideBySource (
+    stopId TEXT NOT NULL,
+    facilityId TEXT NOT NULL,
+    stopName TEXT NOT NULL,
+    facilityName TEXT NOT NULL,
+    source TEXT NOT NULL,
+    PRIMARY KEY (stopId, facilityId, source)
+);
+
+INSERT OR REPLACE INTO SavedParkRideBySource(stopId, facilityId, stopName, facilityName, source)
+SELECT stopId, facilityId, stopName, facilityName, source FROM SavedParkRide;
+
+DROP TABLE SavedParkRide;
+
+ALTER TABLE SavedParkRideBySource RENAME TO SavedParkRide;

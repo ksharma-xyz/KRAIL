@@ -16,6 +16,11 @@ class FakeNswParkRideSandook : NswParkRideSandook {
 
     override fun observeSavedParkRides(): Flow<List<SavedParkRide>> = savedParkRides.asStateFlow()
 
+    override fun observeSavedParkRidesBySource(
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
+    ): Flow<List<SavedParkRide>> =
+        savedParkRides.asStateFlow().map { list -> list.filter { it.source == source.value } }
+
     override fun getAllParkRideFacilityDetail(): Flow<List<NSWParkRideFacilityDetail>> = data.asStateFlow()
 
     override fun getByStopIds(stopIds: List<String>): List<NSWParkRideFacilityDetail> =
@@ -89,6 +94,16 @@ class FakeNswParkRideSandook : NswParkRideSandook {
     override suspend fun deleteSavedParkRide(stopId: String, facilityId: String) {
         savedParkRides.value = savedParkRides.value.filterNot {
             it.stopId == stopId && it.facilityId == facilityId
+        }
+    }
+
+    override suspend fun deleteSavedParkRide(
+        stopId: String,
+        facilityId: String,
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
+    ) {
+        savedParkRides.value = savedParkRides.value.filterNot {
+            it.stopId == stopId && it.facilityId == facilityId && it.source == source.value
         }
     }
 }

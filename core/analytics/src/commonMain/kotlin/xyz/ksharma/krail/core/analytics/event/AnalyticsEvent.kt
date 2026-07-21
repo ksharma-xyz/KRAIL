@@ -1378,4 +1378,23 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     )
 
     // endregion
+
+    // region App review
+
+    /**
+     * Fired when the app asks the platform for its review sheet (Play In-App Review /
+     * StoreKit).
+     *
+     * This counts *asks*, not ratings. Neither platform reports whether the sheet appeared
+     * or what the user did with it, so there is deliberately no companion "shown" or
+     * "rated" event to pair this with; one cannot be built. [source] carries which delight
+     * moment triggered the ask, so future triggers extend this event rather than minting a
+     * new name.
+     */
+    data class ReviewPromptRequestedEvent(val source: String) : AnalyticsEvent(
+        name = "review_prompt_requested",
+        properties = mapOf(PROP_SOURCE to source),
+    )
+
+    // endregion
 }

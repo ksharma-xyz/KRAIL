@@ -76,4 +76,35 @@ enum class FlagKeys(val key: String) {
      * feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
      */
     SEARCH_STOP_ADDRESS_MIN_QUERY_LENGTH("search_stop_address_min_query_length"),
+
+    /**
+     * Kill switch for requesting the platform review sheet (Play In-App Review / StoreKit).
+     * `false` by default so the trigger stays dormant until it is deliberately switched on.
+     * When off, saved-trip opens are still counted, so flipping it on later sees each user's
+     * real history rather than restarting everyone from zero.
+     *
+     * This gates the *automatic* request only. A user-initiated "Rate KRAIL" row in Settings
+     * deep-links to the store listing and is unaffected.
+     */
+    IN_APP_REVIEW_ENABLED("in_app_review_enabled"),
+
+    /**
+     * Saved-trip opens required before a review sheet is requested. Defaults to
+     * `DEFAULT_MIN_SAVED_TRIP_OPENS` in `:core:app-review` when missing or malformed.
+     */
+    IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS("in_app_review_min_saved_trip_opens"),
+
+    /**
+     * Minimum install age in days before a review sheet is requested, read from the
+     * user-lifecycle store (`docs/USER_LIFECYCLE_STORE.md`). Defaults to
+     * `DEFAULT_MIN_ACCOUNT_AGE_DAYS` in `:core:app-review` when missing or malformed.
+     */
+    IN_APP_REVIEW_MIN_ACCOUNT_AGE_DAYS("in_app_review_min_account_age_days"),
+
+    /**
+     * Days between review requests. Both platforms throttle silently, so without a
+     * client-side cooldown the platform quota gets spent on back-to-back requests with no
+     * way to observe it. Defaults to `DEFAULT_COOLDOWN_DAYS` in `:core:app-review`.
+     */
+    IN_APP_REVIEW_COOLDOWN_DAYS("in_app_review_cooldown_days"),
 }

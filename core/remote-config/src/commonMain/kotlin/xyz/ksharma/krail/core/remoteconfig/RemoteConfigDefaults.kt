@@ -168,6 +168,22 @@ object RemoteConfigDefaults {
                 first = FlagKeys.SEARCH_STOP_ADDRESS_MIN_QUERY_LENGTH.key,
                 second = 6,
             ),
+            Pair(
+                first = FlagKeys.IN_APP_REVIEW_ENABLED.key,
+                second = false,
+            ),
+            Pair(
+                first = FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS.key,
+                second = 3,
+            ),
+            Pair(
+                first = FlagKeys.IN_APP_REVIEW_MIN_ACCOUNT_AGE_DAYS.key,
+                second = 3,
+            ),
+            Pair(
+                first = FlagKeys.IN_APP_REVIEW_COOLDOWN_DAYS.key,
+                second = 60,
+            ),
         )
     }
 }

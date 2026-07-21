@@ -37,11 +37,22 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.analytics)
                 implementation(projects.core.log)
+                implementation(projects.core.remoteConfig)
                 implementation(projects.platform.ops)
+                implementation(projects.sandook)
 
                 implementation(libs.compose.runtime)
                 api(libs.di.koinComposeViewmodel)
+            }
+        }
+
+        getByName("androidHostTest") {
+            kotlin.srcDir("src/androidHostTest/kotlin")
+            dependencies {
+                implementation(libs.test.kotlin)
+                implementation(libs.test.robolectric)
             }
         }
     }

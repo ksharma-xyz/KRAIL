@@ -60,4 +60,11 @@ enum class LifecycleCounter(val key: String) {
 
     /** Incremented each time the user opens one of their saved trips. */
     SAVED_TRIP_OPEN("saved_trip_open_count"),
+
+    /**
+     * Incremented each time the platform review sheet is *requested*. The platform never
+     * reports whether it was shown, so this counts asks, not ratings. Its last-seen time is
+     * what enforces the cooldown between requests.
+     */
+    REVIEW_PROMPT_REQUESTED("review_prompt_requested_count"),
 }

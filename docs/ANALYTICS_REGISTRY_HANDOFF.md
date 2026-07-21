@@ -44,6 +44,7 @@ either; most changes should be params on an existing event, not a new name.
 | 2026-07-15 | `view_screen` | `name = ManageStopLabels` (new value) | Existing screen-view event, new screen name | ManageStopLabelsScreen becomes visible (once per entry, rotation-safe) | [#1720](https://github.com/ksharma-xyz/KRAIL/pull/1720) | Registered | — |
 | 2026-07-22 | `park_ride_user_facility` | NEW event: `facilityId`, `stopId`, `action`, `source` | `action` = `add｜remove`; `source` = `add_park_ride_screen｜home_screen` (only `add_park_ride_screen` emitted so far) | Rider adds or removes a Park & Ride facility they picked themselves. Add/remove share one name and split on `action` rather than spending two slots; `source` reserved for a second entry point | [#1740](https://github.com/ksharma-xyz/KRAIL/issues/1740) | Pending | — |
 | 2026-07-22 | `view_screen` | `name = AddParkRide` (new value) | Existing screen-view event, new screen name | Park & Ride picker becomes visible | [#1740](https://github.com/ksharma-xyz/KRAIL/issues/1740) | Pending | — |
+| 2026-07-22 | `review_prompt_requested` (NEW EVENT) | `source` | `saved_trip_open` | App asks the platform for its review sheet (Play In-App Review / StoreKit). Counts asks, not ratings: neither platform reports whether the sheet appeared or what the user did, so no companion "shown"/"rated" event exists or can be built | TBD | Pending | [#1739](https://github.com/ksharma-xyz/KRAIL/issues/1739) |
 
 Registered in KRAIL-Analytics `docs/EVENT_REGISTRY.md`'s "Params registry" table,
 2026-07-14.

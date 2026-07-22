@@ -22,8 +22,8 @@ import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
-import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
-import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
+import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -85,14 +85,14 @@ val viewModelsModule = module {
 
     viewModel {
         AddParkRideViewModel(
-            catalogue = ParkRideCatalogue(
+            catalogue = RealParkRideCatalogue(
                 nswParkRideFacilityManager = get(),
                 stopResultsManager = get(),
                 sandook = get(),
                 festivalManager = get(),
             ),
             parkRideSandook = get(),
-            availabilityLoader = ParkRideAvailabilityLoader(
+            availabilityLoader = RealParkRideAvailabilityLoader(
                 parkRideSandook = get(),
                 parkRideService = get(),
                 flag = get(),

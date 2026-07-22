@@ -75,6 +75,13 @@ analytics side so this class of gap cannot silently reopen.
 - ~~`EVENT_REGISTRY.md` exact path unconfirmed~~ — **Resolved**: it already existed at
   `docs/EVENT_REGISTRY.md`, and now has a "Params registry" table added specifically
   for this handoff.
+- **`park_ride_card_click` loses its `facilityId` param.** Firebase rejects the parameter
+  and drops it, appending `firebase_error` / `error_value = facilityId` to the event
+  instead. The event itself arrives fine, so nothing downstream noticed — but the param
+  is absent on essentially every firing since the event shipped, and Park & Ride facility
+  analysis has no data behind it. Needs an app-side fix (check the param name and value
+  against Firebase's naming and length limits at the call site in the P&R card handler).
+  Historical facility data cannot be recovered; it was never recorded.
 - **`no_entries_detected` is firing.** Its KDoc says the event should stay silent after
   the `resetRoot()` / duplicate `toEntries()` fixes, and that the `NoEntriesUI` fallback
   can be removed if it does. It is arriving in production data, most recently 2026-07-19.

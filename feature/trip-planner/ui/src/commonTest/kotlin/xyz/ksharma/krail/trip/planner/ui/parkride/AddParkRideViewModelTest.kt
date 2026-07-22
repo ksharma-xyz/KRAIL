@@ -51,14 +51,14 @@ class AddParkRideViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         viewModel = AddParkRideViewModel(
-            catalogue = ParkRideCatalogue(
+            catalogue = RealParkRideCatalogue(
                 nswParkRideFacilityManager = facilityManager,
                 stopResultsManager = FakeStopResultsManager(),
                 sandook = sandook,
                 festivalManager = FakeFestivalManager(),
             ),
             parkRideSandook = parkRideSandook,
-            availabilityLoader = ParkRideAvailabilityLoader(
+            availabilityLoader = RealParkRideAvailabilityLoader(
                 parkRideSandook = parkRideSandook,
                 parkRideService = FakeParkRideService(),
                 flag = FakeFlag(),

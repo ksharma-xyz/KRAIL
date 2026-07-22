@@ -294,9 +294,12 @@ private fun ParkRideSheetActions(
         horizontalArrangement = Arrangement.spacedBy(dim.spacingL),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Weighted, because largeButtonSize fills the available width: without a weight the
+        // first button takes the whole row and pushes Directions off-screen entirely.
         Button(
             onClick = onToggle,
             dimensions = ButtonDefaults.largeButtonSize(),
+            modifier = Modifier.weight(1f),
         ) {
             Text(text = if (isAdded) "Remove Park & Ride" else "Add Park & Ride")
         }
@@ -306,6 +309,7 @@ private fun ParkRideSheetActions(
                 onClick = onDirections,
                 colors = ButtonDefaults.subtleButtonColors(),
                 dimensions = ButtonDefaults.largeButtonSize(),
+                modifier = Modifier.weight(1f),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),

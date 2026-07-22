@@ -76,8 +76,41 @@ address results were on screen, the user picked an address" without any query te
 Rows before 2026-07-15 have no `searchSessionId`; treat missing as "pre-join era",
 only app-session-level funnels are possible there.
 
+## The contract — `core/analytics/analytics-events.json`
+
+**This file is the authoritative definition of every analytics event.** It carries each
+event's emitted parameter keys, its human label, the logical metric it belongs to, and
+the full rename history (`removed` / `removedParams`).
+
+`AnalyticsContractTest` asserts `AnalyticsEvent.kt` and the contract agree. It does not
+parse Kotlin — it instantiates every `AnalyticsEvent` subclass and reads the real
+`properties` map, so it sees the keys Firebase actually receives. That matters:
+`PROP_FROM_STOP_ID to tripFromStopId` emits `fromStopId` while the constructor parameter
+is `tripFromStopId`, and a parser records the wrong one.
+
+The test also enforces Firebase's constraints — name and parameter naming rules, the
+40-character limits, 25 params per event, reserved prefixes, the 500-name budget — and
+requires every event to carry a `label`.
+
+**When you add or change an event:**
+
+```bash
+./gradlew :core:analytics:testAndroidHostTest -DregenerateAnalyticsContract=1
+```
+
+That rewrites the contract from the code, preserving labels, descriptions and metric
+membership. Review the diff, fill in the `label` for anything new, and commit it in the
+same PR. `testAndroidHostTest` in CI fails if the contract is stale.
+
+**When you rename or remove an event**, add a `removed` entry declaring `replacedBy`.
+KRAIL-Analytics generates its metric unions from that field, so a rename keeps its
+history automatically instead of collapsing a dashboard metric to zero — which is exactly
+what happened with `journey_card_expand` and `dep_board_stop_click`.
+
 ## Registration gate
 
-Every new event or param must be registered in `docs/EVENT_REGISTRY.md` in the
-**KRAIL-Analytics** repo before the app PR merges: params, trigger description, and
-owner story link.
+KRAIL-Analytics generates its event registry, labels and metric groups from the contract,
+so there is nothing to register by hand — keeping the contract accurate is the whole job.
+
+`docs/ANALYTICS_REGISTRY_HANDOFF.md` remains as the historical audit trail of what was
+registered before the contract existed. New events do not need a row.

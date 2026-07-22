@@ -68,8 +68,7 @@ internal fun LazyListScope.errorRow(
             ErrorKind.NoFacilities -> ErrorMessage(
                 emoji = "🅿️",
                 title = "No stations yet",
-                message = "We couldn't load the list of Park & Ride stations. Check your " +
-                    "connection and try again.",
+                message = "We couldn't load the list of Park & Ride stations.",
                 actionData = ActionData(
                     actionText = "Try again",
                     onActionClick = { onEvent(AddParkRideUiEvent.Retry) },

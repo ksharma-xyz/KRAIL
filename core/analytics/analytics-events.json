@@ -523,6 +523,29 @@
       ]
     },
     {
+      "name": "park_ride_user_facility",
+      "class": "ParkRideUserFacilityEvent",
+      "label": "Add or Remove Park & Ride",
+      "params": [
+        {
+          "name": "action",
+          "optional": false
+        },
+        {
+          "name": "facilityId",
+          "optional": false
+        },
+        {
+          "name": "source",
+          "optional": false
+        },
+        {
+          "name": "stopId",
+          "optional": false
+        }
+      ]
+    },
+    {
       "name": "plan_trip_click",
       "class": "PlanTripClickEvent",
       "label": "Plan a trip",

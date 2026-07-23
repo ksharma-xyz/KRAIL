@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppVersionManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeInfoTileManager
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideFacilityManager
@@ -92,6 +93,7 @@ class SavedTripsViewModelTest {
             infoTileManager = fakeInfoTileManager,
             inviteFriendsTileManager = fakeInviteFriendsTileManager,
             trackingManager = TrackingManager(),
+            appReviewManager = FakeAppReviewManager(),
         )
     }
 

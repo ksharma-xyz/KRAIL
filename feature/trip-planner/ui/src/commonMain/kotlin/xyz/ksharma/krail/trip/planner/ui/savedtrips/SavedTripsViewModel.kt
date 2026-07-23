@@ -26,6 +26,8 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.core.appreview.AppReviewManager
+import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
@@ -79,6 +81,7 @@ class SavedTripsViewModel(
     private val platformOps: PlatformOps,
     private val inviteFriendsTileManager: InviteFriendsTileManager,
     private val trackingManager: TrackingManager,
+    private val appReviewManager: AppReviewManager,
 ) : ViewModel() {
 
     init {
@@ -125,6 +128,7 @@ class SavedTripsViewModel(
             updateSelectedStops()
             updateInviteFriendsTileSeenState()
             loadReorderTipSeenState()
+            maybeRequestReview()
         }
         .onCompletion {
             cleanupJobs()
@@ -150,8 +154,7 @@ class SavedTripsViewModel(
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
-            is SavedTripUiEvent.AnalyticsSavedTripCardClick ->
-                analytics.trackSavedTripCardClick(event.fromStopId, event.toStopId)
+            is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
             SavedTripUiEvent.ReverseStopClick -> {
                 stopResultsManager.reverseSelectedStops()
                 updateUiState {
@@ -187,6 +190,35 @@ class SavedTripsViewModel(
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
             is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
             SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
+        }
+    }
+
+    private fun onSavedTripCardClick(event: SavedTripUiEvent.AnalyticsSavedTripCardClick) {
+        analytics.trackSavedTripCardClick(event.fromStopId, event.toStopId)
+    }
+
+    /**
+     * Saved Trips is the one calm screen the review sheet is allowed to land on. If a delight
+     * moment (a clean timetable view, a save, a park-and-ride add) was armed elsewhere, this
+     * is where it fires; the manager owns every gate and no-ops when nothing is armed. On the
+     * IO dispatcher because the eligibility check reads the saved-trip count from the database.
+     */
+    private fun maybeRequestReview() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            appReviewManager.onSavedTripsScreenShown()
+        }
+    }
+
+    /**
+     * Expanding a Park and Ride card is a delight moment, but it happens on the Saved Trips
+     * screen itself rather than on a screen we navigate away from. So we arm and fire in one
+     * place, after a short delay so the sheet is not requested in the same frame as the tap.
+     */
+    private fun armParkRideCardReviewMoment() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            delay(PARK_RIDE_CARD_REVIEW_DELAY_MS)
+            appReviewManager.onDelightMoment(DelightMoment.PARK_RIDE_CARD_TAPPED)
+            appReviewManager.onSavedTripsScreenShown()
         }
     }
 
@@ -249,6 +281,7 @@ class SavedTripsViewModel(
                 log("Fetching Park Ride facility for stopId: ${parkRideState.stopId}")
                 fetchAndSaveParkRideFacilityIfNeeded(stopId = parkRideState.stopId)
             }
+            armParkRideCardReviewMoment()
             log("Park Ride card expanded done")
         } else {
             log(
@@ -739,6 +772,10 @@ class SavedTripsViewModel(
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }
+
+// Delay before requesting review after a Park and Ride card tap, so it never fires in the
+// same frame as the tap.
+private const val PARK_RIDE_CARD_REVIEW_DELAY_MS = 3_000L
 
 private fun SavedTrip.toTrip(): Trip = Trip(
     fromStopId = fromStopId,

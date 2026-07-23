@@ -76,28 +76,42 @@ class UserLifecycleStoreTest {
 
     @Test
     fun `counter starts at zero with no last seen time`() {
-        assertEquals(0L, store.count(LifecycleCounter.SAVED_TRIP_OPEN))
-        assertNull(store.lastAtMillis(LifecycleCounter.SAVED_TRIP_OPEN))
+        assertEquals(0L, store.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        assertNull(store.lastAtMillis(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
     }
 
     @Test
     fun `increment returns the running total and stamps the last seen time`() {
-        assertEquals(1L, store.increment(LifecycleCounter.SAVED_TRIP_OPEN))
-        assertEquals(DAY_ZERO, store.lastAtMillis(LifecycleCounter.SAVED_TRIP_OPEN))
+        assertEquals(1L, store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        assertEquals(DAY_ZERO, store.lastAtMillis(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
 
         now = DAY_ZERO + MILLIS_PER_DAY
-        assertEquals(2L, store.increment(LifecycleCounter.SAVED_TRIP_OPEN))
-        assertEquals(3L, store.increment(LifecycleCounter.SAVED_TRIP_OPEN))
+        assertEquals(2L, store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        assertEquals(3L, store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
 
-        assertEquals(3L, store.count(LifecycleCounter.SAVED_TRIP_OPEN))
-        assertEquals(DAY_ZERO + MILLIS_PER_DAY, store.lastAtMillis(LifecycleCounter.SAVED_TRIP_OPEN))
+        assertEquals(3L, store.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        assertEquals(DAY_ZERO + MILLIS_PER_DAY, store.lastAtMillis(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+    }
+
+    @Test
+    fun `reset clears the counter but leaves the install date intact`() {
+        store.recordFirstInstallIfAbsent()
+        store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
+        store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
+
+        store.reset(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
+
+        assertEquals(0L, store.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        assertNull(store.lastAtMillis(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        // The install date lives in a separate preferences row, so reset must not touch it.
+        assertEquals(DAY_ZERO, store.firstInstallAtMillis())
     }
 
     @Test
     fun `counters and install date survive reopening the database`() {
         store.recordFirstInstallIfAbsent()
-        store.increment(LifecycleCounter.SAVED_TRIP_OPEN)
-        store.increment(LifecycleCounter.SAVED_TRIP_OPEN)
+        store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
+        store.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
 
         // A second store over the same driver stands in for a relaunch after an app update:
         // nothing is held in memory, every value is read back from the database.
@@ -108,7 +122,7 @@ class UserLifecycleStoreTest {
         )
 
         assertEquals(DAY_ZERO, reopened.firstInstallAtMillis())
-        assertEquals(2L, reopened.count(LifecycleCounter.SAVED_TRIP_OPEN))
+        assertEquals(2L, reopened.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
     }
 
     @Test
@@ -130,7 +144,7 @@ class UserLifecycleStoreTest {
             nowMillis = { now },
         )
 
-        assertEquals(1L, upgraded.increment(LifecycleCounter.SAVED_TRIP_OPEN))
+        assertEquals(1L, upgraded.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
 
         upgradeDriver.close()
     }

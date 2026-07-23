@@ -16,9 +16,14 @@ import xyz.ksharma.krail.platform.ops.CurrentActivityHolder
 class AndroidAppReviewRequester(
     private val context: Context,
     private val activityHolder: CurrentActivityHolder,
+    private val debugSignal: AppReviewDebugSignal,
 ) : AppReviewRequester {
 
-    override fun requestReview() {
+    override fun requestReview(source: String) {
+        // Proof for on-device testing: a sideloaded debug build can never show the real card,
+        // so a debug composable observes this. Inert in release (nothing subscribes).
+        debugSignal.signalRequested(source)
+
         val activity = activityHolder.current
         if (activity == null) {
             // Backgrounded between the trigger and here. Nothing to attach a card to.

@@ -21,6 +21,8 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
+import xyz.ksharma.krail.core.appreview.AppReviewManager
+import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.platform.ops.PlatformOps
@@ -49,6 +51,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideUiEvent
  * that stays owned by the home cards' expand-and-visible lifecycle
  * (see `docs/POLLING_LIFECYCLE.md`).
  */
+@Suppress("LongParameterList")
 class AddParkRideViewModel(
     private val catalogue: ParkRideCatalogue,
     private val parkRideSandook: NswParkRideSandook,
@@ -56,6 +59,7 @@ class AddParkRideViewModel(
     private val platformOps: PlatformOps,
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
+    private val appReviewManager: AppReviewManager,
 ) : ViewModel() {
 
     private var observeUserAddedJob: Job? = null
@@ -215,6 +219,9 @@ class AddParkRideViewModel(
                     }.toSet(),
                     source = UserAdded,
                 )
+                // Adding a facility is a delight moment; it fires once the user returns to
+                // the Saved Trips screen. Removing one is not, so this stays in the add branch.
+                appReviewManager.onDelightMoment(DelightMoment.PARK_RIDE_ADDED)
             }
 
             trackToggle(station)

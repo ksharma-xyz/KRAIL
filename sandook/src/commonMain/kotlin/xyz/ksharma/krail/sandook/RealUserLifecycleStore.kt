@@ -42,6 +42,15 @@ internal class RealUserLifecycleStore(
     override fun lastAtMillis(counter: LifecycleCounter): Long? =
         queries.selectCounter(counter.key).executeAsOneOrNull()?.last_at_millis
 
+    override fun millisSinceLast(counter: LifecycleCounter): Long? {
+        val lastAt = lastAtMillis(counter) ?: return null
+        return nowMillis() - lastAt
+    }
+
+    override fun reset(counter: LifecycleCounter) {
+        queries.deleteCounter(counter.key)
+    }
+
     companion object {
 
         /**

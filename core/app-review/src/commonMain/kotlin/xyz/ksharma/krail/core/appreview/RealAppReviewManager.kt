@@ -7,11 +7,10 @@ import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.sandook.LifecycleCounter
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.UserLifecycleStore
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
- * @param nowMillis injectable clock; production uses the system clock, tests drive it.
+ * @param savedTripCount reads how many trips the user has saved right now. A live count query,
+ *   not a stored counter, so ask 1 gates on what the user actually has.
  */
 class RealAppReviewManager(
     private val requester: AppReviewRequester,
@@ -19,38 +18,57 @@ class RealAppReviewManager(
     private val preferences: SandookPreferences,
     private val flag: Flag,
     private val analytics: Analytics,
-    private val nowMillis: () -> Long = { systemNowMillis() },
+    private val savedTripCount: () -> Long,
 ) : AppReviewManager {
 
-    private var zeroResultSearchAtMillis: Long? = null
+    // In memory on purpose: a delight moment and the landing on Saved Trips that consumes it
+    // are a within-session pair, so process death between them means the landing being guarded
+    // never happened.
+    private var pendingDelightMoment: DelightMoment? = null
 
-    override fun onZeroResultSearch() {
-        zeroResultSearchAtMillis = nowMillis()
+    override fun onDelightMoment(moment: DelightMoment) {
+        pendingDelightMoment = moment
     }
 
-    override fun onSavedTripOpened() {
-        // Counted before the gates so the engagement is recorded even while the feature is
-        // switched off; flipping the flag on later then sees the user's real history.
-        val openCount = lifecycleStore.increment(LifecycleCounter.SAVED_TRIP_OPEN)
+    override fun onSavedTripsScreenShown() {
+        // Consume on arrival whether or not it fires: a landing is a one-time event, and
+        // delight moments recur often enough that spending one on a not-yet-eligible user
+        // costs nothing.
+        val moment = pendingDelightMoment ?: return
+        pendingDelightMoment = null
 
-        if (!isReviewRequestDue(openCount)) return
+        if (!isReviewRequestDue()) return
 
         // Recorded before the call, not after: the platform never reports an outcome, so
-        // "we asked" is the only fact there is, and it is also what drives the cooldown.
+        // "we asked" is the only fact there is. Its count is the lifetime cap and its
+        // last-seen time is the spacing between the two asks.
         lifecycleStore.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
-        analytics.track(AnalyticsEvent.ReviewPromptRequestedEvent(source = SOURCE_SAVED_TRIP_OPEN))
-        log("AppReview: requesting platform review sheet (savedTripOpens=$openCount)")
+        analytics.track(AnalyticsEvent.ReviewPromptRequestedEvent(source = moment.source))
+        log("AppReview: requesting platform review sheet (source=${moment.source})")
 
-        requester.requestReview()
+        requester.requestReview(source = moment.source)
     }
 
-    private fun isReviewRequestDue(openCount: Long): Boolean =
-        flag.isInAppReviewEnabled() &&
-            hasFinishedOnboarding() &&
-            openCount >= flag.minSavedTripOpens() &&
-            isAccountOldEnough() &&
-            isPastCooldown() &&
-            !isAfterZeroResultSearch()
+    private fun isReviewRequestDue(): Boolean {
+        if (!flag.isInAppReviewEnabled()) return false
+        if (!hasFinishedOnboarding()) return false
+        return when (lifecycleStore.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED)) {
+            0L -> isFirstAskDue()
+            1L -> isSecondAskDue()
+            else -> false // Lifetime cap of two asks; never prompt again.
+        }
+    }
+
+    /** Ask 1: a tenured, invested user. */
+    private fun isFirstAskDue(): Boolean =
+        isAccountOldEnough() && savedTripCount() >= flag.minSavedTrips()
+
+    /** Ask 2: a long, deliberate gap after ask 1, keeping both inside the OS quota. */
+    private fun isSecondAskDue(): Boolean {
+        val millisSinceAsk1 =
+            lifecycleStore.millisSinceLast(LifecycleCounter.REVIEW_PROMPT_REQUESTED) ?: return false
+        return millisSinceAsk1 >= flag.minDaysBetweenAsks() * MILLIS_PER_DAY
+    }
 
     /**
      * Apple's guideline is explicit that a review must not be requested during onboarding.
@@ -64,38 +82,8 @@ class RealAppReviewManager(
         return ageDays >= flag.minAccountAgeDays()
     }
 
-    /**
-     * Spaces attempts out rather than firing on every eligible open. The OS throttles too,
-     * but it throttles silently, so without this we would burn the platform quota on
-     * back-to-back requests and never know.
-     */
-    private fun isPastCooldown(): Boolean {
-        val lastRequestedAt =
-            lifecycleStore.lastAtMillis(LifecycleCounter.REVIEW_PROMPT_REQUESTED) ?: return true
-        return nowMillis() - lastRequestedAt >= flag.reviewCooldownDays() * MILLIS_PER_DAY
-    }
-
-    /**
-     * [zeroResultSearchAtMillis] is in memory on purpose: this guards against a request
-     * landing seconds after a failed search, which is a within-session concern. Process
-     * death clearing it is fine, because a search and a saved-trip open separated by a
-     * process death were never the adjacent pair being guarded against.
-     */
-    private fun isAfterZeroResultSearch(): Boolean {
-        val searchedAt = zeroResultSearchAtMillis ?: return false
-        return nowMillis() - searchedAt < ZERO_RESULT_SUPPRESSION_MILLIS
-    }
-
-    companion object {
-
-        private const val SOURCE_SAVED_TRIP_OPEN = "saved_trip_open"
+    private companion object {
 
         private const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
-
-        // How long a zero-result search keeps blocking a request.
-        private const val ZERO_RESULT_SUPPRESSION_MILLIS = 5L * 60L * 1000L
-
-        @OptIn(ExperimentalTime::class)
-        private fun systemNowMillis(): Long = Clock.System.now().toEpochMilliseconds()
     }
 }

@@ -40,6 +40,7 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
             onAddressSearchToggle = viewModel::setAddressSearchEnabled,
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,
+            onResetReviewClick = viewModel::resetInAppReviewAsks,
         )
     }
 

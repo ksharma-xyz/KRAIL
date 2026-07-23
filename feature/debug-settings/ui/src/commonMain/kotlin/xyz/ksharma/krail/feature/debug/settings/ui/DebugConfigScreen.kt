@@ -39,6 +39,7 @@ fun DebugConfigScreen(
     onAddressSearchToggle: (Boolean) -> Unit = {},
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
+    onResetReviewClick: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -77,6 +78,13 @@ fun DebugConfigScreen(
                         subtitle = "Override SEARCH_STOP_ADDRESS_SEARCH_ENABLED RC flag.",
                         checked = addressSearchEnabled,
                         onCheckedChange = onAddressSearchToggle,
+                    )
+                }
+                item(key = "tile-reset-review") {
+                    DebugConfigTile(
+                        title = "Reset in-app review",
+                        subtitle = "Clear the 'already asked' count so it can fire again. Keeps the install date.",
+                        onClick = onResetReviewClick,
                     )
                 }
             }

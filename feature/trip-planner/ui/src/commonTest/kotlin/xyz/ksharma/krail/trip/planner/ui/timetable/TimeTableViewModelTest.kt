@@ -42,6 +42,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState.JourneyC
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.JOURNEY_ENDED_CACHE_THRESHOLD_TIME
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.MAX_LOAD_MORE_COUNT
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.REFRESH_TIME_TEXT_DURATION
@@ -89,6 +90,7 @@ class TimeTableViewModelTest {
             ioDispatcher = testDispatcher,
             festivalManager = festivalManager,
             flag = fakeFlag,
+            appReviewManager = FakeAppReviewManager(),
         )
     }
 

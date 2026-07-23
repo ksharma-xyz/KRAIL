@@ -59,6 +59,7 @@ kotlin {
                 implementation(projects.core.snapshotTestingAnnotations)
                 implementation(projects.core.adaptiveUi)
                 implementation(projects.core.appInfo)
+                implementation(projects.core.appReview)
                 implementation(projects.core.appVersion)
                 implementation(projects.core.analytics)
                 implementation(projects.core.coroutinesExt)

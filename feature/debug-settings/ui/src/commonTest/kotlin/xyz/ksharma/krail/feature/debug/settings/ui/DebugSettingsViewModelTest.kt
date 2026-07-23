@@ -17,6 +17,8 @@ import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsState
 import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
+import xyz.ksharma.krail.sandook.LifecycleCounter
+import xyz.ksharma.krail.sandook.UserLifecycleStore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -45,7 +47,11 @@ class DebugSettingsViewModelTest {
     @Test
     fun `Given default state When selectSource BFF_PROD Then store receives event`() = runTest {
         val store = FakeDebugStore()
-        val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
+        val viewModel = DebugSettingsViewModel(
+            store = store,
+            flag = FakeFlag(false),
+            userLifecycleStore = FakeUserLifecycleStore(),
+        )
 
         viewModel.selectSource(NetworkSource.BFF_PROD)
 
@@ -58,7 +64,11 @@ class DebugSettingsViewModelTest {
     @Test
     fun `Given default state When selectSource NSW_DIRECT Then store receives event`() = runTest {
         val store = FakeDebugStore()
-        val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
+        val viewModel = DebugSettingsViewModel(
+            store = store,
+            flag = FakeFlag(false),
+            userLifecycleStore = FakeUserLifecycleStore(),
+        )
 
         viewModel.selectSource(NetworkSource.NSW_DIRECT)
 
@@ -71,7 +81,11 @@ class DebugSettingsViewModelTest {
     @Test
     fun `Given live RC value true When state collected Then bffEnabled emits true`() = runTest {
         val store = FakeDebugStore()
-        val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(true))
+        val viewModel = DebugSettingsViewModel(
+            store = store,
+            flag = FakeFlag(true),
+            userLifecycleStore = FakeUserLifecycleStore(),
+        )
 
         // Subscribe to state to trigger onStart, which refreshes bffEnabled.
         viewModel.state.test {
@@ -85,7 +99,11 @@ class DebugSettingsViewModelTest {
     @Test
     fun `Given live RC value false When state collected Then bffEnabled emits false`() = runTest {
         val store = FakeDebugStore()
-        val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
+        val viewModel = DebugSettingsViewModel(
+            store = store,
+            flag = FakeFlag(false),
+            userLifecycleStore = FakeUserLifecycleStore(),
+        )
 
         viewModel.state.test {
             awaitItem()
@@ -98,11 +116,58 @@ class DebugSettingsViewModelTest {
     @Test
     fun `Given default state When reset called Then store receives Reset event`() = runTest {
         val store = FakeDebugStore()
-        val viewModel = DebugSettingsViewModel(store = store, flag = FakeFlag(false))
+        val viewModel = DebugSettingsViewModel(
+            store = store,
+            flag = FakeFlag(false),
+            userLifecycleStore = FakeUserLifecycleStore(),
+        )
 
         viewModel.reset()
 
         assertEquals(DebugSettingsEvent.Reset, store.lastEvent)
+    }
+
+    @Test
+    fun `resetInAppReviewAsks clears the review counter but keeps the install date`() = runTest {
+        val lifecycleStore = FakeUserLifecycleStore()
+        lifecycleStore.recordFirstInstallIfAbsent()
+        lifecycleStore.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
+        val viewModel = DebugSettingsViewModel(
+            store = FakeDebugStore(),
+            flag = FakeFlag(false),
+            userLifecycleStore = lifecycleStore,
+        )
+
+        viewModel.resetInAppReviewAsks()
+
+        assertEquals(0L, lifecycleStore.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
+        assertEquals(true, lifecycleStore.firstInstallAtMillis() != null)
+    }
+}
+
+private class FakeUserLifecycleStore : UserLifecycleStore {
+    private var installAtMillis: Long? = null
+    private val counts = mutableMapOf<LifecycleCounter, Long>()
+
+    override fun recordFirstInstallIfAbsent() {
+        if (installAtMillis == null) installAtMillis = 0L
+    }
+
+    override fun firstInstallAtMillis(): Long? = installAtMillis
+    override fun daysSinceFirstInstall(): Long? = installAtMillis?.let { 0L }
+
+    override fun increment(counter: LifecycleCounter): Long {
+        val next = counts.getOrElse(counter) { 0L } + 1
+        counts[counter] = next
+        return next
+    }
+
+    override fun count(counter: LifecycleCounter): Long = counts.getOrElse(counter) { 0L }
+    override fun lastAtMillis(counter: LifecycleCounter): Long? = null
+    override fun millisSinceLast(counter: LifecycleCounter): Long? = null
+
+    override fun reset(counter: LifecycleCounter) {
+        counts.remove(counter)
     }
 }
 

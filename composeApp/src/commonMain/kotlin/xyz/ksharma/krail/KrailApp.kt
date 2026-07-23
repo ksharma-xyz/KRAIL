@@ -27,6 +27,11 @@ fun KrailApp() {
 
         KrailTheme(themeController = themeController) {
             KrailNavHost()
+
+            // Debug-only proof that the review trigger fired; never composed in release.
+            if (appInfo?.isDebug == true) {
+                AppReviewDebugProof()
+            }
         }
     }
 }

@@ -13,14 +13,17 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asNumber
  * its function limit and the tunables are readable in one place.
  */
 
-/** Saved-trip opens required before a review sheet is requested. */
-internal const val DEFAULT_MIN_SAVED_TRIP_OPENS = 3L
+/** Saved trips the user must have before ask 1 (`>= this`). */
+internal const val DEFAULT_MIN_SAVED_TRIPS = 2L
 
-/** Minimum install age in days before a review sheet is requested. */
+/** Minimum install age in days before ask 1. */
 internal const val DEFAULT_MIN_ACCOUNT_AGE_DAYS = 3L
 
-/** Days between review requests. */
-internal const val DEFAULT_COOLDOWN_DAYS = 60L
+/**
+ * Minimum days between ask 1 and ask 2. 150 days is about five months, which keeps both asks
+ * comfortably inside the platform's silent per-year quota so neither is wasted against it.
+ */
+internal const val DEFAULT_MIN_DAYS_BETWEEN_ASKS = 150L
 
 /**
  * Off unless Remote Config says otherwise, so the trigger stays dormant until it is
@@ -29,14 +32,14 @@ internal const val DEFAULT_COOLDOWN_DAYS = 60L
 internal fun Flag.isInAppReviewEnabled(): Boolean =
     getFlagValue(FlagKeys.IN_APP_REVIEW_ENABLED.key).asBoolean(fallback = false)
 
-internal fun Flag.minSavedTripOpens(): Long =
-    getFlagValue(FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS.key)
-        .asNumber(fallback = DEFAULT_MIN_SAVED_TRIP_OPENS)
+internal fun Flag.minSavedTrips(): Long =
+    getFlagValue(FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIPS.key)
+        .asNumber(fallback = DEFAULT_MIN_SAVED_TRIPS)
 
 internal fun Flag.minAccountAgeDays(): Long =
     getFlagValue(FlagKeys.IN_APP_REVIEW_MIN_ACCOUNT_AGE_DAYS.key)
         .asNumber(fallback = DEFAULT_MIN_ACCOUNT_AGE_DAYS)
 
-internal fun Flag.reviewCooldownDays(): Long =
-    getFlagValue(FlagKeys.IN_APP_REVIEW_COOLDOWN_DAYS.key)
-        .asNumber(fallback = DEFAULT_COOLDOWN_DAYS)
+internal fun Flag.minDaysBetweenAsks(): Long =
+    getFlagValue(FlagKeys.IN_APP_REVIEW_MIN_DAYS_BETWEEN_ASKS.key)
+        .asNumber(fallback = DEFAULT_MIN_DAYS_BETWEEN_ASKS)

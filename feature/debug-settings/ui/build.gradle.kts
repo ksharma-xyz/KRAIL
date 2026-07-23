@@ -42,6 +42,7 @@ kotlin {
                 implementation(projects.core.remoteConfig)
                 implementation(projects.feature.debugSettings.state)
                 implementation(projects.feature.debugSettings.store)
+                implementation(projects.sandook)
                 implementation(projects.taj)
 
                 implementation(libs.compose.foundation)

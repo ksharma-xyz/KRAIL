@@ -85,8 +85,10 @@ internal fun LazyListScope.stationRows(
 ) {
     item(key = "picker-description") {
         Text(
-            // No em dash in rider-facing copy.
-            text = "Pick any Sydney car park and its live parking shows on your home screen.",
+            // No em dash in rider-facing copy. "Any Sydney car park" overpromised: the list is
+            // only the Park & Ride facilities that report live space counts, not street or
+            // commercial parking, so the copy names what the list actually is.
+            text = "Pick a Park & Ride and its live spaces show on your home screen.",
             style = KrailTheme.typography.bodyMedium,
             color = KrailTheme.colors.softLabel,
             modifier = Modifier

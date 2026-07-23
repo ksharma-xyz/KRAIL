@@ -106,7 +106,6 @@ fun SavedTripsScreen(
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
 ) {
-    val dim = KrailTheme.dimensions
     // Adaptive search-row presentation:
     //   - Phone portrait, tablet, foldable-unfolded: SearchStopRow is ALWAYS expanded —
     //     these form factors have the vertical room, so the full search affordance stays
@@ -188,7 +187,6 @@ fun SavedTripsScreen(
                     savedTripsListBody(
                         savedTripsState = savedTripsState,
                         trackedJourney = trackedJourney,
-                        pageHorizontalPadding = dim.pageHorizontalPadding,
                         onEvent = onEvent,
                         onSavedTripCardClick = onSavedTripCardClick,
                         onTrackingCardClick = onTrackingCardClick,

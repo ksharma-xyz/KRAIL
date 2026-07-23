@@ -15,6 +15,8 @@ import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsState
 import xyz.ksharma.krail.feature.debug.settings.state.NetworkSource
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
+import xyz.ksharma.krail.sandook.LifecycleCounter
+import xyz.ksharma.krail.sandook.UserLifecycleStore
 
 /**
  * Shared ViewModel for the Debug Config screens.
@@ -27,6 +29,7 @@ import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 class DebugSettingsViewModel(
     private val store: DebugNetworkConfigStore,
     private val flag: Flag,
+    private val userLifecycleStore: UserLifecycleStore,
 ) : ViewModel() {
 
     private val _bffEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -61,6 +64,16 @@ class DebugSettingsViewModel(
 
     fun reset() {
         onEvent(DebugSettingsEvent.Reset)
+    }
+
+    /**
+     * Clears the "already asked for review" count so the in-app review can fire again while
+     * testing. Deliberately keeps the install date, so age-based gates stay realistic.
+     */
+    fun resetInAppReviewAsks() {
+        viewModelScope.launch {
+            userLifecycleStore.reset(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
+        }
     }
 
     private fun refreshLiveFlag() {

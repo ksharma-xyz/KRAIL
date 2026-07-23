@@ -80,6 +80,7 @@ val viewModelsModule = module {
             infoTileManager = get(),
             inviteFriendsTileManager = get(),
             trackingManager = get<TrackingManager>(),
+            appReviewManager = get(),
         )
     }
 
@@ -100,6 +101,7 @@ val viewModelsModule = module {
             platformOps = get(),
             analytics = get(),
             ioDispatcher = get(named(IODispatcher)),
+            appReviewManager = get(),
         )
     }
 
@@ -119,6 +121,7 @@ val viewModelsModule = module {
             festivalManager = get(),
             flag = get(),
             shareManager = get(),
+            appReviewManager = get(),
             tripTrackingDebugOverride = tripTrackingDebugOverride,
         )
     }

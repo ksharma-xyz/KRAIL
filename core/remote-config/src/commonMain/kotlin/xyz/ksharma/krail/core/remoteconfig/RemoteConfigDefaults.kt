@@ -173,16 +173,16 @@ object RemoteConfigDefaults {
                 second = false,
             ),
             Pair(
-                first = FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS.key,
-                second = 3,
+                first = FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIPS.key,
+                second = 2,
             ),
             Pair(
                 first = FlagKeys.IN_APP_REVIEW_MIN_ACCOUNT_AGE_DAYS.key,
                 second = 3,
             ),
             Pair(
-                first = FlagKeys.IN_APP_REVIEW_COOLDOWN_DAYS.key,
-                second = 60,
+                first = FlagKeys.IN_APP_REVIEW_MIN_DAYS_BETWEEN_ASKS.key,
+                second = 150,
             ),
         )
     }

@@ -89,10 +89,11 @@ enum class FlagKeys(val key: String) {
     IN_APP_REVIEW_ENABLED("in_app_review_enabled"),
 
     /**
-     * Saved-trip opens required before a review sheet is requested. Defaults to
-     * `DEFAULT_MIN_SAVED_TRIP_OPENS` in `:core:app-review` when missing or malformed.
+     * Saved trips the user must have before the first review ask (`>= this`). A live count of
+     * the saved-trip table, not a stored counter. Defaults to `DEFAULT_MIN_SAVED_TRIPS` in
+     * `:core:app-review` when missing or malformed.
      */
-    IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS("in_app_review_min_saved_trip_opens"),
+    IN_APP_REVIEW_MIN_SAVED_TRIPS("in_app_review_min_saved_trips"),
 
     /**
      * Minimum install age in days before a review sheet is requested, read from the
@@ -102,9 +103,9 @@ enum class FlagKeys(val key: String) {
     IN_APP_REVIEW_MIN_ACCOUNT_AGE_DAYS("in_app_review_min_account_age_days"),
 
     /**
-     * Days between review requests. Both platforms throttle silently, so without a
-     * client-side cooldown the platform quota gets spent on back-to-back requests with no
-     * way to observe it. Defaults to `DEFAULT_COOLDOWN_DAYS` in `:core:app-review`.
+     * Minimum days between the first review ask and the second (and final) one. About five
+     * months by default, which keeps both asks inside the platform's silent per-year quota.
+     * Defaults to `DEFAULT_MIN_DAYS_BETWEEN_ASKS` in `:core:app-review`.
      */
-    IN_APP_REVIEW_COOLDOWN_DAYS("in_app_review_cooldown_days"),
+    IN_APP_REVIEW_MIN_DAYS_BETWEEN_ASKS("in_app_review_min_days_between_asks"),
 }

@@ -47,6 +47,20 @@ interface UserLifecycleStore {
 
     /** Epoch millis of the most recent [increment] of [counter], or `null` if never. */
     fun lastAtMillis(counter: LifecycleCounter): Long?
+
+    /**
+     * Milliseconds elapsed since the most recent [increment] of [counter], or `null` if it has
+     * never been incremented. Uses this store's own clock, so callers that only need "how long
+     * ago" do not have to inject a second clock of their own.
+     */
+    fun millisSinceLast(counter: LifecycleCounter): Long?
+
+    /**
+     * Clears [counter]'s total and last-seen time, so [count] reads `0` again. Only touches this
+     * one counter: the install date lives in a separate preferences row and is untouched. Used
+     * by debug tooling to re-arm one-shot flows without a full data wipe.
+     */
+    fun reset(counter: LifecycleCounter)
 }
 
 /**
@@ -57,9 +71,6 @@ interface UserLifecycleStore {
  * inventing per-feature persistence.
  */
 enum class LifecycleCounter(val key: String) {
-
-    /** Incremented each time the user opens one of their saved trips. */
-    SAVED_TRIP_OPEN("saved_trip_open_count"),
 
     /**
      * Incremented each time the platform review sheet is *requested*. The platform never

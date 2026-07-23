@@ -26,6 +26,7 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSourc
 import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ErrorKind
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideUiEvent
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -66,6 +67,7 @@ class AddParkRideViewModelTest {
             platformOps = platformOps,
             analytics = analytics,
             ioDispatcher = testDispatcher,
+            appReviewManager = FakeAppReviewManager(),
         )
     }
 

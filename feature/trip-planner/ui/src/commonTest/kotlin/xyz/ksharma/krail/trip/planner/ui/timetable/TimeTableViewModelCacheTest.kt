@@ -42,6 +42,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.MAX_LOAD_MORE_COUNT
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
@@ -86,6 +87,7 @@ class TimeTableViewModelCacheTest {
             ioDispatcher = testDispatcher,
             festivalManager = FakeFestivalManager(),
             flag = FakeFlag(),
+            appReviewManager = FakeAppReviewManager(),
         )
     }
 

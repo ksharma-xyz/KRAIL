@@ -27,6 +27,8 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
+import xyz.ksharma.krail.core.appreview.AppReviewManager
+import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isBefore
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isFuture
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
@@ -77,6 +79,7 @@ class TimeTableViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val festivalManager: FestivalManager,
     val flag: Flag,
+    private val appReviewManager: AppReviewManager,
     private val tripTrackingDebugOverride: Boolean = true,
 ) : ViewModel() {
 
@@ -484,6 +487,10 @@ class TimeTableViewModel(
         result.onSuccess { response ->
             updateTripsCache(response)
             updateUiStateWithFilteredTrips()
+            // The timetable loaded without error: arm a review ask to fire once the user
+            // navigates back to the calm Saved Trips screen. Idempotent, so a background
+            // auto-refresh re-arming the same moment is harmless.
+            appReviewManager.onDelightMoment(DelightMoment.TIMETABLE_VIEWED)
         }.onFailure {
             // fetchTrip() runs on every screen-visible (onStart) and every auto-refresh.
             // A failure on one of those silent/background refreshes must NOT blow away
@@ -709,6 +716,7 @@ class TimeTableViewModel(
             )
             log("Saved Trip (Prompt): $trip")
             updateUiState { copy(isTripSaved = true, showSaveTripPrompt = false) }
+            appReviewManager.onDelightMoment(DelightMoment.TRIP_SAVED)
         }
     }
 
@@ -944,6 +952,7 @@ class TimeTableViewModel(
                     log("Saved Trip (Pref): $trip")
                     // Saving via the star makes the prompt redundant — drop it.
                     updateUiState { copy(isTripSaved = true, showSaveTripPrompt = false) }
+                    appReviewManager.onDelightMoment(DelightMoment.TRIP_SAVED)
                 }
             }
         }

@@ -10,14 +10,14 @@ Android is the primary testable target from the command line. iOS tests are not 
 Firebase caps the app at **500 unique event names, forever**. Before adding or
 changing anything in `AnalyticsEvent.kt`, read `docs/ANALYTICS_EVENTS.md` — it has the
 new-event-vs-param decision checklist, aggregation patterns (`action`/`source`/boolean
-params), the double-counting check, and the EVENT_REGISTRY.md registration gate.
-Never mint an event name without passing that checklist.
+params), and the double-counting check. Never mint an event name without passing that
+checklist.
 
-**Every PR that adds or changes a param/event in `AnalyticsEvent.kt` must also add a
-row to `docs/ANALYTICS_REGISTRY_HANDOFF.md` in the same PR.** That file is the living
-ledger of what still needs registering in the separate KRAIL-Analytics repo's
-`EVENT_REGISTRY.md` — it only stays accurate if it's updated alongside the code change,
-not backfilled later.
+`AnalyticsEvent.kt` is the whole analytics job in this repo. The **KRAIL-Analytics** repo
+reads it at the latest published release tag and builds its own registry, labels and
+dashboard groupings — there is no contract file to keep in sync, no per-PR analytics test,
+and no registration step here. Just define the event well and it reaches analytics after
+the next release.
 
 ## Test Commands
 

@@ -1,4 +1,5 @@
 import xyz.ksharma.krail.gradle.AndroidVersion
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.testing.Test as GradleTest
 
 plugins {
@@ -76,4 +77,11 @@ tasks.withType<GradleTest>().configureEach {
     providers.systemProperty("regenerateAnalyticsContract").orNull?.let {
         systemProperty("regenerateAnalyticsContract", it)
     }
+    // The test reads analytics-events.json at runtime via File(), so Gradle cannot infer
+    // it as an input. Without this, a JSON-only change is reported UP-TO-DATE / FROM-CACHE
+    // and the contract test does NOT run — the exact case of editing only the contract.
+    // Declaring it forces a re-run whenever the contract changes.
+    inputs.file(layout.projectDirectory.file("analytics-events.json"))
+        .withPropertyName("analyticsContract")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

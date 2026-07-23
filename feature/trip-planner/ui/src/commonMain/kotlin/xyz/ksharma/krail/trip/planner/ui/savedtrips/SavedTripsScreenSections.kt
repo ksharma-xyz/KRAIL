@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.Dp
 import kotlinx.collections.immutable.ImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
@@ -54,13 +53,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
- * Full LazyColumn body for [SavedTripsScreen] — picks the empty / populated branch and renders the
- * matching content. Pure extraction of the original `when` block; behaviour is identical.
+ * Full LazyColumn body for [SavedTripsScreen]. Info tiles, then the Saved Trips section only
+ * when there is something saved, then Park & Ride which always renders.
  */
 internal fun LazyListScope.savedTripsListBody(
     savedTripsState: SavedTripsState,
     trackedJourney: TrackedJourney?,
-    pageHorizontalPadding: Dp,
     onEvent: (SavedTripUiEvent) -> Unit,
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit,
     onTrackingCardClick: () -> Unit,
@@ -75,29 +73,10 @@ internal fun LazyListScope.savedTripsListBody(
 
     savedTripsInfoTiles(savedTripsState, onEvent)
 
-    if (savedTripsState.savedTrips.isEmpty()) {
-        // No hero: the bottom search row is already the "plan a trip" affordance, so a
-        // full-page star said nothing the screen was not saying, and pushed the real content
-        // into a corner. Saved Trips and Park & Ride are just two sections, one of which
-        // happens to be empty.
-        stickyHeader(key = "saved_trips_title") {
-            SavedTripsTitle {
-                Text(text = "Saved Trips")
-            }
-        }
-
-        item(key = "saved_trips_empty_row") {
-            Text(
-                text = "Tap ★ on a trip to save it here.",
-                style = KrailTheme.typography.bodyMedium,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = pageHorizontalPadding)
-                    .padding(bottom = KrailTheme.dimensions.spacingXL)
-                    .animateItem(),
-            )
-        }
-    } else {
+    // Nothing saved means no Saved Trips section at all — not a heading over an empty space.
+    // The bottom search row is already the "plan a trip" affordance, so an empty section only
+    // pushed Park & Ride down behind a header that explained nothing.
+    if (savedTripsState.savedTrips.isNotEmpty()) {
         savedTripsContent(
             savedTripsState = savedTripsState,
             trackedJourney = trackedJourney,

@@ -1,5 +1,4 @@
 import xyz.ksharma.krail.gradle.AndroidVersion
-import org.gradle.api.tasks.testing.Test as GradleTest
 
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
@@ -17,7 +16,6 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.analytics"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
-        withHostTest {}
     }
 
     iosArm64()
@@ -53,27 +51,5 @@ kotlin {
 
         iosMain.dependencies {
         }
-
-        // AnalyticsContractTest instantiates every AnalyticsEvent subclass to read its
-        // real property map, so it needs full JVM reflection — hence host test, not common.
-        getByName("androidHostTest") {
-            kotlin.srcDir("src/androidHostTest/kotlin")
-            dependencies {
-                implementation(libs.test.kotlin)
-                implementation(libs.kotlinx.serialization.json)
-                implementation(kotlin("reflect"))
-            }
-        }
-    }
-}
-
-// AnalyticsContractTest can rewrite analytics-events.json from the code when this
-// property is set. Gradle applies -D to its own JVM, so it has to be forwarded to the
-// test JVM explicitly:
-//   ./gradlew :core:analytics:testAndroidHostTest -DregenerateAnalyticsContract=1
-tasks.withType<GradleTest>().configureEach {
-    workingDir = projectDir
-    providers.systemProperty("regenerateAnalyticsContract").orNull?.let {
-        systemProperty("regenerateAnalyticsContract", it)
     }
 }

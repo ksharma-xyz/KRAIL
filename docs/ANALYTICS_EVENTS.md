@@ -76,41 +76,23 @@ address results were on screen, the user picked an address" without any query te
 Rows before 2026-07-15 have no `searchSessionId`; treat missing as "pre-join era",
 only app-session-level funnels are possible there.
 
-## The contract — `core/analytics/analytics-events.json`
+## How analytics reaches the dashboard
 
-**This file is the authoritative definition of every analytics event.** It carries each
-event's emitted parameter keys, its human label, the logical metric it belongs to, and
-the full rename history (`removed` / `removedParams`).
+`AnalyticsEvent.kt` is the only thing this repo owns for analytics — it defines the event
+names and their params, and that is the whole job here. There is **no contract file, no
+per-PR analytics test, and no registration step** in KRAIL.
 
-`AnalyticsContractTest` asserts `AnalyticsEvent.kt` and the contract agree. It does not
-parse Kotlin — it instantiates every `AnalyticsEvent` subclass and reads the real
-`properties` map, so it sees the keys Firebase actually receives. That matters:
-`PROP_FROM_STOP_ID to tripFromStopId` emits `fromStopId` while the constructor parameter
-is `tripFromStopId`, and a parser records the wrong one.
+The **KRAIL-Analytics** repo reads `AnalyticsEvent.kt` at the latest **published release
+tag** (never `main`, so unreleased events are not surfaced early), on a periodic schedule,
+and builds its own registry from it. Everything editorial — human labels, how events group
+into dashboard metrics, and rename/deprecation history — lives in KRAIL-Analytics, because
+those are display decisions the app has no opinion on. KRAIL-Analytics detects a released
+event it has not yet handled and fails its own build until it is; nothing here gates on it.
 
-The test also enforces Firebase's constraints — name and parameter naming rules, the
-40-character limits, 25 params per event, reserved prefixes, the 500-name budget — and
-requires every event to carry a `label`.
+**So, to add or change an event:** just edit `AnalyticsEvent.kt` following the naming and
+budget rules above. Nothing else in this repo. It becomes visible to analytics after it
+ships in a release.
 
-**When you add or change an event:**
-
-```bash
-./gradlew :core:analytics:testAndroidHostTest -DregenerateAnalyticsContract=1
-```
-
-That rewrites the contract from the code, preserving labels, descriptions and metric
-membership. Review the diff, fill in the `label` for anything new, and commit it in the
-same PR. `testAndroidHostTest` in CI fails if the contract is stale.
-
-**When you rename or remove an event**, add a `removed` entry declaring `replacedBy`.
-KRAIL-Analytics generates its metric unions from that field, so a rename keeps its
-history automatically instead of collapsing a dashboard metric to zero — which is exactly
-what happened with `journey_card_expand` and `dep_board_stop_click`.
-
-## Registration gate
-
-KRAIL-Analytics generates its event registry, labels and metric groups from the contract,
-so there is nothing to register by hand — keeping the contract accurate is the whole job.
-
-`docs/ANALYTICS_REGISTRY_HANDOFF.md` remains as the historical audit trail of what was
-registered before the contract existed. New events do not need a row.
+`docs/ANALYTICS_REGISTRY_HANDOFF.md` is kept only as a historical audit trail of the
+registration handshake that predated this model; it is no longer a gate and new events do
+not need a row.

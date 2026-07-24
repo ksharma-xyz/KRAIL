@@ -4,9 +4,10 @@ import org.junit.Before
 import org.junit.Test
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.sandook.LifecycleCounter
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.UserLifecycleStore
@@ -31,7 +32,7 @@ class RealAppReviewManagerTest {
         analytics = RecordingAnalytics()
 
         // The default world is an eligible one, so each test changes exactly one thing.
-        flag.booleans[FlagKeys.IN_APP_REVIEW_ENABLED.key] = true
+        flag.setFlagValue(FlagKeys.IN_APP_REVIEW_ENABLED.key, FlagValue.BooleanValue(true))
         preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
         lifecycleStore.installAgeDays = 10L
     }
@@ -69,7 +70,7 @@ class RealAppReviewManagerTest {
 
     @Test
     fun `counts opens even while the feature is switched off`() {
-        flag.booleans[FlagKeys.IN_APP_REVIEW_ENABLED.key] = false
+        flag.setFlagValue(FlagKeys.IN_APP_REVIEW_ENABLED.key, FlagValue.BooleanValue(false))
         val manager = manager()
 
         repeat(THRESHOLD_OPENS) { manager.onSavedTripOpened() }
@@ -157,7 +158,7 @@ class RealAppReviewManagerTest {
 
     @Test
     fun `remote config thresholds override the defaults`() {
-        flag.numbers[FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS.key] = 1L
+        flag.setFlagValue(FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS.key, FlagValue.NumberValue(1L))
         val manager = manager()
 
         manager.onSavedTripOpened()
@@ -192,19 +193,6 @@ private class RecordingAnalytics : Analytics {
     override fun setUserProperty(name: String, value: String) = Unit
 }
 
-private class FakeFlag : Flag {
-    val booleans = mutableMapOf<String, Boolean>()
-    val numbers = mutableMapOf<String, Long>()
-
-    override fun getFlagValue(key: String): FlagValue = when {
-        booleans.containsKey(key) -> FlagValue.BooleanValue(booleans.getValue(key))
-        numbers.containsKey(key) -> FlagValue.NumberValue(numbers.getValue(key))
-        // Anything unset falls through to the caller's own fallback, same as a missing
-        // Remote Config value at runtime.
-        else -> FlagValue.StringValue("")
-    }
-}
-
 private class FakeUserLifecycleStore(private val nowMillis: () -> Long) : UserLifecycleStore {
     var installAgeDays: Long? = 0L
 
@@ -224,18 +212,4 @@ private class FakeUserLifecycleStore(private val nowMillis: () -> Long) : UserLi
 
     override fun count(counter: LifecycleCounter): Long = counts.getOrElse(counter) { 0L }
     override fun lastAtMillis(counter: LifecycleCounter): Long? = lastAt[counter]
-}
-
-private class FakeSandookPreferences : SandookPreferences {
-    private val values = mutableMapOf<String, Any>()
-
-    override fun getLong(key: String): Long? = values[key] as? Long
-    override fun setLong(key: String, value: Long) { values[key] = value }
-    override fun getString(key: String): String? = values[key] as? String
-    override fun setString(key: String, value: String) { values[key] = value }
-    override fun getBoolean(key: String): Boolean? = values[key] as? Boolean
-    override fun setBoolean(key: String, value: Boolean) { values[key] = value }
-    override fun getDouble(key: String): Double? = values[key] as? Double
-    override fun setDouble(key: String, value: Double) { values[key] = value }
-    override fun deletePreference(key: String) { values.remove(key) }
 }

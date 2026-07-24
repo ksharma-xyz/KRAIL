@@ -51,6 +51,7 @@ kotlin {
         getByName("androidHostTest") {
             kotlin.srcDir("src/androidHostTest/kotlin")
             dependencies {
+                implementation(projects.core.testing)
                 implementation(libs.test.kotlin)
                 implementation(libs.test.robolectric)
             }

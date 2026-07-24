@@ -177,16 +177,6 @@ class RealAppReviewManagerTest {
         assertEquals(2, lifecycleStore.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
     }
 
-    @Test
-    fun `remote config thresholds override the defaults`() {
-        flag.setFlagValue(FlagKeys.IN_APP_REVIEW_MIN_SAVED_TRIPS.key, FlagValue.NumberValue(1L))
-        savedTrips = 1L
-
-        manager().delightThenLand()
-
-        assertEquals(1, requester.requestCount)
-    }
-
     private companion object {
         const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
         const val DAY_ZERO = 1_700_000_000_000L

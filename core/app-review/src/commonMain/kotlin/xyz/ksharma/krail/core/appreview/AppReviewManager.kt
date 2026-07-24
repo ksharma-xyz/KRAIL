@@ -37,8 +37,10 @@ package xyz.ksharma.krail.core.appreview
  * A delight moment usually happens on a screen the review sheet should **not** cover (a
  * timetable, the add-park-ride picker). So [onDelightMoment] only *arms* a pending request;
  * [onSavedTripsScreenShown] is what actually evaluates the gates and fires, once the user has
- * landed back on the calm Saved Trips screen. State comes from the user-lifecycle store,
- * policy comes from Remote Config, so thresholds move without a release.
+ * landed back on the calm Saved Trips screen. State comes from the user-lifecycle store;
+ * the engagement thresholds are app-side constants and only the master on/off gate
+ * (`IN_APP_REVIEW_ENABLED`) comes from Remote Config, so the feature can be armed without a
+ * release.
  */
 interface AppReviewManager {
 

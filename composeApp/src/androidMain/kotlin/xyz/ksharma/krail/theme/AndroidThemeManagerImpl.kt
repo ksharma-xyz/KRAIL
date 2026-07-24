@@ -12,7 +12,7 @@ import xyz.ksharma.krail.taj.theme.ThemeMode
  * when theme mode changes to ensure status bar and navigation bar
  * colors are updated correctly.
  */
-class AndroidThemeManagerImpl(
+internal class AndroidThemeManagerImpl(
     val context: Context,
 ) : ThemeManager {
 

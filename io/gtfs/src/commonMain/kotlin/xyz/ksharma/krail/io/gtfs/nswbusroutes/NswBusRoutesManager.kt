@@ -17,7 +17,7 @@ import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_BUS_ROUTES_VER
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class NswBusRoutesManager(
+internal class NswBusRoutesManager(
     private val ioDispatcher: CoroutineDispatcher,
     private val nswBusRoutesSandook: NswBusRoutesSandook,
     private val preferences: SandookPreferences,

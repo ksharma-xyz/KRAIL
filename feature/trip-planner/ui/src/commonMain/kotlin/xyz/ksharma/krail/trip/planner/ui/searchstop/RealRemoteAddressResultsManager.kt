@@ -17,7 +17,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
  * (`SearchStopViewModel`) is the single place that turns a failure into an empty list
  * for the UI - see feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
  */
-class RealRemoteAddressResultsManager(
+internal class RealRemoteAddressResultsManager(
     private val tripPlanningService: TripPlanningService,
     private val ioDispatcher: CoroutineDispatcher,
 ) : RemoteAddressResultsManager {

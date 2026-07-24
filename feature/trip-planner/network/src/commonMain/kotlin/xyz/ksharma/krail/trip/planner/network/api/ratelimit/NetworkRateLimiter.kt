@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Note: This class should not be Singleton. It should be created per use-case.
  */
-class NetworkRateLimiter : RateLimiter {
+internal class NetworkRateLimiter : RateLimiter {
 
     private val triggerFlow = MutableSharedFlow<Unit>(replay = 1)
     private val isFirstTime = MutableStateFlow(false)

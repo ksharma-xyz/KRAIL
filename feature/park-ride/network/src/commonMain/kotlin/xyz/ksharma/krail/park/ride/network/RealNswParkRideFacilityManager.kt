@@ -9,7 +9,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 
-class RealNswParkRideFacilityManager(
+internal class RealNswParkRideFacilityManager(
     private val flag: Flag,
 ) : NswParkRideFacilityManager {
 

@@ -70,7 +70,7 @@ class AndroidAppInfo(private val context: Context) : AppInfo {
             "deviceManufacturer=$deviceManufacturer, locale=$locale, timeZone=$timeZone)"
 }
 
-class AndroidAppInfoProvider(
+internal class AndroidAppInfoProvider(
     private val context: Context,
 ) : AppInfoProvider {
     override fun getAppInfo(): AppInfo = AndroidAppInfo(context)

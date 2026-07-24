@@ -52,7 +52,7 @@ interface AppVersionManager {
     )
 }
 
-class RealAppVersionManager(
+internal class RealAppVersionManager(
     private val appInfoProvider: AppInfoProvider,
     private val flag: Flag,
 ) : AppVersionManager {

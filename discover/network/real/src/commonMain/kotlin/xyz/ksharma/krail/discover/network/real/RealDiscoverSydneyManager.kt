@@ -20,7 +20,7 @@ import xyz.ksharma.krail.discover.network.api.db.DiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
 
 @VisibleForTesting(otherwise = PACKAGE_PRIVATE)
-class RealDiscoverSydneyManager(
+internal class RealDiscoverSydneyManager(
     private val flag: Flag,
     private val defaultDispatcher: CoroutineDispatcher = DispatchersComponent().defaultDispatcher,
     private val discoverCardOrderingEngine: DiscoverCardOrderingEngine,

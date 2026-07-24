@@ -15,7 +15,7 @@ import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_STOPS_VERSION
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class NswStopsManager(
+internal class NswStopsManager(
     private val ioDispatcher: CoroutineDispatcher,
     private val sandook: Sandook,
     private val preferences: SandookPreferences,

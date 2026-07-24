@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class AndroidShareManager(private val context: Context) : ShareManager {
+internal class AndroidShareManager(private val context: Context) : ShareManager {
 
     override suspend fun shareImage(bitmap: ImageBitmap, title: String, text: String?): Result<Unit> =
         runCatching {

@@ -11,7 +11,7 @@ import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class RealDiscoverCardOrderingEngine(
+internal class RealDiscoverCardOrderingEngine(
     private val discoverCardPreferences: DiscoverCardSeenPreferences,
 ) : DiscoverCardOrderingEngine {
 

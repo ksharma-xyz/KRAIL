@@ -13,7 +13,7 @@ import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter6
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter7
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter8
 
-class IosSandookDriverFactory : SandookDriverFactory {
+internal class IosSandookDriverFactory : SandookDriverFactory {
     override fun createDriver(): SqlDriver {
         return NativeSqliteDriver(
             schema = KrailSandook.Schema,

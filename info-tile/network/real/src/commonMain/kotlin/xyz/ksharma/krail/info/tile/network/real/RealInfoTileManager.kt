@@ -22,7 +22,7 @@ import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.sandook.SandookPreferences
 
-class RealInfoTileManager(
+internal class RealInfoTileManager(
     private val appVersionManager: AppVersionManager,
     private val appInfoProvider: AppInfoProvider,
     private val preferences: SandookPreferences,

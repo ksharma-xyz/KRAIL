@@ -2,18 +2,14 @@ package xyz.ksharma.krail.core.appreview.di
 
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.appreview.AndroidAppReviewRequester
-import xyz.ksharma.krail.core.appreview.AppReviewDebugSignal
 import xyz.ksharma.krail.core.appreview.AppReviewManager
 import xyz.ksharma.krail.core.appreview.AppReviewRequester
-import xyz.ksharma.krail.core.appreview.RealAppReviewDebugSignal
 import xyz.ksharma.krail.core.appreview.RealAppReviewManager
 import xyz.ksharma.krail.sandook.Sandook
 
 actual val appReviewModule = module {
-    single<AppReviewDebugSignal> { RealAppReviewDebugSignal() }
-
     single<AppReviewRequester> {
-        AndroidAppReviewRequester(context = get(), activityHolder = get(), debugSignal = get())
+        AndroidAppReviewRequester(context = get(), activityHolder = get())
     }
 
     // Single, not factory: the armed delight moment is in-memory state that must be shared

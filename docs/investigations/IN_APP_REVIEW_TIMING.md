@@ -247,19 +247,35 @@ Callers:
 
 ## Testing on device
 
-The feature is gated, so first relax the gates in Remote Config:
+### Relaxing the gates for QA
 
-```
-in_app_review_enabled                true
-in_app_review_min_saved_trips        1
-in_app_review_min_account_age_days   0
-in_app_review_min_days_between_asks  0
+Only the master switch is a Remote Config value; the engagement thresholds are app-side
+constants in `AppReviewThresholds.kt`. To exercise the trigger without waiting days:
+
+- Set `in_app_review_enabled` to `true` in Remote Config (default is `false`).
+- Temporarily lower the constants in `AppReviewThresholds.kt`: `MIN_SAVED_TRIPS` (2),
+  `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_DAYS_BETWEEN_ASKS` (150). Revert before committing.
+
+A fresh install cannot otherwise trigger it, because the minimum install age is three days
+and the minimum saved trips is two. Finish the intro, then hit a delight moment (save a
+trip, view a timetable and return, add a Park and Ride facility, or tap a Park and Ride
+card).
+
+### Verifying without a visible sheet
+
+The real sheet is unobservable: both platforms throttle it and report nothing, and a
+sideloaded Android debug build cannot show it at all. There is no in-app debug sheet;
+verification is by log line and by the `review_prompt_requested` analytics event. On
+Android:
+
+```sh
+./gradlew :androidApp:installDebug
+adb logcat -c && adb logcat | grep -i AppReview
 ```
 
-A fresh install cannot otherwise trigger it, because the default minimum install age is
-three days and the default minimum saved trips is two. Also finish the intro, then hit one
-of the delight moments (save a trip, view a timetable and return, add a Park and Ride
-facility, or tap a Park and Ride card).
+`AppReview: requesting platform review sheet` proves every gate passed. On a sideloaded
+build a `requestReviewFlow failed` line follows, which is normal and not a defect. iOS: open
+`iosApp/iosApp.xcodeproj` and run from Xcode, where the StoreKit alert shows every time.
 
 | Build | Behaviour |
 |---|---|
@@ -269,22 +285,49 @@ facility, or tap a Park and Ride card).
 | Android sideloaded (`installDebug`) | `requestReviewFlow()` fails because the install did not come from Play. Logs and returns. No card. |
 | Android internal testing or internal app sharing | Real card, subject to Play quota. |
 
+### Case checklist (both platforms)
+
+Relax the gates as above, then walk each case. "Fires" means the
+`AppReview: requesting platform review sheet` log line and a `review_prompt_requested`
+event; the visible sheet only appears on the builds noted in the table above.
+
+| # | Case | Expect |
+|---|---|---|
+| 1 | Flag OFF, any delight moment, open Saved Trips | No request, no log line |
+| 2 | Flag ON, age below min or below min saved trips | Armed but does not fire (ask-1 gate fails) |
+| 3 | Flag ON, age and saved-trip gates pass, delight moment, return to Saved Trips | Fires once |
+| 4 | Delight moment on a timetable / park-ride screen | Nothing on that screen; fires only after landing on Saved Trips (arm-then-fire) |
+| 5 | Each `DelightMoment`: `timetable_viewed`, `trip_saved`, `park_ride_added`, `park_ride_card_tapped` | Each arms; `park_ride_card_tapped` after its short delay |
+| 6 | Ask 2 before the min days since ask 1 | Does not fire |
+| 7 | Ask 2 after the min days since ask 1 | Fires |
+| 8 | Third attempt after two asks | Never fires (lifetime cap) |
+| 9 | Two moments armed before landing | One request, latest source on the event |
+
+### Platform-specific
+
 Android:
 
-```sh
-./gradlew :androidApp:installDebug
-adb logcat -c && adb logcat | grep -i AppReview
-```
+- Real `installRelease` build with a Play account: confirm the actual card can appear (Play
+  may still show nothing on quota, which is expected; check the logcat lines).
+- `AndroidAppReviewRequester` needs a resumed Activity. Background the app between arming and
+  landing (case 4), then foreground on Saved Trips: no crash, the request still evaluates.
+- Configuration change: rotate on Saved Trips with a moment armed. Armed state must survive
+  recreation with no `FATAL EXCEPTION`.
 
-Expect `AppReview: requesting platform review sheet`, which proves every gate passed,
-followed by a `requestReviewFlow failed` line, which is normal for a sideloaded build and
-is not a defect.
+iOS:
 
-iOS: open `iosApp/iosApp.xcodeproj` and run from Xcode.
+- StoreKit alert shows every launch from Xcode; TestFlight and throttling make other builds
+  unreliable for visual confirmation, so rely on the log line and analytics there.
+- Guideline 1.1.7: confirm no KRAIL-authored pre-prompt precedes the system alert and it
+  never fires from a button tap.
+- Foreground and background around arm-then-fire: no crash, request still evaluates on Saved
+  Trips.
 
-An unbuilt convenience: adding review overrides to the existing debug-only
-`DebugConfigScreen` would replace the Remote Config round trip with an on-device toggle,
-including a bypass-all-gates action.
+### Automated
+
+`./gradlew :core:app-review:testAndroidHostTest` covers gating, arm-then-fire, the two-ask
+lifetime cap, and the spacing between asks. iOS has no host tests here (repo convention);
+the platform requesters are thin wrappers verified manually.
 
 ## Migration numbering
 

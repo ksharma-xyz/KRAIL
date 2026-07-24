@@ -21,8 +21,9 @@ interface AppReviewRequester {
      * Requests the platform review sheet. Silent no-op when the platform cannot show one.
      * Never throws: a failed review request must not affect anything the user was doing.
      *
-     * @param source the [DelightMoment] that prompted this request, used only for logging and
-     *   the debug proof surface. The platform sheet itself carries no KRAIL-authored context.
+     * Which [DelightMoment] prompted the request is recorded on the `review_prompt_requested`
+     * analytics event by [AppReviewManager], not passed here: the platform sheet carries no
+     * KRAIL-authored context, so the requester has no use for it.
      */
-    fun requestReview(source: String)
+    fun requestReview()
 }

@@ -11,7 +11,7 @@ import xyz.ksharma.krail.core.log.log
  * iOS shows the rating alert at most a few times per year per user and reports nothing back,
  * so a call here is a request, never a guarantee.
  */
-class IosAppReviewRequester : AppReviewRequester {
+internal class IosAppReviewRequester : AppReviewRequester {
 
     override fun requestReview() {
         // StoreKit presents UI, so it has to be asked on the main thread.

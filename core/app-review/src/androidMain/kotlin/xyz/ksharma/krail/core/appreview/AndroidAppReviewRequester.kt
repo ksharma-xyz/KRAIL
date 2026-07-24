@@ -13,7 +13,7 @@ import xyz.ksharma.krail.platform.ops.CurrentActivityHolder
  * The flow needs a real Activity, which is why it goes through [CurrentActivityHolder]
  * rather than the application Context.
  */
-class AndroidAppReviewRequester(
+internal class AndroidAppReviewRequester(
     private val context: Context,
     private val activityHolder: CurrentActivityHolder,
 ) : AppReviewRequester {

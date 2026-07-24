@@ -11,7 +11,7 @@ import platform.Foundation.dataWithBytes
 import platform.Foundation.writeToFile
 import xyz.ksharma.krail.core.log.log
 
-class IosFileStorage : FileStorage {
+internal class IosFileStorage : FileStorage {
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun saveFile(fileName: String, data: ByteArray) {
         log("Saving file: $fileName")

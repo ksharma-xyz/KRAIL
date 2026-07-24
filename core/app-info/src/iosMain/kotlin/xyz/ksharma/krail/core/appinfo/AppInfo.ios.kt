@@ -65,7 +65,7 @@ class IOSAppInfo : AppInfo {
             "deviceManufacturer=$deviceManufacturer, locale=$locale, timeZone=$timeZone)"
 }
 
-class IosAppInfoProvider : AppInfoProvider {
+internal class IosAppInfoProvider : AppInfoProvider {
     override fun getAppInfo(): AppInfo {
         return IOSAppInfo()
     }

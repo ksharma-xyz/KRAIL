@@ -6,7 +6,7 @@ import xyz.ksharma.krail.core.remoteconfig.RemoteConfig
 import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
 import xyz.ksharma.krail.sandook.UserLifecycleStore
 
-class RealAppStart(
+internal class RealAppStart(
     private val coroutineScope: CoroutineScope,
     private val remoteConfig: RemoteConfig,
     private val nswStopsManager: StopsManager,

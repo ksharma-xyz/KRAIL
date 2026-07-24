@@ -26,7 +26,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
-class RealStopResultsManager(
+internal class RealStopResultsManager(
     private val sandook: Sandook,
     private val nswBusRoutesSandook: NswBusRoutesSandook,
     private val flag: Flag,

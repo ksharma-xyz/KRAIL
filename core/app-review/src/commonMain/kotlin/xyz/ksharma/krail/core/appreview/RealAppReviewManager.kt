@@ -12,7 +12,7 @@ import xyz.ksharma.krail.sandook.UserLifecycleStore
  * @param savedTripCount reads how many trips the user has saved right now. A live count query,
  *   not a stored counter, so ask 1 gates on what the user actually has.
  */
-class RealAppReviewManager(
+internal class RealAppReviewManager(
     private val requester: AppReviewRequester,
     private val lifecycleStore: UserLifecycleStore,
     private val preferences: SandookPreferences,

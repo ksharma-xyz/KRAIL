@@ -32,7 +32,7 @@ interface ParkRideCatalogue {
     fun loadingEmoji(): LoadingEmoji
 }
 
-class RealParkRideCatalogue(
+internal class RealParkRideCatalogue(
     private val nswParkRideFacilityManager: NswParkRideFacilityManager,
     private val stopResultsManager: StopResultsManager,
     private val sandook: Sandook,

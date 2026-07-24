@@ -22,7 +22,7 @@ import platform.UIKit.UIWindowScene
 import platform.UIKit.popoverPresentationController
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-class IosShareManager : ShareManager {
+internal class IosShareManager : ShareManager {
 
     override suspend fun shareImage(bitmap: ImageBitmap, title: String, text: String?): Result<Unit> =
         runCatching {

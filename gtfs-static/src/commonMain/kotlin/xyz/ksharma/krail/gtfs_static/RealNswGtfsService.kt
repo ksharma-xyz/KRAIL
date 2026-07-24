@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.core.log.log
 
-class RealNswGtfsService(
+internal class RealNswGtfsService(
     private val httpClient: HttpClient,
     private val fileStorage: FileStorage,
     private val ioDispatcher: CoroutineDispatcher = DispatchersComponent().ioDispatcher,

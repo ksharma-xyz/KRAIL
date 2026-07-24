@@ -7,7 +7,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.log.log
 
-class RealAnalytics(
+internal class RealAnalytics(
     private val firebaseAnalytics: FirebaseAnalytics,
     private val appInfoProvider: AppInfoProvider,
     private val coroutineScope: CoroutineScope,

@@ -39,7 +39,7 @@ interface ParkRideAvailabilityLoader {
     suspend fun refreshIfNeeded(mappings: List<ParkRideMapping>)
 }
 
-class RealParkRideAvailabilityLoader(
+internal class RealParkRideAvailabilityLoader(
     private val parkRideSandook: NswParkRideSandook,
     private val parkRideService: ParkRideService,
     private val flag: Flag,

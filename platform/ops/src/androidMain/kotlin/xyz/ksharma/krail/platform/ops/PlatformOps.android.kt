@@ -6,7 +6,7 @@ import androidx.core.net.toUri
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 
-class AndroidPlatformOps(private val context: Context) : PlatformOps {
+internal class AndroidPlatformOps(private val context: Context) : PlatformOps {
 
     // "Tell your mates about KRAIL"
     override fun sharePlainText(text: String, title: String) {

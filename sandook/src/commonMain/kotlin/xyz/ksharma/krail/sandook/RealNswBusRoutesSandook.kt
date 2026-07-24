@@ -5,7 +5,7 @@ package xyz.ksharma.krail.sandook
  * Delegates to the SQLDelight generated queries.
  */
 @Suppress("TooManyFunctions")
-class RealNswBusRoutesSandook(
+internal class RealNswBusRoutesSandook(
     sandook: KrailSandook,
 ) : NswBusRoutesSandook {
 

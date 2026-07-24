@@ -17,7 +17,7 @@ import platform.UIKit.popoverPresentationController
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 
-class IosPlatformOps : PlatformOps {
+internal class IosPlatformOps : PlatformOps {
     override fun sharePlainText(text: String, title: String) {
         handleShareClick(text = text, title = title)
     }

@@ -112,7 +112,20 @@ abstract class BaseSnapshotTest {
             scanner
         }
 
+        // @PreviewComponent/@PreviewScreen stack 3-4 @Preview variants ("1. Light Mode",
+        // "2. Dark Mode", "3. 2x Font Scale", ...) per annotated function so the IDE's
+        // preview panel shows them side by side. The scanner reports each of those
+        // variants as its own entry, but capturePreviewSnapshots() below ignores every
+        // variant's own uiMode/fontScale — ApplyPreviewEnvironment always drives light/
+        // dark/font-scale itself — so all 3-4 variants of one preview render pixel-
+        // identical input and only differ by which of the harness's own combinations
+        // captures them. Without this dedupe every preview was captured 3-4x more than
+        // necessary (confirmed via md5 across existing goldens: ~99% of "Light Mode" vs
+        // "Dark Mode" variant pairs were byte-identical). Keep one variant per underlying
+        // function — declaringClass+methodName, since private preview functions commonly
+        // reuse the same name across files.
         val allPreviews = scannerWithPrivacy.getPreviews()
+            .distinctBy { "${it.declaringClass}#${it.methodName}" }
         val (skipped, previews) = allPreviews.partition { it.methodName in excludedPreviewNames }
 
         println("Found ${allPreviews.size} previews with @ScreenshotTest in $packageToScan")

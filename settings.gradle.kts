@@ -22,6 +22,11 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+// pluginManagement's includeBuild (above) only registers build-logic's *plugins*. Registering it
+// again here makes its regular library projects (:detekt-rules) substitutable for normal GAV
+// dependencies too — needed so Detekt.kt can add :detekt-rules to detektPlugins by coordinate.
+includeBuild("gradle/build-logic")
+
 // Read local.properties for dev credentials (git-ignored, never committed).
 val localProps = Properties().apply {
     rootProject.projectDir.resolve("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)

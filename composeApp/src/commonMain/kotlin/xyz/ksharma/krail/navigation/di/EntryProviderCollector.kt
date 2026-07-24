@@ -30,7 +30,7 @@ import xyz.ksharma.krail.navigation.Navigator
  * ```
  */
 @Composable
-fun collectEntryProviders(
+internal fun collectEntryProviders(
     navigator: Navigator,
 ): (NavKey) -> NavEntry<NavKey> {
     // Inject all entry builders from Koin using centralized qualifiers

@@ -12,7 +12,7 @@ import platform.UIKit.UIScreen
 import platform.UIKit.UIUserInterfaceStyle
 import kotlin.experimental.ExperimentalNativeApi
 
-class IOSAppInfo : AppInfo {
+internal class IOSAppInfo : AppInfo {
 
     override val devicePlatformType: DevicePlatformType = DevicePlatformType.IOS
     private val info = NSBundle.mainBundle.infoDictionary

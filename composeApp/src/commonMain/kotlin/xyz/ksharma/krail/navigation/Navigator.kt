@@ -75,7 +75,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
  * @return Navigator instance with theme loaded from database
  */
 @Composable
-fun rememberNavigator(state: NavigationState): Navigator {
+internal fun rememberNavigator(state: NavigationState): Navigator {
     val sandook: Sandook = koinInject()
     val navigator = remember(state) { Navigator(state) }
 
@@ -100,7 +100,7 @@ fun rememberNavigator(state: NavigationState): Navigator {
  * Implements NavigatorBase so feature modules can depend on the interface
  * without circular dependencies.
  */
-class Navigator(val state: NavigationState) : NavigatorBase {
+internal class Navigator(val state: NavigationState) : NavigatorBase {
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // THEME MANAGEMENT (Temporary Coupling - See Migration Plan Below)
@@ -388,5 +388,5 @@ private fun Navigator.stackSummary(): String =
 
 // To be used for Previews
 @Composable
-fun rememberPreviewNavigator(navigationState: NavigationState): Navigator =
+internal fun rememberPreviewNavigator(navigationState: NavigationState): Navigator =
     remember { Navigator(navigationState) }

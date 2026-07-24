@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 
-class AndroidAppInfo(private val context: Context) : AppInfo {
+internal class AndroidAppInfo(private val context: Context) : AppInfo {
 
     override val devicePlatformType: DevicePlatformType = DevicePlatformType.ANDROID
 

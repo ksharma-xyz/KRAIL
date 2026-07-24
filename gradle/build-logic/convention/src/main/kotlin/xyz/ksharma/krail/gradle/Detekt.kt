@@ -14,6 +14,12 @@ fun Project.configureDetekt() {
     // Compose specific rules
     dependencies.add("detektPlugins", libs.findLibrary("detekt-compose").get())  //  }
 
+    // KRAIL's own custom rules (see gradle/build-logic/detekt-rules), e.g. PublicImplementationClass.
+    // A GAV string, not project(":detekt-rules") — that project lives in the separate
+    // includeBuild("gradle/build-logic") composite build, not in this (the root) build's project
+    // graph, so it has to be requested by coordinate and resolved via composite substitution.
+    dependencies.add("detektPlugins", "xyz.ksharma.krail.gradle:detekt-rules:unspecified")
+
     extensions.configure<DetektExtension>("detekt") {
         autoCorrect = true
         buildUponDefaultConfig = true

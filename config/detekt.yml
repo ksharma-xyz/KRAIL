@@ -74,6 +74,16 @@ exceptions:
   ThrowingNewInstanceOfSameException:
     active: true
 
+krail:
+  PublicImplementationClass:
+    active: true
+    # Interfaces backed by external/library contracts (not this repo's own module
+    # interfaces) that a class may legitimately implement while staying public.
+    excludeSuperTypes: []
+    # :core:testing's Fake* classes are the repo's canonical shared test doubles, deliberately
+    # public so other modules' test source sets can construct them directly.
+    excludes: ['**/core/testing/**']
+
 naming:
   ClassNaming:
     ignoreAnnotated: ['org.junit.jupiter.api.Nested']

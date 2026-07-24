@@ -187,12 +187,9 @@ class RealAppReviewManagerTest {
 private class FakeAppReviewRequester : AppReviewRequester {
     var requestCount = 0
         private set
-    var lastSource: String? = null
-        private set
 
-    override fun requestReview(source: String) {
+    override fun requestReview() {
         requestCount++
-        lastSource = source
     }
 }
 

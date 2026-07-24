@@ -11,14 +11,9 @@ import xyz.ksharma.krail.core.log.log
  * iOS shows the rating alert at most a few times per year per user and reports nothing back,
  * so a call here is a request, never a guarantee.
  */
-class IosAppReviewRequester(
-    private val debugSignal: AppReviewDebugSignal,
-) : AppReviewRequester {
+class IosAppReviewRequester : AppReviewRequester {
 
-    override fun requestReview(source: String) {
-        // Proof for on-device testing; inert in release (nothing subscribes).
-        debugSignal.signalRequested(source)
-
+    override fun requestReview() {
         // StoreKit presents UI, so it has to be asked on the main thread.
         NSOperationQueue.mainQueue.addOperationWithBlock {
             val windowScene = UIApplication.sharedApplication.keyWindow?.windowScene

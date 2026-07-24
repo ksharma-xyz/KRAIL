@@ -46,7 +46,7 @@ class RealAppReviewManager(
         analytics.track(AnalyticsEvent.ReviewPromptRequestedEvent(source = moment.source))
         log("AppReview: requesting platform review sheet (source=${moment.source})")
 
-        requester.requestReview(source = moment.source)
+        requester.requestReview()
     }
 
     private fun isReviewRequestDue(): Boolean {

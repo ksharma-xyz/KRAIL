@@ -90,8 +90,9 @@ tenure, so a save is an engaged user's action, not a day-one visitor's.
 - The `SAVED_TRIP_OPEN` lifecycle counter is removed; ask 1 gates on saved-trip *count*, a
   `SavedTrip` table query (`savedTripCount` provider), not an open counter.
 - `IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS` and `IN_APP_REVIEW_COOLDOWN_DAYS` Remote Config keys
-  are replaced by `IN_APP_REVIEW_MIN_SAVED_TRIPS` (default 2) and
-  `IN_APP_REVIEW_MIN_DAYS_BETWEEN_ASKS` (default 150, about five months).
+  are replaced by the app-side constants `MIN_SAVED_TRIPS` (2) and `MIN_DAYS_BETWEEN_ASKS`
+  (150, about five months) in `AppReviewThresholds.kt`. These are no longer Remote Config
+  tunables: only `IN_APP_REVIEW_ENABLED` remains on Remote Config, as the master on/off gate.
 
 ### Reused as-is
 
@@ -149,11 +150,14 @@ Common gates (both asks):
 
 Then, by how many times the user has been asked (`REVIEW_PROMPT_REQUESTED` count):
 
-| Prior asks | Fires when | Tunable |
+| Prior asks | Fires when | Threshold (app-side constant) |
 |---|---|---|
-| 0 (ask 1) | install age ≥ N days **and** saved-trip count ≥ M | `IN_APP_REVIEW_MIN_ACCOUNT_AGE_DAYS` (3), `IN_APP_REVIEW_MIN_SAVED_TRIPS` (2) |
-| 1 (ask 2) | ≥ D days since ask 1 | `IN_APP_REVIEW_MIN_DAYS_BETWEEN_ASKS` (150) |
+| 0 (ask 1) | install age ≥ N days **and** saved-trip count ≥ M | `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_SAVED_TRIPS` (2) |
+| 1 (ask 2) | ≥ D days since ask 1 | `MIN_DAYS_BETWEEN_ASKS` (150) |
 | 2 or more | never | lifetime cap, hardcoded |
+
+The engagement thresholds are fixed constants in `AppReviewThresholds.kt`, not Remote Config
+dials. Only `IN_APP_REVIEW_ENABLED` is tunable from Remote Config.
 
 The lifetime cap of two is deliberately not a Remote Config dial: it is the premise of the
 design (the platform reports no outcome, so we stop after two well-timed asks), not a knob.

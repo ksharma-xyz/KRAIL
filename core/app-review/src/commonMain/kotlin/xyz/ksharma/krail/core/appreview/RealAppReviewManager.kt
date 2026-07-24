@@ -61,13 +61,13 @@ class RealAppReviewManager(
 
     /** Ask 1: a tenured, invested user. */
     private fun isFirstAskDue(): Boolean =
-        isAccountOldEnough() && savedTripCount() >= flag.minSavedTrips()
+        isAccountOldEnough() && savedTripCount() >= MIN_SAVED_TRIPS
 
     /** Ask 2: a long, deliberate gap after ask 1, keeping both inside the OS quota. */
     private fun isSecondAskDue(): Boolean {
         val millisSinceAsk1 =
             lifecycleStore.millisSinceLast(LifecycleCounter.REVIEW_PROMPT_REQUESTED) ?: return false
-        return millisSinceAsk1 >= flag.minDaysBetweenAsks() * MILLIS_PER_DAY
+        return millisSinceAsk1 >= MIN_DAYS_BETWEEN_ASKS * MILLIS_PER_DAY
     }
 
     /**
@@ -79,7 +79,7 @@ class RealAppReviewManager(
 
     private fun isAccountOldEnough(): Boolean {
         val ageDays = lifecycleStore.daysSinceFirstInstall() ?: return false
-        return ageDays >= flag.minAccountAgeDays()
+        return ageDays >= MIN_ACCOUNT_AGE_DAYS
     }
 
     private companion object {

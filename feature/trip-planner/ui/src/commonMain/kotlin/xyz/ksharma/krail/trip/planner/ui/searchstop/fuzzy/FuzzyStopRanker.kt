@@ -21,7 +21,7 @@ interface FuzzyStopRanker {
     ): List<SearchStopState.SearchResult.Stop>
 }
 
-class DefaultFuzzyStopRanker : FuzzyStopRanker {
+internal class DefaultFuzzyStopRanker : FuzzyStopRanker {
     override fun rank(
         query: String,
         candidates: List<SearchStopState.SearchResult.Stop>,

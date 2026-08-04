@@ -76,6 +76,37 @@ address results were on screen, the user picked an address" without any query te
 Rows before 2026-07-15 have no `searchSessionId`; treat missing as "pre-join era",
 only app-session-level funnels are possible there.
 
+## Param sanitizing: location ids and the 100-char limit
+
+Every event's properties pass through `AnalyticsParamSanitizer` in the `AnalyticsEvent`
+base class, so no call site needs to hash or truncate. It exists because of two traps:
+
+- **Firebase silently drops any String param value over 100 characters.** The event still
+  lands, the param is just missing, so a dashboard reads "unused feature" rather than
+  "rejected param". This is exactly what happened to address selections in v1.25: an EFA
+  `streetID:...` id is 120+ chars, so `stop_selected` rows for addresses arrived with no
+  `stopId`, address search looked unused, and stop rankings quietly omitted those
+  selections.
+- **Address ids and address display names are personal data.** An EFA address id embeds
+  the street, suburb and postcode as plain text, and the display name is the address
+  itself. Sending either would undo the query redaction described above.
+
+Rules applied:
+
+| Param | Value | Result |
+|---|---|---|
+| `stopId`, `fromStopId`, `toStopId` | transit stop id (no colon, ≤ 100 chars) | unchanged |
+| `stopId`, `fromStopId`, `toStopId` | namespaced id (`streetID:`, `poiID:`, `coord:`) or over the limit | `addr_` + stable 64-bit hash |
+| `stopName` | event also carries an address id | `address` |
+| any String | over 100 chars | truncated to 100 |
+
+The hash is stable across launches and devices, so "which addresses get picked" stays
+rankable while the address text never leaves the device. Address rows before this shipped
+have **no** `stopId` at all — do not read their absence as "no address selections".
+
+When adding a param that can carry a location id or a user-visible place name, add its key
+to the relevant set in `AnalyticsParamSanitizer` rather than sanitizing at the call site.
+
 ## How analytics reaches the dashboard
 
 `AnalyticsEvent.kt` is the only thing this repo owns for analytics — it defines the event

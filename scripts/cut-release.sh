@@ -32,8 +32,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Read current version from the base branch (local checkout must be up-to-date)
-CURRENT_VERSION=$(grep -oP '(?<=versionName = ")[^"]+' "$ROOT/androidApp/build.gradle.kts")
+# Read current version from the base branch (local checkout must be up-to-date).
+# sed, not `grep -oP`: BSD grep on macOS has no -P, so the Perl-regex form aborted this
+# script on the maintainer's own machine while working fine in CI on ubuntu.
+CURRENT_VERSION=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' "$ROOT/androidApp/build.gradle.kts" | head -1)
 if [[ -z "$CURRENT_VERSION" ]]; then
   echo "error: could not read versionName from androidApp/build.gradle.kts" >&2
   exit 1

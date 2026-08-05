@@ -68,6 +68,7 @@ class SearchStopViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val preferences: SandookPreferences,
     private val sandook: Sandook,
+    private val searchSessionStore: SearchSessionStore,
     private val isAddressSearchEnabled: () -> Boolean = { false },
     private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
 ) : ViewModel() {
@@ -121,6 +122,14 @@ class SearchStopViewModel(
                 // belong to a previous (or no) query, so send nothing.
                 val state = _uiState.value
                 val fromLiveQuery = state.searchQuery.isNotBlank()
+                // Hand the session to whatever loads a trip next, so the funnel can run
+                // past selection to "departure times were actually seen". Recents and
+                // empty-state stops record null, which also clears any earlier pending
+                // session rather than letting it attach to an unrelated trip.
+                searchSessionStore.recordSelection(
+                    searchSessionId = currentSearchSessionId.takeIf { fromLiveQuery },
+                    stopId = event.stopItem.stopId,
+                )
                 analytics.track(
                     StopSelectedEvent(
                         stopId = event.stopItem.stopId,
@@ -255,6 +264,10 @@ class SearchStopViewModel(
             }
 
             is SearchStopUiEvent.TrackStopSelectedFromMap -> {
+                // A map pick belongs to no query. Recording null clears any session left
+                // pending by an earlier search so the trip that follows is not credited
+                // to a search the rider abandoned.
+                searchSessionStore.recordSelection(searchSessionId = null, stopId = event.stopId)
                 analytics.track(
                     AnalyticsEvent.StopSelectedFromMapEvent(
                         stopId = event.stopId,

@@ -34,6 +34,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,6 +49,7 @@ class SearchStopViewModelTest {
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
     private val fakePreferences = FakeSandookPreferences()
     private val fakeSandook = FakeSandook()
+    private val searchSessionStore = RealSearchSessionStore()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -63,6 +65,7 @@ class SearchStopViewModelTest {
             ioDispatcher = testDispatcher,
             preferences = fakePreferences,
             sandook = fakeSandook,
+            searchSessionStore = searchSessionStore,
         )
     }
 
@@ -343,6 +346,7 @@ class SearchStopViewModelTest {
                 ioDispatcher = testDispatcher,
                 preferences = fakePreferences,
                 sandook = fakeSandook,
+                searchSessionStore = searchSessionStore,
             )
 
             // THEN - Initial state should not include recents (screen triggers refresh)
@@ -621,6 +625,74 @@ class SearchStopViewModelTest {
         }
 
     @Test
+    fun `GIVEN a live query WHEN a stop is selected THEN the session is handed to the trip that follows`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Central"))
+                advanceUntilIdle()
+                viewModel.onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        StopItem(stopName = "Central Station", stopId = "10101"),
+                    ),
+                )
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val selected = fakeAnalytics.getTrackedEvent("stop_selected")
+                assertIs<AnalyticsEvent.StopSelectedEvent>(selected)
+                assertEquals(
+                    selected.searchSessionId,
+                    searchSessionStore.consumeFor(fromStopId = "10101", toStopId = "20202"),
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a recent tap WHEN a stop is selected THEN no session is handed on`() = runTest {
+        viewModel.onEvent(
+            SearchStopUiEvent.TrackStopSelected(
+                StopItem(stopName = "Central Station", stopId = "10101"),
+                isRecentSearch = true,
+            ),
+        )
+        advanceUntilIdle()
+
+        assertNull(searchSessionStore.consumeFor(fromStopId = "10101", toStopId = "20202"))
+    }
+
+    @Test
+    fun `GIVEN a search WHEN the rider then picks from the map THEN the stale session is cleared`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Central"))
+                advanceUntilIdle()
+                viewModel.onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        StopItem(stopName = "Central Station", stopId = "10101"),
+                    ),
+                )
+                viewModel.onEvent(
+                    SearchStopUiEvent.TrackStopSelectedFromMap(
+                        stopId = "30303",
+                        searchRadiusKm = 2.0,
+                        enabledModesCount = 3,
+                        nearbyStopsCount = 5,
+                        hadUserLocation = true,
+                    ),
+                )
+                advanceUntilIdle()
+
+                assertNull(searchSessionStore.consumeFor(fromStopId = "10101", toStopId = "30303"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `CountBucket boundaries`() {
         val bucket = AnalyticsEvent.StopSelectedEvent.CountBucket.Companion::from
         assertEquals(AnalyticsEvent.StopSelectedEvent.CountBucket.ZERO, bucket(0))
@@ -769,6 +841,7 @@ class SearchStopViewModelTest {
         ioDispatcher = testDispatcher,
         preferences = fakePreferences,
         sandook = fakeSandook,
+        searchSessionStore = searchSessionStore,
         isAddressSearchEnabled = { true },
         addressSearchMinQueryLength = { minQueryLength },
     )

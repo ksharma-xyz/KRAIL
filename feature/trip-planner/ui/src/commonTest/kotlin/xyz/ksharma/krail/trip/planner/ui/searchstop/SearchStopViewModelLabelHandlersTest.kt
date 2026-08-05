@@ -66,6 +66,7 @@ class SearchStopViewModelLabelHandlersTest {
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
     private val fakePreferences = FakeSandookPreferences()
     private val fakeSandook = FakeSandook()
+    private val searchSessionStore = RealSearchSessionStore()
 
     private lateinit var viewModel: SearchStopViewModel
 
@@ -87,6 +88,7 @@ class SearchStopViewModelLabelHandlersTest {
             ioDispatcher = testDispatcher,
             preferences = fakePreferences,
             sandook = fakeSandook,
+            searchSessionStore = searchSessionStore,
         )
     }
 
@@ -529,6 +531,7 @@ class SearchStopViewModelLabelHandlersTest {
             ioDispatcher = testDispatcher,
             preferences = FakeSandookPreferences(),
             sandook = freshSandook,
+            searchSessionStore = RealSearchSessionStore(),
         )
         // Subscribe so the VM scope's observer collects.
         freshVm.uiState.test {

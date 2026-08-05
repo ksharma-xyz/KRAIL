@@ -16,6 +16,16 @@ internal fun Analytics.trackSavedTripCardClick(fromStopId: String, toStopId: Str
     track(AnalyticsEvent.SavedTripCardClickEvent(fromStopId = fromStopId, toStopId = toStopId))
 }
 
-internal fun Analytics.trackLoadTimeTableClick(fromStopId: String, toStopId: String) {
-    track(AnalyticsEvent.LoadTimeTableClickEvent(fromStopId = fromStopId, toStopId = toStopId))
+internal fun Analytics.trackLoadTimeTableClick(
+    fromStopId: String,
+    toStopId: String,
+    searchSessionId: String?,
+) {
+    track(
+        AnalyticsEvent.LoadTimeTableClickEvent(
+            fromStopId = fromStopId,
+            toStopId = toStopId,
+            searchSessionId = searchSessionId,
+        ),
+    )
 }

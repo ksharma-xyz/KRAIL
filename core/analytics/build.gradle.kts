@@ -16,6 +16,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.analytics"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
 
     iosArm64()
@@ -28,6 +29,12 @@ kotlin {
     }
 
     sourceSets {
+        commonTest {
+            dependencies {
+                implementation(libs.test.kotlin)
+            }
+        }
+
         androidMain {
             dependencies {
                 // Firebase BOM needed for GitLive Firebase Android platform dependencies

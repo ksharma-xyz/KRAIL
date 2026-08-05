@@ -20,12 +20,22 @@ private const val PROP_NEW_INDEX = "newIndex"
 private const val PROP_TOTAL_COUNT = "totalCount"
 private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
+private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
+private const val PROP_PANE_MODE = "paneMode"
 
-sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? = null) {
+/**
+ * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
+ * exposed, so no subclass can leak an address as text or hand Firebase a parameter value
+ * it will silently drop. Subclasses therefore build their maps from the raw values they
+ * are given - do not truncate or hash at the call site.
+ */
+sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? = null) {
+
+    val properties: Map<String, Any>? = rawProperties?.let(AnalyticsParamSanitizer::sanitize)
 
     data class ScreenViewEvent(val screen: AnalyticsScreen) : AnalyticsEvent(
         name = "view_screen",
-        properties = mapOf("name" to screen.name),
+        rawProperties = mapOf("name" to screen.name),
     )
 
     // region SavedTrips
@@ -33,22 +43,37 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class SavedTripCardClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "saved_trip_card_click",
-            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
+            rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     data class DeleteSavedTripClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "delete_saved_trip_card_click",
-            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
+            rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     data object ReverseStopClickEvent : AnalyticsEvent(name = "reverse_stop_click")
 
-    data class LoadTimeTableClickEvent(val fromStopId: String, val toStopId: String) :
-        AnalyticsEvent(
-            name = "load_timetable_click",
-            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
-        )
+    /**
+     * @param searchSessionId Set when this trip was loaded off the back of a stop the
+     *                        rider had just searched for, which is what closes the search
+     *                        funnel: [StopSelectedEvent] only proves a stop was picked,
+     *                        this proves the rider reached departure times. Null when the
+     *                        trip was loaded from a saved card, a recent, or a map pick -
+     *                        no search preceded it, so attributing one would be wrong.
+     */
+    data class LoadTimeTableClickEvent(
+        val fromStopId: String,
+        val toStopId: String,
+        val searchSessionId: String? = null,
+    ) : AnalyticsEvent(
+        name = "load_timetable_click",
+        rawProperties = buildMap {
+            put(PROP_FROM_STOP_ID, fromStopId)
+            put(PROP_TO_STOP_ID, toStopId)
+            searchSessionId?.let { put(PROP_SEARCH_SESSION_ID, it) }
+        },
+    )
 
     /**
      * User taps Retry after an API/load failure. Unified across surfaces to stay within the
@@ -58,7 +83,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class RetryApiEvent(val source: Source) :
         AnalyticsEvent(
             name = "retry_api",
-            properties = mapOf(PROP_SOURCE to source.value),
+            rawProperties = mapOf(PROP_SOURCE to source.value),
         ) {
         enum class Source(val value: String) {
             TIMETABLE("timetable"),
@@ -98,7 +123,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val totalCount: Int,
     ) : AnalyticsEvent(
         name = "saved_trip_card_reordered",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_FROM_STOP_ID to fromStopId,
             PROP_TO_STOP_ID to toStopId,
             PROP_PREVIOUS_INDEX to previousIndex,
@@ -112,6 +137,12 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     // region SearchStop
 
     /**
+     * @param stopId               Transit stop ids are sent as-is. An address/POI id is
+     *                             replaced by a short stable hash by
+     *                             [AnalyticsParamSanitizer]: the raw EFA id embeds the
+     *                             street and suburb as text, and at 120+ characters
+     *                             Firebase dropped the parameter outright, which made
+     *                             every address selection look like it carried no stop.
      * @param searchSessionId      Joins the selection to its [SearchStopQuery] firings.
      *                             Null when the selection had no live query (recents,
      *                             empty-state stops, map picks).
@@ -131,12 +162,12 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val displayedAddressCount: CountBucket? = null,
     ) : AnalyticsEvent(
         name = "stop_selected",
-        properties = buildMap {
+        rawProperties = buildMap {
             put(PROP_STOP_ID, stopId)
             put("isRecentSearch", isRecentSearch)
             put("locationKind", locationKind.value)
             addressType?.let { put("addressType", it.value) }
-            searchSessionId?.let { put("searchSessionId", it) }
+            searchSessionId?.let { put(PROP_SEARCH_SESSION_ID, it) }
             displayedLocalCount?.let { put("displayedLocalCount", it.value) }
             displayedAddressCount?.let { put("displayedAddressCount", it.value) }
         },
@@ -219,9 +250,9 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val resultSource: ResultSource = ResultSource.LOCAL,
     ) : AnalyticsEvent(
         name = "search_stop_query",
-        properties = buildMap {
+        rawProperties = buildMap {
             put("queryLength", queryLength)
-            put("searchSessionId", searchSessionId)
+            put(PROP_SEARCH_SESSION_ID, searchSessionId)
             put("resultSource", resultSource.value)
             if (isError) {
                 put("isError", isError)
@@ -241,7 +272,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val recentSearchCount: Int,
     ) : AnalyticsEvent(
         name = "clear_recent_search_stops",
-        properties = mapOf(
+        rawProperties = mapOf(
             "recentSearchCount" to recentSearchCount,
         ),
     )
@@ -308,7 +339,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val labelCountBucket: StopLabelCountBucket,
     ) : AnalyticsEvent(
         name = "stop_label_created",
-        properties = mapOf(
+        rawProperties = mapOf(
             "creationSurface" to creationSurface.value,
             "labelCountBucket" to labelCountBucket.value,
         ),
@@ -347,7 +378,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val isReassignment: Boolean,
     ) : AnalyticsEvent(
         name = "stop_label_stop_assigned",
-        properties = mapOf(
+        rawProperties = mapOf(
             "assignmentSurface" to assignmentSurface.value,
             "assignmentMode" to assignmentMode.value,
             "locationKind" to locationKind.value,
@@ -386,7 +417,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val labelKind: StopLabelKind,
     ) : AnalyticsEvent(
         name = "stop_label_removed",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_ACTION to action.value,
             "hadStop" to hadStop,
             PROP_LABEL_KIND to labelKind.value,
@@ -423,7 +454,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val setLabelCountBucket: StopLabelCountBucket,
     ) : AnalyticsEvent(
         name = "stop_label_reordered",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_LABEL_KIND to labelKind.value,
             "moveDistanceBucket" to moveDistanceBucket.value,
             "setLabelCountBucket" to setLabelCountBucket.value,
@@ -454,7 +485,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
 
     data class ThemeSelectedEvent(val themeId: String) : AnalyticsEvent(
         name = "theme_selected",
-        properties = mapOf("themeId" to themeId),
+        rawProperties = mapOf("themeId" to themeId),
     )
 
     // endregion
@@ -470,7 +501,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class ReverseTimeTableClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "reverse_time_table_click",
-            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
+            rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     /**
@@ -484,7 +515,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: String = SOURCE_STAR,
     ) : AnalyticsEvent(
         name = "save_trip_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_FROM_STOP_ID to fromStopId,
             PROP_TO_STOP_ID to toStopId,
             PROP_SOURCE to source,
@@ -500,12 +531,18 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * "Save this trip?" prompt shown on the timetable after loading an unsaved
      * origin-destination pair (the aha-moment save nudge).
      *
+     * Fires when the prompt actually composes, not when it becomes eligible. The
+     * prompt is an item in the timetable list, so it can sit in state without ever
+     * being scrolled to; earlier rows counted eligibility and therefore over-count
+     * what riders saw. Rates measured across that boundary are not comparable -
+     * the denominator changes meaning from "eligible" to "seen".
+     *
      * @param variant `plain` for the simple save prompt; `commute` for the
      * Home/Work label-assigning variant.
      */
     data class SaveTripPromptShownEvent(val variant: String) : AnalyticsEvent(
         name = "save_trip_prompt_shown",
-        properties = mapOf(PROP_VARIANT to variant),
+        rawProperties = mapOf(PROP_VARIANT to variant),
     ) {
         companion object {
             const val VARIANT_PLAIN = "plain"
@@ -516,27 +553,162 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      * User acted on the "Save this trip?" prompt. One event for both outcomes
      * (accept and dismiss) to stay within the Firebase 500-event budget.
      *
-     * @param accepted true when the user tapped Save, false when dismissed.
-     * @param dismissCount Total dismissals for this origin-destination pair
-     * including this one — the prompt stops appearing for the pair at 2.
-     * Always 0 when [accepted] is true.
+     * Every way the prompt can end now fires this event with a [reason], so
+     * "ignored" stops being inferred from a missing row. The four endings need
+     * different fixes and used to be one bucket: a rider who consciously moved on,
+     * one who saved with the star instead, one who left the screen, and one whose
+     * prompt was replaced by a different trip.
+     *
+     * Rows before this shipped carry no `reason` and are all explicit dismissals
+     * (the only ending that fired an event then) - do not read a missing `reason`
+     * as "unknown".
+     *
+     * @param accepted true when the user tapped Save, false for every other ending.
+     * @param reason Which ending this was. Null only on historic rows and on
+     * accepts.
+     * @param dismissCount Total explicit dismissals for this origin-destination
+     * pair including this one - the prompt stops appearing for the pair at 2.
+     * Always 0 when [accepted] is true, and 0 for non-explicit endings: they are
+     * not refusals and deliberately do not count towards that limit.
      */
     data class SaveTripPromptActionEvent(
         val accepted: Boolean,
         val variant: String,
         val dismissCount: Int = 0,
+        val reason: DismissReason? = null,
     ) : AnalyticsEvent(
         name = "save_trip_prompt_action",
-        properties = mapOf(
-            "accepted" to accepted,
-            PROP_VARIANT to variant,
-            "dismissCount" to dismissCount,
+        rawProperties = buildMap {
+            put("accepted", accepted)
+            put(PROP_VARIANT, variant)
+            put("dismissCount", dismissCount)
+            reason?.let { put("reason", it.value) }
+        },
+    ) {
+        enum class DismissReason(val value: String) {
+            /** Rider tapped "Not now" - the only ending that is a real refusal. */
+            EXPLICIT("explicit"),
+
+            /** Rider saved with the star instead, which makes the prompt redundant. */
+            SUPERSEDED("superseded"),
+
+            /** Rider left the timetable with the prompt still on screen. */
+            NAVIGATED_AWAY("navigated_away"),
+
+            /** A different trip loaded underneath the prompt and took it away. */
+            REPLACED("replaced"),
+        }
+    }
+
+    // region Device window
+
+    /**
+     * The window the app actually got, reported once per launch from composition.
+     *
+     * Not folded into [AppStart]: that fires before the UI composes, when no window
+     * exists yet. Not derivable from `deviceModel` either - a foldable used entirely on
+     * its cover display is a phone in every way that matters to layout, and the model
+     * string cannot tell the two apart.
+     *
+     * Raw dp travels alongside the classes deliberately, so buckets can be re-cut later
+     * against history instead of waiting for a release. All values are bare primitives:
+     * ints, and enum names as strings.
+     *
+     * @param widthDp           Window width. Not the physical screen: on a tablet running
+     *                          split-screen this is the slice the app got, which is the
+     *                          thing layout responds to.
+     * @param heightDp          Window height.
+     * @param smallestWidthDp   Smaller of the two, so it survives rotation. The
+     *                          conventional tablet signal sits at 600.
+     * @param widthSizeClass    On the app's own breakpoint axis, the same one
+     *                          `AdaptiveLayoutInfo` drives layout from, so reporting and
+     *                          behaviour cannot drift apart.
+     * @param heightSizeClass   Catches phones in landscape, where height is what is scarce.
+     * @param orientation       `PORTRAIT` / `LANDSCAPE`.
+     * @param formFactor        The app's own bucket: `PHONE`, `TABLET`, `FOLDABLE_OPEN`.
+     * @param paneMode          Whether the layout is showing one pane or two.
+     * @param foldState         `NONE` when not a foldable or the platform cannot tell -
+     *                          always sent, never omitted, including on iOS where it is
+     *                          `NONE` forever.
+     * @param foldOrientation   Book-style vs flip-style; only meaningful when
+     *                          [foldState] is not `NONE`.
+     */
+    data class DeviceWindowEvent(
+        val widthDp: Int,
+        val heightDp: Int,
+        val smallestWidthDp: Int,
+        val widthSizeClass: String,
+        val heightSizeClass: String,
+        val orientation: String,
+        val formFactor: String,
+        val paneMode: String,
+        val foldState: String,
+        val foldOrientation: String,
+    ) : AnalyticsEvent(
+        name = "device_window",
+        rawProperties = mapOf(
+            "widthDp" to widthDp,
+            "heightDp" to heightDp,
+            "smallestWidthDp" to smallestWidthDp,
+            "widthSizeClass" to widthSizeClass,
+            "heightSizeClass" to heightSizeClass,
+            "orientation" to orientation,
+            "formFactor" to formFactor,
+            PROP_PANE_MODE to paneMode,
+            "foldState" to foldState,
+            "foldOrientation" to foldOrientation,
         ),
     )
 
+    /**
+     * A settled change of width class, fold state or pane mode while the app is open.
+     *
+     * This is the event that carries the insight the launch event cannot: that a rider
+     * *unfolded the device to look at KRAIL*, on a known screen, and whether the layout
+     * answered by opening a second pane. Rotation on an ordinary phone lands here too.
+     *
+     * Fires on the settled state only. An unfold or a drag-resize emits a stream of
+     * intermediate sizes; those are debounced and compared against the last reported
+     * classes, and nothing is sent when the classes come out unchanged.
+     *
+     * @param fromWidthClass  Width class before the change.
+     * @param toWidthClass    Width class after it. Equal to [fromWidthClass] when the
+     *                        transition was a fold or pane change alone.
+     * @param fromFoldState   Fold state before the change.
+     * @param toFoldState     Fold state after it.
+     * @param fromPaneMode    Pane mode before the change.
+     * @param toPaneMode      Pane mode after it. `SINGLE` while the width grew means a
+     *                        window the layout declined to use - worth knowing before
+     *                        building more of it.
+     * @param screen          Screen the rider was on, as an [AnalyticsScreen] name, so it
+     *                        joins to `view_screen` without a second vocabulary.
+     */
+    data class DeviceWindowChangedEvent(
+        val fromWidthClass: String,
+        val toWidthClass: String,
+        val fromFoldState: String,
+        val toFoldState: String,
+        val fromPaneMode: String,
+        val toPaneMode: String,
+        val screen: String,
+    ) : AnalyticsEvent(
+        name = "device_window_changed",
+        rawProperties = mapOf(
+            "fromWidthClass" to fromWidthClass,
+            "toWidthClass" to toWidthClass,
+            "fromFoldState" to fromFoldState,
+            "toFoldState" to toFoldState,
+            "fromPaneMode" to fromPaneMode,
+            "toPaneMode" to toPaneMode,
+            "screen" to screen,
+        ),
+    )
+
+    // endregion
+
     data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
         name = "plan_trip_click",
-        properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
+        rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
     )
 
     data class ModeClickEvent(
@@ -545,7 +717,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val displayModeSelectionRow: Boolean,
     ) : AnalyticsEvent(
         name = "mode_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_FROM_STOP_ID to fromStopId,
             PROP_TO_STOP_ID to toStopId,
             "displayModeSelectionRow" to displayModeSelectionRow,
@@ -558,7 +730,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val unselectedProductClasses: Set<Int>,
     ) : AnalyticsEvent(
         name = "mode_selection_done",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_FROM_STOP_ID to fromStopId,
             PROP_TO_STOP_ID to toStopId,
             "unselected" to unselectedProductClasses.toString(),
@@ -573,7 +745,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val isReset: Boolean = false,
     ) : AnalyticsEvent(
         name = "date_time_select",
-        properties = mapOf(
+        rawProperties = mapOf(
             "dayOfWeek" to dayOfWeek,
             "time" to time,
             "journeyOption" to journeyOption,
@@ -605,7 +777,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val isPastDeparture: Boolean,
     ) : AnalyticsEvent(
         name = "share_journey_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_TRANSPORT_MODES to transportModes,
             "lines" to lines,
             PROP_LEG_COUNT to legCount,
@@ -626,7 +798,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val transportModes: String,
     ) : AnalyticsEvent(
         name = "journey_card_toggle",
-        properties = mapOf(
+        rawProperties = mapOf(
             "expanded" to expanded,
             "hasStarted" to hasStarted,
             PROP_LEG_COUNT to legCount,
@@ -647,7 +819,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val lineName: String,
     ) : AnalyticsEvent(
         name = "journey_leg_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             "expanded" to expanded,
             "transportMode" to transportMode,
             "lineName" to lineName,
@@ -657,7 +829,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
     data class JourneyAlertClickEvent(val fromStopId: String, val toStopId: String) :
         AnalyticsEvent(
             name = "journey_alert_click",
-            properties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
+            rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
     /**
@@ -699,7 +871,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val action: String,
     ) : AnalyticsEvent(
         name = "timetable_stop_header_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             PROP_STOP_NAME to stopName,
             "isOrigin" to isOrigin,
@@ -742,7 +914,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val visibleJourneyCount: Int,
     ) : AnalyticsEvent(
         name = "timetable_load_more_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_FROM_STOP_ID to fromStopId,
             PROP_TO_STOP_ID to toStopId,
             "loadMoreCount" to loadMoreCount,
@@ -774,7 +946,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val visibleJourneyCount: Int,
     ) : AnalyticsEvent(
         name = "timetable_load_previous_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_FROM_STOP_ID to fromStopId,
             PROP_TO_STOP_ID to toStopId,
             "isCustomDateTime" to isCustomDateTime,
@@ -800,14 +972,14 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val topLevelRoute: String,
     ) : AnalyticsEvent(
         name = "no_entries_detected",
-        properties = mapOf("topLevelRoute" to topLevelRoute),
+        rawProperties = mapOf("topLevelRoute" to topLevelRoute),
     )
 
     data class BackClickEvent(
         val fromScreen: AnalyticsScreen,
     ) : AnalyticsEvent(
         name = "back_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             "fromScreen" to fromScreen.name,
         ),
     )
@@ -825,7 +997,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val timeZone: String,
     ) : AnalyticsEvent(
         name = "app_start",
-        properties = mapOf(
+        rawProperties = mapOf(
             "platformType" to platformType.trim(),
             "appVersion" to appVersion.trim(),
             "osVersion" to osVersion.trim(),
@@ -850,7 +1022,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      */
     data class ReferFriend(val entryPoint: EntryPoint) : AnalyticsEvent(
         name = "refer_friend",
-        properties = mapOf(
+        rawProperties = mapOf(
             "entryPoint" to entryPoint.from,
         ),
     ) {
@@ -874,7 +1046,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val pageNumber: Int,
     ) : AnalyticsEvent(
         name = "intro_lets_krail",
-        properties = mapOf(
+        rawProperties = mapOf(
             "completedOnPage" to pageType.name,
             "completedOnPageNumber" to pageNumber,
         ),
@@ -892,12 +1064,25 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         name = "our_story",
     )
 
+    /**
+     * Dormant, not dead - do not delete.
+     *
+     * Its Settings entry point was removed in v1.25.0 (#1722), so the only remaining
+     * caller is the Discover card's app-social row (`DiscoverViewModel`), and Discover
+     * itself sits behind the `is_discover_available` flag, currently off. The event
+     * therefore cannot fire on a shipped build today, and an empty stretch in the data is
+     * the flag being off rather than riders ignoring the row.
+     *
+     * It comes back the moment Discover is enabled, which is why the class stays: removing
+     * it would mean re-minting a name against the 500-event budget for a feature that
+     * already exists.
+     */
     data class SocialConnectionLinkClickEvent(
         val socialPlatformType: SocialPlatformType,
         val source: SocialConnectionSource,
     ) : AnalyticsEvent(
         name = "social_connection_link_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             "socialPlatform" to socialPlatformType.platformName,
             PROP_SOURCE to source.source,
         ),
@@ -931,7 +1116,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val time: Long = Clock.System.now().epochSeconds,
     ) : AnalyticsEvent(
         name = "park_ride_card_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId.trim(),
             "facilityId" to facilityId.trim(),
             PROP_EXPAND to expand.toString().trim(),
@@ -956,7 +1141,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: Source,
     ) : AnalyticsEvent(
         name = "park_ride_user_facility",
-        properties = mapOf(
+        rawProperties = mapOf(
             "facilityId" to facilityId.trim(),
             PROP_STOP_ID to stopId.trim(),
             PROP_ACTION to action.value,
@@ -993,7 +1178,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val partnerSocialLink: PartnerSocialLink? = null,
     ) : AnalyticsEvent(
         name = "discover_card_click",
-        properties = mutableMapOf(
+        rawProperties = mutableMapOf(
             // "location" to location,
             PROP_SOURCE to source.actionName,
             "cardId" to cardId,
@@ -1030,7 +1215,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val location: String = "SYD",
     ) : AnalyticsEvent(
         name = "discover_session_complete",
-        properties = mapOf(
+        rawProperties = mapOf(
             "cardSeenCount" to cardSeenCount,
             "location" to location,
         ),
@@ -1040,7 +1225,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val cardType: DiscoverCardClick.CardType,
     ) : AnalyticsEvent(
         name = "discover_filter_chip_selected",
-        properties = mapOf(
+        rawProperties = mapOf(
             "cardType" to cardType.displayName,
         ),
     )
@@ -1082,7 +1267,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val modesChanged: Boolean,
     ) : AnalyticsEvent(
         name = "search_stop_map_options_saved",
-        properties = mapOf(
+        rawProperties = mapOf(
             "radiusKm" to radiusKm,
             PROP_TRANSPORT_MODES to transportModes,
             "showDistanceScale" to showDistanceScale,
@@ -1122,7 +1307,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val hadUserLocation: Boolean,
     ) : AnalyticsEvent(
         name = "stop_selected_from_map",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             "searchRadiusKm" to searchRadiusKm,
             "enabledModesCount" to enabledModesCount,
@@ -1149,7 +1334,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val transportModesCount: Int,
     ) : AnalyticsEvent(
         name = "nearby_stop_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             "transportModesCount" to transportModesCount,
         ),
@@ -1175,7 +1360,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: Source,
     ) : AnalyticsEvent(
         name = "location_permission_settings_click",
-        properties = mapOf(PROP_SOURCE to source.value),
+        rawProperties = mapOf(PROP_SOURCE to source.value),
     ) {
         enum class Source(val value: String) {
             SEARCH_STOP_MAP("search_stop_map"),
@@ -1201,7 +1386,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: Source,
     ) : AnalyticsEvent(
         name = "user_location_button_click",
-        properties = mapOf(
+        rawProperties = mapOf(
             "isLocationActive" to isLocationActive,
             PROP_SOURCE to source.value,
         ),
@@ -1245,7 +1430,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: DepartureBoardSource,
     ) : AnalyticsEvent(
         name = "dep_board_screen_view",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             PROP_STOP_NAME to stopName,
             PROP_SOURCE to source.value,
@@ -1273,7 +1458,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: DepartureBoardSource,
     ) : AnalyticsEvent(
         name = "dep_board_line_filter_click",
-        properties = buildMap {
+        rawProperties = buildMap {
             put(PROP_STOP_ID, stopId)
             put("selected", selected)
             put(PROP_SOURCE, source.value)
@@ -1296,7 +1481,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: DepartureBoardSource,
     ) : AnalyticsEvent(
         name = "dep_board_show_previous",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             "show" to show,
             PROP_SOURCE to source.value,
@@ -1319,7 +1504,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: DepartureBoardSource,
     ) : AnalyticsEvent(
         name = "dep_board_toggle",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             PROP_STOP_NAME to stopName,
             PROP_EXPAND to expand,
@@ -1345,7 +1530,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val source: DepartureBoardSource,
     ) : AnalyticsEvent(
         name = "dep_board_status",
-        properties = mapOf(
+        rawProperties = mapOf(
             PROP_STOP_ID to stopId,
             PROP_ACTION to action.value,
             PROP_SOURCE to source.value,
@@ -1368,7 +1553,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
         val ctaUrl: String? = null,
     ) : AnalyticsEvent(
         name = "info_tile_interaction",
-        properties = mutableMapOf<String, Any>(
+        rawProperties = mutableMapOf<String, Any>(
             "key" to key,
         ).apply {
             dismiss?.let { put("dismiss", dismiss) }
@@ -1393,7 +1578,7 @@ sealed class AnalyticsEvent(val name: String, val properties: Map<String, Any>? 
      */
     data class ReviewPromptRequestedEvent(val source: String) : AnalyticsEvent(
         name = "review_prompt_requested",
-        properties = mapOf(PROP_SOURCE to source),
+        rawProperties = mapOf(PROP_SOURCE to source),
     )
 
     // endregion

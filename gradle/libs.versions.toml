@@ -23,6 +23,7 @@ ksp = "2.3.6" # ksp to kotlin version mapping https://github.com/google/ksp/rele
 compose-multiplatform = "1.10.3"
 ktor = "3.4.1"
 androidx-lifecycle = "2.10.0"
+androidx-window = "1.5.0"
 kotlinxCoroutines = "1.10.2"
 buildkonfigGradlePlugin = "0.17.1"
 kermit = "2.1.0"
@@ -62,6 +63,7 @@ dhruva-state = { module = "io.github.ksharma-xyz:dhruva-state", version.ref = "d
 dhruva-data = { module = "io.github.ksharma-xyz:dhruva-data", version.ref = "dhruva" }
 krail-api-proto = { module = "xyz.ksharma.krail:api-proto", version.ref = "krail-api-proto" }
 
+androidx-window = { module = "androidx.window:window", version.ref = "androidx-window" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 buildkonfig-gradle-plugin = { module = "com.codingfeline.buildkonfig:buildkonfig-gradle-plugin", version.ref = "buildkonfigGradlePlugin" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }

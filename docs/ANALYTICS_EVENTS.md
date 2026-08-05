@@ -7,9 +7,34 @@ Read this before adding or modifying any event in
 
 Firebase Analytics hard-caps the app at **500 unique event names, forever**. GA never
 lets a name be reclaimed from history — a shipped event name is a permanently spent
-slot, even if the code stops sending it. Budget as of 2026-07-22: 60 events defined in
-code plus ~10 historical names, roughly 430 slots left. Update this count when adding
+slot, even if the code stops sending it. Budget as of 2026-08-05: 52 events defined in
+code plus ~10 historical names, roughly 438 slots left. Update this count when adding
 or removing events.
+
+### The other three caps, and which one actually bites
+
+The 500 event names are the famous limit. Three more exist, and the one that constrains
+this app is not the one people reach for. Measured on `main`, 2026-08-05:
+
+| Cap | Limit | Where we are |
+|---|---|---|
+| Params per event | 25 custom | **11** on the widest (`device_window`, `app_start` at 10 each, plus `pane`). Everything else is 7 or below |
+| Event-scoped custom dimensions | 50 per GA4 property | **118 distinct param names** across 52 events |
+| User-scoped custom dimensions | 25 per property | **3** used (`device_form_factor`, `window_width_class`, `pane_mode`) |
+
+Params-per-event has plenty of room, including for `pane`, which rides every event. The
+binding constraint is the **event-scoped dimension cap**: the app emits more than twice
+what a standard GA4 property can surface, and has done for a while.
+
+What that means in practice:
+
+- **BigQuery is unaffected.** Every param lands on the row whether or not it is registered,
+  so BigQuery analysis never hits this cap. Most KRAIL-Analytics queries live there.
+- **The GA4 UI only shows registered dimensions.** An unregistered param is invisible, and
+  invisible looks exactly like absent - the same failure mode as a dropped param. If a param
+  seems missing in the UI, check registration before assuming the app stopped sending it.
+- Adding a param is cheap for the app and not free for analytics. That is another reason
+  the checklist below prefers reusing an existing param over minting one.
 
 ## Decision checklist: new event name vs param
 
@@ -19,8 +44,9 @@ or removing events.
 2. It shares no surface AND no param set with an existing event.
 3. It would be charted standalone on a dashboard.
 
-**Otherwise extend an existing event with a param.** Params are effectively free: the
-limit is 25 per event and nothing in the app is near it.
+**Otherwise extend an existing event with a param.** Params are cheap for the app - the
+limit is 25 per event and the widest event sits at 11 - but not free downstream: each new
+param name competes for a registerable dimension slot, see the caps section above.
 
 | Situation | Pattern | Example |
 |---|---|---|
@@ -62,7 +88,15 @@ Semantics:
 - **One ID per settled query.** Typing "cen" then "central" mints two IDs. Every
   event describing the same query instance carries the same ID.
 - **Carried by** `search_stop_query` (both the `resultSource = local` and
-  `resultSource = address` firings) and `stop_selected`.
+  `resultSource = address` firings), `stop_selected`, and `load_timetable_click`.
+- **Closes at the timetable, not the selection.** `stop_selected` only proves a stop was
+  picked; `load_timetable_click` is where the rider actually reaches departure times, so
+  the id is carried across via `SearchSessionStore` (`:feature:trip-planner:ui`). Two
+  rules keep that attribution honest: the pending id is **consumed once** (loading the
+  same trip again is a repeat view, not a second conversion), and it is only attached when
+  the loaded trip still contains **the stop that was selected in that session** (searching
+  and then tapping an unrelated saved trip attributes nothing). A selection with no live
+  query records a null id, which also clears any earlier pending one.
 - **Null when there is no live query.** Selections from recents, empty-state stops,
   and map picks attach no ID; joining them to a search would be wrong.
 - **Meaningless by design.** Not stored on device, not derived from anything, adds
@@ -75,6 +109,69 @@ What it buys: joining the three events per query instance answers "N local and M
 address results were on screen, the user picked an address" without any query text.
 Rows before 2026-07-15 have no `searchSessionId`; treat missing as "pre-join era",
 only app-session-level funnels are possible there.
+
+## Param sanitizing: location ids and the 100-char limit
+
+Every event's properties pass through `AnalyticsParamSanitizer` in the `AnalyticsEvent`
+base class, so no call site needs to hash or truncate. It exists because of two traps:
+
+- **Firebase silently drops any String param value over 100 characters.** The event still
+  lands, the param is just missing, so a dashboard reads "unused feature" rather than
+  "rejected param". This is exactly what happened to address selections in v1.25: an EFA
+  `streetID:...` id is 120+ chars, so `stop_selected` rows for addresses arrived with no
+  `stopId`, address search looked unused, and stop rankings quietly omitted those
+  selections.
+- **Address ids and address display names are personal data.** An EFA address id embeds
+  the street, suburb and postcode as plain text, and the display name is the address
+  itself. Sending either would undo the query redaction described above.
+
+Rules applied:
+
+| Param | Value | Result |
+|---|---|---|
+| `stopId`, `fromStopId`, `toStopId` | transit stop id (no colon, ≤ 100 chars) | unchanged |
+| `stopId`, `fromStopId`, `toStopId` | namespaced id (`streetID:`, `poiID:`, `coord:`) or over the limit | `addr_` + stable 64-bit hash |
+| `stopName` | event also carries an address id | `address` |
+| any String | over 100 chars | truncated to 100, ending in `~trunc` |
+
+The hash is stable across launches and devices, so "which addresses get picked" stays
+rankable while the address text never leaves the device. Address rows before this shipped
+have **no** `stopId` at all — do not read their absence as "no address selections".
+
+The `~trunc` suffix is deliberate. Truncation keeps the row instead of letting Firebase
+drop the param, but a silently shortened value looks exactly like a real one, so a broken
+call site would read as working data and the rejection signal that flags it would vanish.
+Any value ending in `~trunc` is a call site sending the wrong thing, not data. Fix the
+call site rather than widening the limit: `park_ride_card_click.facilityId` was joining
+whole facility objects instead of their ids, which is a call-site bug, not a length one.
+
+When adding a param that can carry a location id or a user-visible place name, add its key
+to the relevant set in `AnalyticsParamSanitizer` rather than sanitizing at the call site.
+
+## Window, fold and pane reporting: how to read it
+
+`device_window`, `device_window_changed` and the `pane` param answer "is anyone on a large
+screen, and what do they do there". Five things about them are counter-intuitive enough
+that they have been misread once already, so they are written down rather than re-derived.
+These match the addendum in KRAIL-Analytics' `docs/TRACKING_REQUEST_SCREEN_SIZE.md`.
+
+- **An unfold emits two `device_window_changed` rows, not one.** The resize lands first;
+  `androidx.window` delivers the `FoldingFeature` a second or two later. Both are true.
+  **Count unfolds by `toFoldState = FLAT`, never by row totals.**
+- **A wide window that stays `SINGLE` is a finding, not noise.** `widthSizeClass` is the
+  input, `paneMode` is what the layout did with it. The gap between them is the whole point
+  of tracking both.
+- **`formFactor = PHONE` on a device whose model is a Fold is the used-closed segment.**
+  A folded foldable reports no hinge inside the window, so the app cannot see it and does
+  not guess. Crossed with `deviceModel`, that combination is the answer, not a defect.
+- **`pane` is last-touch attribution.** For an event with a tap behind it, that is where the
+  tap happened. For a passive event (screen view, polling, a window change) it is where the
+  rider was last working - **never read it as "where the tap happened" for those**.
+  `SINGLE` means a one-pane window or no touch yet, not "unknown".
+- **Five width classes, not Material's three.** The app branches on `LARGE` and
+  `EXTRA_LARGE` too, and reporting on a different axis than the layout uses would be
+  pointless. Raw `widthDp` ships alongside, so any bucketing can be redone against history
+  without an app change.
 
 ## How analytics reaches the dashboard
 

@@ -546,23 +546,52 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * User acted on the "Save this trip?" prompt. One event for both outcomes
      * (accept and dismiss) to stay within the Firebase 500-event budget.
      *
-     * @param accepted true when the user tapped Save, false when dismissed.
-     * @param dismissCount Total dismissals for this origin-destination pair
-     * including this one — the prompt stops appearing for the pair at 2.
-     * Always 0 when [accepted] is true.
+     * Every way the prompt can end now fires this event with a [reason], so
+     * "ignored" stops being inferred from a missing row. The four endings need
+     * different fixes and used to be one bucket: a rider who consciously moved on,
+     * one who saved with the star instead, one who left the screen, and one whose
+     * prompt was replaced by a different trip.
+     *
+     * Rows before this shipped carry no `reason` and are all explicit dismissals
+     * (the only ending that fired an event then) - do not read a missing `reason`
+     * as "unknown".
+     *
+     * @param accepted true when the user tapped Save, false for every other ending.
+     * @param reason Which ending this was. Null only on historic rows and on
+     * accepts.
+     * @param dismissCount Total explicit dismissals for this origin-destination
+     * pair including this one - the prompt stops appearing for the pair at 2.
+     * Always 0 when [accepted] is true, and 0 for non-explicit endings: they are
+     * not refusals and deliberately do not count towards that limit.
      */
     data class SaveTripPromptActionEvent(
         val accepted: Boolean,
         val variant: String,
         val dismissCount: Int = 0,
+        val reason: DismissReason? = null,
     ) : AnalyticsEvent(
         name = "save_trip_prompt_action",
-        rawProperties = mapOf(
-            "accepted" to accepted,
-            PROP_VARIANT to variant,
-            "dismissCount" to dismissCount,
-        ),
-    )
+        rawProperties = buildMap {
+            put("accepted", accepted)
+            put(PROP_VARIANT, variant)
+            put("dismissCount", dismissCount)
+            reason?.let { put("reason", it.value) }
+        },
+    ) {
+        enum class DismissReason(val value: String) {
+            /** Rider tapped "Not now" - the only ending that is a real refusal. */
+            EXPLICIT("explicit"),
+
+            /** Rider saved with the star instead, which makes the prompt redundant. */
+            SUPERSEDED("superseded"),
+
+            /** Rider left the timetable with the prompt still on screen. */
+            NAVIGATED_AWAY("navigated_away"),
+
+            /** A different trip loaded underneath the prompt and took it away. */
+            REPLACED("replaced"),
+        }
+    }
 
     data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
         name = "plan_trip_click",

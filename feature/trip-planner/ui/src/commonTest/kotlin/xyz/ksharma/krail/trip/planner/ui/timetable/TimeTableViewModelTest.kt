@@ -2277,6 +2277,141 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN prompt visible WHEN dismissed THEN the ending is recorded as explicit`() = runTest {
+        val analytics = fakeAnalytics as FakeAnalytics
+        loadPromptTrip()
+        advanceUntilIdle()
+
+        viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDismissed)
+        advanceUntilIdle()
+
+        val event = assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(
+            assertNotNull(analytics.getTrackedEvent("save_trip_prompt_action")),
+        )
+        assertEquals(
+            AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.EXPLICIT,
+            event.reason,
+        )
+        assertEquals("explicit", event.properties?.get("reason"))
+    }
+
+    @Test
+    fun `GIVEN prompt visible WHEN the trip is saved with the star THEN the ending is superseded`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+
+            viewModel.onEvent(TimeTableUiEvent.SaveTripButtonClicked)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            val event = assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(
+                assertNotNull(analytics.getTrackedEvent("save_trip_prompt_action")),
+            )
+            assertFalse(event.accepted)
+            assertEquals(
+                AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.SUPERSEDED,
+                event.reason,
+            )
+            // Not a refusal, so it must not count towards the two-dismissal limit.
+            assertEquals(0, event.dismissCount)
+            assertNull(
+                fakePreferences.getLong(
+                    SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + promptTrip.tripId,
+                ),
+            )
+        }
+
+    @Test
+    fun `GIVEN no prompt on screen WHEN the trip is saved with the star THEN no prompt ending is recorded`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            sandook.insertOrReplaceTrip(
+                tripId = "OTHER_TRIP_ID",
+                fromStopId = "OTHER_FROM",
+                fromStopName = "Other From",
+                toStopId = "OTHER_TO",
+                toStopName = "Other To",
+            )
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+
+            viewModel.onEvent(TimeTableUiEvent.SaveTripButtonClicked)
+            advanceUntilIdle()
+
+            assertFalse(analytics.isEventTracked("save_trip_prompt_action"))
+        }
+
+    @Test
+    fun `GIVEN prompt visible WHEN the rider leaves the timetable THEN the ending is navigated away`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+
+            viewModel.trackSavePromptAbandonedOnLeave()
+
+            val event = assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(
+                assertNotNull(analytics.getTrackedEvent("save_trip_prompt_action")),
+            )
+            assertEquals(
+                AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.NAVIGATED_AWAY,
+                event.reason,
+            )
+        }
+
+    @Test
+    fun `GIVEN prompt already resolved WHEN the rider leaves the timetable THEN nothing extra is recorded`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDismissed)
+            advanceUntilIdle()
+            analytics.clear()
+
+            viewModel.trackSavePromptAbandonedOnLeave()
+
+            assertFalse(analytics.isEventTracked("save_trip_prompt_action"))
+        }
+
+    @Test
+    fun `GIVEN prompt visible WHEN a different trip loads under it THEN the ending is replaced`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+            analytics.clear()
+
+            // Same session, so the once-per-session gate refuses a second prompt and
+            // the live one disappears without the rider touching it.
+            viewModel.onEvent(
+                TimeTableUiEvent.TripStopChanged(
+                    stopId = "OTHER_STOP_ID",
+                    stopName = "OTHER_STOP_NAME",
+                    isOrigin = false,
+                ),
+            )
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            val event = assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(
+                assertNotNull(analytics.getTrackedEvent("save_trip_prompt_action")),
+            )
+            assertEquals(
+                AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.REPLACED,
+                event.reason,
+            )
+            assertEquals(0, event.dismissCount)
+        }
+
+    @Test
     fun `GIVEN pair dismissed twice before WHEN timetable loads in a new session THEN prompt never returns for that pair`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics

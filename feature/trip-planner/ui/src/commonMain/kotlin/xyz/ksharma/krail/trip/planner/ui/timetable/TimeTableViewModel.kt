@@ -734,6 +734,7 @@ class TimeTableViewModel(
                     accepted = false,
                     variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
                     dismissCount = newCount.toInt(),
+                    reason = AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.EXPLICIT,
                 ),
             )
         }
@@ -951,6 +952,13 @@ class TimeTableViewModel(
                     )
                     log("Saved Trip (Pref): $trip")
                     // Saving via the star makes the prompt redundant — drop it.
+                    // Riders doing this looked identical to riders ignoring the
+                    // prompt, because dropping it fired nothing; say so instead.
+                    if (_uiState.value.showSaveTripPrompt) {
+                        analytics.trackSaveTripPromptEnded(
+                            AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.SUPERSEDED,
+                        )
+                    }
                     updateUiState { copy(isTripSaved = true, showSaveTripPrompt = false) }
                     appReviewManager.onDelightMoment(DelightMoment.TRIP_SAVED)
                 }
@@ -1109,6 +1117,15 @@ class TimeTableViewModel(
         sandook.clearAlerts() // Alerts cache is keyed to the old trip pair too.
 
         val savedTrip = sandook.selectTripById(tripId = newTrip.tripId)
+        // Editing a stop takes a live prompt off screen, and the once-per-session
+        // gate means the reload will not bring it back. The rider never answered
+        // it and never chose to lose it, so record that rather than leaving it to
+        // look like an ignore.
+        if (_uiState.value.showSaveTripPrompt) {
+            analytics.trackSaveTripPromptEnded(
+                AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.REPLACED,
+            )
+        }
         updateUiState {
             copy(
                 trip = newTrip,
@@ -1254,7 +1271,25 @@ class TimeTableViewModel(
     override fun onCleared() {
         super.onCleared()
         log("TimeTableViewModel cleared")
+        trackSavePromptAbandonedOnLeave()
         cleanupJobs()
+    }
+
+    /**
+     * Leaving the screen with the prompt still up is the largest silent ending, so
+     * it gets recorded rather than inferred from a missing row.
+     *
+     * Safe from [onCleared]: `analytics.track()` runs on its own scope, not
+     * `viewModelScope`, which is already cancelled by then. A configuration change
+     * does not reach here either - the ViewModel survives it - so this really is a
+     * departure and not a recreation.
+     */
+    @VisibleForTesting
+    fun trackSavePromptAbandonedOnLeave() {
+        if (!_uiState.value.showSaveTripPrompt) return
+        analytics.trackSaveTripPromptEnded(
+            AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.NAVIGATED_AWAY,
+        )
     }
 
     /**

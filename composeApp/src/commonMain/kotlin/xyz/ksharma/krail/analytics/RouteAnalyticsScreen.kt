@@ -2,6 +2,7 @@ package xyz.ksharma.krail.analytics
 
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.trip.planner.ui.navigation.AddParkRideRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.JourneyMapRoute
@@ -38,5 +39,10 @@ fun NavKey.toAnalyticsScreenName(): String = when (this) {
     is ManageStopLabelsRoute -> AnalyticsScreen.ManageStopLabels.name
     is AddParkRideRoute -> AnalyticsScreen.AddParkRide.name
     is ServiceAlertRoute -> AnalyticsScreen.ServiceAlerts.name
-    else -> UNMAPPED_SCREEN_NAME
+    else -> {
+        // Logged, not sent: a route reaching this branch is either genuinely screenless
+        // (Splash) or a gap in the mapping, and the two are indistinguishable in the data.
+        log("[DEVICE_WINDOW] no AnalyticsScreen for route ${this::class.simpleName}")
+        UNMAPPED_SCREEN_NAME
+    }
 }

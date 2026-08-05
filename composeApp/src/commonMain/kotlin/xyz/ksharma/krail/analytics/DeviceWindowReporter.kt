@@ -108,6 +108,11 @@ fun TrackDeviceWindow(
     // the window was at first composition and no unfold would ever be reported.
     val currentSnapshot = rememberUpdatedState(snapshot)
 
+    // Same reason, and the bug it fixes is subtler: a plain capture would pin every
+    // transition to whatever screen was showing when this first composed, which is Splash
+    // on a cold start. Every unfold would then be reported against the splash screen.
+    val currentScreenName = rememberUpdatedState(screenName)
+
     LaunchedEffect(Unit) {
         snapshotFlow { currentSnapshot.value }
             .debounce(SETTLE_DELAY)
@@ -135,7 +140,7 @@ fun TrackDeviceWindow(
                         toFoldState = settled.foldState.name,
                         fromPaneMode = previous.paneMode.name,
                         toPaneMode = settled.paneMode.name,
-                        screen = screenName,
+                        screen = currentScreenName.value,
                     ),
                 )
             }

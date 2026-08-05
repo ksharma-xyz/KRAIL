@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.timetable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -43,6 +44,11 @@ internal fun LazyListScope.saveTripPromptItem(
     if (!showSaveTripPrompt) return
     item(key = "save-trip-prompt") {
         val haptic = LocalHapticFeedback.current
+        // A lazy item only composes once it is in (or near) the viewport, so this
+        // is the first moment the prompt can be said to have reached the rider.
+        // Eligibility was previously reported as "shown", which counted prompts
+        // that were never scrolled to. The ViewModel de-dupes recompositions.
+        LaunchedEffect(Unit) { onEvent(TimeTableUiEvent.SaveTripPromptDisplayed) }
         InfoTile(
             infoTileData = saveTripPromptTileData,
             initialState = InfoTileState.EXPANDED,

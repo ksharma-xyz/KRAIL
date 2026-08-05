@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
@@ -2161,7 +2162,7 @@ class TimeTableViewModelTest {
     }
 
     @Test
-    fun `GIVEN unsaved pair WHEN timetable loads THEN save prompt is shown and shown event fires once`() =
+    fun `GIVEN unsaved pair WHEN timetable loads THEN prompt enters state but nothing is reported as shown`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics
 
@@ -2178,11 +2179,30 @@ class TimeTableViewModelTest {
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.showSaveTripPrompt)
-            val tracked = analytics.getTrackedEvent("save_trip_prompt_shown")
-            assertNotNull(tracked)
-            val event = assertIs<AnalyticsEvent.SaveTripPromptShownEvent>(tracked)
-            assertEquals(AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN, event.variant)
+            // Eligibility is not display: the item may never be scrolled to.
+            assertFalse(analytics.isEventTracked("save_trip_prompt_shown"))
         }
+
+    @Test
+    fun `GIVEN prompt in state WHEN the item composes THEN the shown event fires once`() = runTest {
+        val analytics = fakeAnalytics as FakeAnalytics
+        loadPromptTrip()
+        advanceUntilIdle()
+
+        viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDisplayed)
+        advanceUntilIdle()
+
+        val event = assertIs<AnalyticsEvent.SaveTripPromptShownEvent>(
+            assertNotNull(analytics.getTrackedEvent("save_trip_prompt_shown")),
+        )
+        assertEquals(AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN, event.variant)
+
+        // Recomposition (scrolling away and back, rotation) must not re-report it.
+        viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDisplayed)
+        advanceUntilIdle()
+
+        assertEquals(1, analytics.getTrackedEvents("save_trip_prompt_shown").size)
+    }
 
     @Test
     fun `GIVEN already-saved pair WHEN timetable loads THEN no prompt is shown`() =
@@ -2346,14 +2366,18 @@ class TimeTableViewModelTest {
         }
 
     @Test
-    fun `GIVEN prompt visible WHEN the rider leaves the timetable THEN the ending is navigated away`() =
+    fun `GIVEN prompt visible WHEN the screen loses its last subscriber THEN the ending is navigated away`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics
             loadPromptTrip()
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
-
-            viewModel.trackSavePromptAbandonedOnLeave()
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDisplayed)
+            advanceUntilIdle()
+            // Subscribe like the screen does, then go away and stay away.
+            val collectJob = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+            collectJob.cancel()
+            advanceUntilIdle()
 
             val event = assertIs<AnalyticsEvent.SaveTripPromptActionEvent>(
                 assertNotNull(analytics.getTrackedEvent("save_trip_prompt_action")),
@@ -2362,6 +2386,46 @@ class TimeTableViewModelTest {
                 AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.NAVIGATED_AWAY,
                 event.reason,
             )
+        }
+
+    @Test
+    fun `GIVEN prompt visible WHEN a configuration change re-subscribes inside the grace THEN nothing is reported`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDisplayed)
+            advanceUntilIdle()
+            analytics.clear()
+            val first = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            // Rotation: the old collector goes and a new one arrives immediately.
+            first.cancel()
+            val second = launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            assertFalse(analytics.isEventTracked("save_trip_prompt_action"))
+            second.cancel()
+        }
+
+    @Test
+    fun `GIVEN prompt visible WHEN abandonment is reported twice THEN only one ending is recorded`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            loadPromptTrip()
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.showSaveTripPrompt)
+            viewModel.onEvent(TimeTableUiEvent.SaveTripPromptDisplayed)
+            advanceUntilIdle()
+            analytics.clear()
+
+            // Leaving the screen and the app going away can both reach this; a
+            // prompt still has exactly one ending.
+            viewModel.trackSavePromptAbandoned()
+            viewModel.trackSavePromptAbandoned()
+
+            assertEquals(1, analytics.getTrackedEvents("save_trip_prompt_action").size)
         }
 
     @Test
@@ -2374,7 +2438,7 @@ class TimeTableViewModelTest {
             advanceUntilIdle()
             analytics.clear()
 
-            viewModel.trackSavePromptAbandonedOnLeave()
+            viewModel.trackSavePromptAbandoned()
 
             assertFalse(analytics.isEventTracked("save_trip_prompt_action"))
         }

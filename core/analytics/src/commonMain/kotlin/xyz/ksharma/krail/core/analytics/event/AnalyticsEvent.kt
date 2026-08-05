@@ -530,6 +530,12 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * "Save this trip?" prompt shown on the timetable after loading an unsaved
      * origin-destination pair (the aha-moment save nudge).
      *
+     * Fires when the prompt actually composes, not when it becomes eligible. The
+     * prompt is an item in the timetable list, so it can sit in state without ever
+     * being scrolled to; earlier rows counted eligibility and therefore over-count
+     * what riders saw. Rates measured across that boundary are not comparable -
+     * the denominator changes meaning from "eligible" to "seen".
+     *
      * @param variant `plain` for the simple save prompt; `commute` for the
      * Home/Work label-assigning variant.
      */

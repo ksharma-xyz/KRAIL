@@ -28,8 +28,10 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealRemoteAddressResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RemoteAddressResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.resolveAddressSearchMinQueryLength
@@ -74,6 +76,7 @@ val viewModelsModule = module {
             parkRideService = get(),
             parkRideSandook = get(),
             stopResultsManager = get(),
+            searchSessionStore = get(),
             flag = get(),
             preferences = get(),
             platformOps = get(),
@@ -157,6 +160,8 @@ val viewModelsModule = module {
         )
     }
 
+    single<SearchSessionStore> { RealSearchSessionStore() }
+
     single<RemoteAddressResultsManager> {
         RealRemoteAddressResultsManager(
             tripPlanningService = get(),
@@ -206,6 +211,7 @@ val viewModelsModule = module {
             ioDispatcher = get(named(IODispatcher)),
             preferences = get(),
             sandook = get(),
+            searchSessionStore = get(),
             isAddressSearchEnabled = isAddressSearchEnabled,
             addressSearchMinQueryLength = addressSearchMinQueryLength,
         )

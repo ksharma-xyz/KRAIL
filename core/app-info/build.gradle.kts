@@ -32,6 +32,8 @@ kotlin {
         androidMain {
             dependencies {
                 api(libs.di.koinAndroid)
+                implementation(libs.androidx.window)
+                implementation(libs.compose.ui)
             }
         }
 

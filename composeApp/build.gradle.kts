@@ -49,6 +49,7 @@ kotlin {
         }
 
         commonMain.dependencies {
+            implementation(projects.core.adaptiveUi)
             implementation(projects.core.analytics)
             implementation(projects.core.appInfo)
             implementation(projects.core.appReview)

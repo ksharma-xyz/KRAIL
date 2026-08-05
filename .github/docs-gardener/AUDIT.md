@@ -1,109 +1,60 @@
-# Docs Gardener Audit — 2026-07-25
+# Docs Gardener Audit — 2026-08-01
 
 Run mode: **report-only** (per Part B of `CHARTER.md`). No documentation was
 modified, moved, or deleted by this run. Everything below is a proposal for a
 human (or a future `active`-mode run) to act on.
 
-This is the third run. It builds on the
+This is the fourth run. It builds on the
 [first run](#carried-forward-findings-from-the-2026-07-17-run) (PR
-[#1727](https://github.com/ksharma-xyz/KRAIL/pull/1727), merged) and
+[#1727](https://github.com/ksharma-xyz/KRAIL/pull/1727), merged), the
 [second run](#carried-forward-findings-from-the-2026-07-17-run) (PR
-[#1732](https://github.com/ksharma-xyz/KRAIL/pull/1732), merged), and adds a
-delta review of everything that changed since (33 commits, `573c047..HEAD`).
+[#1732](https://github.com/ksharma-xyz/KRAIL/pull/1732), merged), and the
+[third run](#carried-forward-findings-from-the-2026-07-17-run) (PR
+[#1777](https://github.com/ksharma-xyz/KRAIL/pull/1777), merged), and adds a
+delta review of everything that changed since (`aa3b25f..HEAD`, 4 commits over
+7 days: three automated NSW GTFS data bumps, #1778/#1780/#1781, and one
+dependency bump, #1779).
 
 ## Feedback ingestion
 
 Searched `is:pr label:docs-gardener` (any state) against `ksharma-xyz/krail`:
-two results, PR #1727 (first run) and PR #1732 (second run), both merged.
-Checked issue comments, review comments, and review-comment threads on both:
-all empty (zero comments on either PR). Nothing to fold into the Steering Log
-this run; no prior rejection to avoid re-proposing.
+three results, PR #1727 (first run), #1732 (second run), and #1777 (third
+run), all merged. All three report `"comments":0`; no issue comments, review
+comments, or `charter:`-prefixed review threads on any of them. Nothing to
+fold into the Steering Log this run; no prior rejection to avoid re-proposing.
 
 ## Charter Part A drift
 
-**Skipped**, as in the second run. This session's GitHub access is scoped to
-`ksharma-xyz/krail` only. Per the tooling available to this session, adding a
-sibling-repo clone requires an explicit, live user request, and this is an
-unattended scheduled run with no live user turn to make one. Per the charter's
-staleness protocol fallback ("If the clone is unavailable, skip and note
-'cross-repo checks skipped'"), no Part A diff was performed. The first run
-(2026-07-17) found no drift; that result is not reconfirmed here.
+**Performed this run** (unlike the second and third runs, which skipped it —
+sibling-repo access was available this time via `add_repo` +
+`get_file_contents`, no full clone needed). Fetched
+`ksharma-xyz/krail-bff`'s `.github/docs-gardener/CHARTER.md` at its default
+branch HEAD and diffed its Part A section against this repo's Part A
+byte-for-byte (Mission through PR conventions, both sections delimited by the
+`## Part A: Core Policy` / `## Part B: Repo Overrides` headings). **No drift**
+— the two Part A sections are identical.
 
-## New files classified this run
+## Delta review this run
 
-| File | Class | Notes / evidence |
-|---|---|---|
-| `docs/FEATURE_QUALITY_CHECKLIST.md` | guide | Pre-flight checklist referenced from `CLAUDE.md` ("Building a feature — read the checklist first"). Spot-checked every symbol/path it cites: `scripts/fullQualityChecks.sh`, `ThemeContrastTest.kt`, `ParkRideAvailabilityLoaderTest.kt`, `NavKeySerializationConfigTest.kt`, `SerializationConfig.kt`, `getForegroundColor`/`ensureMinimumContrast` (`taj/.../A11yColors.kt`) — all exist. No staleness. |
-| `docs/USER_LIFECYCLE_STORE.md` | reference | Documents `:sandook`'s `UserLifecycleStore`. Verified: `LifecycleCounter` enum exists (`UserLifecycleStore.kt:73`), `RealAppStart.recordFirstInstallIfAbsent()` exists and is called from `RealAppstart.kt:20`, and the claimed consumer (`core/app-review`'s `RealAppReviewManager.kt`) does read `SAVED_TRIP_OPEN`-successor state and `daysSinceFirstInstall()`. No staleness. |
-| `docs/investigations/IN_APP_REVIEW_TIMING.md` | investigation | See finding below — one stale section. |
-
-## Finding: `docs/investigations/IN_APP_REVIEW_TIMING.md` — stale Status table
-
-The doc's **Status** section (lines 7-19) reads: "Four branches, stacked, not
-yet raised as PRs" and lists `user-lifecycle-store`, `app-review-wrapper`,
-`app-review-eligibility`, `app-review-trigger` as unmerged branches.
-
-Evidence this is now stale — all four have merged to `main`, days before this
-run:
+`aa3b25f` (the third run's merge commit) to `origin/main` (`6ed9290`) is 4
+commits over 7 days:
 
 ```
-$ git log --format="%ai %h %s" | grep -i app-review
-2026-07-24 20:06:49 +1000 c321522 refactor(app-review): remove debug-only review proof sheet
-2026-07-24 19:06:13 +1000 ec82bbb refactor(app-review): keep engagement thresholds app-side, gate on one flag
-2026-07-24 02:27:45 +1000 ca73b5e feat(app-review): trigger review on shared delight moments
-2026-07-24 22:47:56 +1000 a8a77f9 test(app-review): use :core:testing canonical fakes for Flag and preferences
-2026-07-22 08:06:25 +1000 69ea244 feat(app-review): gate review requests on engagement and Remote Config
-2026-07-22 08:05:57 +1000 89f260a feat(app-review): add platform review request wrapper
-2026-07-21 23:50:40 +1000 2e4941b feat(sandook): add user-lifecycle store for install date and counters
+$ git log --format="%ai %h %s" aa3b25f..origin/main
+2026-08-01 13:53:13 +0000 6ed9290 Update NSW GTFS data (stops + routes) (#1781)
+2026-07-31 14:01:51 +0000 2054f5f Update NSW GTFS data (stops + routes) (#1780)
+2026-07-27 05:55:48 +0000 9948380 build(deps): bump json from 2.19.8 to 2.19.9 (#1779)
+2026-07-26 13:51:48 +0000 8f57039 Update NSW GTFS data (stops + routes) (#1778)
 ```
 
-`core/app-review/` exists on `main` with 10 Kotlin files; `sandook/.../12.sqm`
-exists; the doc's own commit history (`c321522`, `ec82bbb`, `ca73b5e`) shows it
-was edited by the same PRs that merged the feature. The rest of the document
-(FINAL DESIGN, Implemented gates, Architecture) is internally consistent with
-current code — spot-checked `AppReviewThresholds.kt`: `MIN_SAVED_TRIPS = 2L`,
-`MIN_ACCOUNT_AGE_DAYS = 3L`, `MIN_DAYS_BETWEEN_ASKS = 150L`, all matching the
-doc's tables exactly — and `SAVED_TRIP_OPEN` is confirmed gone
-(`grep -rn "SAVED_TRIP_OPEN" --include="*.kt" .` returns zero hits, matching
-the doc's "Deleted in the rework" claim).
-
-This is a **trim candidate, not an archive candidate**: the doc is a live
-reference for an inert-but-shipped feature (compliance constraints, QA/testing
-instructions, gate tables) still worth keeping, not a finished plan to retire.
-Proposed action for a future `active` run: replace the Status table with a
-one-line "shipped, flag off by default" note and keep everything from FINAL
-DESIGN onward as-is.
-
-## Delta review: other commits since the 2026-07-18 run
-
-Beyond the three new docs above, `573c047..HEAD` added the `park-ride` feature
-(`feature/park-ride`, 19 Kotlin files) and grew `core/app-review` (10 Kotlin
-files) — both checked against coverage duties below. It also touched the
-analytics contract (`c4b7e4b` added `analytics-events.json` as a shared
-contract, `a787df2` immediately dropped it again along with the per-PR
-analytics CI) and CI workflows (`f726db3`, `9ea65ea`, `7b8d4b6`, `9df8d10`,
-added `codeql.yml` previously, no new workflow file this cycle). None of these
-touch `docs/plans/STOP_LABEL_ANALYTICS_PLAN.md`'s claims — confirmed no
-`AnalyticsEvent.kt` commit in this range mentions `StopLabel`
-(`git log --oneline 573c047..HEAD -- '**/AnalyticsEvent.kt'` shows only
-`park-ride`/`app-review`-related changes) — so finding 6 below is unaffected.
-`CLAUDE.md`'s analytics section ("no contract file to keep in sync, no
-per-PR analytics test") is already consistent with the net state after
-`a787df2`; no drift there (protected file, flagged only if it had drifted).
-
-## Coverage gaps (new this run)
-
-Per the coverage duty (10+ source files, no README/doc):
-
-| Directory | Kotlin files | Doc? |
-|---|---|---|
-| `feature/park-ride` | 19 | none |
-| `core/app-review` | 10 | none — though `docs/investigations/IN_APP_REVIEW_TIMING.md` covers its design/rationale in detail; a short `core/app-review/README.md` pointing there plus summarizing the module layout would still close the gap per the coverage duty's letter |
-
-Carried forward, unchanged since the first run (still no README/doc, file
-counts not re-measured beyond confirming no doc was added):
-`feature/track`, `feature/departures`, `discover`, `core/remote-config`.
-`feature/debug-settings` (14 Kotlin files, no doc) also carried forward.
+`git diff --stat aa3b25f..origin/main` touches exactly four files: two binary
+GTFS blobs (`NSW_BUSES_ROUTES.pb`, `NSW_STOPS.pb`), `Gemfile.lock`, and
+`SandookPreferences.kt` (the two GTFS version constants bumped from 66/39 to
+69/42, nothing else). **Zero `.md` files changed, zero new source
+directories added, zero `AnalyticsEvent.kt` changes.** No doc in the repo
+newly qualifies for classification or staleness action from this delta —
+every finding below is a re-verification of prior-run findings, not a new
+one.
 
 ---
 
@@ -130,8 +81,9 @@ Re-verified this run; all still apply verbatim.
    codebase grew faster than the migration; still not fully implemented, so
    still no archive action per the prune criteria).
 6. **`docs/plans/STOP_LABEL_ANALYTICS_PLAN.md`** (priority 2: archive) —
-   still verified shipped against `AnalyticsEvent.kt` (unaffected by this
-   run's analytics-contract churn, see delta review above).
+   still verified shipped against `AnalyticsEvent.kt`; zero `AnalyticsEvent.kt`
+   commits since the third run (confirmed in the delta review above), so
+   nothing to re-check.
 7. **`feature/trip-planner/ui/LABEL_DISPLAY_PLAN.md`** (no action) — PR3
    (`StopSearchListItem`/`labelSubtitle`) still not found in code
    (re-ran `grep -rn "labelSubtitle"`: zero hits).
@@ -140,9 +92,36 @@ Re-verified this run; all still apply verbatim.
    (`ManageStopLabelsSheet.kt` still absent from the tree).
 9. **`iosApp/README.md`** (priority 1 / coverage gap) — still links
    `docs/ios-dsym-crashlytics.md`, which still does not exist.
+10. **`docs/investigations/IN_APP_REVIEW_TIMING.md`** (priority 4: trim,
+    found third run) — Status section (lines 7-19) still claims four
+    `app-review`/`user-lifecycle-store` branches are "not yet raised as PRs";
+    they merged to `main` on 2026-07-21/22/24, unchanged since the third run
+    found this (see PR #1777 for the full `git log` evidence). Rest of the
+    doc (FINAL DESIGN, gate tables, `AppReviewThresholds.kt` values,
+    `SAVED_TRIP_OPEN` removal) still verified accurate. Still a trim
+    candidate, not archive: replace the Status table with a one-line
+    "shipped, flag off by default" note.
 
 `SECURITY.md` (classified `guide` in the second run) re-checked: still no
 staleness surface (external links only).
+
+### Coverage gaps (carried forward)
+
+Per the coverage duty (10+ source files, no README/doc), re-counted this run;
+no doc was added for any of these since they were first flagged (confirmed by
+the delta review above — zero `.md` files changed since the third run):
+
+| Directory | Kotlin files | Doc? |
+|---|---|---|
+| `feature/park-ride` (found third run) | 19 | none |
+| `feature/track` (found first run) | 32 | none |
+| `feature/departures` (found first run) | 27 | none |
+| `discover` (found first run) | 16 | none |
+| `feature/debug-settings` (found first run) | 14 | none |
+| `core/app-review` (found third run) | 10 | none — `docs/investigations/IN_APP_REVIEW_TIMING.md` covers its design/rationale in detail; a short `core/app-review/README.md` pointing there plus summarizing module layout would still close the gap per the coverage duty's letter |
+| `core/remote-config` (found first run) | 10 | none |
+
+`park-ride` is the largest undocumented surface and the newest.
 
 ---
 

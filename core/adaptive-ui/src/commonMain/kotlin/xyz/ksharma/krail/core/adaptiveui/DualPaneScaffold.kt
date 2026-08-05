@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.analytics.AnalyticsPane
+import xyz.ksharma.krail.core.analytics.AnalyticsPaneTracker
 
 /**
  * The one dual-pane split used by every screen (SavedTrips, SearchStop, …) so the two-pane
@@ -43,13 +48,25 @@ fun DualPaneScaffold(
     listPaneWidth: Dp = DUAL_PANE_LIST_WIDTH,
     rightPane: (@Composable BoxScope.() -> Unit)? = null,
 ) {
+    val isDualPane = rightPane != null
+
+    // A single pane means the question "which pane" has no answer, so say so rather than
+    // leaving a stale LIST/DETAIL behind from the last dual-pane screen.
+    DisposableEffect(isDualPane) {
+        if (!isDualPane) AnalyticsPaneTracker.set(AnalyticsPane.SINGLE)
+        onDispose { AnalyticsPaneTracker.set(AnalyticsPane.SINGLE) }
+    }
+
     Row(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .then(
-                    if (rightPane != null) Modifier.width(listPaneWidth) else Modifier.fillMaxWidth(),
+                    if (isDualPane) Modifier.width(listPaneWidth) else Modifier.fillMaxWidth(),
                 )
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .then(
+                    if (isDualPane) Modifier.trackPaneTouches(AnalyticsPane.LIST) else Modifier,
+                ),
         ) {
             listPane()
         }
@@ -58,7 +75,8 @@ fun DualPaneScaffold(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .trackPaneTouches(AnalyticsPane.DETAIL),
             ) {
                 rightPane()
             }
@@ -71,3 +89,21 @@ fun DualPaneScaffold(
  * stay readable while the map fills the rest. See docs/TABLET_FOLDABLE_UX.md §2.
  */
 val DUAL_PANE_LIST_WIDTH: Dp = 480.dp
+
+/**
+ * Records the pane a touch landed in, so every analytics event fired afterwards can say
+ * where the rider was working.
+ *
+ * Observes on [PointerEventPass.Initial] and consumes nothing: the pane learns about the
+ * touch before its content does, and the content still receives it untouched. Attribution
+ * by touch rather than by "which screen is on top" is deliberate - in a dual-pane layout
+ * both panes are visible, so topmost would credit the detail pane for list-pane taps.
+ */
+private fun Modifier.trackPaneTouches(pane: AnalyticsPane): Modifier = pointerInput(pane) {
+    awaitPointerEventScope {
+        while (true) {
+            awaitPointerEvent(PointerEventPass.Initial)
+            AnalyticsPaneTracker.set(pane)
+        }
+    }
+}

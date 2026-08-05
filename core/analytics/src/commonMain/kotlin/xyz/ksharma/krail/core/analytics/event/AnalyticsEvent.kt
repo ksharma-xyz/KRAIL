@@ -1064,6 +1064,19 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         name = "our_story",
     )
 
+    /**
+     * Dormant, not dead - do not delete.
+     *
+     * Its Settings entry point was removed in v1.25.0 (#1722), so the only remaining
+     * caller is the Discover card's app-social row (`DiscoverViewModel`), and Discover
+     * itself sits behind the `is_discover_available` flag, currently off. The event
+     * therefore cannot fire on a shipped build today, and an empty stretch in the data is
+     * the flag being off rather than riders ignoring the row.
+     *
+     * It comes back the moment Discover is enabled, which is why the class stays: removing
+     * it would mean re-minting a name against the 500-event budget for a feature that
+     * already exists.
+     */
     data class SocialConnectionLinkClickEvent(
         val socialPlatformType: SocialPlatformType,
         val source: SocialConnectionSource,

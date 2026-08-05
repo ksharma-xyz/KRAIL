@@ -16,10 +16,15 @@ internal class RealAnalytics(
     override fun track(event: AnalyticsEvent) {
         coroutineScope.launch {
             // Only track prod builds analytics events
+            // Pane is attached here rather than at each call site: it is context about
+            // where the rider was, not data the event knows about itself, and injecting
+            // it centrally means events added later are attributed without anyone
+            // remembering to do it.
+            val properties = AnalyticsPaneTracker.decorate(event.properties)
             if (appInfoProvider.getAppInfo().isDebug.not()) {
-                firebaseAnalytics.logEvent(event.name, event.properties)
+                firebaseAnalytics.logEvent(event.name, properties)
             } else {
-                log("ANALYTICS EVENT: $event")
+                log("ANALYTICS EVENT: $event pane=${properties[AnalyticsPaneTracker.PROP_PANE]}")
             }
         }
     }

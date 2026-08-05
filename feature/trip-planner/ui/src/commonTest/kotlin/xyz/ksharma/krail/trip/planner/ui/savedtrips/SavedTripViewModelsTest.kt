@@ -597,6 +597,26 @@ class SavedTripsViewModelTest {
         )
     }
 
+    @Test
+    fun `GIVEN ParkRideCardClick event WHEN tracked THEN facilityId carries ids only`() = runTest {
+        val parkRideState = createParkRideUiState(
+            facilities = persistentSetOf(
+                createParkRideFacilityDetail(facilityId = "28", facilityName = "North car park"),
+                createParkRideFacilityDetail(facilityId = "26", facilityName = "South car park"),
+            ),
+        )
+
+        viewModel.onEvent(SavedTripUiEvent.ParkRideCardClick(parkRideState, isExpanded = true))
+
+        val event = assertIs<AnalyticsEvent.ParkRideCardClickEvent>(
+            (fakeAnalytics as FakeAnalytics).getTrackedEvent("park_ride_card_click"),
+        )
+        // Sorted so the same pair of car parks is always one value, and ids only: joining
+        // the facility objects stringified the whole data class and blew the param limit.
+        assertEquals("26,28", event.facilityId)
+        assertEquals("26,28", event.properties?.get("facilityId"))
+    }
+
     // endregion Park and Ride Tests
 
     // region Selected Stop Events Tests

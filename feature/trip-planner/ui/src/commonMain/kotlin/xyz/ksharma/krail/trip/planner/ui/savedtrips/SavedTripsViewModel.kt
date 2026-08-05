@@ -250,7 +250,14 @@ class SavedTripsViewModel(
             event = AnalyticsEvent.ParkRideCardClickEvent(
                 stopId = parkRideState.stopId,
                 expand = isExpanded,
-                facilityId = parkRideState.facilities.joinToString(),
+                // Ids only: joining the facility objects themselves stringified the whole
+                // data class, which is both unreadable and long enough that Firebase
+                // rejected the param outright. Sorted and comma-joined matches how
+                // multi-value params are encoded elsewhere (e.g. transportModes).
+                facilityId = parkRideState.facilities
+                    .map { it.facilityId }
+                    .sorted()
+                    .joinToString(separator = ","),
             ),
         )
 

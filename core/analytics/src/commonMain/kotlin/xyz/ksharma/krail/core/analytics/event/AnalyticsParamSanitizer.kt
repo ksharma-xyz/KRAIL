@@ -36,6 +36,16 @@ internal object AnalyticsParamSanitizer {
     /** Prefix marking a value as a hashed location id rather than a real stop id. */
     const val HASHED_ID_PREFIX = "addr_"
 
+    /**
+     * Appended to a value that was too long to send whole. Truncation keeps the row
+     * instead of letting Firebase drop the param, but a silently shortened value is
+     * indistinguishable from a real one - a param that starts arriving as clean-looking
+     * garbage is worse than one that is visibly rejected. The marker keeps the defect
+     * visible in the dashboard: any value ending in it is a call site sending the wrong
+     * thing, not data.
+     */
+    const val TRUNCATION_MARKER = "~trunc"
+
     private const val NAMESPACE_SEPARATOR = ':'
 
     private val LOCATION_ID_KEYS = setOf("stopId", "fromStopId", "toStopId")
@@ -56,7 +66,7 @@ internal object AnalyticsParamSanitizer {
                 value !is String -> value
                 key in LOCATION_ID_KEYS -> locationId(value)
                 key in LOCATION_NAME_KEYS && hasAddressId -> REDACTED_LOCATION_NAME
-                value.length > MAX_PARAM_VALUE_LENGTH -> value.take(MAX_PARAM_VALUE_LENGTH)
+                value.length > MAX_PARAM_VALUE_LENGTH -> truncate(value)
                 else -> value
             }
         }
@@ -69,6 +79,9 @@ internal object AnalyticsParamSanitizer {
      */
     fun locationId(rawId: String): String =
         if (rawId.isAddressId()) HASHED_ID_PREFIX + hash(rawId) else rawId
+
+    private fun truncate(value: String): String =
+        value.take(MAX_PARAM_VALUE_LENGTH - TRUNCATION_MARKER.length) + TRUNCATION_MARKER
 
     private fun String.isAddressId(): Boolean =
         contains(NAMESPACE_SEPARATOR) || length > MAX_PARAM_VALUE_LENGTH

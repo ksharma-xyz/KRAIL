@@ -98,11 +98,18 @@ Rules applied:
 | `stopId`, `fromStopId`, `toStopId` | transit stop id (no colon, ≤ 100 chars) | unchanged |
 | `stopId`, `fromStopId`, `toStopId` | namespaced id (`streetID:`, `poiID:`, `coord:`) or over the limit | `addr_` + stable 64-bit hash |
 | `stopName` | event also carries an address id | `address` |
-| any String | over 100 chars | truncated to 100 |
+| any String | over 100 chars | truncated to 100, ending in `~trunc` |
 
 The hash is stable across launches and devices, so "which addresses get picked" stays
 rankable while the address text never leaves the device. Address rows before this shipped
 have **no** `stopId` at all — do not read their absence as "no address selections".
+
+The `~trunc` suffix is deliberate. Truncation keeps the row instead of letting Firebase
+drop the param, but a silently shortened value looks exactly like a real one, so a broken
+call site would read as working data and the rejection signal that flags it would vanish.
+Any value ending in `~trunc` is a call site sending the wrong thing, not data. Fix the
+call site rather than widening the limit: `park_ride_card_click.facilityId` was joining
+whole facility objects instead of their ids, which is a call-site bug, not a length one.
 
 When adding a param that can carry a location id or a user-visible place name, add its key
 to the relevant set in `AnalyticsParamSanitizer` rather than sanitizing at the call site.

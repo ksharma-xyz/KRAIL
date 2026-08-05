@@ -92,4 +92,11 @@ sealed interface TimeTableUiEvent {
 
     /** User dismissed the "Save this trip?" prompt. */
     data object SaveTripPromptDismissed : TimeTableUiEvent
+
+    /**
+     * The "Save this trip?" prompt composed, meaning it actually reached the
+     * screen. Sent from the list item rather than derived from state, because a
+     * prompt held in state may never be scrolled to.
+     */
+    data object SaveTripPromptDisplayed : TimeTableUiEvent
 }

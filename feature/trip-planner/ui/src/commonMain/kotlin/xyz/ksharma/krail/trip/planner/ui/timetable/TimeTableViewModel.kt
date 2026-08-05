@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -163,6 +164,10 @@ class TimeTableViewModel(
 
     private var lastInitializedRouteFromTo: Pair<String, String>? = null
 
+    // One ending per prompt: onCleared and the screen-left watcher can both reach
+    // the abandonment report.
+    private var savePromptAbandonReported = false
+
     /**
      * Cache of trips. Key is [TimeTableState.JourneyCardInfo.journeyId] and value is
      * [TimeTableState.JourneyCardInfo].
@@ -197,6 +202,7 @@ class TimeTableViewModel(
         // SearchStopViewModel's pattern; we deliberately skip the seed-on-empty
         // branch since SearchStopViewModel owns label seeding.
         observeStopLabels()
+        observeSavePromptAbandonment()
     }
 
     /**
@@ -320,6 +326,8 @@ class TimeTableViewModel(
             TimeTableUiEvent.SaveTripPromptAccepted -> onSaveTripPromptAccepted()
 
             TimeTableUiEvent.SaveTripPromptDismissed -> onSaveTripPromptDismissed()
+
+            TimeTableUiEvent.SaveTripPromptDisplayed -> onSavePromptDisplayed()
         }
     }
 
@@ -663,9 +671,13 @@ class TimeTableViewModel(
 
     /**
      * Resolves whether the one-tap "Save this trip?" prompt should be visible
-     * for the trip being loaded. Returns the value for the load's own state
-     * update; also fires the shown event and burns the per-session allowance
-     * the first time it resolves true.
+     * for the trip being loaded, and burns the per-session allowance the first
+     * time it resolves true.
+     *
+     * Deliberately does **not** fire the shown event: eligibility is not display.
+     * The prompt is an item in the timetable list, so resolving it true only means
+     * it was put into state, not that it ever reached the screen. The event fires
+     * from [onSavePromptDisplayed] when the item actually composes.
      *
      * Only users with ZERO saved trips ever see the prompt — once any trip is
      * saved the user has discovered the feature and the nudge is pointless.
@@ -680,12 +692,25 @@ class TimeTableViewModel(
             promptDismissCount(tripId) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
         if (!eligible) return false
         savePromptShownInSession = true
+        return true
+    }
+
+    /**
+     * The prompt reached the screen. Fired from composition rather than from
+     * eligibility so `save_trip_prompt_shown` counts prompts riders could actually
+     * see; a prompt resolved into state but never scrolled to used to count as
+     * shown and inflated every rate measured against it.
+     *
+     * Guarded because a list item recomposes freely: one shown event per prompt.
+     */
+    private fun onSavePromptDisplayed() {
+        if (savePromptDisplayTracked) return
+        savePromptDisplayTracked = true
         analytics.track(
             AnalyticsEvent.SaveTripPromptShownEvent(
                 variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
             ),
         )
-        return true
     }
 
     private fun promptDismissCount(tripId: String): Long =
@@ -734,6 +759,7 @@ class TimeTableViewModel(
                     accepted = false,
                     variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
                     dismissCount = newCount.toInt(),
+                    reason = AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.EXPLICIT,
                 ),
             )
         }
@@ -951,6 +977,13 @@ class TimeTableViewModel(
                     )
                     log("Saved Trip (Pref): $trip")
                     // Saving via the star makes the prompt redundant — drop it.
+                    // Riders doing this looked identical to riders ignoring the
+                    // prompt, because dropping it fired nothing; say so instead.
+                    if (_uiState.value.showSaveTripPrompt) {
+                        analytics.trackSaveTripPromptEnded(
+                            AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.SUPERSEDED,
+                        )
+                    }
                     updateUiState { copy(isTripSaved = true, showSaveTripPrompt = false) }
                     appReviewManager.onDelightMoment(DelightMoment.TRIP_SAVED)
                 }
@@ -1109,6 +1142,15 @@ class TimeTableViewModel(
         sandook.clearAlerts() // Alerts cache is keyed to the old trip pair too.
 
         val savedTrip = sandook.selectTripById(tripId = newTrip.tripId)
+        // Editing a stop takes a live prompt off screen, and the once-per-session
+        // gate means the reload will not bring it back. The rider never answered
+        // it and never chose to lose it, so record that rather than leaving it to
+        // look like an ignore.
+        if (_uiState.value.showSaveTripPrompt) {
+            analytics.trackSaveTripPromptEnded(
+                AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.REPLACED,
+            )
+        }
         updateUiState {
             copy(
                 trip = newTrip,
@@ -1254,7 +1296,53 @@ class TimeTableViewModel(
     override fun onCleared() {
         super.onCleared()
         log("TimeTableViewModel cleared")
+        trackSavePromptAbandoned()
         cleanupJobs()
+    }
+
+    /**
+     * Reports a prompt the rider left without answering.
+     *
+     * Once per prompt: [onCleared] and the screen-left watcher can both reach this,
+     * and a prompt has exactly one ending. Safe from [onCleared] because
+     * `analytics.track()` runs on its own scope rather than `viewModelScope`, which
+     * is cancelled by then.
+     */
+    @VisibleForTesting
+    fun trackSavePromptAbandoned() {
+        // A prompt that never composed was never abandoned - it was never seen.
+        // That case belongs to the gap between eligibility and display, not here.
+        if (!savePromptDisplayTracked) return
+        if (!_uiState.value.showSaveTripPrompt || savePromptAbandonReported) return
+        savePromptAbandonReported = true
+        analytics.trackSaveTripPromptEnded(
+            AnalyticsEvent.SaveTripPromptActionEvent.DismissReason.NAVIGATED_AWAY,
+        )
+    }
+
+    /**
+     * Watches for the rider leaving the timetable with the prompt still up.
+     *
+     * [onCleared] cannot carry this: the ViewModel is resolved from the activity's
+     * store (JourneyMap deliberately reuses this same instance), so it only clears
+     * when the app goes, not when the screen does. Losing every uiState subscriber
+     * is the real "screen is gone" signal.
+     *
+     * The grace period is what keeps a configuration change from being counted as
+     * a departure: rotation drops the subscriber and re-adds it immediately, and
+     * `collectLatest` cancels the pending report when that happens.
+     */
+    private fun observeSavePromptAbandonment() {
+        viewModelScope.launch {
+            _uiState.subscriptionCount
+                .map { count -> count > 0 }
+                .distinctUntilChanged()
+                .collectLatest { hasSubscribers ->
+                    if (hasSubscribers) return@collectLatest
+                    delay(SAVE_PROMPT_ABANDON_GRACE)
+                    trackSavePromptAbandoned()
+                }
+        }
     }
 
     /**
@@ -1279,6 +1367,10 @@ class TimeTableViewModel(
 
     companion object {
         private const val ANR_TIMEOUT = 5000L
+
+// Long enough that a configuration change re-subscribes well inside it, short
+// enough that a real departure is reported while the session is still live.
+        private val SAVE_PROMPT_ABANDON_GRACE = 5.seconds
 
         @VisibleForTesting
         val REFRESH_TIME_TEXT_DURATION = 10.seconds
@@ -1322,9 +1414,16 @@ class TimeTableViewModel(
         // (process lifetime), across all TimeTableViewModel instances.
         private var savePromptShownInSession = false
 
+        // Separate from the eligibility flag above: that one is burned when the
+        // prompt enters state, this one when it actually composes. Also process
+        // scoped, so a rotation recomposing the item does not fire a second
+        // shown event for the same prompt.
+        private var savePromptDisplayTracked = false
+
         @VisibleForTesting
         fun resetSavePromptSessionFlagForTest() {
             savePromptShownInSession = false
+            savePromptDisplayTracked = false
         }
     }
 }

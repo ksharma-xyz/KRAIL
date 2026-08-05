@@ -14,6 +14,27 @@ import kotlin.time.Instant
 
 private const val AEST_TIMEZONE = "Australia/Sydney"
 
+/**
+ * Records an ending of the save-trip prompt that is not an explicit refusal, so the
+ * silent cases (star save, leaving the screen, a different trip loading) announce
+ * themselves instead of being inferred from a missing row.
+ *
+ * [AnalyticsEvent.SaveTripPromptActionEvent.dismissCount] stays 0 here on purpose:
+ * these endings are not refusals and must not count towards the two-dismissal limit
+ * that stops the prompt for a pair.
+ */
+internal fun Analytics.trackSaveTripPromptEnded(
+    reason: AnalyticsEvent.SaveTripPromptActionEvent.DismissReason,
+) {
+    track(
+        AnalyticsEvent.SaveTripPromptActionEvent(
+            accepted = false,
+            variant = AnalyticsEvent.SaveTripPromptShownEvent.VARIANT_PLAIN,
+            reason = reason,
+        ),
+    )
+}
+
 internal fun Analytics.trackJourneyCardToggleEvent(
     expanded: Boolean,
     hasStarted: Boolean,

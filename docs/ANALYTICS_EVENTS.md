@@ -62,7 +62,15 @@ Semantics:
 - **One ID per settled query.** Typing "cen" then "central" mints two IDs. Every
   event describing the same query instance carries the same ID.
 - **Carried by** `search_stop_query` (both the `resultSource = local` and
-  `resultSource = address` firings) and `stop_selected`.
+  `resultSource = address` firings), `stop_selected`, and `load_timetable_click`.
+- **Closes at the timetable, not the selection.** `stop_selected` only proves a stop was
+  picked; `load_timetable_click` is where the rider actually reaches departure times, so
+  the id is carried across via `SearchSessionStore` (`:feature:trip-planner:ui`). Two
+  rules keep that attribution honest: the pending id is **consumed once** (loading the
+  same trip again is a repeat view, not a second conversion), and it is only attached when
+  the loaded trip still contains **the stop that was selected in that session** (searching
+  and then tapping an unrelated saved trip attributes nothing). A selection with no live
+  query records a null id, which also clears any earlier pending one.
 - **Null when there is no live query.** Selections from recents, empty-state stops,
   and map picks attach no ID; joining them to a search would be wrong.
 - **Meaningless by design.** Not stored on device, not derived from anything, adds

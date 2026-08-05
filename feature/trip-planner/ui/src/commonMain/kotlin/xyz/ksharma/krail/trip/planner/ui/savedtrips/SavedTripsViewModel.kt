@@ -51,6 +51,7 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.SavedTrip
+import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
@@ -75,6 +76,7 @@ class SavedTripsViewModel(
     private val parkRideService: ParkRideService,
     private val parkRideSandook: NswParkRideSandook,
     private val stopResultsManager: StopResultsManager,
+    private val searchSessionStore: SearchSessionStore,
     private val flag: Flag,
     private val preferences: SandookPreferences,
     private val infoTileManager: InfoTileManager,
@@ -166,7 +168,14 @@ class SavedTripsViewModel(
                 analytics.track(AnalyticsEvent.ReverseStopClickEvent)
             }
             is SavedTripUiEvent.AnalyticsLoadTimeTableClick ->
-                analytics.trackLoadTimeTableClick(event.fromStopId, event.toStopId)
+                analytics.trackLoadTimeTableClick(
+                    fromStopId = event.fromStopId,
+                    toStopId = event.toStopId,
+                    searchSessionId = searchSessionStore.consumeFor(
+                        fromStopId = event.fromStopId,
+                        toStopId = event.toStopId,
+                    ),
+                )
             SavedTripUiEvent.AnalyticsSettingsButtonClick ->
                 analytics.track(AnalyticsEvent.SettingsClickEvent)
             SavedTripUiEvent.AnalyticsFromButtonClick ->

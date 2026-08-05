@@ -37,6 +37,7 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISMISSED_INFO_TILES
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -69,6 +70,7 @@ class SavedTripsViewModelTest {
     private val fakeFlag = FakeFlag()
 
     private val fakeSandookPreferences = FakeSandookPreferences()
+    private val searchSessionStore = RealSearchSessionStore()
 
     private val fakeAppVersionManager = FakeAppVersionManager()
 
@@ -87,6 +89,7 @@ class SavedTripsViewModelTest {
             parkRideService = fakeParkRideService,
             parkRideSandook = fakeNswParkRideSandook,
             stopResultsManager = fakeStopResultsManager,
+            searchSessionStore = searchSessionStore,
             flag = fakeFlag,
             preferences = fakeSandookPreferences,
             platformOps = fakePlatformOps,
@@ -618,6 +621,52 @@ class SavedTripsViewModelTest {
     }
 
     // endregion Park and Ride Tests
+
+    // region Search funnel Tests
+
+    @Test
+    fun `GIVEN a searched stop WHEN the trip is loaded THEN searchSessionId is attached`() = runTest {
+        searchSessionStore.recordSelection(searchSessionId = "session-1", stopId = "200060")
+
+        viewModel.onEvent(
+            SavedTripUiEvent.AnalyticsLoadTimeTableClick(fromStopId = "200060", toStopId = "200070"),
+        )
+
+        val event = assertIs<AnalyticsEvent.LoadTimeTableClickEvent>(
+            (fakeAnalytics as FakeAnalytics).getTrackedEvent("load_timetable_click"),
+        )
+        assertEquals("session-1", event.searchSessionId)
+        assertEquals("session-1", event.properties?.get("searchSessionId"))
+    }
+
+    @Test
+    fun `GIVEN no preceding search WHEN a trip is loaded THEN no searchSessionId is sent`() = runTest {
+        viewModel.onEvent(
+            SavedTripUiEvent.AnalyticsLoadTimeTableClick(fromStopId = "200060", toStopId = "200070"),
+        )
+
+        val event = assertIs<AnalyticsEvent.LoadTimeTableClickEvent>(
+            (fakeAnalytics as FakeAnalytics).getTrackedEvent("load_timetable_click"),
+        )
+        assertNull(event.searchSessionId)
+        assertFalse(event.properties.orEmpty().containsKey("searchSessionId"))
+    }
+
+    @Test
+    fun `GIVEN a search WHEN an unrelated saved trip is loaded THEN no searchSessionId is sent`() = runTest {
+        searchSessionStore.recordSelection(searchSessionId = "session-1", stopId = "200060")
+
+        viewModel.onEvent(
+            SavedTripUiEvent.AnalyticsLoadTimeTableClick(fromStopId = "200080", toStopId = "200090"),
+        )
+
+        val event = assertIs<AnalyticsEvent.LoadTimeTableClickEvent>(
+            (fakeAnalytics as FakeAnalytics).getTrackedEvent("load_timetable_click"),
+        )
+        assertNull(event.searchSessionId)
+    }
+
+    // endregion Search funnel Tests
 
     // region Selected Stop Events Tests
 

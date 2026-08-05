@@ -20,6 +20,7 @@ private const val PROP_NEW_INDEX = "newIndex"
 private const val PROP_TOTAL_COUNT = "totalCount"
 private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
+private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
 
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
@@ -52,11 +53,26 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     data object ReverseStopClickEvent : AnalyticsEvent(name = "reverse_stop_click")
 
-    data class LoadTimeTableClickEvent(val fromStopId: String, val toStopId: String) :
-        AnalyticsEvent(
-            name = "load_timetable_click",
-            rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
-        )
+    /**
+     * @param searchSessionId Set when this trip was loaded off the back of a stop the
+     *                        rider had just searched for, which is what closes the search
+     *                        funnel: [StopSelectedEvent] only proves a stop was picked,
+     *                        this proves the rider reached departure times. Null when the
+     *                        trip was loaded from a saved card, a recent, or a map pick -
+     *                        no search preceded it, so attributing one would be wrong.
+     */
+    data class LoadTimeTableClickEvent(
+        val fromStopId: String,
+        val toStopId: String,
+        val searchSessionId: String? = null,
+    ) : AnalyticsEvent(
+        name = "load_timetable_click",
+        rawProperties = buildMap {
+            put(PROP_FROM_STOP_ID, fromStopId)
+            put(PROP_TO_STOP_ID, toStopId)
+            searchSessionId?.let { put(PROP_SEARCH_SESSION_ID, it) }
+        },
+    )
 
     /**
      * User taps Retry after an API/load failure. Unified across surfaces to stay within the
@@ -150,7 +166,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             put("isRecentSearch", isRecentSearch)
             put("locationKind", locationKind.value)
             addressType?.let { put("addressType", it.value) }
-            searchSessionId?.let { put("searchSessionId", it) }
+            searchSessionId?.let { put(PROP_SEARCH_SESSION_ID, it) }
             displayedLocalCount?.let { put("displayedLocalCount", it.value) }
             displayedAddressCount?.let { put("displayedAddressCount", it.value) }
         },
@@ -235,7 +251,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         name = "search_stop_query",
         rawProperties = buildMap {
             put("queryLength", queryLength)
-            put("searchSessionId", searchSessionId)
+            put(PROP_SEARCH_SESSION_ID, searchSessionId)
             put("resultSource", resultSource.value)
             if (isError) {
                 put("isError", isError)

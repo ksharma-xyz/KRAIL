@@ -35,6 +35,14 @@ internal class RealAnalytics(
     }
 
     override fun setUserProperty(name: String, value: String) {
-        TODO("Not yet implemented")
+        coroutineScope.launch {
+            // Same prod-only rule as track(): a debug session must not colour real
+            // segments, and the log line is how these are verified on device.
+            if (appInfoProvider.getAppInfo().isDebug.not()) {
+                firebaseAnalytics.setUserProperty(name = name, value = value)
+            } else {
+                log("ANALYTICS USER PROPERTY: $name = $value")
+            }
+        }
     }
 }

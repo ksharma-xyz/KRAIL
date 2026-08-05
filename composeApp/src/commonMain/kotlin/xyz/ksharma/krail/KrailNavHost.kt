@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import org.koin.compose.koinInject
+import xyz.ksharma.krail.analytics.TrackDeviceWindow
+import xyz.ksharma.krail.analytics.UNMAPPED_SCREEN_NAME
+import xyz.ksharma.krail.analytics.toAnalyticsScreenName
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.deeplink.PendingDeepLinkManager
@@ -119,6 +122,18 @@ fun KrailNavHost(modifier: Modifier = Modifier) {
 
     // List-Detail scene strategy for adaptive layout with custom directive
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+
+    // Window reporting lives here because this is where the layout decision is made:
+    // the same directive that decides one pane or two feeds the analytics, so the two
+    // can never disagree about what the rider was actually looking at.
+    TrackDeviceWindow(
+        analytics = analytics,
+        screenName = navigationState.backStacks[navigationState.topLevelRoute]
+            ?.lastOrNull()
+            ?.toAnalyticsScreenName()
+            ?: UNMAPPED_SCREEN_NAME,
+        isDualPane = directive.maxHorizontalPartitions > 1,
+    )
 
     // Calculate entries explicitly to check for emptiness
     val entries = navigationState.toEntries(entryProvider)

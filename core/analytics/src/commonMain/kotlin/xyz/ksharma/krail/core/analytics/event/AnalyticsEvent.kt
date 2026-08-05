@@ -21,6 +21,7 @@ private const val PROP_TOTAL_COUNT = "totalCount"
 private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
 private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
+private const val PROP_PANE_MODE = "paneMode"
 
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
@@ -598,6 +599,112 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             REPLACED("replaced"),
         }
     }
+
+    // region Device window
+
+    /**
+     * The window the app actually got, reported once per launch from composition.
+     *
+     * Not folded into [AppStart]: that fires before the UI composes, when no window
+     * exists yet. Not derivable from `deviceModel` either - a foldable used entirely on
+     * its cover display is a phone in every way that matters to layout, and the model
+     * string cannot tell the two apart.
+     *
+     * Raw dp travels alongside the classes deliberately, so buckets can be re-cut later
+     * against history instead of waiting for a release. All values are bare primitives:
+     * ints, and enum names as strings.
+     *
+     * @param widthDp           Window width. Not the physical screen: on a tablet running
+     *                          split-screen this is the slice the app got, which is the
+     *                          thing layout responds to.
+     * @param heightDp          Window height.
+     * @param smallestWidthDp   Smaller of the two, so it survives rotation. The
+     *                          conventional tablet signal sits at 600.
+     * @param widthSizeClass    On the app's own breakpoint axis, the same one
+     *                          `AdaptiveLayoutInfo` drives layout from, so reporting and
+     *                          behaviour cannot drift apart.
+     * @param heightSizeClass   Catches phones in landscape, where height is what is scarce.
+     * @param orientation       `PORTRAIT` / `LANDSCAPE`.
+     * @param formFactor        The app's own bucket: `PHONE`, `TABLET`, `FOLDABLE_OPEN`.
+     * @param paneMode          Whether the layout is showing one pane or two.
+     * @param foldState         `NONE` when not a foldable or the platform cannot tell -
+     *                          always sent, never omitted, including on iOS where it is
+     *                          `NONE` forever.
+     * @param foldOrientation   Book-style vs flip-style; only meaningful when
+     *                          [foldState] is not `NONE`.
+     */
+    data class DeviceWindowEvent(
+        val widthDp: Int,
+        val heightDp: Int,
+        val smallestWidthDp: Int,
+        val widthSizeClass: String,
+        val heightSizeClass: String,
+        val orientation: String,
+        val formFactor: String,
+        val paneMode: String,
+        val foldState: String,
+        val foldOrientation: String,
+    ) : AnalyticsEvent(
+        name = "device_window",
+        rawProperties = mapOf(
+            "widthDp" to widthDp,
+            "heightDp" to heightDp,
+            "smallestWidthDp" to smallestWidthDp,
+            "widthSizeClass" to widthSizeClass,
+            "heightSizeClass" to heightSizeClass,
+            "orientation" to orientation,
+            "formFactor" to formFactor,
+            PROP_PANE_MODE to paneMode,
+            "foldState" to foldState,
+            "foldOrientation" to foldOrientation,
+        ),
+    )
+
+    /**
+     * A settled change of width class, fold state or pane mode while the app is open.
+     *
+     * This is the event that carries the insight the launch event cannot: that a rider
+     * *unfolded the device to look at KRAIL*, on a known screen, and whether the layout
+     * answered by opening a second pane. Rotation on an ordinary phone lands here too.
+     *
+     * Fires on the settled state only. An unfold or a drag-resize emits a stream of
+     * intermediate sizes; those are debounced and compared against the last reported
+     * classes, and nothing is sent when the classes come out unchanged.
+     *
+     * @param fromWidthClass  Width class before the change.
+     * @param toWidthClass    Width class after it. Equal to [fromWidthClass] when the
+     *                        transition was a fold or pane change alone.
+     * @param fromFoldState   Fold state before the change.
+     * @param toFoldState     Fold state after it.
+     * @param fromPaneMode    Pane mode before the change.
+     * @param toPaneMode      Pane mode after it. `SINGLE` while the width grew means a
+     *                        window the layout declined to use - worth knowing before
+     *                        building more of it.
+     * @param screen          Screen the rider was on, as an [AnalyticsScreen] name, so it
+     *                        joins to `view_screen` without a second vocabulary.
+     */
+    data class DeviceWindowChangedEvent(
+        val fromWidthClass: String,
+        val toWidthClass: String,
+        val fromFoldState: String,
+        val toFoldState: String,
+        val fromPaneMode: String,
+        val toPaneMode: String,
+        val screen: String,
+    ) : AnalyticsEvent(
+        name = "device_window_changed",
+        rawProperties = mapOf(
+            "fromWidthClass" to fromWidthClass,
+            "toWidthClass" to toWidthClass,
+            "fromFoldState" to fromFoldState,
+            "toFoldState" to toFoldState,
+            "fromPaneMode" to fromPaneMode,
+            "toPaneMode" to toPaneMode,
+            "screen" to screen,
+        ),
+    )
+
+    // endregion
 
     data class PlanTripClickEvent(val fromStopId: String, val toStopId: String) : AnalyticsEvent(
         name = "plan_trip_click",

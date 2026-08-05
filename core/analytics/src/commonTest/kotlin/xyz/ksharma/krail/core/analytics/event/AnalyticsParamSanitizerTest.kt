@@ -101,6 +101,22 @@ class AnalyticsParamSanitizerTest {
     }
 
     @Test
+    fun `truncated value is marked so it cannot be mistaken for real data`() {
+        val sanitized = AnalyticsParamSanitizer.sanitize(mapOf("facilityId" to "b".repeat(150)))
+
+        assertTrue((sanitized["facilityId"] as String).endsWith(AnalyticsParamSanitizer.TRUNCATION_MARKER))
+    }
+
+    @Test
+    fun `a value at the limit is left alone`() {
+        val exact = "c".repeat(AnalyticsParamSanitizer.MAX_PARAM_VALUE_LENGTH)
+
+        val sanitized = AnalyticsParamSanitizer.sanitize(mapOf("query" to exact))
+
+        assertEquals(exact, sanitized["query"])
+    }
+
+    @Test
     fun `non string values are untouched`() {
         val sanitized = AnalyticsParamSanitizer.sanitize(
             mapOf("isRecentSearch" to true, "totalCount" to 7),

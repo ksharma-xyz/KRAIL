@@ -240,6 +240,17 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param resultSource    Which pipeline resolved: local stop search or the remote
      *                        NSW address/POI pipeline. One firing per pipeline per
      *                        settled query; join on [searchSessionId].
+     * @param localResultsCount On-device stop matches for this query. Sent on the
+     *                        address firing, where [resultsCount] is the address count -
+     *                        it scores the address gate directly instead of needing a
+     *                        [searchSessionId] join back to the local firing.
+     * @param addressSearchGate What the address pipeline decided for this query. Sent on
+     *                        the local firing, which fires for every settled query - so
+     *                        this is the only record of address calls that were *not*
+     *                        made. Without it a threshold can only be tuned by guesswork,
+     *                        because suppressed calls leave no other trace.
+     * @param queryHasDigit   Whether the typed query contains a digit - a house number is
+     *                        the cheapest address signal there is. A bool, never the text.
      */
     data class SearchStopQuery(
         val queryLength: Int,
@@ -248,6 +259,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val isError: Boolean = false,
         val zeroResultQuery: String? = null,
         val resultSource: ResultSource = ResultSource.LOCAL,
+        val localResultsCount: Int? = null,
+        val addressSearchGate: AddressGate? = null,
+        val queryHasDigit: Boolean? = null,
     ) : AnalyticsEvent(
         name = "search_stop_query",
         rawProperties = buildMap {
@@ -260,11 +274,30 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
                 put("resultsCount", resultsCount)
             }
             zeroResultQuery?.let { put("query", it) }
+            localResultsCount?.let { put("localResultsCount", it) }
+            addressSearchGate?.let { put("addressSearchGate", it.name) }
+            queryHasDigit?.let { put("queryHasDigit", it) }
         },
     ) {
         enum class ResultSource(val value: String) {
             LOCAL("local"),
             ADDRESS("address"),
+        }
+
+        /**
+         * Address-pipeline outcome for a settled query. Mirrors `AddressSearchGate` in
+         * `:feature:trip-planner:ui` plus [CACHE_HIT], which that enum cannot express:
+         * eligibility is a pure decision, whereas a cache hit is why an eligible query
+         * still made no network call. Reported by `.name`, so the values are stable
+         * SCREAMING_CASE strings rather than an object's `toString()`.
+         */
+        enum class AddressGate {
+            DISABLED,
+            BLANK,
+            BELOW_THRESHOLD,
+            STOPS_ALREADY_SUFFICIENT,
+            ELIGIBLE,
+            CACHE_HIT,
         }
     }
 

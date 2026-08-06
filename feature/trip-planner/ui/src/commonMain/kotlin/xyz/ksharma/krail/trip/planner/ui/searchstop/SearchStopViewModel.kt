@@ -108,6 +108,13 @@ class SearchStopViewModel(
     private val addressSearchCache = AddressSearchCache()
     private var addressSearchRequestToken = 0
 
+    // Session id of the most recent query whose address results came straight from the
+    // cache. The local firing reports the address gate, and "no call was made because it
+    // was already cached" is a different fact from any eligibility outcome. Compared by
+    // session id, not a bare Boolean, so a previous query's cache hit can never be read
+    // as this query's.
+    private var addressCacheHitSessionId: String? = null
+
     // Random ID minted per settled query; sent on search analytics events so funnels
     // can be joined per query instance without carrying the typed text (which can be
     // a street address — see SearchQueryAnalyticsRedaction).
@@ -544,12 +551,13 @@ class SearchStopViewModel(
                     searchSessionId = searchSessionId,
                     localResultsCount = stopResults.size,
                     // Same inputs the address job's post-debounce check will see (its
-                    // 350ms debounce outlasts this pipeline's 100ms), so this is the
-                    // decision that actually gets made, not a guess at it.
+                    // 350ms debounce outlasts this pipeline's 100ms), so the reported
+                    // gate is the decision that actually gets made, not a guess at it.
                     addressSearchGate = currentAddressSearchGate(
                         normalizedQuery = normalizeAddressQuery(query),
                         localStopResultCount = stopResults.size,
                     ),
+                    addressServedFromCache = addressCacheHitSessionId == searchSessionId,
                 )
             }.getOrElse {
                 updateUiState { displayError() }
@@ -587,6 +595,7 @@ class SearchStopViewModel(
         val cacheKey = addressSearchCacheKey(normalizedQuery)
         val cached = addressSearchCache.get(cacheKey)
         if (cached != null) {
+            addressCacheHitSessionId = searchSessionId
             updateUiState {
                 copy(addressResults = cached.toImmutableList(), isAddressSearchLoading = false)
             }

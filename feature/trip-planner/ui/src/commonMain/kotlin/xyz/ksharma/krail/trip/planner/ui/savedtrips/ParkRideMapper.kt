@@ -12,6 +12,20 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRid
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+private const val FULL_PERCENT = 100
+
+/**
+ * Caps a real occupancy reading at [max] while leaving the negative loading sentinel alone.
+ *
+ * [FULL_PERCENT] is the cap everywhere: a full car park is 100%, the feed can report more
+ * than that, and the UI must never repeat it.
+ *
+ * A card that has never had data carries -1 for every number, which the UI reads as
+ * "still loading". Clamping into a 0..100 range would turn that sentinel into a real
+ * looking 0% and show an empty car park where there is simply no reading yet.
+ */
+private fun Int.coerceAtMostIfReal(max: Int): Int = if (this < 0) this else minOf(this, max)
+
 /**
  * Converts a [CarParkFacilityDetailResponse] to a [NSWParkRideFacilityDetail] for database storage.
  *
@@ -39,7 +53,16 @@ fun CarParkFacilityDetailResponse.toNSWParkRideFacilityDetail(
         it.occupancy.total?.toIntOrNull() ?: it.occupancy.transients?.toIntOrNull() ?: 0
     }
     val spotsAvailable = totalSpots - occupiedSpots
-    val percentageFull = if (totalSpots > 0) (occupiedSpots * 100) / totalSpots else 0
+    // Clamped for the same reason spotsAvailable is: the feed reports occupancy above
+    // capacity often enough to matter (overflow parking, a stale `spots` total, bays
+    // counted in occupancy but not in capacity), and a car park cannot be more than full.
+    // Leaving this unbounded while clamping spotsAvailable produced "0 spots available,
+    // 135% full" on the same card - two numbers from the same inputs disagreeing.
+    val percentageFull = if (totalSpots > 0) {
+        ((occupiedSpots * FULL_PERCENT) / totalSpots).coerceIn(0, FULL_PERCENT)
+    } else {
+        0
+    }
     val timeText = messageDate.toSimple12HourTime().replace(" ", "\u00A0")
 
     log(
@@ -70,7 +93,11 @@ internal fun NSWParkRideFacilityDetail.toParkRideState(): ParkRideFacilityDetail
         spotsAvailable = spotsAvailable.toInt(),
         totalSpots = totalSpots.toInt(),
         facilityName = facilityName,
-        percentageFull = percentageFull.toInt(),
+        // Clamped on the way out as well as on the way in: rows written before the write
+        // path was fixed are already on disk with values above 100, and they would keep
+        // rendering that way until the next successful poll replaced them.
+        // The -1 loading sentinel is preserved - it is not an occupancy value.
+        percentageFull = percentageFull.toInt().coerceAtMostIfReal(FULL_PERCENT),
         timeText = timeText,
         stopId = stopId,
         facilityId = facilityId,
@@ -93,17 +120,10 @@ fun List<NSWParkRideFacilityDetail>.toParkRideUiState(): List<ParkRideUiState> {
 
             val uniqueFacilities = facilitiesForStop
                 .filter { seenFacilityIds.add(it.facilityId) }
-                .map {
-                    ParkRideFacilityDetail(
-                        spotsAvailable = it.spotsAvailable.toInt(),
-                        totalSpots = it.totalSpots.toInt(),
-                        facilityName = it.facilityName,
-                        percentageFull = it.percentageFull.toInt(),
-                        stopId = it.stopId,
-                        timeText = it.timeText,
-                        facilityId = it.facilityId,
-                    )
-                }
+                // Was an inline copy of toParkRideState(), which is the path the home
+                // cards actually render from - so a fix applied only to that function
+                // would have missed the screen showing the wrong number.
+                .map { it.toParkRideState() }
                 .toImmutableSet()
 
             if (uniqueFacilities.isNotEmpty()) {

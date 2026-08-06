@@ -10,10 +10,11 @@ All in `searchstop/address/` (`:feature:trip-planner:ui`):
 
 | Class | Kind | Responsibility |
 |---|---|---|
-| `AddressSearchGate` | enum | The four possible eligibility outcomes. |
-| `AddressSearchEligibility` | pure object | `evaluate(normalizedQuery, isAddressSearchEnabled, minQueryLength) -> AddressSearchGate`. No I/O, no state. |
+| `AddressSearchGate` | enum | The five possible eligibility outcomes. |
+| `AddressSearchEligibility` | pure object | `evaluate(normalizedQuery, isAddressSearchEnabled, minQueryLength, localStopResultCount, maxLocalStopsForAddressSearch) -> AddressSearchGate`. No I/O, no state. |
 | `AddressSearchQueryNormalizer.kt` | pure functions | `normalizeAddressQuery` (trim) and `addressSearchCacheKey` (trim + lowercase). |
 | `AddressSearchMinQueryLength.kt` | pure function | `resolveAddressSearchMinQueryLength(flag)` — reads and validates the Remote Config integer. |
+| `AddressSearchMaxLocalStops.kt` | pure function | `resolveAddressSearchMaxLocalStops(flag)` — same, for the stop-count gate. |
 | `AddressSearchCache` | stateful class | Per-`SearchStopViewModel` bounded LRU with per-entry TTL. |
 
 Each is independently unit-testable without a ViewModel, Koin, or a fake network layer —
@@ -23,9 +24,39 @@ that was the point of splitting them out rather than growing
 ## Gate order
 
 `AddressSearchEligibility.evaluate` checks, in order: kill switch off -> blank -> below
-threshold -> eligible. `SearchStopViewModel.onAddressSearchTextChanged` calls this
-**before** creating a loading state or a coroutine, and again after the 350ms debounce
-(a flag flip or further edit mid-debounce must not fire a now-stale request).
+threshold -> stops already sufficient -> eligible.
+`SearchStopViewModel.onAddressSearchTextChanged` calls this **before** creating a loading
+state or a coroutine, and again after the 350ms debounce (a flag flip or further edit
+mid-debounce must not fire a now-stale request). The post-debounce check clears the
+address section on its way out, so a previous query's addresses can't linger under a
+newly-suppressed one.
+
+### Stop-count gate
+
+Query length is a weak predictor of whether a rider wants an address; the number of
+on-device stop matches already on screen is a much stronger one. Above
+`search_stop_address_max_local_stops` local matches the call is suppressed with
+`STOPS_ALREADY_SUFFICIENT` — a rider looking at a long, correct stop list is
+demonstrably not stuck. Queries of `ADDRESS_SEARCH_LONG_QUERY_LENGTH` (12) characters or
+more bypass it: a string that long is usually an address, and should still get one even
+if the stop list happens to be busy.
+
+`localStopResultCount` is **nullable, and null means "not known yet"** — it is not a
+stand-in for zero. On the keystroke the local pipeline is still inside its own 100ms
+debounce, so the only count available is the previous query's, which for incremental
+typing is a broader (larger) result set and would suppress calls that should fire. The
+stop-count check therefore runs only at the post-debounce site (350ms), by which time the
+local results have settled. The local pipeline's analytics firing recomputes the gate with
+the same settled count, so the reported gate is the decision that actually gets made.
+
+`STOPS_ALREADY_SUFFICIENT` must stay distinct from `BELOW_THRESHOLD`: two different
+reasons for not calling collapsed into one value would make the `addressSearchGate` param
+unable to tell them apart, which is the entire point of reporting it.
+
+Because the gate now returns a non-`ELIGIBLE` value for queries the local site previously
+handed to the address pipeline, `resolveLocalZeroResultQuery` owns the zero-result
+carve-out for those queries. That **increases** captured zero-result query text (still
+under the same redaction rules) — expected, not a regression.
 
 ## Cache
 
@@ -90,6 +121,8 @@ address-eligible queries because only it knows both pipelines' counts. See
 |---|---|---|---|
 | `search_stop_address_search_enabled` | Boolean | `false` | - |
 | `search_stop_address_min_query_length` | Integer | `6` | `2..12`, else fallback |
+| `search_stop_address_max_local_stops` | Integer | `10` | `0..50`, else fallback |
 
-`resolveAddressSearchMinQueryLength` range-checks in `Long` space before narrowing to
-`Int`, so an oversized remote value can't wrap around into a false in-range result.
+Both resolvers range-check in `Long` space before narrowing to `Int`, so an oversized
+remote value can't wrap around into a false in-range result, and both **fall back rather
+than clamp** — a typo must not quietly become a valid-looking setting.

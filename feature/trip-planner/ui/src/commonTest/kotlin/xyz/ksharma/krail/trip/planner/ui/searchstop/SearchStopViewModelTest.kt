@@ -829,6 +829,168 @@ class SearchStopViewModelTest {
             }
         }
 
+    private fun localEvents(): List<AnalyticsEvent.SearchStopQuery> =
+        (fakeAnalytics as FakeAnalytics).getTrackedEvents("search_stop_query")
+            .filterIsInstance<AnalyticsEvent.SearchStopQuery>()
+            .filter { it.resultSource == AnalyticsEvent.SearchStopQuery.ResultSource.LOCAL }
+
+    @Test
+    fun `GIVEN an address fetch WHEN it resolves THEN the address event carries the local count`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = listOf(
+                SearchStopState.SearchResult.Address(
+                    addressId = "addr-1",
+                    displayName = "Sydney Opera House",
+                    addressType = "poi",
+                ),
+            )
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                val addressEvent = addressEvents().single()
+                assertEquals(1, addressEvent.localResultsCount)
+                assertEquals(1, addressEvent.properties.orEmpty()["localResultsCount"])
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN an eligible query WHEN the local event fires THEN it reports the gate and the digit signal`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = emptyList()
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                val localEvent = localEvents().single()
+                assertEquals(
+                    AnalyticsEvent.SearchStopQuery.AddressGate.ELIGIBLE,
+                    localEvent.addressSearchGate,
+                )
+                assertEquals("ELIGIBLE", localEvent.properties.orEmpty()["addressSearchGate"])
+                assertEquals(false, localEvent.queryHasDigit)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a query with a house number WHEN the local event fires THEN queryHasDigit is true`() =
+        runTest {
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("1 Fulton Place"))
+                advanceUntilIdle()
+
+                assertEquals(true, localEvents().single().queryHasDigit)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a busy stop list WHEN the local event fires THEN the suppressed gate is reported`() =
+        runTest {
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6, maxLocalStops = 0)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                assertEquals(
+                    AnalyticsEvent.SearchStopQuery.AddressGate.STOPS_ALREADY_SUFFICIENT,
+                    localEvents().single().addressSearchGate,
+                )
+                assertTrue(addressEvents().isEmpty())
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a below-threshold query WHEN the local event fires THEN BELOW_THRESHOLD is reported`() =
+        runTest {
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Syd"))
+                advanceUntilIdle()
+
+                assertEquals(
+                    AnalyticsEvent.SearchStopQuery.AddressGate.BELOW_THRESHOLD,
+                    localEvents().single().addressSearchGate,
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN address search disabled WHEN the local event fires THEN DISABLED is reported`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                assertEquals(
+                    AnalyticsEvent.SearchStopQuery.AddressGate.DISABLED,
+                    localEvents().single().addressSearchGate,
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a cache-served query WHEN the local event fires THEN CACHE_HIT is reported`() =
+        runTest {
+            fakeRemoteAddressResultsManager.results = listOf(
+                SearchStopState.SearchResult.Address(
+                    addressId = "addr-1",
+                    displayName = "Sydney Opera House",
+                    addressType = "poi",
+                ),
+            )
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
+
+            addressViewModel.uiState.test {
+                skipItems(1)
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged(""))
+                advanceUntilIdle()
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                advanceUntilIdle()
+
+                // One network call, two local firings: the second was served from cache.
+                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
+                val gates = localEvents().map { it.addressSearchGate }
+                assertEquals(
+                    AnalyticsEvent.SearchStopQuery.AddressGate.ELIGIBLE,
+                    gates.first(),
+                )
+                assertEquals(
+                    AnalyticsEvent.SearchStopQuery.AddressGate.CACHE_HIT,
+                    gates.last(),
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
     // endregion Address search analytics
 
     // region Address search eligibility

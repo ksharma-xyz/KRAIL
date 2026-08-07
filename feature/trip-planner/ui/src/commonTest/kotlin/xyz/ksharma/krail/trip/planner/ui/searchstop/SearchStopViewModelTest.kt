@@ -22,7 +22,6 @@ import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
-import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MAX_LOCAL_STOPS
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
@@ -810,7 +809,7 @@ class SearchStopViewModelTest {
         }
 
     @Test
-    fun `GIVEN a cached query WHEN searched again THEN no second address event fires`() =
+    fun `GIVEN an empty result WHEN searched again THEN a second address event fires`() =
         runTest {
             fakeRemoteAddressResultsManager.results = emptyList()
             val addressViewModel = addressAwareViewModel(minQueryLength = 6)
@@ -822,8 +821,9 @@ class SearchStopViewModelTest {
                 addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
                 advanceUntilIdle()
 
-                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
-                assertEquals(1, addressEvents().size)
+                // An empty result is not remembered - re-issuing the query retries.
+                assertEquals(2, fakeRemoteAddressResultsManager.callCount)
+                assertEquals(2, addressEvents().size)
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -898,21 +898,27 @@ class SearchStopViewModelTest {
             }
         }
 
+    /**
+     * Regression guard for the reverted stop-count gate: local stop matches must never
+     * suppress the address call. "13 hassall" matching dozens of Hassall St bus stops is
+     * exactly when a rider wants an address, and the gate used to go quiet there.
+     */
     @Test
-    fun `GIVEN a busy stop list WHEN the local event fires THEN the suppressed gate is reported`() =
+    fun `GIVEN local stop matches WHEN the local event fires THEN ELIGIBLE is reported`() =
         runTest {
-            val addressViewModel = addressAwareViewModel(minQueryLength = 6, maxLocalStops = 0)
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
 
             addressViewModel.uiState.test {
                 skipItems(1)
-                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Central"))
                 advanceUntilIdle()
 
+                assertTrue(addressViewModel.uiState.value.searchResults.isNotEmpty())
                 assertEquals(
-                    AnalyticsEvent.SearchStopQuery.AddressGate.STOPS_ALREADY_SUFFICIENT,
+                    AnalyticsEvent.SearchStopQuery.AddressGate.ELIGIBLE,
                     localEvents().single().addressSearchGate,
                 )
-                assertTrue(addressEvents().isEmpty())
+                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -955,7 +961,7 @@ class SearchStopViewModelTest {
         }
 
     @Test
-    fun `GIVEN a cache-served query WHEN the local event fires THEN CACHE_HIT is reported`() =
+    fun `GIVEN a repeated query WHEN the local event fires THEN ELIGIBLE is reported each time`() =
         runTest {
             fakeRemoteAddressResultsManager.results = listOf(
                 SearchStopState.SearchResult.Address(
@@ -975,16 +981,13 @@ class SearchStopViewModelTest {
                 addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
                 advanceUntilIdle()
 
-                // One network call, two local firings: the second was served from cache.
-                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
-                val gates = localEvents().map { it.addressSearchGate }
-                assertEquals(
-                    AnalyticsEvent.SearchStopQuery.AddressGate.ELIGIBLE,
-                    gates.first(),
-                )
-                assertEquals(
-                    AnalyticsEvent.SearchStopQuery.AddressGate.CACHE_HIT,
-                    gates.last(),
+                // No result cache: the retyped query is a fresh request, not a replay.
+                assertEquals(2, fakeRemoteAddressResultsManager.callCount)
+                assertTrue(
+                    localEvents().all {
+                        it.addressSearchGate ==
+                            AnalyticsEvent.SearchStopQuery.AddressGate.ELIGIBLE
+                    },
                 )
 
                 cancelAndIgnoreRemainingEvents()
@@ -997,7 +1000,6 @@ class SearchStopViewModelTest {
 
     private fun addressAwareViewModel(
         minQueryLength: Int = 6,
-        maxLocalStops: Int = DEFAULT_ADDRESS_SEARCH_MAX_LOCAL_STOPS,
     ) = SearchStopViewModel(
         analytics = fakeAnalytics,
         stopResultsManager = fakeStopResultsManager,
@@ -1010,7 +1012,6 @@ class SearchStopViewModelTest {
         searchSessionStore = searchSessionStore,
         isAddressSearchEnabled = { true },
         addressSearchMinQueryLength = { minQueryLength },
-        addressSearchMaxLocalStops = { maxLocalStops },
     )
 
     @Test
@@ -1038,57 +1039,6 @@ class SearchStopViewModelTest {
         }
 
     @Test
-    fun `GIVEN the stop list already answers the query WHEN it settles THEN no address request is made`() =
-        runTest {
-            fakeRemoteAddressResultsManager.results = listOf(
-                SearchStopState.SearchResult.Address(
-                    addressId = "addr-1",
-                    displayName = "Sydney Opera House",
-                    addressType = "poi",
-                ),
-            )
-            // "Sydney" matches one local stop; a max of 0 makes that "already sufficient".
-            val addressViewModel = addressAwareViewModel(minQueryLength = 6, maxLocalStops = 0)
-
-            addressViewModel.uiState.test {
-                skipItems(1)
-                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
-                advanceUntilIdle()
-
-                assertEquals(0, fakeRemoteAddressResultsManager.callCount)
-                assertTrue(addressViewModel.uiState.value.addressResults.isEmpty())
-                assertFalse(addressViewModel.uiState.value.isAddressSearchLoading)
-
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `GIVEN the stop list is busy WHEN the query is long THEN the escape hatch still fires the request`() =
-        runTest {
-            fakeRemoteAddressResultsManager.results = listOf(
-                SearchStopState.SearchResult.Address(
-                    addressId = "addr-1",
-                    displayName = "Sydney Airport",
-                    addressType = "poi",
-                ),
-            )
-            val addressViewModel = addressAwareViewModel(minQueryLength = 6, maxLocalStops = 0)
-
-            addressViewModel.uiState.test {
-                skipItems(1)
-                // 12 characters - at the long-query escape hatch, and still matches a stop.
-                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney Airpo"))
-                advanceUntilIdle()
-
-                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
-                assertEquals(1, addressViewModel.uiState.value.addressResults.size)
-
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
     fun `GIVEN addresses on screen WHEN the next query is suppressed THEN the stale addresses are cleared`() =
         runTest {
             fakeRemoteAddressResultsManager.results = listOf(
@@ -1098,7 +1048,7 @@ class SearchStopViewModelTest {
                     addressType = "poi",
                 ),
             )
-            val addressViewModel = addressAwareViewModel(minQueryLength = 6, maxLocalStops = 0)
+            val addressViewModel = addressAwareViewModel(minQueryLength = 6)
 
             addressViewModel.uiState.test {
                 skipItems(1)
@@ -1106,9 +1056,9 @@ class SearchStopViewModelTest {
                 advanceUntilIdle()
                 assertEquals(1, addressViewModel.uiState.value.addressResults.size)
 
-                // Shorter query, still above the length threshold, but now suppressed by
-                // the stop-count gate - the previous query's addresses must not linger.
-                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
+                // Backspacing under the length threshold suppresses the call - the
+                // previous query's addresses must not linger under the shorter one.
+                addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Syd"))
                 advanceUntilIdle()
 
                 assertTrue(addressViewModel.uiState.value.addressResults.isEmpty())
@@ -1145,7 +1095,7 @@ class SearchStopViewModelTest {
         }
 
     @Test
-    fun `GIVEN a cached query WHEN the exact same query is searched again THEN no second network call is made`() =
+    fun `GIVEN a resolved query WHEN the exact same query is searched again THEN a second network call is made`() =
         runTest {
             fakeRemoteAddressResultsManager.results = listOf(
                 SearchStopState.SearchResult.Address(
@@ -1163,15 +1113,15 @@ class SearchStopViewModelTest {
                 advanceUntilIdle()
                 assertEquals(1, fakeRemoteAddressResultsManager.callCount)
 
-                // Clear then retype the identical query - the normalized/case-folded
-                // cache key is the same, so this must be served from cache, not the
-                // network.
+                // Clear then retype the identical query. There is no result cache, so this
+                // hits the network again - deliberately, because a stale or empty cached
+                // answer is indistinguishable on screen from a call that never happened.
                 addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged(""))
                 advanceUntilIdle()
                 addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Sydney"))
                 advanceUntilIdle()
 
-                assertEquals(1, fakeRemoteAddressResultsManager.callCount)
+                assertEquals(2, fakeRemoteAddressResultsManager.callCount)
                 assertEquals(1, addressViewModel.uiState.value.addressResults.size)
 
                 cancelAndIgnoreRemainingEvents()
@@ -1192,9 +1142,8 @@ class SearchStopViewModelTest {
                 assertEquals(1, fakeRemoteAddressResultsManager.callCount)
                 assertTrue(addressViewModel.uiState.value.addressResults.isEmpty())
 
-                // The first call failed - a failure must never be cached as "no
-                // results", or the retry below would be wrongly served from cache
-                // instead of hitting the network again.
+                // The first call failed and left an empty section. Re-issuing the query
+                // must reach the network again rather than settle on that empty state.
                 fakeRemoteAddressResultsManager.shouldThrowError = false
                 fakeRemoteAddressResultsManager.results = listOf(
                     SearchStopState.SearchResult.Address(

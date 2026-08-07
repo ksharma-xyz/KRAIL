@@ -78,17 +78,6 @@ enum class FlagKeys(val key: String) {
     SEARCH_STOP_ADDRESS_MIN_QUERY_LENGTH("search_stop_address_min_query_length"),
 
     /**
-     * Above this many on-device stop matches for the settled query, an address/POI
-     * request is suppressed — a rider already looking at a long, correct stop list is
-     * not stuck, and those calls almost never end in an address being picked. Queries of
-     * 12 characters or more bypass this: a string that long is usually an address.
-     * Bounded integer `0..50`; a missing, malformed, or out-of-range value falls back to
-     * `10` client-side rather than being clamped. See
-     * feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
-     */
-    SEARCH_STOP_ADDRESS_MAX_LOCAL_STOPS("search_stop_address_max_local_stops"),
-
-    /**
      * Kill switch for requesting the platform review sheet (Play In-App Review / StoreKit).
      * `false` by default so the trigger stays dormant until it is deliberately switched on.
      * When off, saved-trip opens are still counted, so flipping it on later sees each user's

@@ -16,15 +16,7 @@ class AddressSearchQueryNormalizerTest {
     }
 
     @Test
-    fun `GIVEN normalized query WHEN addressSearchCacheKey THEN lowercased`() {
-        assertEquals("sydney opera house", addressSearchCacheKey("Sydney Opera House"))
-    }
-
-    @Test
-    fun `GIVEN different casing of same query WHEN addressSearchCacheKey THEN same key`() {
-        assertEquals(
-            addressSearchCacheKey("SYDNEY"),
-            addressSearchCacheKey("sydney"),
-        )
+    fun `GIVEN case WHEN normalizeAddressQuery THEN preserved for the API`() {
+        assertEquals("Sydney Opera House", normalizeAddressQuery(" Sydney Opera House "))
     }
 }

@@ -286,18 +286,18 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
         /**
          * Address-pipeline outcome for a settled query. Mirrors `AddressSearchGate` in
-         * `:feature:trip-planner:ui` plus [CACHE_HIT], which that enum cannot express:
-         * eligibility is a pure decision, whereas a cache hit is why an eligible query
-         * still made no network call. Reported by `.name`, so the values are stable
+         * `:feature:trip-planner:ui`. Reported by `.name`, so the values are stable
          * SCREAMING_CASE strings rather than an object's `toString()`.
+         *
+         * `STOPS_ALREADY_SUFFICIENT` and `CACHE_HIT` were emitted briefly and then
+         * removed with the stop-count gate and the result cache; historical rows may
+         * still carry them.
          */
         enum class AddressGate {
             DISABLED,
             BLANK,
             BELOW_THRESHOLD,
-            STOPS_ALREADY_SUFFICIENT,
             ELIGIBLE,
-            CACHE_HIT,
         }
     }
 

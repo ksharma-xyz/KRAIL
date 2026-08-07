@@ -39,12 +39,9 @@ import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
-import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchCache
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
-import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MAX_LOCAL_STOPS
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
-import xyz.ksharma.krail.trip.planner.ui.searchstop.address.addressSearchCacheKey
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.normalizeAddressQuery
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
@@ -72,7 +69,6 @@ class SearchStopViewModel(
     private val searchSessionStore: SearchSessionStore,
     private val isAddressSearchEnabled: () -> Boolean = { false },
     private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
-    private val addressSearchMaxLocalStops: () -> Int = { DEFAULT_ADDRESS_SEARCH_MAX_LOCAL_STOPS },
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -103,17 +99,11 @@ class SearchStopViewModel(
     private var addressSearchJob: Job? = null
     private var fetchRecentStopsJob: Job? = null
 
-    // Per-ViewModel session cache/staleness-guard for the address pipeline only — local
-    // stop search has no equivalent because it has no remote round-trip to protect.
-    private val addressSearchCache = AddressSearchCache()
+    // Staleness guard for the address pipeline only — local stop search has no equivalent
+    // because it has no remote round-trip to protect. There is deliberately no result
+    // cache: a cached "no results" is indistinguishable on screen from a suppressed call,
+    // and hiding a result the rider asked for costs more than the saved request.
     private var addressSearchRequestToken = 0
-
-    // Session id of the most recent query whose address results came straight from the
-    // cache. The local firing reports the address gate, and "no call was made because it
-    // was already cached" is a different fact from any eligibility outcome. Compared by
-    // session id, not a bare Boolean, so a previous query's cache hit can never be read
-    // as this query's.
-    private var addressCacheHitSessionId: String? = null
 
     // Random ID minted per settled query; sent on search analytics events so funnels
     // can be joined per query instance without carrying the typed text (which can be
@@ -550,14 +540,7 @@ class SearchStopViewModel(
                     query = query,
                     searchSessionId = searchSessionId,
                     localResultsCount = stopResults.size,
-                    // Same inputs the address job's post-debounce check will see (its
-                    // 350ms debounce outlasts this pipeline's 100ms), so the reported
-                    // gate is the decision that actually gets made, not a guess at it.
-                    addressSearchGate = currentAddressSearchGate(
-                        normalizedQuery = normalizeAddressQuery(query),
-                        localStopResultCount = stopResults.size,
-                    ),
-                    addressServedFromCache = addressCacheHitSessionId == searchSessionId,
+                    addressSearchGate = currentAddressSearchGate(normalizeAddressQuery(query)),
                 )
             }.getOrElse {
                 updateUiState { displayError() }
@@ -579,26 +562,8 @@ class SearchStopViewModel(
         val normalizedQuery = normalizeAddressQuery(query)
         val searchSessionId = currentSearchSessionId
 
-        // The local pipeline for THIS query has not settled yet - it is still inside its
-        // own debounce - so the stop-count check is deliberately skipped here rather than
-        // run against the previous query's count, which for an incremental keystroke is a
-        // broader (larger) result set and would suppress calls that should fire. Null
-        // means "not known yet"; the check runs after the debounce below, on the settled
-        // count.
-        if (currentAddressSearchGate(normalizedQuery, localStopResultCount = null) !=
-            AddressSearchGate.ELIGIBLE
-        ) {
+        if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) {
             updateUiState { copy(addressResults = persistentListOf(), isAddressSearchLoading = false) }
-            return
-        }
-
-        val cacheKey = addressSearchCacheKey(normalizedQuery)
-        val cached = addressSearchCache.get(cacheKey)
-        if (cached != null) {
-            addressCacheHitSessionId = searchSessionId
-            updateUiState {
-                copy(addressResults = cached.toImmutableList(), isAddressSearchLoading = false)
-            }
             return
         }
 
@@ -606,16 +571,11 @@ class SearchStopViewModel(
         addressSearchJob = viewModelScope.launch {
             delay(ADDRESS_SEARCH_DEBOUNCE_MS)
 
-            // A flag flip or further edit during the debounce must not fire a now-stale
-            // request - re-check the gate the caller already passed, now with the settled
-            // local stop count, which is the check that could not run on the keystroke.
-            // Clears the section on the way out: a previous query's addresses left on
-            // screen under a newly-suppressed query would be worse than showing none.
-            if (currentAddressSearchGate(
-                    normalizedQuery = normalizedQuery,
-                    localStopResultCount = _uiState.value.searchResults.size,
-                ) != AddressSearchGate.ELIGIBLE
-            ) {
+            // A flag flip during the debounce must not fire a now-stale request - re-check
+            // the same gate the caller already passed. Clears the section on the way out: a
+            // previous query's addresses left on screen under a newly-suppressed query
+            // would be worse than showing none.
+            if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) {
                 updateUiState {
                     copy(addressResults = persistentListOf(), isAddressSearchLoading = false)
                 }
@@ -629,10 +589,6 @@ class SearchStopViewModel(
             val fetchResult = suspendSafeResult(ioDispatcher) {
                 remoteAddressResultsManager.fetchAddressResults(normalizedQuery)
             }
-            // A transient failure must not be cached as "no results" - that would block
-            // the next identical query from retrying for the empty-result TTL. Only a
-            // real response (including a genuine empty one) is cache-worthy.
-            fetchResult.onSuccess { addressSearchCache.put(cacheKey, it) }
             val addressResults = fetchResult.getOrElse {
                 log("Address search failed for query of length ${normalizedQuery.length}: ${it.message}")
                 emptyList()
@@ -656,16 +612,11 @@ class SearchStopViewModel(
         }
     }
 
-    private fun currentAddressSearchGate(
-        normalizedQuery: String,
-        localStopResultCount: Int?,
-    ): AddressSearchGate =
+    private fun currentAddressSearchGate(normalizedQuery: String): AddressSearchGate =
         AddressSearchEligibility.evaluate(
             normalizedQuery = normalizedQuery,
             isAddressSearchEnabled = isAddressSearchEnabled(),
             minQueryLength = addressSearchMinQueryLength(),
-            localStopResultCount = localStopResultCount,
-            maxLocalStopsForAddressSearch = addressSearchMaxLocalStops(),
         )
 
     private fun StopItem.productClasses(): String =

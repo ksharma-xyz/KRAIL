@@ -20,6 +20,12 @@
         <string>$(MARKETING_VERSION)</string>
         <key>CFBundleVersion</key>
         <string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- KRAIL only uses HTTPS and the OS keychain, both exempt under the encryption
+	     export rules. Declaring this here answers the export-compliance question at
+	     upload time; without it every single build sits in TestFlight as "Missing
+	     Compliance" and is withheld from testers until someone answers by hand. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

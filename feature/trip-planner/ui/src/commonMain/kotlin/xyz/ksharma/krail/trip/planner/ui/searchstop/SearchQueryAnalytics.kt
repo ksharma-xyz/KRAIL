@@ -36,6 +36,41 @@ internal fun Analytics.trackAddressSearchResolved(
 }
 
 /**
+ * One firing per settled local stop search. [addressSearchGate] is passed in rather than
+ * recomputed here: the caller holds the settled local stop count the gate needs.
+ */
+internal fun Analytics.trackLocalSearchResolved(
+    query: String,
+    searchSessionId: String,
+    localResultsCount: Int,
+    addressSearchGate: AddressSearchGate,
+) {
+    track(
+        AnalyticsEvent.SearchStopQuery(
+            queryLength = query.length,
+            searchSessionId = searchSessionId,
+            resultsCount = localResultsCount,
+            zeroResultQuery = resolveLocalZeroResultQuery(
+                query = query,
+                localResultsCount = localResultsCount,
+                addressSearchGate = addressSearchGate,
+            ),
+        ),
+    )
+}
+
+/** Local pipeline threw. No gate is reported: the query never reached that decision. */
+internal fun Analytics.trackLocalSearchFailed(query: String, searchSessionId: String) {
+    track(
+        AnalyticsEvent.SearchStopQuery(
+            queryLength = query.length,
+            searchSessionId = searchSessionId,
+            isError = true,
+        ),
+    )
+}
+
+/**
  * Local-pipeline carve-out site. When the address pipeline is eligible for the query,
  * it resolves later and owns the carve-out decision (the query may be a real address
  * the NSW API recognises), so this returns null.

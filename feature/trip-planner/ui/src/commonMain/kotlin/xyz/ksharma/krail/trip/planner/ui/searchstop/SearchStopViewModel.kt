@@ -42,6 +42,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchCache
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
+import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MAX_LOCAL_STOPS
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.addressSearchCacheKey
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.normalizeAddressQuery
@@ -71,6 +72,7 @@ class SearchStopViewModel(
     private val searchSessionStore: SearchSessionStore,
     private val isAddressSearchEnabled: () -> Boolean = { false },
     private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
+    private val addressSearchMaxLocalStops: () -> Int = { DEFAULT_ADDRESS_SEARCH_MAX_LOCAL_STOPS },
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
@@ -537,26 +539,23 @@ class SearchStopViewModel(
             runCatching {
                 val stopResults = stopResultsManager.fetchStopResults(query)
                 updateUiState { displayData(stopResults) }
-                analytics.track(
-                    AnalyticsEvent.SearchStopQuery(
-                        queryLength = query.length,
-                        searchSessionId = searchSessionId,
-                        resultsCount = stopResults.size,
-                        zeroResultQuery = resolveLocalZeroResultQuery(
-                            query = query,
-                            localResultsCount = stopResults.size,
-                            addressSearchGate = currentAddressSearchGate(normalizeAddressQuery(query)),
-                        ),
+                analytics.trackLocalSearchResolved(
+                    query = query,
+                    searchSessionId = searchSessionId,
+                    localResultsCount = stopResults.size,
+                    // Same inputs the address job's post-debounce check will see (its
+                    // 350ms debounce outlasts this pipeline's 100ms), so this is the
+                    // decision that actually gets made, not a guess at it.
+                    addressSearchGate = currentAddressSearchGate(
+                        normalizedQuery = normalizeAddressQuery(query),
+                        localStopResultCount = stopResults.size,
                     ),
                 )
             }.getOrElse {
                 updateUiState { displayError() }
-                analytics.track(
-                    AnalyticsEvent.SearchStopQuery(
-                        queryLength = query.length,
-                        searchSessionId = searchSessionId,
-                        isError = true,
-                    ),
+                analytics.trackLocalSearchFailed(
+                    query = query,
+                    searchSessionId = searchSessionId,
                 )
             }
         }
@@ -572,7 +571,15 @@ class SearchStopViewModel(
         val normalizedQuery = normalizeAddressQuery(query)
         val searchSessionId = currentSearchSessionId
 
-        if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) {
+        // The local pipeline for THIS query has not settled yet - it is still inside its
+        // own debounce - so the stop-count check is deliberately skipped here rather than
+        // run against the previous query's count, which for an incremental keystroke is a
+        // broader (larger) result set and would suppress calls that should fire. Null
+        // means "not known yet"; the check runs after the debounce below, on the settled
+        // count.
+        if (currentAddressSearchGate(normalizedQuery, localStopResultCount = null) !=
+            AddressSearchGate.ELIGIBLE
+        ) {
             updateUiState { copy(addressResults = persistentListOf(), isAddressSearchLoading = false) }
             return
         }
@@ -591,8 +598,20 @@ class SearchStopViewModel(
             delay(ADDRESS_SEARCH_DEBOUNCE_MS)
 
             // A flag flip or further edit during the debounce must not fire a now-stale
-            // request - re-check the same gate the caller already passed.
-            if (currentAddressSearchGate(normalizedQuery) != AddressSearchGate.ELIGIBLE) return@launch
+            // request - re-check the gate the caller already passed, now with the settled
+            // local stop count, which is the check that could not run on the keystroke.
+            // Clears the section on the way out: a previous query's addresses left on
+            // screen under a newly-suppressed query would be worse than showing none.
+            if (currentAddressSearchGate(
+                    normalizedQuery = normalizedQuery,
+                    localStopResultCount = _uiState.value.searchResults.size,
+                ) != AddressSearchGate.ELIGIBLE
+            ) {
+                updateUiState {
+                    copy(addressResults = persistentListOf(), isAddressSearchLoading = false)
+                }
+                return@launch
+            }
 
             updateUiState { copy(isAddressSearchLoading = true) }
             // suspendSafeResult, not runCatching: a cancelled coroutine (e.g. this job
@@ -628,11 +647,16 @@ class SearchStopViewModel(
         }
     }
 
-    private fun currentAddressSearchGate(normalizedQuery: String): AddressSearchGate =
+    private fun currentAddressSearchGate(
+        normalizedQuery: String,
+        localStopResultCount: Int?,
+    ): AddressSearchGate =
         AddressSearchEligibility.evaluate(
             normalizedQuery = normalizedQuery,
             isAddressSearchEnabled = isAddressSearchEnabled(),
             minQueryLength = addressSearchMinQueryLength(),
+            localStopResultCount = localStopResultCount,
+            maxLocalStopsForAddressSearch = addressSearchMaxLocalStops(),
         )
 
     private fun StopItem.productClasses(): String =

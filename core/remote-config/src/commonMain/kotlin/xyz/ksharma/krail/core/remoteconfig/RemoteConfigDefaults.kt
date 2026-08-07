@@ -169,6 +169,10 @@ object RemoteConfigDefaults {
                 second = 6,
             ),
             Pair(
+                first = FlagKeys.SEARCH_STOP_ADDRESS_MAX_LOCAL_STOPS.key,
+                second = 10,
+            ),
+            Pair(
                 first = FlagKeys.IN_APP_REVIEW_ENABLED.key,
                 second = false,
             ),

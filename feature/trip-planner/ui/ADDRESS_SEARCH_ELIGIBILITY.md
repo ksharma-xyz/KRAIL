@@ -115,6 +115,22 @@ digits, 25 chars or fewer) - the address completion site owns that decision for
 address-eligible queries because only it knows both pipelines' counts. See
 `docs/ANALYTICS_REGISTRY_HANDOFF.md` for the param registry status.
 
+Three params exist to make the gate tunable from data rather than guesswork:
+
+| Param | Firing | Meaning |
+|---|---|---|
+| `localResultsCount` | address | On-device stop matches for the query, so the gate can be scored without a `searchSessionId` join |
+| `addressSearchGate` | local | What the address pipeline decided. The local firing happens for **every** settled query, so this is the only record of calls that were *not* made — without it, a threshold that went too far is invisible |
+| `queryHasDigit` | local (both success and error) | Whether the query contains a digit. A house number is the cheapest address signal there is; a bool, never the text |
+
+`addressSearchGate` carries one value the eligibility enum does not: `CACHE_HIT`.
+Eligibility is a pure decision, whereas a cache hit is *why an eligible query still made
+no network call*, and it takes precedence when reporting. The cache is consulted on the
+keystroke, before the settled local count exists, so a query can be both cache-served and
+(later) stop-count-suppressed; reporting `CACHE_HIT` there is the honest reading —
+results were shown, no call was made — and it is what makes cache effectiveness visible
+at all.
+
 ## Remote Config
 
 | Key | Type | Fallback | Valid range |

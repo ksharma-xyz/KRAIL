@@ -6,17 +6,11 @@ on:
       artifact-name:
         required: false
         type: string
-      notify-testers:
-        required: false
-        type: boolean
-        default: false
+  # No inputs: the Fastfile owns distribution (internal groups only, no external
+  # testers), so there was nothing for a notify-testers input to control. It was
+  # declared here but never forwarded to fastlane by any step, and no caller ever
+  # passed it.
   workflow_dispatch:
-    inputs:
-      notify-testers:
-        description: 'Notify external testers after upload'
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   distribute:

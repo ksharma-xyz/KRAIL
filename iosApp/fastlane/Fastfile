@@ -95,10 +95,21 @@ platform :ios do
     app_store_connect_api_key
     upload_to_testflight(
       ipa: "./build/iosApp.ipa",
-      skip_waiting_for_build_processing: true,
+      # Must be false: with skip_waiting_for_build_processing fastlane returns as soon
+      # as the binary is accepted, before the build exists as something distributable,
+      # so it cannot assign groups and the build lands in TestFlight belonging to
+      # nobody. That is the whole reason uploads were invisible to testers.
+      skip_waiting_for_build_processing: false,
+      # Processing is usually a few minutes but Apple gives no guarantee. Bound the
+      # wait so a slow processing queue fails the job loudly instead of burning the
+      # runner's full 6h budget.
+      wait_processing_timeout_duration: 1800,
       skip_submission: true,
+      # Internal groups only. External distribution needs a Beta App Review, which is
+      # not something an RC push should trigger unattended.
       distribute_external: false,
-      notify_external_testers: false
+      notify_external_testers: false,
+      groups: ["Internal", "Friends"]
     )
   end
 

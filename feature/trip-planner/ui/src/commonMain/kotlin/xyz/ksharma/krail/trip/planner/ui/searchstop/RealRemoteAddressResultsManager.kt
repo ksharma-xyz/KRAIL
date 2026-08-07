@@ -12,8 +12,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
  * transit stops are local-DB only, always (see [RealStopResultsManager]).
  *
  * Deliberately does **not** catch here: a failed call must propagate as an exception so
- * the caller's `AddressSearchCache` can tell "the request failed" apart from "the
- * request succeeded with zero results" and skip caching the former. The caller
+ * the caller can tell "the request failed" apart from "the request succeeded with zero
+ * results" and report `isError` rather than a zero count. The caller
  * (`SearchStopViewModel`) is the single place that turns a failure into an empty list
  * for the UI - see feature/trip-planner/ui/ADDRESS_SEARCH_ELIGIBILITY.md.
  */

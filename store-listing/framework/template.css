@@ -1,0 +1,74 @@
+/* Store Panel Framework — app-agnostic panel geometry.
+   An app supplies per-panel CSS vars:
+     --g1/--g2   field gradient stops
+     --hi/--lo   prop tints (light/dark, same hue family)
+   and a display font registered as font-family "PanelDisplay".
+   Scale: 1 unit below = 1px at preview scale; multiply by canvas/preview
+   ratio when rendering store-size output. */
+
+.panel{position:relative;overflow:hidden;display:flex;flex:0 0 auto;flex-direction:column;align-items:center;
+  background:linear-gradient(170deg,var(--g1) 0%,var(--g2) 100%);border-radius:5px;}
+.panel::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:5px 5px;}
+
+/* class geometry: preview scale. Portrait classes share the fixed text zone,
+   so every device slot starts and ends at the same height across a row. */
+.cls-phone-ios{width:216px;height:470px;}      /* 1320x2868 */
+.cls-phone-play{width:216px;height:384px;}     /* 1080x1920 */
+.cls-tab-portrait{width:250px;height:400px;}   /* 1200x1920 */
+.cls-ipad{width:300px;height:400px;}           /* 2064x2752 */
+.cls-tab-landscape{width:352px;height:198px;flex-direction:row;align-items:center;} /* 1920x1080 */
+
+/* fixed text zone (portrait) — the alignment contract */
+.tz{position:relative;z-index:2;height:138px;box-sizing:border-box;padding:50px 14px 0;
+  display:flex;gap:9px;align-items:flex-start;justify-content:center;text-align:center;flex:0 0 auto;}
+.cls-tab-landscape .tz{height:auto;padding:0 0 0 18px;flex:0 0 37%;justify-content:flex-start;text-align:left;}
+
+.hd{display:flex;flex-direction:column;gap:2px;font-family:"PanelDisplay",sans-serif;font-weight:900;
+  color:#fff;text-transform:uppercase;line-height:1.1;letter-spacing:-.005em;
+  text-shadow:0 1px 3px rgba(0,0,0,.18);}
+.hd .l0{font-size:11px;letter-spacing:.08em;opacity:.92;}
+.hd .l1{font-size:21px;}
+.hd .l1.num{font-size:34px;letter-spacing:-.02em;}
+.hd .l2{font-size:12.5px;letter-spacing:.06em;opacity:.92;margin-top:5px;}
+.cls-tab-landscape .hd{text-align:left;}
+.cls-tab-landscape .hd .l0{font-size:8.5px;}
+.cls-tab-landscape .hd .l1{font-size:15px;}
+.cls-tab-landscape .hd .l2{font-size:9.5px;}
+
+/* device slot: fixed height per class so tops AND bottoms align across every row.
+   Images fit the slot height; width follows the capture's own ratio. */
+.dv{position:relative;z-index:2;margin:14px 0 34px;background:#fff;border-radius:18px;padding:5px;
+  box-shadow:0 12px 26px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;}
+.cls-phone-ios .dv{height:284px;}
+.cls-phone-play .dv{height:198px;}
+.cls-tab-portrait .dv{height:214px;}
+.cls-ipad .dv{height:214px;border-radius:14px;}
+.cls-tab-landscape .dv{margin:0 14px 0 0;padding:3px;border-radius:10px;height:auto;}
+.cls-tab-landscape .dv img{height:152px;width:auto;border-radius:7px;}
+.dv img{display:block;height:100%;width:auto;max-width:100%;border-radius:13px;}
+.row .panel:nth-child(odd) .dv{transform:rotate(-2deg);}
+.row .panel:nth-child(even) .dv{transform:rotate(2deg);}
+
+/* decorations */
+.stick{position:absolute;right:18px;top:18px;z-index:3;font-family:"PanelDisplay",sans-serif;
+  font-weight:900;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff;
+  background:var(--g2);border:2px solid rgba(255,255,255,.92);border-radius:6px;padding:2px 7px 3px;
+  transform:rotate(-4deg);box-shadow:0 3px 8px rgba(0,0,0,.28);display:flex;align-items:center;gap:4px;}
+.stick.live{background:#FFC800;color:#3A2A00;}
+.stick .dot{width:6px;height:6px;border-radius:50%;background:#3A2A00;display:inline-block;}
+.gv{position:absolute;left:2px;bottom:14px;z-index:1;writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:"PanelDisplay",sans-serif;font-weight:900;font-size:13px;letter-spacing:.24em;
+  text-transform:uppercase;color:rgba(255,255,255,.13);pointer-events:none;}
+.badge{flex:0 0 auto;width:28px;height:28px;border-radius:6px;background:#fff;color:var(--g2);
+  font-family:"PanelDisplay",sans-serif;font-weight:900;font-size:17px;display:flex;
+  align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.25);align-self:center;}
+.standin{position:absolute;left:10px;bottom:10px;z-index:4;font:8.5px ui-monospace,monospace;
+  letter-spacing:.08em;background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:3px;}
+
+/* background props: corner-anchored, never behind text or device */
+.pr{position:absolute;pointer-events:none;}
+.pr-ring{width:120px;height:120px;left:-44px;top:-44px;}
+.pr-arc{width:150px;height:150px;right:-40px;bottom:-30px;}
+.pr-dots{width:54px;height:22px;right:16px;bottom:16px;}
+.pr-bars{width:46px;height:40px;left:16px;bottom:18px;}

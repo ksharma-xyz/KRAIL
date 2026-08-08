@@ -1,0 +1,17 @@
+<!-- Store Panel Framework — single-panel template.
+     Placeholders: {{CLASS}} cls-phone-ios|cls-phone-play|cls-tab-portrait|cls-ipad|cls-tab-landscape
+                   {{G1}} {{G2}} {{HI}} {{LO}}  field + prop tints
+                   {{PROPS}}    zero or more .pr svg blocks
+                   {{STICKER}}  optional .stick span (class "stick live" for the live chip)
+                   {{GHOST}}    optional vertical word
+                   {{BADGE}}    optional .badge span
+                   {{HEADLINE}} .hd span stack (l0/l1/l1 num/l2)
+                   {{SCREEN}}   full-frame capture, native resolution of the class
+     Render each panel at the class's exact canvas size from devices.json. -->
+<div class="panel {{CLASS}}" style="--g1:{{G1}};--g2:{{G2}};--hi:{{HI}};--lo:{{LO}}">
+  {{PROPS}}
+  <span class="gv">{{GHOST}}</span>
+  {{STICKER}}
+  <div class="tz">{{BADGE}}<div class="hd">{{HEADLINE}}</div></div>
+  <div class="dv"><img src="{{SCREEN}}" alt=""></div>
+</div>

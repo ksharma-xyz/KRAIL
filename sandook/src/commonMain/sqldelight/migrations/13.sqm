@@ -1,0 +1,66 @@
+-- Migration 13: Saved trips are identified by their origin/destination pair.
+--
+-- Older or externally seeded databases can contain a legacy hyphenated tripId alongside
+-- the current concatenated tripId for the same pair. The UI derives its LazyColumn key from
+-- the stop pair, so those two rows become the same key and crash Compose on every launch.
+-- Rebuild the table to keep only the newest row per pair, move every surviving row to the
+-- unambiguous canonical ID, and enforce pair uniqueness for future writes.
+-- SavedTrip has existed since schema version 1. Recreating the legacy shape defensively is
+-- a no-op for real upgrades and keeps partial migration fixtures safe.
+CREATE TABLE IF NOT EXISTS SavedTrip (
+    tripId TEXT PRIMARY KEY,
+    fromStopId TEXT NOT NULL,
+    fromStopName TEXT NOT NULL,
+    toStopId TEXT NOT NULL,
+    toStopName TEXT NOT NULL,
+    timestamp TEXT DEFAULT (datetime('now')),
+    sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+-- A previous interrupted or externally replayed migration may have left the staging table
+-- behind while the database version still reports 13. Always rebuild it from SavedTrip so a
+-- retry is deterministic and cannot preserve a partial copy.
+DROP TABLE IF EXISTS SavedTripByStops;
+
+CREATE TABLE IF NOT EXISTS SavedTripByStops (
+    tripId TEXT PRIMARY KEY,
+    fromStopId TEXT NOT NULL,
+    fromStopName TEXT NOT NULL,
+    toStopId TEXT NOT NULL,
+    toStopName TEXT NOT NULL,
+    timestamp TEXT DEFAULT (datetime('now')),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    CHECK (tripId = fromStopId || '->' || toStopId),
+    UNIQUE (fromStopId, toStopId)
+);
+
+INSERT INTO SavedTripByStops(
+    tripId,
+    fromStopId,
+    fromStopName,
+    toStopId,
+    toStopName,
+    timestamp,
+    sort_order
+)
+SELECT
+    current.fromStopId || '->' || current.toStopId,
+    current.fromStopId,
+    current.fromStopName,
+    current.toStopId,
+    current.toStopName,
+    current.timestamp,
+    current.sort_order
+FROM SavedTrip AS current
+WHERE current.rowid = (
+    SELECT candidate.rowid
+    FROM SavedTrip AS candidate
+    WHERE candidate.fromStopId = current.fromStopId
+        AND candidate.toStopId = current.toStopId
+    ORDER BY candidate.timestamp DESC, candidate.rowid DESC
+    LIMIT 1
+);
+
+DROP TABLE SavedTrip;
+
+ALTER TABLE SavedTripByStops RENAME TO SavedTrip;

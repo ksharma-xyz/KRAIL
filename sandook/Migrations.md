@@ -14,6 +14,10 @@ SQLDelight generates `KrailSandook.Schema.migrate(...)` from the `.sqm` files an
 platform drivers invoke it. Existing installations run each missing `.sqm` migration in
 order; fresh installations create the current schema directly.
 
+When rebuilding a table through a named staging table, start with
+`DROP TABLE IF EXISTS staging_table`. This makes a retry recover safely if an interrupted or
+externally replayed migration left the staging table behind while the schema version stayed old.
+
 Do **not** add a matching iOS `SandookMigrationAfterX` class or `AfterVersion(X)` entry
 solely because a new `.sqm` file exists. The callbacks are not migration registration:
 they are optional hooks that run only *after* SQLDelight has completed the migration to
@@ -30,3 +34,29 @@ version `X`, so it may depend on the migrated schema.
 If the work can be represented in SQL, keep it in the `.sqm` file instead. No Android
 callback change is needed for a standard SQLDelight migration: `SandookCallback` delegates
 to SQLDelight's schema migration via `super.onUpgrade(...)`.
+
+## Saved-trip identity invariant
+
+A saved trip is identified by its ordered `(fromStopId, toStopId)` pair. The reverse
+direction is a different trip. Its internal `tripId` is the canonical string
+`fromStopId->toStopId`; it is a storage and UI key, not user-facing text and not a value
+that callers should parse.
+
+This contract crosses SQL and Kotlin, so keep all of these layers aligned:
+
+- `Trip.tripId` supplies the Compose list key and the IDs used by select, delete, and reorder.
+- `RealSandook.insertOrReplaceTrip` derives the ID from the two stop IDs instead of trusting
+  a caller-provided serialization. `FakeSandook` must behave the same way.
+- `SavedTrip` enforces both `CHECK (tripId = fromStopId || '->' || toStopId)` and
+  `UNIQUE (fromStopId, toStopId)`. Do not remove either constraint: the check keeps the ID
+  canonical, while the unique constraint prevents two IDs from representing the same pair.
+
+Never construct a saved-trip ID by concatenating stop IDs without a separator. That made
+legacy and current database rows resolve to the same Compose key, and delete operations
+could target a different ID from the stored row.
+
+If this identity format changes, update the current `.sq` schema, `Trip`, both Sandook
+implementations, and persisted preference keys together. Add a numbered migration that
+canonicalizes existing rows and deterministically resolves duplicates, plus an executable
+`KrailSandook.Schema.migrate(...)` regression test containing the legacy row shapes. Preserve
+stop names, timestamps, and sort order unless the product requirement explicitly says otherwise.

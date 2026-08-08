@@ -12,8 +12,14 @@ data class Trip(
     val toStopId: String,
     val toStopName: String,
 ) {
+    /**
+     * Stable storage and Compose identity for this ordered stop pair.
+     *
+     * Keep this format aligned with the Sandook `SavedTrip` constraints and migrations.
+     * A separator is required; concatenating opaque stop IDs can create duplicate list keys.
+     */
     val tripId: String
-        get() = "$fromStopId$toStopId"
+        get() = "$fromStopId->$toStopId"
 
     fun toJsonString() = Json.encodeToString(serializer(), this)
 

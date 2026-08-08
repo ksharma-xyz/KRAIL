@@ -99,9 +99,16 @@ class FakeSandook : Sandook {
         toStopId: String,
         toStopName: String,
     ) {
-        val existingSortOrder = tripsFlow.value.find { it.tripId == tripId }?.sort_order ?: 0L
+        val canonicalTripId = "$fromStopId->$toStopId"
+        val existingSortOrder = tripsFlow.value
+            .find {
+                it.tripId == canonicalTripId ||
+                    (it.fromStopId == fromStopId && it.toStopId == toStopId)
+            }
+            ?.sort_order
+            ?: 0L
         val trip = SavedTrip(
-            tripId,
+            canonicalTripId,
             fromStopId,
             fromStopName,
             toStopId,
@@ -110,7 +117,10 @@ class FakeSandook : Sandook {
             sort_order = existingSortOrder,
         )
         val current = tripsFlow.value.toMutableList()
-        current.removeAll { it.tripId == tripId }
+        current.removeAll {
+            it.tripId == canonicalTripId ||
+                (it.fromStopId == fromStopId && it.toStopId == toStopId)
+        }
         current.add(trip)
         tripsFlow.value = current
     }

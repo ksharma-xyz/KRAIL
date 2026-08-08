@@ -945,7 +945,7 @@ class SavedTripsViewModelTest {
                 // Wait for savedTrips to land in state before issuing the move.
                 awaitItem()
 
-                viewModel.onEvent(SavedTripUiEvent.MoveSavedTripToIndex("AB", 2))
+                viewModel.onEvent(SavedTripUiEvent.MoveSavedTripToIndex("A->B", 2))
 
                 // Drain emissions until we have the reorder event tracked. The
                 // optimistic state update can emit before analytics fires, so we
@@ -979,7 +979,7 @@ class SavedTripsViewModelTest {
 
                 // Source == target is a no-op in the handler. Analytics must mirror
                 // that, otherwise drop-in-place gestures inflate reorder counts.
-                viewModel.onEvent(SavedTripUiEvent.MoveSavedTripToIndex("AB", 0))
+                viewModel.onEvent(SavedTripUiEvent.MoveSavedTripToIndex("A->B", 0))
                 advanceUntilIdle()
 
                 assertFalse(analytics.isEventTracked("saved_trip_card_reordered"))

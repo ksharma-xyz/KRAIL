@@ -1,0 +1,6 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

@@ -1,0 +1,8 @@
+appId: xyz.ksharma.krail
+---
+- swipe:
+    start: "50%,52%"
+    end: "50%,12%"
+    duration: 500
+- waitForAnimationToEnd
+- assertVisible: "Leave Now"

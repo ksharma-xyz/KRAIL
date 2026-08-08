@@ -1,0 +1,17 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Krail App"
+- waitForAnimationToEnd
+- tapOn: "Tallawong Station"
+- waitForAnimationToEnd
+- assertVisible: "Tallawong P1"
+- swipe:
+    start: "50%,32%"
+    end: "50%,78%"
+    duration: 500
+- waitForAnimationToEnd
+- assertVisible: "Tallawong P1"
+- takeScreenshot: store-listing/krail/screenshots/iphone65/02_parking_tallawong

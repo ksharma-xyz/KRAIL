@@ -1,0 +1,5 @@
+# Contains store-performance figures. KRAIL is a public repo, so this stays local.
+krail-store-listing-marketing-report.html
+
+# Scratch output from render-store-images.py
+.render-work/

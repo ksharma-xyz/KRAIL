@@ -1,0 +1,5 @@
+appId: xyz.ksharma.krail
+---
+- tapOn: "333"
+- waitForAnimationToEnd
+- assertVisible: "15 stops"

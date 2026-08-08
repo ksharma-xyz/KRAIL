@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS SavedTrip (
 -- retry is deterministic and cannot preserve a partial copy.
 DROP TABLE IF EXISTS SavedTripByStops;
 
-CREATE TABLE SavedTripByStops (
+CREATE TABLE IF NOT EXISTS SavedTripByStops (
     tripId TEXT PRIMARY KEY,
     fromStopId TEXT NOT NULL,
     fromStopName TEXT NOT NULL,

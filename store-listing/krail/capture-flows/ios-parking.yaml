@@ -1,0 +1,10 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Krail App"
+- waitForAnimationToEnd
+- tapOn: "Tallawong Station"
+- waitForAnimationToEnd
+- assertVisible: "Tallawong P1"

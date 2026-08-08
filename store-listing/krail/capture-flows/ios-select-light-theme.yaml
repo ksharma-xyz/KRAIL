@@ -1,0 +1,10 @@
+appId: xyz.ksharma.krail
+---
+- tapOn:
+    point: "42%,4%"
+- waitForAnimationToEnd
+- assertVisible: "Settings"
+- tapOn: "Change Theme"
+- waitForAnimationToEnd
+- tapOn: "Light"
+- waitForAnimationToEnd

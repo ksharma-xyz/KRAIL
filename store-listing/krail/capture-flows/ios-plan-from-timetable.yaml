@@ -1,0 +1,5 @@
+appId: xyz.ksharma.krail
+---
+- tapOn: "Plan your trip"
+- waitForAnimationToEnd
+- assertVisible: "Select Date"

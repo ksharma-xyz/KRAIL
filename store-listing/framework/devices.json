@@ -1,0 +1,61 @@
+{
+  "classes": {
+    "iphone-6.9": {
+      "store": "app-store",
+      "canvas": [1320, 2868],
+      "ratio": "1:2.17",
+      "count": { "min": 1, "max": 10 },
+      "notes": "Required tier. Capture on iPhone 17 Pro Max simulator."
+    },
+    "iphone-6.5": {
+      "store": "app-store",
+      "canvas": [1242, 2688],
+      "ratio": "1:2.16",
+      "count": { "min": 0, "max": 10 },
+      "notes": "Optional; App Store auto-scales 6.9 if omitted. Same template, smaller canvas."
+    },
+    "ipad-13": {
+      "store": "app-store",
+      "canvas": [2064, 2752],
+      "ratio": "3:4",
+      "count": { "min": 1, "max": 10 },
+      "notes": "Required when the app ships on iPad. Dual-pane screens are the point."
+    },
+    "android-phone": {
+      "store": "play",
+      "canvas": [1080, 1920],
+      "ratio": "9:16",
+      "count": { "min": 2, "max": 8 },
+      "notes": "Raw emulator captures (1080x2400) exceed Play's 2:1 rule; always compose onto this canvas. 9:16 at 1080 is the featuring bar. JPEG/PNG-24, no alpha, 8MB."
+    },
+    "android-tablet-portrait": {
+      "store": "play",
+      "canvas": [1200, 1920],
+      "ratio": "5:8",
+      "count": { "min": 2, "max": 8 },
+      "notes": "7-inch slot. Portrait dual-pane screens."
+    },
+    "android-tablet-landscape": {
+      "store": "play",
+      "canvas": [1920, 1080],
+      "ratio": "16:9",
+      "count": { "min": 2, "max": 8 },
+      "notes": "10-inch slot. Landscape layout: text zone left, device right."
+    },
+    "play-feature-graphic": {
+      "store": "play",
+      "canvas": [1024, 500],
+      "ratio": "2.05:1",
+      "count": { "min": 1, "max": 1 },
+      "notes": "Required for featuring consideration. Type + field only, no screenshot."
+    }
+  },
+  "geometry": {
+    "safeBorderPct": 0.083,
+    "textZoneHeightPct": { "portrait": 0.24, "landscape": 0.0, "landscapeTextWidthPct": 0.37 },
+    "deviceTiltDeg": 2,
+    "tiltPattern": "alternate",
+    "stickerCorner": "top-right",
+    "ghostEdge": "left-vertical"
+  }
+}

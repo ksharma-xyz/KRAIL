@@ -1,0 +1,44 @@
+{
+  "app": "KRAIL",
+  "font": "Roboto Black (brand face); in-app screens render Antonio",
+  "palette": {
+    "train":  { "g1": "#F6891F", "g2": "#C25706", "hi": "rgba(255,255,255,.16)", "lo": "rgba(59,26,2,.18)" },
+    "bus":    { "g1": "#00B5EF", "g2": "#00719F", "hi": "rgba(255,255,255,.16)", "lo": "rgba(1,34,46,.20)" },
+    "metro":  { "g1": "#00A87E", "g2": "#005A43", "hi": "rgba(255,255,255,.15)", "lo": "rgba(0,36,27,.22)" },
+    "ferry":  { "g1": "#63B93A", "g2": "#2F711E", "hi": "rgba(255,255,255,.16)", "lo": "rgba(19,45,8,.20)" },
+    "lrail":  { "g1": "#E4022D", "g2": "#8F0219", "hi": "rgba(255,255,255,.16)", "lo": "rgba(50,1,10,.22)" },
+    "dark":   { "g1": "#2C070E", "g2": "#120305", "hi": "rgba(228,2,45,.30)",   "lo": "rgba(228,2,45,.12)" }
+  },
+  "panels": [
+    { "id": 1, "colour": "train", "screenTheme": "train/light",
+      "headline": [["l1","Save your"],["l1","trip"],["l2","See it live"]],
+      "sticker": { "label": "Live", "style": "live" }, "ghost": "Sydney",
+      "screen": "saved trips home, six trips incl Home to Work and Home to Uni labels, no parking in frame" },
+    { "id": 2, "colour": "bus", "screenTheme": "bus/light",
+      "headline": [["l1","Know when"],["l1","to get off"]],
+      "sticker": { "label": "748" }, "ghost": "Central",
+      "screen": "expanded 748 journey: leg stops, get-off stop, walk leg" },
+    { "id": 3, "colour": "metro", "screenTheme": "metro/light",
+      "headline": [["l0","Tallawong fills by"],["l1 num","7:05am"],["l2","See spaces first"]],
+      "badge": "P", "ghost": "Tallawong",
+      "screen": "Tallawong card expanded, P1/P2/P3 live spot counts, card top clean" },
+    { "id": 4, "colour": "ferry", "screenTheme": "ferry/light",
+      "headline": [["l1","Free. No ads."],["l2","Made in Sydney"]],
+      "sticker": { "label": "SYD" }, "ghost": "Krail",
+      "screen": "plan-your-trip bottom sheet over the timetable" },
+    { "id": 5, "colour": "lrail", "screenTheme": "pink/light",
+      "headline": [["l1","Every stop"],["l1","on the map"]],
+      "sticker": { "label": "CBD" }, "ghost": "Wynyard",
+      "screen": "select-on-map, Sydney CBD stop pins, stop sheet open" },
+    { "id": 6, "colour": "dark", "screenTheme": "pink/dark",
+      "headline": [["l0","Built for the"],["l1","6am dark"]],
+      "sticker": { "label": "6am" }, "ghost": "Schofields",
+      "screen": "dark home, saved trips only" }
+  ],
+  "captureNotes": [
+    "Seed via SQLite (run-as pull/push krailSandook.db): SavedTrip, StopLabels, Theme.productClass (1 train, 2 metro, 5 bus, 9 ferry, 100 pink). Removing db-wal on push is mandatory; a db push also restores Theme, so set it in the same push.",
+    "Pin emulator GPS to Sydney (adb emu geo fix 151.2093 -33.8688) and pm-grant location, or maps open on Googleplex with a permission toast.",
+    "Force clean status bars (simctl status_bar override / Android demo mode); times in the 7:00-7:30 window.",
+    "Tablet AVD: krail_tablet (medium_tablet, android-36); portrait via user_rotation 1."
+  ]
+}

@@ -1,0 +1,8 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn:
+    point: "18%,19%"
+- waitForAnimationToEnd

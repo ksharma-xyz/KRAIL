@@ -69,6 +69,40 @@ class SavedTripIdentityMigrationTest {
     }
 
     @Test
+    fun `migration discards a leftover staging table before retrying`() {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        createVersionThirteenTable(driver)
+        driver.insertLegacyTrip(
+            tripId = "200060200080",
+            fromStopId = "200060",
+            fromStopName = "Central Station",
+            toStopId = "200080",
+            toStopName = "Wynyard Station",
+            timestamp = "2026-08-08 11:28:46",
+            sortOrder = 2,
+        )
+        driver.execute(
+            identifier = null,
+            sql = "CREATE TABLE SavedTripByStops (stale TEXT NOT NULL)",
+            parameters = 0,
+        )
+
+        KrailSandook.Schema.migrate(
+            driver = driver,
+            oldVersion = VERSION_THIRTEEN,
+            newVersion = KrailSandook.Schema.version,
+        )
+
+        val trip = KrailSandook(driver).krailSandookQueries.selectAllTrips().executeAsOne()
+        assertEquals("200060->200080", trip.tripId)
+        assertEquals("Central Station", trip.fromStopName)
+        assertEquals(2L, trip.sort_order)
+        assertNonCanonicalTripIdRejected(driver)
+
+        driver.close()
+    }
+
+    @Test
     fun `store normalizes a mismatched caller ID before writing`() {
         val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         KrailSandook.Schema.create(driver)

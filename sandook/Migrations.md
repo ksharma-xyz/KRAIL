@@ -14,6 +14,10 @@ SQLDelight generates `KrailSandook.Schema.migrate(...)` from the `.sqm` files an
 platform drivers invoke it. Existing installations run each missing `.sqm` migration in
 order; fresh installations create the current schema directly.
 
+When rebuilding a table through a named staging table, start with
+`DROP TABLE IF EXISTS staging_table`. This makes a retry recover safely if an interrupted or
+externally replayed migration left the staging table behind while the schema version stayed old.
+
 Do **not** add a matching iOS `SandookMigrationAfterX` class or `AfterVersion(X)` entry
 solely because a new `.sqm` file exists. The callbacks are not migration registration:
 they are optional hooks that run only *after* SQLDelight has completed the migration to

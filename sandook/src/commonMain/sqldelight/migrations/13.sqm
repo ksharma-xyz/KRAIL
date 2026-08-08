@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS SavedTrip (
     sort_order INTEGER NOT NULL DEFAULT 0
 );
 
+-- A previous interrupted or externally replayed migration may have left the staging table
+-- behind while the database version still reports 13. Always rebuild it from SavedTrip so a
+-- retry is deterministic and cannot preserve a partial copy.
+DROP TABLE IF EXISTS SavedTripByStops;
+
 CREATE TABLE SavedTripByStops (
     tripId TEXT PRIMARY KEY,
     fromStopId TEXT NOT NULL,

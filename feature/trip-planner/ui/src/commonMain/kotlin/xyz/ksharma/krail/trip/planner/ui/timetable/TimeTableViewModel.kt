@@ -684,12 +684,12 @@ class TimeTableViewModel(
      * Frequency rules (story A2): at most once per app session, and stop after
      * [MAX_SAVE_TRIP_PROMPT_DISMISSALS] dismissals for the same pair.
      */
-    private fun resolveSavePromptOnLoad(tripId: String): Boolean {
+    private fun resolveSavePromptOnLoad(trip: Trip): Boolean {
         // Already on screen (e.g. same-trip re-init) — keep it there.
         if (_uiState.value.showSaveTripPrompt) return true
         val eligible = !savePromptShownInSession &&
             sandook.selectAllTrips().isEmpty() &&
-            promptDismissCount(tripId) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
+            promptDismissCount(trip) < MAX_SAVE_TRIP_PROMPT_DISMISSALS
         if (!eligible) return false
         savePromptShownInSession = true
         return true
@@ -713,8 +713,14 @@ class TimeTableViewModel(
         )
     }
 
-    private fun promptDismissCount(tripId: String): Long =
-        preferences.getLong(SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + tripId) ?: 0L
+    private fun promptDismissCount(trip: Trip): Long {
+        val prefix = SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX
+        val canonicalCount = preferences.getLong(prefix + trip.tripId) ?: 0L
+        // tripId used to be the two stop IDs concatenated without a separator. Keep honouring
+        // those persisted counters after moving saved trips to the canonical pair identity.
+        val legacyCount = preferences.getLong(prefix + trip.fromStopId + trip.toStopId) ?: 0L
+        return maxOf(canonicalCount, legacyCount)
+    }
 
     private fun onSaveTripPromptAccepted() {
         val trip = tripInfo ?: return
@@ -749,7 +755,7 @@ class TimeTableViewModel(
         val trip = tripInfo ?: return
         updateUiState { copy(showSaveTripPrompt = false) }
         viewModelScope.launch(ioDispatcher) {
-            val newCount = promptDismissCount(trip.tripId) + 1
+            val newCount = promptDismissCount(trip) + 1
             preferences.setLong(
                 key = SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + trip.tripId,
                 value = newCount,
@@ -1051,7 +1057,7 @@ class TimeTableViewModel(
         // Resolved at load time so the prompt shows while journeys are still
         // loading; results simply render below it when they arrive. Folded into
         // the same state update as the load itself (single emission).
-        val showSavePrompt = resolveSavePromptOnLoad(currentTripId)
+        val showSavePrompt = resolveSavePromptOnLoad(trip)
 
         if (!isSameTrip) {
             // Different trip - clear state and fetch new data

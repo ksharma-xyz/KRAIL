@@ -42,8 +42,14 @@ internal class RealSandook(
         toStopId: String,
         toStopName: String,
     ) {
+        // This boundary owns saved-trip identity. Keep it aligned with Trip.tripId and the
+        // SavedTrip CHECK constraint instead of trusting a caller-provided serialization.
+        val canonicalTripId = "$fromStopId->$toStopId"
+        if (tripId != canonicalTripId) {
+            log("Normalizing saved trip ID from $tripId to $canonicalTripId")
+        }
         query.insertOrReplaceTrip(
-            tripId,
+            canonicalTripId,
             fromStopId,
             fromStopName,
             toStopId,

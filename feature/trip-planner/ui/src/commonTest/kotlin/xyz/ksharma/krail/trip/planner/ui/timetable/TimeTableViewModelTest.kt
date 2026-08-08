@@ -2492,6 +2492,23 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN pair dismissed under legacy ID WHEN timetable loads THEN prompt stays dismissed`() =
+        runTest {
+            val analytics = fakeAnalytics as FakeAnalytics
+            val legacyTripId = promptTrip.fromStopId + promptTrip.toStopId
+            fakePreferences.setLong(
+                SandookPreferences.KEY_SAVE_TRIP_PROMPT_DISMISSALS_PREFIX + legacyTripId,
+                TimeTableViewModel.MAX_SAVE_TRIP_PROMPT_DISMISSALS,
+            )
+
+            loadPromptTrip()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showSaveTripPrompt)
+            assertFalse(analytics.isEventTracked("save_trip_prompt_shown"))
+        }
+
+    @Test
     fun `GIVEN prompt already shown this session WHEN another unsaved pair loads THEN prompt is not shown again`() =
         runTest {
             val analytics = fakeAnalytics as FakeAnalytics

@@ -1,0 +1,23 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Settings"
+- waitForAnimationToEnd
+- assertVisible: "Settings"
+- tapOn: "Change Theme"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "On the track, no lookin' back!"
+    direction: DOWN
+- tapOn: "On the track, no lookin' back!"
+- tapOn: "Dark"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"
+- takeScreenshot: store-listing/krail/screenshots/ipad13/07_dark_mode

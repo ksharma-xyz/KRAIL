@@ -523,6 +523,29 @@
       font-weight: 800;
     }
 
+    .readiness { border-top-color: var(--train); }
+
+    .readiness-status {
+      display: inline-block;
+      margin-bottom: 5px;
+      color: #087a5d;
+      font: 900 11px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .readiness-status.caution { color: #9a5700; }
+
+    .readiness-note {
+      max-width: 950px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .readiness-note a { color: var(--ink); }
+
     @media (max-width: 760px) {
       .wrap {
         width: min(100% - 24px, 1360px);
@@ -589,8 +612,8 @@
         <h1>One story across every screen.</h1>
         <p class="intro">The final capture set for Android phone, Android tablet, iPhone 6.5-inch, and iPad 13-inch. Scroll each row horizontally; select any app frame to open its full-resolution source.</p>
       </div>
-      <div class="summary-count" aria-label="Nineteen proposed panels">
-        <strong>19</strong>
+      <div class="summary-count" aria-label="Twenty-eight proposed panels">
+        <strong>28</strong>
         <span>proposed panels across four device classes</span>
       </div>
     </header>
@@ -601,6 +624,7 @@
       <a href="#iphone">iPhone 6.5-inch</a>
       <a href="#ipad">iPad 13-inch</a>
       <a href="#baseline">Capture baseline</a>
+      <a href="#readiness">Submission review</a>
     </nav>
 
     <section class="platform" id="android-phone">
@@ -632,7 +656,7 @@
           <span class="panel-index">02</span>
           <span class="sticker live">Live</span>
           <div class="panel-copy">
-            <strong>Live times. Every leg.</strong>
+            <strong>Live times. Start to finish.</strong>
             <small>Stops, stands and transfers</small>
           </div>
           <div class="device"><a class="device-link" href="screenshots/android_mobile/time_table_bus.png" target="_blank" aria-label="Open full Android timetable screenshot"><img src="screenshots/android_mobile/time_table_bus.png" alt="KRAIL route 333 timetable with expanded journey"></a></div>
@@ -646,7 +670,7 @@
               <span class="parking-badge" aria-hidden="true">P</span>
               <strong><span class="panel-line">Check</span><span class="panel-line"><span class="panel-accent">parking</span> first</span></strong>
             </div>
-            <small>Live spaces before you drive</small>
+            <small>Live Park &amp; Ride availability</small>
           </div>
           <div class="device"><a class="device-link" href="screenshots/android_mobile/Tallawong_Parking_Card.png" target="_blank" aria-label="Open full Android Tallawong parking screenshot"><img src="screenshots/android_mobile/Tallawong_Parking_Card.png" alt="KRAIL Tallawong Park and Ride availability"></a></div>
           <span class="ghost">Tallawong</span>
@@ -701,9 +725,9 @@
     <section class="platform" id="android-tablet">
       <div class="platform-head">
         <div>
-          <p class="platform-kicker">Google Play / Android tablet / 4 panels</p>
+          <p class="platform-kicker">Google Play / Android tablet / 7 panels</p>
           <h2>Use the width to show context.</h2>
-          <p class="platform-note">The tablet sequence keeps the same first three benefits while letting route 333, all 15 stops, and the map carry the timetable panel.</p>
+          <p class="platform-note">The full seven-panel story mirrors the phone listing, with route 333, all 15 stops, the wider map, and a deliberate dark-mode finish.</p>
         </div>
         <div class="carousel-controls" aria-label="Android tablet carousel controls">
           <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android tablet panel" title="Previous panel">&larr;</button>
@@ -723,36 +747,69 @@
           <span class="ghost">Daily trips</span>
         </article>
 
-        <article class="store-panel tablet-landscape" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-right:-70px;--ring-bottom:-74px">
+        <article class="store-panel tablet-landscape" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-70px;--ring-bottom:-74px">
           <span class="panel-index">02</span>
-          <div class="panel-copy">
-            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
-            <small>Tallawong P1, P2 and P3</small>
-          </div>
-          <div class="device"><a class="device-link" href="screenshots/android_tablet/02_parking_tallawong.png" target="_blank" aria-label="Open full Android tablet parking screenshot"><img src="screenshots/android_tablet/02_parking_tallawong.png" alt="KRAIL Android tablet Tallawong parking screen"></a></div>
-          <span class="ghost">Tallawong</span>
-        </article>
-
-        <article class="store-panel tablet-landscape" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-left:-80px;--ring-right:auto;--ring-bottom:34px">
-          <span class="panel-index">03</span>
           <span class="sticker live">15 stops</span>
           <div class="panel-copy">
-            <strong>See the <span class="panel-accent">whole journey</span></strong>
+            <strong>Live times. <span class="panel-accent">Start to finish.</span></strong>
             <small>Route 333 expanded beside the map</small>
           </div>
-          <div class="device"><a class="device-link" href="screenshots/android_tablet/03_work_to_uni_delays.png" target="_blank" aria-label="Open full Android tablet expanded journey screenshot"><img src="screenshots/android_tablet/03_work_to_uni_delays.png" alt="KRAIL Android tablet route 333 expanded beside the map"></a></div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/02_live_times.png" target="_blank" aria-label="Open full Android tablet route 333 screenshot"><img src="screenshots/android_tablet/02_live_times.png" alt="KRAIL Android tablet route 333 expanded beside the map"></a></div>
           <span class="ghost">Bondi to Quay</span>
         </article>
 
-        <article class="store-panel tablet-landscape" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:185px;--ring-right:32px;--ring-bottom:auto;--ring-top:-116px">
+        <article class="store-panel tablet-landscape" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-80px;--ring-right:auto;--ring-top:86px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/03_parking_tallawong.png" target="_blank" aria-label="Open full Android tablet parking screenshot"><img src="screenshots/android_tablet/03_parking_tallawong.png" alt="KRAIL Android tablet Tallawong parking screen"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel tablet-landscape alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:64px">
           <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong>Check <span class="panel-accent">service alerts</span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/04_service_alerts.png" target="_blank" aria-label="Open full Android tablet service alert screenshot"><img src="screenshots/android_tablet/04_service_alerts.png" alt="KRAIL Android tablet service alert sheet"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">Live</span>
+          <div class="panel-copy">
+            <strong>See <span class="panel-accent">delays</span> in real time</strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/05_live_delays.png" target="_blank" aria-label="Open full Android tablet delay screenshot"><img src="screenshots/android_tablet/05_live_delays.png" alt="KRAIL Android tablet timetable showing a delayed route 333"></a></div>
+          <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:185px;--ring-right:32px;--ring-bottom:auto;--ring-top:-116px">
+          <span class="panel-index">06</span>
           <span class="sticker">Any time</span>
           <div class="panel-copy">
             <strong><span class="panel-accent">Plan</span> around your day</strong>
             <small>Leave now or arrive by</small>
           </div>
-          <div class="device"><a class="device-link" href="screenshots/android_tablet/04_plan_trip_sheet.png" target="_blank" aria-label="Open full Android tablet trip planner screenshot"><img src="screenshots/android_tablet/04_plan_trip_sheet.png" alt="KRAIL Android tablet trip planning sheet"></a></div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/06_plan_trip_sheet.png" target="_blank" aria-label="Open full Android tablet trip planner screenshot"><img src="screenshots/android_tablet/06_plan_trip_sheet.png" alt="KRAIL Android tablet trip planning sheet"></a></div>
           <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+            <small>Dark mode. Your colours.</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/07_dark_mode.png" target="_blank" aria-label="Open full Android tablet dark mode screenshot"><img src="screenshots/android_tablet/07_dark_mode.png" alt="KRAIL Android tablet Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
         </article>
       </div>
     </section>
@@ -760,9 +817,9 @@
     <section class="platform" id="iphone">
       <div class="platform-head">
         <div>
-          <p class="platform-kicker">Apple App Store / iPhone 6.5-inch / 4 panels</p>
+          <p class="platform-kicker">Apple App Store / iPhone 6.5-inch / 7 panels</p>
           <h2>Match the Android promise.</h2>
-          <p class="platform-note">Fresh captures from the latest main build use light mode, approved labels, Bondi Junction to Circular Quay, and an expanded route 333.</p>
+          <p class="platform-note">Fresh captures from the latest main build use approved labels, Bondi Junction to Circular Quay, an expanded route 333, and one dark-mode panel.</p>
         </div>
         <div class="carousel-controls" aria-label="iPhone carousel controls">
           <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPhone panel" title="Previous panel">&larr;</button>
@@ -782,36 +839,69 @@
           <span class="ghost">Daily trips</span>
         </article>
 
-        <article class="store-panel" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-top:174px;--ring-bottom:auto">
+        <article class="store-panel" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-68px;--ring-bottom:-70px">
           <span class="panel-index">02</span>
-          <div class="panel-copy">
-            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
-            <small>Live spaces before you drive</small>
-          </div>
-          <div class="device"><a class="device-link" href="screenshots/iphone65/02_parking_tallawong.png" target="_blank" aria-label="Open full iPhone Tallawong parking screenshot"><img src="screenshots/iphone65/02_parking_tallawong.png" alt="KRAIL iPhone Tallawong parking details"></a></div>
-          <span class="ghost">Tallawong</span>
-        </article>
-
-        <article class="store-panel" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-left:-70px;--ring-right:auto;--ring-bottom:28px">
-          <span class="panel-index">03</span>
           <span class="sticker live">15 stops</span>
           <div class="panel-copy">
-            <strong>See the <span class="panel-accent">whole journey</span></strong>
+            <strong>Live times. <span class="panel-accent">Start to finish.</span></strong>
             <small>Route 333, expanded</small>
           </div>
-          <div class="device"><a class="device-link" href="screenshots/iphone65/03_home_to_work_timetable.png" target="_blank" aria-label="Open full iPhone route 333 screenshot"><img src="screenshots/iphone65/03_home_to_work_timetable.png" alt="KRAIL iPhone route 333 expanded timetable"></a></div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/02_live_times.png" target="_blank" aria-label="Open full iPhone route 333 screenshot"><img src="screenshots/iphone65/02_live_times.png" alt="KRAIL iPhone route 333 expanded timetable"></a></div>
           <span class="ghost">Circular Quay</span>
         </article>
 
-        <article class="store-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:170px;--ring-right:28px;--ring-bottom:auto;--ring-top:-106px">
+        <article class="store-panel" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-top:174px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/03_parking_tallawong.png" target="_blank" aria-label="Open full iPhone Tallawong parking screenshot"><img src="screenshots/iphone65/03_parking_tallawong.png" alt="KRAIL iPhone Tallawong parking details"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:112px">
           <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong>Check <span class="panel-accent">service alerts</span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/04_service_alerts.png" target="_blank" aria-label="Open full iPhone service alert screenshot"><img src="screenshots/iphone65/04_service_alerts.png" alt="KRAIL iPhone service alert sheet"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">Live</span>
+          <div class="panel-copy">
+            <strong>See <span class="panel-accent">delays</span> in real time</strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/05_live_delays.png" target="_blank" aria-label="Open full iPhone delay screenshot"><img src="screenshots/iphone65/05_live_delays.png" alt="KRAIL iPhone timetable showing a delayed route 333"></a></div>
+          <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:170px;--ring-right:28px;--ring-bottom:auto;--ring-top:-106px">
+          <span class="panel-index">06</span>
           <span class="sticker">Any time</span>
           <div class="panel-copy">
             <strong><span class="panel-accent">Plan</span> around your day</strong>
             <small>Leave now or arrive by</small>
           </div>
-          <div class="device"><a class="device-link" href="screenshots/iphone65/04_plan_trip_sheet.png" target="_blank" aria-label="Open full iPhone trip planner screenshot"><img src="screenshots/iphone65/04_plan_trip_sheet.png" alt="KRAIL iPhone trip planning sheet"></a></div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/06_plan_trip_sheet.png" target="_blank" aria-label="Open full iPhone trip planner screenshot"><img src="screenshots/iphone65/06_plan_trip_sheet.png" alt="KRAIL iPhone trip planning sheet"></a></div>
           <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+            <small>Dark mode. Your colours.</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/07_dark_mode.png" target="_blank" aria-label="Open full iPhone dark mode screenshot"><img src="screenshots/iphone65/07_dark_mode.png" alt="KRAIL iPhone Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
         </article>
       </div>
     </section>
@@ -819,9 +909,9 @@
     <section class="platform" id="ipad">
       <div class="platform-head">
         <div>
-          <p class="platform-kicker">Apple App Store / iPad 13-inch / 4 panels</p>
+          <p class="platform-kicker">Apple App Store / iPad 13-inch / 7 panels</p>
           <h2>Let the map explain the journey.</h2>
-          <p class="platform-note">The latest main-branch build uses the same saved labels and route as Android. The expanded 333 panel gives the larger screen a clear reason to exist.</p>
+          <p class="platform-note">The latest main-branch build uses the same labels, route, expanded alert, and product themes as Android, with a dark-mode finish.</p>
         </div>
         <div class="carousel-controls" aria-label="iPad carousel controls">
           <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPad panel" title="Previous panel">&larr;</button>
@@ -841,36 +931,69 @@
           <span class="ghost">Daily trips</span>
         </article>
 
-        <article class="store-panel ipad-portrait" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-right:-75px;--ring-bottom:-76px">
+        <article class="store-panel ipad-portrait" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-75px;--ring-bottom:-76px">
           <span class="panel-index">02</span>
-          <div class="panel-copy">
-            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
-            <small>Tallawong P1, P2 and P3</small>
-          </div>
-          <div class="device"><a class="device-link" href="screenshots/ipad13/02_parking_tallawong.png" target="_blank" aria-label="Open full iPad parking screenshot"><img src="screenshots/ipad13/02_parking_tallawong.png" alt="KRAIL iPad Tallawong parking with map"></a></div>
-          <span class="ghost">Tallawong</span>
-        </article>
-
-        <article class="store-panel ipad-portrait" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-bottom:36px">
-          <span class="panel-index">03</span>
           <span class="sticker live">15 stops</span>
           <div class="panel-copy">
-            <strong>See the <span class="panel-accent">whole journey</span></strong>
+            <strong>Live times. <span class="panel-accent">Start to finish.</span></strong>
             <small>Route 333 expanded beside the map</small>
           </div>
-          <div class="device"><a class="device-link" href="screenshots/ipad13/03_home_to_work_timetable_map.png" target="_blank" aria-label="Open full iPad expanded journey screenshot"><img src="screenshots/ipad13/03_home_to_work_timetable_map.png" alt="KRAIL iPad route 333 expanded beside the map"></a></div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/02_live_times.png" target="_blank" aria-label="Open full iPad route 333 screenshot"><img src="screenshots/ipad13/02_live_times.png" alt="KRAIL iPad route 333 expanded beside the map"></a></div>
           <span class="ghost">Bondi to Quay</span>
         </article>
 
-        <article class="store-panel ipad-portrait" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:180px;--ring-right:36px;--ring-bottom:auto;--ring-top:-112px">
+        <article class="store-panel ipad-portrait" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-top:174px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/03_parking_tallawong.png" target="_blank" aria-label="Open full iPad parking screenshot"><img src="screenshots/ipad13/03_parking_tallawong.png" alt="KRAIL iPad Tallawong parking with map"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel ipad-portrait alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:112px">
           <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong>Check <span class="panel-accent">service alerts</span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/04_service_alerts.png" target="_blank" aria-label="Open full iPad service alert screenshot"><img src="screenshots/ipad13/04_service_alerts.png" alt="KRAIL iPad service alert sheet beside the map"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel ipad-portrait" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">Live</span>
+          <div class="panel-copy">
+            <strong>See <span class="panel-accent">delays</span> in real time</strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/05_live_delays.png" target="_blank" aria-label="Open full iPad delay screenshot"><img src="screenshots/ipad13/05_live_delays.png" alt="KRAIL iPad timetable showing a delayed route 333 beside the map"></a></div>
+          <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel ipad-portrait plan-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:180px;--ring-right:36px;--ring-bottom:auto;--ring-top:-112px">
+          <span class="panel-index">06</span>
           <span class="sticker">Any time</span>
           <div class="panel-copy">
-            <strong><span class="panel-accent">Plan</span> around your day</strong>
+            <strong><span class="panel-line"><span class="panel-accent">Plan</span> around</span><span class="panel-line">your day</span></strong>
             <small>Leave now or arrive by</small>
           </div>
-          <div class="device"><a class="device-link" href="screenshots/ipad13/04_plan_trip_sheet.png" target="_blank" aria-label="Open full iPad trip planner screenshot"><img src="screenshots/ipad13/04_plan_trip_sheet.png" alt="KRAIL iPad trip planning sheet beside the map"></a></div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/06_plan_trip_sheet.png" target="_blank" aria-label="Open full iPad trip planner screenshot"><img src="screenshots/ipad13/06_plan_trip_sheet.png" alt="KRAIL iPad trip planning sheet beside the map"></a></div>
           <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel ipad-portrait" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+            <small>Dark mode. Your colours.</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/07_dark_mode.png" target="_blank" aria-label="Open full iPad dark mode screenshot"><img src="screenshots/ipad13/07_dark_mode.png" alt="KRAIL iPad Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
         </article>
       </div>
     </section>
@@ -880,9 +1003,20 @@
       <dl class="capture-facts">
         <div><dt>Primary trip</dt><dd>Bondi Junction Station to Circular Quay Station</dd></div>
         <div><dt>Saved trips</dt><dd>Home to Work; Home to Uni</dd></div>
-        <div><dt>Parking</dt><dd>Tallawong P1, P2, P3; Schofields</dd></div>
-        <div><dt>Presentation</dt><dd>Light mode by default; one deliberate Android dark panel</dd></div>
+        <div><dt>Parking</dt><dd>Tallawong P1, P2 and P3 with live Park &amp; Ride availability</dd></div>
+        <div><dt>Presentation</dt><dd>Light mode by default; dark mode on Android phone, Android tablet, iPhone, and iPad</dd></div>
       </dl>
+    </section>
+
+    <section class="capture-baseline readiness" id="readiness">
+      <h2>Submission readiness</h2>
+      <dl class="capture-facts">
+        <div><dt>Apple / iPhone</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at an accepted 1242 x 2688 size. Real app UI is visible and text overlays are permitted.</dd></div>
+        <div><dt>Apple / iPad</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at the accepted 2064 x 2752 size for a 13-inch display.</dd></div>
+        <div><dt>Google / phone</dt><dd><span class="readiness-status">Ready</span><br>7 opaque 1080 x 1920 PNGs, within the eight-screenshot limit and showing shipped features.</dd></div>
+        <div><dt>Google / tablet</dt><dd><span class="readiness-status caution">Ready with caveat</span><br>7 opaque 1920 x 1080 PNGs meet the 10-inch size, ratio, and count rules. Google advises against extra marketing text on large-screen screenshots because it may be cropped on promotional surfaces.</dd></div>
+      </dl>
+      <p class="readiness-note">Rejection risk is low based on the assets themselves: the screenshots show the app in use, avoid rankings and price claims, use supported dimensions, and stay within each store's count. Final acceptance still depends on the submitted build matching these features and labels. Localize these text-bearing panels for every localized listing. Sources: <a href="https://developer.apple.com/app-store/review/guidelines/" target="_blank">Apple App Review Guidelines 2.3.3</a>, <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/" target="_blank">Apple screenshot specifications</a>, and <a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank">Google Play preview asset requirements</a>.</p>
     </section>
   </main>
 

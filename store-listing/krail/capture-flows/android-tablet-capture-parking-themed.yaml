@@ -1,0 +1,10 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Tallawong Station"
+- waitForAnimationToEnd
+- assertVisible: "Tallawong P1"
+- assertVisible: "Tallawong P3"
+- takeScreenshot: store-listing/krail/screenshots/android_tablet/03_parking_tallawong

@@ -1,0 +1,13 @@
+appId: xyz.ksharma.krail.debug
+---
+- assertVisible: "Delayed.*"
+- tapOn: "Delayed.*"
+- waitForAnimationToEnd
+- swipe:
+    start: "30%,90%"
+    end: "30%,40%"
+    duration: 500
+- waitForAnimationToEnd
+- assertVisible: "15 stops"
+- assertVisible: "Delayed.*"
+- takeScreenshot: store-listing/krail/screenshots/android_tablet/05_live_delays

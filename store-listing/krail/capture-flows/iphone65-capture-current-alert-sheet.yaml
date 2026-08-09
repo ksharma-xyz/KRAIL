@@ -1,0 +1,7 @@
+appId: xyz.ksharma.krail
+---
+- assertVisible: ".*Alerts?"
+- tapOn: ".*Alerts?"
+- waitForAnimationToEnd
+- assertVisible: "Service Alerts"
+- takeScreenshot: store-listing/krail/screenshots/iphone65/04_service_alerts

@@ -4,11 +4,12 @@ Reads krail-screenshot-listing.html, extracts every .store-panel, re-renders eac
 one on its platform's exact store canvas via headless Chrome, and writes the PNGs
 into store-listing/krail/store-images/<platform>/.
 """
-import base64, html as htmllib, json, pathlib, re, shutil, subprocess, sys
+import base64, json, pathlib, re, shutil, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "krail-screenshot-listing.html"
 OUT = ROOT / "store-images"
+UPLOAD = ROOT / "upload-ready" / "2026-08-09"
 WORK = ROOT / ".render-work"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
@@ -23,7 +24,7 @@ MIN_WINDOW_WIDTH = 500
 
 PLATFORMS = {
     "android-phone":  {"section": "android-phone",  "css": (540, 960),   "dsf": 2, "px": (1080, 1920)},
-    "android-tablet": {"section": "android-tablet", "css": (960, 600),   "dsf": 2, "px": (1920, 1200)},
+    "android-tablet": {"section": "android-tablet", "css": (960, 540),   "dsf": 2, "px": (1920, 1080)},
     "iphone-6-5":     {"section": "iphone",         "css": (621, 1344),  "dsf": 2, "px": (1242, 2688)},
     "ipad-13":        {"section": "ipad",           "css": (516, 688),   "dsf": 4, "px": (2064, 2752)},
 }
@@ -31,9 +32,19 @@ PLATFORMS = {
 SLUGS = {
     "android-phone": ["saved-trips", "live-times", "parking", "service-alerts",
                       "live-delays", "plan-your-day", "dark-mode"],
-    "android-tablet": ["saved-trips", "parking", "whole-journey", "plan-your-day"],
-    "iphone-6-5": ["saved-trips", "parking", "whole-journey", "plan-your-day"],
-    "ipad-13": ["saved-trips", "parking", "whole-journey", "plan-your-day"],
+    "android-tablet": ["saved-trips", "live-times", "parking", "service-alerts",
+                       "live-delays", "plan-your-day", "dark-mode"],
+    "iphone-6-5": ["saved-trips", "live-times", "parking", "service-alerts",
+                    "live-delays", "plan-your-day", "dark-mode"],
+    "ipad-13": ["saved-trips", "live-times", "parking", "service-alerts",
+                 "live-delays", "plan-your-day", "dark-mode"],
+}
+
+UPLOAD_DESTS = {
+    "android-phone": UPLOAD / "google-play" / "phone",
+    "android-tablet": UPLOAD / "google-play" / "tablet-10-inch",
+    "iphone-6-5": UPLOAD / "app-store" / "iphone-6.5-inch",
+    "ipad-13": UPLOAD / "app-store" / "ipad-13-inch",
 }
 
 # All sizes below are in cqw (1% of the canvas width) so one sheet serves every
@@ -262,7 +273,7 @@ PLATFORM_CSS = {
 .store-panel::before { background-image: radial-gradient(rgba(255,255,255,.25) .14cqw, transparent .14cqw); background-size: .9cqw .9cqw; }
 .store-panel::after { width: var(--ring-size, 21cqw); height: var(--ring-size, 21cqw); border-width: 3.2cqw; }
 .device {
-  width: 67cqw; height: auto; margin-top: 1.4cqw; padding: .6cqw;
+  width: 64cqw; height: auto; margin-top: 1.2cqw; padding: .6cqw;
   border-radius: 2cqw; box-shadow: 0 2cqw 4.4cqw rgba(0, 0, 0, .38);
 }
 .device img { width: 100%; height: auto; border-radius: 1.7cqw; }
@@ -294,6 +305,7 @@ PLATFORM_CSS = {
 .parking-lockup { flex-direction: row; gap: 2.4cqw; }
 .parking-badge { width: 7.4cqw; height: 7.4cqw; font-size: 4.8cqw; }
 .store-panel { --device-height: 82cqw; }
+.store-panel.plan-panel { --copy-height: 34cqw; }
 .device { border-radius: 3.6cqw; padding: 1.1cqw; }
 .device img { border-radius: 2.6cqw; }
 """,
@@ -327,6 +339,8 @@ def main():
     if WORK.exists():
         shutil.rmtree(WORK)
     WORK.mkdir(parents=True)
+    if UPLOAD.exists():
+        shutil.rmtree(UPLOAD)
 
     manifest = {}
     for name, cfg in PLATFORMS.items():
@@ -344,6 +358,8 @@ def main():
 
         dest = OUT / name
         dest.mkdir(parents=True, exist_ok=True)
+        for stale in dest.glob("*.png"):
+            stale.unlink()
         css = BASE_CSS + PLATFORM_CSS[name]
         entries = []
 
@@ -379,6 +395,34 @@ def main():
         print(f"{name}: {len(entries)} panels at {cfg['px'][0]}x{cfg['px'][1]}")
 
     (OUT / "index.json").write_text(json.dumps(manifest, indent=2) + "\n")
+
+    upload_manifest = {}
+    for name, cfg in PLATFORMS.items():
+        upload_dest = UPLOAD_DESTS[name]
+        upload_dest.mkdir(parents=True, exist_ok=True)
+        files = manifest[name]["files"]
+        primary_count = 7 if name in {"android-tablet", "iphone-6-5", "ipad-13"} else 6
+        core_files = files[:primary_count]
+        for filename in core_files:
+            shutil.copy2(OUT / name / filename, upload_dest / filename)
+        upload_manifest[str(upload_dest.relative_to(UPLOAD))] = {
+            "spec": manifest[name]["spec"],
+            "files": core_files,
+        }
+
+    optional = UPLOAD / "optional" / "google-play-phone"
+    optional.mkdir(parents=True, exist_ok=True)
+    dark_file = manifest["android-phone"]["files"][6]
+    shutil.copy2(OUT / "android-phone" / dark_file, optional / dark_file)
+
+    (UPLOAD / "index.json").write_text(json.dumps(upload_manifest, indent=2) + "\n")
+    (UPLOAD / "README.md").write_text(
+        "# KRAIL store screenshots - 2026-08-09\n\n"
+        "Upload files in numeric order from the matching platform folder. "
+        "The Android tablet, iPhone, and iPad folders contain seven opaque PNGs; "
+        "the Android phone folder contains six. The Android phone dark-mode "
+        "seventh panel is kept under `optional/`.\n"
+    )
 
 
 if __name__ == "__main__":

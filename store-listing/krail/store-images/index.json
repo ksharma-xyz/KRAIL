@@ -12,30 +12,36 @@
     ]
   },
   "android-tablet": {
-    "spec": "1920x1200",
+    "spec": "1920x1080",
     "files": [
       "01_saved-trips.png",
-      "02_parking.png",
-      "03_whole-journey.png",
-      "04_plan-your-day.png"
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png"
     ]
   },
   "iphone-6-5": {
     "spec": "1242x2688",
     "files": [
       "01_saved-trips.png",
-      "02_parking.png",
-      "03_whole-journey.png",
-      "04_plan-your-day.png"
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png"
     ]
   },
   "ipad-13": {
     "spec": "2064x2752",
     "files": [
       "01_saved-trips.png",
-      "02_parking.png",
-      "03_whole-journey.png",
-      "04_plan-your-day.png"
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png"
     ]
   }
 }

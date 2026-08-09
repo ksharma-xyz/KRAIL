@@ -1,0 +1,22 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Krail App"
+- waitForAnimationToEnd
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+- assertVisible: "333"
+- tapOn: "333"
+- waitForAnimationToEnd
+- assertVisible: ".*Alerts?"
+- tapOn: ".*Alerts?"
+- waitForAnimationToEnd
+- assertVisible: "Service Alerts"
+- assertVisible: "Read More"
+- tapOn: "Read More"
+- waitForAnimationToEnd
+- assertNotVisible: "Read More"
+- takeScreenshot: store-listing/krail/screenshots/iphone65/04_service_alerts

@@ -1,7 +1,33 @@
 {
-  "version": 1,
+  "version": 2,
   "report": "example-screenshot-listing.html",
+  "manifest": "manifest.json",
   "outputIndex": "store-images/index.json",
+  "scoring": {
+    "baseline": 100,
+    "method": "Every platform starts at 100 after mandatory checks pass, with documented deductions for remaining weaknesses"
+  },
+  "policySources": [
+    {
+      "id": "official-store-source",
+      "store": "Store name",
+      "title": "Official screenshot requirement",
+      "url": "https://example.com/replace-with-official-store-policy",
+      "quote": "Short quotation also present in the report",
+      "checked": "YYYY-MM-DD"
+    }
+  ],
+  "submissionGates": [
+    {
+      "severity": "blocker",
+      "triggered": false,
+      "title": "Submitted build must match the screenshots",
+      "trigger": "The review build differs from the captured app state",
+      "outcome": "The listing may be rejected as inaccurate",
+      "action": "Verify every shown feature in the submitted build",
+      "sourceIds": ["official-store-source"]
+    }
+  ],
   "copyRules": {
     "forbidFullStops": true,
     "headlineMaxWords": 7,
@@ -16,8 +42,13 @@
       "sourceDimensions": [1242, 2688],
       "outputDimensions": [1242, 2688],
       "outputDir": "store-images/iphone-6-5",
-      "uploadDir": "upload-ready/2026-08-09/app-store/iphone-6.5-inch",
+      "uploadDir": "upload-ready/YYYY-MM-DD/app-store/iphone-6.5-inch",
       "uploadCount": 1,
+      "strengths": [
+        "Uses a genuine native capture",
+        "Meets the configured output dimensions",
+        "Shows one clear benefit with visible proof"
+      ],
       "panels": [
         {
           "source": "screenshots/iphone65/01_example.png",
@@ -25,8 +56,23 @@
         }
       ],
       "deductions": [
-        { "points": 2, "reason": "Example visual-review deduction" }
-      ]
+        {
+          "points": 2,
+          "category": "Example category",
+          "reason": "Example visible weakness",
+          "impact": "Explain the user or merchandising impact",
+          "improvement": "Describe the exact improvement",
+          "storeRisk": "State whether this is quality, warning or blocker risk"
+        }
+      ],
+      "policyReview": {
+        "status": "pass",
+        "title": "No current screenshot blocker detected",
+        "issue": "Summarize the reviewed requirements",
+        "reviewOutcome": "State the expected review outcome without guaranteeing approval",
+        "remediation": "State the condition that must remain true at submission",
+        "sourceIds": ["official-store-source"]
+      }
     }
   ]
 }

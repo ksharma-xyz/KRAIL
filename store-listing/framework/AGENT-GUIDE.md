@@ -6,12 +6,14 @@ on previous chat context. Read these files in order:
 1. `store-listing/framework/README.md`
 2. `store-listing/framework/QA-CHECKLIST.md`
 3. `store-listing/<app>/README.md`
-4. `store-listing/<app>/listing-qa.json`
-5. `store-listing/<app>/manifest.json`
+4. `store-listing/<app>/DECISIONS.md`
+5. `store-listing/<app>/listing-qa.json`
+6. `store-listing/<app>/manifest.json`
 
 ## Required behaviour
 
 - Inspect the existing report and all raw captures before changing copy or layout
+- Reconcile panel order and intent across the manifest, report, QA config and output filenames
 - Preserve app-specific canonical routes, labels, themes and data
 - Use committed Maestro flows for state arrangement
 - Pin device identifiers in every automation command
@@ -77,3 +79,4 @@ Do not call an asset ready when any of these is true:
 - the submitted build does not contain the shown feature or label
 - a score appears without passed checks, exact deductions, remediation and policy impact
 - a rejection-risk statement lacks an official source and checked date
+- manifest panel order differs from the report configuration or generated outputs

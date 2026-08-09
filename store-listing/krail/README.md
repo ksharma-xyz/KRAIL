@@ -22,15 +22,18 @@ permission banners into this listing set.
 - `capture-flows/`: repeatable Maestro interactions and capture runbook
 - `screenshots/`: raw native device captures; do not resize these
 - `krail-screenshot-listing.html`: horizontal review report and panel source
+- `DECISIONS.md`: approved feedback, rejected experiments and capture lessons
 - `render-store-images.py`: renders exact store-size panels from the report
 - `store-images/`: generated complete seven-panel sets for review
 - `upload-ready/2026-08-09/`: approved files grouped by store upload target
 - `listing-qa.json`: dimensions, filenames, copy rules and QA deductions
-- `manifest.json`: KRAIL palette and product-story notes
+- `manifest.json`: approved seven-panel order, palette, intent and proof contract
 
 Both raw captures and generated panels are committed through Git LFS. The
 dated upload directory is intentionally immutable: make a new dated directory
 for a later release rather than silently replacing a previously submitted set.
+Future sessions must read `DECISIONS.md` before editing and keep the manifest,
+report, QA configuration and generated filenames synchronized.
 
 ## Rebuild and verify
 

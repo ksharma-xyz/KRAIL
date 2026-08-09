@@ -82,12 +82,9 @@
       "outputDimensions": [1080, 1920],
       "outputDir": "store-images/android-phone",
       "uploadDir": "upload-ready/2026-08-09/google-play/phone",
-      "uploadCount": 6,
-      "optionalUploads": [
-        { "dir": "upload-ready/2026-08-09/optional/google-play-phone", "file": "07_dark-mode.png" }
-      ],
+      "uploadCount": 7,
       "strengths": [
-        "Six primary 1080 x 1920 opaque PNGs meet Google Play's recommended 9:16 promotional format",
+        "Seven primary 1080 x 1920 opaque PNGs meet Google Play's recommended 9:16 promotional format",
         "The first three panels lead with real Saved Trips, live timetable, and parking UI",
         "All marketing claims are concise and supported by visible app functionality"
       ],

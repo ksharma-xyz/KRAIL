@@ -12,6 +12,7 @@ OUT = ROOT / "store-images"
 UPLOAD = ROOT / "upload-ready" / "2026-08-09"
 WORK = ROOT / ".render-work"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+QA_CONFIG = json.loads((ROOT / "listing-qa.json").read_text())
 
 # Store canvases. css = layout size in CSS px, dsf = device scale factor.
 # css * dsf must equal the exact store pixel spec.
@@ -45,6 +46,11 @@ UPLOAD_DESTS = {
     "android-tablet": UPLOAD / "google-play" / "tablet-10-inch",
     "iphone-6-5": UPLOAD / "app-store" / "iphone-6.5-inch",
     "ipad-13": UPLOAD / "app-store" / "ipad-13-inch",
+}
+
+PLATFORM_QA = {
+    platform.get("outputKey", platform["id"]): platform
+    for platform in QA_CONFIG["platforms"]
 }
 
 # All sizes below are in cqw (1% of the canvas width) so one sheet serves every
@@ -416,7 +422,7 @@ def main():
         upload_dest = UPLOAD_DESTS[name]
         upload_dest.mkdir(parents=True, exist_ok=True)
         files = manifest[name]["files"]
-        primary_count = 7 if name in {"android-tablet", "iphone-6-5", "ipad-13"} else 6
+        primary_count = PLATFORM_QA[name]["uploadCount"]
         core_files = files[:primary_count]
         for filename in core_files:
             shutil.copy2(OUT / name / filename, upload_dest / filename)
@@ -425,18 +431,12 @@ def main():
             "files": core_files,
         }
 
-    optional = UPLOAD / "optional" / "google-play-phone"
-    optional.mkdir(parents=True, exist_ok=True)
-    dark_file = manifest["android-phone"]["files"][6]
-    shutil.copy2(OUT / "android-phone" / dark_file, optional / dark_file)
-
     (UPLOAD / "index.json").write_text(json.dumps(upload_manifest, indent=2) + "\n")
     (UPLOAD / "README.md").write_text(
         "# KRAIL store screenshots - 2026-08-09\n\n"
         "Upload files in numeric order from the matching platform folder. "
-        "The Android tablet, iPhone, and iPad folders contain seven opaque PNGs; "
-        "the Android phone folder contains six. The Android phone dark-mode "
-        "seventh panel is kept under `optional/`.\n"
+        "Every platform folder contains seven opaque PNGs, including the "
+        "dark-mode panel at `07_dark-mode.png`.\n"
     )
 
     verifier = ROOT.parent / "framework" / "verify-listing.py"

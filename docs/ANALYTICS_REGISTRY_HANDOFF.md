@@ -19,6 +19,14 @@ and similar per-feature docs stay accurate: **update it in the same PR** that ch
 table will never be large (Firebase caps the app at 500 event names, ever — see
 `docs/ANALYTICS_EVENTS.md`).
 
+New-event rows (`Event` column marked `(NEW EVENT)`, or `Param(s)` starting `NEW
+event:`) get flipped automatically: when KRAIL-Analytics labels the event, its CI
+fires a `repository_dispatch` naming it, and `.github/workflows/analytics-registry-sync.yml`
+opens a PR here flipping the row (labeled `analytics-sync`). Param and user-property
+rows are never touched by the bot — they have no per-item registry surface on the
+analytics side to check against, so mark those `Documented` by hand instead once
+their shape is final (see `Status = Documented` below).
+
 **New event name vs new param on an existing event** — both go in this ledger the same
 way, distinguished by the `Event` column. Read `docs/ANALYTICS_EVENTS.md` before adding
 either; most changes should be params on an existing event, not a new name.

@@ -101,6 +101,11 @@ business/strategy context. The skill has the template and full content policy.
 Exception: the automated docs gardener (single, non-stacked, docs-only PRs labeled
 `docs-gardener`, policy in `.github/docs-gardener/CHARTER.md`) may use `gh pr create`.
 
+Exception: the automated analytics registry sync bot (`.github/workflows/analytics-registry-sync.yml`,
+single docs-only PRs labeled `analytics-sync`, flipping `docs/ANALYTICS_REGISTRY_HANDOFF.md`
+rows from Pending to Registered once KRAIL-Analytics has labelled the event) may use
+`gh pr create`.
+
 We stack PRs. Break work into focused, layered branches and submit the full stack with `gt submit --stack --publish`.
 
 **Max 500 lines of change per PR.** If a branch exceeds this, split it before submitting:

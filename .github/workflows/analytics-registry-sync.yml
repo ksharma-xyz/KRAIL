@@ -1,0 +1,83 @@
+name: Analytics registry sync
+
+# Receives a repository_dispatch from KRAIL-Analytics naming event(s) it has just
+# labelled, flips the matching Pending row(s) in docs/ANALYTICS_REGISTRY_HANDOFF.md to
+# Registered, and opens a PR. Runs entirely on this repo's own GITHUB_TOKEN: KRAIL-Analytics
+# never pushes here directly, it only calls the dispatches API. That said, the token it
+# holds to do that (KRAIL_DISPATCH_TOKEN, a secret in that repo) needs Contents: write on
+# KRAIL to call that API - it is a real push-capable credential, not a narrower
+# dispatch-only grant, so containment is this repo's branch protection on main, not the
+# token's own scope.
+#
+# The dispatch's client_payload.events is untrusted input from another repo's
+# workflow, so it is passed to the flip script via an env var rather than interpolated
+# into a shell command, and never interpolated directly into a `run:` step either.
+#
+# The opened PR is authored by GITHUB_TOKEN, so it will NOT trigger this repo's
+# pull_request-triggered required check (code-quality / detekt) - that is a standing
+# GitHub restriction on the built-in token, not a bug here. Push an empty commit or use
+# the "Update branch" button as yourself before merging, same as any other
+# GITHUB_TOKEN-authored PR.
+#
+# The PR branch is named deterministically from the sorted flipped event names, so a
+# repeat dispatch for the same still-unmerged set is a no-op instead of a new PR.
+
+on:
+  repository_dispatch:
+    types: [analytics-registry-sync]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  flip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Flip registered rows
+        id: flip
+        env:
+          EVENTS_JSON: ${{ toJson(github.event.client_payload.events) }}
+        run: python3 scripts/flip_registry_status.py
+
+      - name: Open PR
+        if: steps.flip.outputs.flipped != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FLIPPED: ${{ steps.flip.outputs.flipped }}
+        run: |
+          # Deterministic branch name (hash of the sorted flipped names): a repeat
+          # dispatch for the exact same still-open flip set lands on the same branch
+          # instead of opening a duplicate PR every time the daily backstop re-runs
+          # before the first one merges.
+          slug=$(printf '%s' "$FLIPPED" | tr ',' '\n' | sort | tr '\n' ',' | sha256sum | cut -c1-12)
+          branch="analytics-sync/${slug}"
+
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "Branch $branch already exists - this exact flip set is already an open PR. Nothing to do."
+            exit 0
+          fi
+
+          git checkout -b "$branch"
+          git config user.name "krail-analytics-sync[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/ANALYTICS_REGISTRY_HANDOFF.md
+          git commit -m "docs(analytics): mark ${FLIPPED} registered"
+          git push origin "$branch"
+
+          body_file=$(mktemp)
+          {
+            echo "Automated: KRAIL-Analytics has labelled \`${FLIPPED}\`, so this flips the matching row(s) in the ledger from Pending to Registered."
+            echo ""
+            echo "Note: this PR is authored by GITHUB_TOKEN, so the required \`code-quality / detekt\` check will not auto-run on it (a standing GitHub restriction, not a bug). Push an empty commit or click \"Update branch\" before merging."
+          } > "$body_file"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "docs(analytics): mark event(s) registered" \
+            --body-file "$body_file" \
+            --label analytics-sync

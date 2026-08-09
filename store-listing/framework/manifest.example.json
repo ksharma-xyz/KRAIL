@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "status": "approved",
+  "app": "Example App",
+  "sourceOfTruth": "example-screenshot-listing.html",
+  "palette": {
+    "primary": { "g1": "#007A5E", "g2": "#004C3B", "accent": "#FFFFFF" }
+  },
+  "panelOrder": [
+    {
+      "id": 1,
+      "slug": "example",
+      "intent": "State the customer benefit",
+      "colour": "primary",
+      "screenTheme": "primary/light",
+      "headline": "Show the benefit",
+      "proof": "Describe the native app state that proves the claim"
+    }
+  ],
+  "platformRules": {
+    "phone": "Centre concise copy above the native portrait app frame",
+    "tablet": "Compose around the genuine wide or split-view tablet layout"
+  },
+  "motifRules": [
+    "Keep supporting decoration outside copy and device bounds"
+  ],
+  "captureRules": [
+    "Capture the exact build and canonical app state intended for submission"
+  ],
+  "avoid": [
+    "Permission prompts, placeholder data and substituted device classes"
+  ]
+}

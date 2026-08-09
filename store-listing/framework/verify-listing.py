@@ -87,6 +87,43 @@ def main() -> int:
         if not ok:
             failures.append(f"{scope}: {message}")
 
+    manifest_path = root / config.get("manifest", "manifest.json")
+    manifest: dict = {}
+    check(manifest_path.exists(), "Manifest", f"missing {manifest_path.name}")
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text())
+        except json.JSONDecodeError as error:
+            check(False, "Manifest", f"invalid JSON: {error}")
+
+    check(manifest.get("status") == "approved", "Manifest",
+          "status must be 'approved'")
+    check(manifest.get("sourceOfTruth") == config["report"], "Manifest",
+          "sourceOfTruth must match the configured report")
+    manifest_panels = manifest.get("panelOrder", [])
+    check(isinstance(manifest_panels, list) and bool(manifest_panels), "Manifest",
+          "panelOrder must be a non-empty list")
+    manifest_slugs: list[str] = []
+    if isinstance(manifest_panels, list):
+        for index, panel in enumerate(manifest_panels, start=1):
+            panel_scope = f"Manifest panel {index:02d}"
+            if not isinstance(panel, dict):
+                check(False, panel_scope, "panel must be an object")
+                continue
+            for field in ("id", "slug", "intent", "colour", "screenTheme", "headline", "proof"):
+                check(bool(panel.get(field)), panel_scope, f"{field} is missing")
+            check(panel.get("id") == index, panel_scope,
+                  f"id must be {index}, found {panel.get('id')!r}")
+            slug = panel.get("slug", "")
+            check(bool(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug)), panel_scope,
+                  f"invalid slug {slug!r}")
+            manifest_slugs.append(slug)
+    check(len(manifest_slugs) == len(set(manifest_slugs)), "Manifest",
+          "panel slugs must be unique")
+    check(bool(manifest.get("motifRules")), "Manifest", "motifRules are missing")
+    check(bool(manifest.get("captureRules")), "Manifest", "captureRules are missing")
+    check(bool(manifest.get("avoid")), "Manifest", "avoid rules are missing")
+
     scoring = config.get("scoring", {})
     baseline = scoring.get("baseline")
     check(baseline == 100, "Scoring", f"baseline must be 100, found {baseline!r}")
@@ -139,6 +176,12 @@ def main() -> int:
 
         articles = re.findall(r'(<article class="store-panel.*?</article>)', body, re.S)
         panels = platform["panels"]
+        output_slugs = [
+            re.sub(r"^\d+_", "", pathlib.Path(panel["output"]).stem)
+            for panel in panels
+        ]
+        check(output_slugs == manifest_slugs, scope,
+              "configured output order does not match manifest panelOrder")
         check(len(articles) == len(panels), scope,
               f"report has {len(articles)} panels, config has {len(panels)}")
 
@@ -229,6 +272,18 @@ def main() -> int:
             report_source = source_match.group(1) if source_match else None
             check(report_source == panel["source"], panel_scope,
                   f"report source is {report_source!r}, expected {panel['source']!r}")
+
+            manifest_panel = (
+                manifest_panels[index]
+                if isinstance(manifest_panels, list)
+                and index < len(manifest_panels)
+                and isinstance(manifest_panels[index], dict)
+                else {}
+            )
+            headline_match = re.search(r"<strong[^>]*>(.*?)</strong>", article, re.S)
+            report_headline = plain(headline_match.group(1)) if headline_match else ""
+            check(report_headline == manifest_panel.get("headline"), panel_scope,
+                  "report headline does not match the approved manifest headline")
 
             copy_fragments: list[tuple[str, str, int]] = []
             for tag, label, limit in (

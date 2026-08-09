@@ -1,44 +1,113 @@
 {
+  "version": 2,
+  "status": "approved",
   "app": "KRAIL",
-  "font": "Roboto Black (brand face); in-app screens render Antonio",
+  "sourceOfTruth": "krail-screenshot-listing.html",
+  "font": "Roboto Black for listing copy; Antonio inside native app captures",
   "palette": {
-    "train":  { "g1": "#F6891F", "g2": "#C25706", "hi": "rgba(255,255,255,.16)", "lo": "rgba(59,26,2,.18)" },
-    "bus":    { "g1": "#00B5EF", "g2": "#00719F", "hi": "rgba(255,255,255,.16)", "lo": "rgba(1,34,46,.20)" },
-    "metro":  { "g1": "#00A87E", "g2": "#005A43", "hi": "rgba(255,255,255,.15)", "lo": "rgba(0,36,27,.22)" },
-    "ferry":  { "g1": "#63B93A", "g2": "#2F711E", "hi": "rgba(255,255,255,.16)", "lo": "rgba(19,45,8,.20)" },
-    "lrail":  { "g1": "#E4022D", "g2": "#8F0219", "hi": "rgba(255,255,255,.16)", "lo": "rgba(50,1,10,.22)" },
-    "dark":   { "g1": "#2C070E", "g2": "#120305", "hi": "rgba(228,2,45,.30)",   "lo": "rgba(228,2,45,.12)" }
+    "train": { "g1": "#F6891F", "g2": "#BD5306", "accent": "#2B1603" },
+    "bus": { "g1": "#00B5EF", "g2": "#007AA8", "accent": "#FFE15A" },
+    "metro": { "g1": "#00A57F", "g2": "#006C56", "accent": "#FFE15A" },
+    "alert": { "g1": "#E6AB22", "g2": "#A96900", "accent": "#382300" },
+    "lightRail": { "g1": "#EC1742", "g2": "#A00022", "accent": "#FFE15A" },
+    "ferry": { "g1": "#5ABF32", "g2": "#2C7F21", "accent": "#17390D" },
+    "dark": { "g1": "#2A2522", "g2": "#11100F", "accent": "#F6891F" }
   },
-  "panels": [
-    { "id": 1, "colour": "train", "screenTheme": "train/light",
-      "headline": [["l1","Save your"],["l1","trip"],["l2","See it live"]],
-      "sticker": { "label": "Live", "style": "live" }, "ghost": "Sydney",
-      "screen": "saved trips home, six trips incl Home to Work and Home to Uni labels, no parking in frame" },
-    { "id": 2, "colour": "bus", "screenTheme": "bus/light",
-      "headline": [["l1","Know when"],["l1","to get off"]],
-      "sticker": { "label": "748" }, "ghost": "Central",
-      "screen": "expanded 748 journey: leg stops, get-off stop, walk leg" },
-    { "id": 3, "colour": "metro", "screenTheme": "metro/light",
-      "headline": [["l0","Tallawong fills by"],["l1 num","7:05am"],["l2","See spaces first"]],
-      "badge": "P", "ghost": "Tallawong",
-      "screen": "Tallawong card expanded, P1/P2/P3 live spot counts, card top clean" },
-    { "id": 4, "colour": "ferry", "screenTheme": "ferry/light",
-      "headline": [["l1","Free. No ads."],["l2","Made in Sydney"]],
-      "sticker": { "label": "SYD" }, "ghost": "Krail",
-      "screen": "plan-your-trip bottom sheet over the timetable" },
-    { "id": 5, "colour": "lrail", "screenTheme": "pink/light",
-      "headline": [["l1","Every stop"],["l1","on the map"]],
-      "sticker": { "label": "CBD" }, "ghost": "Wynyard",
-      "screen": "select-on-map, Sydney CBD stop pins, stop sheet open" },
-    { "id": 6, "colour": "dark", "screenTheme": "pink/dark",
-      "headline": [["l0","Built for the"],["l1","6am dark"]],
-      "sticker": { "label": "6am" }, "ghost": "Schofields",
-      "screen": "dark home, saved trips only" }
+  "panelOrder": [
+    {
+      "id": 1,
+      "slug": "saved-trips",
+      "intent": "Lead with the daily habit",
+      "colour": "train",
+      "screenTheme": "train/light",
+      "headline": "Save your trips",
+      "proof": "Saved Trips shows the canonical Home to Work and Home to Uni labels"
+    },
+    {
+      "id": 2,
+      "slug": "live-times",
+      "intent": "Prove a complete journey at a glance",
+      "colour": "bus",
+      "screenTheme": "bus/light",
+      "headline": "Live times Start to finish",
+      "proof": "Route 333 from Bondi Junction to Circular Quay is expanded with all 15 stops"
+    },
+    {
+      "id": 3,
+      "slug": "parking",
+      "intent": "Show useful Park and Ride information before driving",
+      "colour": "metro",
+      "screenTheme": "metro/light",
+      "headline": "Check parking first",
+      "proof": "Tallawong Park and Ride shows live P1, P2 and P3 availability"
+    },
+    {
+      "id": 4,
+      "slug": "service-alerts",
+      "intent": "Separate network alerts from live delay information",
+      "colour": "alert",
+      "screenTheme": "light",
+      "headline": "Check service alerts",
+      "proof": "The first service alert is expanded on tablet, iPhone and iPad"
+    },
+    {
+      "id": 5,
+      "slug": "live-delays",
+      "intent": "Make real-time disruption visibility unmistakable",
+      "colour": "lightRail",
+      "screenTheme": "light-rail/light",
+      "headline": "See delays in real time",
+      "proof": "The timetable visibly shows a delayed service and updated timing"
+    },
+    {
+      "id": 6,
+      "slug": "plan-your-day",
+      "intent": "Show leave-now and arrive-by planning flexibility",
+      "colour": "ferry",
+      "screenTheme": "ferry/light",
+      "headline": "Plan around your day",
+      "proof": "The trip-planning sheet exposes date, time, leave and arrive controls"
+    },
+    {
+      "id": 7,
+      "slug": "dark-mode",
+      "intent": "Finish with a deliberate low-light use case",
+      "colour": "dark",
+      "screenTheme": "train/dark",
+      "headline": "Made for the 6am dark",
+      "proof": "Saved Trips is captured in genuine app dark mode"
+    }
   ],
-  "captureNotes": [
-    "Seed via SQLite (run-as pull/push krailSandook.db): SavedTrip, StopLabels, Theme.productClass (1 train, 2 metro, 5 bus, 9 ferry, 100 pink). Removing db-wal on push is mandatory; a db push also restores Theme, so set it in the same push.",
-    "Pin emulator GPS to Sydney (adb emu geo fix 151.2093 -33.8688) and pm-grant location, or maps open on Googleplex with a permission toast.",
-    "Force clean status bars (simctl status_bar override / Android demo mode); times in the 7:00-7:30 window.",
-    "Tablet AVD: krail_tablet (medium_tablet, android-36); portrait via user_rotation 1."
+  "platformRules": {
+    "phone": "Centre copy above a dominant portrait app frame and keep headlines to two lines",
+    "androidTablet": "Use a genuine landscape tablet capture with compact copy aligned to the wide app composition",
+    "ipad": "Use a genuine iPad split view with centred copy, safe edges and no enlarged phone UI",
+    "darkMode": "Use dark mode only for the final panel; all other panels use light mode"
+  },
+  "motifRules": [
+    "Accent only one meaningful word or phrase and keep the treatment consistent across device classes",
+    "Do not use squiggly or decorative underlines",
+    "Vary the circular ring position so it does not repeat in the bottom-right corner",
+    "Align the white parking P badge with the parking headline rather than the page edge",
+    "Keep badges and pills clear of all headline and subline text",
+    "Keep visible colour field and safe space around every device edge"
+  ],
+  "captureRules": [
+    "Use native captures from the current main build rather than generated or substituted device imagery",
+    "Use Bondi Junction to Circular Quay, route 333, Home to Work and Home to Uni consistently",
+    "Grant location permission and set GPS to Sydney before capture",
+    "Expand the timetable journey and the first service alert where the device set requires it",
+    "Return the app to Saved Trips or stop the emulator after capture so timetable polling does not continue",
+    "Capture final iOS pixels with simctl while exactly one target simulator is booted"
+  ],
+  "avoid": [
+    "Full stops in listing headlines, sublines, stickers or ghost labels",
+    "Technical passenger copy such as leg",
+    "Long parking claims focused on one facility when the feature covers many stations",
+    "Placeholder labels such as Work 1",
+    "Arbitrary routes such as Schofields to Central",
+    "Permission banners, dialogs, keyboards, loading states or errors",
+    "Phone screenshots presented as tablet or iPad screenshots",
+    "Repeated delay wording on both the service-alert and live-delay panels"
   ]
 }

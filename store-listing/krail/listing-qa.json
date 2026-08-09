@@ -1,6 +1,7 @@
 {
   "version": 2,
   "report": "krail-screenshot-listing.html",
+  "manifest": "manifest.json",
   "outputIndex": "store-images/index.json",
   "scoring": {
     "baseline": 100,

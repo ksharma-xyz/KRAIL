@@ -15,6 +15,7 @@ Each app keeps this structure:
 ```text
 store-listing/<app>/
   README.md                    app-specific runbook and canonical data
+  DECISIONS.md                 approved feedback and rejected experiments
   listing-qa.json              machine-readable QA contract and scores
   manifest.json                product story, palette and panel intent
   capture-flows/               committed Maestro state-arrangement flows
@@ -66,12 +67,12 @@ geometry so text, device tops and device bottoms do not jump between panels.
 10. Never display a score without explaining the baseline, passed checks, deductions and fixes directly below it
 11. Treat conversion quality, parity, policy warnings and upload blockers as separate severities
 12. Quote store policy sparingly, link the official source and record when it was checked
-10. Centre portrait copy; align landscape-tablet copy to its device composition
-11. Keep badges outside the headline bounding box with a full line of clearance
-12. Accent one meaningful word or phrase, consistently across device classes
-13. Do not use decorative underlines when they reduce legibility
-14. Do not capture permission prompts, banners, keyboards, loading states or errors
-15. Distinct panels must use distinct source captures
+13. Centre portrait copy; align landscape-tablet copy to its device composition
+14. Keep badges outside the headline bounding box with a full line of clearance
+15. Accent one meaningful word or phrase, consistently across device classes
+16. Do not use decorative underlines when they reduce legibility
+17. Do not capture permission prompts, banners, keyboards, loading states or errors
+18. Distinct panels must use distinct source captures
 
 `template.css`, `template.html` and `devices.json` define the reusable geometry.
 Apps may tune sizes by device class, but must preserve safe borders and stable
@@ -91,21 +92,24 @@ slots.
 ## Automated gate
 
 Copy `project.example.json` into the app directory as `listing-qa.json`, fill in
-the real paths and run:
+the real paths, copy `manifest.example.json` as `manifest.json`, define the
+approved panel order and run:
 
 ```bash
 python3 store-listing/framework/verify-listing.py \
   store-listing/<app>/listing-qa.json
 ```
 
-The command validates source identity by native pixel size, rendered specs,
-opacity, file size, counts, duplicate captures, copy limits, punctuation,
-device headings and QA scores. Visual claims and crop quality still require a
-human or screenshot-based visual review; they are represented as explicit
-score deductions instead of being silently ignored. Each deduction must include
-its category, visible impact, exact improvement and store-review risk. A report
-must also show platform strengths, a policy verdict and conditional rejection
-gates. Active blockers fail validation; warnings remain visible without being
-misrepresented as guaranteed rejection.
+The command validates manifest/report/output order, source identity by native
+pixel size, rendered specs, opacity, file size, counts, duplicate captures,
+copy limits, punctuation, device headings and QA scores. This manifest drift
+gate prevents an abandoned product story from surviving beside approved
+artwork. Visual claims and crop quality still require a human or screenshot-
+based visual review; they are represented as explicit score deductions instead
+of being silently ignored. Each deduction must include its category, visible
+impact, exact improvement and store-review risk. A report must also show
+platform strengths, a policy verdict and conditional rejection gates. Active
+blockers fail validation; warnings remain visible without being misrepresented
+as guaranteed rejection.
 
 See [QA-CHECKLIST.md](QA-CHECKLIST.md) for the release gate.

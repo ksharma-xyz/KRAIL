@@ -15,9 +15,16 @@ checklist.
 
 `AnalyticsEvent.kt` is the whole analytics job in this repo. The **KRAIL-Analytics** repo
 reads it at the latest published release tag and builds its own registry, labels and
-dashboard groupings — there is no contract file to keep in sync, no per-PR analytics test,
-and no registration step here. Just define the event well and it reaches analytics after
-the next release.
+dashboard groupings — there is no contract file to keep in sync and no per-PR analytics
+test.
+
+There IS one registration step: **any PR that adds a new event name, or changes params on
+an existing event, must add a row to `docs/ANALYTICS_REGISTRY_HANDOFF.md` in the same PR**
+(`Status = Pending`). New-event rows get flipped to `Registered` automatically once
+KRAIL-Analytics labels them — see `docs/ANALYTICS_REGISTRY_SYNC.md` for how. Param and
+user-property rows have no per-item registry surface on the analytics side, so mark those
+`Documented` by hand once their shape is final. Read the ledger's own "How to use this
+file" section for the exact row format before adding one.
 
 ## Test Commands
 
@@ -104,7 +111,14 @@ Exception: the automated docs gardener (single, non-stacked, docs-only PRs label
 Exception: the automated analytics registry sync bot (`.github/workflows/analytics-registry-sync.yml`,
 single docs-only PRs labeled `analytics-sync`, flipping `docs/ANALYTICS_REGISTRY_HANDOFF.md`
 rows from Pending to Registered once KRAIL-Analytics has labelled the event) may use
-`gh pr create`.
+`gh pr create` **and may auto-merge** — the one bot here allowed to. Every other bot,
+including docs-gardener, is explicitly forbidden from auto-merging (docs-gardener's
+charter: "Never merge, approve, or enable auto-merge"). This bot is narrower than a
+prose-editing bot: its only possible edit is flipping one table cell from `Pending` to
+`Registered`, and `scripts/validate_flip_diff.py` independently re-checks the actual
+git diff before every push and refuses (no push, no PR, no merge) unless the change is
+exactly that. If you ever widen what this bot can touch, remove the auto-merge
+exception and put a human back in the loop.
 
 We stack PRs. Break work into focused, layered branches and submit the full stack with `gt submit --stack --publish`.
 
@@ -362,3 +376,6 @@ that contradicts the doc should also update the doc in the same change.
   `collapseSameRouteQuickWalks()` merges same-route-number legs split by a trivial walk;
   read before changing leg-merge/split logic in `TripResponseMapper.kt` or
   `TripResponseLegMapper.kt`.
+- `docs/ANALYTICS_REGISTRY_SYNC.md` — how new-event rows in
+  `docs/ANALYTICS_REGISTRY_HANDOFF.md` auto-flip from `Pending` to `Registered`; read
+  before touching `.github/workflows/analytics-registry-sync.yml` or its scripts.

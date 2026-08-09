@@ -63,6 +63,9 @@ geometry so text, device tops and device bottoms do not jump between panels.
 7. Use no full stops in headlines, sublines, stickers or ghost labels
 8. Use no more than seven headline words and eight subline words
 9. Keep headlines to two lines on phones and iPad; use one or two on landscape
+10. Never display a score without explaining the baseline, passed checks, deductions and fixes directly below it
+11. Treat conversion quality, parity, policy warnings and upload blockers as separate severities
+12. Quote store policy sparingly, link the official source and record when it was checked
 10. Centre portrait copy; align landscape-tablet copy to its device composition
 11. Keep badges outside the headline bounding box with a full line of clearance
 12. Accent one meaningful word or phrase, consistently across device classes
@@ -99,6 +102,10 @@ The command validates source identity by native pixel size, rendered specs,
 opacity, file size, counts, duplicate captures, copy limits, punctuation,
 device headings and QA scores. Visual claims and crop quality still require a
 human or screenshot-based visual review; they are represented as explicit
-score deductions instead of being silently ignored.
+score deductions instead of being silently ignored. Each deduction must include
+its category, visible impact, exact improvement and store-review risk. A report
+must also show platform strengths, a policy verdict and conditional rejection
+gates. Active blockers fail validation; warnings remain visible without being
+misrepresented as guaranteed rejection.
 
 See [QA-CHECKLIST.md](QA-CHECKLIST.md) for the release gate.

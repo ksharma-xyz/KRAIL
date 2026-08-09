@@ -57,6 +57,15 @@ def section(report: str, section_id: str) -> str | None:
     return match.group(1) if match else None
 
 
+def score_audit(report: str, section_id: str) -> str | None:
+    match = re.search(
+        rf'<article class="score-audit" id="score-{re.escape(section_id)}"(.*?)</article>',
+        report,
+        re.S,
+    )
+    return match.group(1) if match else None
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print("usage: verify-listing.py <app/listing-qa.json>", file=sys.stderr)
@@ -78,6 +87,44 @@ def main() -> int:
         if not ok:
             failures.append(f"{scope}: {message}")
 
+    scoring = config.get("scoring", {})
+    baseline = scoring.get("baseline")
+    check(baseline == 100, "Scoring", f"baseline must be 100, found {baseline!r}")
+    check(bool(scoring.get("method")), "Scoring", "method is missing")
+
+    policy_sources = {source["id"]: source for source in config.get("policySources", [])}
+    check(bool(policy_sources), "Policy evidence", "no policy sources are configured")
+    quoted_words_by_url: dict[str, int] = {}
+    for source_id, source in policy_sources.items():
+        source_scope = f"Policy evidence {source_id}"
+        for field in ("store", "title", "url", "quote", "checked"):
+            check(bool(source.get(field)), source_scope, f"{field} is missing")
+        check(source.get("url", "").startswith("https://"), source_scope,
+              "source URL must use HTTPS")
+        check(words(source.get("quote", "")) <= 15, source_scope,
+              "policy quote exceeds the 15-word report limit")
+        check(source.get("quote", "") in plain(report), source_scope,
+              "configured policy quote is missing from the report")
+        check(source.get("url", "") in report, source_scope,
+              "configured policy link is missing from the report")
+        url = source.get("url", "")
+        quoted_words_by_url[url] = quoted_words_by_url.get(url, 0) + words(source.get("quote", ""))
+    for url, quoted_word_count in quoted_words_by_url.items():
+        check(quoted_word_count <= 25, "Policy evidence",
+              f"quotes from {url} total {quoted_word_count} words; maximum is 25")
+
+    for gate in config.get("submissionGates", []):
+        gate_scope = f"Submission gate {gate.get('title', 'untitled')}"
+        check(gate.get("severity") in {"warning", "blocker"}, gate_scope,
+              "severity must be warning or blocker")
+        for field in ("title", "trigger", "outcome", "action", "sourceIds"):
+            check(bool(gate.get(field)), gate_scope, f"{field} is missing")
+        for source_id in gate.get("sourceIds", []):
+            check(source_id in policy_sources, gate_scope,
+                  f"unknown policy source {source_id!r}")
+        check(not (gate.get("triggered") and gate.get("severity") == "blocker"),
+              gate_scope, "active blocker prevents store upload")
+
     for platform in config["platforms"]:
         scope = platform["displayName"]
         body = section(report, platform["sectionId"])
@@ -96,11 +143,69 @@ def main() -> int:
               f"report has {len(articles)} panels, config has {len(panels)}")
 
         deductions = platform.get("deductions", [])
-        score = 100 - sum(item["points"] for item in deductions)
+        score = baseline - sum(item["points"] for item in deductions)
         score_match = re.search(r'class="platform-score" data-score="(\d+)"', body)
         report_score = int(score_match.group(1)) if score_match else None
         check(report_score == score, scope,
               f"report score is {report_score}; configured score is {score}")
+
+        explanation_match = re.search(
+            rf'data-score-explanation="{re.escape(platform["sectionId"])}"(.*?)</div>',
+            body,
+            re.S,
+        )
+        explanation = explanation_match.group(1) if explanation_match else ""
+        check(bool(explanation_match), scope, "immediate score explanation is missing")
+        check(f"Why {score}:" in plain(explanation), scope,
+              f"immediate explanation must begin with 'Why {score}:'")
+        for deduction in deductions:
+            check(str(deduction["points"]) in plain(explanation), scope,
+                  f"immediate explanation omits -{deduction['points']} deduction")
+
+        audit = score_audit(report, platform["sectionId"])
+        check(audit is not None, scope, "detailed score audit is missing")
+        audit = audit or ""
+        audit_score_match = re.search(r'data-score="(\d+)"', audit)
+        audit_score = int(audit_score_match.group(1)) if audit_score_match else None
+        check(audit_score == score, scope,
+              f"detailed audit score is {audit_score}; configured score is {score}")
+        for heading in ("What is correct", "Points deducted and improvements", "Store review flag"):
+            check(heading in plain(audit), scope,
+                  f"detailed audit is missing '{heading}'")
+
+        strengths = platform.get("strengths", [])
+        check(len(strengths) >= 3, scope, "at least three strengths are required")
+        for strength in strengths:
+            check(strength in plain(audit), scope,
+                  f"configured strength is missing from report: {strength!r}")
+
+        for deduction in deductions:
+            deduction_scope = f"{scope} -{deduction.get('points', '?')} deduction"
+            check(isinstance(deduction.get("points"), int) and deduction["points"] > 0,
+                  deduction_scope, "points must be a positive integer")
+            for field in ("category", "reason", "impact", "improvement", "storeRisk"):
+                check(bool(deduction.get(field)), deduction_scope, f"{field} is missing")
+            check(deduction.get("category", "") in plain(audit), deduction_scope,
+                  "category is missing from detailed audit")
+            check(f"-{deduction['points']}" in plain(audit), deduction_scope,
+                  "point deduction is missing from detailed audit")
+
+        policy_review = platform.get("policyReview", {})
+        policy_status = policy_review.get("status")
+        check(policy_status in {"pass", "warning", "blocker"}, scope,
+              f"invalid policy status {policy_status!r}")
+        for field in ("title", "issue", "reviewOutcome", "remediation", "sourceIds"):
+            check(bool(policy_review.get(field)), scope,
+                  f"policy review {field} is missing")
+        check(f'data-policy-status="{policy_status}"' in audit, scope,
+              "detailed audit policy status does not match config")
+        check(policy_review.get("title", "") in plain(audit), scope,
+              "policy review title is missing from detailed audit")
+        for source_id in policy_review.get("sourceIds", []):
+            check(source_id in policy_sources, scope,
+                  f"policy review references unknown source {source_id!r}")
+        check(policy_status != "blocker", scope,
+              f"active policy blocker: {policy_review.get('title', 'unknown')}")
 
         source_hashes: set[str] = set()
         output_dir = root / platform["outputDir"]
@@ -190,7 +295,7 @@ def main() -> int:
         deduction_text = "; ".join(
             f"-{item['points']} {item['reason']}" for item in deductions
         ) or "no deductions"
-        print(f"PASS {scope}: {score}/100 ({deduction_text})")
+        print(f"PASS {scope}: {score}/100; policy={policy_status} ({deduction_text})")
 
     if failures:
         print("\nFAILED")

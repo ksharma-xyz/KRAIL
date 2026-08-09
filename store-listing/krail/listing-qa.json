@@ -1,7 +1,71 @@
 {
-  "version": 1,
+  "version": 2,
   "report": "krail-screenshot-listing.html",
   "outputIndex": "store-images/index.json",
+  "scoring": {
+    "baseline": 100,
+    "method": "Every platform starts at 100 after mandatory file and report checks pass. Points are deducted for documented presentation, proof, parity, or policy weaknesses.",
+    "riskLevels": {
+      "pass": "No current screenshot-policy issue detected",
+      "quality": "Conversion or consistency issue only",
+      "warning": "Store guidance conflict or manual review risk",
+      "blocker": "Do not upload until corrected"
+    }
+  },
+  "policySources": [
+    {
+      "id": "apple-review-2.3.3",
+      "store": "Apple",
+      "title": "App Review Guidelines 2.3.3",
+      "url": "https://developer.apple.com/app-store/review/guidelines/",
+      "quote": "Screenshots should show the app in use",
+      "checked": "2026-08-09"
+    },
+    {
+      "id": "apple-screenshot-specs",
+      "store": "Apple",
+      "title": "Screenshot specifications",
+      "url": "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+      "quote": "You must upload one to ten screenshots",
+      "checked": "2026-08-09"
+    },
+    {
+      "id": "google-preview-assets",
+      "store": "Google Play",
+      "title": "Preview asset requirements",
+      "url": "https://support.google.com/googleplay/android-developer/answer/9866151?hl=en",
+      "quote": "Screenshots must demonstrate the actual in-app or in-game experience",
+      "checked": "2026-08-09"
+    },
+    {
+      "id": "google-large-screen-text",
+      "store": "Google Play",
+      "title": "Large-screen screenshot guidance",
+      "url": "https://support.google.com/googleplay/android-developer/answer/9866151?hl=en",
+      "quote": "Exclude additional text that is not part of your core app experience",
+      "checked": "2026-08-09"
+    }
+  ],
+  "submissionGates": [
+    {
+      "severity": "blocker",
+      "triggered": false,
+      "title": "Submitted build must match the screenshots",
+      "trigger": "The store-review build does not contain the shown screens, labels, themes, or app states",
+      "outcome": "Apple or Google may treat the listing as inaccurate or misleading and reject the metadata or app submission",
+      "action": "Submit the same tested build lineage used for capture and manually verify every shown feature before upload",
+      "sourceIds": ["apple-review-2.3.3", "google-preview-assets"]
+    },
+    {
+      "severity": "warning",
+      "triggered": false,
+      "title": "Text overlays must match the listing locale",
+      "trigger": "These English marketing panels are reused unchanged in a non-English localized listing",
+      "outcome": "The listing may remain technically uploadable, but comprehension and promotional eligibility can be reduced",
+      "action": "Render a translated panel set for every localized storefront that uses translated metadata",
+      "sourceIds": ["google-preview-assets"]
+    }
+  ],
   "copyRules": {
     "forbidFullStops": true,
     "headlineMaxWords": 7,
@@ -21,6 +85,11 @@
       "optionalUploads": [
         { "dir": "upload-ready/2026-08-09/optional/google-play-phone", "file": "07_dark-mode.png" }
       ],
+      "strengths": [
+        "Six primary 1080 x 1920 opaque PNGs meet Google Play's recommended 9:16 promotional format",
+        "The first three panels lead with real Saved Trips, live timetable, and parking UI",
+        "All marketing claims are concise and supported by visible app functionality"
+      ],
       "panels": [
         { "source": "screenshots/android_mobile/saved_trip.png", "output": "01_saved-trips.png" },
         { "source": "screenshots/android_mobile/time_table_bus.png", "output": "02_live-times.png" },
@@ -31,9 +100,31 @@
         { "source": "screenshots/android_mobile/dark_mode.png", "output": "07_dark-mode.png" }
       ],
       "deductions": [
-        { "points": 6, "reason": "service-alert card is collapsed" },
-        { "points": 4, "reason": "Saved Trips parking state differs from newer captures" }
-      ]
+        {
+          "points": 6,
+          "category": "Feature proof",
+          "reason": "The first service-alert card is collapsed",
+          "impact": "The panel promises service alerts but reveals less alert detail than the tablet and iOS versions",
+          "improvement": "Recapture the Android phone screen with the first alert card expanded",
+          "storeRisk": "Quality issue only; it is not expected to cause rejection because the visible claim remains accurate"
+        },
+        {
+          "points": 4,
+          "category": "Cross-platform parity",
+          "reason": "The Saved Trips parking state differs from newer captures",
+          "impact": "Android phone shows Schofields only while the newer device sets show Tallawong and Schofields",
+          "improvement": "Recapture Saved Trips with the same parking cards and labels used on tablet and iOS",
+          "storeRisk": "Consistency issue only; it does not violate a screenshot requirement"
+        }
+      ],
+      "policyReview": {
+        "status": "pass",
+        "title": "No current Google Play rejection blocker detected",
+        "issue": "The primary set has valid dimensions, count, opacity, authentic app UI, and no ranking or price claims",
+        "reviewOutcome": "Expected to upload successfully; the two deductions affect proof and consistency rather than policy compliance",
+        "remediation": "Confirm the submitted Android build still contains every shown state and localize overlay copy for other storefront languages",
+        "sourceIds": ["google-preview-assets"]
+      }
     },
     {
       "id": "android-tablet",
@@ -44,6 +135,11 @@
       "outputDir": "store-images/android-tablet",
       "uploadDir": "upload-ready/2026-08-09/google-play/tablet-10-inch",
       "uploadCount": 7,
+      "strengths": [
+        "Seven native tablet captures show the real wide-screen app layout instead of enlarged phone screenshots",
+        "All outputs are opaque 1920 x 1080 PNGs with the recommended 16:9 aspect ratio",
+        "Saved Trips, expanded live times, parking, expanded alerts, planning, delays, and dark mode form a complete set"
+      ],
       "panels": [
         { "source": "screenshots/android_tablet/01_saved_trips.png", "output": "01_saved-trips.png" },
         { "source": "screenshots/android_tablet/02_live_times.png", "output": "02_live-times.png" },
@@ -54,8 +150,23 @@
         { "source": "screenshots/android_tablet/07_dark_mode.png", "output": "07_dark-mode.png" }
       ],
       "deductions": [
-        { "points": 4, "reason": "Google may crop marketing copy on large-screen promotional surfaces" }
-      ]
+        {
+          "points": 4,
+          "category": "Large-screen presentation",
+          "reason": "Every tablet panel adds marketing copy outside the captured app UI",
+          "impact": "Google warns that extra text on large-screen screenshots can be cut off on Play homepages",
+          "improvement": "Keep a UI-only 1920 x 1080 tablet fallback set ready, or test these panels in Play Console before publishing",
+          "storeRisk": "Warning, not an automatic rejection; cropping or reduced promotional placement is more likely than listing rejection"
+        }
+      ],
+      "policyReview": {
+        "status": "warning",
+        "title": "Google large-screen text guidance needs a fallback",
+        "issue": "All seven tablet images include a headline and subline above the native app capture",
+        "reviewOutcome": "The files meet upload specifications, but Play may crop the copy or limit promotional use; a strict review could request replacement assets",
+        "remediation": "Prepare an alternate UI-only 16:9 set before submission and use it if Play Console previewing crops the marketing text",
+        "sourceIds": ["google-preview-assets", "google-large-screen-text"]
+      }
     },
     {
       "id": "iphone",
@@ -67,6 +178,11 @@
       "outputDir": "store-images/iphone-6-5",
       "uploadDir": "upload-ready/2026-08-09/app-store/iphone-6.5-inch",
       "uploadCount": 7,
+      "strengths": [
+        "Seven opaque 1242 x 2688 PNGs use an accepted Apple 6.5-inch screenshot size",
+        "Every panel shows the app in use and text overlays are permitted by App Review Guideline 2.3.3",
+        "The set includes expanded journey and alert proof plus a genuine dark-mode capture"
+      ],
       "panels": [
         { "source": "screenshots/iphone65/01_saved_trips.png", "output": "01_saved-trips.png" },
         { "source": "screenshots/iphone65/02_live_times.png", "output": "02_live-times.png" },
@@ -77,8 +193,23 @@
         { "source": "screenshots/iphone65/07_dark_mode.png", "output": "07_dark-mode.png" }
       ],
       "deductions": [
-        { "points": 2, "reason": "expanded service-alert detail is dense at thumbnail size" }
-      ]
+        {
+          "points": 2,
+          "category": "Thumbnail readability",
+          "reason": "The expanded service-alert detail is dense at App Store thumbnail size",
+          "impact": "Small alert text is harder to scan before a customer opens the screenshot",
+          "improvement": "Use a shorter alert example or increase the app-frame scale while preserving genuine app context",
+          "storeRisk": "Conversion issue only; dense genuine UI is not an Apple screenshot rejection reason"
+        }
+      ],
+      "policyReview": {
+        "status": "pass",
+        "title": "No current Apple screenshot rejection blocker detected",
+        "issue": "The set uses an accepted size, stays within the one-to-ten count, and shows authentic app screens with permitted overlays",
+        "reviewOutcome": "Expected to pass screenshot metadata review if the submitted build matches the captured functionality",
+        "remediation": "Confirm build parity and provide translated artwork for every localized product page",
+        "sourceIds": ["apple-review-2.3.3", "apple-screenshot-specs"]
+      }
     },
     {
       "id": "ipad",
@@ -90,6 +221,11 @@
       "outputDir": "store-images/ipad-13",
       "uploadDir": "upload-ready/2026-08-09/app-store/ipad-13-inch",
       "uploadCount": 7,
+      "strengths": [
+        "Seven genuine iPad captures render as opaque 2064 x 2752 PNGs accepted for Apple's 13-inch display",
+        "The dual-pane map and detail layout proves native iPad support instead of presenting phone UI",
+        "Expanded journey, expanded alert, planning, parking, delays, and dark mode all use the latest app build"
+      ],
       "panels": [
         { "source": "screenshots/ipad13/01_saved_trips.png", "output": "01_saved-trips.png" },
         { "source": "screenshots/ipad13/02_live_times.png", "output": "02_live-times.png" },
@@ -100,8 +236,23 @@
         { "source": "screenshots/ipad13/07_dark_mode.png", "output": "07_dark-mode.png" }
       ],
       "deductions": [
-        { "points": 2, "reason": "expanded service-alert detail is dense at thumbnail size" }
-      ]
+        {
+          "points": 2,
+          "category": "Thumbnail readability",
+          "reason": "The expanded service-alert detail is dense at App Store thumbnail size",
+          "impact": "The long alert body competes with the split-view map when the panel is shown small",
+          "improvement": "Capture a shorter expanded alert while retaining the native split-view layout",
+          "storeRisk": "Conversion issue only; the screenshot still accurately shows the iPad app in use"
+        }
+      ],
+      "policyReview": {
+        "status": "pass",
+        "title": "No current Apple screenshot rejection blocker detected",
+        "issue": "The captures are native iPad screens at an accepted 13-inch size and show the app in use",
+        "reviewOutcome": "Expected to pass screenshot metadata review if the submitted iPad build matches these screens",
+        "remediation": "Confirm the App Store build supports iPad and contains the same dual-pane layouts and labels",
+        "sourceIds": ["apple-review-2.3.3", "apple-screenshot-specs"]
+      }
     }
   ]
 }

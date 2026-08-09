@@ -214,6 +214,57 @@
       font-weight: 800;
     }
 
+    .score-why {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin: -2px 0 18px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--metro);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .55);
+      font-size: 13px;
+    }
+
+    .score-why.warning { border-left-color: var(--alert); }
+
+    .score-why p { margin: 0; }
+
+    .score-why a {
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .risk-chip {
+      display: inline-block;
+      padding: 4px 7px;
+      border-radius: 3px;
+      background: #e4f4ee;
+      color: #087a5d;
+      font: 900 10px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .risk-chip.quality {
+      background: #eee9e4;
+      color: #685c52;
+    }
+
+    .risk-chip.warning {
+      background: #fff0d7;
+      color: #8a4d00;
+    }
+
+    .risk-chip.blocker {
+      background: #ffe3e6;
+      color: #a20e27;
+    }
+
     .carousel-controls {
       display: flex;
       flex: 0 0 auto;
@@ -580,6 +631,122 @@
 
     .readiness-note a { color: var(--ink); }
 
+    .score-audits {
+      display: grid;
+      gap: 20px;
+    }
+
+    .score-audit {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .score-audit-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .score-audit-head h3 {
+      margin: 0;
+      font: 900 21px/1.1 var(--display);
+      letter-spacing: 0;
+    }
+
+    .score-audit-number {
+      flex: 0 0 auto;
+      font: 900 28px/1 var(--display);
+    }
+
+    .score-audit-number small {
+      color: var(--muted);
+      font: 800 12px var(--body);
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 24px;
+      padding-top: 16px;
+    }
+
+    .audit-grid h4,
+    .policy-evidence h3 {
+      margin: 0 0 8px;
+      font: 900 11px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .audit-grid ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #403a36;
+      font-size: 13px;
+    }
+
+    .audit-grid li + li { margin-top: 7px; }
+
+    .deduction {
+      margin: 0;
+      padding-left: 12px;
+      border-left: 3px solid #b5aaa1;
+      color: #403a36;
+      font-size: 13px;
+    }
+
+    .deduction + .deduction { margin-top: 14px; }
+
+    .deduction strong { color: var(--ink); }
+
+    .points {
+      display: inline-block;
+      min-width: 26px;
+      margin-right: 5px;
+      color: #a20e27;
+      font: 900 12px var(--mono);
+    }
+
+    .policy-verdict {
+      margin: 8px 0 0;
+      color: #403a36;
+      font-size: 13px;
+    }
+
+    .policy-verdict strong { color: var(--ink); }
+
+    .policy-evidence {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .policy-evidence blockquote {
+      margin: 0;
+      padding: 14px 0 0;
+      border-top: 3px solid var(--ink);
+      color: #403a36;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .policy-evidence cite {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    .policy-evidence a { color: var(--ink); }
+
     @media (max-width: 760px) {
       .wrap {
         width: min(100% - 24px, 1360px);
@@ -606,6 +773,12 @@
 
       .platform-actions { align-items: center; }
 
+      .score-why {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .score-why a { grid-column: 2; }
+
       .platform-note { font-size: 13px; }
 
       .carousel-controls { display: none; }
@@ -618,6 +791,9 @@
       .store-panel.tablet-landscape .device { width: 84%; }
 
       .capture-facts { grid-template-columns: 1fr 1fr; }
+
+      .audit-grid,
+      .policy-evidence { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 430px) {
@@ -679,6 +855,12 @@
             <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android phone panel" title="Next panel">&rarr;</button>
           </div>
         </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="android-phone">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 90:</strong> mandatory checks pass; minus 6 for the collapsed alert and minus 4 for the older Saved Trips parking state</p>
+        <a href="#score-android-phone">Full breakdown</a>
       </div>
 
       <div class="carousel" aria-label="Android phone screenshot panels">
@@ -779,6 +961,12 @@
         </div>
       </div>
 
+      <div class="score-why warning" data-score-explanation="android-tablet">
+        <span class="risk-chip warning">Policy warning</span>
+        <p><strong>Why 96:</strong> mandatory checks pass; minus 4 because Google may crop added marketing copy on large-screen promotional surfaces</p>
+        <a href="#score-android-tablet">Full breakdown</a>
+      </div>
+
       <div class="carousel" aria-label="Android tablet screenshot panels">
         <article class="store-panel tablet-landscape" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-left:-70px;--ring-right:auto;--ring-top:-82px;--ring-bottom:auto">
           <span class="panel-index">01</span>
@@ -872,6 +1060,12 @@
             <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPhone panel" title="Next panel">&rarr;</button>
           </div>
         </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="iphone">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 98:</strong> mandatory checks pass; minus 2 because the expanded alert is dense at App Store thumbnail size</p>
+        <a href="#score-iphone">Full breakdown</a>
       </div>
 
       <div class="carousel" aria-label="iPhone screenshot panels">
@@ -969,6 +1163,12 @@
         </div>
       </div>
 
+      <div class="score-why" data-score-explanation="ipad">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 98:</strong> mandatory checks pass; minus 2 because the expanded alert competes with the map at thumbnail size</p>
+        <a href="#score-ipad">Full breakdown</a>
+      </div>
+
       <div class="carousel" aria-label="iPad screenshot panels">
         <article class="store-panel ipad-portrait" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-left:-74px;--ring-right:auto;--ring-top:-72px;--ring-bottom:auto">
           <span class="panel-index">01</span>
@@ -1060,13 +1260,114 @@
 
     <section class="capture-baseline" id="scores">
       <h2>Platform QA scores</h2>
-      <dl class="capture-facts">
-        <div><dt>Android phone / 90</dt><dd>Technically valid; loses 6 points for the collapsed alert and 4 for the older Schofields-only Saved Trips state</dd></div>
-        <div><dt>Android tablet / 96</dt><dd>Strong native wide set; loses 4 points because Google may crop marketing copy on large-screen promotional surfaces</dd></div>
-        <div><dt>iPhone / 98</dt><dd>Native, complete and ready; loses 2 points because the expanded alert is dense at thumbnail size</dd></div>
-        <div><dt>iPad / 98</dt><dd>Correct native iPad captures, split-view proof and dark mode; loses 2 points for the dense expanded alert</dd></div>
-      </dl>
-      <p class="readiness-note">Scores start at 100 and subtract documented limitations from <code>listing-qa.json</code>. They measure this asset set, not the app itself and not the probability of store approval.</p>
+      <p class="readiness-note">Every platform starts at 100 only after mandatory file and report checks pass. Points are then deducted for documented presentation, proof, parity, or policy weaknesses. Each deduction below states what is wrong, why it matters, the exact improvement, and whether it creates store-review risk.</p>
+
+      <div class="score-audits">
+        <article class="score-audit" id="score-android-phone" data-score="90" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvements</span><h3>Android phone</h3></div>
+            <div class="score-audit-number">90 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Six primary 1080 x 1920 opaque PNGs meet Google Play's recommended 9:16 promotional format</li>
+                <li>The first three panels lead with real Saved Trips, live timetable, and parking UI</li>
+                <li>All marketing claims are concise and supported by visible app functionality</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-6</span><strong>Feature proof</strong><br><strong>Wrong:</strong> the first service-alert card is collapsed<br><strong>Impact:</strong> it reveals less alert detail than tablet and iOS<br><strong>Improve:</strong> recapture with the first alert card expanded<br><strong>Store risk:</strong> quality issue only; the visible claim remains accurate</p>
+              <p class="deduction"><span class="points">-4</span><strong>Cross-platform parity</strong><br><strong>Wrong:</strong> Saved Trips shows Schofields only instead of Tallawong and Schofields<br><strong>Impact:</strong> the phone state differs from the newer captures<br><strong>Improve:</strong> recapture with matching parking cards and labels<br><strong>Store risk:</strong> consistency issue only; no screenshot rule is violated</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Google Play rejection blocker detected</strong><br>The count, dimensions, opacity, app UI, and claims are valid. Confirm that the submitted Android build matches these screens and localize overlay copy for other languages.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-android-tablet" data-score="96" data-policy-status="warning">
+          <header class="score-audit-head">
+            <div><span class="risk-chip warning">Policy warning</span><h3>Android tablet</h3></div>
+            <div class="score-audit-number">96 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven native tablet captures show the real wide-screen app layout instead of enlarged phone screenshots</li>
+                <li>All outputs are opaque 1920 x 1080 PNGs with the recommended 16:9 aspect ratio</li>
+                <li>Saved Trips, expanded live times, parking, expanded alerts, planning, delays, and dark mode form a complete set</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-4</span><strong>Large-screen presentation</strong><br><strong>Wrong:</strong> all seven tablet panels add a headline and subline outside the app UI<br><strong>Impact:</strong> Google warns that extra text can be cut off on Play homepages<br><strong>Improve:</strong> keep a UI-only 1920 x 1080 fallback set ready and inspect Play Console previews<br><strong>Store risk:</strong> warning, not an automatic rejection; cropping or reduced promotion is more likely</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip warning">Warning</span>
+              <p class="policy-verdict"><strong>Google large-screen text guidance needs a fallback</strong><br>The files meet upload specifications, but Play may crop the copy or limit promotional use. A strict asset review could request UI-only replacement screenshots.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-iphone" data-score="98" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvement</span><h3>iPhone 6.5-inch</h3></div>
+            <div class="score-audit-number">98 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven opaque 1242 x 2688 PNGs use an accepted Apple 6.5-inch screenshot size</li>
+                <li>Every panel shows the app in use and text overlays are permitted by App Review Guideline 2.3.3</li>
+                <li>The set includes expanded journey and alert proof plus a genuine dark-mode capture</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-2</span><strong>Thumbnail readability</strong><br><strong>Wrong:</strong> the expanded service-alert detail is dense at App Store thumbnail size<br><strong>Impact:</strong> small alert text is difficult to scan before opening the image<br><strong>Improve:</strong> use a shorter alert or enlarge the app frame while retaining genuine app context<br><strong>Store risk:</strong> conversion issue only; dense genuine UI is not an Apple rejection reason</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Apple screenshot rejection blocker detected</strong><br>The accepted size, count, authentic screens, and permitted overlays should pass metadata review when the submitted build matches the captured functionality.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-ipad" data-score="98" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvement</span><h3>iPad 13-inch</h3></div>
+            <div class="score-audit-number">98 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven genuine iPad captures render as opaque 2064 x 2752 PNGs accepted for Apple's 13-inch display</li>
+                <li>The dual-pane map and detail layout proves native iPad support instead of presenting phone UI</li>
+                <li>Expanded journey, expanded alert, planning, parking, delays, and dark mode all use the latest app build</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-2</span><strong>Thumbnail readability</strong><br><strong>Wrong:</strong> the expanded alert body competes with the split-view map at thumbnail size<br><strong>Impact:</strong> the detailed message is difficult to scan in the carousel<br><strong>Improve:</strong> capture a shorter expanded alert while retaining the native split view<br><strong>Store risk:</strong> conversion issue only; the image accurately shows the iPad app in use</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Apple screenshot rejection blocker detected</strong><br>The captures are genuine iPad screens at an accepted 13-inch size. Confirm the submitted build supports the same dual-pane layouts and labels.</p>
+            </section>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="capture-baseline readiness" id="validation">
@@ -1086,9 +1387,36 @@
         <div><dt>Apple / iPhone</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at an accepted 1242 x 2688 size. Real app UI is visible and text overlays are permitted.</dd></div>
         <div><dt>Apple / iPad</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at the accepted 2064 x 2752 size for a 13-inch display.</dd></div>
         <div><dt>Google / phone</dt><dd><span class="readiness-status">Ready</span><br>6 primary opaque 1080 x 1920 PNGs plus 1 optional dark-mode panel, within the eight-screenshot limit and showing shipped features.</dd></div>
-        <div><dt>Google / tablet</dt><dd><span class="readiness-status caution">Ready with caveat</span><br>7 opaque 1920 x 1080 PNGs meet the 10-inch size, ratio, and count rules. Google advises against extra marketing text on large-screen screenshots because it may be cropped on promotional surfaces.</dd></div>
+        <div><dt>Google / tablet</dt><dd><span class="readiness-status caution">Ready with fallback</span><br>7 opaque 1920 x 1080 PNGs meet the 10-inch size, ratio, and count rules. Keep a UI-only set ready because Google advises excluding extra marketing text from large-screen screenshots.</dd></div>
       </dl>
-      <p class="readiness-note">Rejection risk is low based on the assets themselves: the screenshots show the app in use, avoid rankings and price claims, use supported dimensions, and stay within each store's count. Final acceptance still depends on the submitted build matching these features and labels. Localize these text-bearing panels for every localized listing. Sources: <a href="https://developer.apple.com/app-store/review/guidelines/" target="_blank">Apple App Review Guidelines 2.3.3</a>, <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/" target="_blank">Apple screenshot specifications</a>, and <a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank">Google Play preview asset requirements</a>.</p>
+
+      <h3 style="margin:26px 0 10px;font:900 16px var(--display)">Conditional rejection gates</h3>
+      <dl class="capture-facts">
+        <div><dt><span class="risk-chip blocker">Blocker if triggered</span></dt><dd>Submitted build does not contain the shown screens, labels, themes, or states<br><br><strong>Possible outcome:</strong> inaccurate or misleading metadata rejection<br><strong>Action:</strong> verify every panel against the exact store-review build</dd></div>
+        <div><dt><span class="risk-chip warning">Localization warning</span></dt><dd>English overlays are reused on a non-English product page<br><br><strong>Possible outcome:</strong> weaker comprehension or promotional eligibility<br><strong>Action:</strong> render translated panels for each localized listing</dd></div>
+        <div><dt><span class="risk-chip warning">Current tablet warning</span></dt><dd>Marketing headlines sit outside the Android tablet app UI<br><br><strong>Possible outcome:</strong> copy may be cropped or assets may receive less promotion<br><strong>Action:</strong> retain a UI-only 16:9 fallback set</dd></div>
+        <div><dt><span class="risk-chip">Current file review</span></dt><dd>No dimension, count, opacity, duplicate-image, unsupported-claim, or wrong-device blocker was detected by the automated checks</dd></div>
+      </dl>
+
+      <div class="policy-evidence" aria-label="Official store policy evidence">
+        <div>
+          <h3>Apple content rule</h3>
+          <blockquote>&ldquo;Screenshots should show the app in use&rdquo;<cite><a href="https://developer.apple.com/app-store/review/guidelines/" target="_blank" rel="noreferrer">Apple App Review Guidelines 2.3.3</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+        <div>
+          <h3>Apple count rule</h3>
+          <blockquote>&ldquo;You must upload one to ten screenshots&rdquo;<cite><a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/" target="_blank" rel="noreferrer">Apple screenshot specifications</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+        <div>
+          <h3>Google content rule</h3>
+          <blockquote>&ldquo;Screenshots must demonstrate the actual in-app or in-game experience&rdquo;<cite><a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank" rel="noreferrer">Google Play preview asset requirements</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+        <div>
+          <h3>Google large-screen rule</h3>
+          <blockquote>&ldquo;Exclude additional text that is not part of your core app experience&rdquo;<cite><a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank" rel="noreferrer">Google Play large-screen guidance</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+      </div>
+      <p class="readiness-note">The current assets have no high-confidence file-level rejection blocker. Store approval cannot be guaranteed because review also evaluates the submitted binary, metadata, account state, localization, and policies outside screenshot composition.</p>
     </section>
   </main>
 

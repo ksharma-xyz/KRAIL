@@ -56,4 +56,16 @@ Run this checklist for every app, locale and device class.
 - [ ] Dated upload folders contain only approved submission files
 - [ ] Raw captures, flows, report, generated panels and upload files are committed
 
-Any unchecked capture-identity, app-state, layout or output item blocks upload.
+## Scoring and policy evidence
+
+- [ ] Every visible score has an immediate explanation directly below it
+- [ ] Every platform has at least three specific statements describing what passed
+- [ ] Every deduction records points, category, exact issue, impact, improvement and store risk
+- [ ] Quality or parity deductions are not described as policy violations
+- [ ] Policy warnings identify the exact asset, likely review outcome and fallback
+- [ ] Potential rejection blockers state their trigger and required remediation
+- [ ] Every policy claim links to an official Apple or Google source with a checked date
+- [ ] Official quotations remain short and are clearly attributed
+- [ ] Any active blocker fails automated validation and blocks upload
+
+Any unchecked capture-identity, app-state, layout, output, or active policy-blocker item blocks upload.

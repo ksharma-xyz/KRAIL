@@ -19,7 +19,10 @@ on previous chat context. Read these files in order:
 - Verify source dimensions immediately after every capture
 - Generate a horizontal report row for every supported device class
 - Make device class the prominent section heading; store and count are secondary
-- Display a QA score and its exact deductions for every platform
+- Display a QA score with an immediate explanation and a full audit for every platform
+- Separate conversion quality, consistency warnings and actual store-policy blockers
+- State what passed, what lost points, why it matters, how to improve it and whether review is affected
+- Cite current official store policy for every rejection-risk claim
 - Keep foreground content inside safe borders with visible field around devices
 - Enforce headline, subline, punctuation and alignment limits from the framework
 - Render all store-size outputs after any report-copy or source-capture change
@@ -48,6 +51,8 @@ mockup. It must contain:
 - a horizontal carousel of full panel previews
 - direct links to native source captures
 - platform score and deductions
+- passed checks, exact improvements and store-review impact for every deduction
+- policy verdict, conditional rejection gates and short official-source quotations
 - canonical capture baseline
 - parity findings and unresolved recaptures
 - store submission readiness and source links
@@ -70,3 +75,5 @@ Do not call an asset ready when any of these is true:
 - a claim is not visible or defensible from the screenshot
 - output size, opacity, count or byte limit fails validation
 - the submitted build does not contain the shown feature or label
+- a score appears without passed checks, exact deductions, remediation and policy impact
+- a rejection-risk statement lacks an official source and checked date

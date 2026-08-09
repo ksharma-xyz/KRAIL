@@ -18,7 +18,8 @@
       "03_parking.png",
       "04_service-alerts.png",
       "05_live-delays.png",
-      "06_plan-your-day.png"
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
     ]
   },
   "app-store/iphone-6.5-inch": {
@@ -29,7 +30,8 @@
       "03_parking.png",
       "04_service-alerts.png",
       "05_live-delays.png",
-      "06_plan-your-day.png"
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
     ]
   },
   "app-store/ipad-13-inch": {
@@ -40,7 +42,8 @@
       "03_parking.png",
       "04_service-alerts.png",
       "05_live-delays.png",
-      "06_plan-your-day.png"
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
     ]
   }
 }

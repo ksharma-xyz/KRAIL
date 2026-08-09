@@ -19,7 +19,8 @@
       "03_parking.png",
       "04_service-alerts.png",
       "05_live-delays.png",
-      "06_plan-your-day.png"
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
     ]
   },
   "iphone-6-5": {
@@ -30,7 +31,8 @@
       "03_parking.png",
       "04_service-alerts.png",
       "05_live-delays.png",
-      "06_plan-your-day.png"
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
     ]
   },
   "ipad-13": {
@@ -41,7 +43,8 @@
       "03_parking.png",
       "04_service-alerts.png",
       "05_live-delays.png",
-      "06_plan-your-day.png"
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
     ]
   }
 }

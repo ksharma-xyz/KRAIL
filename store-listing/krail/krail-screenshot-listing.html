@@ -624,6 +624,7 @@
       <a href="#iphone">iPhone 6.5-inch</a>
       <a href="#ipad">iPad 13-inch</a>
       <a href="#baseline">Capture baseline</a>
+      <a href="#validation">Parity review</a>
       <a href="#readiness">Submission review</a>
     </nav>
 
@@ -1008,12 +1009,23 @@
       </dl>
     </section>
 
+    <section class="capture-baseline readiness" id="validation">
+      <h2>Cross-platform parity review</h2>
+      <dl class="capture-facts">
+        <div><dt>Journey and labels</dt><dd><span class="readiness-status">Aligned</span><br>Bondi Junction to Circular Quay, route 333, Home to Work, and Home to Uni are used across the sets. Timetable captures show an expanded trip.</dd></div>
+        <div><dt>Theme sequence</dt><dd><span class="readiness-status">Aligned</span><br>Train orange leads Saved Trips, Metro teal supports parking and alerts, Ferry green supports planning, and every device class includes a dark Train view.</dd></div>
+        <div><dt>Android phone alert</dt><dd><span class="readiness-status caution">Recapture for exact parity</span><br>The Android phone source leaves the first service-alert card collapsed; Android tablet, iPhone, and iPad show the first card expanded.</dd></div>
+        <div><dt>Saved parking cards</dt><dd><span class="readiness-status caution">Recapture for exact parity</span><br>The Android phone Saved Trips source shows Schofields only. The newer Android tablet, iPhone, and iPad sources show Tallawong and Schofields.</dd></div>
+      </dl>
+      <p class="readiness-note">These two differences are not store-policy problems and do not block upload. Recapture the Android phone alert and Saved Trips sources only if exact cross-device state parity is required; the current marketing sequence and claims remain accurate.</p>
+    </section>
+
     <section class="capture-baseline readiness" id="readiness">
       <h2>Submission readiness</h2>
       <dl class="capture-facts">
         <div><dt>Apple / iPhone</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at an accepted 1242 x 2688 size. Real app UI is visible and text overlays are permitted.</dd></div>
         <div><dt>Apple / iPad</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at the accepted 2064 x 2752 size for a 13-inch display.</dd></div>
-        <div><dt>Google / phone</dt><dd><span class="readiness-status">Ready</span><br>7 opaque 1080 x 1920 PNGs, within the eight-screenshot limit and showing shipped features.</dd></div>
+        <div><dt>Google / phone</dt><dd><span class="readiness-status">Ready</span><br>6 primary opaque 1080 x 1920 PNGs plus 1 optional dark-mode panel, within the eight-screenshot limit and showing shipped features.</dd></div>
         <div><dt>Google / tablet</dt><dd><span class="readiness-status caution">Ready with caveat</span><br>7 opaque 1920 x 1080 PNGs meet the 10-inch size, ratio, and count rules. Google advises against extra marketing text on large-screen screenshots because it may be cropped on promotional surfaces.</dd></div>
       </dl>
       <p class="readiness-note">Rejection risk is low based on the assets themselves: the screenshots show the app in use, avoid rankings and price claims, use supported dimensions, and stay within each store's count. Final acceptance still depends on the submitted build matching these features and labels. Localize these text-bearing panels for every localized listing. Sources: <a href="https://developer.apple.com/app-store/review/guidelines/" target="_blank">Apple App Review Guidelines 2.3.3</a>, <a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/" target="_blank">Apple screenshot specifications</a>, and <a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank">Google Play preview asset requirements</a>.</p>

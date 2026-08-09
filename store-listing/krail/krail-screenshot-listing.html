@@ -1,0 +1,1435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KRAIL Store Screenshot Listing</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --train: #f6891f;
+      --bus: #00a9df;
+      --metro: #009b77;
+      --alert: #e8a216;
+      --light-rail: #d80c2f;
+      --green: #51b82e;
+      --ink: #171412;
+      --paper: #fbf7f3;
+      --surface: #ffffff;
+      --muted: #746d67;
+      --line: #e4dbd2;
+      --display: "Arial Black", "Helvetica Neue", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 82px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    a { font: inherit; }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .wrap {
+      width: min(1360px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 88px;
+    }
+
+    .report-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 36px;
+      align-items: end;
+      padding-bottom: 30px;
+    }
+
+    .eyebrow,
+    .platform-kicker,
+    .panel-index,
+    .capture-facts dt {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--train);
+    }
+
+    h1,
+    h2,
+    .panel-copy {
+      font-family: var(--display);
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1;
+    }
+
+    .intro {
+      max-width: 70ch;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .summary-count {
+      min-width: 170px;
+      padding-left: 18px;
+      border-left: 4px solid var(--metro);
+    }
+
+    .summary-count strong {
+      display: block;
+      font: 900 34px/1 var(--display);
+    }
+
+    .summary-count span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .platform-nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      margin: 0 -12px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 247, 243, .96);
+      backdrop-filter: blur(12px);
+    }
+
+    .platform-nav a {
+      flex: 0 0 auto;
+      padding: 8px 11px;
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .platform-nav a:hover,
+    .platform-nav a:focus-visible {
+      background: var(--ink);
+      color: #fff;
+      outline: none;
+    }
+
+    .platform {
+      padding: 42px 0 36px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .platform:last-of-type { border-bottom: 0; }
+
+    .platform-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 17px;
+    }
+
+    .platform-kicker {
+      margin: 0 0 5px;
+      color: var(--muted);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 38px);
+      line-height: 1.08;
+    }
+
+    .platform-note {
+      max-width: 58ch;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .platform-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: end;
+      gap: 18px;
+    }
+
+    .platform-score {
+      min-width: 96px;
+      padding-left: 12px;
+      border-left: 4px solid var(--metro);
+      line-height: 1;
+    }
+
+    .platform-score span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font: 800 10px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .platform-score strong {
+      font: 900 27px var(--display);
+    }
+
+    .platform-score small {
+      margin-left: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .score-why {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin: -2px 0 18px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--metro);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .55);
+      font-size: 13px;
+    }
+
+    .score-why.warning { border-left-color: var(--alert); }
+
+    .score-why p { margin: 0; }
+
+    .score-why a {
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .risk-chip {
+      display: inline-block;
+      padding: 4px 7px;
+      border-radius: 3px;
+      background: #e4f4ee;
+      color: #087a5d;
+      font: 900 10px var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .risk-chip.quality {
+      background: #eee9e4;
+      color: #685c52;
+    }
+
+    .risk-chip.warning {
+      background: #fff0d7;
+      color: #8a4d00;
+    }
+
+    .risk-chip.blocker {
+      background: #ffe3e6;
+      color: #a20e27;
+    }
+
+    .carousel-controls {
+      display: flex;
+      flex: 0 0 auto;
+      gap: 7px;
+    }
+
+    .carousel-control {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #cfc5bd;
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .carousel-control:hover,
+    .carousel-control:focus-visible {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #fff;
+      outline: none;
+    }
+
+    .carousel {
+      display: flex;
+      gap: 18px;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      padding: 4px 2px 18px;
+      scroll-behavior: smooth;
+      scroll-snap-type: x mandatory;
+      scrollbar-color: #aaa19a transparent;
+      scrollbar-width: thin;
+    }
+
+    .carousel::-webkit-scrollbar { height: 8px; }
+    .carousel::-webkit-scrollbar-track { background: transparent; }
+    .carousel::-webkit-scrollbar-thumb {
+      border-radius: 4px;
+      background: #aaa19a;
+    }
+
+    .store-panel {
+      --g1: #f6891f;
+      --g2: #bd5306;
+      --word-accent: #ffe15a;
+      position: relative;
+      flex: 0 0 250px;
+      width: 250px;
+      aspect-ratio: 9 / 16;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-radius: 6px;
+      background: linear-gradient(170deg, var(--g1), var(--g2));
+      scroll-snap-align: start;
+      isolation: isolate;
+    }
+
+    .store-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      opacity: .28;
+      background-image: radial-gradient(rgba(255, 255, 255, .25) 1px, transparent 1px);
+      background-size: 6px 6px;
+    }
+
+    .store-panel::after {
+      content: "";
+      position: absolute;
+      width: var(--ring-size, 145px);
+      height: var(--ring-size, 145px);
+      right: var(--ring-right, -82px);
+      bottom: var(--ring-bottom, -78px);
+      left: var(--ring-left, auto);
+      top: var(--ring-top, auto);
+      z-index: -1;
+      border: 22px solid rgba(255, 255, 255, .13);
+      border-radius: 50%;
+    }
+
+    .panel-index {
+      position: absolute;
+      top: 17px;
+      left: 17px;
+      z-index: 3;
+      color: rgba(255, 255, 255, .76);
+    }
+
+    .sticker {
+      position: absolute;
+      top: 15px;
+      right: 16px;
+      z-index: 3;
+      min-width: 42px;
+      padding: 4px 8px;
+      border: 2px solid rgba(255, 255, 255, .9);
+      border-radius: 5px;
+      background: var(--g2);
+      color: #fff;
+      font: 900 10px var(--display);
+      letter-spacing: .06em;
+      text-align: center;
+      text-transform: uppercase;
+      transform: rotate(-4deg);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .2);
+    }
+
+    .store-panel:nth-child(even) .sticker { transform: rotate(4deg); }
+
+    .sticker.live {
+      background: #ffca16;
+      color: #332500;
+    }
+
+    .panel-copy {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 144px;
+      flex: 0 0 144px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 47px 17px 12px;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+    }
+
+    .panel-copy strong {
+      display: block;
+      max-width: 218px;
+      font-size: 23px;
+      line-height: 1.04;
+      text-transform: uppercase;
+    }
+
+    .panel-line { display: block; }
+    .panel-line + .panel-line { margin-top: 1px; }
+
+    .panel-accent {
+      display: inline-block;
+      color: var(--word-accent);
+      white-space: nowrap;
+    }
+
+    .panel-copy small {
+      display: block;
+      margin-top: 6px;
+      font: 700 11px var(--body);
+      letter-spacing: 0;
+      opacity: .94;
+    }
+
+    .parking-lockup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .parking-badge {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: #fff;
+      color: var(--metro);
+      font: 900 21px/1 var(--display);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .2);
+    }
+
+    .parking-lockup strong { font-size: 20px; }
+
+    .alert-panel .panel-copy {
+      padding-right: 11px;
+      padding-bottom: 7px;
+      padding-left: 11px;
+    }
+
+    .alert-panel .panel-copy strong {
+      max-width: 228px;
+      font-size: 20px;
+    }
+
+    .device {
+      position: relative;
+      z-index: 2;
+      height: 272px;
+      margin-top: 10px;
+      padding: 5px;
+      border-radius: 17px;
+      background: #fff;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, .38);
+    }
+
+    .device img {
+      width: auto;
+      height: 100%;
+      border-radius: 12px;
+    }
+
+    .store-panel:nth-child(odd) .device { transform: rotate(-2deg); }
+    .store-panel:nth-child(even) .device { transform: rotate(2deg); }
+
+    .device-link {
+      display: block;
+      height: 100%;
+    }
+
+    .ghost {
+      position: absolute;
+      left: 5px;
+      bottom: 18px;
+      z-index: 1;
+      color: rgba(255, 255, 255, .17);
+      font: 900 13px var(--display);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    .store-panel.tablet-landscape {
+      flex-basis: 520px;
+      width: 520px;
+      aspect-ratio: 4 / 3;
+      align-items: center;
+    }
+
+    .store-panel.tablet-landscape .panel-copy {
+      height: 105px;
+      flex-basis: 105px;
+      justify-content: flex-end;
+      padding: 40px 28px 7px;
+    }
+
+    .store-panel.tablet-landscape .panel-copy strong {
+      max-width: 420px;
+      font-size: 28px;
+    }
+
+    .store-panel.tablet-landscape .panel-copy small { font-size: 12px; }
+
+    .store-panel.tablet-landscape .parking-lockup {
+      flex-direction: row;
+      gap: 10px;
+    }
+
+    .store-panel.tablet-landscape .parking-lockup strong { font-size: 26px; }
+
+    .store-panel.tablet-landscape .device {
+      width: 440px;
+      height: auto;
+      margin-top: 7px;
+      padding: 6px;
+      border-radius: 15px;
+    }
+
+    .store-panel.tablet-landscape .device img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+
+    .store-panel.ipad-portrait {
+      flex-basis: 340px;
+      width: 340px;
+      aspect-ratio: 3 / 4;
+    }
+
+    .store-panel.ipad-portrait .panel-copy {
+      height: 105px;
+      flex-basis: 105px;
+      padding: 39px 22px 7px;
+    }
+
+    .store-panel.ipad-portrait .panel-copy strong {
+      max-width: 295px;
+      font-size: 25px;
+    }
+
+    .store-panel.ipad-portrait .parking-lockup {
+      flex-direction: row;
+      gap: 9px;
+    }
+
+    .store-panel.ipad-portrait .parking-lockup strong { font-size: 23px; }
+
+    .store-panel.ipad-portrait .device {
+      height: 324px;
+      margin-top: 9px;
+      padding: 6px;
+      border-radius: 15px;
+    }
+
+    .store-panel.ipad-portrait .device img { border-radius: 10px; }
+
+    .capture-baseline {
+      margin-top: 38px;
+      padding-top: 25px;
+      border-top: 4px solid var(--metro);
+    }
+
+    .capture-baseline h2 {
+      margin-bottom: 18px;
+      font-size: 25px;
+    }
+
+    .capture-facts {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .capture-facts div {
+      padding: 14px 18px 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .capture-facts dt {
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+
+    .capture-facts dd {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .readiness { border-top-color: var(--train); }
+
+    .readiness-status {
+      display: inline-block;
+      margin-bottom: 5px;
+      color: #087a5d;
+      font: 900 11px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .readiness-status.caution { color: #9a5700; }
+
+    .readiness-note {
+      max-width: 950px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .readiness-note a { color: var(--ink); }
+
+    .score-audits {
+      display: grid;
+      gap: 20px;
+    }
+
+    .score-audit {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .score-audit-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .score-audit-head h3 {
+      margin: 0;
+      font: 900 21px/1.1 var(--display);
+      letter-spacing: 0;
+    }
+
+    .score-audit-number {
+      flex: 0 0 auto;
+      font: 900 28px/1 var(--display);
+    }
+
+    .score-audit-number small {
+      color: var(--muted);
+      font: 800 12px var(--body);
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 24px;
+      padding-top: 16px;
+    }
+
+    .audit-grid h4,
+    .policy-evidence h3 {
+      margin: 0 0 8px;
+      font: 900 11px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .audit-grid ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #403a36;
+      font-size: 13px;
+    }
+
+    .audit-grid li + li { margin-top: 7px; }
+
+    .deduction {
+      margin: 0;
+      padding-left: 12px;
+      border-left: 3px solid #b5aaa1;
+      color: #403a36;
+      font-size: 13px;
+    }
+
+    .deduction + .deduction { margin-top: 14px; }
+
+    .deduction strong { color: var(--ink); }
+
+    .points {
+      display: inline-block;
+      min-width: 26px;
+      margin-right: 5px;
+      color: #a20e27;
+      font: 900 12px var(--mono);
+    }
+
+    .policy-verdict {
+      margin: 8px 0 0;
+      color: #403a36;
+      font-size: 13px;
+    }
+
+    .policy-verdict strong { color: var(--ink); }
+
+    .policy-evidence {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .policy-evidence blockquote {
+      margin: 0;
+      padding: 14px 0 0;
+      border-top: 3px solid var(--ink);
+      color: #403a36;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .policy-evidence cite {
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    .policy-evidence a { color: var(--ink); }
+
+    @media (max-width: 760px) {
+      .wrap {
+        width: min(100% - 24px, 1360px);
+        padding-top: 28px;
+      }
+
+      .report-head {
+        grid-template-columns: 1fr;
+        gap: 22px;
+      }
+
+      .summary-count {
+        min-width: 0;
+        padding-left: 14px;
+      }
+
+      .platform {
+        padding-top: 34px;
+      }
+
+      .platform-head {
+        align-items: start;
+      }
+
+      .platform-actions { align-items: center; }
+
+      .score-why {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .score-why a { grid-column: 2; }
+
+      .platform-note { font-size: 13px; }
+
+      .carousel-controls { display: none; }
+
+      .store-panel.tablet-landscape {
+        flex-basis: min(88vw, 460px);
+        width: min(88vw, 460px);
+      }
+
+      .store-panel.tablet-landscape .device { width: 84%; }
+
+      .capture-facts { grid-template-columns: 1fr 1fr; }
+
+      .audit-grid,
+      .policy-evidence { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 430px) {
+      .store-panel {
+        flex-basis: 236px;
+        width: 236px;
+      }
+
+      .store-panel.ipad-portrait {
+        flex-basis: min(84vw, 330px);
+        width: min(84vw, 330px);
+      }
+
+      .capture-facts { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html,
+      .carousel { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="report-head">
+      <div>
+        <p class="eyebrow">KRAIL / Store listing</p>
+        <h1>One story across every screen.</h1>
+        <p class="intro">The final capture set for Android phone, Android tablet, iPhone 6.5-inch, and iPad 13-inch. Scroll each row horizontally; select any app frame to open its full-resolution source.</p>
+      </div>
+      <div class="summary-count" aria-label="Twenty-eight proposed panels">
+        <strong>28</strong>
+        <span>proposed panels across four device classes</span>
+      </div>
+    </header>
+
+    <nav class="platform-nav" aria-label="Screenshot platform sections">
+      <a href="#android-phone">Android phone</a>
+      <a href="#android-tablet">Android tablet</a>
+      <a href="#iphone">iPhone 6.5-inch</a>
+      <a href="#ipad">iPad 13-inch</a>
+      <a href="#baseline">Capture baseline</a>
+      <a href="#scores">QA scores</a>
+      <a href="#validation">Parity review</a>
+      <a href="#readiness">Submission review</a>
+    </nav>
+
+    <section class="platform" id="android-phone">
+      <div class="platform-head">
+        <div>
+          <p class="platform-kicker">Google Play / 7 panels</p>
+          <h2>Android phone</h2>
+          <p class="platform-note">Saved trips, live detail, and parking establish utility first. Alerts, live delays, flexible planning, and dark mode complete the story.</p>
+        </div>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="90" aria-label="Android phone QA score 90 out of 100"><span>QA score</span><strong>90</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="Android phone carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android phone panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android phone panel" title="Next panel">&rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="android-phone">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 90:</strong> mandatory checks pass; minus 6 for the collapsed alert and minus 4 for the older Saved Trips parking state</p>
+        <a href="#score-android-phone">Full breakdown</a>
+      </div>
+
+      <div class="carousel" aria-label="Android phone screenshot panels">
+        <article class="store-panel" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-left:-66px;--ring-right:auto;--ring-top:-62px;--ring-bottom:auto">
+          <span class="panel-index">01</span>
+          <span class="sticker">1 tap</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line"><span class="panel-accent">Save</span> your</span><span class="panel-line">trips</span></strong>
+            <small>Home to work, ready to go</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/saved_trip.png" target="_blank" aria-label="Open full Android Saved Trips screenshot"><img src="screenshots/android_mobile/saved_trip.png" alt="KRAIL Saved Trips with Home to Work and parking"></a></div>
+          <span class="ghost">Sydney</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00b5ef;--g2:#007aa8;--ring-right:-68px;--ring-bottom:-70px">
+          <span class="panel-index">02</span>
+          <span class="sticker live">Live</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">Live times</span><span class="panel-line">Start to finish</span></strong>
+            <small>Stops, stands and transfers</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/time_table_bus.png" target="_blank" aria-label="Open full Android timetable screenshot"><img src="screenshots/android_mobile/time_table_bus.png" alt="KRAIL route 333 timetable with expanded journey"></a></div>
+          <span class="ghost">Circular Quay</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-86px;--ring-right:auto;--ring-top:172px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup">
+              <span class="parking-badge" aria-hidden="true">P</span>
+              <strong><span class="panel-line">Check</span><span class="panel-line"><span class="panel-accent">parking</span> first</span></strong>
+            </div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/Tallawong_Parking_Card.png" target="_blank" aria-label="Open full Android Tallawong parking screenshot"><img src="screenshots/android_mobile/Tallawong_Parking_Card.png" alt="KRAIL Tallawong Park and Ride availability"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:112px">
+          <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">Check</span><span class="panel-line"><span class="panel-accent">service alerts</span></span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/ALERTS_1.png" target="_blank" aria-label="Open full Android service alert screenshot"><img src="screenshots/android_mobile/ALERTS_1.png" alt="KRAIL service alert sheet"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">4 min</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">See <span class="panel-accent">delays</span></span><span class="panel-line">in real time</span></strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/LIGHT_RAIL_TIMETABLE.png" target="_blank" aria-label="Open full Android delays screenshot"><img src="screenshots/android_mobile/LIGHT_RAIL_TIMETABLE.png" alt="KRAIL timetable showing a live delay"></a></div>
+          <span class="ghost">Light Rail</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:170px;--ring-right:34px;--ring-bottom:auto;--ring-top:-104px">
+          <span class="panel-index">06</span>
+          <span class="sticker">Any time</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line"><span class="panel-accent">Plan</span> around</span><span class="panel-line">your day</span></strong>
+            <small>Leave now or arrive by</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/PLAN_TRIP_SHEET.png" target="_blank" aria-label="Open full Android trip planner screenshot"><img src="screenshots/android_mobile/PLAN_TRIP_SHEET.png" alt="KRAIL trip planning sheet"></a></div>
+          <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">Made for the</span><span class="panel-line">6am <span class="panel-accent">dark</span></span></strong>
+            <small>Dark mode in your colours</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_mobile/dark_mode.png" target="_blank" aria-label="Open full Android dark mode screenshot"><img src="screenshots/android_mobile/dark_mode.png" alt="KRAIL Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="platform" id="android-tablet">
+      <div class="platform-head">
+        <div>
+          <p class="platform-kicker">Google Play / 7 panels</p>
+          <h2>Android tablet</h2>
+          <p class="platform-note">The full seven-panel story mirrors the phone listing, with route 333, all 15 stops, the wider map, and a deliberate dark-mode finish.</p>
+        </div>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="96" aria-label="Android tablet QA score 96 out of 100"><span>QA score</span><strong>96</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="Android tablet carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android tablet panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android tablet panel" title="Next panel">&rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-why warning" data-score-explanation="android-tablet">
+        <span class="risk-chip warning">Policy warning</span>
+        <p><strong>Why 96:</strong> mandatory checks pass; minus 4 because Google may crop added marketing copy on large-screen promotional surfaces</p>
+        <a href="#score-android-tablet">Full breakdown</a>
+      </div>
+
+      <div class="carousel" aria-label="Android tablet screenshot panels">
+        <article class="store-panel tablet-landscape" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-left:-70px;--ring-right:auto;--ring-top:-82px;--ring-bottom:auto">
+          <span class="panel-index">01</span>
+          <span class="sticker">Saved</span>
+          <div class="panel-copy">
+            <strong><span class="panel-accent">Save</span> your trips</strong>
+            <small>Home to Work and Home to Uni</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/01_saved_trips.png" target="_blank" aria-label="Open full Android tablet Saved Trips screenshot"><img src="screenshots/android_tablet/01_saved_trips.png" alt="KRAIL Android tablet Saved Trips screen"></a></div>
+          <span class="ghost">Daily trips</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-70px;--ring-bottom:-74px">
+          <span class="panel-index">02</span>
+          <span class="sticker live">15 stops</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">Live times</span><span class="panel-line panel-accent">Start to finish</span></strong>
+            <small>Route 333 expanded beside the map</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/02_live_times.png" target="_blank" aria-label="Open full Android tablet route 333 screenshot"><img src="screenshots/android_tablet/02_live_times.png" alt="KRAIL Android tablet route 333 expanded beside the map"></a></div>
+          <span class="ghost">Bondi to Quay</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-80px;--ring-right:auto;--ring-top:86px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/03_parking_tallawong.png" target="_blank" aria-label="Open full Android tablet parking screenshot"><img src="screenshots/android_tablet/03_parking_tallawong.png" alt="KRAIL Android tablet Tallawong parking screen"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel tablet-landscape alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:64px">
+          <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong>Check <span class="panel-accent">service alerts</span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/04_service_alerts.png" target="_blank" aria-label="Open full Android tablet service alert screenshot"><img src="screenshots/android_tablet/04_service_alerts.png" alt="KRAIL Android tablet service alert sheet"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">Live</span>
+          <div class="panel-copy">
+            <strong>See <span class="panel-accent">delays</span> in real time</strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/05_live_delays.png" target="_blank" aria-label="Open full Android tablet delay screenshot"><img src="screenshots/android_tablet/05_live_delays.png" alt="KRAIL Android tablet timetable showing a delayed route 333"></a></div>
+          <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:185px;--ring-right:32px;--ring-bottom:auto;--ring-top:-116px">
+          <span class="panel-index">06</span>
+          <span class="sticker">Any time</span>
+          <div class="panel-copy">
+            <strong><span class="panel-accent">Plan</span> around your day</strong>
+            <small>Leave now or arrive by</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/06_plan_trip_sheet.png" target="_blank" aria-label="Open full Android tablet trip planner screenshot"><img src="screenshots/android_tablet/06_plan_trip_sheet.png" alt="KRAIL Android tablet trip planning sheet"></a></div>
+          <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel tablet-landscape" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+            <small>Dark mode in your colours</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/android_tablet/07_dark_mode.png" target="_blank" aria-label="Open full Android tablet dark mode screenshot"><img src="screenshots/android_tablet/07_dark_mode.png" alt="KRAIL Android tablet Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="platform" id="iphone">
+      <div class="platform-head">
+        <div>
+          <p class="platform-kicker">Apple App Store / 7 panels</p>
+          <h2>iPhone 6.5-inch</h2>
+          <p class="platform-note">Fresh captures from the latest main build use approved labels, Bondi Junction to Circular Quay, an expanded route 333, and one dark-mode panel.</p>
+        </div>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="98" aria-label="iPhone QA score 98 out of 100"><span>QA score</span><strong>98</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="iPhone carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPhone panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPhone panel" title="Next panel">&rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="iphone">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 98:</strong> mandatory checks pass; minus 2 because the expanded alert is dense at App Store thumbnail size</p>
+        <a href="#score-iphone">Full breakdown</a>
+      </div>
+
+      <div class="carousel" aria-label="iPhone screenshot panels">
+        <article class="store-panel" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-right:-68px;--ring-bottom:-70px">
+          <span class="panel-index">01</span>
+          <span class="sticker">Saved</span>
+          <div class="panel-copy">
+            <strong><span class="panel-accent">Save</span> your trips</strong>
+            <small>Home to Work and Home to Uni</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/01_saved_trips.png" target="_blank" aria-label="Open full iPhone Saved Trips screenshot"><img src="screenshots/iphone65/01_saved_trips.png" alt="KRAIL iPhone Saved Trips screen"></a></div>
+          <span class="ghost">Daily trips</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-68px;--ring-bottom:-70px">
+          <span class="panel-index">02</span>
+          <span class="sticker live">15 stops</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">Live times</span><span class="panel-line panel-accent">Start to finish</span></strong>
+            <small>Route 333, expanded</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/02_live_times.png" target="_blank" aria-label="Open full iPhone route 333 screenshot"><img src="screenshots/iphone65/02_live_times.png" alt="KRAIL iPhone route 333 expanded timetable"></a></div>
+          <span class="ghost">Circular Quay</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-top:174px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/03_parking_tallawong.png" target="_blank" aria-label="Open full iPhone Tallawong parking screenshot"><img src="screenshots/iphone65/03_parking_tallawong.png" alt="KRAIL iPhone Tallawong parking details"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:112px">
+          <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong>Check <span class="panel-accent">service alerts</span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/04_service_alerts.png" target="_blank" aria-label="Open full iPhone service alert screenshot"><img src="screenshots/iphone65/04_service_alerts.png" alt="KRAIL iPhone service alert sheet"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">Live</span>
+          <div class="panel-copy">
+            <strong>See <span class="panel-accent">delays</span> in real time</strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/05_live_delays.png" target="_blank" aria-label="Open full iPhone delay screenshot"><img src="screenshots/iphone65/05_live_delays.png" alt="KRAIL iPhone timetable showing a delayed route 333"></a></div>
+          <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:170px;--ring-right:28px;--ring-bottom:auto;--ring-top:-106px">
+          <span class="panel-index">06</span>
+          <span class="sticker">Any time</span>
+          <div class="panel-copy">
+            <strong><span class="panel-accent">Plan</span> around your day</strong>
+            <small>Leave now or arrive by</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/06_plan_trip_sheet.png" target="_blank" aria-label="Open full iPhone trip planner screenshot"><img src="screenshots/iphone65/06_plan_trip_sheet.png" alt="KRAIL iPhone trip planning sheet"></a></div>
+          <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+            <small>Dark mode in your colours</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/iphone65/07_dark_mode.png" target="_blank" aria-label="Open full iPhone dark mode screenshot"><img src="screenshots/iphone65/07_dark_mode.png" alt="KRAIL iPhone Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="platform" id="ipad">
+      <div class="platform-head">
+        <div>
+          <p class="platform-kicker">Apple App Store / 7 panels</p>
+          <h2>iPad 13-inch</h2>
+          <p class="platform-note">The latest main-branch build uses the same labels, route, expanded alert, and product themes as Android, with a dark-mode finish.</p>
+        </div>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="98" aria-label="iPad QA score 98 out of 100"><span>QA score</span><strong>98</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="iPad carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPad panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPad panel" title="Next panel">&rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="ipad">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 98:</strong> mandatory checks pass; minus 2 because the expanded alert competes with the map at thumbnail size</p>
+        <a href="#score-ipad">Full breakdown</a>
+      </div>
+
+      <div class="carousel" aria-label="iPad screenshot panels">
+        <article class="store-panel ipad-portrait" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-left:-74px;--ring-right:auto;--ring-top:-72px;--ring-bottom:auto">
+          <span class="panel-index">01</span>
+          <span class="sticker">Saved</span>
+          <div class="panel-copy">
+            <strong><span class="panel-accent">Save</span> your trips</strong>
+            <small>Home to Work and Home to Uni</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/01_saved_trips.png" target="_blank" aria-label="Open full iPad Saved Trips screenshot"><img src="screenshots/ipad13/01_saved_trips.png" alt="KRAIL iPad Saved Trips with map"></a></div>
+          <span class="ghost">Daily trips</span>
+        </article>
+
+        <article class="store-panel ipad-portrait" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-75px;--ring-bottom:-76px">
+          <span class="panel-index">02</span>
+          <span class="sticker live">15 stops</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line">Live times</span><span class="panel-line panel-accent">Start to finish</span></strong>
+            <small>Route 333 expanded beside the map</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/02_live_times.png" target="_blank" aria-label="Open full iPad route 333 screenshot"><img src="screenshots/ipad13/02_live_times.png" alt="KRAIL iPad route 333 expanded beside the map"></a></div>
+          <span class="ghost">Bondi to Quay</span>
+        </article>
+
+        <article class="store-panel ipad-portrait" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-top:174px;--ring-bottom:auto">
+          <span class="panel-index">03</span>
+          <div class="panel-copy">
+            <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+            <small>Live Park &amp; Ride availability</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/03_parking_tallawong.png" target="_blank" aria-label="Open full iPad parking screenshot"><img src="screenshots/ipad13/03_parking_tallawong.png" alt="KRAIL iPad Tallawong parking with map"></a></div>
+          <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel ipad-portrait alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:112px">
+          <span class="panel-index">04</span>
+          <span class="sticker">Alerts</span>
+          <div class="panel-copy">
+            <strong>Check <span class="panel-accent">service alerts</span></strong>
+            <small>Before you leave</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/04_service_alerts.png" target="_blank" aria-label="Open full iPad service alert screenshot"><img src="screenshots/ipad13/04_service_alerts.png" alt="KRAIL iPad service alert sheet beside the map"></a></div>
+          <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel ipad-portrait" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+          <span class="panel-index">05</span>
+          <span class="sticker">Live</span>
+          <div class="panel-copy">
+            <strong>See <span class="panel-accent">delays</span> in real time</strong>
+            <small>Your service, updated live</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/05_live_delays.png" target="_blank" aria-label="Open full iPad delay screenshot"><img src="screenshots/ipad13/05_live_delays.png" alt="KRAIL iPad timetable showing a delayed route 333 beside the map"></a></div>
+          <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel ipad-portrait plan-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:180px;--ring-right:36px;--ring-bottom:auto;--ring-top:-112px">
+          <span class="panel-index">06</span>
+          <span class="sticker">Any time</span>
+          <div class="panel-copy">
+            <strong><span class="panel-line"><span class="panel-accent">Plan</span> around</span><span class="panel-line">your day</span></strong>
+            <small>Leave now or arrive by</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/06_plan_trip_sheet.png" target="_blank" aria-label="Open full iPad trip planner screenshot"><img src="screenshots/ipad13/06_plan_trip_sheet.png" alt="KRAIL iPad trip planning sheet beside the map"></a></div>
+          <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel ipad-portrait" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+          <span class="panel-index">07</span>
+          <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+          <div class="panel-copy">
+            <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+            <small>Dark mode in your colours</small>
+          </div>
+          <div class="device"><a class="device-link" href="screenshots/ipad13/07_dark_mode.png" target="_blank" aria-label="Open full iPad dark mode screenshot"><img src="screenshots/ipad13/07_dark_mode.png" alt="KRAIL iPad Saved Trips in dark mode"></a></div>
+          <span class="ghost">Krail</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="capture-baseline" id="baseline">
+      <h2>Shared capture baseline</h2>
+      <dl class="capture-facts">
+        <div><dt>Primary trip</dt><dd>Bondi Junction Station to Circular Quay Station</dd></div>
+        <div><dt>Saved trips</dt><dd>Home to Work; Home to Uni</dd></div>
+        <div><dt>Parking</dt><dd>Tallawong P1, P2 and P3 with live Park &amp; Ride availability</dd></div>
+        <div><dt>Presentation</dt><dd>Light mode by default; dark mode on Android phone, Android tablet, iPhone, and iPad</dd></div>
+      </dl>
+    </section>
+
+    <section class="capture-baseline" id="scores">
+      <h2>Platform QA scores</h2>
+      <p class="readiness-note">Every platform starts at 100 only after mandatory file and report checks pass. Points are then deducted for documented presentation, proof, parity, or policy weaknesses. Each deduction below states what is wrong, why it matters, the exact improvement, and whether it creates store-review risk.</p>
+
+      <div class="score-audits">
+        <article class="score-audit" id="score-android-phone" data-score="90" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvements</span><h3>Android phone</h3></div>
+            <div class="score-audit-number">90 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Six primary 1080 x 1920 opaque PNGs meet Google Play's recommended 9:16 promotional format</li>
+                <li>The first three panels lead with real Saved Trips, live timetable, and parking UI</li>
+                <li>All marketing claims are concise and supported by visible app functionality</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-6</span><strong>Feature proof</strong><br><strong>Wrong:</strong> the first service-alert card is collapsed<br><strong>Impact:</strong> it reveals less alert detail than tablet and iOS<br><strong>Improve:</strong> recapture with the first alert card expanded<br><strong>Store risk:</strong> quality issue only; the visible claim remains accurate</p>
+              <p class="deduction"><span class="points">-4</span><strong>Cross-platform parity</strong><br><strong>Wrong:</strong> Saved Trips shows Schofields only instead of Tallawong and Schofields<br><strong>Impact:</strong> the phone state differs from the newer captures<br><strong>Improve:</strong> recapture with matching parking cards and labels<br><strong>Store risk:</strong> consistency issue only; no screenshot rule is violated</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Google Play rejection blocker detected</strong><br>The count, dimensions, opacity, app UI, and claims are valid. Confirm that the submitted Android build matches these screens and localize overlay copy for other languages.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-android-tablet" data-score="96" data-policy-status="warning">
+          <header class="score-audit-head">
+            <div><span class="risk-chip warning">Policy warning</span><h3>Android tablet</h3></div>
+            <div class="score-audit-number">96 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven native tablet captures show the real wide-screen app layout instead of enlarged phone screenshots</li>
+                <li>All outputs are opaque 1920 x 1080 PNGs with the recommended 16:9 aspect ratio</li>
+                <li>Saved Trips, expanded live times, parking, expanded alerts, planning, delays, and dark mode form a complete set</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-4</span><strong>Large-screen presentation</strong><br><strong>Wrong:</strong> all seven tablet panels add a headline and subline outside the app UI<br><strong>Impact:</strong> Google warns that extra text can be cut off on Play homepages<br><strong>Improve:</strong> keep a UI-only 1920 x 1080 fallback set ready and inspect Play Console previews<br><strong>Store risk:</strong> warning, not an automatic rejection; cropping or reduced promotion is more likely</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip warning">Warning</span>
+              <p class="policy-verdict"><strong>Google large-screen text guidance needs a fallback</strong><br>The files meet upload specifications, but Play may crop the copy or limit promotional use. A strict asset review could request UI-only replacement screenshots.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-iphone" data-score="98" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvement</span><h3>iPhone 6.5-inch</h3></div>
+            <div class="score-audit-number">98 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven opaque 1242 x 2688 PNGs use an accepted Apple 6.5-inch screenshot size</li>
+                <li>Every panel shows the app in use and text overlays are permitted by App Review Guideline 2.3.3</li>
+                <li>The set includes expanded journey and alert proof plus a genuine dark-mode capture</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-2</span><strong>Thumbnail readability</strong><br><strong>Wrong:</strong> the expanded service-alert detail is dense at App Store thumbnail size<br><strong>Impact:</strong> small alert text is difficult to scan before opening the image<br><strong>Improve:</strong> use a shorter alert or enlarge the app frame while retaining genuine app context<br><strong>Store risk:</strong> conversion issue only; dense genuine UI is not an Apple rejection reason</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Apple screenshot rejection blocker detected</strong><br>The accepted size, count, authentic screens, and permitted overlays should pass metadata review when the submitted build matches the captured functionality.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-ipad" data-score="98" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvement</span><h3>iPad 13-inch</h3></div>
+            <div class="score-audit-number">98 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven genuine iPad captures render as opaque 2064 x 2752 PNGs accepted for Apple's 13-inch display</li>
+                <li>The dual-pane map and detail layout proves native iPad support instead of presenting phone UI</li>
+                <li>Expanded journey, expanded alert, planning, parking, delays, and dark mode all use the latest app build</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-2</span><strong>Thumbnail readability</strong><br><strong>Wrong:</strong> the expanded alert body competes with the split-view map at thumbnail size<br><strong>Impact:</strong> the detailed message is difficult to scan in the carousel<br><strong>Improve:</strong> capture a shorter expanded alert while retaining the native split view<br><strong>Store risk:</strong> conversion issue only; the image accurately shows the iPad app in use</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Apple screenshot rejection blocker detected</strong><br>The captures are genuine iPad screens at an accepted 13-inch size. Confirm the submitted build supports the same dual-pane layouts and labels.</p>
+            </section>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="capture-baseline readiness" id="validation">
+      <h2>Cross-platform parity review</h2>
+      <dl class="capture-facts">
+        <div><dt>Journey and labels</dt><dd><span class="readiness-status">Aligned</span><br>Bondi Junction to Circular Quay, route 333, Home to Work, and Home to Uni are used across the sets. Timetable captures show an expanded trip.</dd></div>
+        <div><dt>Theme sequence</dt><dd><span class="readiness-status">Aligned</span><br>Train orange leads Saved Trips, Metro teal supports parking and alerts, Ferry green supports planning, and every device class includes a dark Train view.</dd></div>
+        <div><dt>Android phone alert</dt><dd><span class="readiness-status caution">Recapture for exact parity</span><br>The Android phone source leaves the first service-alert card collapsed; Android tablet, iPhone, and iPad show the first card expanded.</dd></div>
+        <div><dt>Saved parking cards</dt><dd><span class="readiness-status caution">Recapture for exact parity</span><br>The Android phone Saved Trips source shows Schofields only. The newer Android tablet, iPhone, and iPad sources show Tallawong and Schofields.</dd></div>
+      </dl>
+      <p class="readiness-note">These two differences are not store-policy problems and do not block upload. Recapture the Android phone alert and Saved Trips sources only if exact cross-device state parity is required; the current marketing sequence and claims remain accurate.</p>
+    </section>
+
+    <section class="capture-baseline readiness" id="readiness">
+      <h2>Submission readiness</h2>
+      <dl class="capture-facts">
+        <div><dt>Apple / iPhone</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at an accepted 1242 x 2688 size. Real app UI is visible and text overlays are permitted.</dd></div>
+        <div><dt>Apple / iPad</dt><dd><span class="readiness-status">Ready</span><br>7 opaque PNGs at the accepted 2064 x 2752 size for a 13-inch display.</dd></div>
+        <div><dt>Google / phone</dt><dd><span class="readiness-status">Ready</span><br>6 primary opaque 1080 x 1920 PNGs plus 1 optional dark-mode panel, within the eight-screenshot limit and showing shipped features.</dd></div>
+        <div><dt>Google / tablet</dt><dd><span class="readiness-status caution">Ready with fallback</span><br>7 opaque 1920 x 1080 PNGs meet the 10-inch size, ratio, and count rules. Keep a UI-only set ready because Google advises excluding extra marketing text from large-screen screenshots.</dd></div>
+      </dl>
+
+      <h3 style="margin:26px 0 10px;font:900 16px var(--display)">Conditional rejection gates</h3>
+      <dl class="capture-facts">
+        <div><dt><span class="risk-chip blocker">Blocker if triggered</span></dt><dd>Submitted build does not contain the shown screens, labels, themes, or states<br><br><strong>Possible outcome:</strong> inaccurate or misleading metadata rejection<br><strong>Action:</strong> verify every panel against the exact store-review build</dd></div>
+        <div><dt><span class="risk-chip warning">Localization warning</span></dt><dd>English overlays are reused on a non-English product page<br><br><strong>Possible outcome:</strong> weaker comprehension or promotional eligibility<br><strong>Action:</strong> render translated panels for each localized listing</dd></div>
+        <div><dt><span class="risk-chip warning">Current tablet warning</span></dt><dd>Marketing headlines sit outside the Android tablet app UI<br><br><strong>Possible outcome:</strong> copy may be cropped or assets may receive less promotion<br><strong>Action:</strong> retain a UI-only 16:9 fallback set</dd></div>
+        <div><dt><span class="risk-chip">Current file review</span></dt><dd>No dimension, count, opacity, duplicate-image, unsupported-claim, or wrong-device blocker was detected by the automated checks</dd></div>
+      </dl>
+
+      <div class="policy-evidence" aria-label="Official store policy evidence">
+        <div>
+          <h3>Apple content rule</h3>
+          <blockquote>&ldquo;Screenshots should show the app in use&rdquo;<cite><a href="https://developer.apple.com/app-store/review/guidelines/" target="_blank" rel="noreferrer">Apple App Review Guidelines 2.3.3</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+        <div>
+          <h3>Apple count rule</h3>
+          <blockquote>&ldquo;You must upload one to ten screenshots&rdquo;<cite><a href="https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/" target="_blank" rel="noreferrer">Apple screenshot specifications</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+        <div>
+          <h3>Google content rule</h3>
+          <blockquote>&ldquo;Screenshots must demonstrate the actual in-app or in-game experience&rdquo;<cite><a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank" rel="noreferrer">Google Play preview asset requirements</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+        <div>
+          <h3>Google large-screen rule</h3>
+          <blockquote>&ldquo;Exclude additional text that is not part of your core app experience&rdquo;<cite><a href="https://support.google.com/googleplay/android-developer/answer/9866151?hl=en" target="_blank" rel="noreferrer">Google Play large-screen guidance</a> / checked 9 August 2026</cite></blockquote>
+        </div>
+      </div>
+      <p class="readiness-note">The current assets have no high-confidence file-level rejection blocker. Store approval cannot be guaranteed because review also evaluates the submitted binary, metadata, account state, localization, and policies outside screenshot composition.</p>
+    </section>
+  </main>
+
+  <script>
+    document.querySelectorAll(".carousel-control").forEach((button) => {
+      button.addEventListener("click", () => {
+        const carousel = button.closest(".platform").querySelector(".carousel");
+        const panel = carousel.querySelector(".store-panel");
+        const gap = Number.parseFloat(getComputedStyle(carousel).gap) || 18;
+        const distance = panel.getBoundingClientRect().width + gap;
+        carousel.scrollBy({ left: distance * Number(button.dataset.dir), behavior: "smooth" });
+      });
+    });
+  </script>
+</body>
+</html>

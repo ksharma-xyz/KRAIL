@@ -1,0 +1,5 @@
+appId: xyz.ksharma.krail
+---
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

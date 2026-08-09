@@ -1,0 +1,8 @@
+appId: xyz.ksharma.krail
+---
+- tapOn:
+    point: "75%,20%"
+- waitForAnimationToEnd
+- assertVisible: "Delayed.*"
+- assertVisible: "15 stops"
+- takeScreenshot: store-listing/krail/screenshots/ipad13/05_live_delays

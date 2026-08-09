@@ -1,0 +1,8 @@
+appId: xyz.ksharma.krail
+---
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

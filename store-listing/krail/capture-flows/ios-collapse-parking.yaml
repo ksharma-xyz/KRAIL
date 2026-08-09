@@ -1,0 +1,6 @@
+appId: xyz.ksharma.krail
+---
+- tapOn: "Tallawong P1"
+- waitForAnimationToEnd
+- assertVisible: "Tallawong Station"
+- assertVisible: "Saved Trips"

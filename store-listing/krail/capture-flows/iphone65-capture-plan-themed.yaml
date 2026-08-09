@@ -1,0 +1,21 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Krail App"
+- waitForAnimationToEnd
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+- assertVisible: "333"
+- tapOn: "Plan your trip"
+- waitForAnimationToEnd
+- assertVisible: "Select Date"
+- swipe:
+    start: "50%,52%"
+    end: "50%,12%"
+    duration: 500
+- waitForAnimationToEnd
+- assertVisible: "Leave Now"
+- takeScreenshot: store-listing/krail/screenshots/iphone65/06_plan_trip_sheet

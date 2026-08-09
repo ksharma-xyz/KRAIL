@@ -1,0 +1,13 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn:
+    point: "18%,19%"
+- waitForAnimationToEnd
+- assertVisible: "333"
+- tapOn: "333"
+- waitForAnimationToEnd
+- assertVisible: "15 stops"
+- takeScreenshot: store-listing/krail/screenshots/android_tablet/02_live_times

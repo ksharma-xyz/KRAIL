@@ -1,0 +1,10 @@
+appId: xyz.ksharma.krail
+---
+- swipe:
+    start: "50%,10%"
+    end: "50%,90%"
+    duration: 600
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

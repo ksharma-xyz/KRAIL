@@ -1,0 +1,49 @@
+{
+  "google-play/phone": {
+    "spec": "1080x1920",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png"
+    ]
+  },
+  "google-play/tablet-10-inch": {
+    "spec": "1920x1080",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ]
+  },
+  "app-store/iphone-6.5-inch": {
+    "spec": "1242x2688",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ]
+  },
+  "app-store/ipad-13-inch": {
+    "spec": "2064x2752",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ]
+  }
+}

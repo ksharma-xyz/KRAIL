@@ -1,0 +1,20 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn:
+    point: "18%,19%"
+- waitForAnimationToEnd
+- assertVisible: "333"
+- tapOn: "333"
+- waitForAnimationToEnd
+- assertVisible: "1 Alert"
+- tapOn: "1 Alert"
+- waitForAnimationToEnd
+- assertVisible: "Service Alerts"
+- assertVisible: "Read More"
+- tapOn: "Read More"
+- waitForAnimationToEnd
+- assertNotVisible: "Read More"
+- takeScreenshot: store-listing/krail/screenshots/android_tablet/04_service_alerts

@@ -1,0 +1,24 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Krail App"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"
+- tapOn: "Home, to, Work"
+- extendedWaitUntil:
+    visible: "333"
+    timeout: 20000
+- tapOn: "333"
+- waitForAnimationToEnd
+- assertVisible: ".*Alerts?"
+- tapOn: ".*Alerts?"
+- waitForAnimationToEnd
+- assertVisible: "Service Alerts"
+- assertVisible: "Read More"
+- tapOn: "Read More"
+- waitForAnimationToEnd
+- assertNotVisible: "Read More"
+- assertNotVisible: "Location Permission Required"
+- takeScreenshot: store-listing/krail/screenshots/ipad13/04_service_alerts

@@ -1,0 +1,8 @@
+appId: xyz.ksharma.krail
+---
+- assertVisible: "Delayed.*"
+- tapOn: "Delayed.*"
+- waitForAnimationToEnd
+- assertVisible: "15 stops"
+- assertVisible: "Delayed.*"
+- takeScreenshot: store-listing/krail/screenshots/iphone65/05_live_delays

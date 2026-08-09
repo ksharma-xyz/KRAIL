@@ -1,0 +1,7 @@
+appId: xyz.ksharma.krail.debug
+---
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

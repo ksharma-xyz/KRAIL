@@ -1,0 +1,9 @@
+appId: xyz.ksharma.krail
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Krail App"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"
+- takeScreenshot: store-listing/krail/screenshots/ipad13/01_saved_trips

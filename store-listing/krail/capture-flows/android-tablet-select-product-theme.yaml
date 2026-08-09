@@ -1,0 +1,22 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn: "Settings"
+- waitForAnimationToEnd
+- assertVisible: "Settings"
+- tapOn: "Change Theme"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "${THEME_TAGLINE}"
+    direction: DOWN
+- tapOn: "${THEME_TAGLINE}"
+- tapOn: "Light"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

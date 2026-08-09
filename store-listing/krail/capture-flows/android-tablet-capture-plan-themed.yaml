@@ -1,0 +1,22 @@
+appId: xyz.ksharma.krail.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+- tapOn:
+    point: "18%,19%"
+- waitForAnimationToEnd
+- assertVisible: "333"
+- tapOn: "333"
+- waitForAnimationToEnd
+- assertVisible: "15 stops"
+- tapOn: "Plan your trip"
+- waitForAnimationToEnd
+- assertVisible: "Select Date"
+- swipe:
+    start: "26%,52%"
+    end: "26%,12%"
+    duration: 500
+- waitForAnimationToEnd
+- assertVisible: "Leave Now"
+- takeScreenshot: store-listing/krail/screenshots/android_tablet/06_plan_trip_sheet

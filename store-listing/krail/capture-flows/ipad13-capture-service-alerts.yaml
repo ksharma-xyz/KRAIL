@@ -5,10 +5,11 @@ appId: xyz.ksharma.krail
 - waitForAnimationToEnd
 - tapOn: "Krail App"
 - waitForAnimationToEnd
-- tapOn:
-    point: "20%,12%"
-- waitForAnimationToEnd
-- assertVisible: "333"
+- assertVisible: "Saved Trips"
+- tapOn: "Home, to, Work"
+- extendedWaitUntil:
+    visible: "333"
+    timeout: 20000
 - tapOn: "333"
 - waitForAnimationToEnd
 - assertVisible: ".*Alerts?"

@@ -22,11 +22,13 @@ name: Analytics registry sync
 # interpolated into a shell command, and never interpolated directly into a `run:`
 # step either.
 #
-# The push, PR, and merge run as KRAIL_BOT_PAT (a fine-grained PAT scoped to this
-# repo only, Contents: read/write), not the built-in GITHUB_TOKEN. Two reasons:
+# The push, PR, and merge run as the existing krail-gtfs-bot GitHub App (already used
+# by bump-after-release.yml; same KRAIL_BOT_APP_ID / KRAIL_BOT_PRIVATE_KEY secrets, no
+# new credential needed), not the built-in GITHUB_TOKEN. Two reasons:
 #   - A GITHUB_TOKEN-authored PR does not trigger this repo's pull_request-triggered
 #     required check (code-quality / detekt) - a standing GitHub restriction - which
-#     would leave every auto-merge attempt permanently blocked.
+#     would leave every auto-merge attempt permanently blocked. A GitHub App
+#     installation token is a distinct real actor and does not have that restriction.
 #   - Docs-gardener's charter explicitly forbids any bot here from auto-merging.
 #     This bot is a deliberate, narrow exception: its only possible edit is a single
 #     table cell, mechanically re-verified before every merge by validate_flip_diff.py,
@@ -50,9 +52,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Generate krail-bot token
+        id: app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.KRAIL_BOT_APP_ID }}
+          private-key: ${{ secrets.KRAIL_BOT_PRIVATE_KEY }}
+
       - uses: actions/checkout@v5
         with:
-          token: ${{ secrets.KRAIL_BOT_PAT }}
+          token: ${{ steps.app_token.outputs.token }}
 
       - name: Flip registered rows
         id: flip
@@ -67,8 +76,9 @@ jobs:
       - name: Push, open PR, and auto-merge
         if: steps.flip.outputs.flipped != ''
         env:
-          GH_TOKEN: ${{ secrets.KRAIL_BOT_PAT }}
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
           FLIPPED: ${{ steps.flip.outputs.flipped }}
+          KRAIL_BOT_APP_ID: ${{ secrets.KRAIL_BOT_APP_ID }}
         run: |
           # Deterministic branch name (hash of the sorted flipped names): a repeat
           # dispatch for the exact same still-open flip set lands on the same branch
@@ -83,8 +93,8 @@ jobs:
           fi
 
           git checkout -b "$branch"
-          git config user.name "krail-analytics-sync[bot]"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name "krail-gtfs-bot[bot]"
+          git config user.email "${KRAIL_BOT_APP_ID}+krail-gtfs-bot[bot]@users.noreply.github.com"
           git add docs/ANALYTICS_REGISTRY_HANDOFF.md
           git commit -m "docs(analytics): mark ${FLIPPED} registered"
           git push origin "$branch"

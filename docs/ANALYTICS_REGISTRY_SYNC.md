@@ -47,13 +47,16 @@ exception in `CLAUDE.md` and put a human back in the loop.
 
 ## Setup (one-time)
 
-`KRAIL_BOT_PAT` — a fine-grained PAT, scoped to this repo only, Contents: read/write,
-stored as a secret in **this** repo. Needed because a PR authored by the built-in
+Nothing new on this side. The push/PR/merge steps authenticate as the existing
+krail-gtfs-bot GitHub App (`KRAIL_BOT_APP_ID` / `KRAIL_BOT_PRIVATE_KEY`, already a
+secret here for `bump-after-release.yml`) via `actions/create-github-app-token`, the
+same pattern that workflow already uses. Needed because a PR authored by the built-in
 `GITHUB_TOKEN` never triggers `pull_request`-scoped required checks (a standing GitHub
 restriction), which would leave every auto-merge attempt permanently blocked on the
-required `code-quality / detekt` check.
+required `code-quality / detekt` check — a GitHub App installation token is a distinct
+real actor and doesn't have that restriction.
 
-`KRAIL_DISPATCH_TOKEN` — a separate fine-grained PAT, scoped to this repo only,
+`KRAIL_DISPATCH_TOKEN` — a fine-grained PAT, scoped to this repo only,
 Contents: read/write, stored as a secret in the **KRAIL-Analytics** repo. This is what
 lets that repo call `POST /repos/ksharma-xyz/KRAIL/dispatches`. It is a real write
 credential on this repo, not a narrower "dispatch-only" grant — GitHub has no such

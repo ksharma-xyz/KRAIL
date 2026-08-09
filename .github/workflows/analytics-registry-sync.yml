@@ -53,7 +53,7 @@ jobs:
           # dispatch for the exact same still-open flip set lands on the same branch
           # instead of opening a duplicate PR every time the daily backstop re-runs
           # before the first one merges.
-          slug=$(printf '%s' "$FLIPPED" | tr ',' '\n' | sort | tr '\n' ',' | shasum -a 256 | cut -c1-12)
+          slug=$(printf '%s' "$FLIPPED" | tr ',' '\n' | sort | tr '\n' ',' | sha256sum | cut -c1-12)
           branch="analytics-sync/${slug}"
 
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then

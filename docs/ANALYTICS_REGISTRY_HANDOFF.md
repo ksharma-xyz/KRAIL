@@ -23,8 +23,9 @@ New-event rows (`Event` column marked `(NEW EVENT)`, or `Param(s)` starting `NEW
 event:`) get flipped automatically: when KRAIL-Analytics labels the event, its CI
 fires a `repository_dispatch` naming it, and `.github/workflows/analytics-registry-sync.yml`
 opens a PR here flipping the row (labeled `analytics-sync`). Param and user-property
-rows have no per-item registry surface on the analytics side, so they're never
-touched by the bot — flip those by hand once their shape is final.
+rows are never touched by the bot — they have no per-item registry surface on the
+analytics side to check against, so mark those `Documented` by hand instead once
+their shape is final (see `Status = Documented` below).
 
 **New event name vs new param on an existing event** — both go in this ledger the same
 way, distinguished by the `Event` column. Read `docs/ANALYTICS_EVENTS.md` before adding

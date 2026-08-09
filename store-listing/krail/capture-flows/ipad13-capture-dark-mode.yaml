@@ -23,4 +23,5 @@ appId: xyz.ksharma.krail
 - tapOn: "Back"
 - waitForAnimationToEnd
 - assertVisible: "Saved Trips"
+- assertNotVisible: "Location Permission Required"
 - takeScreenshot: store-listing/krail/screenshots/ipad13/07_dark_mode

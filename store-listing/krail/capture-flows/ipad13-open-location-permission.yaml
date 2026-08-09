@@ -8,4 +8,4 @@ appId: xyz.ksharma.krail
 - assertVisible: "Location Permission Required"
 - tapOn: "Location Permission Required"
 - waitForAnimationToEnd
-- takeScreenshot: store-listing/krail/screenshots/ipad13/location_permission_state
+- assertNotVisible: "Location Permission Required"

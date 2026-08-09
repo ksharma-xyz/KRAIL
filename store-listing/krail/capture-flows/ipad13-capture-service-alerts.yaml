@@ -20,4 +20,5 @@ appId: xyz.ksharma.krail
 - tapOn: "Read More"
 - waitForAnimationToEnd
 - assertNotVisible: "Read More"
+- assertNotVisible: "Location Permission Required"
 - takeScreenshot: store-listing/krail/screenshots/ipad13/04_service_alerts

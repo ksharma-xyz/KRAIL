@@ -1,6 +1,7 @@
 {
   "android-phone": {
     "spec": "1080x1920",
+    "reportSha256": "b09783302725025f99b3f4ee297ed24a3bf7bcaa328fcafd1177315c75e4c467",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -9,10 +10,41 @@
       "05_live-delays.png",
       "06_plan-your-day.png",
       "07_dark-mode.png"
-    ]
+    ],
+    "inputs": {
+      "01_saved-trips.png": {
+        "source": "screenshots/android_mobile/saved_trip.png",
+        "sourceSha256": "5028e8cfd15d91fd26fe0afd125c1e46f19aa535d1093b60b1a5483ffb2e5eec"
+      },
+      "02_live-times.png": {
+        "source": "screenshots/android_mobile/time_table_bus.png",
+        "sourceSha256": "ef199f1c5352120831615781b498ae6adbfd7d78c8dd053beca35552ed541715"
+      },
+      "03_parking.png": {
+        "source": "screenshots/android_mobile/Tallawong_Parking_Card.png",
+        "sourceSha256": "880c48901161718037225971a8830837e2113340e83947fff9b768616e48bfb1"
+      },
+      "04_service-alerts.png": {
+        "source": "screenshots/android_mobile/ALERTS_1.png",
+        "sourceSha256": "df783edefa9810ee5853f84baa41997f2e80ba09935c51707ddbe34fedb64c56"
+      },
+      "05_live-delays.png": {
+        "source": "screenshots/android_mobile/LIGHT_RAIL_TIMETABLE.png",
+        "sourceSha256": "f75e8274eadd313dee88a036124700a78ac9a51ab930b4a03fe23e54acc9387e"
+      },
+      "06_plan-your-day.png": {
+        "source": "screenshots/android_mobile/PLAN_TRIP_SHEET.png",
+        "sourceSha256": "a9a2bcb73aaaaa5eb670852b16733c1005f3eeb6a0f1286cd77f0b26ff207c3b"
+      },
+      "07_dark-mode.png": {
+        "source": "screenshots/android_mobile/dark_mode.png",
+        "sourceSha256": "212c9c358b2604acd0a67703ccd9b8dde8e5a773cfe06df1dfe35bfdcf232d55"
+      }
+    }
   },
   "android-tablet": {
     "spec": "1920x1080",
+    "reportSha256": "b09783302725025f99b3f4ee297ed24a3bf7bcaa328fcafd1177315c75e4c467",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -21,10 +53,41 @@
       "05_live-delays.png",
       "06_plan-your-day.png",
       "07_dark-mode.png"
-    ]
+    ],
+    "inputs": {
+      "01_saved-trips.png": {
+        "source": "screenshots/android_tablet/01_saved_trips.png",
+        "sourceSha256": "38e27daba2f3f5cfc6396f9cfd08057ebf2b6f3dff52602ce71b65e498217c92"
+      },
+      "02_live-times.png": {
+        "source": "screenshots/android_tablet/02_live_times.png",
+        "sourceSha256": "ec7d8fc69f6410cf7132f70adcf2037714d4de7a2f8ade064f841af414c3bd20"
+      },
+      "03_parking.png": {
+        "source": "screenshots/android_tablet/03_parking_tallawong.png",
+        "sourceSha256": "02dc1827c45290901249f26b814ea75148157ddd4e3f4d9ef47e7fb1a5ed390d"
+      },
+      "04_service-alerts.png": {
+        "source": "screenshots/android_tablet/04_service_alerts.png",
+        "sourceSha256": "25c7ba8dbd994faf9269cc1134b1e5be73613f64c0d0f6889bd8adc7b2d4be90"
+      },
+      "05_live-delays.png": {
+        "source": "screenshots/android_tablet/05_live_delays.png",
+        "sourceSha256": "49c3bad4ebaf10ac136293c0940d694c247ea24963705bdd713277fa1bc183cb"
+      },
+      "06_plan-your-day.png": {
+        "source": "screenshots/android_tablet/06_plan_trip_sheet.png",
+        "sourceSha256": "50dea51e6cb17e51dac58c6dcf5c636b59b16fe1fbd084ef41c5b2aba42d4ea1"
+      },
+      "07_dark-mode.png": {
+        "source": "screenshots/android_tablet/07_dark_mode.png",
+        "sourceSha256": "d1bd002d6772135811aafe646971274486282e31c0255007b19432e31ab15c93"
+      }
+    }
   },
   "iphone-6-5": {
     "spec": "1242x2688",
+    "reportSha256": "b09783302725025f99b3f4ee297ed24a3bf7bcaa328fcafd1177315c75e4c467",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -33,10 +96,41 @@
       "05_live-delays.png",
       "06_plan-your-day.png",
       "07_dark-mode.png"
-    ]
+    ],
+    "inputs": {
+      "01_saved-trips.png": {
+        "source": "screenshots/iphone65/01_saved_trips.png",
+        "sourceSha256": "0a773ff898c967f5757699c2cea3864757fb732926f795db5aef1eaf1e892093"
+      },
+      "02_live-times.png": {
+        "source": "screenshots/iphone65/02_live_times.png",
+        "sourceSha256": "7227210eab7742c0316eb59e8d893f85505a05283459538f671b77889593253d"
+      },
+      "03_parking.png": {
+        "source": "screenshots/iphone65/03_parking_tallawong.png",
+        "sourceSha256": "a5dfdcd918b29627d86c575eb30a183f352c4f169c52e8b6233a49295e85bbd2"
+      },
+      "04_service-alerts.png": {
+        "source": "screenshots/iphone65/04_service_alerts.png",
+        "sourceSha256": "b3efcfde0d6cc3626db49db2a40563f018bcf9d4978e3d280b01992224d30b60"
+      },
+      "05_live-delays.png": {
+        "source": "screenshots/iphone65/05_live_delays.png",
+        "sourceSha256": "416def4571145fb75549aa13a35c56cb1ac48cc7edbd12c4b0533baa03e599f2"
+      },
+      "06_plan-your-day.png": {
+        "source": "screenshots/iphone65/06_plan_trip_sheet.png",
+        "sourceSha256": "1a3021e7600dc88fc01468fe42d893e54c4e8c33ab6ae2cc0a9954c605e5cb0c"
+      },
+      "07_dark-mode.png": {
+        "source": "screenshots/iphone65/07_dark_mode.png",
+        "sourceSha256": "d7864e8cec6238dd1a6bded7b7de0cead2a611f6502abf2289eff0dc82675ae1"
+      }
+    }
   },
   "ipad-13": {
     "spec": "2064x2752",
+    "reportSha256": "b09783302725025f99b3f4ee297ed24a3bf7bcaa328fcafd1177315c75e4c467",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -45,6 +139,36 @@
       "05_live-delays.png",
       "06_plan-your-day.png",
       "07_dark-mode.png"
-    ]
+    ],
+    "inputs": {
+      "01_saved-trips.png": {
+        "source": "screenshots/ipad13/01_saved_trips.png",
+        "sourceSha256": "2c2fa0dbbea0d95a1a4c9f922b397900049644425d71a10a31cc777c30fe75e8"
+      },
+      "02_live-times.png": {
+        "source": "screenshots/ipad13/02_live_times.png",
+        "sourceSha256": "324634a4615af4c1d1adda913e647208ee016b7e5922ec223f306fdc9a1e3fbf"
+      },
+      "03_parking.png": {
+        "source": "screenshots/ipad13/03_parking_tallawong.png",
+        "sourceSha256": "e68c93e99f97f67619c956b539981bfb3126e9d3d632e637f5f48768260a848d"
+      },
+      "04_service-alerts.png": {
+        "source": "screenshots/ipad13/04_service_alerts.png",
+        "sourceSha256": "2c9bf9d1ca10fc90074aa23b06b50edfde549321ba8e01a7e6b7a297f74ed3af"
+      },
+      "05_live-delays.png": {
+        "source": "screenshots/ipad13/05_live_delays.png",
+        "sourceSha256": "e1e83160d20429c9771139e4e6b7ba166353d6133efbf27f713a560e90061454"
+      },
+      "06_plan-your-day.png": {
+        "source": "screenshots/ipad13/06_plan_trip_sheet.png",
+        "sourceSha256": "3e705742578c0b9204ed4e96fd0facddd12ad75bb6fa0c33f2941c9dd72d3422"
+      },
+      "07_dark-mode.png": {
+        "source": "screenshots/ipad13/07_dark_mode.png",
+        "sourceSha256": "ada7c488456457ac29e917b949e6d57aa23e3746b22aa7daa237ef6f7ad9fb1f"
+      }
+    }
   }
 }

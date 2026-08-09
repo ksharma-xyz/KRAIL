@@ -4,7 +4,7 @@ Reads krail-screenshot-listing.html, extracts every .store-panel, re-renders eac
 one on its platform's exact store canvas via headless Chrome, and writes the PNGs
 into store-listing/krail/store-images/<platform>/.
 """
-import base64, json, pathlib, re, shutil, subprocess, sys
+import base64, hashlib, json, pathlib, re, shutil, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "krail-screenshot-listing.html"
@@ -336,6 +336,7 @@ def extract(section_id: str, doc: str):
 
 def main():
     doc = SRC.read_text()
+    report_digest = hashlib.sha256(SRC.read_bytes()).hexdigest()
     if WORK.exists():
         shutil.rmtree(WORK)
     WORK.mkdir(parents=True)
@@ -362,6 +363,7 @@ def main():
             stale.unlink()
         css = BASE_CSS + PLATFORM_CSS[name]
         entries = []
+        inputs = {}
 
         for i, (panel, slug) in enumerate(zip(panels, slugs), start=1):
             # alternate the sticker/device tilt exactly as the listing page does
@@ -371,6 +373,10 @@ def main():
                 'style="', f'style="--sticker-tilt:{tilt};--device-tilt:{dev};', 1)
             panel = re.sub(
                 r'<a class="device-link"[^>]*>(.*?)</a>', r"\1", panel, flags=re.S)
+            source_match = re.search(r'src="(screenshots/[^"]+)"', panel)
+            if not source_match:
+                sys.exit(f"{name} panel {i}: source capture not found")
+            source_rel = source_match.group(1)
             panel = re.sub(
                 r'src="(screenshots/[^"]+)"',
                 lambda m: 'src="' + datauri(m.group(1)) + '"', panel)
@@ -389,9 +395,18 @@ def main():
             ], check=True, capture_output=True)
 
             entries.append(out_png.name)
+            inputs[out_png.name] = {
+                "source": source_rel,
+                "sourceSha256": hashlib.sha256((ROOT / source_rel).read_bytes()).hexdigest(),
+            }
             print(f"  {out_png.relative_to(ROOT)}")
 
-        manifest[name] = {"spec": f"{cfg['px'][0]}x{cfg['px'][1]}", "files": entries}
+        manifest[name] = {
+            "spec": f"{cfg['px'][0]}x{cfg['px'][1]}",
+            "reportSha256": report_digest,
+            "files": entries,
+            "inputs": inputs,
+        }
         print(f"{name}: {len(entries)} panels at {cfg['px'][0]}x{cfg['px'][1]}")
 
     (OUT / "index.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -423,6 +438,10 @@ def main():
         "the Android phone folder contains six. The Android phone dark-mode "
         "seventh panel is kept under `optional/`.\n"
     )
+
+    verifier = ROOT.parent / "framework" / "verify-listing.py"
+    subprocess.run([sys.executable, str(verifier), str(ROOT / "listing-qa.json")],
+                   check=True)
 
 
 if __name__ == "__main__":

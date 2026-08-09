@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "report": "krail-screenshot-listing.html",
+  "outputIndex": "store-images/index.json",
+  "copyRules": {
+    "forbidFullStops": true,
+    "headlineMaxWords": 7,
+    "sublineMaxWords": 8
+  },
+  "maxOutputBytes": 8388608,
+  "platforms": [
+    {
+      "id": "android-phone",
+      "displayName": "Android phone",
+      "sectionId": "android-phone",
+      "sourceDimensions": [1080, 2400],
+      "outputDimensions": [1080, 1920],
+      "outputDir": "store-images/android-phone",
+      "uploadDir": "upload-ready/2026-08-09/google-play/phone",
+      "uploadCount": 6,
+      "optionalUploads": [
+        { "dir": "upload-ready/2026-08-09/optional/google-play-phone", "file": "07_dark-mode.png" }
+      ],
+      "panels": [
+        { "source": "screenshots/android_mobile/saved_trip.png", "output": "01_saved-trips.png" },
+        { "source": "screenshots/android_mobile/time_table_bus.png", "output": "02_live-times.png" },
+        { "source": "screenshots/android_mobile/Tallawong_Parking_Card.png", "output": "03_parking.png" },
+        { "source": "screenshots/android_mobile/ALERTS_1.png", "output": "04_service-alerts.png" },
+        { "source": "screenshots/android_mobile/LIGHT_RAIL_TIMETABLE.png", "output": "05_live-delays.png" },
+        { "source": "screenshots/android_mobile/PLAN_TRIP_SHEET.png", "output": "06_plan-your-day.png" },
+        { "source": "screenshots/android_mobile/dark_mode.png", "output": "07_dark-mode.png" }
+      ],
+      "deductions": [
+        { "points": 6, "reason": "service-alert card is collapsed" },
+        { "points": 4, "reason": "Saved Trips parking state differs from newer captures" }
+      ]
+    },
+    {
+      "id": "android-tablet",
+      "displayName": "Android tablet",
+      "sectionId": "android-tablet",
+      "sourceDimensions": [2560, 1600],
+      "outputDimensions": [1920, 1080],
+      "outputDir": "store-images/android-tablet",
+      "uploadDir": "upload-ready/2026-08-09/google-play/tablet-10-inch",
+      "uploadCount": 7,
+      "panels": [
+        { "source": "screenshots/android_tablet/01_saved_trips.png", "output": "01_saved-trips.png" },
+        { "source": "screenshots/android_tablet/02_live_times.png", "output": "02_live-times.png" },
+        { "source": "screenshots/android_tablet/03_parking_tallawong.png", "output": "03_parking.png" },
+        { "source": "screenshots/android_tablet/04_service_alerts.png", "output": "04_service-alerts.png" },
+        { "source": "screenshots/android_tablet/05_live_delays.png", "output": "05_live-delays.png" },
+        { "source": "screenshots/android_tablet/06_plan_trip_sheet.png", "output": "06_plan-your-day.png" },
+        { "source": "screenshots/android_tablet/07_dark_mode.png", "output": "07_dark-mode.png" }
+      ],
+      "deductions": [
+        { "points": 4, "reason": "Google may crop marketing copy on large-screen promotional surfaces" }
+      ]
+    },
+    {
+      "id": "iphone",
+      "outputKey": "iphone-6-5",
+      "displayName": "iPhone 6.5-inch",
+      "sectionId": "iphone",
+      "sourceDimensions": [1242, 2688],
+      "outputDimensions": [1242, 2688],
+      "outputDir": "store-images/iphone-6-5",
+      "uploadDir": "upload-ready/2026-08-09/app-store/iphone-6.5-inch",
+      "uploadCount": 7,
+      "panels": [
+        { "source": "screenshots/iphone65/01_saved_trips.png", "output": "01_saved-trips.png" },
+        { "source": "screenshots/iphone65/02_live_times.png", "output": "02_live-times.png" },
+        { "source": "screenshots/iphone65/03_parking_tallawong.png", "output": "03_parking.png" },
+        { "source": "screenshots/iphone65/04_service_alerts.png", "output": "04_service-alerts.png" },
+        { "source": "screenshots/iphone65/05_live_delays.png", "output": "05_live-delays.png" },
+        { "source": "screenshots/iphone65/06_plan_trip_sheet.png", "output": "06_plan-your-day.png" },
+        { "source": "screenshots/iphone65/07_dark_mode.png", "output": "07_dark-mode.png" }
+      ],
+      "deductions": [
+        { "points": 2, "reason": "expanded service-alert detail is dense at thumbnail size" }
+      ]
+    },
+    {
+      "id": "ipad",
+      "outputKey": "ipad-13",
+      "displayName": "iPad 13-inch",
+      "sectionId": "ipad",
+      "sourceDimensions": [2064, 2752],
+      "outputDimensions": [2064, 2752],
+      "outputDir": "store-images/ipad-13",
+      "uploadDir": "upload-ready/2026-08-09/app-store/ipad-13-inch",
+      "uploadCount": 7,
+      "panels": [
+        { "source": "screenshots/ipad13/01_saved_trips.png", "output": "01_saved-trips.png" },
+        { "source": "screenshots/ipad13/02_live_times.png", "output": "02_live-times.png" },
+        { "source": "screenshots/ipad13/03_parking_tallawong.png", "output": "03_parking.png" },
+        { "source": "screenshots/ipad13/04_service_alerts.png", "output": "04_service-alerts.png" },
+        { "source": "screenshots/ipad13/05_live_delays.png", "output": "05_live-delays.png" },
+        { "source": "screenshots/ipad13/06_plan_trip_sheet.png", "output": "06_plan-your-day.png" },
+        { "source": "screenshots/ipad13/07_dark_mode.png", "output": "07_dark-mode.png" }
+      ],
+      "deductions": [
+        { "points": 2, "reason": "expanded service-alert detail is dense at thumbnail size" }
+      ]
+    }
+  ]
+}

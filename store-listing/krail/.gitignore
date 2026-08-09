@@ -3,3 +3,6 @@ krail-store-listing-marketing-report.html
 
 # Scratch output from render-store-images.py
 .render-work/
+
+# Debug-only permission-state capture produced by the preflight flow
+screenshots/ipad13/location_permission_state.png

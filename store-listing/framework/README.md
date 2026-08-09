@@ -1,55 +1,104 @@
-# Store Panel Framework
+# Store Listing Framework
 
-App-agnostic template system for App Store / Google Play screenshot panels.
-Nothing in this folder knows about KRAIL: apps supply a config (palette, copy,
-screens, badges) and the framework supplies geometry, layout and rules. Designed
-to be lifted into its own repo later; consumed here by `../krail/`.
+App-agnostic groundwork for producing App Store and Google Play screenshot
+sets. Application folders provide captures, copy, colours, device metadata and
+automation flows. This folder owns reusable geometry, capture discipline and
+validation.
 
-## What a panel is
+The framework is intentionally kept separate from `../krail/` so it can move
+to its own repository later without carrying KRAIL data or artwork.
 
-One store screenshot = one **panel**: a colour field, a fixed text zone, a
-device slot showing one full app screen, and small decorations. Every panel of
-a device class shares identical geometry so a row of them reads as one system:
-**every device starts and ends at the same height.**
+## Repository contract
 
+Each app keeps this structure:
+
+```text
+store-listing/<app>/
+  README.md                    app-specific runbook and canonical data
+  listing-qa.json              machine-readable QA contract and scores
+  manifest.json                product story, palette and panel intent
+  capture-flows/               committed Maestro state-arrangement flows
+  screenshots/<device>/        raw, native, full-screen app captures
+  <app>-screenshot-listing.html review report and panel source
+  render-store-images.py       thin app renderer or framework adapter
+  store-images/<device>/       generated reviewable store panels
+  upload-ready/<date>/         immutable files arranged by store upload slot
 ```
-┌─────────────────────────┐
-│ safe border 18u         │  nothing but background art may enter
-│  [ghost]      [sticker] │  sticker: top-right, inside safe border
-│  TEXT ZONE (fixed h)    │  headline stack, fixed height per class
-│  ┌───────────────────┐  │
-│  │      DEVICE       │  │  full screen, never cropped, alternating
-│  │   (fixed slot)    │  │  tilt: odd panels -4deg, even +4deg
-│  └───────────────────┘  │
-│ breathing room          │
-└─────────────────────────┘
+
+Raw captures and final rendered PNGs are source artifacts and belong in Git
+LFS. Scratch browser pages, simulator logs and temporary contact sheets do not.
+
+## End-to-end workflow
+
+1. Build and install the exact branch under review
+2. Seed canonical labels, routes and test data
+3. Boot only the simulator being captured
+4. Set product theme, light or dark appearance, GPS and permissions
+5. Use Maestro to arrange and assert the required app state
+6. Use the platform-native screenshot command to capture the pinned device
+7. Verify native source dimensions immediately
+8. Generate the horizontal HTML review report and composed store panels
+9. Run `verify-listing.py` before visual review or upload
+10. Review every full-size output and a four-platform contact sheet
+11. Copy approved outputs into a dated `upload-ready` directory
+12. Commit raw captures, automation, report, generated panels and upload files
+
+For iOS, Maestro must not be trusted to select the correct screenshot source
+when multiple simulators are booted. Keep one iOS simulator booted, pin the
+UDID for interaction, and take the final pixels with `xcrun simctl io`.
+`capture-ios.sh` implements that rule.
+
+## Panel design contract
+
+One panel contains one benefit, one full app screen, one fixed text zone and a
+small amount of supporting decoration. All panels in a device class use stable
+geometry so text, device tops and device bottoms do not jump between panels.
+
+1. Keep foreground content inside the configured safe border
+2. Background texture may bleed; text, badges and devices may not
+3. Preserve visible colour field around every device edge
+4. Show the full app frame and never substitute another device class
+5. Use one message and one visual proof per panel
+6. Put the benefit first and keep the app evidence directly below it
+7. Use no full stops in headlines, sublines, stickers or ghost labels
+8. Use no more than seven headline words and eight subline words
+9. Keep headlines to two lines on phones and iPad; use one or two on landscape
+10. Centre portrait copy; align landscape-tablet copy to its device composition
+11. Keep badges outside the headline bounding box with a full line of clearance
+12. Accent one meaningful word or phrase, consistently across device classes
+13. Do not use decorative underlines when they reduce legibility
+14. Do not capture permission prompts, banners, keyboards, loading states or errors
+15. Distinct panels must use distinct source captures
+
+`template.css`, `template.html` and `devices.json` define the reusable geometry.
+Apps may tune sizes by device class, but must preserve safe borders and stable
+slots.
+
+## Device-specific placement
+
+- Phone: centred copy, headline at most two lines, app frame dominant, at least
+  6% horizontal safe space and visible field above and beside the frame
+- iPad portrait: centred copy with a shorter text zone than phone, real iPad
+  split-view evidence, badge isolated in the top corner
+- Android tablet landscape: compact copy above the wide device, full map and
+  details visible together, no phone capture enlarged into the slot
+- Dark panels: capture the same canonical Saved Trips state, use the requested
+  product theme, and assert that no location banner is visible
+
+## Automated gate
+
+Copy `project.example.json` into the app directory as `listing-qa.json`, fill in
+the real paths and run:
+
+```bash
+python3 store-listing/framework/verify-listing.py \
+  store-listing/<app>/listing-qa.json
 ```
 
-## Device classes
+The command validates source identity by native pixel size, rendered specs,
+opacity, file size, counts, duplicate captures, copy limits, punctuation,
+device headings and QA scores. Visual claims and crop quality still require a
+human or screenshot-based visual review; they are represented as explicit
+score deductions instead of being silently ignored.
 
-Geometry per class lives in `devices.json`. Canvas sizes are the stores'
-requirements; slot sizes are the template's internal layout at canvas scale.
-Classes ship separately: iPhone 6.9", iPhone 6.5" (derived), Android phone,
-Android tablet portrait + landscape, iPad 13", Play feature graphic.
-
-## The contract (what an app supplies)
-
-Per panel: `field` (two gradient stops), `propTints` (hi/lo), `headline`
-(lines, each sized s/m/num), `sticker` (label + style), `ghost` (vertical
-word), `badge` (optional square badge letter), `screen` (path to a full-frame
-capture in this class's native resolution), `tilt` (auto by position).
-
-Per app: display font (embedded), palette, capture set per device class.
-
-## Rules (enforced by review + verify script)
-
-1. One message per panel; benefit word first.
-2. Headline claims must be visible in the screen below them.
-3. The entire screen, never a crop; no transient prompts or dialogs captured.
-4. One device chrome per row; N distinct screens for N panels, zero repeats.
-5. Decoration never sits on the text baseline; one sticker per panel.
-6. Safe border inviolate for foreground; background art may bleed.
-7. Whitespace is a design element; the field must stay visible.
-8. Exact store pixels and ratios; text zone under 20% of canvas height for Play.
-9. No usage metrics, ever, in outward assets. Live network data is fine.
-10. Render-verify the composed output before any upload.
+See [QA-CHECKLIST.md](QA-CHECKLIST.md) for the release gate.

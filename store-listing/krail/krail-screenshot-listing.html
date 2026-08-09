@@ -180,6 +180,40 @@
       font-size: 14px;
     }
 
+    .platform-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: end;
+      gap: 18px;
+    }
+
+    .platform-score {
+      min-width: 96px;
+      padding-left: 12px;
+      border-left: 4px solid var(--metro);
+      line-height: 1;
+    }
+
+    .platform-score span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font: 800 10px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .platform-score strong {
+      font: 900 27px var(--display);
+    }
+
+    .platform-score small {
+      margin-left: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .carousel-controls {
       display: flex;
       flex: 0 0 auto;
@@ -570,6 +604,8 @@
         align-items: start;
       }
 
+      .platform-actions { align-items: center; }
+
       .platform-note { font-size: 13px; }
 
       .carousel-controls { display: none; }
@@ -624,6 +660,7 @@
       <a href="#iphone">iPhone 6.5-inch</a>
       <a href="#ipad">iPad 13-inch</a>
       <a href="#baseline">Capture baseline</a>
+      <a href="#scores">QA scores</a>
       <a href="#validation">Parity review</a>
       <a href="#readiness">Submission review</a>
     </nav>
@@ -635,9 +672,12 @@
           <h2>Android phone</h2>
           <p class="platform-note">Saved trips, live detail, and parking establish utility first. Alerts, live delays, flexible planning, and dark mode complete the story.</p>
         </div>
-        <div class="carousel-controls" aria-label="Android phone carousel controls">
-          <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android phone panel" title="Previous panel">&larr;</button>
-          <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android phone panel" title="Next panel">&rarr;</button>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="90" aria-label="Android phone QA score 90 out of 100"><span>QA score</span><strong>90</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="Android phone carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android phone panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android phone panel" title="Next panel">&rarr;</button>
+          </div>
         </div>
       </div>
 
@@ -730,9 +770,12 @@
           <h2>Android tablet</h2>
           <p class="platform-note">The full seven-panel story mirrors the phone listing, with route 333, all 15 stops, the wider map, and a deliberate dark-mode finish.</p>
         </div>
-        <div class="carousel-controls" aria-label="Android tablet carousel controls">
-          <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android tablet panel" title="Previous panel">&larr;</button>
-          <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android tablet panel" title="Next panel">&rarr;</button>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="96" aria-label="Android tablet QA score 96 out of 100"><span>QA score</span><strong>96</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="Android tablet carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous Android tablet panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next Android tablet panel" title="Next panel">&rarr;</button>
+          </div>
         </div>
       </div>
 
@@ -822,9 +865,12 @@
           <h2>iPhone 6.5-inch</h2>
           <p class="platform-note">Fresh captures from the latest main build use approved labels, Bondi Junction to Circular Quay, an expanded route 333, and one dark-mode panel.</p>
         </div>
-        <div class="carousel-controls" aria-label="iPhone carousel controls">
-          <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPhone panel" title="Previous panel">&larr;</button>
-          <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPhone panel" title="Next panel">&rarr;</button>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="98" aria-label="iPhone QA score 98 out of 100"><span>QA score</span><strong>98</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="iPhone carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPhone panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPhone panel" title="Next panel">&rarr;</button>
+          </div>
         </div>
       </div>
 
@@ -914,9 +960,12 @@
           <h2>iPad 13-inch</h2>
           <p class="platform-note">The latest main-branch build uses the same labels, route, expanded alert, and product themes as Android, with a dark-mode finish.</p>
         </div>
-        <div class="carousel-controls" aria-label="iPad carousel controls">
-          <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPad panel" title="Previous panel">&larr;</button>
-          <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPad panel" title="Next panel">&rarr;</button>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="98" aria-label="iPad QA score 98 out of 100"><span>QA score</span><strong>98</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="iPad carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPad panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPad panel" title="Next panel">&rarr;</button>
+          </div>
         </div>
       </div>
 
@@ -1007,6 +1056,17 @@
         <div><dt>Parking</dt><dd>Tallawong P1, P2 and P3 with live Park &amp; Ride availability</dd></div>
         <div><dt>Presentation</dt><dd>Light mode by default; dark mode on Android phone, Android tablet, iPhone, and iPad</dd></div>
       </dl>
+    </section>
+
+    <section class="capture-baseline" id="scores">
+      <h2>Platform QA scores</h2>
+      <dl class="capture-facts">
+        <div><dt>Android phone / 90</dt><dd>Technically valid; loses 6 points for the collapsed alert and 4 for the older Schofields-only Saved Trips state</dd></div>
+        <div><dt>Android tablet / 96</dt><dd>Strong native wide set; loses 4 points because Google may crop marketing copy on large-screen promotional surfaces</dd></div>
+        <div><dt>iPhone / 98</dt><dd>Native, complete and ready; loses 2 points because the expanded alert is dense at thumbnail size</dd></div>
+        <div><dt>iPad / 98</dt><dd>Correct native iPad captures, split-view proof and dark mode; loses 2 points for the dense expanded alert</dd></div>
+      </dl>
+      <p class="readiness-note">Scores start at 100 and subtract documented limitations from <code>listing-qa.json</code>. They measure this asset set, not the app itself and not the probability of store approval.</p>
     </section>
 
     <section class="capture-baseline readiness" id="validation">

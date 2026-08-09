@@ -1,0 +1,52 @@
+name: Analytics registry sync
+
+# Receives a repository_dispatch from KRAIL-Analytics naming event(s) it has just
+# labelled, flips the matching Pending row(s) in docs/ANALYTICS_REGISTRY_HANDOFF.md to
+# Registered, and opens a PR. Runs entirely on this repo's own GITHUB_TOKEN: no
+# cross-repo secret writes to this repo, and KRAIL-Analytics only ever needs a token
+# scoped to trigger a dispatch on KRAIL, never to push here directly.
+#
+# The dispatch's client_payload.events is untrusted input from another repo's
+# workflow, so it is passed to the flip script via an env var rather than interpolated
+# into a shell command, and never interpolated directly into a `run:` step either.
+
+on:
+  repository_dispatch:
+    types: [analytics-registry-sync]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  flip:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Flip registered rows
+        id: flip
+        env:
+          EVENTS_JSON: ${{ toJson(github.event.client_payload.events) }}
+        run: python3 scripts/flip_registry_status.py
+
+      - name: Open PR
+        if: steps.flip.outputs.flipped != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FLIPPED: ${{ steps.flip.outputs.flipped }}
+        run: |
+          branch="analytics-sync/${{ github.run_id }}"
+          git checkout -b "$branch"
+          git config user.name "krail-analytics-sync[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/ANALYTICS_REGISTRY_HANDOFF.md
+          git commit -m "docs(analytics): mark ${FLIPPED} registered"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "docs(analytics): mark event(s) registered" \
+            --body "Automated: KRAIL-Analytics has labelled \`${FLIPPED}\`, so this flips the matching row(s) in the ledger from Pending to Registered." \
+            --label analytics-sync

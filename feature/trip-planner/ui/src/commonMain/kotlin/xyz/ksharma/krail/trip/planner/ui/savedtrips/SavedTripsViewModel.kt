@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -434,6 +435,14 @@ class SavedTripsViewModel(
             log("StopId -> FacilityId Mapping: \n${it.joinToString("\n")}")
         }
 
+        // 4. Diff against the previously persisted set so add/remove can be tracked per facility.
+        val previousKeys = parkRideSandook.observeSavedParkRidesBySource(SavedTrips).first()
+            .map { it.stopId to it.facilityId }
+            .toSet()
+        val newKeys = savedParkRideList.map { it.stopId to it.facilityId }.toSet()
+        val addedKeys = newKeys - previousKeys
+        val removedKeys = previousKeys - newKeys
+
         // Clear all existing saved park rides linked to saved trips for accuracy
         parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
 
@@ -441,6 +450,34 @@ class SavedTripsViewModel(
             parkRideSandook.insertOrReplaceSavedParkRides(
                 parkRideInfoList = savedParkRideList,
                 source = SavedTrips,
+            )
+        }
+
+        trackParkRideAutoSync(addedKeys, removedKeys)
+    }
+
+    private fun trackParkRideAutoSync(
+        addedKeys: Set<Pair<String, String>>,
+        removedKeys: Set<Pair<String, String>>,
+    ) {
+        addedKeys.forEach { (stopId, facilityId) ->
+            analytics.track(
+                AnalyticsEvent.ParkRideUserFacilityEvent(
+                    facilityId = facilityId,
+                    stopId = stopId,
+                    action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD,
+                    source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
+                ),
+            )
+        }
+        removedKeys.forEach { (stopId, facilityId) ->
+            analytics.track(
+                AnalyticsEvent.ParkRideUserFacilityEvent(
+                    facilityId = facilityId,
+                    stopId = stopId,
+                    action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE,
+                    source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
+                ),
             )
         }
     }

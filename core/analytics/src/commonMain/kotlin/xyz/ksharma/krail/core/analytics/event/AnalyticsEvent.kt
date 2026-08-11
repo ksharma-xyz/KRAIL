@@ -1158,11 +1158,12 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     )
 
     /**
-     * Fired when a rider adds or removes a Park & Ride facility they picked themselves.
+     * Fired when a Park & Ride facility is added to or removed from the rider's saved list,
+     * whether they picked it themselves or it was synced automatically from a saved trip.
      *
-     * Add and remove are two outcomes of one intent (managing your own Park & Ride list), so
+     * Add and remove are two outcomes of one intent (managing the saved Park & Ride list), so
      * they share a name and split on [action] rather than spending two event slots. [source]
-     * is here so a second entry point (e.g. adding from search) folds into this event too.
+     * distinguishes the two entry points that can produce that intent.
      *
      * @param facilityId The ID of the Park and Ride facility.
      * @param stopId The ID of the stop associated with the facility.
@@ -1186,13 +1187,16 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             REMOVE("remove"),
         }
 
-        /** Where the rider performed the add or remove. */
+        /** Where the add or remove originated. */
         enum class Source(val value: String) {
-            /** The "Add Park & Ride" screen, reached from the home screen section. */
+            /** Rider manually toggled a station on the "Add Park & Ride" screen. */
             ADD_PARK_RIDE_SCREEN("add_park_ride_screen"),
 
-            /** The Park & Ride section on the home screen. */
-            HOME_SCREEN("home_screen"),
+            /**
+             * Auto-synced because a saved trip's stop gained or lost a Park & Ride facility
+             * mapping. See [SavedTripsViewModel.updateParkRideStopIdsInDb].
+             */
+            SAVED_TRIPS_SCREEN("saved_trips_screen"),
         }
     }
     // endregion

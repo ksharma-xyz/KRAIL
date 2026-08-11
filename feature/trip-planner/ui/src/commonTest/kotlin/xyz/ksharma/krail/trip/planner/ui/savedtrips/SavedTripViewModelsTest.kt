@@ -989,6 +989,78 @@ class SavedTripsViewModelTest {
 
     // endregion MoveSavedTrip
 
+    // region Park & Ride auto-sync analytics (SAVED_TRIPS_SCREEN source)
+    //
+    // Saving/removing a trip can add/remove a Park & Ride facility from the saved list
+    // without the rider ever touching the Add Park & Ride screen. These tests lock down
+    // that this auto-sync fires `park_ride_user_facility` with `source = SAVED_TRIPS_SCREEN`.
+
+    @Test
+    fun `GIVEN a trip stop maps to a park and ride facility WHEN the trip is saved THEN a saved trips screen add event is tracked`() =
+        runTest(testDispatcher) {
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            sandook.insertOrReplaceTrip(
+                tripId = "207210->999", fromStopId = "207210", fromStopName = "Stop A",
+                toStopId = "999", toStopName = "Stop B",
+            )
+
+            viewModel.uiState.test {
+                skipItems(1)
+                awaitItem()
+                advanceUntilIdle()
+
+                val tracked = analytics.getTrackedEvents("park_ride_user_facility")
+                assertEquals(1, tracked.size)
+                val event = assertIs<AnalyticsEvent.ParkRideUserFacilityEvent>(tracked.first())
+                assertEquals("6", event.facilityId)
+                assertEquals("207210", event.stopId)
+                assertEquals(AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD, event.action)
+                assertEquals(
+                    AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
+                    event.source,
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a saved trip synced a park and ride facility WHEN the trip is removed THEN a saved trips screen remove event is tracked`() =
+        runTest(testDispatcher) {
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            sandook.insertOrReplaceTrip(
+                tripId = "207210->999", fromStopId = "207210", fromStopName = "Stop A",
+                toStopId = "999", toStopName = "Stop B",
+            )
+
+            viewModel.uiState.test {
+                skipItems(1)
+                awaitItem()
+                advanceUntilIdle()
+                analytics.clear()
+
+                sandook.deleteTrip("207210->999")
+                advanceUntilIdle()
+
+                val tracked = analytics.getTrackedEvents("park_ride_user_facility")
+                assertEquals(1, tracked.size)
+                val event = assertIs<AnalyticsEvent.ParkRideUserFacilityEvent>(tracked.first())
+                assertEquals("6", event.facilityId)
+                assertEquals("207210", event.stopId)
+                assertEquals(AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE, event.action)
+                assertEquals(
+                    AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
+                    event.source,
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion Park & Ride auto-sync analytics
+
     @Test
     fun `a park ride card falls back to the stored stop name, never the raw stop id`() =
         runTest(testDispatcher) {

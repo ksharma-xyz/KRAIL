@@ -50,6 +50,9 @@ kotlin {
 
         commonMain.dependencies {
             implementation(projects.core.adaptiveUi)
+            implementation(projects.core.aiText)
+            implementation(projects.core.speechToText)
+            implementation(projects.core.textRecognition)
             implementation(projects.core.analytics)
             implementation(projects.core.appInfo)
             implementation(projects.core.appReview)

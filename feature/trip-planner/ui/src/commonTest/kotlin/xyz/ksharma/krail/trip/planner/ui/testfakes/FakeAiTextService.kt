@@ -11,11 +11,18 @@ class FakeAiTextService : AiTextService {
     var extractionResult: TripIntentExtraction? = null
     var lastExtractedText: String? = null
 
+    /** How many times [summarize] ran, so a caller's dedupe guard can be asserted on. */
+    var summarizeCallCount: Int = 0
+        private set
+
     override suspend fun checkAvailability(): AiAvailability = availability
 
     override suspend fun checkExtractionAvailability(): AiAvailability = extractionAvailability
 
-    override suspend fun summarize(text: String): String? = summarizeResult
+    override suspend fun summarize(text: String): String? {
+        summarizeCallCount++
+        return summarizeResult
+    }
 
     override suspend fun extractTripIntent(text: String): TripIntentExtraction? {
         lastExtractedText = text

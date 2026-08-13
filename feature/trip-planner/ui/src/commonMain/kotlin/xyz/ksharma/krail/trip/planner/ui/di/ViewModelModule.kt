@@ -67,7 +67,6 @@ val viewModelsModule = module {
         }
         AlertSummaryViewModel(
             aiTextService = get(),
-            analytics = get(),
             isAlertSummaryEnabled = isAlertSummaryEnabled,
         )
     }

@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiTextService
-import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.AlertSummaryStatusEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
@@ -36,7 +34,6 @@ private val RETRIABLE_REASONS = setOf("downloadable", "downloading")
  */
 class AlertSummaryViewModel(
     private val aiTextService: AiTextService,
-    private val analytics: Analytics,
     // Lambda, not a captured Boolean: re-read on every call so a debug-settings toggle
     // flipped while this sheet is open (Debug Settings -> back, same nav entry) takes
     // effect immediately rather than only on next ViewModel creation.
@@ -106,9 +103,6 @@ class AlertSummaryViewModel(
             delay(GENERATING_MIN_DURATION_MS)
 
             _uiState.value = AlertSummaryUiState.Resolved(text = summary)
-            analytics.track(
-                AlertSummaryStatusEvent(alertSetKey = setKey, action = AlertSummaryStatusEvent.Action.SHOWN),
-            )
         }
     }
 
@@ -136,26 +130,23 @@ class AlertSummaryViewModel(
         return perAlertSummaries.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { "• $it" }
     }
 
+    /**
+     * The vote is recorded in state only: it flips the control to its chosen side and locks
+     * it. Nothing is reported anywhere.
+     */
     private fun onVoteClicked(vote: AlertFeedbackVoteChoice) {
         val current = _uiState.value as? AlertSummaryUiState.Resolved ?: return
-        val setKey = requestedSetKey ?: return
         if (current.vote != null) return // one vote per summary, matches every other feedback control
 
         _uiState.value = current.copy(vote = vote)
-        val action = when (vote) {
-            AlertFeedbackVoteChoice.UP -> AlertSummaryStatusEvent.Action.UPVOTE
-            AlertFeedbackVoteChoice.DOWN -> AlertSummaryStatusEvent.Action.DOWNVOTE
-        }
-        analytics.track(AlertSummaryStatusEvent(alertSetKey = setKey, action = action))
     }
 }
 
 /**
  * Stable per-content id for a set of alerts. There is no server-provided alert id in
  * [ServiceAlert] today — content is stable once TfNSW publishes it, so the sorted,
- * concatenated heading+message of every alert in the set is an adequate substitute
- * cache/analytics key. Sorted so the same set of alerts hashes identically regardless of
- * iteration order.
+ * concatenated heading+message of every alert in the set is an adequate substitute cache
+ * key. Sorted so the same set of alerts hashes identically regardless of iteration order.
  */
 internal fun ImmutableSet<ServiceAlert>.summaryCacheKey(): String =
     map { "${it.heading}|${it.message}" }.sorted().joinToString("||").hashCode().toString()

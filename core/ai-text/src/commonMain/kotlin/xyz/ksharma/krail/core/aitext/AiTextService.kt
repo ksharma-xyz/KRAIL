@@ -90,9 +90,9 @@ data class TimeIntent(
 )
 
 /**
- * Whether [AiTextService] can be used right now. [Unavailable.reason] is for logging /
- * analytics only — never shown to the user, since both features this backs are additive
- * and must degrade silently to today's UI.
+ * Whether [AiTextService] can be used right now. [Unavailable.reason] is for logging only —
+ * never shown to the user, since both features this backs are additive and must degrade
+ * silently to today's UI.
  */
 sealed interface AiAvailability {
     data object Available : AiAvailability

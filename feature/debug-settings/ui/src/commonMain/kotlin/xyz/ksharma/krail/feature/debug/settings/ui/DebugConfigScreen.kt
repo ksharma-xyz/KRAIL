@@ -37,6 +37,11 @@ fun DebugConfigScreen(
     onTripTrackingToggle: (Boolean) -> Unit = {},
     addressSearchEnabled: Boolean = false,
     onAddressSearchToggle: (Boolean) -> Unit = {},
+    alertSummaryEnabled: Boolean = false,
+    onAlertSummaryToggle: (Boolean) -> Unit = {},
+    aiSearchInputEnabled: Boolean = false,
+    onAiSearchInputToggle: (Boolean) -> Unit = {},
+    onDeviceAiAvailable: Boolean = true,
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
     onResetReviewClick: () -> Unit = {},
@@ -78,6 +83,26 @@ fun DebugConfigScreen(
                         subtitle = "Override SEARCH_STOP_ADDRESS_SEARCH_ENABLED RC flag.",
                         checked = addressSearchEnabled,
                         onCheckedChange = onAddressSearchToggle,
+                    )
+                }
+                item(key = "tile-alert-summary") {
+                    DebugConfigToggleTile(
+                        title = "Alert Summary",
+                        subtitle = "Override ALERT_SUMMARY_ENABLED RC flag.",
+                        checked = alertSummaryEnabled,
+                        onCheckedChange = onAlertSummaryToggle,
+                        enabled = onDeviceAiAvailable,
+                        disabledReason = "On-device AI isn't available on this device.",
+                    )
+                }
+                item(key = "tile-ai-search-input") {
+                    DebugConfigToggleTile(
+                        title = "AI Search Input",
+                        subtitle = "Override AI_SEARCH_INPUT_ENABLED RC flag.",
+                        checked = aiSearchInputEnabled,
+                        onCheckedChange = onAiSearchInputToggle,
+                        enabled = onDeviceAiAvailable,
+                        disabledReason = "On-device AI isn't available on this device.",
                     )
                 }
                 item(key = "tile-reset-review") {
@@ -145,12 +170,14 @@ internal fun DebugConfigToggleTile(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    disabledReason: String? = null,
 ) {
     val dim = KrailTheme.dimensions
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .klickable(onClick = { onCheckedChange(!checked) })
+            .klickable(enabled = enabled, onClick = { onCheckedChange(!checked) })
             .semantics(mergeDescendants = true) {},
     ) {
         Row(
@@ -166,8 +193,15 @@ internal fun DebugConfigToggleTile(
                     style = KrailTheme.typography.body,
                     color = KrailTheme.colors.softLabel,
                 )
+                if (!enabled && disabledReason != null) {
+                    Text(
+                        text = disabledReason,
+                        style = KrailTheme.typography.body,
+                        color = KrailTheme.colors.error,
+                    )
+                }
             }
-            Switch(checked = checked, onCheckedChange = onCheckedChange)
+            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         }
         Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
     }

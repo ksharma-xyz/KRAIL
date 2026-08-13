@@ -172,6 +172,10 @@ object RemoteConfigDefaults {
                 first = FlagKeys.IN_APP_REVIEW_ENABLED.key,
                 second = false,
             ),
+            Pair(
+                first = FlagKeys.ALERT_SUMMARY_ENABLED.key,
+                second = false,
+            ),
         )
     }
 }

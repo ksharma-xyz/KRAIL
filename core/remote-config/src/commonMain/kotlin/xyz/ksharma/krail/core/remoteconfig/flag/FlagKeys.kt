@@ -87,4 +87,22 @@ enum class FlagKeys(val key: String) {
      * deep-links to the store listing and is unaffected.
      */
     IN_APP_REVIEW_ENABLED("in_app_review_enabled"),
+
+    /**
+     * Master kill switch for the on-device AI alert summary + vote UI on
+     * `ServiceAlertScreen`/`CollapsibleAlert`. `false` by default. When off, no
+     * [xyz.ksharma.krail.core.aitext.AiTextService] call is ever made and nothing renders
+     * beyond today's plain alert card — same behaviour as a device that fails the
+     * on-device availability check. Lets the feature be pulled instantly without a release
+     * if summaries prove low quality or the vote signal turns negative.
+     */
+    ALERT_SUMMARY_ENABLED("alert_summary_enabled"),
+
+    /**
+     * Master kill switch for the AI search-input flow (speak/type/paste instead of manual
+     * From/To + time picking). `false` by default. When off, the entry point doesn't render
+     * at all on the search row — same "not built" outcome as a device that fails the
+     * on-device availability check, not a disabled-looking button.
+     */
+    AI_SEARCH_INPUT_ENABLED("ai_search_input_enabled"),
 }

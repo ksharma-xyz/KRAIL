@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldDecorator
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
@@ -31,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +41,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentAlpha
@@ -49,6 +53,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.tokens.RadiusTokens
 import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
@@ -74,11 +79,20 @@ fun TextField(
     // Same shape as ButtonDefaults: callers override the whole colour set rather than passing
     // one-off colours. Defaults keep every existing call site unchanged.
     colors: TextFieldColors = TextFieldDefaults.colors(),
+    // SingleLine keeps the pill shape and the fixed [TextFieldHeight]; a multiline limit
+    // drops both so the caller's own height/shape apply (see [shape]).
+    lineLimits: TextFieldLineLimits = TextFieldLineLimits.SingleLine,
+    shape: Shape? = null,
+    // Fires on the IME action key (e.g. Send) - null means the platform's default
+    // behaviour (usually just dismissing the keyboard) applies.
+    onSubmit: (() -> Unit)? = null,
+    // Kept as the last parameter (existing call sites use trailing-lambda syntax for it).
     onTextChange: (CharSequence) -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val contentAlpha = if (enabled) 1f else TextFieldTokens.DisabledLabelOpacity
+    val layout = textFieldLayout(lineLimits = lineLimits, shape = shape)
 
     // Hoisted state takes precedence — callers that need to mutate the text from
     // outside (e.g. selecting a suggestion chip that fills the field) must pass
@@ -106,8 +120,7 @@ fun TextField(
         BasicTextField(
             state = textFieldState,
             enabled = enabled,
-            modifier = modifier
-                .height(TextFieldHeight),
+            modifier = modifier.then(layout.heightModifier),
             // This will change the colors of the innerTextField() composable.
             textStyle = textStyle
                 ?: LocalTextStyle.current.copy(
@@ -120,10 +133,11 @@ fun TextField(
                 imeAction = imeAction,
                 hintLocales = LocaleList.current,
             ),
-            lineLimits = TextFieldLineLimits.SingleLine,
+            lineLimits = lineLimits,
             readOnly = readOnly,
             interactionSource = interactionSource,
             cursorBrush = SolidColor(colors.cursorColor),
+            onKeyboardAction = onSubmit?.let { submit -> KeyboardActionHandler { submit() } },
             // Workaround: Using an anonymous object instead of a lambda
             // https://youtrack.jetbrains.com/projects/CMP/issues/CMP-9456/Reference-to-lambda-in-lambda-in-function-TextField-can-not-be-evaluated
             decorator = object : TextFieldDecorator {
@@ -131,18 +145,18 @@ fun TextField(
                 override fun Decoration(innerTextField: @Composable () -> Unit) {
                     val innerTextFieldContent = remember { movableContentOf { innerTextField() } }
                     Row(
-                        modifier = Modifier
+                        modifier = layout.containerModifier
                             .background(
-                                shape = RoundedCornerShape(TextFieldHeight.div(2)),
+                                shape = layout.shape,
                                 color = colors.containerColor,
                             )
-                            .padding(vertical = SpacingTokens.XS)
+                            .padding(vertical = layout.verticalPadding)
                             .padding(
                                 end = SpacingTokens.XL,
                                 start = if (leadingIcon != null) 0.dp else SpacingTokens.XL,
                             ),
                         horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = layout.verticalAlignment,
                     ) {
                         leadingIcon?.let { icon ->
                             icon.invoke()
@@ -155,12 +169,14 @@ fun TextField(
                                 TextFieldPlaceholder(
                                     placeholder = placeholder,
                                     color = colors.placeholderColor,
+                                    maxLines = layout.placeholderMaxLines,
                                 )
                             }
                         } else if (textFieldState.text.isEmpty()) {
                             TextFieldPlaceholder(
                                 placeholder = placeholder,
                                 color = colors.placeholderColor,
+                                maxLines = layout.placeholderMaxLines,
                             )
                         } else {
                             innerTextFieldContent()
@@ -171,6 +187,43 @@ fun TextField(
         )
     }
 }
+
+/**
+ * The handful of layout values that differ between a single-line pill and a multiline box,
+ * resolved in one place so [TextField] itself stays branch-free over [TextFieldLineLimits].
+ */
+@Immutable
+private class TextFieldLayout(
+    val heightModifier: Modifier,
+    val containerModifier: Modifier,
+    val shape: Shape,
+    val verticalPadding: Dp,
+    val verticalAlignment: Alignment.Vertical,
+    val placeholderMaxLines: Int,
+)
+
+private fun textFieldLayout(lineLimits: TextFieldLineLimits, shape: Shape?): TextFieldLayout =
+    if (lineLimits == TextFieldLineLimits.SingleLine) {
+        TextFieldLayout(
+            heightModifier = Modifier.height(TextFieldHeight),
+            containerModifier = Modifier,
+            shape = shape ?: RoundedCornerShape(TextFieldHeight.div(2)),
+            verticalPadding = SpacingTokens.XS,
+            verticalAlignment = Alignment.CenterVertically,
+            placeholderMaxLines = MAX_LINES,
+        )
+    } else {
+        // No height of its own — a multiline field takes the height the caller gives it, and
+        // the decoration fills that box so the container colour covers the whole slot.
+        TextFieldLayout(
+            heightModifier = Modifier,
+            containerModifier = Modifier.fillMaxSize(),
+            shape = shape ?: RoundedCornerShape(RadiusTokens.XL),
+            verticalPadding = SpacingTokens.M,
+            verticalAlignment = Alignment.Top,
+            placeholderMaxLines = Int.MAX_VALUE,
+        )
+    }
 
 // region Placeholder
 

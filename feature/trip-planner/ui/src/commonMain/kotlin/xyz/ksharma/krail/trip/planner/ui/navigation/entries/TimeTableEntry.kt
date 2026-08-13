@@ -34,6 +34,7 @@ import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertScreen
+import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorScreen
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.business.JourneyMapMapper.toJourneyMapState
@@ -256,8 +257,12 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                         WindowInsets(0, 0, 0, 0)
                     },
                 ) {
+                    val alertSummaryViewModel: AlertSummaryViewModel = koinViewModel()
+                    val alertSummaryState by alertSummaryViewModel.uiState.collectAsStateWithLifecycle()
                     ServiceAlertScreen(
                         serviceAlerts = alertsToDisplay,
+                        alertSummaryState = alertSummaryState,
+                        onSummaryEvent = alertSummaryViewModel::onEvent,
                     )
                 }
             }

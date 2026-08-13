@@ -31,7 +31,6 @@ kotlin {
             dependencies {
                 api(libs.di.koinAndroid)
                 implementation(libs.core.ktx)
-                implementation(libs.activity.compose)
             }
         }
 
@@ -39,6 +38,7 @@ kotlin {
             dependencies {
                 implementation(projects.core.log)
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.aagya.data)
                 api(libs.di.koinComposeViewmodel)
             }
         }

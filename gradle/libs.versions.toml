@@ -59,7 +59,7 @@ mlkitTextRecognition = "16.0.1"
 reorderable = "2.5.1"
 
 # KRAIL-extracted libraries (published as separate KMP libs)
-aagya = "0.1.1"
+aagya = "0.2.0"
 dhruva = "0.1.1"
 krail-api-proto = "0.4.2"
 

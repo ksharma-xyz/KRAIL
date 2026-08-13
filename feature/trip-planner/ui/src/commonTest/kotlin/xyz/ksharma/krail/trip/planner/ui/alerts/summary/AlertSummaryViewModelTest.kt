@@ -10,7 +10,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.aitext.AiAvailability
-import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAiTextService
@@ -29,7 +28,6 @@ class AlertSummaryViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val aiTextService = FakeAiTextService()
-    private val analytics = FakeAnalytics()
     private lateinit var viewModel: AlertSummaryViewModel
 
     @BeforeTest
@@ -38,7 +36,6 @@ class AlertSummaryViewModelTest {
         aiTextService.summarizeResult = "Trains delayed due to a signal fault."
         viewModel = AlertSummaryViewModel(
             aiTextService = aiTextService,
-            analytics = analytics,
             isAlertSummaryEnabled = { true },
         )
     }
@@ -52,7 +49,6 @@ class AlertSummaryViewModelTest {
     fun `flag off never requests a summary`() = runTest(testDispatcher) {
         viewModel = AlertSummaryViewModel(
             aiTextService = aiTextService,
-            analytics = analytics,
             isAlertSummaryEnabled = { false },
         )
 
@@ -71,14 +67,13 @@ class AlertSummaryViewModelTest {
     }
 
     @Test
-    fun `single alert resolves to a summary and tracks shown`() = runTest(testDispatcher) {
+    fun `single alert resolves to a summary`() = runTest(testDispatcher) {
         viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertTrue(state is AlertSummaryUiState.Resolved)
         assertEquals("Trains delayed due to a signal fault.", state.text)
-        assertTrue(analytics.isEventTracked("alert_summary_status"))
     }
 
     @Test
@@ -88,7 +83,7 @@ class AlertSummaryViewModelTest {
         viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
         advanceUntilIdle()
 
-        assertEquals(1, analytics.getTrackedEvents("alert_summary_status").size)
+        assertEquals(1, aiTextService.summarizeCallCount)
     }
 
     @Test
@@ -181,7 +176,6 @@ class AlertSummaryViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is AlertSummaryUiState.Resolved)
         assertEquals(AlertFeedbackVoteChoice.UP, state.vote)
-        assertTrue(analytics.isEventTracked("alert_summary_status"))
     }
 
     @Test

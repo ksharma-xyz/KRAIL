@@ -18,7 +18,6 @@ private const val PROP_TO_STOP_ID = "toStopId"
 private const val PROP_PREVIOUS_INDEX = "previousIndex"
 private const val PROP_NEW_INDEX = "newIndex"
 private const val PROP_TOTAL_COUNT = "totalCount"
-private const val PROP_ALERT_ID = "alertId"
 private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
 private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
@@ -863,43 +862,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             name = "journey_alert_click",
             rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
-
-    /**
-     * On-device AI alert summary lifecycle, gated behind [ALERT_SUMMARY_ENABLED]
-     * (`xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys`). One event, action-parameterized,
-     * same convention as [DepartureBoardStatusEvent].
-     *
-     * One aggregate summary card covers every active alert for the trip at once — see
-     * `AiAlertSummaryCard` in `:feature:trip-planner:ui`.
-     *
-     * [Action.SHOWN] — the aggregate summary card rendered atop `ServiceAlertScreen`.
-     * [Action.UPVOTE] / [Action.DOWNVOTE] — user tapped the vote control under the summary.
-     *
-     * Deliberately excludes summary text and full alert text from params — only the vote
-     * action, which is all that's needed to measure whether the feature is helping in
-     * aggregate. See `docs/proposals/on-device-ai-foray.md`.
-     *
-     * @param alertSetKey Stable hash of the active alert set's sorted heading+message
-     * content (there is no server-provided alert id in
-     * [xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert] today).
-     * @param action What happened to the summary.
-     */
-    data class AlertSummaryStatusEvent(
-        val alertSetKey: String,
-        val action: Action,
-    ) : AnalyticsEvent(
-        name = "alert_summary_status",
-        rawProperties = mapOf(
-            PROP_ALERT_ID to alertSetKey,
-            PROP_ACTION to action.value,
-        ),
-    ) {
-        enum class Action(val value: String) {
-            SHOWN("shown"),
-            UPVOTE("upvote"),
-            DOWNVOTE("downvote"),
-        }
-    }
 
     /**
      * Fired when the user taps either affordance on a stop row in the timetable

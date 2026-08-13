@@ -33,11 +33,17 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
     ) {
         val viewModel: DebugSettingsViewModel = koinViewModel()
         val state by viewModel.state.collectAsStateWithLifecycle()
+        val onDeviceAiAvailable by viewModel.onDeviceAiAvailable.collectAsStateWithLifecycle()
         DebugConfigScreen(
             tripTrackingEnabled = state.tripTrackingEnabled,
             onTripTrackingToggle = viewModel::setTripTrackingEnabled,
             addressSearchEnabled = state.addressSearchEnabled,
             onAddressSearchToggle = viewModel::setAddressSearchEnabled,
+            alertSummaryEnabled = state.alertSummaryEnabled,
+            onAlertSummaryToggle = viewModel::setAlertSummaryEnabled,
+            aiSearchInputEnabled = state.aiSearchInputEnabled,
+            onAiSearchInputToggle = viewModel::setAiSearchInputEnabled,
+            onDeviceAiAvailable = onDeviceAiAvailable,
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,
             onResetReviewClick = viewModel::resetInAppReviewAsks,

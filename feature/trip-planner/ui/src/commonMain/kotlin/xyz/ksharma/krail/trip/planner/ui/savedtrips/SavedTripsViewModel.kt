@@ -158,16 +158,6 @@ class SavedTripsViewModel(
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
-            SavedTripUiEvent.ReverseStopClick -> {
-                stopResultsManager.reverseSelectedStops()
-                updateUiState {
-                    copy(
-                        fromStop = stopResultsManager.selectedFromStop,
-                        toStop = stopResultsManager.selectedToStop,
-                    )
-                }
-                analytics.track(AnalyticsEvent.ReverseStopClickEvent)
-            }
             is SavedTripUiEvent.AnalyticsLoadTimeTableClick ->
                 analytics.trackLoadTimeTableClick(
                     fromStopId = event.fromStopId,

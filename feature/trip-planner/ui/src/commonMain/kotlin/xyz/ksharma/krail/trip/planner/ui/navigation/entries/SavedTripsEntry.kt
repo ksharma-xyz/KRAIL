@@ -1,11 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
@@ -15,6 +18,9 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -37,6 +43,35 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
+
+        // Drives SearchStopRow's inline AI panel directly (see AiInlineSearchPanel) - no
+        // separate sheet/confirm screen. userLocationManager only exists as a @Composable
+        // factory (its permission/location controllers need Activity context tied to
+        // composition), so it's built here and passed in via koinViewModel's parametersOf,
+        // matching TrackTripViewModel's own Composable-supplied param.
+        val userLocationManager = rememberUserLocationManager()
+        val aiSearchInputViewModel: AiSearchInputViewModel = koinViewModel(
+            parameters = { parametersOf(suspend { userLocationManager.getCurrentLocation().getOrNull() }) },
+        )
+        val aiSearchInputState by aiSearchInputViewModel.uiState.collectAsStateWithLifecycle()
+
+        // Whatever the AI resolved is written into SavedTripsState the same way a manual
+        // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved
+        // trip still fills the field it did find and leaves the other for a normal tap. The
+        // AI flow is then reset, and the row shows ordinary filled fields plus a Search button;
+        // the rider taps Search themselves. There is no separate confirm card here.
+        LaunchedEffect(aiSearchInputState.phase, aiSearchInputState.resolved) {
+            val resolved = aiSearchInputState.resolved
+            if (aiSearchInputState.phase == AiSearchInputPhase.RESOLVED && resolved != null) {
+                resolved.fromStopItem?.let {
+                    viewModel.onEvent(SavedTripUiEvent.FromStopChanged(it.toJsonString()))
+                }
+                resolved.toStopItem?.let {
+                    viewModel.onEvent(SavedTripUiEvent.ToStopChanged(it.toJsonString()))
+                }
+                aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
+            }
+        }
 
         // Listen for StopSelected results from SearchStop screen
         // This uses the singleton ResultEventBus to ensure results are received
@@ -95,6 +130,8 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     tripPlannerNavigator = tripPlannerNavigator,
                 )
             },
+            aiState = aiSearchInputState,
+            onAiEvent = aiSearchInputViewModel::onEvent,
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 tripPlannerNavigator.navigateToSettings()

@@ -2,6 +2,7 @@ package xyz.ksharma.krail.gradle
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -60,6 +61,16 @@ class SnapshotTestingConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("io.github.takahirom.roborazzi")
+
+            // Default JVM test heap (usually ~512m-1g) isn't enough once a module accumulates
+            // a few hundred @ScreenshotTest previews in one process — capture is Robolectric +
+            // Skia bitmap rendering held in memory across the whole `generateSnapshots()` run,
+            // not released between previews. Confirmed via `feature:trip-planner:ui` (280+
+            // previews) hitting `java.lang.OutOfMemoryError` at the default heap, reproducibly,
+            // even on a freshly restarted Gradle daemon.
+            tasks.withType(Test::class.java).configureEach {
+                maxHeapSize = "4g"
+            }
 
             // Wire the deps once the KMP extension is configured (which happens after the
             // module's `plugins { alias(libs.plugins.krail.kotlin.multiplatform) }` block).

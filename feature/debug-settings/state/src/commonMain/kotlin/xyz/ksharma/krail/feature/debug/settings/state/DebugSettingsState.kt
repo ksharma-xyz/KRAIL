@@ -16,6 +16,8 @@ data class DebugSettingsState(
     val source: NetworkSource = DEFAULT_SOURCE,
     val tripTrackingEnabled: Boolean = DEFAULT_TRIP_TRACKING_ENABLED,
     val addressSearchEnabled: Boolean = DEFAULT_ADDRESS_SEARCH_ENABLED,
+    val alertSummaryEnabled: Boolean = DEFAULT_ALERT_SUMMARY_ENABLED,
+    val aiSearchInputEnabled: Boolean = DEFAULT_AI_SEARCH_INPUT_ENABLED,
 ) {
     companion object {
         val DEFAULT_SOURCE: NetworkSource = NetworkSource.FOLLOW_RC
@@ -25,10 +27,20 @@ data class DebugSettingsState(
         // builds behave like production until a developer flips this row.
         const val DEFAULT_ADDRESS_SEARCH_ENABLED: Boolean = false
 
+        // Matches ALERT_SUMMARY_ENABLED's RC default (off) so debug builds behave
+        // like production until a developer flips this row.
+        const val DEFAULT_ALERT_SUMMARY_ENABLED: Boolean = false
+
+        // Matches AI_SEARCH_INPUT_ENABLED's RC default (off) so debug builds behave
+        // like production until a developer flips this row.
+        const val DEFAULT_AI_SEARCH_INPUT_ENABLED: Boolean = false
+
         fun default(): DebugSettingsState = DebugSettingsState(
             source = DEFAULT_SOURCE,
             tripTrackingEnabled = DEFAULT_TRIP_TRACKING_ENABLED,
             addressSearchEnabled = DEFAULT_ADDRESS_SEARCH_ENABLED,
+            alertSummaryEnabled = DEFAULT_ALERT_SUMMARY_ENABLED,
+            aiSearchInputEnabled = DEFAULT_AI_SEARCH_INPUT_ENABLED,
         )
     }
 }

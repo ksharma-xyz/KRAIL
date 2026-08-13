@@ -1,0 +1,101 @@
+package xyz.ksharma.krail.taj.modifier
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.unit.Dp
+import xyz.ksharma.krail.taj.animations.rememberAiSpinAngle
+import xyz.ksharma.krail.taj.tokens.AiGradientTokens
+import xyz.ksharma.krail.taj.tokens.StrokeTokens
+import kotlin.math.hypot
+
+/**
+ * The card-level counterpart to [xyz.ksharma.krail.taj.components.AiWheelMark] — a hairline
+ * [AiGradientTokens] border that rotates like a sweep gradient, sharing the exact same
+ * spin/settle timing via [rememberAiSpinAngle] so a wheel and its card animate in the same
+ * rhythm when driven by the same `spinning` flag.
+ *
+ * The border is always the same gradient; only its rotation speed changes (constant while
+ * [spinning], decelerating to a stop when it flips to `false`) — never swapped for a
+ * different gradient at rest, which reads as the color abruptly disappearing.
+ *
+ * The ring's outline never rotates — only the paint inside it does. An earlier version
+ * rotated the `drawRoundRect` geometry itself, which is only safe for a circle; on a wide
+ * rectangular card its corners swing far outside the card at most angles (a rotated
+ * rectangle's diagonal exceeds its own bounds). The fix: draw the static stroke ring into
+ * an offscreen layer as an alpha mask, then composite a rotating gradient-filled square
+ * into it with [BlendMode.SrcIn] — every Compose Multiplatform target (Android and iOS
+ * both render through Skia) supports this without a platform-specific shader matrix.
+ *
+ * @param colors Gradient stops for the sweep. Defaults to [AiGradientTokens]; pass
+ * [xyz.ksharma.krail.taj.tokens.AiCoolGradientTokens] for AI-input surfaces instead of
+ * AI-summary surfaces — see [xyz.ksharma.krail.taj.components.AiWheelMark]'s `colors` param
+ * for the same distinction on the mark itself.
+ */
+@Composable
+fun Modifier.aiGradientBorder(
+    spinning: Boolean,
+    cornerRadius: Dp,
+    strokeWidth: Dp = StrokeTokens.Thick,
+    colors: List<Color> = AiGradientTokens.stops,
+): Modifier {
+    val angle = rememberAiSpinAngle(spinning)
+    val brush = remember(colors) {
+        Brush.sweepGradient(colors + colors.first())
+    }
+
+    return this.drawWithContent {
+        drawContent()
+        val strokePx = strokeWidth.toPx()
+        val half = strokePx / 2f
+        val ringTopLeft = Offset(half, half)
+        val ringSize = Size(size.width - strokePx, size.height - strokePx)
+
+        // The gradient-filled square must fully cover the ring's bounding box at every
+        // rotation angle, so its side is the card's own diagonal, centered on the card.
+        val coverSide = hypot(size.width, size.height)
+        val coverTopLeft = Offset(
+            (size.width - coverSide) / 2f,
+            (size.height - coverSide) / 2f,
+        )
+
+        drawIntoCanvas { canvas ->
+            canvas.saveLayer(Rect(Offset.Zero, size), Paint())
+
+            // 1. Static mask: the stroke ring, unrotated. This is the only thing that
+            // defines where paint can land — its geometry never moves.
+            drawRoundRect(
+                color = Color.Black,
+                style = Stroke(width = strokePx),
+                cornerRadius = CornerRadius(cornerRadius.toPx()),
+                topLeft = ringTopLeft,
+                size = ringSize,
+            )
+
+            // 2. Rotating paint: composited only where the mask has alpha, so this is
+            // the only thing that visibly moves.
+            rotate(degrees = angle) {
+                drawRect(
+                    brush = brush,
+                    topLeft = coverTopLeft,
+                    size = Size(coverSide, coverSide),
+                    blendMode = BlendMode.SrcIn,
+                )
+            }
+
+            canvas.restore()
+        }
+    }
+}

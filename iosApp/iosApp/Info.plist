@@ -20,6 +20,10 @@
         <string>$(MARKETING_VERSION)</string>
         <key>CFBundleVersion</key>
         <string>$(CURRENT_PROJECT_VERSION)</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>KRAIL uses your microphone so you can speak a trip search instead of typing it.</string>
+        <key>NSSpeechRecognitionUsageDescription</key>
+        <string>KRAIL turns your speech into text so you can search for a trip by voice.</string>
 	<!-- KRAIL only uses HTTPS and the OS keychain, both exempt under the encryption
 	     export rules. Declaring this here answers the export-compliance question at
 	     upload time; without it every single build sits in TestFlight as "Missing

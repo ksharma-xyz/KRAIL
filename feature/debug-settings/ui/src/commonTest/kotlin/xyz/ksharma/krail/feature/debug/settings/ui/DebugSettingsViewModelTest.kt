@@ -10,6 +10,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import xyz.ksharma.krail.core.aitext.AiAvailability
+import xyz.ksharma.krail.core.aitext.AiTextService
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
@@ -51,6 +53,7 @@ class DebugSettingsViewModelTest {
             store = store,
             flag = FakeFlag(false),
             userLifecycleStore = FakeUserLifecycleStore(),
+            aiTextService = FakeAiTextService(),
         )
 
         viewModel.selectSource(NetworkSource.BFF_PROD)
@@ -68,6 +71,7 @@ class DebugSettingsViewModelTest {
             store = store,
             flag = FakeFlag(false),
             userLifecycleStore = FakeUserLifecycleStore(),
+            aiTextService = FakeAiTextService(),
         )
 
         viewModel.selectSource(NetworkSource.NSW_DIRECT)
@@ -85,6 +89,7 @@ class DebugSettingsViewModelTest {
             store = store,
             flag = FakeFlag(true),
             userLifecycleStore = FakeUserLifecycleStore(),
+            aiTextService = FakeAiTextService(),
         )
 
         // Subscribe to state to trigger onStart, which refreshes bffEnabled.
@@ -103,6 +108,7 @@ class DebugSettingsViewModelTest {
             store = store,
             flag = FakeFlag(false),
             userLifecycleStore = FakeUserLifecycleStore(),
+            aiTextService = FakeAiTextService(),
         )
 
         viewModel.state.test {
@@ -120,6 +126,7 @@ class DebugSettingsViewModelTest {
             store = store,
             flag = FakeFlag(false),
             userLifecycleStore = FakeUserLifecycleStore(),
+            aiTextService = FakeAiTextService(),
         )
 
         viewModel.reset()
@@ -136,6 +143,7 @@ class DebugSettingsViewModelTest {
             store = FakeDebugStore(),
             flag = FakeFlag(false),
             userLifecycleStore = lifecycleStore,
+            aiTextService = FakeAiTextService(),
         )
 
         viewModel.resetInAppReviewAsks()
@@ -171,6 +179,15 @@ private class FakeUserLifecycleStore : UserLifecycleStore {
     }
 }
 
+private class FakeAiTextService(
+    private val availability: AiAvailability = AiAvailability.Available,
+) : AiTextService {
+    override suspend fun checkAvailability(): AiAvailability = availability
+    override suspend fun checkExtractionAvailability(): AiAvailability = availability
+    override suspend fun summarize(text: String) = null
+    override suspend fun extractTripIntent(text: String) = null
+}
+
 private class FakeFlag(private val bffEnabled: Boolean) : Flag {
     override fun getFlagValue(key: String): FlagValue = when (key) {
         FlagKeys.ENABLE_PROTO_BFF.key -> FlagValue.BooleanValue(bffEnabled)
@@ -192,6 +209,8 @@ private class FakeDebugStore : DebugNetworkConfigStore {
             is DebugSettingsEvent.SetSource -> _state.value.copy(source = event.source)
             is DebugSettingsEvent.SetTripTrackingEnabled -> _state.value.copy(tripTrackingEnabled = event.enabled)
             is DebugSettingsEvent.SetAddressSearchEnabled -> _state.value.copy(addressSearchEnabled = event.enabled)
+            is DebugSettingsEvent.SetAlertSummaryEnabled -> _state.value.copy(alertSummaryEnabled = event.enabled)
+            is DebugSettingsEvent.SetAiSearchInputEnabled -> _state.value.copy(aiSearchInputEnabled = event.enabled)
             DebugSettingsEvent.Reset -> DebugSettingsState.default()
         }
     }

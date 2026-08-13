@@ -7,6 +7,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.DefaultDispatcher
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
@@ -17,6 +18,8 @@ import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
+import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
+import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
@@ -27,6 +30,7 @@ import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealRemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
@@ -48,6 +52,50 @@ val viewModelsModule = module {
     viewModelOf(::ServiceAlertsViewModel)
     viewModelOf(::DateTimeSelectorViewModel)
     viewModelOf(::OurStoryViewModel)
+
+    viewModel {
+        val isDebug = get<AppInfoProvider>().getAppInfo().isDebug
+        val debugNetworkConfigStore = get<DebugNetworkConfigStore>()
+        val flag = get<Flag>()
+        // Read live, not once, same reasoning as isAddressSearchEnabled above.
+        val isAlertSummaryEnabled = {
+            if (isDebug) {
+                debugNetworkConfigStore.state.value.alertSummaryEnabled
+            } else {
+                flag.isAlertSummaryEnabled()
+            }
+        }
+        AlertSummaryViewModel(
+            aiTextService = get(),
+            analytics = get(),
+            isAlertSummaryEnabled = isAlertSummaryEnabled,
+        )
+    }
+
+    viewModel { params ->
+        val isDebug = get<AppInfoProvider>().getAppInfo().isDebug
+        val debugNetworkConfigStore = get<DebugNetworkConfigStore>()
+        val flag = get<Flag>()
+        // Read live, not once — same reasoning as isAlertSummaryEnabled above.
+        val isAiSearchInputEnabled = {
+            if (isDebug) {
+                debugNetworkConfigStore.state.value.aiSearchInputEnabled
+            } else {
+                flag.getFlagValue(FlagKeys.AI_SEARCH_INPUT_ENABLED.key).asBoolean(false)
+            }
+        }
+        // Composable-supplied — see AiSearchInputViewModel's constructor doc for why this
+        // can't be a plain Koin `get()`.
+        val resolveCurrentLocation = params.getOrNull<suspend () -> Location?>() ?: { null }
+        AiSearchInputViewModel(
+            aiTextService = get(),
+            speechToTextService = get(),
+            stopResultsManager = get(),
+            nearbyStopsRepository = get(),
+            resolveCurrentLocation = resolveCurrentLocation,
+            isAiSearchInputEnabled = isAiSearchInputEnabled,
+        )
+    }
 
     viewModel {
         IntroViewModel(

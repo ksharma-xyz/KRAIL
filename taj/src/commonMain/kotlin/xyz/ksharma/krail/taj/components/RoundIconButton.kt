@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,10 +27,14 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.BadgeTokens
 import xyz.ksharma.krail.taj.tokens.ButtonTokens.RoundButtonSize
 
+private const val DISABLED_ROUND_BUTTON_ALPHA = 0.35f
+
 /**
  * A round icon button with customizable content and colors.
  *
  * @param modifier Modifier to be applied to the button.
+ * @param enabled When false the button dims and stops responding — including its ripple, so a
+ * tap reads as "not now" rather than as a button that fired and did nothing.
  * @param color Background color of the button. Defaults to the theme's secondary container color.
  * @param onClickLabel Semantic / accessibility label for the [onClick] action.
  * @param content Composable content to be displayed inside the button.
@@ -39,6 +44,7 @@ import xyz.ksharma.krail.taj.tokens.ButtonTokens.RoundButtonSize
 fun RoundIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     showBadge: Boolean = false,
     color: Color? = null,
     onClickLabel: String? = null,
@@ -50,14 +56,15 @@ fun RoundIconButton(
     ) {
         Box(
             modifier = modifier
-                .size(RoundButtonSize),
+                .size(RoundButtonSize)
+                .alpha(if (enabled) 1f else DISABLED_ROUND_BUTTON_ALPHA),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
                     .background(color = color ?: LocalContainerColor.current)
-                    .klickable(onClick = onClick),
+                    .klickable(enabled = enabled, onClick = onClick),
                 contentAlignment = Alignment.Center,
             ) {
                 content()

@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -79,6 +80,8 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -96,6 +99,8 @@ fun SavedTripsScreen(
     toButtonClick: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
     onSearchButtonClick: () -> Unit = {},
+    aiState: AiSearchInputUiState = AiSearchInputUiState(),
+    onAiEvent: (AiSearchInputEvent) -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
@@ -149,6 +154,11 @@ fun SavedTripsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            // The search row is pinned to the bottom of this box and its AI box is a real text
+            // field, so the layout area has to end where the keyboard starts — same root-level
+            // imePadding SearchStopScreen uses. Padding the row itself instead only stretches
+            // its coloured background downwards.
+            .imePadding()
             .background(color = KrailTheme.colors.surface)
             .onSizeChanged { log("[MAP_STOP_SEL] outerBox size=${it.width}x${it.height}") },
     ) {
@@ -229,8 +239,14 @@ fun SavedTripsScreen(
                     fromButtonClick()
                 },
                 toButtonClick = toButtonClick,
-                onReverseButtonClick = { onEvent(SavedTripUiEvent.ReverseStopClick) },
                 onSearchButtonClick = { onSearchButtonClick() },
+                aiState = aiState,
+                onAiEvent = onAiEvent,
+                // The row's AI box is a text field and the row is pinned to the bottom of a
+                // window that draws behind the keyboard, so without this the keyboard covers
+                // it. Applied here rather than inside the row: padding the row's own content
+                // would stretch its coloured background down to the old bottom edge instead
+                // of lifting the card.
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }

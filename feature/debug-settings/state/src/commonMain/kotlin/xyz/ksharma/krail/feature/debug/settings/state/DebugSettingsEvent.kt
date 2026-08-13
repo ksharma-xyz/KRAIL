@@ -15,6 +15,12 @@ sealed interface DebugSettingsEvent {
     /** Override the SEARCH_STOP_ADDRESS_SEARCH_ENABLED RC flag locally for this debug build. */
     data class SetAddressSearchEnabled(val enabled: Boolean) : DebugSettingsEvent
 
+    /** Override the ALERT_SUMMARY_ENABLED RC flag locally for this debug build. */
+    data class SetAlertSummaryEnabled(val enabled: Boolean) : DebugSettingsEvent
+
+    /** Override the AI_SEARCH_INPUT_ENABLED RC flag locally for this debug build. */
+    data class SetAiSearchInputEnabled(val enabled: Boolean) : DebugSettingsEvent
+
     /** Restore the entire state to [DebugSettingsState.default]. */
     data object Reset : DebugSettingsEvent
 }

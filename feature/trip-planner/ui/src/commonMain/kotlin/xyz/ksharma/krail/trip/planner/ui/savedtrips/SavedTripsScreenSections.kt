@@ -44,6 +44,8 @@ import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -310,9 +312,10 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     onCollapseRequest: () -> Unit,
     fromButtonClick: () -> Unit,
     toButtonClick: () -> Unit,
-    onReverseButtonClick: () -> Unit,
     onSearchButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    aiState: AiSearchInputUiState = AiSearchInputUiState(),
+    onAiEvent: (AiSearchInputEvent) -> Unit = {},
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -331,8 +334,9 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
             onCollapseRequest = if (showPill) onCollapseRequest else null,
             fromButtonClick = fromButtonClick,
             toButtonClick = toButtonClick,
-            onReverseButtonClick = onReverseButtonClick,
             onSearchButtonClick = onSearchButtonClick,
+            aiState = aiState,
+            onAiEvent = onAiEvent,
         )
     }
 }

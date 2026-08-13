@@ -36,6 +36,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.aiText)
                 implementation(projects.core.appInfo)
                 implementation(projects.core.log)
                 implementation(projects.core.network)

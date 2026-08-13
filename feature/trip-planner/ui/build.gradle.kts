@@ -58,6 +58,8 @@ kotlin {
             dependencies {
                 implementation(projects.core.snapshotTestingAnnotations)
                 implementation(projects.core.adaptiveUi)
+                implementation(projects.core.aiText)
+                implementation(projects.core.speechToText)
                 implementation(projects.core.appInfo)
                 implementation(projects.core.appReview)
                 implementation(projects.core.appVersion)

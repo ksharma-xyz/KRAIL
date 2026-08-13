@@ -7,6 +7,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.includes
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.aitext.di.aiTextModule
 import xyz.ksharma.krail.core.analytics.di.analyticsModule
 import xyz.ksharma.krail.core.appinfo.di.appInfoModule
 import xyz.ksharma.krail.core.appreview.di.appReviewModule
@@ -20,6 +21,8 @@ import xyz.ksharma.krail.core.maps.data.di.mapsDataModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
 import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
 import xyz.ksharma.krail.core.share.di.shareModule
+import xyz.ksharma.krail.core.speechtotext.di.speechToTextModule
+import xyz.ksharma.krail.core.textrecognition.di.textRecognitionModule
 import xyz.ksharma.krail.departures.network.api.di.departuresNetworkModule
 import xyz.ksharma.krail.departures.ui.di.departuresUiModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
@@ -62,6 +65,9 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             appStartModule,
             opsModule,
             appReviewModule,
+            aiTextModule,
+            speechToTextModule,
+            textRecognitionModule,
             tripPlannerNetworkModule,
             departuresNetworkModule,
             departuresUiModule,

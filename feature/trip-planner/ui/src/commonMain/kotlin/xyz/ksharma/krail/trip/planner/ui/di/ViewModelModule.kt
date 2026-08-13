@@ -31,6 +31,9 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopLabelTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopSearchTextResolver
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealRemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
@@ -89,7 +92,14 @@ val viewModelsModule = module {
         AiSearchInputViewModel(
             aiTextService = get(),
             speechToTextService = get(),
-            stopResultsManager = get(),
+            // Order is precedence. Labels first: "work" is the rider naming a stop
+            // themselves, which beats a coincidental match against every stop in the state.
+            stopTextResolver = ChainedStopTextResolver(
+                listOf(
+                    StopLabelTextResolver(sandook = get()),
+                    StopSearchTextResolver(stopResultsManager = get()),
+                ),
+            ),
             nearbyStopsRepository = get(),
             resolveCurrentLocation = resolveCurrentLocation,
             isAiSearchInputEnabled = isAiSearchInputEnabled,

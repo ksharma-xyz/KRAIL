@@ -16,8 +16,7 @@ import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextService
-import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val NEARBY_STOP_RADIUS_KM = 1.0
@@ -41,7 +40,10 @@ private const val NEARBY_STOP_RADIUS_KM = 1.0
 class AiSearchInputViewModel(
     private val aiTextService: AiTextService,
     private val speechToTextService: SpeechToTextService,
-    private val stopResultsManager: StopResultsManager,
+    // A chain of capabilities rather than one search call, so what counts as "smart" about
+    // resolving a place is declared in one ordered list (see StopTextResolver) instead of
+    // growing branches in here.
+    private val stopTextResolver: StopTextResolver,
     private val nearbyStopsRepository: NearbyStopsRepository,
     // A lambda, not a UserLocationManager, because UserLocationManager only exists as
     // `rememberUserLocationManager()` — a @Composable factory (its underlying permission/
@@ -201,18 +203,13 @@ class AiSearchInputViewModel(
     }
 
     /**
-     * Top result from the exact same [StopResultsManager] search [SearchStopViewModel
-     * ][xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel] uses, treated as a
-     * guess — no auto-pick concept exists anywhere else in this codebase either, this is
-     * the first place introducing one, deliberately scoped to only this AI-guess context. A
-     * miss (no stop results, or only address/POI/trip results) resolves to `null`; route
-     * search is skipped (`searchRoutesEnabled = false`) since a place name is never a route.
+     * Hands the extracted text to [stopTextResolver], whose chain decides which capability
+     * answers: the rider's own labels first, then the same stop search the search-stop screen
+     * uses. The answer is treated as a guess — no auto-pick concept exists anywhere else in
+     * this codebase, and it stays deliberately scoped to this AI context — so a miss resolves
+     * to `null` and leaves the field for the rider to fill by hand.
      */
-    private suspend fun resolveStop(query: String): StopItem? {
-        val results = stopResultsManager.fetchStopResults(query, searchRoutesEnabled = false)
-        val topStop = results.filterIsInstance<SearchStopState.SearchResult.Stop>().firstOrNull() ?: return null
-        return StopItem(stopName = topStop.stopName, stopId = topStop.stopId)
-    }
+    private suspend fun resolveStop(query: String): StopItem? = stopTextResolver.resolve(query)
 
     /**
      * The rider didn't say where they're leaving from ("need to be at Central by 6:30pm" —

@@ -11,7 +11,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * specific first, so a rider's own words for a place beat a generic search over every stop in
  * the state.
  */
-class ChainedStopTextResolver(
+internal class ChainedStopTextResolver(
     private val resolvers: List<StopTextResolver>,
 ) : StopTextResolver {
 

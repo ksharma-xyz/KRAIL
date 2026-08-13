@@ -14,6 +14,10 @@ import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopLabelTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopSearchTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAiTextService
@@ -36,6 +40,16 @@ class AiSearchInputViewModelTest {
     private val aiTextService = FakeAiTextService()
     private val speechToTextService = FakeSpeechToTextService()
     private val stopResultsManager = FakeStopResultsManager()
+    private val sandook = FakeSandook()
+
+    // The real chain, not a stub: these tests exercise resolution end to end, so a
+    // change in capability order shows up here rather than only in production.
+    private val stopTextResolver = ChainedStopTextResolver(
+        listOf(
+            StopLabelTextResolver(sandook),
+            StopSearchTextResolver(stopResultsManager),
+        ),
+    )
     private val nearbyStopsRepository = FakeNearbyStopsRepository()
     private lateinit var viewModel: AiSearchInputViewModel
 
@@ -45,7 +59,7 @@ class AiSearchInputViewModelTest {
         viewModel = AiSearchInputViewModel(
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
-            stopResultsManager = stopResultsManager,
+            stopTextResolver = stopTextResolver,
             nearbyStopsRepository = nearbyStopsRepository,
             isAiSearchInputEnabled = { true },
         )
@@ -61,7 +75,7 @@ class AiSearchInputViewModelTest {
         viewModel = AiSearchInputViewModel(
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
-            stopResultsManager = stopResultsManager,
+            stopTextResolver = stopTextResolver,
             nearbyStopsRepository = nearbyStopsRepository,
             isAiSearchInputEnabled = { false },
         )
@@ -113,6 +127,32 @@ class AiSearchInputViewModelTest {
         assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), resolved?.toStopItem)
         assertEquals(listOf("train"), resolved?.modeHints)
         assertTrue(resolved?.hasAnyStop == true)
+    }
+
+    @Test
+    fun `a stop label resolves as a destination`() = runTest(testDispatcher) {
+        // "let's go to work" - the rider's own word for a place, which no stop is named.
+        sandook.upsertStopLabel(
+            label = "work",
+            emoji = "💼",
+            stopId = "10102",
+            stopName = "Town Hall",
+            sortOrder = 0L,
+        )
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = "Central Station",
+            destinationText = "work",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("let's go to work"))
+
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        advanceUntilIdle()
+
+        assertEquals(
+            StopItem(stopName = "Town Hall", stopId = "10102"),
+            viewModel.uiState.value.resolved?.toStopItem,
+        )
     }
 
     @Test
@@ -284,7 +324,7 @@ class AiSearchInputViewModelTest {
         viewModel = AiSearchInputViewModel(
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
-            stopResultsManager = stopResultsManager,
+            stopTextResolver = stopTextResolver,
             nearbyStopsRepository = nearbyStopsRepository,
             resolveCurrentLocation = { TEST_LOCATION },
             isAiSearchInputEnabled = { true },
@@ -309,7 +349,7 @@ class AiSearchInputViewModelTest {
         viewModel = AiSearchInputViewModel(
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
-            stopResultsManager = stopResultsManager,
+            stopTextResolver = stopTextResolver,
             nearbyStopsRepository = nearbyStopsRepository,
             resolveCurrentLocation = { null },
             isAiSearchInputEnabled = { true },

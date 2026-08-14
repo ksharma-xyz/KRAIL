@@ -56,7 +56,11 @@ fun AiWheelMark(
     markSize: Dp = IconSizeTokens.S,
 ) {
     val angle = rememberAiSpinAngle(spinning)
-    val gradientBrush = remember(colors) { Brush.linearGradient(colors) }
+    // Horizontal, not the default corner to corner. The mark is a circle inside a square, so a
+    // diagonal gradient spends its first and last stretch in the empty corners and the two end
+    // colours barely appear on the wheel itself — a theme's own colour was getting cropped out
+    // of its own gradient. Left edge to right edge puts both ends on the rim where they show.
+    val gradientBrush = remember(colors) { Brush.horizontalGradient(colors) }
 
     Canvas(
         modifier = modifier

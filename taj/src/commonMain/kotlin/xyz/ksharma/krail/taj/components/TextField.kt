@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -213,11 +213,13 @@ private fun textFieldLayout(lineLimits: TextFieldLineLimits, shape: Shape?): Tex
             placeholderMaxLines = MAX_LINES,
         )
     } else {
-        // No height of its own — a multiline field takes the height the caller gives it, and
-        // the decoration fills that box so the container colour covers the whole slot.
+        // Grows with its own text between the caller's line limits, rather than filling
+        // whatever box it is dropped into. Filling was right when the only multiline caller
+        // handed it a fixed height; in a bottom sheet with no height of its own it swallowed
+        // the whole sheet and pushed every other control off screen.
         TextFieldLayout(
             heightModifier = Modifier,
-            containerModifier = Modifier.fillMaxSize(),
+            containerModifier = Modifier.fillMaxWidth(),
             shape = shape ?: RoundedCornerShape(RadiusTokens.XL),
             verticalPadding = SpacingTokens.M,
             verticalAlignment = Alignment.Top,

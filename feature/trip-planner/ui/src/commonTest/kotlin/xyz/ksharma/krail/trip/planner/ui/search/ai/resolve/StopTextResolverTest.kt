@@ -71,6 +71,47 @@ class StopLabelTextResolverTest {
     }
 }
 
+class StopSearchTextResolverTest {
+
+    private val resolver = StopSearchTextResolver(FakeStopResultsManager())
+
+    @Test
+    fun `a query inside a longer word is not a match`() = runTest {
+        // The bug this exists for: the stop search offers "70 Powderworks Rd" for "work",
+        // which is a fine row to show a rider choosing from a list and a terrible thing to
+        // fill a field with on their behalf.
+        assertNull(resolver.resolve("work"))
+    }
+
+    @Test
+    fun `a whole word still matches`() = runTest {
+        assertEquals(
+            StopItem(stopId = "10101", stopName = "Central Station"),
+            resolver.resolve("Central Station"),
+        )
+    }
+
+    @Test
+    fun `a word start still matches`() = runTest {
+        // "central" prefixes "Central"; the rider does not have to say "Station".
+        assertEquals(
+            StopItem(stopId = "10101", stopName = "Central Station"),
+            resolver.resolve("central"),
+        )
+    }
+
+    @Test
+    fun `every query word has to land somewhere`() = runTest {
+        // "town" matches, "beach" does not, so the whole query does not.
+        assertNull(resolver.resolve("town beach"))
+    }
+
+    @Test
+    fun `nothing matching resolves to null`() = runTest {
+        assertNull(resolver.resolve("Nonexistent Place"))
+    }
+}
+
 class ChainedStopTextResolverTest {
 
     private val sandook = FakeSandook()

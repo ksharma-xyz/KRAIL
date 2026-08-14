@@ -29,6 +29,13 @@ class FakeStopResultsManager : StopResultsManager {
             stopName = "Town Hall",
             transportModeType = persistentListOf(NswTransportMode.Train)
         ),
+        // A real stop, kept because it is the one that made "work" resolve to a bus stop on
+        // the northern beaches: "work" appears inside "Powderworks".
+        SearchStopState.SearchResult.Stop(
+            stopId = "10104",
+            stopName = "70 Powderworks Rd",
+            transportModeType = persistentListOf(NswTransportMode.Bus)
+        ),
         SearchStopState.SearchResult.Stop(
             stopId = "10103",
             stopName = "Parramatta Station",

@@ -140,7 +140,7 @@ private fun AiInputFullScreen(
                 .safeDrawingPadding(),
         ) {
             TitleBar(
-                title = { Text(text = "KRAIL AI") },
+                title = { Text(text = "Plan a trip") },
                 onNavActionClick = onDismiss,
             )
             Column(

@@ -82,7 +82,10 @@ internal fun AiInputContent(
         } else {
             TextField(
                 state = textFieldState,
-                placeholder = "Home to work, leaving at nine",
+                // Named stops and a real time, prefixed so it reads as an example rather than
+                // as something already typed. "Home to work, leaving at nine" showed the shape
+                // of a sentence while teaching nothing about what this understands.
+                placeholder = "Try: Town Hall to Bondi Junction by 6pm",
                 lineLimits = TextFieldLineLimits.MultiLine(minHeightInLines = 1, maxHeightInLines = 6),
                 imeAction = ImeAction.Search,
                 onSubmit = { onEvent(AiSearchInputEvent.Submit) },

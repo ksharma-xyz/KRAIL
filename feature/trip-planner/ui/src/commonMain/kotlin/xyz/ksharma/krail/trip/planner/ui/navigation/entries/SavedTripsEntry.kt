@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
@@ -23,6 +24,9 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+
+// Long enough to see the working border stop turning, short enough that nobody waits on it.
+private const val AI_SCREEN_EXIT_DELAY_MILLIS = 1_500L
 
 /**
  * Saved Trips Entry - List Screen in List-Detail pattern.
@@ -72,6 +76,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 resolved.toStopItem?.let {
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(it.toJsonString()))
                 }
+                // The AI screen is still up at this point, with its border decelerating. It
+                // closes a beat later so that ending is seen rather than cut off; the fields
+                // behind it are already written, so the row is correct the moment it goes.
+                delay(AI_SCREEN_EXIT_DELAY_MILLIS)
                 aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
             }
         }

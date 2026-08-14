@@ -23,14 +23,17 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.AiCoolGradientTokens
-import kotlin.math.abs
 import kotlin.math.sin
 
 private const val BAR_COUNT = 14
-private const val WAVE_CYCLE_MS = 5200
+private const val WAVE_CYCLE_MS = 6000
+private const val WAVES_PER_CYCLE = 2f
 private const val PHASE_STEP = 0.5f
 private const val MIN_BAR_HEIGHT_FRACTION = 0.14f
 private const val MAX_BAR_HEIGHT_FRACTION = 0.9f
+private const val ENVELOPE_FLOOR = 0.5f
+private const val ENVELOPE_RANGE = 0.5f
+private const val TAU = 2.0 * kotlin.math.PI
 private val WaveformWidth = 120.dp
 private val WaveformHeight = 40.dp
 private val BarWidth = 4.dp
@@ -81,15 +84,10 @@ private fun AiWaveform(active: Boolean, modifier: Modifier = Modifier) {
         val barGap = size.width / BAR_COUNT
         val barStrokePx = BarWidth.toPx()
         for (i in 0 until BAR_COUNT) {
-            val phase = i * PHASE_STEP
-            val amplitude = if (active) {
-                abs(sin(time * 2 * kotlin.math.PI * 2 + phase))
-            } else {
-                MIN_BAR_HEIGHT_FRACTION.toDouble()
-            }
+            val amplitude = if (active) barAmplitude(time, i) else 0f
             val barHeight = size.height * (
                 MIN_BAR_HEIGHT_FRACTION +
-                    (MAX_BAR_HEIGHT_FRACTION - MIN_BAR_HEIGHT_FRACTION) * amplitude.toFloat()
+                    (MAX_BAR_HEIGHT_FRACTION - MIN_BAR_HEIGHT_FRACTION) * amplitude
                 )
             val x = barGap * i + barGap / 2f
             drawLine(
@@ -102,6 +100,29 @@ private fun AiWaveform(active: Boolean, modifier: Modifier = Modifier) {
         }
     }
 }
+
+/**
+ * Height fraction for bar [index] at loop position [time] (0..1).
+ *
+ * Two sines multiplied, both on periods that divide the loop so it repeats seamlessly:
+ *
+ * - the travelling wave runs [WAVES_PER_CYCLE] times per loop, and [PHASE_STEP] spreads a
+ *   little over one full wave across the row, so the crest reads as moving left to right
+ *   rather than every bar pumping at once;
+ * - the envelope runs once per loop and scales the whole row between [ENVELOPE_FLOOR] and
+ *   full height, so the waveform swells and eases off the way a voice does.
+ *
+ * The sines are mapped from -1..1 into 0..1 rather than passed through `abs`. `abs` folds the
+ * negative half back up, which both doubles the apparent rate and puts a hard corner at every
+ * zero crossing — bars snapping off the floor is exactly what made this read as frantic.
+ */
+private fun barAmplitude(time: Float, index: Int): Float {
+    val wave = sin(TAU * WAVES_PER_CYCLE * time + index * PHASE_STEP).toUnitRange()
+    val envelope = ENVELOPE_FLOOR + ENVELOPE_RANGE * sin(TAU * time).toUnitRange()
+    return wave * envelope
+}
+
+private fun Double.toUnitRange(): Float = ((this + 1.0) / 2.0).toFloat()
 
 // region Previews
 

@@ -14,6 +14,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import xyz.ksharma.krail.core.log.log
 
+private const val EARLIEST_THE_RECOGNISER_MAY_FINISH_MILLIS = 3_000L
+private const val SILENCE_THAT_ENDS_THE_SESSION_MILLIS = 2_500L
+private const val SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS = 1_800L
+
 /**
  * `android.speech.SpeechRecognizer`, not ML Kit — see this module's README for why.
  *
@@ -95,6 +99,25 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+                // Without these the recogniser ends the session on the platform's own default
+                // pause, which on several devices is short enough to cut a rider off mid
+                // sentence ("from Central to..." <thinking> and it has already stopped). A
+                // trip said out loud has thinking pauses in it, so the silence windows are
+                // widened and a floor is set on how soon it may decide the rider is done.
+                // These are hints: an OEM recogniser is free to ignore them, which is why
+                // AiSearchInputViewModel also caps the session on its own side.
+                putExtra(
+                    RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS,
+                    EARLIEST_THE_RECOGNISER_MAY_FINISH_MILLIS,
+                )
+                putExtra(
+                    RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
+                    SILENCE_THAT_ENDS_THE_SESSION_MILLIS,
+                )
+                putExtra(
+                    RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
+                    SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS,
+                )
             },
         )
 

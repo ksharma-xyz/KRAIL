@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -188,6 +189,10 @@ fun TextField(
     }
 }
 
+// Roughly three lines of body text plus the box's own vertical padding: enough that an empty
+// multiline field reads as somewhere to write a sentence rather than a search bar.
+private val MultiLineMinHeight = 128.dp
+
 /**
  * The handful of layout values that differ between a single-line pill and a multiline box,
  * resolved in one place so [TextField] itself stays branch-free over [TextFieldLineLimits].
@@ -217,9 +222,13 @@ private fun textFieldLayout(lineLimits: TextFieldLineLimits, shape: Shape?): Tex
         // whatever box it is dropped into. Filling was right when the only multiline caller
         // handed it a fixed height; in a bottom sheet with no height of its own it swallowed
         // the whole sheet and pushed every other control off screen.
+        //
+        // The minimum height is not redundant with the caller's own minHeightInLines: an empty
+        // unfocused field composes only its placeholder, never the inner text field, so the
+        // line limits have nothing to size and the box collapses to one line until tapped.
         TextFieldLayout(
             heightModifier = Modifier,
-            containerModifier = Modifier.fillMaxWidth(),
+            containerModifier = Modifier.fillMaxWidth().heightIn(min = MultiLineMinHeight),
             shape = shape ?: RoundedCornerShape(RadiusTokens.XL),
             verticalPadding = SpacingTokens.M,
             verticalAlignment = Alignment.Top,

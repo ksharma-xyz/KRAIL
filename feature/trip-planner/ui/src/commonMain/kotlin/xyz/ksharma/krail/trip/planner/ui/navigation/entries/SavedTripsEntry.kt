@@ -44,11 +44,11 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
 
-        // Drives SearchStopRow's inline AI panel directly (see AiInlineSearchPanel) - no
-        // separate sheet/confirm screen. userLocationManager only exists as a @Composable
-        // factory (its permission/location controllers need Activity context tied to
-        // composition), so it's built here and passed in via koinViewModel's parametersOf,
-        // matching TrackTripViewModel's own Composable-supplied param.
+        // Drives the AI search sheet the home screen opens over itself (see AiSearchSheet).
+        // userLocationManager only exists as a @Composable factory (its permission/location
+        // controllers need Activity context tied to composition), so it's built here and
+        // passed in via koinViewModel's parametersOf, matching TrackTripViewModel's own
+        // Composable-supplied param.
         val userLocationManager = rememberUserLocationManager()
         val aiSearchInputViewModel: AiSearchInputViewModel = koinViewModel(
             parameters = { parametersOf(suspend { userLocationManager.getCurrentLocation().getOrNull() }) },
@@ -59,10 +59,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved
         // trip still fills the field it did find and leaves the other for a normal tap.
         //
-        // With both ends known there is nothing left to confirm, so the rider goes straight to
-        // the timetable: the sheet asked them where they were going and they answered. With
-        // only one end, the sheet closes onto a row with that field filled and the rider
-        // finishes it the ordinary way — navigating on a half-known trip would be guessing.
+        // The sheet fills the fields and stops there. Loading a timetable is the rider's call
+        // and always has been: they read the two fields, decide the AI got it right, and press
+        // Search themselves. Doing it for them takes that check away at the one moment it
+        // matters most.
         LaunchedEffect(aiSearchInputState.phase, aiSearchInputState.resolved) {
             val resolved = aiSearchInputState.resolved
             if (aiSearchInputState.phase == AiSearchInputPhase.RESOLVED && resolved != null) {
@@ -73,12 +73,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(it.toJsonString()))
                 }
                 aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
-                triggerTripSearch(
-                    fromStop = resolved.fromStopItem,
-                    toStop = resolved.toStopItem,
-                    viewModel = viewModel,
-                    tripPlannerNavigator = tripPlannerNavigator,
-                )
             }
         }
 
@@ -141,19 +135,13 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
             aiState = aiSearchInputState,
             onAiEvent = aiSearchInputViewModel::onEvent,
-            // A label chip is the no-speech path through the sheet: it names a destination
-            // the rider chose themselves, so it is treated exactly like a resolved one. With
-            // an origin already in the row that is a whole trip and they go straight there.
+            // A label chip is the no-speech path through the sheet: it names a destination the
+            // rider chose themselves. Same rule as a resolved intent — it fills Destination and
+            // closes, and the rider presses Search when they are ready.
             onAiLabelClick = { label ->
                 label.toStopItem()?.let { stop ->
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
                     aiSearchInputViewModel.onEvent(AiSearchInputEvent.CloseSheet)
-                    triggerTripSearch(
-                        fromStop = savedTripState.fromStop,
-                        toStop = stop,
-                        viewModel = viewModel,
-                        tripPlannerNavigator = tripPlannerNavigator,
-                    )
                 }
             },
             onSettingsButtonClick = {

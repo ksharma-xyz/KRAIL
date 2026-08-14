@@ -3,7 +3,9 @@ package xyz.ksharma.krail.trip.planner.ui.search.ai
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -271,7 +273,10 @@ class AiSearchInputViewModelTest {
     fun `closing the box while listening stops the mic`() = runTest(testDispatcher) {
         viewModel.onEvent(AiSearchInputEvent.OpenSheet)
         viewModel.onEvent(AiSearchInputEvent.StartListening)
-        advanceUntilIdle()
+        // runCurrent, not advanceUntilIdle: the session has a 20s ceiling on it now, and
+        // advancing until idle would run virtual time past that and stop the mic before the
+        // test gets to. Same reason in every test below that asserts a live session.
+        runCurrent()
         assertTrue(viewModel.uiState.value.isListening)
 
         viewModel.onEvent(AiSearchInputEvent.CloseSheet)
@@ -405,10 +410,10 @@ class AiSearchInputViewModelTest {
     @Test
     fun `start listening surfaces partial transcripts while speaking`() = runTest(testDispatcher) {
         viewModel.onEvent(AiSearchInputEvent.StartListening)
-        advanceUntilIdle()
+        runCurrent()
 
         speechToTextService.results.emit(SpeechToTextResult.Partial("central to"))
-        advanceUntilIdle()
+        runCurrent()
 
         val state = viewModel.uiState.value
         assertTrue(state.isListening)
@@ -452,11 +457,11 @@ class AiSearchInputViewModelTest {
     @Test
     fun `starting again tears the previous session down first`() = runTest(testDispatcher) {
         viewModel.onEvent(AiSearchInputEvent.StartListening)
-        advanceUntilIdle()
+        runCurrent()
         val stopsAfterFirstStart = speechToTextService.stopListeningCallCount
 
         viewModel.onEvent(AiSearchInputEvent.StartListening)
-        advanceUntilIdle()
+        runCurrent()
 
         // Without this the platform recogniser is still running when the new session starts,
         // which comes back as a busy error.
@@ -485,7 +490,7 @@ class AiSearchInputViewModelTest {
                 timeIntent = null,
             )
             viewModel.onEvent(AiSearchInputEvent.StartListening)
-            advanceUntilIdle()
+            runCurrent()
             assertTrue(viewModel.uiState.value.isListening)
 
             viewModel.onEvent(AiSearchInputEvent.StopListening)
@@ -503,4 +508,21 @@ class AiSearchInputViewModelTest {
 
             assertEquals(AiSearchInputPhase.RESOLVED, viewModel.uiState.value.phase)
         }
+
+    @Test
+    fun `listening stops itself once it hits the ceiling`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isListening)
+
+        // A recogniser that never reports an end would otherwise leave a live microphone and a
+        // running waveform on screen with no way out but backing off the sheet.
+        advanceTimeBy(MAX_LISTENING_MILLIS_IN_TEST + 1)
+        runCurrent()
+
+        assertEquals(false, viewModel.uiState.value.isListening)
+        assertEquals(1, speechToTextService.stopListeningCallCount)
+    }
 }
+
+private const val MAX_LISTENING_MILLIS_IN_TEST = 20_000L

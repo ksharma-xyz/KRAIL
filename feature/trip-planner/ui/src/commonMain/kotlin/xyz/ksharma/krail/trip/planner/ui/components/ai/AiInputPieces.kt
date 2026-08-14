@@ -40,13 +40,17 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_UNSUPPORTED
 private const val WORKING_TEXT_ALPHA = 0.55f
 
 /**
- * Title and one line under it. The line is the only thing that changes with state, so the
- * surface never reintroduces itself: no new heading appears, no block is added or removed.
+ * The question lives in the title bar, so all this carries is the one line under it, and that
+ * line is the only thing in the header that changes with state. Nothing is added or removed
+ * between states: the words change inside a block that is always exactly one line tall.
+ *
+ * The dialog has no title bar of its own, so it asks for [showTitle] and gets the question
+ * back at the top of the card.
  */
 @Composable
 internal fun AiInputHeader(
     state: AiSearchInputUiState,
-    showDescription: Boolean,
+    showTitle: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -55,20 +59,22 @@ internal fun AiInputHeader(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
-        Text(
-            text = if (state.isListening) "Listening" else "Where are you going?",
-            style = KrailTheme.typography.titleLarge,
-            color = KrailTheme.colors.onSurface,
-        )
-        if (showDescription) {
+        if (showTitle) {
             Text(
-                text = state.descriptionLine(),
-                style = KrailTheme.typography.bodyMedium,
-                color = KrailTheme.colors.softLabel,
+                text = AI_INPUT_QUESTION,
+                style = KrailTheme.typography.titleLarge,
+                color = KrailTheme.colors.onSurface,
             )
         }
+        Text(
+            text = state.descriptionLine(),
+            style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.secondaryLabel,
+        )
     }
 }
+
+internal const val AI_INPUT_QUESTION = "Where are you going?"
 
 private fun AiSearchInputUiState.descriptionLine(): String = when {
     isListening -> "Go ahead, I am listening."
@@ -219,7 +225,7 @@ internal fun StageProblem(message: String) {
     Text(
         text = message,
         style = KrailTheme.typography.bodyMedium,
-        color = KrailTheme.colors.softLabel,
+        color = KrailTheme.colors.secondaryLabel,
     )
 }
 
@@ -247,6 +253,9 @@ internal val AiSearchInputUiState.needsSettingsForMic: Boolean
 
 internal val AiSearchInputUiState.isSpeechUnsupported: Boolean
     get() = speechUnavailableReason == MIC_UNSUPPORTED || speechUnavailableReason == "not_available"
+
+internal val AiSearchInputUiState.isWorking: Boolean
+    get() = phase == AiSearchInputPhase.EXTRACTING
 
 internal val AiSearchInputUiState.isBusy: Boolean
     get() = phase == AiSearchInputPhase.EXTRACTING || isListening

@@ -5,21 +5,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
+import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
+import xyz.ksharma.krail.taj.modifier.aiGradientBorder
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 
@@ -33,6 +38,11 @@ private const val MIC_LEAVES_FIELD_SCALE = 1.3f
  * way instead: one full width control per row, ordered by how likely it is to be used.
  */
 internal const val ACTIONS_STACK_SCALE = 1.8f
+
+// This button fills the two fields on the screen behind and closes. It does not load a
+// timetable: the rider still decides when to do that. "Find trip" promised results they then
+// had to ask for a second time.
+private const val PRIMARY_ACTION = "Continue"
 
 /**
  * The AI input surface's content, with no opinion about what contains it. `AiInputSurface`
@@ -53,8 +63,12 @@ internal fun AiInputContent(
     // keyboard and land under the thumb. A dialog packs to its content instead: a card with a
     // stretch of empty space in the middle of it looks broken rather than roomy.
     actionsAtBottom: Boolean = false,
+    // Full screen has the question in its title bar already; the dialog has no bar to put it
+    // in, so it draws its own.
+    showTitle: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
+    val themeColorHex by LocalThemeColor.current
     val fontScale = LocalDensity.current.fontScale
     // A 44dp control inside the field costs every line of text the same 60dp of width. At
     // default size that is about three characters; by MIC_LEAVES_FIELD_SCALE the text is large
@@ -64,11 +78,13 @@ internal fun AiInputContent(
     val micInField = fontScale < MIC_LEAVES_FIELD_SCALE
     val stackActions = fontScale >= ACTIONS_STACK_SCALE
 
+    // The line and the field are one group and sit close together; the actions are a separate
+    // group and get the wider gap. A single uniform gap made all three read as unrelated.
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
-        AiInputHeader(state = state, showDescription = !stackActions)
+        AiInputHeader(state = state, showTitle = showTitle)
 
         // The waveform takes the field's own box rather than appearing above or below it, so
         // starting and stopping the microphone never changes the surface's height.
@@ -98,8 +114,16 @@ internal fun AiInputContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = TextFieldDefaults.MultiLineMinHeight)
-                    // Working dims the sentence rather than hiding it: the rider can still read
-                    // what is being worked out, and nothing is added or removed to say so.
+                    // Working puts the app's own rotating gradient around the field, the same
+                    // treatment the alert summary card uses while it thinks. A dimmed sentence
+                    // and a 24dp wheel in the corner were too quiet to read as working at all.
+                    .aiGradientBorder(
+                        spinning = state.isWorking,
+                        cornerRadius = dim.radiusL,
+                        colors = AiThemeGradientTokens.stopsFor(themeColorHex),
+                    )
+                    // Dimmed rather than hidden: the rider can still read what is being worked
+                    // out, and nothing is added or removed to say so.
                     .graphicsLayer { alpha = state.workingTextAlpha },
                 onTextChange = { onEvent(AiSearchInputEvent.TypedTextChanged(it.toString())) },
             )
@@ -107,13 +131,21 @@ internal fun AiInputContent(
 
         state.problemMessage()?.let { StageProblem(message = it) }
 
-        if (actionsAtBottom) Spacer(modifier = Modifier.weight(1f))
+        if (actionsAtBottom) {
+            Spacer(modifier = Modifier.weight(1f))
+        } else {
+            Spacer(modifier = Modifier.height(dim.spacingM))
+        }
 
         AiInputActions(
             state = state,
             hasText = textFieldState.text.isNotBlank(),
             showMic = !micInField,
             stacked = stackActions,
+            // The full screen already has a back arrow and the system back gesture. A Cancel
+            // beside them is a third way out of the same screen. The dialog has neither, so it
+            // keeps one.
+            showCancel = showTitle,
             onEvent = onEvent,
             onDismiss = onDismiss,
         )
@@ -126,6 +158,7 @@ private fun AiInputActions(
     hasText: Boolean,
     showMic: Boolean,
     stacked: Boolean,
+    showCancel: Boolean,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -144,10 +177,12 @@ private fun AiInputActions(
                 onClick = { onEvent(AiSearchInputEvent.Submit) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(text = "Find trip")
+                Text(text = PRIMARY_ACTION)
             }
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Cancel")
+            if (showCancel) {
+                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Cancel")
+                }
             }
         }
         return
@@ -166,12 +201,14 @@ private fun AiInputActions(
             horizontalArrangement = Arrangement.spacedBy(dim.spacingL, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onDismiss) { Text(text = "Cancel") }
+            if (showCancel) {
+                TextButton(onClick = onDismiss) { Text(text = "Cancel") }
+            }
             Button(
                 enabled = hasText && !state.isBusy,
                 onClick = { onEvent(AiSearchInputEvent.Submit) },
             ) {
-                Text(text = "Find trip")
+                Text(text = PRIMARY_ACTION)
             }
         }
     }

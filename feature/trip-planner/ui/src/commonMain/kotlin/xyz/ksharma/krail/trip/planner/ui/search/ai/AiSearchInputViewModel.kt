@@ -22,11 +22,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 private const val NEARBY_STOP_RADIUS_KM = 1.0
 
 /**
- * Owns the AI box that `SearchStopRow` shows in place of its From/To fields: typed text ->
+ * Owns the AI search sheet the home screen opens over itself: typed text ->
  * [AiTextService.extractTripIntent] -> resolve origin/destination text against the *same* stop
  * search [SearchStopViewModel][xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel]
- * already uses (no second search path) -> the row's own From/To fields. There is no separate
- * confirm card: the filled row *is* the confirmation, and the rider still taps Search itself.
+ * already uses (no second search path) -> the home row's own From/To fields. The sheet is an
+ * input method, not a destination: it writes into the same two fields a rider would fill by
+ * hand, and everything downstream of it is the ordinary trip flow.
  * Speaking feeds the same pipeline via [SpeechToTextService] (a final transcript becomes
  * [AiSearchInputUiState.typedText] and triggers [submit] directly), so typing and speaking are
  * the same one path in.
@@ -76,8 +77,8 @@ class AiSearchInputViewModel(
 
             AiSearchInputEvent.MicPermissionDenied ->
                 _uiState.update { it.copy(isListening = false, speechUnavailableReason = "no_permission") }
-            AiSearchInputEvent.OpenBox -> _uiState.update { it.copy(isBoxOpen = true) }
-            AiSearchInputEvent.CloseBox -> closeBox()
+            AiSearchInputEvent.OpenSheet -> _uiState.update { it.copy(isSheetOpen = true) }
+            AiSearchInputEvent.CloseSheet -> closeSheet()
             AiSearchInputEvent.Submit -> submit()
             AiSearchInputEvent.StartOver -> _uiState.update { AiSearchInputUiState() }
             AiSearchInputEvent.StartListening -> startListening()
@@ -86,15 +87,16 @@ class AiSearchInputViewModel(
     }
 
     /**
-     * Backing out of the box (system back) throws the draft away rather than keeping it for
-     * the next time the wheel is tapped — the box reads as a fresh prompt every time it
-     * opens, and a half-typed sentence from minutes ago would silently submit itself.
+     * Dismissing the sheet (swipe down, scrim tap, system back) throws the draft away rather
+     * than keeping it for the next time the wheel is tapped — the sheet reads as a fresh
+     * prompt every time it opens, and a half-typed sentence from minutes ago would silently
+     * submit itself.
      */
-    private fun closeBox() {
+    private fun closeSheet() {
         // Cancelled, not just stopped: unlike [stopListening] — which keeps collecting so a
         // late final transcript still lands — backing out means the rider is done. Leaving the
         // collection alive would let a transcript arriving a second later run [submit] and
-        // write stops into a row the rider had already walked away from.
+        // write stops into a row the rider had already dismissed the sheet on.
         listeningJob?.cancel()
         listeningJob = null
         if (_uiState.value.isListening) speechToTextService.stopListening()
@@ -250,12 +252,12 @@ class AiSearchInputViewModel(
 /**
  * One stop resolving is enough to be useful: the row is an ordinary editable From/To pair, so
  * whichever field the AI did resolve gets written and the rider fills the other one the usual
- * way. Nothing resolving at all is a failure, not a result — the box stays open with the
+ * way. Nothing resolving at all is a failure, not a result — the sheet stays open with the
  * rider's text still in it so they can reword rather than retype.
  */
 private fun AiSearchInputUiState.withResolution(intent: ResolvedTripIntent): AiSearchInputUiState =
     copy(
         phase = if (intent.hasAnyStop) AiSearchInputPhase.RESOLVED else AiSearchInputPhase.UNRESOLVED,
         resolved = if (intent.hasAnyStop) intent else null,
-        isBoxOpen = !intent.hasAnyStop,
+        isSheetOpen = !intent.hasAnyStop,
     )

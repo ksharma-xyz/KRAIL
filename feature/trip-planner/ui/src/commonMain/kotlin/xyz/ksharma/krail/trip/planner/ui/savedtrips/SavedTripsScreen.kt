@@ -80,10 +80,12 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.ai.AiSearchSheet
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
@@ -101,6 +103,7 @@ fun SavedTripsScreen(
     onSearchButtonClick: () -> Unit = {},
     aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
+    onAiLabelClick: (StopLabel) -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
@@ -240,15 +243,24 @@ fun SavedTripsScreen(
                 },
                 toButtonClick = toButtonClick,
                 onSearchButtonClick = { onSearchButtonClick() },
-                aiState = aiState,
                 onAiEvent = onAiEvent,
-                // The row's AI box is a text field and the row is pinned to the bottom of a
-                // window that draws behind the keyboard, so without this the keyboard covers
-                // it. Applied here rather than inside the row: padding the row's own content
-                // would stretch its coloured background down to the old bottom edge instead
-                // of lifting the card.
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
+
+            // The AI surface is a sheet over the whole screen rather than a mode inside the
+            // row: what a rider does here (speak, watch it listen, be told it could not place
+            // something) needs more room than two text fields, and folding it into them was
+            // what made the previous attempt fight the layout. It still only ever writes into
+            // those same two fields.
+            if (aiState.isSheetOpen) {
+                AiSearchSheet(
+                    state = aiState,
+                    stopLabels = savedTripsState.stopLabels,
+                    onEvent = onAiEvent,
+                    onLabelClick = onAiLabelClick,
+                    onDismiss = { onAiEvent(AiSearchInputEvent.CloseSheet) },
+                )
+            }
         }
         log(
             "[MAP_STOP_SEL] SavedTripsScreen dualPane=$dualPane " +

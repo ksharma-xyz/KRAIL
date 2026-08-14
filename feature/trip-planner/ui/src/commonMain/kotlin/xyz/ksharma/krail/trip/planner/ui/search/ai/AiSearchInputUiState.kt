@@ -6,16 +6,16 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 enum class AiSearchInputPhase { IDLE, EXTRACTING, DOWNLOADING, RESOLVED, UNRESOLVED }
 
 /**
- * @param isBoxOpen Whether `SearchStopRow`'s AI box is showing *in place of* its From/To
- * fields. Owned here rather than as `rememberSaveable` in the row so that closing-on-resolve
- * and the reset that follows it happen in one state emission — a row-local flag would race
- * with [AiSearchInputEvent.StartOver] and could leave an empty box open.
+ * @param isSheetOpen Whether the AI search sheet is showing over the home screen. Owned here
+ * rather than as `rememberSaveable` in the screen so that closing-on-resolve and the reset
+ * that follows it happen in one state emission — a screen-local flag would race with
+ * [AiSearchInputEvent.StartOver] and could leave an empty sheet open.
  */
 data class AiSearchInputUiState(
     val typedText: String = "",
     val phase: AiSearchInputPhase = AiSearchInputPhase.IDLE,
     val resolved: ResolvedTripIntent? = null,
-    val isBoxOpen: Boolean = false,
+    val isSheetOpen: Boolean = false,
     val isListening: Boolean = false,
     val speechTranscript: String = "",
     val speechUnavailableReason: String? = null,
@@ -41,8 +41,8 @@ data class ResolvedTripIntent(
 
 sealed interface AiSearchInputEvent {
     data class TypedTextChanged(val text: String) : AiSearchInputEvent
-    data object OpenBox : AiSearchInputEvent
-    data object CloseBox : AiSearchInputEvent
+    data object OpenSheet : AiSearchInputEvent
+    data object CloseSheet : AiSearchInputEvent
     data object Submit : AiSearchInputEvent
     data object StartOver : AiSearchInputEvent
     data object StartListening : AiSearchInputEvent

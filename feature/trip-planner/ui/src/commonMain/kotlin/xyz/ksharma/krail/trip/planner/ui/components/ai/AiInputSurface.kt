@@ -140,14 +140,14 @@ private fun AiInputFullScreen(
                 .safeDrawingPadding(),
         ) {
             TitleBar(
-                title = { Text(text = "Plan a trip") },
+                title = { Text(text = AI_INPUT_QUESTION) },
                 onNavActionClick = onDismiss,
             )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingXL)
+                    .padding(top = dim.spacingM, bottom = dim.spacingXL)
                     .then(if (stacked) Modifier.verticalScroll(rememberScrollState()) else Modifier),
                 verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
             ) {
@@ -219,6 +219,7 @@ private fun AiInputDialog(
                         textFieldState = textFieldState,
                         onEvent = onEvent,
                         onDismiss = onDismiss,
+                        showTitle = true,
                     )
                 }
             }

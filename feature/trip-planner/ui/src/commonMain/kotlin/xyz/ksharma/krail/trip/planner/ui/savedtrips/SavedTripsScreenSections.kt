@@ -45,7 +45,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
-import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -314,7 +313,6 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     toButtonClick: () -> Unit,
     onSearchButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
-    aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
 ) {
     AnimatedVisibility(
@@ -335,7 +333,6 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
             fromButtonClick = fromButtonClick,
             toButtonClick = toButtonClick,
             onSearchButtonClick = onSearchButtonClick,
-            aiState = aiState,
             onAiEvent = onAiEvent,
         )
     }

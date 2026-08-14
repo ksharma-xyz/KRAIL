@@ -57,9 +57,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 
         // Whatever the AI resolved is written into SavedTripsState the same way a manual
         // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved
-        // trip still fills the field it did find and leaves the other for a normal tap. The
-        // AI flow is then reset, and the row shows ordinary filled fields plus a Search button;
-        // the rider taps Search themselves. There is no separate confirm card here.
+        // trip still fills the field it did find and leaves the other for a normal tap.
+        //
+        // With both ends known there is nothing left to confirm, so the rider goes straight to
+        // the timetable: the sheet asked them where they were going and they answered. With
+        // only one end, the sheet closes onto a row with that field filled and the rider
+        // finishes it the ordinary way — navigating on a half-known trip would be guessing.
         LaunchedEffect(aiSearchInputState.phase, aiSearchInputState.resolved) {
             val resolved = aiSearchInputState.resolved
             if (aiSearchInputState.phase == AiSearchInputPhase.RESOLVED && resolved != null) {
@@ -70,6 +73,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(it.toJsonString()))
                 }
                 aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
+                triggerTripSearch(
+                    fromStop = resolved.fromStopItem,
+                    toStop = resolved.toStopItem,
+                    viewModel = viewModel,
+                    tripPlannerNavigator = tripPlannerNavigator,
+                )
             }
         }
 
@@ -132,6 +141,21 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
             aiState = aiSearchInputState,
             onAiEvent = aiSearchInputViewModel::onEvent,
+            // A label chip is the no-speech path through the sheet: it names a destination
+            // the rider chose themselves, so it is treated exactly like a resolved one. With
+            // an origin already in the row that is a whole trip and they go straight there.
+            onAiLabelClick = { label ->
+                label.toStopItem()?.let { stop ->
+                    viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                    aiSearchInputViewModel.onEvent(AiSearchInputEvent.CloseSheet)
+                    triggerTripSearch(
+                        fromStop = savedTripState.fromStop,
+                        toStop = stop,
+                        viewModel = viewModel,
+                        tripPlannerNavigator = tripPlannerNavigator,
+                    )
+                }
+            },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 tripPlannerNavigator.navigateToSettings()

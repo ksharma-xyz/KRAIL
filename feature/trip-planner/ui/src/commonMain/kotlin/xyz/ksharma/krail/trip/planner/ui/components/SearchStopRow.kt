@@ -41,30 +41,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_check
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
-import xyz.ksharma.krail.core.speechtotext.rememberRequestRecordAudioPermission
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
-import xyz.ksharma.krail.taj.components.MicIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
@@ -72,8 +65,6 @@ import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
-import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
-import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private val SearchRowTopRadius = 36.dp
@@ -92,7 +83,6 @@ fun SearchStopRow(
     onExpandRequest: () -> Unit = {},
     onCollapseRequest: (() -> Unit)? = null,
     onSearchButtonClick: () -> Unit = {},
-    aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
 ) {
     val themeColorHex by LocalThemeColor.current
@@ -150,7 +140,6 @@ fun SearchStopRow(
                 toButtonClick = toButtonClick,
                 onCollapseRequest = onCollapseRequest,
                 onSearchButtonClick = onSearchButtonClick,
-                aiState = aiState,
                 onAiEvent = onAiEvent,
             )
         } else {
@@ -236,7 +225,6 @@ private const val PILL_PULSE_PEAK_SCALE = 1.05f
 private const val PILL_PULSE_UP_DURATION_MILLIS = 240
 private const val PILL_PULSE_DOWN_DURATION_MILLIS = 360
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun ExpandedSearchRow(
     fromStopItem: StopItem?,
@@ -250,18 +238,9 @@ private fun ExpandedSearchRow(
     onSearchButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
     onCollapseRequest: (() -> Unit)? = null,
-    aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
-
-    // Open/closed lives in AiSearchInputViewModel, not here: it closes as part of the same
-    // state emission that resolves the trip, so it can't race the reset that follows.
-    val aiBoxOpen = aiState.isBoxOpen
-
-    // Back closes the box instead of leaving the screen — the box replaces the fields, so
-    // there is no visible way out of it otherwise.
-    BackHandler(enabled = aiBoxOpen) { onAiEvent(AiSearchInputEvent.CloseBox) }
 
     // Cutout inset on the outer box so the background itself doesn't draw behind
     // the camera notch/punch-hole in landscape. Content and background are both
@@ -302,44 +281,25 @@ private fun ExpandedSearchRow(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
                 ) {
-                    if (aiBoxOpen) {
-                        AiInlineSearchBox(
-                            state = aiState,
-                            onEvent = onAiEvent,
-                            // Exactly the two fields it stands in for, so the row's height
-                            // never jumps between AI mode and normal mode.
-                            height = dim.textFieldHeight * 2 + SearchFieldSpacing,
-                        )
-                    } else {
-                        FromToFields(
-                            fromStopItem = fromStopItem,
-                            toStopItem = toStopItem,
-                            showFromField = showFromField,
-                            isFromHighlighted = isFromHighlighted,
-                            fromButtonClick = fromButtonClick,
-                            toButtonClick = toButtonClick,
-                        )
-                    }
+                    FromToFields(
+                        fromStopItem = fromStopItem,
+                        toStopItem = toStopItem,
+                        showFromField = showFromField,
+                        isFromHighlighted = isFromHighlighted,
+                        fromButtonClick = fromButtonClick,
+                        toButtonClick = toButtonClick,
+                    )
                 }
 
-                // Action buttons (AI wheel/mic + search/submit) - same RoundIconButton, same
-                // size, for both so the column stays visually symmetric.
+                // Action buttons (AI wheel + search) - same RoundIconButton, same size, for
+                // both so the column stays visually symmetric.
                 Column(
                     modifier = Modifier.padding(start = dim.spacingXL),
                     verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
                 ) {
-                    AiRowEntryButton(
-                        boxOpen = aiBoxOpen,
-                        aiState = aiState,
-                        onAiEvent = onAiEvent,
-                    )
+                    AiSheetEntryButton(onAiEvent = onAiEvent)
 
-                    SearchOrSubmitButton(
-                        boxOpen = aiBoxOpen,
-                        aiState = aiState,
-                        onAiEvent = onAiEvent,
-                        onSearchButtonClick = onSearchButtonClick,
-                    )
+                    SearchButton(onSearchButtonClick = onSearchButtonClick)
                 }
             }
         }
@@ -437,85 +397,36 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
 }
 
 /**
- * Same [RoundIconButton] the row's own Search button uses (size, shape) - only the icon and
- * tap behaviour change with state, so the column stays visually symmetric. Closed shows the
- * wheel and opens the box; open shows a mic that starts listening (permission-gated) or stops
- * it. It goes inert while extraction runs, so a second tap can't race the result.
+ * The way into the AI search sheet. Opening is all it does: the sheet owns speaking, typing
+ * and every failure they can hit, so this button has one job and one look. It used to change
+ * into a mic and back, which meant the row had to explain a mode it was not showing.
  */
 @Composable
-private fun AiRowEntryButton(
-    boxOpen: Boolean,
-    aiState: AiSearchInputUiState,
-    onAiEvent: (AiSearchInputEvent) -> Unit,
-) {
+private fun AiSheetEntryButton(onAiEvent: (AiSearchInputEvent) -> Unit) {
     val dim = KrailTheme.dimensions
-    val requestMicPermission = rememberRequestRecordAudioPermission()
-    val coroutineScope = rememberCoroutineScope()
-    val enabled = aiState.phase != AiSearchInputPhase.EXTRACTING
 
     RoundIconButton(
-        enabled = enabled,
         content = {
-            if (boxOpen) {
-                Image(
-                    imageVector = MicIcon,
-                    contentDescription = "Talk to KRAIL",
-                    colorFilter = ColorFilter.tint(LocalContentColor.current),
-                    modifier = Modifier.size(dim.iconDefault),
-                )
-            } else {
-                AiWheelMark(spinning = false, markSize = dim.iconDefault)
-            }
+            AiWheelMark(spinning = false, markSize = dim.iconDefault)
         },
-        onClick = {
-            when {
-                !boxOpen -> onAiEvent(AiSearchInputEvent.OpenBox)
-                aiState.isListening -> onAiEvent(AiSearchInputEvent.StopListening)
-                else -> coroutineScope.launch {
-                    // A denial has to be said out loud. Starting the recogniser anyway just
-                    // fails silently and the rider watches the box do nothing.
-                    val granted = requestMicPermission()
-                    onAiEvent(
-                        if (granted) {
-                            AiSearchInputEvent.StartListening
-                        } else {
-                            AiSearchInputEvent.MicPermissionDenied
-                        },
-                    )
-                }
-            }
-        },
+        onClick = { onAiEvent(AiSearchInputEvent.OpenSheet) },
     )
 }
 
-/**
- * One button in one slot: Search normally, a tick while the AI box holds text. The tick
- * submits that text for extraction; it never searches, and Search never submits — the rider
- * always taps Search themselves once the fields are filled.
- */
 @Composable
-private fun SearchOrSubmitButton(
-    boxOpen: Boolean,
-    aiState: AiSearchInputUiState,
-    onAiEvent: (AiSearchInputEvent) -> Unit,
-    onSearchButtonClick: () -> Unit,
-) {
+private fun SearchButton(onSearchButtonClick: () -> Unit) {
     val dim = KrailTheme.dimensions
-    val isSubmit = boxOpen && aiState.typedText.isNotBlank()
-    // An open box with nothing in it has nothing to submit and nothing to search for.
-    val enabled = if (boxOpen) isSubmit && aiState.phase != AiSearchInputPhase.EXTRACTING else true
 
     RoundIconButton(
-        enabled = enabled,
         content = {
             Image(
-                painter = painterResource(if (isSubmit) Res.drawable.ic_check else Res.drawable.ic_search),
-                contentDescription = if (isSubmit) "Find these stops" else "Search",
+                painter = painterResource(Res.drawable.ic_search),
+                contentDescription = "Search",
                 colorFilter = ColorFilter.tint(LocalContentColor.current),
                 modifier = Modifier.size(dim.iconDefault),
             )
         },
-        onClick = { if (isSubmit) onAiEvent(AiSearchInputEvent.Submit) else onSearchButtonClick() },
+        onClick = onSearchButtonClick,
     )
 }
 

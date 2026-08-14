@@ -416,6 +416,36 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `a recogniser error is reported as itself, not as a permission problem`() =
+        runTest(testDispatcher) {
+            // The rider tapped the mic while listening and again straight after; the platform
+            // recogniser was still winding down and returned busy. Permission is granted, so
+            // the reason must not be a permission one - the box words these differently.
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            advanceUntilIdle()
+
+            speechToTextService.results.emit(SpeechToTextResult.Error(reason = "recognizer_error_8"))
+            advanceUntilIdle()
+
+            assertEquals("recognizer_error_8", viewModel.uiState.value.speechUnavailableReason)
+        }
+
+    @Test
+    fun `starting again tears the previous session down first`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        advanceUntilIdle()
+        val stopsAfterFirstStart = speechToTextService.stopListeningCallCount
+
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        advanceUntilIdle()
+
+        // Without this the platform recogniser is still running when the new session starts,
+        // which comes back as a busy error.
+        assertEquals(stopsAfterFirstStart + 1, speechToTextService.stopListeningCallCount)
+        assertNull(viewModel.uiState.value.speechUnavailableReason)
+    }
+
+    @Test
     fun `speech unavailable surfaces the reason instead of listening`() = runTest(testDispatcher) {
         speechToTextService.availability = SpeechToTextAvailability.Unavailable(reason = "no_permission")
 

@@ -108,7 +108,18 @@ class AiSearchInputViewModel(
      * documents for OCR, so [AiTextService.extractTripIntent] only ever needs one caller.
      */
     private fun startListening() {
-        listeningJob?.cancel()
+        // A previous session that is still winding down will fail a new start with a busy
+        // error from the platform recogniser, which used to surface as a permission problem.
+        // Stopping and starting again in quick succession is an easy thing for a rider to do,
+        // so an existing session is torn down before a new one begins. Only when there is one:
+        // a first start has nothing to stop, and asking anyway would be a no-op call the
+        // platform still has to service.
+        if (listeningJob != null) {
+            listeningJob?.cancel()
+            speechToTextService.stopListening()
+        }
+        listeningJob = null
+
         listeningJob = viewModelScope.launch {
             val availability = speechToTextService.checkAvailability()
             log("AiSearchInputViewModel: speech availability -> $availability")
@@ -117,6 +128,8 @@ class AiSearchInputViewModel(
                 return@launch
             }
 
+            // Clears any previous failure message as the new attempt begins, so a retry does
+            // not start under the last attempt's error.
             _uiState.update {
                 it.copy(isListening = true, speechTranscript = "", speechUnavailableReason = null)
             }

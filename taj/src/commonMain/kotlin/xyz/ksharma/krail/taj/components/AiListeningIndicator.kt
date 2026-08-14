@@ -51,6 +51,9 @@ fun AiListeningIndicator(
     modifier: Modifier = Modifier,
     active: Boolean = true,
     colors: List<Color> = AiCoolGradientTokens.stops,
+    // A waveform already says "listening", and it says it better than a mark can. The mark is
+    // only worth drawing where there is no waveform beside it.
+    showMark: Boolean = true,
 ) {
     val dim = KrailTheme.dimensions
     Column(
@@ -58,7 +61,9 @@ fun AiListeningIndicator(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        AiWheelMark(spinning = active, colors = colors)
+        if (showMark) {
+            AiWheelMark(spinning = active, colors = colors)
+        }
         AiWaveform(active = active, colors = colors)
     }
 }

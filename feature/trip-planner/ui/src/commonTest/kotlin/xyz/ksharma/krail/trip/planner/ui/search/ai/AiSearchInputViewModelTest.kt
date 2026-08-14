@@ -156,6 +156,25 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `an unlabelled word does not become a stop that merely contains it`() =
+        runTest(testDispatcher) {
+            // Same sentence as the label test, on a phone with no "work" label. Rather than
+            // filling the destination with "70 Powderworks Rd", it resolves to nothing and
+            // leaves the field for the rider.
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = "Central Station",
+                destinationText = "work",
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("let's go to work"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.resolved?.toStopItem)
+        }
+
+    @Test
     fun `one stop resolving is still a result - the other field is left for manual entry`() =
         runTest(testDispatcher) {
             aiTextService.extractionResult = TripIntentExtraction(

@@ -14,13 +14,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -30,16 +31,22 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
-// Tall enough that the sheet does not resize between stages (the waveform stage is the
+// Tall enough that the sheet does not resize between stages (the listening waveform is the
 // tallest), so opening it, speaking and being answered is one steady surface rather than a
 // panel that grows and shrinks under the rider's thumb.
-private val SheetStageMinHeight = 280.dp
+private val SheetStageMinHeight = 380.dp
+
+// The sheet's own background is the theme colour laid over the page surface at low strength.
+// A plain surface put a white field on an almost-white sheet with no edge between them; a
+// tint keeps the field reading as a field without touching the field's own colours.
+private const val SHEET_TINT_ALPHA = 0.14f
 
 /**
  * The AI search surface: a sheet of its own, rather than an AI mode folded into the search
@@ -65,7 +72,8 @@ fun AiSearchSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = KrailTheme.colors.bottomSheetBackground,
+        containerColor = themeColor().copy(alpha = SHEET_TINT_ALPHA)
+            .compositeOver(KrailTheme.colors.surface),
         modifier = modifier,
     ) {
         AiSearchSheetContent(
@@ -88,12 +96,18 @@ internal fun AiSearchSheetContent(
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
     val gradient = AiThemeGradientTokens.stopsFor(themeColorHex)
+    val stage = state.stage()
 
-    // Typing is a mode the rider chooses, not something the pipeline knows about, so it lives
-    // here rather than in the ViewModel. rememberSaveable so a rotation mid-sentence does not
-    // drop them back to the speak prompt with their words still in the field.
-    var isTyping by rememberSaveable { mutableStateOf(false) }
-    val stage = state.stage(isTyping)
+    // One field, owned above the stages, so a transcript that came in by voice lands in the
+    // same box the rider would have typed into and can be corrected there rather than
+    // re-spoken. Only pushed in when the two actually differ: writing on every recomposition
+    // would fight the rider's own cursor.
+    val textFieldState = rememberTextFieldState()
+    LaunchedEffect(state.typedText) {
+        if (state.typedText != textFieldState.text.toString()) {
+            textFieldState.setTextAndPlaceCursorAtEnd(state.typedText)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -124,27 +138,26 @@ internal fun AiSearchSheetContent(
                 state = state,
                 gradient = gradient,
                 stopLabels = stopLabels,
+                textFieldState = textFieldState,
                 onEvent = onEvent,
                 onLabelClick = onLabelClick,
-                onTypingChange = { isTyping = it },
             )
         }
     }
 }
 
-internal enum class AiSheetStage { READY, TYPING, LISTENING, THINKING, DOWNLOADING, FAILED }
-
 /**
- * Listening beats every other signal: the rider is mid-sentence and the surface has to show
- * that before anything else it might also be true of.
+ * Three stages, not one per phase. Typing is not a mode to be switched into: the box is
+ * always there, and a rider who does not want to talk simply does not tap the microphone.
+ * Failure and a model still downloading are lines of text above that same box rather than
+ * stages of their own, because both of them end with the rider trying again in it.
  */
-private fun AiSearchInputUiState.stage(isTyping: Boolean): AiSheetStage = when {
+internal enum class AiSheetStage { INPUT, LISTENING, THINKING }
+
+private fun AiSearchInputUiState.stage(): AiSheetStage = when {
     isListening -> AiSheetStage.LISTENING
     phase == AiSearchInputPhase.EXTRACTING -> AiSheetStage.THINKING
-    phase == AiSearchInputPhase.DOWNLOADING -> AiSheetStage.DOWNLOADING
-    phase == AiSearchInputPhase.UNRESOLVED -> AiSheetStage.FAILED
-    isTyping -> AiSheetStage.TYPING
-    else -> AiSheetStage.READY
+    else -> AiSheetStage.INPUT
 }
 
 // region Previews
@@ -157,7 +170,7 @@ private val previewLabels = persistentListOf(
 
 @PreviewComponent
 @Composable
-private fun PreviewAiSearchSheetReady() {
+private fun PreviewAiSearchSheetInput() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         AiSearchSheetContent(
             state = AiSearchInputUiState(),
@@ -183,7 +196,7 @@ private fun PreviewAiSearchSheetListening() {
 
 @PreviewComponent
 @Composable
-private fun PreviewAiSearchSheetFailed() {
+private fun PreviewAiSearchSheetUnresolved() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         AiSearchSheetContent(
             state = AiSearchInputUiState(

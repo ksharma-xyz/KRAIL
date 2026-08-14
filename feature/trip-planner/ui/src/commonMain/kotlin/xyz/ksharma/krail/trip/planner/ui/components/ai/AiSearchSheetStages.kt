@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,19 +16,21 @@ import xyz.ksharma.krail.taj.components.AiThinkingIndicator
 import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
-private val MarkSize = 84.dp
+private val MarkSize = 72.dp
+
+private const val INPUT_MIN_LINES = 3
+private const val INPUT_MAX_LINES = 6
 
 /**
  * One stage of [AiSearchSheetContent]. Each is a whole screenful of sheet rather than a
  * variation on a shared skeleton: what the rider is doing in each of these is genuinely
- * different, and a single layout with six sets of conditional bits was what made the previous
+ * different, and a single layout with a set of conditional bits was what made the previous
  * in-row version so hard to read.
  */
 @Composable
@@ -37,19 +39,19 @@ internal fun AiSearchSheetStage(
     state: AiSearchInputUiState,
     gradient: List<Color>,
     stopLabels: ImmutableList<StopLabel>,
+    textFieldState: TextFieldState,
     onEvent: (AiSearchInputEvent) -> Unit,
     onLabelClick: (StopLabel) -> Unit,
-    onTypingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (stage) {
-        AiSheetStage.READY -> ReadyStage(
+        AiSheetStage.INPUT -> InputStage(
+            state = state,
             gradient = gradient,
             stopLabels = stopLabels,
-            speechUnavailableReason = state.speechUnavailableReason,
+            textFieldState = textFieldState,
             onEvent = onEvent,
             onLabelClick = onLabelClick,
-            onTypeInstead = { onTypingChange(true) },
             modifier = modifier,
         )
 
@@ -60,67 +62,58 @@ internal fun AiSearchSheetStage(
             modifier = modifier,
         )
 
-        AiSheetStage.TYPING -> TypingStage(
-            initialText = state.typedText,
-            stopLabels = stopLabels,
-            onEvent = onEvent,
-            onLabelClick = onLabelClick,
-            onSpeakInstead = { onTypingChange(false) },
-            modifier = modifier,
-        )
-
         AiSheetStage.THINKING -> ThinkingStage(gradient = gradient, modifier = modifier)
-
-        AiSheetStage.DOWNLOADING -> MessageStage(
-            gradient = gradient,
-            title = "Getting ready",
-            body = "KRAIL is still downloading the on device model. Try again in a moment.",
-            primaryLabel = "Try again",
-            onPrimary = { onEvent(AiSearchInputEvent.Submit) },
-            stopLabels = stopLabels,
-            onLabelClick = onLabelClick,
-            modifier = modifier,
-        )
-
-        AiSheetStage.FAILED -> MessageStage(
-            gradient = gradient,
-            title = "I could not place that",
-            body = failedBody(state.typedText),
-            primaryLabel = "Try again",
-            onPrimary = {
-                onEvent(AiSearchInputEvent.StartOver)
-                onTypingChange(false)
-            },
-            stopLabels = stopLabels,
-            onLabelClick = onLabelClick,
-            modifier = modifier,
-        )
     }
 }
 
-private fun failedBody(typedText: String): String = if (typedText.isBlank()) {
-    "Try a stop name, or pick one of your places."
-} else {
-    "I heard \"$typedText\". Try a stop name, or pick one of your places."
-}
-
+/**
+ * The box is always here and the microphone sits beside it. Nothing asks the rider to choose
+ * between speaking and typing first: one of the two is already in front of them, and the other
+ * is one tap away in the same place every time.
+ */
 @Composable
-private fun ReadyStage(
+private fun InputStage(
+    state: AiSearchInputUiState,
     gradient: List<Color>,
     stopLabels: ImmutableList<StopLabel>,
-    speechUnavailableReason: String?,
+    textFieldState: TextFieldState,
     onEvent: (AiSearchInputEvent) -> Unit,
     onLabelClick: (StopLabel) -> Unit,
-    onTypeInstead: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dim = KrailTheme.dimensions
+
     StageColumn(modifier = modifier) {
         AiWheelMark(spinning = false, colors = gradient, markSize = MarkSize)
         StageHeading(title = "Where to?", body = "Say it the way you would say it to a friend.")
+
+        state.problemMessage()?.let { StageProblem(message = it) }
+
+        TextField(
+            state = textFieldState,
+            placeholder = "Home to work, leaving at nine",
+            lineLimits = TextFieldLineLimits.MultiLine(
+                minHeightInLines = INPUT_MIN_LINES,
+                maxHeightInLines = INPUT_MAX_LINES,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            onTextChange = { onEvent(AiSearchInputEvent.TypedTextChanged(it.toString())) },
+        )
+
         AiLabelChipRow(stopLabels = stopLabels, onLabelClick = onLabelClick)
-        speechUnavailableReason?.let { MicProblem(reason = it) }
-        SpeakButton(onEvent = onEvent)
-        TextButton(onClick = onTypeInstead) { Text(text = "Type instead") }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MicButton(onEvent = onEvent)
+            Button(
+                enabled = textFieldState.text.isNotBlank(),
+                onClick = { onEvent(AiSearchInputEvent.Submit) },
+            ) {
+                Text(text = "Find trip")
+            }
+        }
     }
 }
 
@@ -139,7 +132,7 @@ private fun ListeningStage(
             // stops repeating "listening" back at a rider who can already see the waveform.
             body = if (transcript.isBlank()) "Tell me where you are going." else "",
         )
-        TextButton(onClick = onStop) { Text(text = "Stop") }
+        StopListeningButton(onClick = onStop)
     }
 }
 
@@ -148,61 +141,5 @@ private fun ThinkingStage(gradient: List<Color>, modifier: Modifier = Modifier) 
     StageColumn(modifier = modifier) {
         AiThinkingIndicator(active = true, colors = gradient)
         StageHeading(title = "Working it out", body = "")
-    }
-}
-
-@Composable
-private fun TypingStage(
-    initialText: String,
-    stopLabels: ImmutableList<StopLabel>,
-    onEvent: (AiSearchInputEvent) -> Unit,
-    onLabelClick: (StopLabel) -> Unit,
-    onSpeakInstead: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    val textFieldState = rememberTextFieldState(initialText = initialText)
-
-    StageColumn(modifier = modifier) {
-        StageHeading(title = "Where to?", body = "")
-        TextField(
-            state = textFieldState,
-            placeholder = "Home to work, leaving at nine",
-            lineLimits = TextFieldLineLimits.MultiLine(minHeightInLines = 2, maxHeightInLines = 4),
-            modifier = Modifier.fillMaxWidth(),
-            onTextChange = { onEvent(AiSearchInputEvent.TypedTextChanged(it.toString())) },
-        )
-        AiLabelChipRow(stopLabels = stopLabels, onLabelClick = onLabelClick)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Button(
-                enabled = textFieldState.text.isNotBlank(),
-                onClick = { onEvent(AiSearchInputEvent.Submit) },
-            ) {
-                Text(text = "Find trip")
-            }
-            TextButton(onClick = onSpeakInstead) { Text(text = "Speak") }
-        }
-    }
-}
-
-@Composable
-private fun MessageStage(
-    gradient: List<Color>,
-    title: String,
-    body: String,
-    primaryLabel: String,
-    onPrimary: () -> Unit,
-    stopLabels: ImmutableList<StopLabel>,
-    onLabelClick: (StopLabel) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StageColumn(modifier = modifier) {
-        AiWheelMark(spinning = false, colors = gradient, markSize = MarkSize)
-        StageHeading(title = title, body = body)
-        AiLabelChipRow(stopLabels = stopLabels, onLabelClick = onLabelClick)
-        Button(onClick = onPrimary) { Text(text = primaryLabel) }
     }
 }

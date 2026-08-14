@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.search.ai
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,15 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val NEARBY_STOP_RADIUS_KM = 1.0
+
+// Hard ceiling on one listening session. Ending it is normally the recogniser's call: it stops
+// when the rider stops talking, with the silence windows widened on the Android side so a
+// thinking pause mid sentence does not count as finished. Those windows are hints an OEM
+// recogniser may ignore, and a recogniser that never reports an end leaves a live microphone and
+// a running waveform on screen with no way out but backing off the sheet. Twenty seconds is far
+// longer than anyone takes to say where they are going, so hitting this is a fault rather than a
+// rider being slow.
+private const val MAX_LISTENING_MILLIS = 20_000L
 
 /**
  * Owns the AI search sheet the home screen opens over itself: typed text ->
@@ -62,6 +72,7 @@ class AiSearchInputViewModel(
     val uiState: StateFlow<AiSearchInputUiState> = _uiState.asStateFlow()
 
     private var listeningJob: Job? = null
+    private var listeningTimeoutJob: Job? = null
 
     fun onEvent(event: AiSearchInputEvent) {
         when (event) {
@@ -99,6 +110,8 @@ class AiSearchInputViewModel(
         // write stops into a row the rider had already dismissed the sheet on.
         listeningJob?.cancel()
         listeningJob = null
+        listeningTimeoutJob?.cancel()
+        listeningTimeoutJob = null
         if (_uiState.value.isListening) speechToTextService.stopListening()
         _uiState.update { AiSearchInputUiState() }
     }
@@ -121,6 +134,7 @@ class AiSearchInputViewModel(
             speechToTextService.stopListening()
         }
         listeningJob = null
+        listeningTimeoutJob?.cancel()
 
         listeningJob = viewModelScope.launch {
             val availability = speechToTextService.checkAvailability()
@@ -135,6 +149,8 @@ class AiSearchInputViewModel(
             _uiState.update {
                 it.copy(isListening = true, speechTranscript = "", speechUnavailableReason = null)
             }
+
+            startListeningTimeout()
 
             speechToTextService.startListening().collect { result ->
                 when (result) {
@@ -158,6 +174,22 @@ class AiSearchInputViewModel(
     }
 
     /**
+     * The backstop for a recogniser that never says it is done. Stopping is the same graceful
+     * stop the rider's own stop button does, so whatever was said up to that point still comes
+     * back through the flow as a final transcript rather than being thrown away.
+     */
+    private fun startListeningTimeout() {
+        listeningTimeoutJob?.cancel()
+        listeningTimeoutJob = viewModelScope.launch {
+            delay(MAX_LISTENING_MILLIS)
+            if (_uiState.value.isListening) {
+                log("AiSearchInputViewModel: listening hit the ${MAX_LISTENING_MILLIS}ms ceiling")
+                stopListening()
+            }
+        }
+    }
+
+    /**
      * Deliberately does NOT cancel [listeningJob] — [SpeechToTextService.stopListening] only
      * *requests* a graceful finish; both platform implementations still deliver an eventual
      * [SpeechToTextResult.Final] (or [SpeechToTextResult.Error]) through the same flow
@@ -166,6 +198,8 @@ class AiSearchInputViewModel(
      * `isListening` still flips immediately so the UI stops showing a live mic right away.
      */
     private fun stopListening() {
+        listeningTimeoutJob?.cancel()
+        listeningTimeoutJob = null
         speechToTextService.stopListening()
         _uiState.update { it.copy(isListening = false) }
     }

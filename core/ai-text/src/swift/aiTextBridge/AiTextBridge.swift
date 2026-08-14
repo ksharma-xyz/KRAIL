@@ -67,7 +67,10 @@ import FoundationModels
                 "leaving around" - omit the whole time field if the rider gave no time. \
                 timeText is the time phrase verbatim (e.g. "9am", "6:30pm"), never \
                 resolved. modeHints lists any transport mode words mentioned, verbatim, \
-                lowercase. Never invent a field the rider didn't actually say.
+                lowercase. Never invent a field the rider didn't actually say. If the \
+                rider names only one place, decide from the phrasing: "go home", "take \
+                me to X" and "heading to X" mean X is the destination and origin is \
+                omitted; only "from X" or "leaving X" makes a lone place the origin.
                 """
                 do {
                     let session = LanguageModelSession(instructions: instructions)

@@ -171,7 +171,17 @@ private fun buildExtractionPrompt(riderText: String): String = """
       "6:30pm") — do not convert or resolve it.
     - modeHints lists any transport mode words mentioned (e.g. "train", "bus"), verbatim,
       lowercase. Empty array if none mentioned.
+    - If the rider names only ONE place, decide which field it belongs in from the
+      phrasing. "go home", "let's go to X", "take me to X", "heading to X", "I need to
+      get to X" all mean X is the DESTINATION and originText is null. Only put a lone
+      place in originText when the wording is clearly about leaving, such as "from X" or
+      "leaving X". A rider saying where they are going is far more common than a rider
+      saying only where they are.
     - Never guess a field the rider didn't actually say. Use null / empty array instead.
+
+    Examples:
+    "let's go home" -> {"originText": null, "destinationText": "home", "timeIntent": null, "modeHints": []}
+    "leaving home around 9" -> {"originText": "home", "destinationText": null, "timeIntent": {"isArrival": false, "timeText": "around 9"}, "modeHints": []}
 
     Rider's message: "$riderText"
 

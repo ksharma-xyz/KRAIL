@@ -56,7 +56,7 @@ internal fun AiInputHeader(
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
         Text(
-            text = if (state.isListening) "Listening" else "Where to?",
+            text = if (state.isListening) "Listening" else "Where are you going?",
             style = KrailTheme.typography.titleLarge,
             color = KrailTheme.colors.onSurface,
         )
@@ -71,9 +71,11 @@ internal fun AiInputHeader(
 }
 
 private fun AiSearchInputUiState.descriptionLine(): String = when {
-    isListening -> "Tell me where you are going."
+    isListening -> "Go ahead, I am listening."
     phase == AiSearchInputPhase.EXTRACTING -> "Working it out."
-    else -> "Say it the way you would to a friend."
+    // What the rider needs to know is that plain words are enough and that there are two ways
+    // in. "Say it the way you would to a friend" was a nice line that told them neither.
+    else -> "Plain words are fine. Type it, or tap the mic."
 }
 
 /**

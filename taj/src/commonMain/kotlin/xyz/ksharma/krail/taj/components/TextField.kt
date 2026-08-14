@@ -74,6 +74,9 @@ fun TextField(
     textStyle: TextStyle? = null,
     readOnly: Boolean = false,
     leadingIcon: (@Composable () -> Unit)? = null,
+    // Sits at the field's trailing edge, top aligned on a multiline field. The field reserves
+    // room for it rather than letting it float on top, so text can never run underneath.
+    trailingIcon: (@Composable () -> Unit)? = null,
     imeAction: ImeAction = ImeAction.Default,
     filter: (CharSequence) -> CharSequence = { it },
     maxLength: Int = Int.MAX_VALUE,
@@ -151,9 +154,13 @@ fun TextField(
                                 shape = layout.shape,
                                 color = colors.containerColor,
                             )
-                            .padding(vertical = layout.verticalPadding)
+                            // A trailing control is inset by the smaller step and the text
+                            // makes up the difference below, so the control sits an equal
+                            // gap from the field's top and end while the text keeps its own
+                            // roomier inset. Unequal insets on a control read as bolted on.
+                            .padding(vertical = if (trailingIcon != null) SpacingTokens.M else layout.verticalPadding)
                             .padding(
-                                end = SpacingTokens.XL,
+                                end = if (trailingIcon != null) SpacingTokens.M else SpacingTokens.XL,
                                 start = if (leadingIcon != null) 0.dp else SpacingTokens.XL,
                             ),
                         horizontalArrangement = Arrangement.Start,
@@ -164,24 +171,42 @@ fun TextField(
                             Spacer(modifier = Modifier.width(SpacingTokens.XS))
                         }
 
-                        if (textFieldState.text.isEmpty() && isFocused) {
-                            Box {
-                                innerTextFieldContent() // Displays cursor
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .then(
+                                    if (trailingIcon != null) {
+                                        Modifier.padding(
+                                            top = SpacingTokens.M,
+                                            bottom = SpacingTokens.M,
+                                            end = SpacingTokens.M,
+                                        )
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
+                        ) {
+                            if (textFieldState.text.isEmpty() && isFocused) {
+                                Box {
+                                    innerTextFieldContent() // Displays cursor
+                                    TextFieldPlaceholder(
+                                        placeholder = placeholder,
+                                        color = colors.placeholderColor,
+                                        maxLines = layout.placeholderMaxLines,
+                                    )
+                                }
+                            } else if (textFieldState.text.isEmpty()) {
                                 TextFieldPlaceholder(
                                     placeholder = placeholder,
                                     color = colors.placeholderColor,
                                     maxLines = layout.placeholderMaxLines,
                                 )
+                            } else {
+                                innerTextFieldContent()
                             }
-                        } else if (textFieldState.text.isEmpty()) {
-                            TextFieldPlaceholder(
-                                placeholder = placeholder,
-                                color = colors.placeholderColor,
-                                maxLines = layout.placeholderMaxLines,
-                            )
-                        } else {
-                            innerTextFieldContent()
                         }
+
+                        trailingIcon?.invoke()
                     }
                 }
             },

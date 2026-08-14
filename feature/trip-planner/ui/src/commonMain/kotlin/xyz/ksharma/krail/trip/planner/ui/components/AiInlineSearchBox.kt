@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
@@ -50,7 +53,15 @@ internal fun AiInlineSearchBox(
     AnimatedContent(
         targetState = state.boxContent(),
         transitionSpec = { fadeIn() togetherWith fadeOut() },
-        modifier = modifier.fillMaxWidth().height(height),
+        // One surface for every state. Nothing in this row draws directly on the theme band:
+        // the fields and buttons each have their own surface, and the label tokens are defined
+        // against that surface rather than a band whose colour follows the rider's theme. Text
+        // straight on the band came out grey-on-orange.
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(KrailTheme.dimensions.spacingXL))
+            .background(KrailTheme.colors.surface),
         label = "AiInlineSearchBox",
     ) { content ->
         when (content) {
@@ -71,23 +82,23 @@ internal fun AiInlineSearchBox(
                 BoxMessage(text = "Setting up on-device AI. Try again shortly.")
             }
 
-            AiBoxContent.NO_MIC -> Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
-            ) {
-                BoxMessage(text = "Can't use the mic without permission. Type it instead.")
-                AiTextEntry(state = state, onEvent = onEvent, modifier = Modifier.weight(1f))
-            }
+            AiBoxContent.NO_MIC -> MessageWithTextEntry(
+                message = "Mic needs permission. Type instead.",
+                state = state,
+                onEvent = onEvent,
+            )
 
-            AiBoxContent.FAILED -> Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
-            ) {
-                BoxMessage(text = "Couldn't work that one out. Try rewording it.")
-                // weight, not fillMaxSize: a Column child that fills the parent's whole
-                // height would push the message out of the fixed-height box.
-                AiTextEntry(state = state, onEvent = onEvent, modifier = Modifier.weight(1f))
-            }
+            AiBoxContent.MIC_FAILED -> MessageWithTextEntry(
+                message = "Mic didn't start. Tap it again, or type.",
+                state = state,
+                onEvent = onEvent,
+            )
+
+            AiBoxContent.FAILED -> MessageWithTextEntry(
+                message = "Couldn't work that out. Try rewording.",
+                state = state,
+                onEvent = onEvent,
+            )
 
             AiBoxContent.INPUT -> AiTextEntry(
                 state = state,
@@ -104,7 +115,7 @@ internal fun AiInlineSearchBox(
  * it on the state itself would restart the animation (and rebuild the text field) on every
  * keystroke.
  */
-private enum class AiBoxContent { INPUT, LISTENING, EXTRACTING, DOWNLOADING, FAILED, NO_MIC }
+private enum class AiBoxContent { INPUT, LISTENING, EXTRACTING, DOWNLOADING, FAILED, NO_MIC, MIC_FAILED }
 
 private fun AiSearchInputUiState.boxContent(): AiBoxContent = when {
     isListening -> AiBoxContent.LISTENING
@@ -112,9 +123,44 @@ private fun AiSearchInputUiState.boxContent(): AiBoxContent = when {
     phase == AiSearchInputPhase.DOWNLOADING -> AiBoxContent.DOWNLOADING
     phase == AiSearchInputPhase.UNRESOLVED -> AiBoxContent.FAILED
     // Speech going nowhere has to say so: the rider tapped the mic and would otherwise
-    // watch the box do nothing at all.
-    speechUnavailableReason != null -> AiBoxContent.NO_MIC
-    else -> AiBoxContent.INPUT
+    // watch the box do nothing at all. Which thing went wrong matters, though — see
+    // [isPermissionFailure].
+    speechUnavailableReason == null -> AiBoxContent.INPUT
+    speechUnavailableReason.isPermissionFailure() -> AiBoxContent.NO_MIC
+    else -> AiBoxContent.MIC_FAILED
+}
+
+/**
+ * The speech service reports several unrelated failures as reason strings
+ * (`permission_required`, `not_available`, `recognizer_error_<code>`, `no_result`), and only
+ * some of them are about permission.
+ *
+ * Telling a rider who has already granted the microphone that they have not is worse than
+ * saying nothing: it sends them to a settings screen where everything is already correct.
+ * Tapping the mic while listening and again straight after is the easy way to hit this — the
+ * platform recogniser is still winding down and returns a busy error, which is a retry, not a
+ * permission problem.
+ */
+private fun String.isPermissionFailure(): Boolean =
+    this == "permission_required" || this == "no_permission"
+
+/** A short message above the text entry, on the box's own surface. */
+@Composable
+private fun MessageWithTextEntry(
+    message: String,
+    state: AiSearchInputUiState,
+    onEvent: (AiSearchInputEvent) -> Unit,
+) {
+    val dim = KrailTheme.dimensions
+    Column(
+        modifier = Modifier.fillMaxSize().padding(top = dim.spacingS),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+    ) {
+        BoxMessage(text = message)
+        // weight, not fillMaxSize: a Column child that fills the parent's whole height would
+        // push the message out of the fixed-height box.
+        AiTextEntry(state = state, onEvent = onEvent, modifier = Modifier.weight(1f))
+    }
 }
 
 @Composable

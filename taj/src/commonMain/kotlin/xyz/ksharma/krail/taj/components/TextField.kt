@@ -214,10 +214,6 @@ fun TextField(
     }
 }
 
-// Roughly three lines of body text plus the box's own vertical padding: enough that an empty
-// multiline field reads as somewhere to write a sentence rather than a search bar.
-private val MultiLineMinHeight = 128.dp
-
 /**
  * The handful of layout values that differ between a single-line pill and a multiline box,
  * resolved in one place so [TextField] itself stays branch-free over [TextFieldLineLimits].
@@ -253,7 +249,9 @@ private fun textFieldLayout(lineLimits: TextFieldLineLimits, shape: Shape?): Tex
         // line limits have nothing to size and the box collapses to one line until tapped.
         TextFieldLayout(
             heightModifier = Modifier,
-            containerModifier = Modifier.fillMaxWidth().heightIn(min = MultiLineMinHeight),
+            containerModifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = TextFieldDefaults.MultiLineMinHeight),
             shape = shape ?: RoundedCornerShape(RadiusTokens.XL),
             verticalPadding = SpacingTokens.M,
             verticalAlignment = Alignment.Top,
@@ -296,6 +294,15 @@ data class TextFieldColors(
 )
 
 object TextFieldDefaults {
+
+    /**
+     * Roughly three lines of body text plus the box's own vertical padding: enough that an
+     * empty multiline field reads as somewhere to write a sentence rather than a search bar.
+     *
+     * Public because anything that swaps itself in for a multiline field has to be exactly
+     * this tall, or the swap resizes the layout around it.
+     */
+    val MultiLineMinHeight = 128.dp
 
     private const val INVERTED_PLACEHOLDER_ALPHA = 0.7f
 

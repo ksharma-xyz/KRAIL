@@ -75,6 +75,7 @@ internal fun AiInputContent(
     // enough that those characters matter and the control is large enough to crowd them, so it
     // moves out to the action row. Past ACTIONS_STACK_SCALE that row cannot hold three controls
     // on one line without wrapping a label or shrinking a touch target, so it becomes a column.
+    val workingBorder = rememberWorkingBorder(isWorking = state.isWorking)
     val micInField = fontScale < MIC_LEAVES_FIELD_SCALE
     val stackActions = fontScale >= ACTIONS_STACK_SCALE
 
@@ -118,9 +119,10 @@ internal fun AiInputContent(
                     // treatment the alert summary card uses while it thinks. A dimmed sentence
                     // and a 24dp wheel in the corner were too quiet to read as working at all.
                     .aiGradientBorder(
-                        spinning = state.isWorking,
+                        spinning = workingBorder.spinning,
                         cornerRadius = dim.radiusL,
                         colors = AiThemeGradientTokens.stopsFor(themeColorHex),
+                        alpha = workingBorder.alpha,
                     )
                     // Dimmed rather than hidden: the rider can still read what is being worked
                     // out, and nothing is added or removed to say so.

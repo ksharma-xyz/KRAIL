@@ -50,8 +50,13 @@ fun Modifier.aiGradientBorder(
     cornerRadius: Dp,
     strokeWidth: Dp = StrokeTokens.Thick,
     colors: List<Color> = AiGradientTokens.stops,
+    // Lets a caller fade the whole ring in and out. At zero the ring is not drawn at all,
+    // which is what a surface that only wears this while it works needs: without it the
+    // border is simply always there, and "working" reads as a ring that stops turning.
+    alpha: Float = 1f,
 ): Modifier {
     val angle = rememberAiSpinAngle(spinning)
+    if (alpha <= 0f) return this
     val brush = remember(colors) {
         Brush.sweepGradient(colors + colors.first())
     }
@@ -77,7 +82,9 @@ fun Modifier.aiGradientBorder(
             // 1. Static mask: the stroke ring, unrotated. This is the only thing that
             // defines where paint can land — its geometry never moves.
             drawRoundRect(
-                color = Color.Black,
+                // The mask's own alpha scales the gradient composited into it by SrcIn, so
+                // fading the mask fades the ring.
+                color = Color.Black.copy(alpha = alpha),
                 style = Stroke(width = strokePx),
                 cornerRadius = CornerRadius(cornerRadius.toPx()),
                 topLeft = ringTopLeft,

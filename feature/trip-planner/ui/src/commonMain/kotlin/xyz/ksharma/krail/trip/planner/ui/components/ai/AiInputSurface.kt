@@ -27,7 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -101,10 +103,16 @@ fun AiInputSurface(
 }
 
 /**
- * Full screen, so there is nothing to keep clear of the keyboard: `safeDrawingPadding` already
- * contains the IME inset, and it is applied exactly once. A second `imePadding` anywhere below
- * this would subtract the keyboard twice and leave a gap the height of a keyboard.
+ * Full screen, and deliberately NOT a Dialog.
+ *
+ * A Compose dialog opens its own window, and that window insets itself for the system bars,
+ * so the gradient stopped short of the top and bottom edges and the system bar areas showed
+ * whatever was behind. Drawing into the host window instead means this surface inherits the
+ * app's own edge to edge setup, and `safeDrawingPadding` keeps the content clear of the bars
+ * while the background runs to the edges. It also puts the keyboard inset on the same footing
+ * as every other screen, rather than a second window's version of it.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun AiInputFullScreen(
     state: AiSearchInputUiState,
@@ -121,41 +129,36 @@ private fun AiInputFullScreen(
     // mutually exclusive, since a scrolling column has no bounded height to distribute.
     val stacked = LocalDensity.current.fontScale >= ACTIONS_STACK_SCALE
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        // usePlatformDefaultWidth is the only inset-adjacent flag in the common
-        // DialogProperties: decorFitsSystemWindows is Android-only and usePlatformInsets is
-        // not in this version's common surface, so the content applies its own insets and the
-        // dialog window is left with its defaults.
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        CloudGradientBackground(modifier = Modifier.fillMaxSize()) {
+    // Without a dialog window there is no automatic back handling, and this surface covers the
+    // screen it was opened from.
+    BackHandler(enabled = true) { onDismiss() }
+
+    CloudGradientBackground(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
+        ) {
+            TitleBar(
+                title = { Text(text = "KRAIL AI") },
+                onNavActionClick = onDismiss,
+            )
             Column(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxSize()
-                    .safeDrawingPadding(),
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .padding(bottom = dim.spacingXL)
+                    .then(if (stacked) Modifier.verticalScroll(rememberScrollState()) else Modifier),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
             ) {
-                TitleBar(
-                    title = { Text(text = "KRAIL AI") },
-                    onNavActionClick = onDismiss,
+                AiInputContent(
+                    state = state,
+                    textFieldState = textFieldState,
+                    onEvent = onEvent,
+                    onDismiss = onDismiss,
+                    modifier = if (stacked) Modifier else Modifier.weight(1f),
+                    actionsAtBottom = !stacked,
                 )
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = dim.pageHorizontalPadding)
-                        .padding(bottom = dim.spacingXL)
-                        .then(if (stacked) Modifier.verticalScroll(rememberScrollState()) else Modifier),
-                    verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
-                ) {
-                    AiInputContent(
-                        state = state,
-                        textFieldState = textFieldState,
-                        onEvent = onEvent,
-                        onDismiss = onDismiss,
-                        modifier = if (stacked) Modifier else Modifier.weight(1f),
-                        actionsAtBottom = !stacked,
-                    )
-                }
             }
         }
     }

@@ -135,15 +135,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
             aiState = aiSearchInputState,
             onAiEvent = aiSearchInputViewModel::onEvent,
-            // A label chip is the no-speech path through the sheet: it names a destination the
-            // rider chose themselves. Same rule as a resolved intent — it fills Destination and
-            // closes, and the rider presses Search when they are ready.
-            onAiLabelClick = { label ->
-                label.toStopItem()?.let { stop ->
-                    viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
-                    aiSearchInputViewModel.onEvent(AiSearchInputEvent.CloseSheet)
-                }
-            },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 tripPlannerNavigator.navigateToSettings()

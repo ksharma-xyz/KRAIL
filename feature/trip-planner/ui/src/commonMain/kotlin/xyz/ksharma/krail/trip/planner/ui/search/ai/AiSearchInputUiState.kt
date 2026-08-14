@@ -6,7 +6,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 enum class AiSearchInputPhase { IDLE, EXTRACTING, DOWNLOADING, RESOLVED, UNRESOLVED }
 
 /**
- * @param isSheetOpen Whether the AI search sheet is showing over the home screen. Owned here
+ * @param isInputOpen Whether the AI search sheet is showing over the home screen. Owned here
  * rather than as `rememberSaveable` in the screen so that closing-on-resolve and the reset
  * that follows it happen in one state emission — a screen-local flag would race with
  * [AiSearchInputEvent.StartOver] and could leave an empty sheet open.
@@ -15,7 +15,7 @@ data class AiSearchInputUiState(
     val typedText: String = "",
     val phase: AiSearchInputPhase = AiSearchInputPhase.IDLE,
     val resolved: ResolvedTripIntent? = null,
-    val isSheetOpen: Boolean = false,
+    val isInputOpen: Boolean = false,
     val isListening: Boolean = false,
     val speechTranscript: String = "",
     val speechUnavailableReason: String? = null,
@@ -41,11 +41,19 @@ data class ResolvedTripIntent(
 
 sealed interface AiSearchInputEvent {
     data class TypedTextChanged(val text: String) : AiSearchInputEvent
-    data object OpenSheet : AiSearchInputEvent
-    data object CloseSheet : AiSearchInputEvent
+    data object OpenInput : AiSearchInputEvent
+    data object CloseInput : AiSearchInputEvent
     data object Submit : AiSearchInputEvent
     data object StartOver : AiSearchInputEvent
     data object StartListening : AiSearchInputEvent
     data object StopListening : AiSearchInputEvent
+
+    /** Refused just now, and the system will ask again next time the mic is tapped. */
     data object MicPermissionDenied : AiSearchInputEvent
+
+    /** Refused for good. The mic's job changes to opening Settings. */
+    data object MicPermissionBlocked : AiSearchInputEvent
+
+    /** No recogniser, or the microphone is restricted by the device. Speaking is off. */
+    data object SpeechUnsupported : AiSearchInputEvent
 }

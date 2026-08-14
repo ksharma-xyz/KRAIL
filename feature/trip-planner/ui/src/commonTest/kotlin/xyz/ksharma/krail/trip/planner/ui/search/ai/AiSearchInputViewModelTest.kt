@@ -184,7 +184,7 @@ class AiSearchInputViewModelTest {
                 destinationText = "Town Hall",
                 timeIntent = null,
             )
-            viewModel.onEvent(AiSearchInputEvent.OpenSheet)
+            viewModel.onEvent(AiSearchInputEvent.OpenInput)
             viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("from nowhere to town hall"))
 
             viewModel.onEvent(AiSearchInputEvent.Submit)
@@ -196,7 +196,7 @@ class AiSearchInputViewModelTest {
             assertNull(state.resolved?.fromStopItem)
             assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), state.resolved?.toStopItem)
             // The row can show the destination it did find, so the box gets out of the way.
-            assertEquals(false, state.isSheetOpen)
+            assertEquals(false, state.isInputOpen)
         }
 
     @Test
@@ -207,7 +207,7 @@ class AiSearchInputViewModelTest {
                 destinationText = "Also Nonexistent",
                 timeIntent = null,
             )
-            viewModel.onEvent(AiSearchInputEvent.OpenSheet)
+            viewModel.onEvent(AiSearchInputEvent.OpenInput)
             viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("from nowhere to nowhere"))
 
             viewModel.onEvent(AiSearchInputEvent.Submit)
@@ -216,7 +216,7 @@ class AiSearchInputViewModelTest {
             val state = viewModel.uiState.value
             assertEquals(AiSearchInputPhase.UNRESOLVED, state.phase)
             assertNull(state.resolved)
-            assertTrue(state.isSheetOpen)
+            assertTrue(state.isInputOpen)
             // Rewording means editing what's there, not retyping it.
             assertEquals("from nowhere to nowhere", state.typedText)
         }
@@ -245,33 +245,33 @@ class AiSearchInputViewModelTest {
             destinationText = "Town Hall",
             timeIntent = null,
         )
-        viewModel.onEvent(AiSearchInputEvent.OpenSheet)
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
-        assertTrue(viewModel.uiState.value.isSheetOpen)
+        assertTrue(viewModel.uiState.value.isInputOpen)
 
         viewModel.onEvent(AiSearchInputEvent.Submit)
         advanceUntilIdle()
 
-        assertEquals(false, viewModel.uiState.value.isSheetOpen)
+        assertEquals(false, viewModel.uiState.value.isInputOpen)
     }
 
     @Test
     fun `closing the box throws the draft away rather than keeping it for next time`() =
         runTest(testDispatcher) {
-            viewModel.onEvent(AiSearchInputEvent.OpenSheet)
+            viewModel.onEvent(AiSearchInputEvent.OpenInput)
             viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("half a sentence"))
 
-            viewModel.onEvent(AiSearchInputEvent.CloseSheet)
+            viewModel.onEvent(AiSearchInputEvent.CloseInput)
 
             val state = viewModel.uiState.value
-            assertEquals(false, state.isSheetOpen)
+            assertEquals(false, state.isInputOpen)
             assertEquals("", state.typedText)
             assertEquals(AiSearchInputPhase.IDLE, state.phase)
         }
 
     @Test
     fun `closing the box while listening stops the mic`() = runTest(testDispatcher) {
-        viewModel.onEvent(AiSearchInputEvent.OpenSheet)
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
         viewModel.onEvent(AiSearchInputEvent.StartListening)
         // runCurrent, not advanceUntilIdle: the session has a 20s ceiling on it now, and
         // advancing until idle would run virtual time past that and stop the mic before the
@@ -279,7 +279,7 @@ class AiSearchInputViewModelTest {
         runCurrent()
         assertTrue(viewModel.uiState.value.isListening)
 
-        viewModel.onEvent(AiSearchInputEvent.CloseSheet)
+        viewModel.onEvent(AiSearchInputEvent.CloseInput)
 
         assertEquals(false, viewModel.uiState.value.isListening)
         assertEquals(1, speechToTextService.stopListeningCallCount)
@@ -395,13 +395,13 @@ class AiSearchInputViewModelTest {
 
     @Test
     fun `startOver resets the whole flow`() = runTest(testDispatcher) {
-        viewModel.onEvent(AiSearchInputEvent.OpenSheet)
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("some text"))
 
         viewModel.onEvent(AiSearchInputEvent.StartOver)
 
         val state = viewModel.uiState.value
-        assertEquals(false, state.isSheetOpen)
+        assertEquals(false, state.isInputOpen)
         assertEquals("", state.typedText)
         assertEquals(AiSearchInputPhase.IDLE, state.phase)
         assertNull(state.resolved)

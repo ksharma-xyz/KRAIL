@@ -409,7 +409,7 @@ private fun AiSheetEntryButton(onAiEvent: (AiSearchInputEvent) -> Unit) {
         content = {
             AiWheelMark(spinning = false, markSize = dim.iconDefault)
         },
-        onClick = { onAiEvent(AiSearchInputEvent.OpenSheet) },
+        onClick = { onAiEvent(AiSearchInputEvent.OpenInput) },
     )
 }
 

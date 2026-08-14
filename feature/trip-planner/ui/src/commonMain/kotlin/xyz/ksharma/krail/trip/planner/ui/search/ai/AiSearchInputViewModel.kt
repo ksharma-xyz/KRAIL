@@ -31,6 +31,12 @@ private const val NEARBY_STOP_RADIUS_KM = 1.0
 // rider being slow.
 private const val MAX_LISTENING_MILLIS = 20_000L
 
+// Reasons the UI branches on. Strings rather than a type because SpeechToTextService reports
+// its own platform reasons through the same field, and this side has to hold both.
+internal const val MIC_DENIED = "no_permission"
+internal const val MIC_NEEDS_SETTINGS = "needs_settings"
+internal const val MIC_UNSUPPORTED = "unsupported"
+
 /**
  * Owns the AI search sheet the home screen opens over itself: typed text ->
  * [AiTextService.extractTripIntent] -> resolve origin/destination text against the *same* stop
@@ -87,9 +93,15 @@ class AiSearchInputViewModel(
             }
 
             AiSearchInputEvent.MicPermissionDenied ->
-                _uiState.update { it.copy(isListening = false, speechUnavailableReason = "no_permission") }
-            AiSearchInputEvent.OpenSheet -> _uiState.update { it.copy(isSheetOpen = true) }
-            AiSearchInputEvent.CloseSheet -> closeSheet()
+                _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_DENIED) }
+
+            AiSearchInputEvent.MicPermissionBlocked ->
+                _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_NEEDS_SETTINGS) }
+
+            AiSearchInputEvent.SpeechUnsupported ->
+                _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_UNSUPPORTED) }
+            AiSearchInputEvent.OpenInput -> _uiState.update { it.copy(isInputOpen = true) }
+            AiSearchInputEvent.CloseInput -> closeInput()
             AiSearchInputEvent.Submit -> submit()
             AiSearchInputEvent.StartOver -> _uiState.update { AiSearchInputUiState() }
             AiSearchInputEvent.StartListening -> startListening()
@@ -103,7 +115,7 @@ class AiSearchInputViewModel(
      * prompt every time it opens, and a half-typed sentence from minutes ago would silently
      * submit itself.
      */
-    private fun closeSheet() {
+    private fun closeInput() {
         // Cancelled, not just stopped: unlike [stopListening] — which keeps collecting so a
         // late final transcript still lands — backing out means the rider is done. Leaving the
         // collection alive would let a transcript arriving a second later run [submit] and
@@ -223,12 +235,13 @@ class AiSearchInputViewModel(
                 return@launch
             }
 
-            val extraction = aiTextService.extractTripIntent(text)
-            log("AiSearchInputViewModel: extraction -> ${if (extraction == null) "null" else "parsed"}")
-            if (extraction == null) {
+            val rawExtraction = aiTextService.extractTripIntent(text)
+            log("AiSearchInputViewModel: extraction -> ${if (rawExtraction == null) "null" else "parsed"}")
+            if (rawExtraction == null) {
                 _uiState.update { it.copy(phase = AiSearchInputPhase.UNRESOLVED) }
                 return@launch
             }
+            val extraction = rawExtraction.withSinglePlaceInTheRightField(text)
 
             val toStopItem = extraction.destinationText?.let { resolveStop(it) }
             val originText = extraction.originText
@@ -293,5 +306,5 @@ private fun AiSearchInputUiState.withResolution(intent: ResolvedTripIntent): AiS
     copy(
         phase = if (intent.hasAnyStop) AiSearchInputPhase.RESOLVED else AiSearchInputPhase.UNRESOLVED,
         resolved = if (intent.hasAnyStop) intent else null,
-        isSheetOpen = !intent.hasAnyStop,
+        isInputOpen = !intent.hasAnyStop,
     )

@@ -80,12 +80,11 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.ai.AiSearchSheet
+import xyz.ksharma.krail.trip.planner.ui.components.ai.AiInputSurface
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
@@ -103,7 +102,6 @@ fun SavedTripsScreen(
     onSearchButtonClick: () -> Unit = {},
     aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
-    onAiLabelClick: (StopLabel) -> Unit = {},
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
@@ -252,13 +250,11 @@ fun SavedTripsScreen(
             // something) needs more room than two text fields, and folding it into them was
             // what made the previous attempt fight the layout. It still only ever writes into
             // those same two fields.
-            if (aiState.isSheetOpen) {
-                AiSearchSheet(
+            if (aiState.isInputOpen) {
+                AiInputSurface(
                     state = aiState,
-                    stopLabels = savedTripsState.stopLabels,
                     onEvent = onAiEvent,
-                    onLabelClick = onAiLabelClick,
-                    onDismiss = { onAiEvent(AiSearchInputEvent.CloseSheet) },
+                    onDismiss = { onAiEvent(AiSearchInputEvent.CloseInput) },
                 )
             }
         }

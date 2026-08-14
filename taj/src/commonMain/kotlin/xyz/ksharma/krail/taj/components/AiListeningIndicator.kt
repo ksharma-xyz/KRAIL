@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -46,20 +47,24 @@ private val BarWidth = 4.dp
  * wasteful for a component that's already spinning the wheel on its own driver).
  */
 @Composable
-fun AiListeningIndicator(modifier: Modifier = Modifier, active: Boolean = true) {
+fun AiListeningIndicator(
+    modifier: Modifier = Modifier,
+    active: Boolean = true,
+    colors: List<Color> = AiCoolGradientTokens.stops,
+) {
     val dim = KrailTheme.dimensions
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        AiWheelMark(spinning = active, colors = AiCoolGradientTokens.stops)
-        AiWaveform(active = active)
+        AiWheelMark(spinning = active, colors = colors)
+        AiWaveform(active = active, colors = colors)
     }
 }
 
 @Composable
-private fun AiWaveform(active: Boolean, modifier: Modifier = Modifier) {
+private fun AiWaveform(active: Boolean, colors: List<Color>, modifier: Modifier = Modifier) {
     // Animatable + LaunchedEffect(active), not rememberInfiniteTransition unconditionally —
     // the latter starts its animation clock regardless of whether the value is read, which
     // hangs Robolectric's screenshot capture (it waits for the clock to go idle). Same
@@ -78,7 +83,7 @@ private fun AiWaveform(active: Boolean, modifier: Modifier = Modifier) {
         }
     }
     val time = timeState.value
-    val brush = remember { Brush.verticalGradient(AiCoolGradientTokens.stops) }
+    val brush = remember(colors) { Brush.verticalGradient(colors) }
 
     Canvas(modifier = modifier.width(WaveformWidth).height(WaveformHeight)) {
         val barGap = size.width / BAR_COUNT

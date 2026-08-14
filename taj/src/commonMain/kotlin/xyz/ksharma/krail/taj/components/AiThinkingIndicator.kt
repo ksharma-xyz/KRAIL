@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -36,15 +37,21 @@ private val RingStrokeWidth = 1.5.dp
  * the mockup's staggered `animation-delay` approach.
  */
 @Composable
-fun AiThinkingIndicator(modifier: Modifier = Modifier, active: Boolean = true) {
+fun AiThinkingIndicator(
+    modifier: Modifier = Modifier,
+    active: Boolean = true,
+    colors: List<Color> = AiCoolGradientTokens.stops,
+) {
     Box(modifier = modifier.size(IndicatorSize), contentAlignment = Alignment.Center) {
-        RippleRings(active = active)
-        AiWheelMark(spinning = active, colors = AiCoolGradientTokens.stops)
+        // Middle stop, so the rings sit between the mark's two ends rather than repeating
+        // either one of them. A two-stop list has no middle, hence the coerce.
+        RippleRings(active = active, color = colors[(colors.size / 2).coerceAtMost(colors.lastIndex)])
+        AiWheelMark(spinning = active, colors = colors)
     }
 }
 
 @Composable
-private fun RippleRings(active: Boolean, modifier: Modifier = Modifier) {
+private fun RippleRings(active: Boolean, color: Color, modifier: Modifier = Modifier) {
     // Animatable + LaunchedEffect(active), not rememberInfiniteTransition unconditionally —
     // see the identical note in AiScanSweep.kt / AiListeningIndicator.kt's AiWaveform.
     val phaseState = remember { Animatable(0f) }
@@ -61,7 +68,6 @@ private fun RippleRings(active: Boolean, modifier: Modifier = Modifier) {
         }
     }
     val phase = phaseState.value
-    val color = AiCoolGradientTokens.Violet
 
     Canvas(modifier = modifier.size(IndicatorSize)) {
         val strokePx = RingStrokeWidth.toPx()

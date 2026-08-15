@@ -376,6 +376,10 @@ that contradicts the doc should also update the doc in the same change.
   `collapseSameRouteQuickWalks()` merges same-route-number legs split by a trivial walk;
   read before changing leg-merge/split logic in `TripResponseMapper.kt` or
   `TripResponseLegMapper.kt`.
+- `docs/SEARCH_QUERY_TELEMETRY_SPEC.md` — what KRAIL may learn about what a rider types into
+  search: length and shape always, raw text only under the zero-result carve-out, and the four
+  conditions that carve-out requires. Read before touching `SearchQueryAnalytics`,
+  `SearchQueryAnalyticsRedaction` or any `search_stop_query` parameter.
 - `docs/ANALYTICS_REGISTRY_SYNC.md` — how new-event rows in
   `docs/ANALYTICS_REGISTRY_HANDOFF.md` auto-flip from `Pending` to `Registered`; read
   before touching `.github/workflows/analytics-registry-sync.yml` or its scripts.

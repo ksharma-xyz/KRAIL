@@ -748,10 +748,12 @@ class AiSearchInputViewModelTest {
 
         // Words arriving inside the window just before the ceiling: this rider is mid
         // sentence, and cutting them off there is the thing the extension exists to prevent.
-        advanceTimeBy(LISTENING_CEILING_IN_TEST - 1_000)
+        // Three seconds before the ceiling is inside the four-second window, and is also a
+        // pause the recogniser itself would still be waiting through.
+        advanceTimeBy(LISTENING_CEILING_IN_TEST - 3_000)
         runCurrent()
         speechToTextService.results.emit(SpeechToTextResult.Partial("central to town"))
-        advanceTimeBy(1_001)
+        advanceTimeBy(3_001)
         runCurrent()
 
         assertTrue(viewModel.uiState.value.isListening, "should not stop at the ordinary ceiling")

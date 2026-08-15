@@ -24,6 +24,23 @@ private val HOUR_RANGE = 0 until HOURS_PER_DAY
 private val MINUTE_RANGE = 0 until MINUTES_PER_HOUR
 
 private const val ON_THE_HOUR_MINUTE = 0
+private const val DAYS_PER_WEEK = 7
+
+private val TODAY_WORDS = setOf("today", "tonight", "this evening", "this afternoon", "this morning")
+private const val TOMORROW_WORD = "tomorrow"
+
+// Ordered so the index is the offset from Monday, matching kotlinx.datetime's DayOfWeek
+// ordinal. "tues"/"thurs"/"weds" are here because riders write them, not because a general
+// abbreviation scheme would produce them.
+private val WEEKDAY_WORDS: List<List<String>> = listOf(
+    listOf("monday", "mon"),
+    listOf("tuesday", "tues", "tue"),
+    listOf("wednesday", "weds", "wed"),
+    listOf("thursday", "thurs", "thu"),
+    listOf("friday", "fri"),
+    listOf("saturday", "sat"),
+    listOf("sunday", "sun"),
+)
 
 private data class ResolvedClock(val hour: Int, val minute: Int, val date: LocalDate)
 
@@ -83,11 +100,45 @@ internal fun resolveTimeIntent(
     val option = if (timeIntent.isArrival) JourneyTimeOptions.ARRIVE else JourneyTimeOptions.LEAVE
     val text = timeIntent.timeText.trim()
 
-    val resolved = resolveClockTime(text, nowLocal.date, nowLocal.hour, nowLocal.minute)
+    // A day named in the sentence overrides the "next occurrence" rollover: a rider who said
+    // Friday means Friday, even for a time that has already gone today.
+    val namedDay = resolveNamedDay(text, nowLocal.date)
+
+    val resolved = resolveClockTime(text, nowLocal.date, nowLocal.hour, nowLocal.minute, namedDay)
         ?: resolveRelativeMinutes(text, nowLocal.hour, nowLocal.minute, nowLocal.date)
         ?: return null
 
     return DateTimeSelectionItem(option = option, hour = resolved.hour, minute = resolved.minute, date = resolved.date)
+}
+
+/**
+ * The date a day word in [text] refers to, or null when no day was named.
+ *
+ * Only days, never times. "tonight" resolves to today's date and nothing else: turning it into
+ * an hour would be inventing precision the rider did not give, which is the same line
+ * [resolveTimeIntent] draws for every other vague phrase. Without a clock time alongside it, a
+ * day on its own still resolves to nothing, because a date with no time is not a departure.
+ *
+ * A named weekday means its next occurrence, counting today. "Friday" said on a Friday is that
+ * day, not the one a week later, which is what a rider means and also what makes the phrase
+ * useful at all on the day itself.
+ */
+private fun resolveNamedDay(text: String, today: LocalDate): LocalDate? {
+    val lower = text.lowercase()
+    return when {
+        lower.contains(TOMORROW_WORD) -> today.plus(1, DateTimeUnit.DAY)
+        TODAY_WORDS.any { lower.contains(it) } -> today
+        else -> resolveWeekday(lower, today)
+    }
+}
+
+private fun resolveWeekday(lowercaseText: String, today: LocalDate): LocalDate? {
+    val weekdayIndex = WEEKDAY_WORDS.indexOfFirst { names ->
+        names.any { name -> Regex("\\b$name\\b").containsMatchIn(lowercaseText) }
+    }
+    if (weekdayIndex < 0) return null
+    val daysAhead = (weekdayIndex - today.dayOfWeek.ordinal + DAYS_PER_WEEK) % DAYS_PER_WEEK
+    return today.plus(daysAhead, DateTimeUnit.DAY)
 }
 
 /**
@@ -121,8 +172,17 @@ internal fun leaveNowDateTimeSelectionItem(
  * time, matching [resolveRelativeMinutes]'s own day-rollover for the relative-minutes path
  * just below. A match for the exact current minute stays today ("leaving at 9am" said at
  * 9:00am means now, not this time tomorrow).
+ *
+ * [namedDay] switches that off. A rider who said which day meant it, and guessing forward from
+ * their own word would be the app overruling them.
  */
-private fun resolveClockTime(text: String, today: LocalDate, nowHour: Int, nowMinute: Int): ResolvedClock? {
+private fun resolveClockTime(
+    text: String,
+    today: LocalDate,
+    nowHour: Int,
+    nowMinute: Int,
+    namedDay: LocalDate? = null,
+): ResolvedClock? {
     val clockMatch = CLOCK_TIME_REGEX.findAll(text)
         .mapNotNull(::parseClockMatch)
         .firstOrNull { it.isPlausible() }
@@ -132,7 +192,8 @@ private fun resolveClockTime(text: String, today: LocalDate, nowHour: Int, nowMi
     if (hour24 !in HOUR_RANGE) return null
 
     val hasAlreadyPassedToday = hour24 < nowHour || (hour24 == nowHour && clockMatch.minute < nowMinute)
-    val date = if (hasAlreadyPassedToday) today.plus(1, DateTimeUnit.DAY) else today
+    val date = namedDay
+        ?: if (hasAlreadyPassedToday) today.plus(1, DateTimeUnit.DAY) else today
     return ResolvedClock(hour24, clockMatch.minute, date)
 }
 

@@ -168,7 +168,9 @@ private fun buildExtractionPrompt(riderText: String): String = """
       false for "leave at" / "leaving around" / "departing at". timeIntent is null if the
       rider gave no time at all.
     - timeIntent.timeText is the time phrase verbatim as the rider said it (e.g. "9am",
-      "6:30pm") — do not convert or resolve it.
+      "6:30pm") — do not convert or resolve it. Include any day word said with it
+      ("tomorrow at 9am", "friday 6pm", "tonight at 7"), because the day is part of when
+      they are travelling and is resolved later from this same string.
     - modeHints lists any transport mode words mentioned (e.g. "train", "bus"), verbatim,
       lowercase. Empty array if none mentioned.
     - If the rider names only ONE place, decide which field it belongs in from the
@@ -182,6 +184,7 @@ private fun buildExtractionPrompt(riderText: String): String = """
     Examples:
     "let's go home" -> {"originText": null, "destinationText": "home", "timeIntent": null, "modeHints": []}
     "leaving home around 9" -> {"originText": "home", "destinationText": null, "timeIntent": {"isArrival": false, "timeText": "around 9"}, "modeHints": []}
+    "town hall to bondi junction by 6pm friday" -> {"originText": "town hall", "destinationText": "bondi junction", "timeIntent": {"isArrival": true, "timeText": "6pm friday"}, "modeHints": []}
 
     Rider's message: "$riderText"
 

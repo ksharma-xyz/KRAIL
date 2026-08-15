@@ -17,10 +17,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  *   turn that a better-informed one would have handled correctly.
  * - Be side-effect free. Resolvers run on whatever the AI extracted, which may be nonsense.
  */
-// Exploratory, not scheduled: a weak match is the only failure here with no visible failure,
-// and the honest answer is to offer two or three candidates with the reason each was suggested
-// rather than commit to one. That needs a scored result rather than a StopItem? — FuzzyStopRanker
-// already computes the score and discards it at this boundary. See AI_SEARCH_UX.md.
+// Exploratory, not scheduled: offering two or three candidates with the reason each was
+// suggested, rather than committing to one, for a match that is not clearly right.
+//
+// This used to say the groundwork was exposing FuzzyStopRanker's score, which it discards at
+// this boundary. That was wrong on three counts and the note is kept so it is not proposed
+// again from the same reasoning. See AI_SEARCH_UX.md for the long version.
 interface StopTextResolver {
 
     /** Stable, human-readable id used in logs to show which capability answered. */

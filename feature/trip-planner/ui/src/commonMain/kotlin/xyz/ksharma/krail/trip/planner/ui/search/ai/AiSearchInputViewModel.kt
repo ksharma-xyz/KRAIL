@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiTextService
+import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
@@ -223,7 +224,13 @@ class AiSearchInputViewModel(
         if (!flagEnabled || text.isEmpty()) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(phase = AiSearchInputPhase.EXTRACTING) }
+            _uiState.update {
+                it.copy(
+                    phase = AiSearchInputPhase.EXTRACTING,
+                    unresolvedReason = null,
+                    unmatchedPlace = null,
+                )
+            }
 
             val availability = aiTextService.checkExtractionAvailability()
             log("AiSearchInputViewModel: extraction availability -> $availability")
@@ -238,7 +245,12 @@ class AiSearchInputViewModel(
             val rawExtraction = aiTextService.extractTripIntent(text)
             log("AiSearchInputViewModel: extraction -> ${if (rawExtraction == null) "null" else "parsed"}")
             if (rawExtraction == null) {
-                _uiState.update { it.copy(phase = AiSearchInputPhase.UNRESOLVED) }
+                _uiState.update {
+                    it.copy(
+                        phase = AiSearchInputPhase.UNRESOLVED,
+                        unresolvedReason = UnresolvedReason.COULD_NOT_READ,
+                    )
+                }
                 return@launch
             }
             val extraction = rawExtraction.withSinglePlaceInTheRightField(text)
@@ -268,7 +280,7 @@ class AiSearchInputViewModel(
                 dateTimeSelectionItem = dateTimeSelectionItem,
                 modeHints = extraction.modeHints,
             )
-            _uiState.update { it.withResolution(intent) }
+            _uiState.update { it.withResolution(intent, namedAnyPlace = extraction.namesAPlace()) }
         }
     }
 
@@ -310,9 +322,34 @@ class AiSearchInputViewModel(
  * way. Nothing resolving at all is a failure, not a result — the sheet stays open with the
  * rider's text still in it so they can reword rather than retype.
  */
-private fun AiSearchInputUiState.withResolution(intent: ResolvedTripIntent): AiSearchInputUiState =
-    copy(
-        phase = if (intent.hasAnyStop) AiSearchInputPhase.RESOLVED else AiSearchInputPhase.UNRESOLVED,
-        resolved = if (intent.hasAnyStop) intent else null,
-        isInputOpen = !intent.hasAnyStop,
-    )
+private fun AiSearchInputUiState.withResolution(
+    intent: ResolvedTripIntent,
+    namedAnyPlace: Boolean,
+): AiSearchInputUiState = copy(
+    phase = if (intent.hasAnyStop) AiSearchInputPhase.RESOLVED else AiSearchInputPhase.UNRESOLVED,
+    resolved = if (intent.hasAnyStop) intent else null,
+    isInputOpen = !intent.hasAnyStop,
+    // A rider who named a place we could not find needs different words from one who named no
+    // place at all. The first can be told which name failed; the second only needs an example.
+    unresolvedReason = when {
+        intent.hasAnyStop -> null
+        namedAnyPlace -> UnresolvedReason.STOP_NOT_FOUND
+        else -> UnresolvedReason.NO_PLACE_MENTIONED
+    },
+    // Quoted back only when those exact words are in what the rider wrote. The model's output
+    // is used to look stops up, never shown: a place name it invented or reworded, printed
+    // back inside quote marks, would read as something the rider said when it is not.
+    unmatchedPlace = if (intent.hasAnyStop) {
+        null
+    } else {
+        intent.firstNamedPlace()?.takeIf { place ->
+            typedText.contains(place, ignoreCase = true)
+        }
+    },
+)
+
+private fun TripIntentExtraction.namesAPlace(): Boolean =
+    !originText.isNullOrBlank() || !destinationText.isNullOrBlank()
+
+private fun ResolvedTripIntent.firstNamedPlace(): String? =
+    listOfNotNull(toText, fromText).firstOrNull { it.isNotBlank() }

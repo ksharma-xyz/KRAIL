@@ -407,6 +407,50 @@ class AiSearchInputViewModelTest {
         }
 
     @Test
+    fun `a sentence with no place in it says so, rather than blaming the stop search`() =
+        runTest(testDispatcher) {
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = null,
+                destinationText = null,
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("hey how are you"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(UnresolvedReason.NO_PLACE_MENTIONED, viewModel.uiState.value.unresolvedReason)
+        }
+
+    @Test
+    fun `a named place that matches no stop is quoted back`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = null,
+            destinationText = "Hogwarts",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("take me to Hogwarts"))
+
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(UnresolvedReason.STOP_NOT_FOUND, state.unresolvedReason)
+        assertEquals("Hogwarts", state.unmatchedPlace)
+    }
+
+    @Test
+    fun `a model that gives nothing back is its own kind of failure`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = null
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        advanceUntilIdle()
+
+        assertEquals(UnresolvedReason.COULD_NOT_READ, viewModel.uiState.value.unresolvedReason)
+    }
+
+    @Test
     fun `nearby-stop resolver failure leaves origin unresolved, not a crash`() = runTest(testDispatcher) {
         viewModel = AiSearchInputViewModel(
             aiTextService = aiTextService,

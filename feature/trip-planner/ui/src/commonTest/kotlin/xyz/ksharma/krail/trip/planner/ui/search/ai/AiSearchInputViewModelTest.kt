@@ -369,6 +369,44 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `a sentence about nothing does not fill the origin with wherever the rider is`() =
+        runTest(testDispatcher) {
+            nearbyStopsRepository.nearbyStops = listOf(
+                NearbyStop(
+                    stopId = "99999",
+                    stopName = "Nearby Station",
+                    latitude = TEST_LOCATION.latitude,
+                    longitude = TEST_LOCATION.longitude,
+                    transportModes = emptyList(),
+                ),
+            )
+            viewModel = AiSearchInputViewModel(
+                aiTextService = aiTextService,
+                speechToTextService = speechToTextService,
+                stopTextResolver = stopTextResolver,
+                nearbyStopsRepository = nearbyStopsRepository,
+                resolveCurrentLocation = { TEST_LOCATION },
+                isAiSearchInputEnabled = { true },
+            )
+            // "hey how are you" parses without error and mentions no place at all. The nearby
+            // fallback used to run regardless, so the rider got their current stop written
+            // into From and a screen that closed as though it had understood them.
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = null,
+                destinationText = null,
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("hey how are you"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(AiSearchInputPhase.UNRESOLVED, state.phase)
+            assertNull(state.resolved)
+        }
+
+    @Test
     fun `nearby-stop resolver failure leaves origin unresolved, not a crash`() = runTest(testDispatcher) {
         viewModel = AiSearchInputViewModel(
             aiTextService = aiTextService,

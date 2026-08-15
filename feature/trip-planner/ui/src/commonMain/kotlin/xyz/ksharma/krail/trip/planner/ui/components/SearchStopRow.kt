@@ -59,6 +59,7 @@ import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.components.SubtleButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
@@ -85,6 +86,8 @@ fun SearchStopRow(
     onSearchButtonClick: () -> Unit = {},
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
+    dateTimeSelectionText: String? = null,
+    onDateTimeSelectionClear: () -> Unit = {},
 ) {
     val themeColorHex by LocalThemeColor.current
     val navBarPadding = with(LocalDensity.current) {
@@ -143,6 +146,8 @@ fun SearchStopRow(
                 onSearchButtonClick = onSearchButtonClick,
                 onAiEvent = onAiEvent,
                 isAiSearchAvailable = isAiSearchAvailable,
+                dateTimeSelectionText = dateTimeSelectionText,
+                onDateTimeSelectionClear = onDateTimeSelectionClear,
             )
         } else {
             CollapsedPill(
@@ -242,6 +247,8 @@ private fun ExpandedSearchRow(
     onCollapseRequest: (() -> Unit)? = null,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
+    dateTimeSelectionText: String? = null,
+    onDateTimeSelectionClear: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
 
@@ -266,6 +273,13 @@ private fun ExpandedSearchRow(
         ) {
             if (onCollapseRequest != null) {
                 CollapseHandle(onClick = onCollapseRequest)
+            }
+
+            // Only drawn when something set a time, which today only the AI sheet can do.
+            // It has to be visible before Search is pressed: a time held in state that the
+            // rider cannot see would quietly change what the button does.
+            if (dateTimeSelectionText != null) {
+                WhenChip(text = dateTimeSelectionText, onClear = onDateTimeSelectionClear)
             }
 
             val navBarPaddingDp = with(LocalDensity.current) { navBarPadding.dp }
@@ -398,6 +412,31 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
         label = label,
     ) { targetText ->
         ThemeTextFieldPlaceholderText(text = targetText, isActive = isActive)
+    }
+}
+
+/**
+ * The departure or arrival time the search will run with, when one was understood before any
+ * timetable existed. Deliberately the same `SubtleButton` and the same `toDateTimeText()`
+ * wording the timetable's own time button uses, so the rider meets one control twice rather
+ * than two controls that happen to agree.
+ *
+ * Tapping clears it back to now. Opening the picker from here is the next step and wants the
+ * selector route to be reachable from this screen first.
+ */
+@Composable
+private fun WhenChip(text: String, onClear: () -> Unit) {
+    val dim = KrailTheme.dimensions
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dim.pageHorizontalPadding)
+            .padding(top = dim.spacingM),
+    ) {
+        SubtleButton(onClick = onClear, dimensions = ButtonDefaults.mediumButtonSize()) {
+            Text(text = text)
+        }
     }
 }
 

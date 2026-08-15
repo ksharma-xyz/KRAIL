@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
@@ -21,6 +22,12 @@ data class SavedTripsState(
     // Stop selection state managed by ViewModel
     val fromStop: StopItem? = null,
     val toStop: StopItem? = null,
+    /**
+     * A departure or arrival time chosen before any timetable was opened. Only the AI search
+     * sheet sets this today: it is the one surface that can hear "by 6pm" while the rider is
+     * still choosing stops. Null means now, which is what pressing Search has always meant.
+     */
+    val dateTimeSelectionItem: DateTimeSelectionItem? = null,
     val hasSeenInviteFriendsTile: Boolean = false,
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
     // Default true so the tip is hidden until the preference is loaded from DB.

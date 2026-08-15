@@ -315,6 +315,8 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     modifier: Modifier = Modifier,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
+    dateTimeSelectionText: String? = null,
+    onDateTimeSelectionClear: () -> Unit = {},
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -336,6 +338,8 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
             onSearchButtonClick = onSearchButtonClick,
             onAiEvent = onAiEvent,
             isAiSearchAvailable = isAiSearchAvailable,
+            dateTimeSelectionText = dateTimeSelectionText,
+            onDateTimeSelectionClear = onDateTimeSelectionClear,
         )
     }
 }

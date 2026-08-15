@@ -55,6 +55,7 @@ import xyz.ksharma.krail.sandook.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
+import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -187,6 +188,9 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.InfoTileExpand -> onInfoTileExpand(key = event.key)
             is SavedTripUiEvent.FromStopChanged -> onFromStopChanged(event.fromJson)
             is SavedTripUiEvent.ToStopChanged -> onToStopChanged(event.toJson)
+            is SavedTripUiEvent.DateTimeSelectionChanged -> updateUiState {
+                copy(dateTimeSelectionItem = event.dateTimeJson?.let(DateTimeSelectionItem::fromJsonString))
+            }
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
             is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
             SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()

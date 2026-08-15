@@ -951,6 +951,61 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN a time chosen before the timetable opened WHEN the trip is initialized THEN it is used`() =
+        runTest {
+            tripPlanningService.isSuccess = true
+            val chosen = DateTimeSelectionItem(
+                option = JourneyTimeOptions.ARRIVE,
+                hour = 18,
+                minute = 0,
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+            )
+
+            viewModel.initializeTrip(
+                fromStopId = "stop_a",
+                fromStopName = "Stop A",
+                toStopId = "stop_b",
+                toStopName = "Stop B",
+                dateTimeSelectionJson = chosen.toJsonString(),
+            )
+            advanceUntilIdle()
+
+            // A new trip normally clears the selection back to now. The route's own value has
+            // to survive that clear, or "by 6pm" is understood and then thrown away.
+            assertEquals(chosen, viewModel.dateTimeSelectionItem)
+        }
+
+    @Test
+    fun `GIVEN no time on the route WHEN the trip is initialized THEN the timetable still starts at now`() =
+        runTest {
+            tripPlanningService.isSuccess = true
+
+            viewModel.initializeTrip("stop_a", "Stop A", "stop_b", "Stop B")
+            advanceUntilIdle()
+
+            assertNull(viewModel.dateTimeSelectionItem)
+        }
+
+    @Test
+    fun `GIVEN unreadable time json WHEN the trip is initialized THEN it falls back to now`() =
+        runTest {
+            tripPlanningService.isSuccess = true
+
+            viewModel.initializeTrip(
+                fromStopId = "stop_a",
+                fromStopName = "Stop A",
+                toStopId = "stop_b",
+                toStopName = "Stop B",
+                dateTimeSelectionJson = "not json",
+            )
+            advanceUntilIdle()
+
+            // A route serialised by an older build, or corrupted in the saved back stack,
+            // must not take the timetable down with it.
+            assertNull(viewModel.dateTimeSelectionItem)
+        }
+
+    @Test
     fun `GIVEN initialized route WHEN initializeTrip called with different route THEN new trip is loaded`() =
         runTest {
             tripPlanningService.isSuccess = true

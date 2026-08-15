@@ -39,6 +39,7 @@ internal class TripPlannerNavigatorImpl(
         fromStopName: String,
         toStopId: String,
         toStopName: String,
+        dateTimeSelectionJson: String?,
     ) {
         baseNavigator.pushSingleInstance(
             TimeTableRoute(
@@ -46,6 +47,7 @@ internal class TripPlannerNavigatorImpl(
                 fromStopName = fromStopName,
                 toStopId = toStopId,
                 toStopName = toStopName,
+                dateTimeSelectionJson = dateTimeSelectionJson,
             ),
         )
     }

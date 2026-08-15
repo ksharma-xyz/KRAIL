@@ -45,6 +45,17 @@ data class TimeTableRoute(
     val fromStopName: String,
     val toStopId: String,
     val toStopName: String,
+    /**
+     * A [xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem] as
+     * JSON, when the rider chose a departure or arrival time before the timetable was opened.
+     * Null means "now", which is what every existing caller passes and what the timetable has
+     * always defaulted to.
+     *
+     * On the route rather than handed over after navigation, because the back stack is
+     * serialised: a rider who chose "arrive 6pm" and then had the app killed in the background
+     * comes back to 6pm rather than to now.
+     */
+    val dateTimeSelectionJson: String? = null,
 ) : TripPlannerRoute
 
 /**

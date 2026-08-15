@@ -605,6 +605,57 @@ class SearchStopViewModelTest {
         }
 
     @Test
+    fun `GIVEN a live query WHEN the rider picks the second result THEN the event records that row`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                // "Station" matches Central and Parramatta, in that order.
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Station"))
+                advanceUntilIdle()
+                viewModel.onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        StopItem(stopName = "Parramatta Station", stopId = "10103"),
+                    ),
+                )
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val selected = fakeAnalytics.getTrackedEvent("stop_selected")
+                assertIs<AnalyticsEvent.StopSelectedEvent>(selected)
+                assertEquals(1, selected.resultIndex)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a live query WHEN the rider picks the top result THEN the recorded row is zero`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Station"))
+                advanceUntilIdle()
+                viewModel.onEvent(
+                    SearchStopUiEvent.TrackStopSelected(
+                        StopItem(stopName = "Central Station", stopId = "10101"),
+                    ),
+                )
+                advanceUntilIdle()
+
+                assertTrue(fakeAnalytics is FakeAnalytics)
+                val selected = fakeAnalytics.getTrackedEvent("stop_selected")
+                assertIs<AnalyticsEvent.StopSelectedEvent>(selected)
+                // Zero must survive as zero: a top-result pick is the single most common
+                // outcome, and a param that only appears when ranking went badly would
+                // make the ranker look worse than it is.
+                assertEquals(0, selected.resultIndex)
+                assertTrue(selected.properties.orEmpty().containsKey("resultIndex"))
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `GIVEN no live query WHEN a stop is selected THEN no session or bucket params are attached`() =
         runTest {
             viewModel.onEvent(
@@ -621,7 +672,9 @@ class SearchStopViewModelTest {
             assertEquals(null, selected.searchSessionId)
             assertEquals(null, selected.displayedLocalCount)
             assertEquals(null, selected.displayedAddressCount)
+            assertEquals(null, selected.resultIndex)
             assertFalse(selected.properties.orEmpty().containsKey("searchSessionId"))
+            assertFalse(selected.properties.orEmpty().containsKey("resultIndex"))
         }
 
     @Test

@@ -149,6 +149,14 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param displayedAddressCount Same for the address/POI section. Together these
      *                             answer "how many options were showing when the user
      *                             picked" without carrying any query text.
+     * @param resultIndex          Zero-based row the picked result was sitting at inside
+     *                             its own section; [locationKind] says which section that
+     *                             is. This is the ranking-quality signal: the counts say
+     *                             fifty rows were showing, only this says the rider had to
+     *                             scroll to number nine to find what they meant. Sent raw
+     *                             rather than bucketed because first-versus-second is the
+     *                             whole question, and a number adds no string cardinality.
+     *                             Null without a live query.
      */
     data class StopSelectedEvent(
         val stopId: String,
@@ -158,6 +166,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val searchSessionId: String? = null,
         val displayedLocalCount: CountBucket? = null,
         val displayedAddressCount: CountBucket? = null,
+        val resultIndex: Int? = null,
     ) : AnalyticsEvent(
         name = "stop_selected",
         rawProperties = buildMap {
@@ -168,6 +177,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             searchSessionId?.let { put(PROP_SEARCH_SESSION_ID, it) }
             displayedLocalCount?.let { put("displayedLocalCount", it.value) }
             displayedAddressCount?.let { put("displayedAddressCount", it.value) }
+            resultIndex?.let { put("resultIndex", it) }
         },
     ) {
         /** Bounded so dashboards group cleanly; raw counts add cardinality without

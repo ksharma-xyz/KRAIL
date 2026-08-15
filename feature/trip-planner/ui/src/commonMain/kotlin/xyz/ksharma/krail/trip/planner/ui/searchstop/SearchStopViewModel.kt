@@ -145,6 +145,8 @@ class SearchStopViewModel(
                         displayedAddressCount = StopSelectedEvent.CountBucket
                             .from(state.addressResults.size)
                             .takeIf { fromLiveQuery },
+                        resultIndex = state.resultIndexOf(event.stopItem.stopId)
+                            .takeIf { fromLiveQuery },
                     ),
                 )
             }
@@ -785,5 +787,29 @@ class SearchStopViewModel(
         const val ADDRESS_SEARCH_DEBOUNCE_MS = 350L
 
         fun newSearchSessionId(): String = Random.nextLong().toULong().toString(radix = 16)
+    }
+}
+
+/**
+ * Zero-based row the selected stop was sitting at, within its own section: the local
+ * list for transit stops, the address section below it for addresses. Null when the
+ * stop is not on screen at all, which is every selection that did not come from a
+ * live query.
+ *
+ * A stop tapped inside an expanded trip card reports the trip's own row, because that
+ * is the row the rider had to reach before the stop was reachable at all.
+ */
+private fun SearchStopState.resultIndexOf(stopId: String): Int? {
+    val localIndex = searchResults.indexOfFirst { result ->
+        when (result) {
+            is SearchStopState.SearchResult.Stop -> result.stopId == stopId
+            is SearchStopState.SearchResult.Trip -> result.stops.any { it.stopId == stopId }
+            is SearchStopState.SearchResult.Address -> result.addressId == stopId
+        }
+    }
+    return if (localIndex >= 0) {
+        localIndex
+    } else {
+        addressResults.indexOfFirst { it.addressId == stopId }.takeIf { it >= 0 }
     }
 }

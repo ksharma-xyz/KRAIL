@@ -58,21 +58,54 @@ instead of to now. And `TimeTableViewModel.dateTimeSelectionItem` is a plain `va
 `uiState`, which survives rotation but not process death — the route is what makes it durable
 without moving that field.
 
+### What the time grammar reads
+
+Clock times ("9am", "6:30pm"), relative offsets ("in 20 minutes", "in 2 hours"), and named
+days: "today", "tonight", "tomorrow", and weekday names including the short forms riders
+actually write ("fri", "tues"). A named day beats the next-occurrence rollover, because a
+rider who said Friday meant Friday and guessing past their own word overrules them. Day
+matching is on word boundaries so "sun" is not read out of "sunset".
+
+Both platform prompts are told to keep the day word in `timeText`, since the day is resolved
+later from that same string. Dropping it there loses the day silently.
+
 ### Still to do on the time path
 
 - The chip clears on tap. It should open the existing date/time picker, which wants
   `DateTimeSelectorRoute` reachable from the home screen.
-- The grammar reads clock times and relative minutes only. Days ("tomorrow", "tonight",
-  "Friday") are pure date arithmetic on a well-tested seam and are the obvious next addition.
+- A day on its own still resolves to nothing. A date with no time is not a departure, and
+  picking an hour for it would be a guess.
 - Vague day-parts stay unresolved on purpose. "morning = 9am" is invented precision. If they
   are ever handled, the phrase should reach the chip unresolved and open the picker at roughly
   that time, so the rider supplies the precision and the app only supplies the shortcut.
 
 ## Parked, deliberately
 
-**Offer a choice when confidence is low.** #7 is the only failure with no visible failure, and
-the honest answer to a weak match is to ask rather than commit: two or three candidates with
-the reason each was suggested (your label, a saved trip, a name that looks similar), and no
-auto-fill below the bar. `FuzzyStopRanker` already computes the score this needs and discards
-it at the interface boundary, so the groundwork is a scored result type rather than new
-matching. Not being built today; this note is the record of why it should be.
+**Offer a choice when confidence is low.** For a match that is not clearly right, ask rather
+than commit: two or three candidates with the reason each was suggested (your label, a saved
+trip, a name that looks similar).
+
+This note used to say the groundwork was exposing `FuzzyStopRanker`'s score, which it computes
+and discards at the resolver boundary. **That was wrong**, and it is written down here so the
+same reasoning does not produce the same plan again:
+
+1. **The score is not the boundary.** `RealStopResultsManager` returns exact SQL matches first
+   and only falls back to the fuzzy ranker when there are few of them. The results this path
+   picks from are usually not scored at all, so there is no score to expose for them.
+2. **The score does not encode the safety property.** `StopSearchTextResolver`'s word-boundary
+   guard is not a duplicate of the ranker. The ranker scores "work" against *70 Powderworks Rd*
+   at ~1.0, through the longest-common-substring signal it uses on purpose so a rider reading a
+   list gets loose suggestions. Replacing the guard with a score threshold reintroduces exactly
+   the bug the guard exists for.
+3. **The score does not encode priority.** For "central", *Central Station* and *Central Ave*
+   score identically. What puts the station first is `prioritiseByRelevance`, which knows about
+   major interchanges. Picking by score would be worse than picking by the order the manager
+   already returns.
+
+So the ranker's score is not the missing piece, and the guard should stay. A real version of
+this needs a genuine ambiguity signal, and the ordering the manager already produces is a
+better starting point than any number the ranker computes.
+
+Worth noting the failure is also milder than "silent": the sheet writes into the visible From
+and To fields and stops there, so a rider sees the wrong stop before pressing Search. Loading
+the timetable was deliberately left as their action.

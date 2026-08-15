@@ -94,4 +94,68 @@ class AiTripIntentTimeResolverTest {
         assertNull(resolveTimeIntent(TimeIntent(isArrival = false, timeText = "this evening"), fixedNow, utc))
         assertNull(resolveTimeIntent(TimeIntent(isArrival = true, timeText = "tomorrow morning"), fixedNow, utc))
     }
+
+    // region Named days
+
+    @Test
+    fun `tomorrow with a clock time lands on tomorrow`() {
+        val result = resolveTimeIntent(TimeIntent(isArrival = false, timeText = "tomorrow at 9am"), fixedNow, utc)
+
+        assertEquals(LocalDate(2026, 8, 11), result?.date)
+        assertEquals(9, result?.hour)
+    }
+
+    @Test
+    fun `a named weekday lands on its next occurrence`() {
+        // now is Monday 10 Aug; the next Friday is the 14th.
+        val result = resolveTimeIntent(TimeIntent(isArrival = true, timeText = "friday 6pm"), fixedNow, utc)
+
+        assertEquals(LocalDate(2026, 8, 14), result?.date)
+        assertEquals(18, result?.hour)
+    }
+
+    @Test
+    fun `today's own weekday means today, not a week away`() {
+        // Said on a Monday. "Monday" has to mean this one, or the word is useless on the day
+        // a rider is most likely to say it.
+        val result = resolveTimeIntent(TimeIntent(isArrival = false, timeText = "monday 11am"), fixedNow, utc)
+
+        assertEquals(LocalDate(2026, 8, 10), result?.date)
+    }
+
+    @Test
+    fun `a named day beats the next-occurrence rollover`() {
+        // now is 09:00, so 8am has gone. Without a named day this rolls to tomorrow; with one
+        // it must not, because the rider said which day and guessing past that overrules them.
+        val result = resolveTimeIntent(TimeIntent(isArrival = false, timeText = "today at 8am"), fixedNow, utc)
+
+        assertEquals(LocalDate(2026, 8, 10), result?.date)
+        assertEquals(8, result?.hour)
+    }
+
+    @Test
+    fun `tonight names the day and nothing else`() {
+        val withTime = resolveTimeIntent(TimeIntent(isArrival = false, timeText = "tonight at 7pm"), fixedNow, utc)
+        assertEquals(LocalDate(2026, 8, 10), withTime?.date)
+        assertEquals(19, withTime?.hour)
+
+        // On its own it is still a day-part with no hour in it, and inventing one is the thing
+        // this resolver refuses to do.
+        assertNull(resolveTimeIntent(TimeIntent(isArrival = false, timeText = "tonight"), fixedNow, utc))
+    }
+
+    @Test
+    fun `a day word inside a longer word is not a day`() {
+        // "sun" must not be read out of "sunset"; the same guard is why day matching is on
+        // word boundaries rather than substrings.
+        assertNull(resolveTimeIntent(TimeIntent(isArrival = false, timeText = "around sunset"), fixedNow, utc))
+    }
+
+    @Test
+    fun `a named day with no clock time still resolves to nothing`() {
+        // A date with no time is not a departure, and picking one would be a guess.
+        assertNull(resolveTimeIntent(TimeIntent(isArrival = false, timeText = "friday"), fixedNow, utc))
+    }
+
+    // endregion Named days
 }

@@ -35,7 +35,7 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 | 8 | Only one end resolves | That field fills, the other is left | `one stop resolving is still a result` |
 | 9 | Origin unstated, destination found, GPS off or denied | From left empty | `nearby-stop resolver failure leaves origin unresolved, not a crash` |
 | 10 | Microphone denied, blocked, unsupported, or the recogniser errors | A different message for each; a blocked mic opens Settings | `speech unavailable surfaces the reason`, `a recogniser error is reported as itself` |
-| 11 | Recogniser never reports an end | Stops itself at 20s | `listening stops itself once it hits the ceiling` |
+| 11 | Recogniser never reports an end | Stops itself at 10s, or 15s if words were still arriving | `listening stops itself once it hits the ceiling`, `a rider still speaking at the ceiling is given longer`, `words that stopped before the ceiling do not earn the extension` |
 | 12 | Time understood ("by 6pm") | Shown on the search row, and the timetable opens with it | `resolves a time intent into the confirm state`, plus three in `TimeTableViewModelTest` covering the route carrying it, no time meaning now, and unreadable JSON falling back to now |
 | 13 | Dismissed mid-flight | Mic stopped, draft discarded | `closing the box while listening stops the mic`, `closing the box throws the draft away` |
 
@@ -66,8 +66,14 @@ actually write ("fri", "tues"). A named day beats the next-occurrence rollover, 
 rider who said Friday meant Friday and guessing past their own word overrules them. Day
 matching is on word boundaries so "sun" is not read out of "sunset".
 
-Both platform prompts are told to keep the day word in `timeText`, since the day is resolved
-later from that same string. Dropping it there loses the day silently.
+Both platform prompts are told to keep the day word in `timeText`. They do not always: "10am
+Monday work" came back with Monday swallowed into the place, leaving "10am", which had already
+passed and rolled to tomorrow. So the day is looked for in the **rider's whole sentence** as
+well, and the prompt is now an optimisation rather than the thing correctness rests on. The
+extracted phrase still wins when both name a day, being the more precise signal.
+
+The general lesson: anything a prompt is asked to preserve should have a deterministic path
+that does not need the prompt to have worked.
 
 ### Still to do on the time path
 

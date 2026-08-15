@@ -152,6 +152,50 @@ class AiTripIntentTimeResolverTest {
     }
 
     @Test
+    fun `a day the model left out of the time phrase is still read from the sentence`() {
+        // The real failure: "10am Monday work" came back with the day swallowed into the
+        // place, leaving "10am", which had already passed and rolled to tomorrow. now is
+        // Monday, so the day that was dropped means today.
+        val result = resolveTimeIntent(
+            timeIntent = TimeIntent(isArrival = true, timeText = "10am"),
+            now = fixedNow,
+            timeZone = utc,
+            riderText = "10am Monday work",
+        )
+
+        assertEquals(LocalDate(2026, 8, 10), result?.date)
+        assertEquals(10, result?.hour)
+    }
+
+    @Test
+    fun `the time phrase wins when both name a day`() {
+        val result = resolveTimeIntent(
+            timeIntent = TimeIntent(isArrival = false, timeText = "tomorrow at 9am"),
+            now = fixedNow,
+            timeZone = utc,
+            riderText = "friday something tomorrow at 9am",
+        )
+
+        // The extracted phrase is the more precise signal; the sentence is only the fallback
+        // for when the day never made it into that phrase.
+        assertEquals(LocalDate(2026, 8, 11), result?.date)
+    }
+
+    @Test
+    fun `a sentence with no day in it still rolls forward as before`() {
+        // now is Monday 09:00, so 8am has gone and means tomorrow. The fallback must not
+        // invent a day out of a sentence that has none.
+        val result = resolveTimeIntent(
+            timeIntent = TimeIntent(isArrival = false, timeText = "8am"),
+            now = fixedNow,
+            timeZone = utc,
+            riderText = "central to town hall at 8am",
+        )
+
+        assertEquals(LocalDate(2026, 8, 11), result?.date)
+    }
+
+    @Test
     fun `a named day with no clock time still resolves to nothing`() {
         // A date with no time is not a departure, and picking one would be a guess.
         assertNull(resolveTimeIntent(TimeIntent(isArrival = false, timeText = "friday"), fixedNow, utc))

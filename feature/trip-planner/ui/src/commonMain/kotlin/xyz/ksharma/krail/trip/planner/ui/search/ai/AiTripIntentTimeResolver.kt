@@ -94,6 +94,7 @@ internal fun resolveTimeIntent(
     timeIntent: TimeIntent?,
     now: Instant = Clock.System.now(),
     timeZone: TimeZone = TimeZone.of("Australia/Sydney"),
+    riderText: String = "",
 ): DateTimeSelectionItem? {
     if (timeIntent == null) return null
     val nowLocal = now.toLocalDateTime(timeZone)
@@ -102,7 +103,15 @@ internal fun resolveTimeIntent(
 
     // A day named in the sentence overrides the "next occurrence" rollover: a rider who said
     // Friday means Friday, even for a time that has already gone today.
+    //
+    // Looked for in the rider's whole sentence, not only in the extracted time phrase. The
+    // model is asked to keep the day word with the time, and does not always: "10am Monday
+    // work" came back with "10am" as the time and Monday swallowed into the place, so the
+    // day was lost and an already-passed 10am rolled to tomorrow. A day word is a fact about
+    // the sentence, so reading it from the sentence removes the model from that decision
+    // entirely rather than relying on a prompt to hold.
     val namedDay = resolveNamedDay(text, nowLocal.date)
+        ?: resolveNamedDay(riderText.trim(), nowLocal.date)
 
     val resolved = resolveClockTime(text, nowLocal.date, nowLocal.hour, nowLocal.minute, namedDay)
         ?: resolveRelativeMinutes(text, nowLocal.hour, nowLocal.minute, nowLocal.date)

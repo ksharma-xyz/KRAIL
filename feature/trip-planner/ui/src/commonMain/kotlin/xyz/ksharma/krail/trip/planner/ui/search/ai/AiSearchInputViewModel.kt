@@ -32,6 +32,8 @@ private const val NEARBY_STOP_RADIUS_KM = 1.0
 // rider being slow.
 private const val MAX_LISTENING_MILLIS = 20_000L
 
+private const val AI_OUTCOME_TAG = "[AI_OUTCOME]"
+
 // Reasons the UI branches on. Strings rather than a type because SpeechToTextService reports
 // its own platform reasons through the same field, and this side has to hold both.
 internal const val MIC_DENIED = "no_permission"
@@ -151,9 +153,9 @@ class AiSearchInputViewModel(
 
         listeningJob = viewModelScope.launch {
             val availability = speechToTextService.checkAvailability()
-            log("AiSearchInputViewModel: speech availability -> $availability")
             if (availability is SpeechToTextAvailability.Unavailable) {
                 _uiState.update { it.copy(speechUnavailableReason = availability.reason) }
+                logOutcome(reason = "speech_unavailable")
                 return@launch
             }
 
@@ -178,8 +180,8 @@ class AiSearchInputViewModel(
                     }
 
                     is SpeechToTextResult.Error -> {
-                        log("AiSearchInputViewModel: speech error -> ${result.reason}")
                         _uiState.update { it.copy(isListening = false, speechUnavailableReason = result.reason) }
+                        logOutcome(reason = "speech_error")
                     }
                 }
             }
@@ -196,7 +198,7 @@ class AiSearchInputViewModel(
         listeningTimeoutJob = viewModelScope.launch {
             delay(MAX_LISTENING_MILLIS)
             if (_uiState.value.isListening) {
-                log("AiSearchInputViewModel: listening hit the ${MAX_LISTENING_MILLIS}ms ceiling")
+                logOutcome(reason = "listening_hit_ceiling")
                 stopListening()
             }
         }
@@ -220,8 +222,10 @@ class AiSearchInputViewModel(
     private fun submit() {
         val flagEnabled = isAiSearchInputEnabled()
         val text = _uiState.value.typedText.trim()
-        log("AiSearchInputViewModel: submit, flagEnabled=$flagEnabled, textLength=${text.length}")
-        if (!flagEnabled || text.isEmpty()) return
+        if (!flagEnabled || text.isEmpty()) {
+            logOutcome(reason = if (!flagEnabled) "flag_off" else "empty_text")
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update {
@@ -233,17 +237,16 @@ class AiSearchInputViewModel(
             }
 
             val availability = aiTextService.checkExtractionAvailability()
-            log("AiSearchInputViewModel: extraction availability -> $availability")
             if (availability is AiAvailability.Unavailable) {
                 val isTemporary = availability.reason == "downloadable" || availability.reason == "downloading"
                 _uiState.update {
                     it.copy(phase = if (isTemporary) AiSearchInputPhase.DOWNLOADING else AiSearchInputPhase.UNRESOLVED)
                 }
+                logOutcome(reason = "model_unavailable_${availability.reason}")
                 return@launch
             }
 
             val rawExtraction = aiTextService.extractTripIntent(text)
-            log("AiSearchInputViewModel: extraction -> ${if (rawExtraction == null) "null" else "parsed"}")
             if (rawExtraction == null) {
                 _uiState.update {
                     it.copy(
@@ -251,6 +254,7 @@ class AiSearchInputViewModel(
                         unresolvedReason = UnresolvedReason.COULD_NOT_READ,
                     )
                 }
+                logOutcome()
                 return@launch
             }
             val extraction = rawExtraction.withSinglePlaceInTheRightField(text)
@@ -281,7 +285,29 @@ class AiSearchInputViewModel(
                 modeHints = extraction.modeHints,
             )
             _uiState.update { it.withResolution(intent, namedAnyPlace = extraction.namesAPlace()) }
+            logOutcome()
         }
+    }
+
+    /**
+     * One wide line per attempt, at the end of it, rather than a handful of narrow ones spread
+     * through the coroutine that a person then has to stitch back together in logcat. Grep
+     * [AI_OUTCOME_TAG] and each attempt is one row.
+     *
+     * Deliberately carries no rider text: not what they typed, not what was heard, not the
+     * place name quoted back at them. Phases, reasons and booleans say what happened without
+     * saying where anyone is going.
+     */
+    private fun logOutcome(reason: String? = null) {
+        val state = _uiState.value
+        val resolved = state.resolved
+        log(
+            "$AI_OUTCOME_TAG phase=${state.phase}" +
+                " reason=${reason ?: state.unresolvedReason?.name ?: "none"}" +
+                " speechProblem=${state.speechUnavailableReason ?: "none"}" +
+                " from=${resolved?.fromStopItem != null} to=${resolved?.toStopItem != null}" +
+                " spokeIt=${state.speechTranscript.isNotEmpty()}",
+        )
     }
 
     /**
@@ -311,7 +337,6 @@ class AiSearchInputViewModel(
             radiusKm = NEARBY_STOP_RADIUS_KM,
             maxResults = 1,
         ).firstOrNull()?.let { StopItem(stopName = it.stopName, stopId = it.stopId) } ?: return null to null
-        log("AiSearchInputViewModel: origin not stated, using nearby stop ${stop.stopName}")
         return stop.stopName to stop
     }
 }

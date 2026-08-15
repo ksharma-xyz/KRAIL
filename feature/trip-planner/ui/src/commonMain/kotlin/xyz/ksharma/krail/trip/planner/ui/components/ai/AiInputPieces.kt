@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.speechtotext.MicPermissionOutcome
+import xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons
 import xyz.ksharma.krail.core.speechtotext.rememberOpenAppSettings
 import xyz.ksharma.krail.core.speechtotext.rememberRequestMicrophonePermission
 import xyz.ksharma.krail.taj.LocalContentColor
@@ -277,7 +278,8 @@ internal val AiSearchInputUiState.needsSettingsForMic: Boolean
     get() = speechUnavailableReason == MIC_NEEDS_SETTINGS
 
 internal val AiSearchInputUiState.isSpeechUnsupported: Boolean
-    get() = speechUnavailableReason == MIC_UNSUPPORTED || speechUnavailableReason == "not_available"
+    get() = speechUnavailableReason == MIC_UNSUPPORTED ||
+        speechUnavailableReason == SpeechUnavailableReasons.NOT_AVAILABLE
 
 internal val AiSearchInputUiState.isWorking: Boolean
     get() = phase == AiSearchInputPhase.EXTRACTING

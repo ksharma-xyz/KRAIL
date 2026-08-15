@@ -32,6 +32,21 @@ interface SpeechToTextService {
     fun stopListening()
 }
 
+/**
+ * The reasons both platform implementations report, and the only ones a caller may branch on.
+ *
+ * They were string literals typed out separately in the Android service, the iOS service and
+ * the UI that checks them. Nothing kept the three in sync, so renaming one of them silently
+ * removed a message rather than breaking a build. Anything a platform reports that is not one
+ * of these is still passed through as its own string for logs, and callers treat it as an
+ * unknown failure rather than guessing.
+ */
+object SpeechUnavailableReasons {
+    const val NOT_AVAILABLE = "not_available"
+    const val PERMISSION_REQUIRED = "permission_required"
+    const val NO_RESULT = "no_result"
+}
+
 sealed interface SpeechToTextAvailability {
     data object Available : SpeechToTextAvailability
     data class Unavailable(val reason: String) : SpeechToTextAvailability

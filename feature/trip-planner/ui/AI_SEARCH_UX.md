@@ -36,21 +36,37 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 | 9 | Origin unstated, destination found, GPS off or denied | From left empty | `nearby-stop resolver failure leaves origin unresolved, not a crash` |
 | 10 | Microphone denied, blocked, unsupported, or the recogniser errors | A different message for each; a blocked mic opens Settings | `speech unavailable surfaces the reason`, `a recogniser error is reported as itself` |
 | 11 | Recogniser never reports an end | Stops itself at 20s | `listening stops itself once it hits the ceiling` |
-| 12 | Time understood ("by 6pm") | **Dropped.** Parsed, then thrown away | `resolves a time intent into the confirm state` proves we parse it. Nothing covers it being lost, because it is lost outside this ViewModel |
+| 12 | Time understood ("by 6pm") | Shown on the search row, and the timetable opens with it | `resolves a time intent into the confirm state`, plus three in `TimeTableViewModelTest` covering the route carrying it, no time meaning now, and unreadable JSON falling back to now |
 | 13 | Dismissed mid-flight | Mic stopped, draft discarded | `closing the box while listening stops the mic`, `closing the box throws the draft away` |
 
-One of these is still an open defect rather than behaviour:
+Both of the open defects recorded here are now fixed.
 
-- **#12** is worse than not parsing at all: `AiTripIntentTimeResolver` already produces a
-  complete `DateTimeSelectionItem`, and a rider who says "by 6pm" is understood and then
-  ignored. The gap is not really navigation. The date/time picker exists only on the timetable
-  screen, so there is nowhere on the search surface for a time to land, by any route, AI or
-  not. Fixing it properly means a when-chip the rider can see and change, and
-  `TimeTableRoute` carrying the selection through.
+**#1.** The flag now reaches the state as `isFeatureEnabled`, the row does not draw the wheel
+without it, and `OpenInput` refuses as well as the button being absent — a caller that has not
+been told cannot open a sheet whose only action would be inert.
 
-**#1 is fixed.** The flag now reaches the state as `isFeatureEnabled`, the row does not draw
-the wheel without it, and `OpenInput` refuses as well as the button being absent — a caller
-that has not been told cannot open a sheet whose only action would be inert.
+**#12.** The parse was never the problem: `AiTripIntentTimeResolver` has always produced a
+complete `DateTimeSelectionItem`. There was nowhere to put it. The date/time picker existed
+only on the timetable, so a time understood while the rider was still choosing stops had no
+home, by any route, AI or not. It now lands in `SavedTripsState`, shows on the search row as a
+chip built from the same `SubtleButton` and the same `toDateTimeText()` the timetable uses, and
+travels to the timetable on `TimeTableRoute`.
+
+On the route rather than handed over after navigation, for two reasons. The back stack is
+serialised, so a rider whose app is killed in the background comes back to the time they chose
+instead of to now. And `TimeTableViewModel.dateTimeSelectionItem` is a plain `var` outside
+`uiState`, which survives rotation but not process death — the route is what makes it durable
+without moving that field.
+
+### Still to do on the time path
+
+- The chip clears on tap. It should open the existing date/time picker, which wants
+  `DateTimeSelectorRoute` reachable from the home screen.
+- The grammar reads clock times and relative minutes only. Days ("tomorrow", "tonight",
+  "Friday") are pure date arithmetic on a well-tested seam and are the obvious next addition.
+- Vague day-parts stay unresolved on purpose. "morning = 9am" is invented precision. If they
+  are ever handled, the phrase should reach the chip unresolved and open the picker at roughly
+  that time, so the rider supplies the precision and the app only supplies the shortcut.
 
 ## Parked, deliberately
 

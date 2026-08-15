@@ -225,6 +225,7 @@ class TimeTableViewModel(
         toStopId: String,
         toStopName: String,
         forceReload: Boolean = false,
+        dateTimeSelectionJson: String? = null,
     ) {
         val currentRoute = Pair(fromStopId, toStopId)
         // Check if this is the EXACT SAME route we just initialized.
@@ -260,7 +261,11 @@ class TimeTableViewModel(
         // Call LoadTimeTable - it will handle logic:
         // - If trip changed: Clear date/time, clear cache, fetch from API
         // - If same trip (rotation/nav back): Preserve state, skip API call
-        onLoadTimeTable(trip)
+        //
+        // The route's own selection is handed to it rather than applied afterwards. Applying
+        // it after would mean two fetches: one for "now" and one for the time the rider
+        // actually asked for, with the wrong one able to land second.
+        onLoadTimeTable(trip, dateTimeSelection = dateTimeSelectionJson?.let(DateTimeSelectionItem::fromJsonString))
     }
 
     fun onEvent(event: TimeTableUiEvent) {
@@ -1040,7 +1045,12 @@ class TimeTableViewModel(
         }
     }
 
-    private fun onLoadTimeTable(trip: Trip) {
+    /**
+     * @param dateTimeSelection Applied instead of the usual clear when this is a different
+     * trip. Null, which every caller but [initializeTrip] passes, keeps the old behaviour of
+     * a new trip starting at "now".
+     */
+    private fun onLoadTimeTable(trip: Trip, dateTimeSelection: DateTimeSelectionItem? = null) {
         log("🗺️ onLoadTimeTable -- fromStopId: ${trip.fromStopId}, toStopId: ${trip.toStopId}")
 
         // Check if this is the same trip or a different one
@@ -1062,7 +1072,7 @@ class TimeTableViewModel(
         if (!isSameTrip) {
             // Different trip - clear state and fetch new data
             log("🗺️ onLoadTimeTable -- Different trip, clearing cache and fetching")
-            dateTimeSelectionItem = null
+            dateTimeSelectionItem = dateTimeSelection
             journeys.clear()
             resetPaginationCaches()
             rawJourneyDataByJourneyId.clear()

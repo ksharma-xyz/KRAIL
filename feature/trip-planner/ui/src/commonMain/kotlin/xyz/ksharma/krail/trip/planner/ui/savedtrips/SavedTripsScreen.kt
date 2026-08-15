@@ -243,6 +243,8 @@ fun SavedTripsScreen(
                 onSearchButtonClick = { onSearchButtonClick() },
                 onAiEvent = onAiEvent,
                 isAiSearchAvailable = aiState.isFeatureEnabled,
+                dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
+                onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
 

@@ -17,7 +17,19 @@ interface TripPlannerNavigator {
         labelKey: String? = null,
         editTripLeg: Boolean = false,
     )
-    fun navigateToTimeTable(fromStopId: String, fromStopName: String, toStopId: String, toStopName: String)
+
+    /**
+     * @param dateTimeSelectionJson A serialised
+     * [xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem] when a
+     * departure or arrival time was chosen before the timetable opened. Null means now.
+     */
+    fun navigateToTimeTable(
+        fromStopId: String,
+        fromStopName: String,
+        toStopId: String,
+        toStopName: String,
+        dateTimeSelectionJson: String? = null,
+    )
     fun navigateToJourneyMap(journeyId: String)
     fun navigateToSettings()
     fun navigateToDiscover()

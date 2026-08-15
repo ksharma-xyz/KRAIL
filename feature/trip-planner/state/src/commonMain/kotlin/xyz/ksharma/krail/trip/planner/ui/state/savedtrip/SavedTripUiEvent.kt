@@ -36,6 +36,12 @@ sealed interface SavedTripUiEvent {
     data class FromStopChanged(val fromJson: String) : SavedTripUiEvent
     data class ToStopChanged(val toJson: String) : SavedTripUiEvent
 
+    /**
+     * A departure or arrival time understood before a timetable was opened. `null` clears it
+     * back to now, which is what starting a fresh search means.
+     */
+    data class DateTimeSelectionChanged(val dateTimeJson: String?) : SavedTripUiEvent
+
     data object StopTracking : SavedTripUiEvent
 
     data class MoveSavedTripToIndex(val tripId: String, val targetIndex: Int) : SavedTripUiEvent

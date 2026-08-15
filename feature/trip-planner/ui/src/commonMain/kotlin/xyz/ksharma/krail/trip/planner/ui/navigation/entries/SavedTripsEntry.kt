@@ -76,6 +76,15 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 resolved.toStopItem?.let {
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(it.toJsonString()))
                 }
+                // "by 6pm" used to be understood and then dropped on the floor here. It is
+                // held with the two stops and travels with them when the rider presses
+                // Search. Sent even when null, so a fresh sentence with no time in it clears
+                // a time left over from the previous one.
+                viewModel.onEvent(
+                    SavedTripUiEvent.DateTimeSelectionChanged(
+                        resolved.dateTimeSelectionItem?.toJsonString(),
+                    ),
+                )
                 // The AI screen is still up at this point, with its border decelerating. It
                 // closes a beat later so that ending is seen rather than cut off; the fields
                 // behind it are already written, so the row is correct the moment it goes.
@@ -139,6 +148,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     toStop = savedTripState.toStop,
                     viewModel = viewModel,
                     tripPlannerNavigator = tripPlannerNavigator,
+                    dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
                 )
             },
             aiState = aiSearchInputState,
@@ -170,6 +180,7 @@ private fun triggerTripSearch(
     toStop: StopItem?,
     viewModel: SavedTripsViewModel,
     tripPlannerNavigator: TripPlannerNavigator,
+    dateTimeSelectionJson: String? = null,
 ) {
     if (fromStop != null && toStop != null && fromStop.stopId != toStop.stopId) {
         viewModel.onEvent(
@@ -183,6 +194,7 @@ private fun triggerTripSearch(
             fromStopName = fromStop.stopName,
             toStopId = toStop.stopId,
             toStopName = toStop.stopName,
+            dateTimeSelectionJson = dateTimeSelectionJson,
         )
     }
 }

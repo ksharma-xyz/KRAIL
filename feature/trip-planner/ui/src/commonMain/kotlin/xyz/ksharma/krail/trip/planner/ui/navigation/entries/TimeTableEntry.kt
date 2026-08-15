@@ -133,6 +133,12 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 toStopId = key.toStopId,
                 toStopName = key.toStopName,
                 forceReload = !hasInitializedTrip,
+                // Passed every time and filtered inside the ViewModel, which is the only
+                // place that knows whether it still holds a selection of its own. Gating it
+                // on `hasInitializedTrip` here would look right and be wrong: that flag is
+                // rememberSaveable, so after process death it restores as true while the
+                // ViewModel it is meant to describe has been rebuilt from nothing.
+                dateTimeSelectionJson = key.dateTimeSelectionJson,
             )
             hasInitializedTrip = true
         }

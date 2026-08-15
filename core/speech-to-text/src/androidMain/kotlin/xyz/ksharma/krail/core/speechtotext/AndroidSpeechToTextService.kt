@@ -15,8 +15,18 @@ import kotlinx.coroutines.flow.callbackFlow
 import xyz.ksharma.krail.core.log.log
 
 private const val EARLIEST_THE_RECOGNISER_MAY_FINISH_MILLIS = 3_000L
-private const val SILENCE_THAT_ENDS_THE_SESSION_MILLIS = 2_500L
-private const val SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS = 1_800L
+
+// Both widened by roughly a second and a half after a rider reported being cut off while still
+// thinking. The phrase window is the one that does it: a trip said out loud usually ends on
+// something that sounds finished ("...on Monday morning"), and the recogniser treats a
+// complete-sounding phrase as licence to close much sooner than an unfinished one.
+//
+// Erring long is the cheap direction here. A rider who has finished has a stop button in front
+// of them and pays nothing for a generous window; a rider who was drawing breath loses their
+// sentence and has to start again. The ceiling in AiSearchInputViewModel is what stops these
+// from running forever.
+private const val SILENCE_THAT_ENDS_THE_SESSION_MILLIS = 4_000L
+private const val SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS = 3_000L
 
 /**
  * `android.speech.SpeechRecognizer`, not ML Kit — see this module's README for why.

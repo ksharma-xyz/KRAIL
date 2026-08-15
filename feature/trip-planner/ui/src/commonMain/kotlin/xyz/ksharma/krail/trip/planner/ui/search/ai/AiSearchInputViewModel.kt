@@ -34,9 +34,16 @@ private const val NEARBY_STOP_RADIUS_KM = 1.0
 // whether words are still arriving, and if they are, EXTENSION runs the session to fifteen, which
 // is a hard stop. Measured on words arriving in that window rather than at all, because every
 // session has words in it somewhere.
+//
+// STILL_SPEAKING_WINDOW must not be shorter than the recogniser's own silence tolerance
+// (SILENCE_THAT_ENDS_THE_SESSION_MILLIS in AndroidSpeechToTextService, currently the same four
+// seconds). If it were, this ceiling could end a session the recogniser still considered live:
+// a rider who paused at eight seconds and was about to carry on would look finished to us and
+// unfinished to it, and we would be the ones who cut them off. Kept in step by hand, since the
+// two live in different modules on purpose - this one must not depend on a platform source set.
 private const val LISTENING_CEILING_MILLIS = 10_000L
 private const val LISTENING_EXTENSION_MILLIS = 5_000L
-private const val STILL_SPEAKING_WINDOW_MILLIS = 2_000L
+private const val STILL_SPEAKING_WINDOW_MILLIS = 4_000L
 
 private const val AI_OUTCOME_TAG = "[AI_OUTCOME]"
 

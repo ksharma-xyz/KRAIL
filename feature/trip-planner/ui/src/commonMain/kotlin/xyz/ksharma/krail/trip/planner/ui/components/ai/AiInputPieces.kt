@@ -36,6 +36,7 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_NEEDS_SETTINGS
 import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_UNSUPPORTED
+import xyz.ksharma.krail.trip.planner.ui.search.ai.UnresolvedReason
 
 private const val WORKING_TEXT_ALPHA = 0.55f
 
@@ -238,14 +239,38 @@ internal fun StageProblem(message: String) {
 internal fun AiSearchInputUiState.problemMessage(): String? = when {
     phase == AiSearchInputPhase.DOWNLOADING ->
         "KRAIL is still downloading the on device model. Try again in a moment."
-    phase == AiSearchInputPhase.UNRESOLVED ->
-        "I could not place that. Try a stop name, or one of your labels."
+    phase == AiSearchInputPhase.UNRESOLVED -> unresolvedMessage()
     speechUnavailableReason == null -> null
     needsSettingsForMic ->
         "Microphone is off for KRAIL. Tap the mic again to open Settings."
     isSpeechUnsupported ->
         "Speaking is not available on this device. You can still type."
     else -> "KRAIL needs the microphone to hear you. You can still type."
+}
+
+/**
+ * Written here rather than asked of the model. A model that has just failed to understand a
+ * sentence is the worst possible narrator of that failure, it would cost a second on-device
+ * call right after the rider already waited, and the case where the model is unavailable still
+ * needs words. What makes these better than one catch-all line is that each names the thing the
+ * rider can act on.
+ */
+private fun AiSearchInputUiState.unresolvedMessage(): String = when (unresolvedReason) {
+    // The sentence read fine and had no place in it. An example is more use than an apology.
+    UnresolvedReason.NO_PLACE_MENTIONED ->
+        "No place in that one. Name a stop, like Central Station, and where you are going."
+
+    // We know exactly which word failed, so it is quoted back rather than described.
+    UnresolvedReason.STOP_NOT_FOUND ->
+        unmatchedPlace
+            ?.let { place -> "No stop called \"$place\". Try the name as it appears on the sign." }
+            ?: "That is not a stop I know. Try the name as it appears on the sign."
+
+    // The model, not the sentence. Nothing about the wording is worth changing.
+    UnresolvedReason.COULD_NOT_READ ->
+        "That did not come through. Have another go, or use fewer words."
+
+    null -> "Something is missing there. Name where you are going, and where from."
 }
 
 internal val AiSearchInputUiState.needsSettingsForMic: Boolean

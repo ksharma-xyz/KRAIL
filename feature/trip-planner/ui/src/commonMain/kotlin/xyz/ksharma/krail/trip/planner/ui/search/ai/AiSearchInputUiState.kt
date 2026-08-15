@@ -6,6 +6,16 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 enum class AiSearchInputPhase { IDLE, EXTRACTING, DOWNLOADING, RESOLVED, UNRESOLVED }
 
 /**
+ * Why nothing was resolved, so the rider is told the one thing that would help rather than a
+ * single sentence covering three different problems.
+ *
+ * @property NO_PLACE_MENTIONED The sentence was read fine and named no place at all.
+ * @property STOP_NOT_FOUND A place was named and no stop matches it.
+ * @property COULD_NOT_READ The model itself gave nothing usable back.
+ */
+enum class UnresolvedReason { NO_PLACE_MENTIONED, STOP_NOT_FOUND, COULD_NOT_READ }
+
+/**
  * @param isInputOpen Whether the AI search sheet is showing over the home screen. Owned here
  * rather than as `rememberSaveable` in the screen so that closing-on-resolve and the reset
  * that follows it happen in one state emission — a screen-local flag would race with
@@ -19,6 +29,9 @@ data class AiSearchInputUiState(
     val isListening: Boolean = false,
     val speechTranscript: String = "",
     val speechUnavailableReason: String? = null,
+    val unresolvedReason: UnresolvedReason? = null,
+    /** The place the rider named that no stop matched, quoted back to them. */
+    val unmatchedPlace: String? = null,
 )
 
 /**

@@ -987,6 +987,68 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN a seeded time WHEN the same selection is sent again THEN nothing reloads`() =
+        runTest {
+            tripPlanningService.isSuccess = true
+            val chosen = DateTimeSelectionItem(
+                option = JourneyTimeOptions.ARRIVE,
+                hour = 9,
+                minute = 0,
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+            )
+
+            viewModel.initializeTrip(
+                fromStopId = "stop_a",
+                fromStopName = "Stop A",
+                toStopId = "stop_b",
+                toStopName = "Stop B",
+                dateTimeSelectionJson = chosen.toJsonString(),
+            )
+            advanceUntilIdle()
+            val triggersAfterLoad = rateLimiter.triggerCount
+
+            // The screen syncs its own copy of the selection to here after the trip loads.
+            // On a fresh navigation the two already agree, and that has to cost nothing:
+            // if it reloaded, every AI-planned trip would fetch twice.
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(chosen))
+            advanceUntilIdle()
+
+            assertEquals(chosen, viewModel.dateTimeSelectionItem)
+            assertEquals(triggersAfterLoad, rateLimiter.triggerCount)
+        }
+
+    @Test
+    fun `GIVEN a seeded time WHEN null is sent afterwards THEN the time is lost`() =
+        runTest {
+            tripPlanningService.isSuccess = true
+            val chosen = DateTimeSelectionItem(
+                option = JourneyTimeOptions.ARRIVE,
+                hour = 9,
+                minute = 0,
+                date = Clock.System.now().toLocalDateTime(currentSystemDefault()).date,
+            )
+
+            viewModel.initializeTrip(
+                fromStopId = "stop_a",
+                fromStopName = "Stop A",
+                toStopId = "stop_b",
+                toStopName = "Stop B",
+                dateTimeSelectionJson = chosen.toJsonString(),
+            )
+            advanceUntilIdle()
+
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(null))
+            advanceUntilIdle()
+
+            // Last writer wins, by design: the screen owns the selection and must be able to
+            // clear it. This test exists to pin the consequence, which is that anything
+            // syncing a null into here AFTER the trip is seeded silently throws the rider's
+            // time away and reloads at now. TimeTableEntry sends its sync after
+            // initializeTrip for exactly this reason; sending it before was the defect.
+            assertNull(viewModel.dateTimeSelectionItem)
+        }
+
+    @Test
     fun `GIVEN unreadable time json WHEN the trip is initialized THEN it falls back to now`() =
         runTest {
             tripPlanningService.isSuccess = true

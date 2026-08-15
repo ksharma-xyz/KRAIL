@@ -101,17 +101,17 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             mutableStateOf(persistentSetOf())
         }
 
-        // State for date/time selection - survives rotation but clears when trip changes
+        // State for date/time selection - survives rotation but clears when trip changes.
+        //
+        // Seeded from the route, because this is what the screen displays and what it pushes
+        // into the ViewModel. Seeding only the ViewModel left the two disagreeing: the trip
+        // loaded at the right time and the button still read "Plan your trip", until the sync
+        // below pushed this null back over it and the timetable reloaded at now.
         var dateTimeSelectionItem by rememberSaveable(
             tripId,
             stateSaver = dateTimeSelectionSaver(),
         ) {
-            mutableStateOf<DateTimeSelectionItem?>(null)
-        }
-
-        // Sync date/time selection with ViewModel on first composition
-        LaunchedEffect(Unit) {
-            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
+            mutableStateOf(key.dateTimeSelectionJson?.let(DateTimeSelectionItem::fromJsonString))
         }
 
         // False only on the FIRST composition of a freshly pushed nav entry;
@@ -141,6 +141,15 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                 dateTimeSelectionJson = key.dateTimeSelectionJson,
             )
             hasInitializedTrip = true
+        }
+
+        // Runs after the trip is initialised, not before it. This state is the one the screen
+        // shows, so it has the final say; the ViewModel has just been given the route's value
+        // and on a fresh navigation the two already agree, making this a no-op. It earns its
+        // place after process death, where this restores the time the rider actually chose
+        // while the route still carries the one they arrived with.
+        LaunchedEffect(Unit) {
+            viewModel.onEvent(TimeTableUiEvent.DateTimeSelectionChanged(dateTimeSelectionItem))
         }
 
         // Stop picked from the leg-scoped search opened via the timetable header

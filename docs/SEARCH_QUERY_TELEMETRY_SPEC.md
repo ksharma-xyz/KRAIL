@@ -22,6 +22,7 @@ What we send instead describes the *shape* of the query, never its content:
 | `resultsCount`, `localResultsCount` | How many stops or addresses came back | Says nothing about what was asked |
 | `searchSessionId` | Random per settled query | Joins a query to its selection without identifying a person |
 | `addressSearchGate` | Which branch the address pipeline took | The only record of address calls *not* made |
+| `resultIndex` | Which row the rider picked | A row number describes the ranking, not the rider |
 
 ## The one carve-out
 
@@ -64,6 +65,11 @@ case stays as a regression test.
 
 This is why the carve-out earns its place. Without it the ranker can only be tuned by guessing
 at what people type.
+
+`resultIndex` on `stop_selected` is the other half, and it needs no text at all: a rider who
+scrolls past eight results to reach the one they meant has told you the ranking is wrong for
+that query without telling you what the query was. Read it against `displayedLocalCount`, and
+remember that zero is the common case and a real value, not a missing one.
 
 ## Rules for anyone changing this
 

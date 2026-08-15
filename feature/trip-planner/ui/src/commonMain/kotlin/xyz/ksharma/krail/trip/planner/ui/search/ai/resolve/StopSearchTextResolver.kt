@@ -5,6 +5,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val MIN_QUERY_TOKEN_LENGTH_TO_MATCH_AS_PREFIX = 3
+private const val MAX_WORDS_JOINED = 4
 
 /**
  * Resolves a place name against the same stop search the search-stop screen uses, taking the
@@ -54,14 +55,37 @@ private fun String.matchesOnTokenBoundaries(query: String): Boolean {
     val queryTokens = query.tokenise()
     if (queryTokens.isEmpty()) return false
 
+    val runs = candidateTokens.consecutiveRuns()
     return queryTokens.all { queryToken ->
-        candidateTokens.any { candidateToken ->
+        runs.any { run ->
             if (queryToken.length >= MIN_QUERY_TOKEN_LENGTH_TO_MATCH_AS_PREFIX) {
-                candidateToken.startsWith(queryToken)
+                run.startsWith(queryToken)
             } else {
                 // One and two letter tokens prefix far too much to be trusted as a prefix.
-                candidateToken == queryToken
+                run == queryToken
             }
+        }
+    }
+}
+
+/**
+ * Each word of the stop name, plus each run of consecutive words joined up.
+ *
+ * Riders write stop names closed that the timetable writes open: "townhall", "kingscross",
+ * "circularquay". Matching word by word rejected all of those, which put this path in the
+ * absurd position of refusing a stop the app's own search screen finds instantly, and telling
+ * the rider no such stop exists.
+ *
+ * Joining runs rather than allowing a match anywhere inside the name is what keeps the
+ * original guarantee: "townhall" reaches *Town Hall Station* because those words are adjacent
+ * and in order, while "work" still cannot reach *70 Powderworks Rd*, because no run of that
+ * name begins with it.
+ */
+private fun List<String>.consecutiveRuns(): List<String> = buildList {
+    for (start in this@consecutiveRuns.indices) {
+        val last = minOf(start + MAX_WORDS_JOINED, this@consecutiveRuns.size)
+        for (end in start + 1..last) {
+            add(this@consecutiveRuns.subList(start, end).joinToString(separator = ""))
         }
     }
 }

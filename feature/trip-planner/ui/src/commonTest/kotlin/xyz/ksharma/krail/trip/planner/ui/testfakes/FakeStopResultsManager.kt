@@ -11,6 +11,9 @@ class FakeStopResultsManager : StopResultsManager {
     // Add a flag to control whether fetchStopResults should throw an exception
     var shouldThrowError = false
 
+    /** Matches "townhall" against "Town Hall" the way the real fuzzy search does. */
+    var spaceInsensitiveSearch = false
+
     // Track selected stops
     private var _selectedFromStop: StopItem? = null
     private var _selectedToStop: StopItem? = null
@@ -67,10 +70,19 @@ class FakeStopResultsManager : StopResultsManager {
             testStopResults
         } else {
             testStopResults.filter {
-                it.stopName.contains(query, ignoreCase = true)
+                // With spaceInsensitiveSearch on, the fake finds "Town Hall" for "townhall"
+                // the way the real fuzzy search does. Off by default: tests that assert on
+                // zero-result queries would otherwise start matching things.
+                it.stopName.contains(query, ignoreCase = true) ||
+                    (
+                        spaceInsensitiveSearch &&
+                            it.stopName.withoutSpaces().contains(query.withoutSpaces(), ignoreCase = true)
+                        )
             }
         }
     }
+
+    private fun String.withoutSpaces(): String = replace(" ", "")
 
     override fun prioritiseStops(stopResults: List<SearchStopState.SearchResult.Stop>): List<SearchStopState.SearchResult.Stop> {
         return stopResults.sortedByDescending { it.transportModeType.size }

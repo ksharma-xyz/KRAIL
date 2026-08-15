@@ -245,10 +245,18 @@ class AiSearchInputViewModel(
 
             val toStopItem = extraction.destinationText?.let { resolveStop(it) }
             val originText = extraction.originText
-            val (fromText, fromStopItem) = if (originText != null) {
-                originText to resolveStop(originText)
-            } else {
-                resolveCurrentLocationStop()
+            val (fromText, fromStopItem) = when {
+                originText != null -> originText to resolveStop(originText)
+
+                // Only fall back to the nearest stop when a destination was actually
+                // understood. Without that condition, a sentence about nothing at all ("hey
+                // how are you") resolved to no places, took the fallback anyway, and filled
+                // the From field with wherever the rider happened to be standing. That reads
+                // as the app having understood something, which is the one thing it must not
+                // fake.
+                toStopItem != null -> resolveCurrentLocationStop()
+
+                else -> null to null
             }
             val dateTimeSelectionItem = resolveTimeIntent(extraction.timeIntent) ?: leaveNowDateTimeSelectionItem()
 

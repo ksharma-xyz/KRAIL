@@ -30,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -87,6 +88,47 @@ class AiSearchInputViewModelTest {
         advanceUntilIdle()
 
         assertEquals(AiSearchInputPhase.IDLE, viewModel.uiState.value.phase)
+    }
+
+    @Test
+    fun `with the flag off there is no way in`() = runTest(testDispatcher) {
+        viewModel = AiSearchInputViewModel(
+            aiTextService = aiTextService,
+            speechToTextService = speechToTextService,
+            stopTextResolver = stopTextResolver,
+            nearbyStopsRepository = nearbyStopsRepository,
+            isAiSearchInputEnabled = { false },
+        )
+
+        // The state the row reads to decide whether to draw the button at all.
+        assertFalse(viewModel.uiState.value.isFeatureEnabled)
+
+        // And if something opens it anyway, it does not open. A sheet whose only action is
+        // inert is the defect this pair of guards exists for.
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        assertFalse(viewModel.uiState.value.isInputOpen)
+    }
+
+    @Test
+    fun `with the flag on the way in is there and opens`() = runTest(testDispatcher) {
+        assertTrue(viewModel.uiState.value.isFeatureEnabled)
+
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+
+        assertTrue(viewModel.uiState.value.isInputOpen)
+    }
+
+    @Test
+    fun `starting over keeps the way in`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+
+        viewModel.onEvent(AiSearchInputEvent.StartOver)
+
+        // The draft goes; what the app knows about itself does not, or the row would lose the
+        // button the moment a rider started again.
+        assertEquals("", viewModel.uiState.value.typedText)
+        assertTrue(viewModel.uiState.value.isFeatureEnabled)
     }
 
     @Test

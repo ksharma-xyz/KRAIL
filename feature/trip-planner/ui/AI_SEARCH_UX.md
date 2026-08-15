@@ -25,7 +25,7 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 
 | # | Failure | Rider sees | Test |
 |---|---|---|---|
-| 1 | Feature flag off | **Nothing at all.** Continue does nothing | `submit while flag is off does nothing` — the no-op is tested, the dead button is not fixed |
+| 1 | Feature flag off | **No way in.** The wheel is not drawn | `with the flag off there is no way in`, `with the flag on the way in is there and opens`, `starting over keeps the way in`, plus `submit while flag is off does nothing` |
 | 2 | Model not downloaded, or downloading | "still downloading… try again in a moment" | `model downloadable lands in DOWNLOADING`, `model downloading lands in DOWNLOADING too` |
 | 3 | Device unsupported | Generic unresolved message | `unsupported device lands in UNRESOLVED, not DOWNLOADING` — reads as a parse failure rather than "not available here" |
 | 4 | Model returns nothing usable | "did not come through, have another go" | `failed extraction resolves to UNRESOLVED`, `a model that gives nothing back is its own kind of failure` |
@@ -39,12 +39,18 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 | 12 | Time understood ("by 6pm") | **Dropped.** Parsed, then thrown away | `resolves a time intent into the confirm state` proves we parse it. Nothing covers it being lost, because it is lost outside this ViewModel |
 | 13 | Dismissed mid-flight | Mic stopped, draft discarded | `closing the box while listening stops the mic`, `closing the box throws the draft away` |
 
-Two of these are open defects rather than behaviour:
+One of these is still an open defect rather than behaviour:
 
-- **#1** is a dead button. The flag reaches the ViewModel but not the UI, so the entry point
-  shows and does nothing when the feature is off. It should hide the wheel instead.
-- **#12** is worse than not parsing at all: `navigateToTimeTable` has no date/time parameter, so
-  a rider who says "by 6pm" is understood and then ignored. Fixing it means a route parameter.
+- **#12** is worse than not parsing at all: `AiTripIntentTimeResolver` already produces a
+  complete `DateTimeSelectionItem`, and a rider who says "by 6pm" is understood and then
+  ignored. The gap is not really navigation. The date/time picker exists only on the timetable
+  screen, so there is nowhere on the search surface for a time to land, by any route, AI or
+  not. Fixing it properly means a when-chip the rider can see and change, and
+  `TimeTableRoute` carrying the selection through.
+
+**#1 is fixed.** The flag now reaches the state as `isFeatureEnabled`, the row does not draw
+the wheel without it, and `OpenInput` refuses as well as the button being absent — a caller
+that has not been told cannot open a sheet whose only action would be inert.
 
 ## Parked, deliberately
 

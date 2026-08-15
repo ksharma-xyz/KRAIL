@@ -20,6 +20,10 @@ enum class UnresolvedReason { NO_PLACE_MENTIONED, STOP_NOT_FOUND, COULD_NOT_READ
  * rather than as `rememberSaveable` in the screen so that closing-on-resolve and the reset
  * that follows it happen in one state emission — a screen-local flag would race with
  * [AiSearchInputEvent.StartOver] and could leave an empty sheet open.
+ * @param isFeatureEnabled Whether the feature flag is on. The way in has to know this: the
+ * flag reached the ViewModel, which refused to submit, but never reached the UI, so with the
+ * feature off the wheel still rendered and did nothing when tapped. A button that does
+ * nothing is worse than no button.
  */
 data class AiSearchInputUiState(
     val typedText: String = "",
@@ -32,6 +36,7 @@ data class AiSearchInputUiState(
     val unresolvedReason: UnresolvedReason? = null,
     /** The place the rider named that no stop matched, quoted back to them. */
     val unmatchedPlace: String? = null,
+    val isFeatureEnabled: Boolean = false,
 )
 
 /**

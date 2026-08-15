@@ -84,6 +84,7 @@ fun SearchStopRow(
     onCollapseRequest: (() -> Unit)? = null,
     onSearchButtonClick: () -> Unit = {},
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
+    isAiSearchAvailable: Boolean = false,
 ) {
     val themeColorHex by LocalThemeColor.current
     val navBarPadding = with(LocalDensity.current) {
@@ -141,6 +142,7 @@ fun SearchStopRow(
                 onCollapseRequest = onCollapseRequest,
                 onSearchButtonClick = onSearchButtonClick,
                 onAiEvent = onAiEvent,
+                isAiSearchAvailable = isAiSearchAvailable,
             )
         } else {
             CollapsedPill(
@@ -239,6 +241,7 @@ private fun ExpandedSearchRow(
     modifier: Modifier = Modifier,
     onCollapseRequest: (() -> Unit)? = null,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
+    isAiSearchAvailable: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
 
@@ -297,7 +300,9 @@ private fun ExpandedSearchRow(
                     modifier = Modifier.padding(start = dim.spacingXL),
                     verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
                 ) {
-                    AiSheetEntryButton(onAiEvent = onAiEvent)
+                    if (isAiSearchAvailable) {
+                        AiSheetEntryButton(onAiEvent = onAiEvent)
+                    }
 
                     SearchButton(onSearchButtonClick = onSearchButtonClick)
                 }
@@ -400,6 +405,10 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
  * The way into the AI search sheet. Opening is all it does: the sheet owns speaking, typing
  * and every failure they can hit, so this button has one job and one look. It used to change
  * into a mic and back, which meant the row had to explain a mode it was not showing.
+ *
+ * Not rendered at all when the feature is off. It used to render regardless, because the flag
+ * stopped at the ViewModel — the sheet opened, the rider typed a sentence, and Continue did
+ * nothing.
  */
 @Composable
 private fun AiSheetEntryButton(onAiEvent: (AiSearchInputEvent) -> Unit) {

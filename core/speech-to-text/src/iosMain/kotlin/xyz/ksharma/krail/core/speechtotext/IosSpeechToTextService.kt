@@ -44,7 +44,7 @@ internal class IosSpeechToTextService : SpeechToTextService {
                 SpeechToTextAvailability.Unavailable(reason = "permission_denied")
 
             recognizer.available.not() ->
-                SpeechToTextAvailability.Unavailable(reason = "not_available")
+                SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.NOT_AVAILABLE)
 
             else -> SpeechToTextAvailability.Available
         }
@@ -54,7 +54,7 @@ internal class IosSpeechToTextService : SpeechToTextService {
 
     override fun startListening(): Flow<SpeechToTextResult> = callbackFlow {
         if (recognizer.available.not()) {
-            trySend(SpeechToTextResult.Error(reason = "not_available"))
+            trySend(SpeechToTextResult.Error(reason = SpeechUnavailableReasons.NOT_AVAILABLE))
             close()
             return@callbackFlow
         }

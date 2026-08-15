@@ -23,7 +23,7 @@ private const val SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS = 1_800L
  *
  * A plain singleton service has no `Activity` to show the `RECORD_AUDIO` system permission
  * dialog from, so unlike iOS's [IosSpeechToTextService] this class only *checks* permission
- * status — [SpeechToTextAvailability.Unavailable] with `reason = "permission_required"] tells
+ * status — [SpeechToTextAvailability.Unavailable] with `reason = SpeechUnavailableReasons.PERMISSION_REQUIRED] tells
  * the caller to trigger the actual request via an `ActivityResultContracts.RequestPermission`
  * launcher at the Compose/Activity layer, then retry.
  */
@@ -34,10 +34,10 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
     override suspend fun checkAvailability(): SpeechToTextAvailability {
         val result = when {
             !SpeechRecognizer.isRecognitionAvailable(context) ->
-                SpeechToTextAvailability.Unavailable(reason = "not_available")
+                SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.NOT_AVAILABLE)
 
             !hasRecordAudioPermission() ->
-                SpeechToTextAvailability.Unavailable(reason = "permission_required")
+                SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.PERMISSION_REQUIRED)
 
             else -> SpeechToTextAvailability.Available
         }
@@ -47,12 +47,12 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
 
     override fun startListening(): Flow<SpeechToTextResult> = callbackFlow {
         if (!hasRecordAudioPermission()) {
-            trySend(SpeechToTextResult.Error(reason = "permission_required"))
+            trySend(SpeechToTextResult.Error(reason = SpeechUnavailableReasons.PERMISSION_REQUIRED))
             close()
             return@callbackFlow
         }
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            trySend(SpeechToTextResult.Error(reason = "not_available"))
+            trySend(SpeechToTextResult.Error(reason = SpeechUnavailableReasons.NOT_AVAILABLE))
             close()
             return@callbackFlow
         }
@@ -80,7 +80,7 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
                         if (text != null) {
                             SpeechToTextResult.Final(text = text)
                         } else {
-                            SpeechToTextResult.Error(reason = "no_result")
+                            SpeechToTextResult.Error(reason = SpeechUnavailableReasons.NO_RESULT)
                         },
                     )
                     close()

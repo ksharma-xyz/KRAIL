@@ -23,14 +23,20 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val NEARBY_STOP_RADIUS_KM = 1.0
 
-// Hard ceiling on one listening session. Ending it is normally the recogniser's call: it stops
-// when the rider stops talking, with the silence windows widened on the Android side so a
-// thinking pause mid sentence does not count as finished. Those windows are hints an OEM
-// recogniser may ignore, and a recogniser that never reports an end leaves a live microphone and
-// a running waveform on screen with no way out but backing off the sheet. Twenty seconds is far
-// longer than anyone takes to say where they are going, so hitting this is a fault rather than a
-// rider being slow.
-private const val MAX_LISTENING_MILLIS = 20_000L
+// Ceiling on one listening session. The rider's stop button is the real control; ending it
+// otherwise is normally the recogniser's call, since it stops when they stop talking, with the
+// silence windows widened on the Android side so a thinking pause mid sentence does not count as
+// finished. Those windows are hints an OEM recogniser may ignore, and one that never reports an
+// end leaves a live microphone and a running waveform with no way out but backing off the sheet.
+//
+// Ten seconds is longer than anyone takes to say where they are going. A rider still mid sentence
+// at ten is not cut off: STILL_SPEAKING_WINDOW is the stretch before the ceiling that decides
+// whether words are still arriving, and if they are, EXTENSION runs the session to fifteen, which
+// is a hard stop. Measured on words arriving in that window rather than at all, because every
+// session has words in it somewhere.
+private const val LISTENING_CEILING_MILLIS = 10_000L
+private const val LISTENING_EXTENSION_MILLIS = 5_000L
+private const val STILL_SPEAKING_WINDOW_MILLIS = 2_000L
 
 private const val AI_OUTCOME_TAG = "[AI_OUTCOME]"
 
@@ -91,6 +97,9 @@ class AiSearchInputViewModel(
 
     private var listeningJob: Job? = null
     private var listeningTimeoutJob: Job? = null
+
+    // Only ever compared against an earlier reading of itself, never read as a total.
+    private var wordsHeardSoFar: Int = 0
 
     fun onEvent(event: AiSearchInputEvent) {
         when (event) {
@@ -186,8 +195,13 @@ class AiSearchInputViewModel(
 
             speechToTextService.startListening().collect { result ->
                 when (result) {
-                    is SpeechToTextResult.Partial ->
+                    is SpeechToTextResult.Partial -> {
+                        // Counted, not timestamped: the ceiling only needs to know whether new
+                        // words arrived during a window, and a counter is readable from a test
+                        // running on virtual time where a wall clock is not.
+                        wordsHeardSoFar++
                         _uiState.update { it.copy(speechTranscript = result.text) }
+                    }
 
                     is SpeechToTextResult.Final -> {
                         _uiState.update {
@@ -209,11 +223,32 @@ class AiSearchInputViewModel(
      * The backstop for a recogniser that never says it is done. Stopping is the same graceful
      * stop the rider's own stop button does, so whatever was said up to that point still comes
      * back through the flow as a final transcript rather than being thrown away.
+     *
+     * The rider's stop button is the real control; this only decides when to stop waiting for
+     * someone who has finished but whose recogniser has not noticed.
+     *
+     * Ten seconds is the ordinary ceiling, which is longer than any trip anyone says out loud.
+     * A rider still mid-sentence at ten seconds is not cut off: the extension runs to fifteen,
+     * which is a hard stop. "Still speaking" is measured by whether new words arrived in the
+     * two seconds before the ceiling, not by whether any arrived at all, since every session
+     * has words in it somewhere.
      */
     private fun startListeningTimeout() {
         listeningTimeoutJob?.cancel()
         listeningTimeoutJob = viewModelScope.launch {
-            delay(MAX_LISTENING_MILLIS)
+            delay(LISTENING_CEILING_MILLIS - STILL_SPEAKING_WINDOW_MILLIS)
+            val wordsBeforeTheWindow = wordsHeardSoFar
+            delay(STILL_SPEAKING_WINDOW_MILLIS)
+
+            if (wordsHeardSoFar > wordsBeforeTheWindow) {
+                delay(LISTENING_EXTENSION_MILLIS)
+                if (_uiState.value.isListening) {
+                    logOutcome(reason = "listening_hit_extended_ceiling")
+                    stopListening()
+                }
+                return@launch
+            }
+
             if (_uiState.value.isListening) {
                 logOutcome(reason = "listening_hit_ceiling")
                 stopListening()
@@ -291,7 +326,8 @@ class AiSearchInputViewModel(
 
                 else -> null to null
             }
-            val dateTimeSelectionItem = resolveTimeIntent(extraction.timeIntent) ?: leaveNowDateTimeSelectionItem()
+            val dateTimeSelectionItem =
+                resolveTimeIntent(extraction.timeIntent, riderText = text) ?: leaveNowDateTimeSelectionItem()
 
             val intent = ResolvedTripIntent(
                 fromText = fromText,

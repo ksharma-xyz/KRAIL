@@ -661,12 +661,52 @@ class AiSearchInputViewModelTest {
 
         // A recogniser that never reports an end would otherwise leave a live microphone and a
         // running waveform on screen with no way out but backing off the sheet.
-        advanceTimeBy(MAX_LISTENING_MILLIS_IN_TEST + 1)
+        advanceTimeBy(LISTENING_CEILING_IN_TEST + 1)
         runCurrent()
 
         assertEquals(false, viewModel.uiState.value.isListening)
         assertEquals(1, speechToTextService.stopListeningCallCount)
     }
+
+    @Test
+    fun `a rider still speaking at the ceiling is given longer`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+
+        // Words arriving inside the window just before the ceiling: this rider is mid
+        // sentence, and cutting them off there is the thing the extension exists to prevent.
+        advanceTimeBy(LISTENING_CEILING_IN_TEST - 1_000)
+        runCurrent()
+        speechToTextService.results.emit(SpeechToTextResult.Partial("central to town"))
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        assertTrue(viewModel.uiState.value.isListening, "should not stop at the ordinary ceiling")
+
+        advanceTimeBy(LISTENING_EXTENSION_IN_TEST)
+        runCurrent()
+
+        // Fifteen seconds is a hard stop, extension or not.
+        assertEquals(false, viewModel.uiState.value.isListening)
+    }
+
+    @Test
+    fun `words that stopped before the ceiling do not earn the extension`() =
+        runTest(testDispatcher) {
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+
+            // Said early, then silence. Every session has words in it somewhere, so the test
+            // is whether they were still arriving at the end, not whether there were any.
+            speechToTextService.results.emit(SpeechToTextResult.Partial("central"))
+            runCurrent()
+
+            advanceTimeBy(LISTENING_CEILING_IN_TEST + 1)
+            runCurrent()
+
+            assertEquals(false, viewModel.uiState.value.isListening)
+        }
 }
 
-private const val MAX_LISTENING_MILLIS_IN_TEST = 20_000L
+private const val LISTENING_CEILING_IN_TEST = 10_000L
+private const val LISTENING_EXTENSION_IN_TEST = 5_000L

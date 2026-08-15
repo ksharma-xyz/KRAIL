@@ -31,7 +31,38 @@ If context is needed to review the change, describe the *technical* rationale
 - No em dashes in PR/commit prose
 - No arrow characters
 - Plain "what changed" statements; no hype, no filler
-- Title: conventional commit format, e.g. `refactor(settings): remove social links row`
+
+## Titles
+
+Shape: `type(scope): <verb> <the concrete thing> <where>`
+
+The title is read in a list, next to five others, in about two seconds. Everything below
+follows from that.
+
+- **Start with a verb for the code change**: add, hide, carry, read, record, stop, remove,
+  fix. Not a noun phrase, not a principle, not an aphorism.
+- **Name something greppable**: a parameter, a screen, a flag, a feature. If a reviewer
+  would search for the word, it belongs in the title (`resultIndex`, `named days`,
+  `AI search entry point`).
+- **Answer "what is different once this merges?"** The reasoning is the body's job. A title
+  that states why the change is right tells you nothing about what it does.
+- **Under ~70 characters**, or GitHub truncates it in the list.
+- **Scan test before submitting**: read the title beside the other open PR titles. If two
+  share a sentence shape, rewrite one. Parallel phrasing reads well in prose and terribly
+  in a list, because the shape is the first thing seen and matching shapes look like
+  duplicates.
+
+Never: metaphors, negations, constructions repeated across a stack, or a shape reused from
+an earlier title.
+
+| Bad | Why | Better |
+|---|---|---|
+| `fix(trip-planner): a sentence about nothing fills nothing` | States a principle; could be any layer | `fix(trip-planner): stop filling From when the rider named no place` |
+| `fix(trip-planner): with the feature off, there is no way in` | No verb, no subject, unsearchable | `fix(trip-planner): hide the AI search entry point when the flag is off` |
+| `feat(trip-planner): a day the rider names is a day the search uses` | Same shape as the PR below it in the stack | `feat(trip-planner): understand named days like tomorrow and friday` |
+
+The commit subject and the PR title should match. Rebase-merge puts the commit subject in
+`main`'s history, so fixing only the PR title is cosmetic.
 
 ## Template
 

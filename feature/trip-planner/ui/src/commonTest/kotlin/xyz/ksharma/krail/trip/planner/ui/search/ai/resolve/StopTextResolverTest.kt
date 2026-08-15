@@ -73,7 +73,8 @@ class StopLabelTextResolverTest {
 
 class StopSearchTextResolverTest {
 
-    private val resolver = StopSearchTextResolver(FakeStopResultsManager())
+    private val stopResultsManager = FakeStopResultsManager().apply { spaceInsensitiveSearch = true }
+    private val resolver = StopSearchTextResolver(stopResultsManager)
 
     @Test
     fun `a query inside a longer word is not a match`() = runTest {
@@ -104,6 +105,23 @@ class StopSearchTextResolverTest {
     fun `every query word has to land somewhere`() = runTest {
         // "town" matches, "beach" does not, so the whole query does not.
         assertNull(resolver.resolve("town beach"))
+    }
+
+    @Test
+    fun `a name written closed still finds the stop written open`() = runTest {
+        // The bug this exists for: the search screen finds Town Hall for "townhall" instantly,
+        // and this path told the rider no such stop existed. Word-by-word matching could not
+        // see a name whose words the rider had run together.
+        assertEquals(
+            StopItem(stopId = "10102", stopName = "Town Hall"),
+            resolver.resolve("townhall"),
+        )
+    }
+
+    @Test
+    fun `running words together does not let a query reach inside a word`() = runTest {
+        // Joining runs of adjacent words must not reopen what the word-boundary rule closed.
+        assertNull(resolver.resolve("work"))
     }
 
     @Test

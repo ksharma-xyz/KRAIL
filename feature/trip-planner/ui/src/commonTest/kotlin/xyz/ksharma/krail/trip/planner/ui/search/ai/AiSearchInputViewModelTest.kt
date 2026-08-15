@@ -440,6 +440,26 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `a place the model invented is never quoted back at the rider`() = runTest(testDispatcher) {
+        // The model is used to look stops up, never to produce anything the rider reads. Here
+        // it returns a place that is nowhere in what they typed: a reworded or hallucinated
+        // name, printed inside quote marks, would read as their own words.
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = null,
+            destinationText = "Kings Cross Station",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("somewhere nice please"))
+
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(UnresolvedReason.STOP_NOT_FOUND, state.unresolvedReason)
+        assertNull(state.unmatchedPlace)
+    }
+
+    @Test
     fun `a model that gives nothing back is its own kind of failure`() = runTest(testDispatcher) {
         aiTextService.extractionResult = null
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))

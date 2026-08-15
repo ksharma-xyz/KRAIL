@@ -379,6 +379,10 @@ that contradicts the doc should also update the doc in the same change.
 - `docs/ANALYTICS_REGISTRY_SYNC.md` — how new-event rows in
   `docs/ANALYTICS_REGISTRY_HANDOFF.md` auto-flip from `Pending` to `Registered`; read
   before touching `.github/workflows/analytics-registry-sync.yml` or its scripts.
+- `feature/trip-planner/ui/AI_SEARCH_UX.md` — the "Where are you going?" surface and the
+  pipeline behind it: the rule that nothing the model produces is ever displayed, every failure
+  mode with whether a test holds it, and the two open defects (flag-off dead button, parsed
+  time discarded at navigation).
 - `feature/trip-planner/ui/ALERT_SUMMARY_UX.md` — on-device AI alert summary + vote gating
   (`ALERT_SUMMARY_ENABLED` flag, device availability, call outcome all collapse to "render
   nothing"); read before changing `alerts/summary/` or `CollapsibleAlert.kt`.

@@ -80,6 +80,15 @@ class AiSearchInputViewModel(
     private val _uiState = MutableStateFlow(AiSearchInputUiState())
     val uiState: StateFlow<AiSearchInputUiState> = _uiState.asStateFlow()
 
+    init {
+        // Read here rather than through `stateIn(WhileSubscribed)`: this state is read
+        // directly as `uiState.value` in places with no active collector, and a shared flow
+        // would report its initial value to all of them. The ViewModel is built on screen
+        // entry, so this is re-read often enough, and [AiSearchInputEvent.OpenInput] reads it
+        // again at the moment it matters.
+        _uiState.update { it.copy(isFeatureEnabled = isAiSearchInputEnabled()) }
+    }
+
     private var listeningJob: Job? = null
     private var listeningTimeoutJob: Job? = null
 
@@ -103,10 +112,18 @@ class AiSearchInputViewModel(
 
             AiSearchInputEvent.SpeechUnsupported ->
                 _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_UNSUPPORTED) }
-            AiSearchInputEvent.OpenInput -> _uiState.update { it.copy(isInputOpen = true) }
+            // Guarded as well as hidden. The button is gone when the feature is off, so this
+            // can only be reached by a caller that has not been told; opening a sheet whose
+            // only action is inert is the failure this is here to prevent.
+            AiSearchInputEvent.OpenInput -> _uiState.update {
+                it.copy(isInputOpen = isAiSearchInputEnabled(), isFeatureEnabled = isAiSearchInputEnabled())
+            }
             AiSearchInputEvent.CloseInput -> closeInput()
             AiSearchInputEvent.Submit -> submit()
-            AiSearchInputEvent.StartOver -> _uiState.update { AiSearchInputUiState() }
+            // Everything the rider produced is thrown away; what the app knows about itself
+            // is not, or starting over would hide the way back in.
+            AiSearchInputEvent.StartOver ->
+                _uiState.update { AiSearchInputUiState(isFeatureEnabled = it.isFeatureEnabled) }
             AiSearchInputEvent.StartListening -> startListening()
             AiSearchInputEvent.StopListening -> stopListening()
         }
@@ -128,7 +145,7 @@ class AiSearchInputViewModel(
         listeningTimeoutJob?.cancel()
         listeningTimeoutJob = null
         if (_uiState.value.isListening) speechToTextService.stopListening()
-        _uiState.update { AiSearchInputUiState() }
+        _uiState.update { AiSearchInputUiState(isFeatureEnabled = it.isFeatureEnabled) }
     }
 
     /**

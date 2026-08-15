@@ -242,6 +242,7 @@ fun SavedTripsScreen(
                 toButtonClick = toButtonClick,
                 onSearchButtonClick = { onSearchButtonClick() },
                 onAiEvent = onAiEvent,
+                isAiSearchAvailable = aiState.isFeatureEnabled,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
 

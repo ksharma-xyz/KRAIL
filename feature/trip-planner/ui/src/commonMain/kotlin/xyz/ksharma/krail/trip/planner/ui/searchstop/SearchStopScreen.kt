@@ -70,6 +70,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -100,6 +101,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import krail.feature.trip_planner.ui.generated.resources.Res as TripPlannerRes
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+// Less travel than the AI input surface uses. There the field is the screen and can move as
+// much as it likes; here it sits behind a list of stop names that a rider is reading, and the
+// same amplitude pulls the eye off the words.
+private const val SEARCH_FIELD_MOTION_SCALE = 1.6f
+
 @Composable
 fun SearchStopScreen(
     searchStopState: SearchStopState,
@@ -460,6 +466,10 @@ private fun SearchStopScreenSinglePane(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
                 themeColor = themeColor.hexToComposeColor(),
+                spec = CloudFieldSpec.aiPair(
+                    themeColorHex = themeColor,
+                    motionScale = SEARCH_FIELD_MOTION_SCALE,
+                ),
             ) {
                 SearchStopListContent(
                     listState = searchStopState.listState,
@@ -575,6 +585,10 @@ private fun SearchStopScreenDualPane(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
                 themeColor = themeColor.hexToComposeColor(),
+                spec = CloudFieldSpec.aiPair(
+                    themeColorHex = themeColor,
+                    motionScale = SEARCH_FIELD_MOTION_SCALE,
+                ),
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     SearchTopBar(

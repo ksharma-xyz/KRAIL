@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.AlertFeedbackVote
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
@@ -22,6 +25,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 
 private val SkeletonLineHeight = 12.dp
 private val SkeletonLineCornerRadius = 6.dp
@@ -42,6 +46,12 @@ fun AiAlertSummaryCard(
 ) {
     val dim = KrailTheme.dimensions
     val spinning = state is AlertSummaryUiState.Generating
+    // The rider's theme, not the fixed cool gradient both of these default to. Every other AI
+    // surface in the app is painted from this pair now, and a card in somebody else's blue and
+    // violet reads as a different product's card. Passed to the border and the mark from one
+    // value so the two cannot drift: the doc's rule is that they read as a single object.
+    val themeColorHex by LocalThemeColor.current
+    val aiColors = remember(themeColorHex) { AiThemeGradientTokens.stopsFor(themeColorHex) }
 
     Column(
         modifier = modifier
@@ -50,7 +60,11 @@ fun AiAlertSummaryCard(
                 color = KrailTheme.colors.surface,
                 shape = RoundedCornerShape(dim.cardCornerRadius),
             )
-            .aiGradientBorder(spinning = spinning, cornerRadius = dim.cardCornerRadius)
+            .aiGradientBorder(
+                spinning = spinning,
+                cornerRadius = dim.cardCornerRadius,
+                colors = aiColors,
+            )
             .padding(horizontal = dim.spacingXL, vertical = dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
@@ -58,7 +72,7 @@ fun AiAlertSummaryCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         ) {
-            AiWheelMark(spinning = spinning)
+            AiWheelMark(spinning = spinning, colors = aiColors)
             Text(
                 text = if (spinning) "Summarizing" else "AI Summary",
                 style = KrailTheme.typography.labelSmall,

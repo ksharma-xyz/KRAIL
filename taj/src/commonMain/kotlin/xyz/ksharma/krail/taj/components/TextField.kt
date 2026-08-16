@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -87,6 +88,15 @@ fun TextField(
     // drops both so the caller's own height/shape apply (see [shape]).
     lineLimits: TextFieldLineLimits = TextFieldLineLimits.SingleLine,
     shape: Shape? = null,
+    // Overrides the multiline branch's own minimum. A caller that wants a field which starts
+    // as a one line pill and grows only when the words need it passes the single line height
+    // here; without it a multiline field is 128dp tall the moment it is composed, which is a
+    // box rather than a pill no matter what [shape] says.
+    minHeight: Dp? = null,
+    // Overrides the inset between the box's edge and its text. Defaults keep every existing
+    // field exactly as it was; a field that is the whole point of its screen wants a roomier
+    // one than a field in a list of them.
+    contentPadding: PaddingValues? = null,
     // Fires on the IME action key (e.g. Send) - null means the platform's default
     // behaviour (usually just dismissing the keyboard) applies.
     onSubmit: (() -> Unit)? = null,
@@ -96,7 +106,7 @@ fun TextField(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val contentAlpha = if (enabled) 1f else TextFieldTokens.DisabledLabelOpacity
-    val layout = textFieldLayout(lineLimits = lineLimits, shape = shape)
+    val layout = textFieldLayout(lineLimits = lineLimits, shape = shape, minHeight = minHeight)
 
     // Hoisted state takes precedence — callers that need to mutate the text from
     // outside (e.g. selecting a suggestion chip that fills the field) must pass
@@ -158,10 +168,23 @@ fun TextField(
                             // makes up the difference below, so the control sits an equal
                             // gap from the field's top and end while the text keeps its own
                             // roomier inset. Unequal insets on a control read as bolted on.
-                            .padding(vertical = if (trailingIcon != null) SpacingTokens.M else layout.verticalPadding)
-                            .padding(
-                                end = if (trailingIcon != null) SpacingTokens.M else SpacingTokens.XL,
-                                start = if (leadingIcon != null) 0.dp else SpacingTokens.XL,
+                            .then(
+                                if (contentPadding != null) {
+                                    Modifier.padding(contentPadding)
+                                } else {
+                                    Modifier
+                                        .padding(
+                                            vertical = if (trailingIcon != null) {
+                                                SpacingTokens.M
+                                            } else {
+                                                layout.verticalPadding
+                                            },
+                                        )
+                                        .padding(
+                                            end = if (trailingIcon != null) SpacingTokens.M else SpacingTokens.XL,
+                                            start = if (leadingIcon != null) 0.dp else SpacingTokens.XL,
+                                        )
+                                },
                             ),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = layout.verticalAlignment,
@@ -228,7 +251,11 @@ private class TextFieldLayout(
     val placeholderMaxLines: Int,
 )
 
-private fun textFieldLayout(lineLimits: TextFieldLineLimits, shape: Shape?): TextFieldLayout =
+private fun textFieldLayout(
+    lineLimits: TextFieldLineLimits,
+    shape: Shape?,
+    minHeight: Dp? = null,
+): TextFieldLayout =
     if (lineLimits == TextFieldLineLimits.SingleLine) {
         TextFieldLayout(
             heightModifier = Modifier.height(TextFieldHeight),
@@ -251,7 +278,7 @@ private fun textFieldLayout(lineLimits: TextFieldLineLimits, shape: Shape?): Tex
             heightModifier = Modifier,
             containerModifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = TextFieldDefaults.MultiLineMinHeight),
+                .heightIn(min = minHeight ?: TextFieldDefaults.MultiLineMinHeight),
             shape = shape ?: RoundedCornerShape(RadiusTokens.XL),
             verticalPadding = SpacingTokens.M,
             verticalAlignment = Alignment.Top,
@@ -303,6 +330,13 @@ object TextFieldDefaults {
      * this tall, or the swap resizes the layout around it.
      */
     val MultiLineMinHeight = 128.dp
+
+    /**
+     * The height a single line field is, published so a multiline caller can ask to start at
+     * exactly one line and grow from there. Passed as `minHeight`, it is what makes a field a
+     * pill on open rather than a box, without giving up multiline once the words need it.
+     */
+    val SingleLineHeight = TextFieldHeight
 
     private const val INVERTED_PLACEHOLDER_ALPHA = 0.7f
 

@@ -433,10 +433,17 @@ class AiSearchInputViewModel(
 }
 
 /**
- * One stop resolving is enough to be useful: the row is an ordinary editable From/To pair, so
- * whichever field the AI did resolve gets written and the rider fills the other one the usual
- * way. Nothing resolving at all is a failure, not a result — the sheet stays open with the
- * rider's text still in it so they can reword rather than retype.
+ * The surface never gets out of the way on its own any more, whatever it found.
+ *
+ * It used to close as soon as one stop resolved, which meant the stops a rider asked for were
+ * only visible after the screen that found them had gone, and a half-read sentence looked
+ * identical to a correct one: both dropped the rider back on the home row to work out for
+ * themselves which field had been filled and which had not.
+ *
+ * Now every outcome is shown where it happened. Both stops get a card with one way to the
+ * timetable; one stop gets the same card with the missing field empty and waiting, which is
+ * exactly the case where seeing it matters most; nothing at all keeps the rider's text in the
+ * field so they can reword rather than retype.
  */
 private fun AiSearchInputUiState.withResolution(
     intent: ResolvedTripIntent,
@@ -444,7 +451,7 @@ private fun AiSearchInputUiState.withResolution(
 ): AiSearchInputUiState = copy(
     phase = if (intent.hasAnyStop) AiSearchInputPhase.RESOLVED else AiSearchInputPhase.UNRESOLVED,
     resolved = if (intent.hasAnyStop) intent else null,
-    isInputOpen = !intent.hasAnyStop,
+    isInputOpen = true,
     // A rider who named a place we could not find needs different words from one who named no
     // place at all. The first can be told which name failed; the second only needs an example.
     unresolvedReason = when {

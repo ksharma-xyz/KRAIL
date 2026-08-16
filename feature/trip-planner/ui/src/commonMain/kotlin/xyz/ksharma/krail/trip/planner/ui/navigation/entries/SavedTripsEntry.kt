@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
@@ -19,14 +18,10 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
-import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-
-// Long enough to see the working border stop turning, short enough that nobody waits on it.
-private const val AI_SCREEN_EXIT_DELAY_MILLIS = 1_500L
 
 /**
  * Saved Trips Entry - List Screen in List-Detail pattern.
@@ -63,10 +58,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved
         // trip still fills the field it did find and leaves the other for a normal tap.
         //
-        // The sheet fills the fields and stops there. Loading a timetable is the rider's call
-        // and always has been: they read the two fields, decide the AI got it right, and press
-        // Search themselves. Doing it for them takes that check away at the one moment it
-        // matters most.
+        // Loading a timetable is still the rider's call and always has been: they read the two
+        // stops, decide the AI got it right, and press the button themselves. Doing it for them
+        // takes that check away at the one moment it matters most. What changed is only where
+        // they read them — on the surface that found them, rather than on the row behind it.
         LaunchedEffect(aiSearchInputState.phase, aiSearchInputState.resolved) {
             val resolved = aiSearchInputState.resolved
             if (aiSearchInputState.phase == AiSearchInputPhase.RESOLVED && resolved != null) {
@@ -85,19 +80,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                         resolved.dateTimeSelectionItem?.toJsonString(),
                     ),
                 )
-                // A whole trip stays on the AI screen, which now shows it back as a card with
-                // the two stops and one way to the timetable. The fields behind are written
-                // all the same, so whichever way the rider leaves the card — its own button,
-                // or back — the row is already correct.
-                //
-                // A half-resolved trip has no timetable to offer, so it keeps the behaviour it
-                // has always had: fill the field that was found and get out of the way. The
-                // screen is still up at this point with its border decelerating, and closes a
-                // beat later so that ending is seen rather than cut off.
-                if (!resolved.hasWholeTrip) {
-                    delay(AI_SCREEN_EXIT_DELAY_MILLIS)
-                    aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
-                }
+                // Nothing closes the AI screen from here any more. It shows the rider what it
+                // found, including the field it missed, and they leave it themselves: by its
+                // own button or by back. These writes happen either way, so whichever route
+                // they take lands on a row that already agrees with the card.
             }
         }
 

@@ -1,7 +1,12 @@
 # AI search input — rules, failure modes, and what is actually tested
 
-Covers the "Where are you going?" surface (`components/ai/`) and the pipeline behind it
-(`search/ai/`). Read this before changing either.
+Covers the pipeline behind the Ask KRAIL surface (`search/ai/`): extraction, resolution, and
+every way both of them fail. Read this before changing what a sentence turns into.
+
+What the screen SAYS and how it is laid out is a separate concern and lives in
+`ASK_KRAIL_UX.md` — the suggestion line, the label vocabulary, the speech rules and the layout
+invariants are all there. The surface was called "Where are you going?" when this file was
+written; it is `AskKrailScreen` now.
 
 ## The one rule that must not bend
 

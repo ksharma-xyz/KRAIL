@@ -17,6 +17,14 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * Matching is deliberately exact (case- and space-insensitive) rather than fuzzy: a label is
  * a short word the rider chose, and loose matching here would let "home" capture "homebush".
  * Anything not an exact label falls through to the next capability.
+ *
+ * Exact does not mean the app's vocabulary only. A rider whose label is `Work` says "office by
+ * Monday morning" and means it, so [LabelSynonyms] widens which WORDS count while keeping every
+ * comparison a whole-word exact one. The Homebush case is unaffected.
+ *
+ * Two passes, and the order matters: a rider with both a `Work` and an `Office` label has named
+ * two different stops, and "office" has to reach the one they called Office. Only when nothing
+ * matches literally does the synonym pass run.
  */
 internal class StopLabelTextResolver(
     private val sandook: Sandook,
@@ -28,11 +36,14 @@ internal class StopLabelTextResolver(
         val normalised = query.normaliseLabel()
         if (normalised.isEmpty()) return null
 
+        val labels = sandook.observeStopLabels().first()
+
         // A label the rider made but never pointed at a stop resolves to null, same as no
         // match: there is nothing to fill the field with.
-        return sandook.observeStopLabels().first()
-            .firstOrNull { it.label.normaliseLabel() == normalised }
-            ?.toStopItemOrNull()
+        val literal = labels.firstOrNull { it.label.normaliseLabel() == normalised }
+        val synonym = literal ?: labels.firstOrNull { LabelSynonyms.sameMeaning(it.label, normalised) }
+
+        return synonym?.toStopItemOrNull()
     }
 }
 

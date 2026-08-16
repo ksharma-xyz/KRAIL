@@ -56,6 +56,34 @@ class StopLabelTextResolverTest {
     }
 
     @Test
+    fun `a rider's own word for the place resolves to their label`() = runTest {
+        // Reported: label is "Work", rider said "office by Monday morning", nothing resolved.
+        sandook.putLabel("Work", WORK_STOP)
+
+        assertEquals(WORK_STOP, resolver.resolve("office"))
+        assertEquals(WORK_STOP, resolver.resolve("the job".removePrefix("the ")))
+    }
+
+    @Test
+    fun `a literal label wins over a synonym of another one`() = runTest {
+        // A rider with both has named two different stops, and "office" has to reach the one
+        // they actually called Office.
+        val office = StopItem(stopId = "30001", stopName = "Wynyard")
+        sandook.putLabel("Work", WORK_STOP)
+        sandook.putLabel("Office", office)
+
+        assertEquals(office, resolver.resolve("office"))
+        assertEquals(WORK_STOP, resolver.resolve("work"))
+    }
+
+    @Test
+    fun `a synonym of a label the rider never pinned resolves to null`() = runTest {
+        sandook.putLabel("Work", null)
+
+        assertNull(resolver.resolve("office"))
+    }
+
+    @Test
     fun `partial matches are not labels`() = runTest {
         sandook.putLabel("home", WORK_STOP)
 

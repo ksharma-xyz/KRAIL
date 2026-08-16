@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelSynonyms
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.time.Clock
@@ -34,10 +35,14 @@ import kotlin.time.Clock
 internal data class AiGreeting(val suggestion: String)
 
 // The rider's word for a place they go on a schedule. Excluded at weekends outright: suggesting
-// a commute on a Sunday is the app telling someone it has not been paying attention, and about
-// a third of trips here are loaded at a weekend. Matched case-insensitively against the label
-// the rider typed, so a free-text "Gym" or "Beach" is never caught by it.
-private val COMMUTE_LABELS = setOf("work", "uni", "school")
+// a commute on a Sunday is the app telling someone it has not been paying attention. Matched
+// case-insensitively against the label the rider typed, so a free-text "Gym" or "Beach" is
+// never caught by it.
+//
+// Taken from LabelSynonyms rather than listed again, so a label named "Office" counts as the
+// commute for the weekend rule exactly as "Work" does. Two lists would have drifted the moment
+// one of them gained a word.
+private val COMMUTE_LABELS = LabelSynonyms.commuteLabels
 
 private const val HOME_LABEL = "home"
 private const val DEFAULT_FROM = "Central"

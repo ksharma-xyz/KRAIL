@@ -173,10 +173,14 @@ class AiSearchInputViewModel(
     }
 
     /**
-     * A final transcript sets [AiSearchInputUiState.typedText] and calls [submit] directly
-     * instead of a separate speech-specific extraction path — same "just another way to
-     * produce the string" shape [xyz.ksharma.krail.core.textrecognition.TextRecognitionService]
-     * documents for OCR, so [AiTextService.extractTripIntent] only ever needs one caller.
+     * Speech writes into [AiSearchInputUiState.typedText] and nothing else — the same field
+     * typing fills, so [AiTextService.extractTripIntent] only ever needs one caller. Same "just
+     * another way to produce the string" shape
+     * [xyz.ksharma.krail.core.textrecognition.TextRecognitionService] documents for OCR.
+     *
+     * Both partial and final transcripts land there: partials so the rider can see the words
+     * arriving, the final so the last correction sticks. Neither submits. The rider presses
+     * send when what is in the box is what they meant.
      */
     private fun startListening() {
         // A previous session that is still winding down will fail a new start with a busy
@@ -215,14 +219,23 @@ class AiSearchInputViewModel(
                         // words arrived during a window, and a counter is readable from a test
                         // running on virtual time where a wall clock is not.
                         wordsHeardSoFar++
-                        _uiState.update { it.copy(speechTranscript = result.text) }
+                        // Into typedText, not just the transcript. The field renders typedText,
+                        // so writing only the transcript meant a rider watched an empty box
+                        // while they talked and everything appeared at once when they stopped.
+                        // Partials are what make speaking feel like it is being heard.
+                        _uiState.update { it.copy(speechTranscript = result.text, typedText = result.text) }
                     }
 
                     is SpeechToTextResult.Final -> {
+                        // Fills the field and stops. It used to submit here, which took the
+                        // decision away from the rider: the recogniser deciding it had heard a
+                        // full sentence is not the same as a rider deciding they have finished
+                        // saying one, and a mis-heard word was already on its way to a search
+                        // before they could look at it. Speaking is a way of typing; send is
+                        // still theirs to press.
                         _uiState.update {
                             it.copy(isListening = false, speechTranscript = result.text, typedText = result.text)
                         }
-                        submit()
                     }
 
                     is SpeechToTextResult.Error -> {

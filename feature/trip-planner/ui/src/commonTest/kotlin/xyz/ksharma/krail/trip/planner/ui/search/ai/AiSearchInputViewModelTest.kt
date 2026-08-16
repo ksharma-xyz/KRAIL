@@ -587,23 +587,65 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
-    fun `final transcript stops listening and submits automatically`() = runTest(testDispatcher) {
-        aiTextService.extractionResult = TripIntentExtraction(
-            originText = "Central Station",
-            destinationText = "Town Hall",
-            timeIntent = null,
-        )
-        viewModel.onEvent(AiSearchInputEvent.StartListening)
-        advanceUntilIdle()
+    fun `a final transcript fills the field and waits for the rider to send`() =
+        runTest(testDispatcher) {
+            // It used to submit here. The recogniser deciding it has heard a full sentence is
+            // not the rider deciding they have finished saying one, and a mis-heard word was
+            // already on its way to a search before they could look at it.
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = "Central Station",
+                destinationText = "Town Hall",
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            advanceUntilIdle()
 
-        speechToTextService.results.emit(SpeechToTextResult.Final("central to town hall"))
-        advanceUntilIdle()
+            speechToTextService.results.emit(SpeechToTextResult.Final("central to town hall"))
+            advanceUntilIdle()
 
-        val state = viewModel.uiState.value
-        assertEquals(false, state.isListening)
-        assertEquals("central to town hall", state.typedText)
-        assertEquals(AiSearchInputPhase.RESOLVED, state.phase)
-    }
+            val state = viewModel.uiState.value
+            assertEquals(false, state.isListening)
+            assertEquals("central to town hall", state.typedText)
+            assertEquals(AiSearchInputPhase.IDLE, state.phase)
+        }
+
+    @Test
+    fun `pressing send after speaking runs the same submit typing does`() =
+        runTest(testDispatcher) {
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = "Central Station",
+                destinationText = "Town Hall",
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            advanceUntilIdle()
+            speechToTextService.results.emit(SpeechToTextResult.Final("central to town hall"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(AiSearchInputPhase.RESOLVED, viewModel.uiState.value.phase)
+        }
+
+    @Test
+    fun `words appear in the field while the rider is still speaking`() =
+        runTest(testDispatcher) {
+            // Partials used to land in speechTranscript only, which nothing renders, so a rider
+            // watched an empty box while they talked and the whole sentence appeared at once
+            // when they stopped.
+            // runCurrent, not advanceUntilIdle: advancing to idle runs virtual time past the
+            // listening ceiling, and the session would have stopped itself before the
+            // assertion.
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+
+            speechToTextService.results.emit(SpeechToTextResult.Partial("central to"))
+            runCurrent()
+
+            assertEquals("central to", viewModel.uiState.value.typedText)
+            assertTrue(viewModel.uiState.value.isListening)
+        }
 
     @Test
     fun `a recogniser error is reported as itself, not as a permission problem`() =
@@ -672,7 +714,9 @@ class AiSearchInputViewModelTest {
             speechToTextService.results.emit(SpeechToTextResult.Final("central to town hall"))
             advanceUntilIdle()
 
-            assertEquals(AiSearchInputPhase.RESOLVED, viewModel.uiState.value.phase)
+            // The late transcript still has to LAND. It no longer submits, so what proves it
+            // was not dropped is that it reached the field.
+            assertEquals("central to town hall", viewModel.uiState.value.typedText)
         }
 
     @Test

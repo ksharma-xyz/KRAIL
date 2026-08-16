@@ -18,6 +18,7 @@ import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopLabelTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopSearchTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
@@ -63,7 +64,7 @@ class AiSearchInputViewModelTest {
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
             stopTextResolver = stopTextResolver,
-            nearbyStopsRepository = nearbyStopsRepository,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
             isAiSearchInputEnabled = { true },
         )
     }
@@ -79,7 +80,7 @@ class AiSearchInputViewModelTest {
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
             stopTextResolver = stopTextResolver,
-            nearbyStopsRepository = nearbyStopsRepository,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
             isAiSearchInputEnabled = { false },
         )
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("leaving home for central"))
@@ -96,7 +97,7 @@ class AiSearchInputViewModelTest {
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
             stopTextResolver = stopTextResolver,
-            nearbyStopsRepository = nearbyStopsRepository,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
             isAiSearchInputEnabled = { false },
         )
 
@@ -413,8 +414,10 @@ class AiSearchInputViewModelTest {
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
             stopTextResolver = stopTextResolver,
-            nearbyStopsRepository = nearbyStopsRepository,
-            resolveCurrentLocation = { TEST_LOCATION },
+            riderOriginLocator = RiderOriginLocator(
+                resolveCurrentLocation = { TEST_LOCATION },
+                nearbyStopsRepository = nearbyStopsRepository,
+            ),
             isAiSearchInputEnabled = { true },
         )
         aiTextService.extractionResult = TripIntentExtraction(
@@ -448,8 +451,10 @@ class AiSearchInputViewModelTest {
                 aiTextService = aiTextService,
                 speechToTextService = speechToTextService,
                 stopTextResolver = stopTextResolver,
-                nearbyStopsRepository = nearbyStopsRepository,
-                resolveCurrentLocation = { TEST_LOCATION },
+                riderOriginLocator = RiderOriginLocator(
+                    resolveCurrentLocation = { TEST_LOCATION },
+                    nearbyStopsRepository = nearbyStopsRepository,
+                ),
                 isAiSearchInputEnabled = { true },
             )
             // "hey how are you" parses without error and mentions no place at all. The nearby
@@ -540,8 +545,10 @@ class AiSearchInputViewModelTest {
             aiTextService = aiTextService,
             speechToTextService = speechToTextService,
             stopTextResolver = stopTextResolver,
-            nearbyStopsRepository = nearbyStopsRepository,
-            resolveCurrentLocation = { null },
+            riderOriginLocator = RiderOriginLocator(
+                resolveCurrentLocation = { null },
+                nearbyStopsRepository = nearbyStopsRepository,
+            ),
             isAiSearchInputEnabled = { true },
         )
         aiTextService.extractionResult = TripIntentExtraction(

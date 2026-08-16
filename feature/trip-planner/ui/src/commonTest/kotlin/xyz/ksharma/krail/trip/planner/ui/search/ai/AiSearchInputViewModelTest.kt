@@ -256,8 +256,9 @@ class AiSearchInputViewModelTest {
             assertEquals("Nonexistent Place", state.resolved?.fromText)
             assertNull(state.resolved?.fromStopItem)
             assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), state.resolved?.toStopItem)
-            // The row can show the destination it did find, so the box gets out of the way.
-            assertEquals(false, state.isInputOpen)
+            // The surface stays up and shows the miss rather than dropping the rider on the
+            // home row to work out for themselves which of the two fields got filled.
+            assertTrue(state.isInputOpen)
         }
 
     @Test
@@ -300,21 +301,27 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
-    fun `resolving closes the box so the row shows its own filled fields`() = runTest(testDispatcher) {
-        aiTextService.extractionResult = TripIntentExtraction(
-            originText = "Central Station",
-            destinationText = "Town Hall",
-            timeIntent = null,
-        )
-        viewModel.onEvent(AiSearchInputEvent.OpenInput)
-        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
-        assertTrue(viewModel.uiState.value.isInputOpen)
+    fun `resolving keeps the surface open, because there is now an answer to show on it`() =
+        runTest(testDispatcher) {
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = "Central Station",
+                destinationText = "Town Hall",
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.OpenInput)
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+            assertTrue(viewModel.uiState.value.isInputOpen)
 
-        viewModel.onEvent(AiSearchInputEvent.Submit)
-        advanceUntilIdle()
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
 
-        assertEquals(false, viewModel.uiState.value.isInputOpen)
-    }
+            // This closed for most of the feature's life, and the two stops the rider asked
+            // for were only visible after the screen that found them had gone. The surface now
+            // shows them back with one way to the timetable, so it has to still be there.
+            val state = viewModel.uiState.value
+            assertTrue(state.isInputOpen)
+            assertTrue(state.resolved?.hasWholeTrip == true)
+        }
 
     @Test
     fun `closing the box throws the draft away rather than keeping it for next time`() =

@@ -24,9 +24,8 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.ResolvedTripIntent
 
 internal const val SEE_TIMES_LABEL = "See times"
 
-// Unreachable while the card only renders for a fully resolved trip, and kept anyway: the field
-// component takes a string either way, and an empty pill would be a worse failure than the word
-// the row itself uses.
+// The words the home row uses for an empty field, so the pill a rider taps to fix a missed stop
+// reads the same here as it does there.
 private const val STARTING_FROM_PLACEHOLDER = "Starting from"
 private const val DESTINATION_PLACEHOLDER = "Destination"
 
@@ -46,9 +45,11 @@ private const val CARD_DARKEN_DARK = 0.45f
  * thing the rider typed into settling into the answer rather than as one view being replaced by
  * another.
  *
- * **Only shown when both stops resolved.** A half-resolved trip has no timetable to offer, so it
- * keeps the behaviour it has always had: the fields on the home screen are filled and the rider
- * completes the other one the ordinary way.
+ * **A half-read sentence gets the same card**, with the field it missed left empty and waiting.
+ * That is the case where seeing the answer matters most: closing on a partial dropped the rider
+ * back on the home row to work out for themselves which of the two fields had been filled. See
+ * times is disabled until both ends are known, because there is no timetable to load without
+ * them, and the empty pill is then the only thing on the card left to press.
  *
  * **Nothing here comes from the model.** The two names are stops from our own database and the
  * time is the one the resolver produced, which is the same rule the rest of the pipeline runs
@@ -106,7 +107,11 @@ internal fun AiResultCard(
 
         // Says what happens next. "Continue" was the old wording and promised less than it
         // delivered, which is what sent riders back to the row to look for the real button.
-        Button(onClick = actions.onSeeTimes) {
+        //
+        // Disabled rather than hidden when a stop is missing: a button that vanishes leaves the
+        // rider guessing what the card is for, where a dimmed one paired with an empty pill
+        // says which of the two has to be dealt with first.
+        Button(onClick = actions.onSeeTimes, enabled = resolved.hasWholeTrip) {
             Text(text = SEE_TIMES_LABEL)
         }
     }

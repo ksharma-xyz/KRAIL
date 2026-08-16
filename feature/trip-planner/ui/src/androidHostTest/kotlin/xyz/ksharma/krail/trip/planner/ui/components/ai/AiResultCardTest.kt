@@ -52,8 +52,33 @@ class AiResultCardTest {
     }
 
     @Test
-    fun onlyOneStopResolved_keepsTheInputBar() {
+    fun oneStopMissed_stillShowsTheCardWithThatFieldEmpty() {
         setContent(state(from = null, to = WYNYARD))
+
+        // The miss is the case where seeing the answer matters most. Closing here dropped the
+        // rider on the home row to work out for themselves which field had been filled.
+        composeRule.onNodeWithText(WYNYARD.stopName).assertExists()
+        composeRule.onNodeWithText(STARTING_FROM_PLACEHOLDER).assertExists()
+    }
+
+    @Test
+    fun oneStopMissed_seeTimesDoesNothing() {
+        var seeTimes = 0
+        setContent(
+            state(from = null, to = WYNYARD),
+            actions = AiResultActions(onSeeTimes = { seeTimes++ }),
+        )
+
+        composeRule.onNodeWithText(SEE_TIMES_LABEL).performClick()
+
+        // No timetable exists without both ends, so the button is inert rather than absent: a
+        // vanished button leaves the rider guessing what the card is for.
+        assertEquals(0, seeTimes)
+    }
+
+    @Test
+    fun nothingResolved_keepsTheInputBar() {
+        setContent(state(from = null, to = null))
 
         composeRule.onNodeWithText(SEE_TIMES_LABEL).assertDoesNotExist()
     }
@@ -145,6 +170,7 @@ class AiResultCardTest {
         val HOST_HEIGHT = 800.dp
         const val SUGGESTION = "Home to Work by 9am"
         const val ARRIVE_TEXT = "Arrive"
+        const val STARTING_FROM_PLACEHOLDER = "Starting from"
         val SEVEN_HILLS = StopItem(stopId = "2147", stopName = "Seven Hills Station")
         val WYNYARD = StopItem(stopId = "200070", stopName = "Wynyard Station")
     }

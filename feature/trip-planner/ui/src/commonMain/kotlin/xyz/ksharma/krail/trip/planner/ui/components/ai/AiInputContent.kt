@@ -146,10 +146,10 @@ internal fun AiInputContent(
         // same width, same radius, so what a rider sees is the thing they typed into settling
         // into the answer — not the answer arriving somewhere else while the box they used
         // sits there still offering to take another sentence.
-        val whole = state.resolved
-            ?.takeIf { state.phase == AiSearchInputPhase.RESOLVED && it.hasWholeTrip }
-        if (whole != null) {
-            AiResultCard(resolved = whole, actions = resultActions)
+        val answer = state.resolved
+            ?.takeIf { state.phase == AiSearchInputPhase.RESOLVED && it.hasAnyStop }
+        if (answer != null) {
+            AiResultCard(resolved = answer, actions = resultActions)
         } else {
             AiInputBar(
                 state = state,

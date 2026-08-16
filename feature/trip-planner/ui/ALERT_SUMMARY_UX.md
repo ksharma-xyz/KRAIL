@@ -18,7 +18,7 @@ This shape was chosen over "card on the Timetable screen" (bigger blast radius, 
 | `AlertSummaryUiState` | same | Sealed: `Generating` (model running) / `Resolved(text, vote)`. `null` at the call site — not a third case — means render nothing. |
 | `AlertSummaryEvent` | same | `SummaryRequested(alerts)` / `VoteClicked(vote)` — the only way `ServiceAlertScreen` talks to the ViewModel. No Koin in the composable. |
 | `AiAlertSummaryCard` | same | The card itself: wheel mark + label, skeleton lines while `Generating`, summary text + vote row while `Resolved`. |
-| `AiWheelMark`, `Modifier.aiGradientBorder` | `:taj` | KRAIL's on-device-AI mark (a wheel, not a sparkle) and its matching rotating gradient border. Reusable for any future AI surface, not alert-specific. |
+| `AiWheelMark`, `Modifier.aiGradientBorder` | `:taj` | KRAIL's on-device-AI mark (a wheel, not a sparkle) and its matching rotating gradient border. Reusable for any future AI surface, not alert-specific. Both default to the fixed cool gradient; this card passes `AiThemeGradientTokens.stopsFor(themeColorHex)` to **both** from one value, so they cannot drift apart. |
 | `AlertFeedbackVote` | `:taj` | Generic thumbs-up/down component; not alert-specific either. |
 
 ## Gating: three independent switches, one outcome
@@ -42,6 +42,18 @@ simply disappears rather than being replaced by an error. There is nothing for a
 see as broken in any of these cases.
 
 ## Animation: settle, never swap
+
+### Colour: the rider's theme, not a fixed gradient
+
+The mark and the border are drawn from `AiThemeGradientTokens.stopsFor(themeColorHex)`: the
+theme colour, its HSV mid-stop, and a partner hue 97 to 134 degrees around the wheel. They used
+to take the components' default, a fixed blue/violet/pink that ignores the theme. That was
+defensible while this card was the only AI surface in the app. It no longer is: the AI input
+surface and both of SearchStop's panes are now painted from this same pair, so a card in a
+different blue and violet reads as another product's card dropped into KRAIL.
+
+The value is computed once in the card and handed to both, because they have to look like one
+object (see the rotation rule below).
 
 Both `AiWheelMark` and `Modifier.aiGradientBorder` share one rotation driver
 (`rememberAiSpinAngle` in `:taj`, `taj/animations/AiSpinAnimation.kt`) so the wheel and the

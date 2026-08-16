@@ -18,6 +18,7 @@ data class KrailTypography(
     val displayMedium: TextStyle,
     val displaySmall: TextStyle,
     val headlineLarge: TextStyle,
+    val headlineLargeRegular: TextStyle,
     val headlineMedium: TextStyle,
     val headlineSmall: TextStyle,
     val labelLarge: TextStyle,
@@ -42,6 +43,7 @@ internal val LocalKrailTypography = staticCompositionLocalOf {
         displayMedium = TextStyle.Default,
         displaySmall = TextStyle.Default,
         headlineLarge = TextStyle.Default,
+        headlineLargeRegular = TextStyle.Default,
         headlineMedium = TextStyle.Default,
         headlineSmall = TextStyle.Default,
         labelLarge = TextStyle.Default,
@@ -116,6 +118,16 @@ internal val krailTypography = KrailTypography(
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp,
+        letterSpacing = 0.sp,
+    ),
+    // headlineLarge's size at the weight a sentence is read at rather than announced at. Bold
+    // is how this scale is used for a heading over content; a line that IS the content, with
+    // nothing under it to be a heading for, only reads as shouting at that weight.
+    headlineLargeRegular = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
         fontSize = 28.sp,
         lineHeight = 36.sp,
         letterSpacing = 0.sp,

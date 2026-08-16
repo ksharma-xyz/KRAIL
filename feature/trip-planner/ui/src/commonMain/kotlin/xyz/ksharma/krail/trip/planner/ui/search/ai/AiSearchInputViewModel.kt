@@ -84,6 +84,9 @@ class AiSearchInputViewModel(
     // layer builds the lambda and passes it through koinViewModel's parametersOf, the same
     // pattern TrackTripViewModel already uses.
     private val riderOriginLocator: RiderOriginLocator = RiderOriginLocator(),
+    // The rider's own label words, for the case where the model reads a sentence correctly and
+    // still finds no place in it because the place is a word like "work".
+    private val riderLabels: suspend () -> List<String> = { emptyList() },
     private val isAiSearchInputEnabled: () -> Boolean = { false },
 ) : ViewModel() {
 
@@ -341,7 +344,12 @@ class AiSearchInputViewModel(
                 logOutcome()
                 return@launch
             }
-            val extraction = rawExtraction.withSinglePlaceInTheRightField(text)
+            // "work by 9am tomm" came back with no place at all: to the model, "work" is an
+            // ordinary noun, not this rider's stop. Their own word, from their own text, matched
+            // against their own labels — nothing here comes from the model.
+            val extraction = rawExtraction
+                .withSinglePlaceInTheRightField(text)
+                .withLabelWordAsDestination(riderText = text, labels = riderLabels())
 
             val toStopItem = extraction.destinationText?.let { resolveStop(it) }
             val originText = extraction.originText

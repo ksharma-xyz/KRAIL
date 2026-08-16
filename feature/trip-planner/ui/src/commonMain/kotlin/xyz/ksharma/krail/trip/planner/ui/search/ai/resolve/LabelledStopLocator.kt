@@ -59,6 +59,18 @@ class LabelledStopLocator(
             ?.first
     }
 
+    /**
+     * Whether the rider is already standing at [stopId].
+     *
+     * Asked about the DESTINATION. Someone at home saying "to home by 9pm" is already there,
+     * and the honest answer is no journey at all — filling the origin with the next stop along
+     * the road produces a trip from one bus stop to its neighbour, which is not a trip.
+     */
+    suspend fun isStandingAt(stopId: String, latitude: Double, longitude: Double): Boolean {
+        val coordinates = sandook.selectStopCoordinatesBatch(listOf(stopId))[stopId] ?: return false
+        return distanceKm(latitude, longitude, coordinates.first, coordinates.second) <= RADIUS_KM
+    }
+
     private companion object {
 
         /**

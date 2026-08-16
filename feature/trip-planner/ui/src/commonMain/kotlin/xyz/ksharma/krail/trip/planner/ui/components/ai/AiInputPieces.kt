@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.components.ai
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
 import kotlinx.coroutines.launch
@@ -40,6 +42,7 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_NEEDS_SETTINGS
 import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_UNSUPPORTED
 import xyz.ksharma.krail.trip.planner.ui.search.ai.UnresolvedReason
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelSynonyms
 
 /**
  * What the slot shows while the surface is busy. Two states, two motions, one word each.
@@ -183,10 +186,15 @@ internal fun AiVoiceControl(
  * dark red. The container pair is designed for exactly this and is already tuned for both.
  */
 @Composable
-internal fun AiProblemBanner(message: String, modifier: Modifier = Modifier) {
+internal fun AiProblemBanner(
+    message: String,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null,
+) {
     val dim = KrailTheme.dimensions
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(
@@ -194,12 +202,27 @@ internal fun AiProblemBanner(message: String, modifier: Modifier = Modifier) {
                 shape = RoundedCornerShape(dim.radiusM),
             )
             .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingS),
     ) {
         Text(
             text = message,
             style = KrailTheme.typography.bodyMedium,
             color = KrailTheme.colors.onErrorContainer,
         )
+
+        // Only when the rider can actually do something about it. A message that names a fix
+        // and then leaves them to find it is barely better than one that does not.
+        if (actionLabel != null && onActionClick != null) {
+            Text(
+                text = actionLabel,
+                style = KrailTheme.typography.titleSmall,
+                color = KrailTheme.colors.onErrorContainer,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(dim.radiusS))
+                    .clickable(onClick = onActionClick)
+                    .padding(vertical = dim.spacingXS),
+            )
+        }
     }
 }
 
@@ -234,10 +257,19 @@ private fun AiSearchInputUiState.unresolvedMessage(): String = when (unresolvedR
         "No place in that one. Name a stop, like Central Station, and where you are going."
 
     // We know exactly which word failed, so it is quoted back rather than described.
+    //
+    // A label word gets different advice, because "try the name as it appears on the sign" is
+    // useless for it: there is no sign that says Work. The rider does not want a stop called
+    // work, they want their Work stop, and the thing they can act on is setting it.
     UnresolvedReason.STOP_NOT_FOUND ->
-        unmatchedPlace
-            ?.let { place -> "No stop called \"$place\". Try the name as it appears on the sign." }
-            ?: "That is not a stop I know. Try the name as it appears on the sign."
+        unmatchedPlace?.let { place ->
+            if (LabelSynonyms.isLabelWord(place)) {
+                "No stop saved as \"$place\" yet. Search for the stop, save it under that " +
+                    "name, and you can say it here."
+            } else {
+                "No stop called \"$place\". Try the name as it appears on the sign."
+            }
+        } ?: "That is not a stop I know. Try the name as it appears on the sign."
 
     // The model, not the sentence. Nothing about the wording is worth changing.
     UnresolvedReason.COULD_NOT_READ ->
@@ -245,6 +277,17 @@ private fun AiSearchInputUiState.unresolvedMessage(): String = when (unresolvedR
 
     null -> "Something is missing there. Name where you are going, and where from."
 }
+
+/**
+ * The unmatched place is a word the rider names places with, and they have not set it yet.
+ *
+ * Distinct from an ordinary unknown stop, because the fix is different: there is no sign that
+ * says Work, and telling them to check one is advice they cannot follow.
+ */
+internal val AiSearchInputUiState.missingStopLabel: String?
+    get() = unmatchedPlace?.takeIf {
+        unresolvedReason == UnresolvedReason.STOP_NOT_FOUND && LabelSynonyms.isLabelWord(it)
+    }
 
 internal val AiSearchInputUiState.needsSettingsForMic: Boolean
     get() = speechUnavailableReason == MIC_NEEDS_SETTINGS

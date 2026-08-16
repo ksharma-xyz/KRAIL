@@ -32,6 +32,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelWordGuard
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelledStopLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopLabelTextResolver
@@ -99,7 +100,10 @@ val viewModelsModule = module {
             stopTextResolver = ChainedStopTextResolver(
                 listOf(
                     StopLabelTextResolver(sandook = get()),
-                    StopSearchTextResolver(stopResultsManager = get()),
+                    // Guarded: a label word that reached no label must resolve to nothing
+                    // rather than being searched for among stop names. "work" with no Work
+                    // label set matched Blacktown Workers Club.
+                    LabelWordGuard(StopSearchTextResolver(stopResultsManager = get())),
                 ),
             ),
             // Same precedence idea as the resolver chain above, applied to where a journey

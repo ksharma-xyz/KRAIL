@@ -132,6 +132,24 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `editing the sentence clears the problem it produced`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = null
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("take me to hogwarts"))
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        advanceUntilIdle()
+        assertEquals(AiSearchInputPhase.UNRESOLVED, viewModel.uiState.value.phase)
+
+        // No dismiss control by design: a banner with an X asks the rider to tidy up after a
+        // failure that was not theirs. Changing the sentence is already them moving on, and
+        // leaving the old message up makes the new attempt look like it has failed too.
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("take me to central"))
+
+        assertEquals(AiSearchInputPhase.IDLE, viewModel.uiState.value.phase)
+        assertNull(viewModel.uiState.value.unresolvedReason)
+        assertNull(viewModel.uiState.value.unmatchedPlace)
+    }
+
+    @Test
     fun `submit with blank text does nothing`() = runTest(testDispatcher) {
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("   "))
 
@@ -361,7 +379,7 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
-    fun `no time mentioned defaults to leave-now, not left unset`() = runTest(testDispatcher) {
+    fun `no time mentioned means no time, not a time we chose`() = runTest(testDispatcher) {
         aiTextService.extractionResult = TripIntentExtraction(
             originText = "Central Station",
             destinationText = "Town Hall",
@@ -372,8 +390,12 @@ class AiSearchInputViewModelTest {
         viewModel.onEvent(AiSearchInputEvent.Submit)
         advanceUntilIdle()
 
-        val resolved = viewModel.uiState.value.resolved
-        assertEquals(JourneyTimeOptions.LEAVE, resolved?.dateTimeSelectionItem?.option)
+        // This used to fall back to "leave now", which was harmless while nothing displayed it
+        // and became wrong the moment the home screen grew a chip: a rider who said nothing
+        // about when saw "Leave Today 12:29 AM" and read it as a decision they had made. Null
+        // already means now everywhere downstream, so the fallback was never carrying meaning,
+        // only manufacturing it.
+        assertNull(viewModel.uiState.value.resolved?.dateTimeSelectionItem)
     }
 
     @Test

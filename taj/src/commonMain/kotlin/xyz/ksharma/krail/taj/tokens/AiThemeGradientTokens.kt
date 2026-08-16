@@ -36,7 +36,10 @@ object AiThemeGradientTokens {
 
     private val partners: Map<KrailThemeStyle, Pair<Color, Color>> = mapOf(
         KrailThemeStyle.Train to (Train to PurpleDrip),
-        KrailThemeStyle.Metro to (Metro to PurpleDrip),
+        // Teal into yellow, not into purple. Purple Drip is a magenta, so the teal theme's
+        // gradient read as teal and pink, and the two ends fought rather than travelled. Yellow
+        // is the same cool-to-warm crossing that works for Bus, at 119 degrees.
+        KrailThemeStyle.Metro to (Metro to MagicYellow),
         // Yellow, not pink. Blue into pink travels through purple and reads as somebody
         // else's AI product; blue into yellow is the one pair here that crosses from cool to
         // warm, so the two ends stay told apart wherever the gradient is in its drift. It is

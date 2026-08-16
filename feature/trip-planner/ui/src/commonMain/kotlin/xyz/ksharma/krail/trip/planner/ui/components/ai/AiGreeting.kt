@@ -45,6 +45,11 @@ internal data class AiGreeting(val suggestion: String)
 private val COMMUTE_LABELS = LabelSynonyms.commuteLabels
 
 private const val HOME_LABEL = "home"
+
+// The label is home by definition here, so the sentence says home rather than quoting whatever
+// casing the rider typed. "Get me home" is also what somebody would actually say out loud.
+private const val GET_ME_HOME = "Get me home"
+
 private const val DEFAULT_FROM = "Central"
 private const val DEFAULT_TO = "Parramatta"
 
@@ -67,17 +72,33 @@ internal fun suggestionFor(
     isWeekend: Boolean,
     labels: List<StopLabel>,
     savedTrips: List<Trip>,
+    isSunday: Boolean = false,
 ): String {
-    val pair = labelPair(labels, isWeekend)
-        ?: eligibleTrip(savedTrips, labels, isWeekend)?.let { trip ->
+    val situation = situationFor(hour = hour, isWeekend = isWeekend, isSunday = isSunday)
+
+    val pair = labelPair(labels, situation.allowsCommute)
+        ?: eligibleTrip(savedTrips, labels, situation.allowsCommute)?.let { trip ->
             trip.fromStopName.withoutStationSuffix() to trip.toStopName.withoutStationSuffix()
         }
-        ?: defaultPair(isWeekend)
 
-    // Everything about the hour and the day comes from the situations table, so this function
-    // only has to know how to turn two stops plus a situation into a sentence.
-    val situation = situationFor(hour = hour, isWeekend = isWeekend)
-    val (from, to) = if (situation.direction == Direction.Back) pair.second to pair.first else pair
+    // Home-bound because the situation asks for it, or because the day's rules disqualified
+    // everything the rider has.
+    //
+    // That second case is the one that matters. A rider whose only data IS the commute used to
+    // fall straight past the weekend rules to two unrelated stations, so every Saturday and
+    // Sunday showed strangers' stops. Falling back to the commute instead would have undone
+    // the weekend rule; falling back to home uses what they have, is true whenever they are
+    // out, and is the only line that shows the origin can be left out at all, since the
+    // nearby-stop resolver fills it from where they are.
+    val home = homeLabel(labels)
+    if ((situation.shape == SuggestionShape.HomeBound || pair == null) && home != null) {
+        return "$GET_ME_HOME${situation.clause}"
+    }
+
+    val resolved = pair ?: defaultPair(isWeekend)
+
+    val (from, to) =
+        if (situation.direction == Direction.Back) resolved.second to resolved.first else resolved
 
     // Longest first, then what to give up. The clause goes before the stops do, because a
     // journey with no time still describes their journey and a time with the wrong stops does
@@ -102,8 +123,8 @@ private fun defaultPair(isWeekend: Boolean): Pair<String, String> =
  * to follow the stops, not the words, since the same two platforms are the commute whether or
  * not anybody has labelled them.
  */
-private fun eligibleTrip(savedTrips: List<Trip>, labels: List<StopLabel>, isWeekend: Boolean): Trip? {
-    if (!isWeekend) return savedTrips.firstOrNull()
+private fun eligibleTrip(savedTrips: List<Trip>, labels: List<StopLabel>, allowsCommute: Boolean): Trip? {
+    if (allowsCommute) return savedTrips.firstOrNull()
 
     val commuteStopIds = labels
         .filter { it.isSet && it.label.lowercase() in COMMUTE_LABELS }
@@ -126,20 +147,24 @@ private fun eligibleTrip(savedTrips: List<Trip>, labels: List<StopLabel>, isWeek
  * a weekend commute labels are dropped entirely and any other named place is used instead, which
  * is how "Home to Gym" turns up on a Saturday without anybody writing a Saturday template.
  */
-private fun labelPair(labels: List<StopLabel>, isWeekend: Boolean): Pair<String, String>? {
+private fun labelPair(labels: List<StopLabel>, allowsCommute: Boolean): Pair<String, String>? {
     val set = labels.filter { it.isSet }
     val home = set.firstOrNull { it.label.equals(HOME_LABEL, ignoreCase = true) }
 
     val others = set.filterNot { it.label.equals(HOME_LABEL, ignoreCase = true) }
-    val eligible = if (isWeekend) {
-        others.filterNot { it.label.lowercase() in COMMUTE_LABELS }
-    } else {
+    val eligible = if (allowsCommute) {
         others.sortedByDescending { it.label.lowercase() in COMMUTE_LABELS }
+    } else {
+        others.filterNot { it.label.lowercase() in COMMUTE_LABELS }
     }
     val other = eligible.firstOrNull()
 
     return if (home != null && other != null) home.label to other.label else null
 }
+
+/** Whether the rider has a home pinned to a stop, which is all the home-bound line needs. */
+private fun homeLabel(labels: List<StopLabel>): String? =
+    labels.firstOrNull { it.isSet && it.label.equals(HOME_LABEL, ignoreCase = true) }?.label
 
 /**
  * `Seven Hills Station` reads as `Seven Hills`. Only the trailing word goes: everything else in
@@ -161,15 +186,17 @@ internal fun rememberAiGreeting(
 ): AiGreeting {
     val now = Clock.System.now().toLocalDateTime(TimeZone.of(SYDNEY))
     val hour = now.hour
-    val isWeekend = now.dayOfWeek == DayOfWeek.SATURDAY || now.dayOfWeek == DayOfWeek.SUNDAY
+    val isSunday = now.dayOfWeek == DayOfWeek.SUNDAY
+    val isWeekend = isSunday || now.dayOfWeek == DayOfWeek.SATURDAY
 
-    return remember(hour, isWeekend, stopLabels, savedTrips) {
+    return remember(hour, isWeekend, isSunday, stopLabels, savedTrips) {
         AiGreeting(
             suggestion = suggestionFor(
                 hour = hour,
                 isWeekend = isWeekend,
                 labels = stopLabels,
                 savedTrips = savedTrips,
+                isSunday = isSunday,
             ),
         )
     }

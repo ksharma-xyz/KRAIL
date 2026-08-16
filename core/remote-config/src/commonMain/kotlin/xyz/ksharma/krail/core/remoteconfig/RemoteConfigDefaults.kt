@@ -189,18 +189,19 @@ object RemoteConfigDefaults {
                 first = FlagKeys.AI_SEARCH_INPUT_ENABLED.key,
                 second = false,
             ),
-            // The one where the missing row was doing real harm. Its call site asks for
-            // asBoolean(fallback = true) and its own docs say "true/unset", but with no row here
-            // an unfetched client read false and took the direct GTFS-RT path instead of the BFF
-            // snapshot. Only reachable once the endpoint already resolves to the BFF, so this
-            // restores the documented default rather than turning anything on.
+            // Off until it is turned on in the console, deliberately. Note this default is what
+            // decides the value, NOT the asBoolean(fallback = true) at the call site in
+            // BffGtfsRealtimeRepository: a key with a row here is a real boolean, so the
+            // fallback is never reached and the two disagreeing does not change behaviour. Same
+            // for the "true/unset" wording on FlagKeys.BFF_USE_FOR_TRACK. Read this row, not
+            // those, for what an unfetched client actually gets.
             Pair(
                 first = FlagKeys.BFF_USE_FOR_TRACK.key,
-                second = true,
+                second = false,
             ),
             Pair(
                 first = FlagKeys.JOURNEY_MAPS_AVAILABLE.key,
-                second = false,
+                second = true,
             ),
         )
     }

@@ -55,6 +55,14 @@ data class ResolvedTripIntent(
     val modeHints: List<String>,
 ) {
     val hasAnyStop: Boolean get() = fromStopItem != null || toStopItem != null
+
+    /**
+     * Both ends known, so there is a timetable that can actually be loaded from here. This is
+     * the line between showing the rider an answer and handing a half-filled row back to them:
+     * with one stop missing there is nothing to show times for, and the surface keeps its
+     * original behaviour of filling what it found and getting out of the way.
+     */
+    val hasWholeTrip: Boolean get() = fromStopItem != null && toStopItem != null
 }
 
 sealed interface AiSearchInputEvent {

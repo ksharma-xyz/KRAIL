@@ -69,6 +69,7 @@ fun AskKrailScreen(
     suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
+    resultActions: AiResultActions = AiResultActions(),
     modifier: Modifier = Modifier,
 ) {
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
@@ -93,6 +94,7 @@ fun AskKrailScreen(
             suggestion = suggestion,
             onEvent = onEvent,
             onDismiss = onDismiss,
+            resultActions = resultActions,
             modifier = modifier,
         )
     } else {
@@ -102,6 +104,7 @@ fun AskKrailScreen(
             suggestion = suggestion,
             onEvent = onEvent,
             onDismiss = onDismiss,
+            resultActions = resultActions,
             modifier = modifier,
         )
     }
@@ -125,6 +128,7 @@ private fun AskKrailFullScreen(
     suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
+    resultActions: AiResultActions = AiResultActions(),
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -185,6 +189,7 @@ private fun AskKrailFullScreen(
                 textFieldState = textFieldState,
                 suggestion = suggestion,
                 onEvent = onEvent,
+                resultActions = resultActions,
                 // weight(1f) states that this takes whatever the title bar leaves. It is not
                 // load bearing over fillMaxSize(): a Column hands a non-weighted child the
                 // remaining bounded height, so both measure the same. Measured, not assumed,
@@ -215,6 +220,7 @@ private fun AskKrailDialog(
     suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
+    resultActions: AiResultActions = AiResultActions(),
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -258,6 +264,7 @@ private fun AskKrailDialog(
                         textFieldState = textFieldState,
                         suggestion = suggestion,
                         onEvent = onEvent,
+                        resultActions = resultActions,
                         showTitle = true,
                     )
                 }

@@ -136,7 +136,9 @@ internal fun AiInputContent(
         // message names the real route and the shortcut waits until it can point at it.
         state.problemMessage()?.let { AiProblemBanner(message = it) }
 
-        Spacer(modifier = Modifier.height(dim.spacingM))
+        // The banner and the box are two different things and used to sit close enough to read
+        // as one block.
+        Spacer(modifier = Modifier.height(dim.spacingXL))
 
         AiInputBar(
             state = state,

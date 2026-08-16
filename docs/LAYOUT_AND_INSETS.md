@@ -75,7 +75,43 @@ Prefer `weight(1f)` anyway when a child should take the leftover space: it state
 and it keeps working if a sibling is added below. But do not go hunting for this as the cause
 of a misplaced child in a `Column` — it will not be.
 
-### 1.4 One scroller per axis
+### 1.4 Measurement order: what must survive a squeeze has to be measured first
+
+A `Column` measures its **non-weighted children first**, against the height it was given, and
+divides what is left among the weighted ones. A child measured past that bound is still laid
+out, at a position past the parent's bottom edge, and a `clip()` on the parent then removes it
+from the screen. The node is not off-screen and not missing: it is **inside its parent, below
+its parent's edge**.
+
+So in any container holding growable content plus controls, **the growable part is the one that
+gets the weight**, not the controls:
+
+```kotlin
+Column(modifier = Modifier.clip(shape)) {
+    TextField(
+        // Measured after the Row below, from what is left. fill = false so a short
+        // sentence still makes a short bar.
+        modifier = Modifier.weight(weight = 1f, fill = false),
+        lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 6),
+    )
+    Row { /* mic, send — unweighted, so measured first and always fit */ }
+}
+```
+
+Without the weight the field takes its natural height up to its line limit, and the controls
+fall off the bottom the moment the container is squeezed: keyboard up, something above it, or
+landscape. `AiInputBar.kt` shipped that bug; see
+`docs/learning/2026-08-16-clipped-inside-its-own-parent.md`.
+
+**Test it with `assertIsDisplayed()`, never with bounds arithmetic.**
+`getUnclippedBoundsInRoot()` reports where a node was laid out, not whether any of it can be
+seen — a clipped node returns perfectly legal on-screen bounds. Only a display assertion walks
+the clip chain. Render the surface at the height a keyboard actually leaves, with content long
+enough to overflow, then mutation-check the probe in both directions: remove the fix and watch
+it go red, restore it and watch it go green. A probe that cannot fail and a probe that cannot
+pass both look exactly like a probe that works.
+
+### 1.5 One scroller per axis
 
 A `verticalScroll` child measured by a `verticalScroll` parent gets an infinite height
 constraint and throws. If the content scrolls, the wrapper must not.

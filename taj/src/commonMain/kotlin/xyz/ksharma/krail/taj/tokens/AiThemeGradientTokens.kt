@@ -3,6 +3,7 @@ package xyz.ksharma.krail.taj.tokens
 import androidx.compose.ui.graphics.Color
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.magic_yellow
 
 /**
  * The gradient the AI search surface wears: the rider's own theme colour, plus one other
@@ -31,11 +32,16 @@ object AiThemeGradientTokens {
     private val PurpleDrip = Color(0xFFAC00C9)
     private val Ferry = Color(0xFF5AB031)
     private val BarbiePink = Color(0xFFE0218A)
+    private val MagicYellow = magic_yellow
 
     private val partners: Map<KrailThemeStyle, Pair<Color, Color>> = mapOf(
         KrailThemeStyle.Train to (Train to PurpleDrip),
         KrailThemeStyle.Metro to (Metro to PurpleDrip),
-        KrailThemeStyle.Bus to (Bus to BarbiePink),
+        // Yellow, not pink. Blue into pink travels through purple and reads as somebody
+        // else's AI product; blue into yellow is the one pair here that crosses from cool to
+        // warm, so the two ends stay told apart wherever the gradient is in its drift. It is
+        // also KRAIL's own yellow rather than a colour invented for this.
+        KrailThemeStyle.Bus to (Bus to MagicYellow),
         KrailThemeStyle.PurpleDrip to (PurpleDrip to Bus),
         KrailThemeStyle.Ferry to (Ferry to BarbiePink),
         KrailThemeStyle.BarbiePink to (BarbiePink to Bus),

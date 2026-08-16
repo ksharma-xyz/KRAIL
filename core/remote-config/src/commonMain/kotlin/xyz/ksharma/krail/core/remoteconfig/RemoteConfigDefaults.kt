@@ -6,6 +6,15 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
  * Holds the default values for remote configuration.
  * Add new default values here. These will be used as fallbacks when the remote config is not available
  * due to network or other issues.
+ *
+ * **Every key in [FlagKeys] needs a row here, including the ones whose intended default is
+ * `false`.** A key that is absent from this list is not the same as a key defaulting to `false`,
+ * even though the two look identical today. Firebase returns an empty string for a key it has
+ * never heard of, `RemoteConfigFlag` classifies that as a `StringValue("")` rather than a
+ * boolean, and `asBoolean(fallback)` then returns `"".toBoolean()` — false — **without ever
+ * reading the fallback it was passed**. So a flag that is missing here reads as `false` whatever
+ * the call site asked for, and the day one wants to ship defaulting to `true` it would silently
+ * be off for every client that has not completed a fetch.
  */
 object RemoteConfigDefaults {
 
@@ -174,6 +183,23 @@ object RemoteConfigDefaults {
             ),
             Pair(
                 first = FlagKeys.ALERT_SUMMARY_ENABLED.key,
+                second = false,
+            ),
+            Pair(
+                first = FlagKeys.AI_SEARCH_INPUT_ENABLED.key,
+                second = false,
+            ),
+            // The one where the missing row was doing real harm. Its call site asks for
+            // asBoolean(fallback = true) and its own docs say "true/unset", but with no row here
+            // an unfetched client read false and took the direct GTFS-RT path instead of the BFF
+            // snapshot. Only reachable once the endpoint already resolves to the BFF, so this
+            // restores the documented default rather than turning anything on.
+            Pair(
+                first = FlagKeys.BFF_USE_FOR_TRACK.key,
+                second = true,
+            ),
+            Pair(
+                first = FlagKeys.JOURNEY_MAPS_AVAILABLE.key,
                 second = false,
             ),
         )

@@ -16,6 +16,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.remoteconfig"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
 
     iosArm64()

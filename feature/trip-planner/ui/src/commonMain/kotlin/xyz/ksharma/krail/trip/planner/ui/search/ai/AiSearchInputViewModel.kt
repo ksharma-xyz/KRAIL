@@ -104,12 +104,27 @@ class AiSearchInputViewModel(
     fun onEvent(event: AiSearchInputEvent) {
         when (event) {
             is AiSearchInputEvent.TypedTextChanged -> _uiState.update {
-                // Typing is the way out of a mic problem, so the warning clears as they type.
+                // Typing is the way out of every problem this surface can show, so the message
+                // clears as they type rather than needing a control of its own to dismiss. A
+                // banner with an X on it asks the rider to tidy up after a failure that was
+                // not theirs; editing the sentence is already them saying they have moved on.
+                //
                 // Only on real text: the text field reports its initial empty value as soon as
-                // it composes, which would otherwise clear the warning before it is ever read.
+                // it composes, which would otherwise clear the message before it is ever read.
+                val startedEditing = event.text.isNotEmpty()
                 it.copy(
                     typedText = event.text,
-                    speechUnavailableReason = if (event.text.isEmpty()) it.speechUnavailableReason else null,
+                    speechUnavailableReason = if (startedEditing) null else it.speechUnavailableReason,
+                    // An unresolved result is a problem about the last sentence. The moment the
+                    // rider changes that sentence it is stale, and leaving it up makes the new
+                    // attempt look like it has already failed.
+                    phase = if (startedEditing && it.phase == AiSearchInputPhase.UNRESOLVED) {
+                        AiSearchInputPhase.IDLE
+                    } else {
+                        it.phase
+                    },
+                    unresolvedReason = if (startedEditing) null else it.unresolvedReason,
+                    unmatchedPlace = if (startedEditing) null else it.unmatchedPlace,
                 )
             }
 
@@ -326,8 +341,12 @@ class AiSearchInputViewModel(
 
                 else -> null to null
             }
-            val dateTimeSelectionItem =
-                resolveTimeIntent(extraction.timeIntent, riderText = text) ?: leaveNowDateTimeSelectionItem()
+            // No fallback to "leave now". A rider who mentioned no time gets no time, because
+            // the home screen now shows this as a chip: falling back produced "Leave Today
+            // 12:29 AM" on a sentence that said nothing about when, which is the app inventing
+            // a decision and then displaying it back as though the rider had made it. Null
+            // already means now everywhere downstream.
+            val dateTimeSelectionItem = resolveTimeIntent(extraction.timeIntent, riderText = text)
 
             val intent = ResolvedTripIntent(
                 fromText = fromText,

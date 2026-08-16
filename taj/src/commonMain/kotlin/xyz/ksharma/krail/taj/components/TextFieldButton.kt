@@ -23,6 +23,11 @@ import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
 /**
  * A button that looks like a text field.
  *
+ * @param onClick What tapping does, or `null` for a field that only reports. A null click is
+ * not the same as `enabled = false`: a disabled field is dimmed, which says "you cannot do this
+ * yet", where a read-only one is at full strength and simply is not a control. The Ask KRAIL
+ * result card shows the two stops it found this way — they are an answer being read, and a
+ * field that looks tappable and is not is worse than one that plainly is not.
  * @param modifier The modifier to apply to this component.
  * @param enabled Whether the button is enabled.
  * @param content The content of the button.
@@ -31,7 +36,7 @@ import xyz.ksharma.krail.taj.tokens.TextFieldTokens.TextFieldHeight
  */
 @Composable
 fun TextFieldButton(
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     content: @Composable () -> Unit,
@@ -49,7 +54,7 @@ fun TextFieldButton(
                 .height(TextFieldHeight)
                 .clip(RoundedCornerShape(50))
                 .background(color = KrailTheme.colors.surface)
-                .klickable(onClick = onClick)
+                .then(if (onClick != null) Modifier.klickable(onClick = onClick) else Modifier)
                 .padding(horizontal = SpacingTokens.XL, vertical = SpacingTokens.XS),
             contentAlignment = Alignment.CenterStart,
         ) {

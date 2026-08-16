@@ -80,7 +80,7 @@ internal fun AiInputContent(
     onEvent: (AiSearchInputEvent) -> Unit,
     modifier: Modifier = Modifier,
     showTitle: Boolean = false,
-    resultActions: AiResultActions = AiResultActions(),
+    onSeeTimes: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val fontScale = LocalDensity.current.fontScale
@@ -142,22 +142,25 @@ internal fun AiInputContent(
         // as one block.
         Spacer(modifier = Modifier.height(dim.spacingXL))
 
-        // The card takes the bar's place rather than appearing above or below it. Same slot,
-        // same width, same radius, so what a rider sees is the thing they typed into settling
-        // into the answer — not the answer arriving somewhere else while the box they used
-        // sits there still offering to take another sentence.
+        // Above the bar, never instead of it. The card replaced the bar for one build and that
+        // was wrong twice over: a rider who wanted a different sentence had nothing left to
+        // type into, and a half-read sentence became a dead end with no stop worth tapping and
+        // no box to reword in. Bar is the input, card is the result, and both stay.
         val answer = state.resolved
             ?.takeIf { state.phase == AiSearchInputPhase.RESOLVED && it.hasAnyStop }
         if (answer != null) {
-            AiResultCard(resolved = answer, actions = resultActions)
-        } else {
-            AiInputBar(
-                state = state,
-                textFieldState = textFieldState,
-                placeholder = AI_INPUT_PLACEHOLDER,
-                onEvent = onEvent,
-            )
+            AiResultCard(resolved = answer, onSeeTimes = onSeeTimes)
+            // Wider than any gap inside the result, so the bar reads as a separate object
+            // rather than as one more row of it.
+            Spacer(modifier = Modifier.height(dim.spacingXXL))
         }
+
+        AiInputBar(
+            state = state,
+            textFieldState = textFieldState,
+            placeholder = AI_INPUT_PLACEHOLDER,
+            onEvent = onEvent,
+        )
     }
 }
 

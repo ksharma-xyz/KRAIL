@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
@@ -48,7 +49,7 @@ class AiResultCardTest {
 
         composeRule.onNodeWithText(SEVEN_HILLS.stopName).assertExists()
         composeRule.onNodeWithText(WYNYARD.stopName).assertExists()
-        composeRule.onNodeWithText(SEE_TIMES_LABEL).assertExists()
+        composeRule.onNodeWithText(SEE_TIMETABLE_LABEL).assertExists()
     }
 
     @Test
@@ -62,14 +63,14 @@ class AiResultCardTest {
     }
 
     @Test
-    fun oneStopMissed_seeTimesDoesNothing() {
+    fun oneStopMissed_seeTimetableDoesNothing() {
         var seeTimes = 0
         setContent(
             state(from = null, to = WYNYARD),
-            actions = AiResultActions(onSeeTimes = { seeTimes++ }),
+            onSeeTimes = { seeTimes++ },
         )
 
-        composeRule.onNodeWithText(SEE_TIMES_LABEL).performClick()
+        composeRule.onNodeWithText(SEE_TIMETABLE_LABEL).performClick()
 
         // No timetable exists without both ends, so the button is inert rather than absent: a
         // vanished button leaves the rider guessing what the card is for.
@@ -80,7 +81,7 @@ class AiResultCardTest {
     fun nothingResolved_keepsTheInputBar() {
         setContent(state(from = null, to = null))
 
-        composeRule.onNodeWithText(SEE_TIMES_LABEL).assertDoesNotExist()
+        composeRule.onNodeWithText(SEE_TIMETABLE_LABEL).assertDoesNotExist()
     }
 
     @Test
@@ -89,7 +90,7 @@ class AiResultCardTest {
             state(from = SEVEN_HILLS, to = WYNYARD, phase = AiSearchInputPhase.EXTRACTING),
         )
 
-        composeRule.onNodeWithText(SEE_TIMES_LABEL).assertDoesNotExist()
+        composeRule.onNodeWithText(SEE_TIMETABLE_LABEL).assertDoesNotExist()
     }
 
     @Test
@@ -102,36 +103,42 @@ class AiResultCardTest {
     }
 
     @Test
-    fun seeTimes_reportsExactlyOnce() {
+    fun seeTimetable_reportsExactlyOnce() {
         var seeTimes = 0
         setContent(
             state(from = SEVEN_HILLS, to = WYNYARD),
-            actions = AiResultActions(onSeeTimes = { seeTimes++ }),
+            onSeeTimes = { seeTimes++ },
         )
 
-        composeRule.onNodeWithText(SEE_TIMES_LABEL).performClick()
+        composeRule.onNodeWithText(SEE_TIMETABLE_LABEL).performClick()
 
         assertEquals(1, seeTimes)
     }
 
     @Test
-    fun tappingAStop_reportsThatFieldAndNotTheOther() {
-        var editFrom = 0
-        var editTo = 0
-        setContent(
-            state(from = SEVEN_HILLS, to = WYNYARD),
-            actions = AiResultActions(onEditFrom = { editFrom++ }, onEditTo = { editTo++ }),
-        )
+    fun tappingAStop_doesNothing() {
+        var seeTimes = 0
+        setContent(state(from = SEVEN_HILLS, to = WYNYARD), onSeeTimes = { seeTimes++ })
 
+        // Read-only on purpose. Tapping used to open the stop search, which closed this surface
+        // and destroyed the very thing the rider was correcting.
         composeRule.onNodeWithText(SEVEN_HILLS.stopName).performClick()
 
-        assertEquals(1, editFrom)
-        assertEquals(0, editTo)
+        assertEquals(0, seeTimes)
+    }
+
+    @Test
+    fun resolved_keepsTheInputBarSoTheSentenceCanBeReworded() {
+        setContent(state(from = SEVEN_HILLS, to = WYNYARD))
+
+        // The bar is the only way back to a different sentence. Replacing it with the result
+        // left a rider who was misheard with nothing to type into.
+        composeRule.onNodeWithContentDescription(MIC_DESCRIPTION).assertExists()
     }
 
     private fun setContent(
         state: AiSearchInputUiState,
-        actions: AiResultActions = AiResultActions(),
+        onSeeTimes: () -> Unit = {},
     ) {
         composeRule.setContent {
             PreviewTheme {
@@ -142,7 +149,7 @@ class AiResultCardTest {
                         suggestion = SUGGESTION,
                         onEvent = {},
                         modifier = Modifier.weight(1f),
-                        resultActions = actions,
+                        onSeeTimes = onSeeTimes,
                     )
                 }
             }
@@ -171,6 +178,7 @@ class AiResultCardTest {
         const val SUGGESTION = "Home to Work by 9am"
         const val ARRIVE_TEXT = "Arrive"
         const val STARTING_FROM_PLACEHOLDER = "Starting from"
+        const val MIC_DESCRIPTION = "Speak"
         val SEVEN_HILLS = StopItem(stopId = "2147", stopName = "Seven Hills Station")
         val WYNYARD = StopItem(stopId = "200070", stopName = "Wynyard Station")
     }

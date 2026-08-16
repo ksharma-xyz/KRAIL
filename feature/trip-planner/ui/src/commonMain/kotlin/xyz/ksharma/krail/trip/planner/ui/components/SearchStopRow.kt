@@ -45,14 +45,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_clock
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
@@ -66,7 +64,6 @@ import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -282,7 +279,16 @@ private fun ExpandedSearchRow(
             // It has to be visible before Search is pressed: a time held in state that the
             // rider cannot see would quietly change what the button does.
             if (dateTimeSelectionText != null) {
-                WhenChip(text = dateTimeSelectionText, onClear = onDateTimeSelectionClear)
+                // Tapping clears it back to now. Opening the picker from here is the next step
+                // and wants the selector route to be reachable from this screen first.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = dim.pageHorizontalPadding)
+                        .padding(top = dim.spacingM),
+                ) {
+                    WhenChip(text = dateTimeSelectionText, onClick = onDateTimeSelectionClear)
+                }
             }
 
             val navBarPaddingDp = with(LocalDensity.current) { navBarPadding.dp }
@@ -417,65 +423,6 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
         ThemeTextFieldPlaceholderText(text = targetText, isActive = isActive)
     }
 }
-
-/**
- * The departure or arrival time the search will run with, when one was understood before any
- * timetable existed. Deliberately the same `SubtleButton` and the same `toDateTimeText()`
- * wording the timetable's own time button uses, so the rider meets one control twice rather
- * than two controls that happen to agree.
- *
- * Tapping clears it back to now. Opening the picker from here is the next step and wants the
- * selector route to be reachable from this screen first.
- */
-@Composable
-private fun WhenChip(text: String, onClear: () -> Unit) {
-    val dim = KrailTheme.dimensions
-    // The row's own surface, the same one the From and To pills use. As bare text on the
-    // coloured row this was white and bold and read as a heading, louder than the two stops
-    // it qualifies. In a pill of its own it belongs to the row instead of shouting over it,
-    // and the label can take an ordinary readable colour rather than fighting the theme.
-    val chipBackground = KrailTheme.colors.surface
-    // Checked against the pill it actually sits on rather than assumed, so it holds up on
-    // every theme and in both light and dark.
-    val chipForeground = getForegroundColor(backgroundColor = chipBackground)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = dim.pageHorizontalPadding)
-            .padding(top = dim.spacingM),
-    ) {
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(percent = CHIP_CORNER_PERCENT))
-                .background(chipBackground)
-                .clickable(onClick = onClear)
-                .padding(horizontal = dim.spacingL, vertical = dim.spacingS),
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // A clock says "this is a time" before a word of it is read, which is the whole
-            // job of a chip sitting beside two stop names.
-            Image(
-                painter = painterResource(Res.drawable.ic_clock),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(chipForeground),
-                modifier = Modifier.size(dim.iconSmall),
-            )
-            Text(
-                text = text,
-                // Smaller than the stop names beside it: this qualifies the search, it is not
-                // the search.
-                style = KrailTheme.typography.bodySmall,
-                // Checked against the pill it actually sits on rather than assumed, so it
-                // holds up on every theme and in both light and dark.
-                color = chipForeground,
-            )
-        }
-    }
-}
-
-private const val CHIP_CORNER_PERCENT = 50
 
 /**
  * The way into the AI search sheet. Opening is all it does: the sheet owns speaking, typing

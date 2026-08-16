@@ -85,11 +85,19 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                         resolved.dateTimeSelectionItem?.toJsonString(),
                     ),
                 )
-                // The AI screen is still up at this point, with its border decelerating. It
-                // closes a beat later so that ending is seen rather than cut off; the fields
-                // behind it are already written, so the row is correct the moment it goes.
-                delay(AI_SCREEN_EXIT_DELAY_MILLIS)
-                aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
+                // A whole trip stays on the AI screen, which now shows it back as a card with
+                // the two stops and one way to the timetable. The fields behind are written
+                // all the same, so whichever way the rider leaves the card — its own button,
+                // or back — the row is already correct.
+                //
+                // A half-resolved trip has no timetable to offer, so it keeps the behaviour it
+                // has always had: fill the field that was found and get out of the way. The
+                // screen is still up at this point with its border decelerating, and closes a
+                // beat later so that ending is seen rather than cut off.
+                if (!resolved.hasWholeTrip) {
+                    delay(AI_SCREEN_EXIT_DELAY_MILLIS)
+                    aiSearchInputViewModel.onEvent(AiSearchInputEvent.StartOver)
+                }
             }
         }
 

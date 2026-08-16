@@ -80,6 +80,7 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.components.ai.AiResultActions
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
@@ -287,6 +288,25 @@ fun SavedTripsScreen(
                 suggestion = greeting.suggestion,
                 onEvent = onAiEvent,
                 onDismiss = { onAiEvent(AiSearchInputEvent.CloseInput) },
+                // All three close the surface first, and all three then do exactly what the
+                // row behind it already does. Editing a stop is the row's own From or To
+                // button, and seeing times is its Search button: by the time this card is on
+                // screen the two stops and the time have been written into this screen's
+                // state, so there is no second path to keep in step with the first.
+                resultActions = AiResultActions(
+                    onEditFrom = {
+                        onAiEvent(AiSearchInputEvent.StartOver)
+                        fromButtonClick()
+                    },
+                    onEditTo = {
+                        onAiEvent(AiSearchInputEvent.StartOver)
+                        toButtonClick()
+                    },
+                    onSeeTimes = {
+                        onAiEvent(AiSearchInputEvent.StartOver)
+                        onSearchButtonClick()
+                    },
+                ),
             )
         }
     }

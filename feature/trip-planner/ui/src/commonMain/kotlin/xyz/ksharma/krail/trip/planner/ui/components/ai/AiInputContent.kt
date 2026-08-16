@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 
 // Past this scale the wheel and its rings stop being drawn and the status becomes plain text.
@@ -79,6 +80,7 @@ internal fun AiInputContent(
     onEvent: (AiSearchInputEvent) -> Unit,
     modifier: Modifier = Modifier,
     showTitle: Boolean = false,
+    resultActions: AiResultActions = AiResultActions(),
 ) {
     val dim = KrailTheme.dimensions
     val fontScale = LocalDensity.current.fontScale
@@ -140,12 +142,22 @@ internal fun AiInputContent(
         // as one block.
         Spacer(modifier = Modifier.height(dim.spacingXL))
 
-        AiInputBar(
-            state = state,
-            textFieldState = textFieldState,
-            placeholder = AI_INPUT_PLACEHOLDER,
-            onEvent = onEvent,
-        )
+        // The card takes the bar's place rather than appearing above or below it. Same slot,
+        // same width, same radius, so what a rider sees is the thing they typed into settling
+        // into the answer — not the answer arriving somewhere else while the box they used
+        // sits there still offering to take another sentence.
+        val whole = state.resolved
+            ?.takeIf { state.phase == AiSearchInputPhase.RESOLVED && it.hasWholeTrip }
+        if (whole != null) {
+            AiResultCard(resolved = whole, actions = resultActions)
+        } else {
+            AiInputBar(
+                state = state,
+                textFieldState = textFieldState,
+                placeholder = AI_INPUT_PLACEHOLDER,
+                onEvent = onEvent,
+            )
+        }
     }
 }
 

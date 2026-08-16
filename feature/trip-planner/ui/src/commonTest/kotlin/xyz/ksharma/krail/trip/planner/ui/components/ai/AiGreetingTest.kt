@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.components.ai
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -29,7 +30,14 @@ class AiGreetingTest {
         isWeekend: Boolean = false,
         labels: List<StopLabel> = emptyList(),
         savedTrips: List<Trip> = emptyList(),
-    ) = suggestionFor(hour = hour, isWeekend = isWeekend, labels = labels, savedTrips = savedTrips)
+        isSunday: Boolean = false,
+    ) = suggestionFor(
+        hour = hour,
+        isWeekend = isWeekend,
+        labels = labels,
+        savedTrips = savedTrips,
+        isSunday = isSunday,
+    )
 
     // region Always a complete line
 
@@ -109,8 +117,11 @@ class AiGreetingTest {
             savedTrips = listOf(commuteTrip),
         )
 
+        // Falls to home rather than to strangers' stations. Suggesting the commute here is what
+        // the weekend rule exists to stop; suggesting Central to Bondi Junction was what it did
+        // instead, and that told the rider nothing about their own trips.
         assertFalse(line.contains("Wynyard"), "\"$line\" is the commute on a weekend")
-        assertTrue(line.contains("Bondi Junction"), "\"$line\" should offer somewhere else")
+        assertTrue(line.startsWith("Get me home"), "\"$line\" should offer to get them home")
     }
 
     @Test
@@ -221,11 +232,58 @@ class AiGreetingTest {
 
     // endregion
 
+    @Test
+    fun `a rider whose only data is the commute is offered home at the weekend`() {
+        // The reported bug: every weekend showed "Central to Bondi Junction". The weekend rules
+        // disqualified the labels AND the saved trip, and the ladder fell to two stations the
+        // rider has nothing to do with.
+        val commuteTrip = Trip(
+            fromStopId = "1",
+            fromStopName = "Seven Hills Station",
+            toStopId = "2",
+            toStopName = "Wynyard Station",
+        )
+        val line = suggestion(
+            hour = 11,
+            isWeekend = true,
+            labels = listOf(home, work),
+            savedTrips = listOf(commuteTrip),
+        )
+
+        assertTrue(line.startsWith("Get me home"), "\"$line\" fell through to strangers' stops")
+        assertFalse(line.contains("Central"), "\"$line\" is not this rider's journey")
+    }
+
+    @Test
+    fun `a sunday evening offers tomorrow's commute`() {
+        val line = suggestion(hour = 18, isWeekend = true, isSunday = true, labels = listOf(home, work))
+
+        assertTrue(line.startsWith("Home to Work"), "\"$line\" should plan the commute")
+        assertTrue(line.endsWith("by 9am tomorrow"), "\"$line\" has to say tomorrow")
+    }
+
+    @Test
+    fun `a weekday evening offers to get them home, with a time`() {
+        // The time is the point: it is how a rider learns one can go in at all.
+        val line = suggestion(hour = 19, labels = listOf(home, work))
+
+        assertEquals("Get me home by 9pm", line)
+    }
+
+    @Test
+    fun `no home label means no home-bound line`() {
+        // Nothing to get them to, so it falls to the generic pair rather than promising a home
+        // that is not set.
+        val line = suggestion(hour = 19, labels = emptyList())
+
+        assertFalse(line.contains("Get me home"), "\"$line\" promises a home that is not set")
+    }
+
     private companion object {
         // Mirrors LONGEST_LINE in AiGreeting.kt. Duplicated rather than exposed: the production
         // constant is an implementation detail, and a test that reads it cannot fail when it
         // changes.
         const val LONGEST_LINE_FOR_TEST = 38
-        val TIME_WORDS = listOf("by 9am", "in 20 minutes", "after 6pm")
+        val TIME_WORDS = listOf("by 9am", "in 20 minutes", "after 6pm", "by 9pm")
     }
 }

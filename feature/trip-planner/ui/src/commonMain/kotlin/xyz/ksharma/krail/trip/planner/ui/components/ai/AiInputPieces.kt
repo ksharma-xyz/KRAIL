@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.components.ai
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
 import kotlinx.coroutines.launch
@@ -27,6 +25,7 @@ import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AiActivity
 import xyz.ksharma.krail.taj.components.AiListeningIndicator
+import xyz.ksharma.krail.taj.components.AlertIcon
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.MicIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
@@ -189,40 +188,38 @@ internal fun AiVoiceControl(
 internal fun AiProblemBanner(
     message: String,
     modifier: Modifier = Modifier,
-    actionLabel: String? = null,
-    onActionClick: (() -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
 
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .background(
                 color = KrailTheme.colors.errorContainer,
                 shape = RoundedCornerShape(dim.radiusM),
             )
-            .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingS),
+            .padding(horizontal = dim.spacingL, vertical = dim.spacingL),
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        Text(
-            text = message,
-            style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.onErrorContainer,
+        // Top aligned, not centred. The message runs to three lines often enough that a centred
+        // icon drifts into the middle of a paragraph and reads as punctuation rather than as a
+        // marker for the whole thing.
+        Image(
+            imageVector = AlertIcon,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(KrailTheme.colors.onErrorContainer),
+            modifier = Modifier
+                .padding(top = dim.spacingXXS)
+                .size(dim.iconSmall),
         )
 
-        // Only when the rider can actually do something about it. A message that names a fix
-        // and then leaves them to find it is barely better than one that does not.
-        if (actionLabel != null && onActionClick != null) {
-            Text(
-                text = actionLabel,
-                style = KrailTheme.typography.titleSmall,
-                color = KrailTheme.colors.onErrorContainer,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(dim.radiusS))
-                    .clickable(onClick = onActionClick)
-                    .padding(vertical = dim.spacingXS),
-            )
-        }
+        // Smaller than the rider's own sentence. This is the app talking, and it should not
+        // compete for weight with the words they wrote.
+        Text(
+            text = message,
+            style = KrailTheme.typography.bodySmall,
+            color = KrailTheme.colors.onErrorContainer,
+        )
     }
 }
 

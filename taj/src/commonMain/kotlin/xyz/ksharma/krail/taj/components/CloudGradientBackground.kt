@@ -77,14 +77,31 @@ import kotlin.math.sin
 fun CloudGradientBackground(
     modifier: Modifier = Modifier,
     themeColor: Color = themeColor(),
+    spec: CloudFieldSpec = CloudFieldSpec.Ambient,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val surface = KrailTheme.colors.surface
     val darkMode = isAppInDarkMode()
-    val peakAlpha = if (darkMode) DARK_PEAK_ALPHA else LIGHT_PEAK_ALPHA
+    val peakAlpha = (if (darkMode) DARK_PEAK_ALPHA else LIGHT_PEAK_ALPHA) * spec.alphaScale
 
-    val tintA = lerp(themeColor, surface, BLOB_TINT_A_BLEND)
-    val tintB = lerp(themeColor, surface, BLOB_TINT_B_BLEND)
+    // Both companion blobs are the theme colour pulled towards the FAR end of the theme, not
+    // always towards `surface`. Pulling towards surface is right in light mode, where surface
+    // is white and the blob softens. In dark mode surface is near black, so the same lerp
+    // walked the colour down towards black: a saturated blue turned into navy sludge and the
+    // field read as a dark smear rather than as light. Pulling towards `onSurface` in dark mode
+    // lightens instead, which is what a glow does.
+    val (tintA, tintB) = cloudBlobTints(
+        themeColor = themeColor,
+        surface = surface,
+        onSurface = KrailTheme.colors.onSurface,
+        darkMode = darkMode,
+    )
+    // Explicit colours win, one per blob. Falling back per index rather than all-or-nothing
+    // means a caller can hand over two and still get a sensible third.
+    val blob1 = spec.colors?.getOrNull(0) ?: themeColor
+    val blob2 = spec.colors?.getOrNull(1) ?: tintA
+    val blob3 = spec.colors?.getOrNull(2) ?: tintB
+    val amp = spec.motionScale
 
     val windowSize = LocalWindowInfo.current.containerSize
     val refSize: Size? = remember(windowSize.width, windowSize.height) {
@@ -99,19 +116,25 @@ fun CloudGradientBackground(
     val t1 by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(BLOB_1_PERIOD_MS, easing = LinearEasing)),
+        animationSpec = infiniteRepeatable(
+            tween(scaledPeriod(BLOB_1_PERIOD_MS, spec.speedScale), easing = LinearEasing),
+        ),
         label = "cloud-blob-1",
     )
     val t2 by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(BLOB_2_PERIOD_MS, easing = LinearEasing)),
+        animationSpec = infiniteRepeatable(
+            tween(scaledPeriod(BLOB_2_PERIOD_MS, spec.speedScale), easing = LinearEasing),
+        ),
         label = "cloud-blob-2",
     )
     val t3 by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(BLOB_3_PERIOD_MS, easing = LinearEasing)),
+        animationSpec = infiniteRepeatable(
+            tween(scaledPeriod(BLOB_3_PERIOD_MS, spec.speedScale), easing = LinearEasing),
+        ),
         label = "cloud-blob-3",
     )
     // Separate "breathe" phase drives radius pulsing — independent of position
@@ -119,7 +142,9 @@ fun CloudGradientBackground(
     val breathe by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(BREATHE_PERIOD_MS, easing = LinearEasing)),
+        animationSpec = infiniteRepeatable(
+            tween(scaledPeriod(BREATHE_PERIOD_MS, spec.speedScale), easing = LinearEasing),
+        ),
         label = "cloud-breathe",
     )
 
@@ -135,31 +160,31 @@ fun CloudGradientBackground(
 
                 drawBlob(
                     referenceSize = ref,
-                    color = themeColor,
+                    color = blob1,
                     peakAlpha = peakAlpha,
                     centerFrac = Offset(
-                        x = BLOB_1_CENTER_X + BLOB_1_AMP_X * sin(t1 * TWO_PI),
-                        y = BLOB_1_CENTER_Y + BLOB_1_AMP_Y * cos(t1 * TWO_PI),
+                        x = BLOB_1_CENTER_X + BLOB_1_AMP_X * amp * sin(t1 * TWO_PI),
+                        y = BLOB_1_CENTER_Y + BLOB_1_AMP_Y * amp * cos(t1 * TWO_PI),
                     ),
                     rFrac = BLOB_1_RADIUS_FRAC + pulse,
                 )
                 drawBlob(
                     referenceSize = ref,
-                    color = tintA,
+                    color = blob2,
                     peakAlpha = peakAlpha,
                     centerFrac = Offset(
-                        x = BLOB_2_CENTER_X + BLOB_2_AMP_X * cos(t2 * TWO_PI),
-                        y = BLOB_2_CENTER_Y + BLOB_2_AMP_Y * sin(t2 * TWO_PI),
+                        x = BLOB_2_CENTER_X + BLOB_2_AMP_X * amp * cos(t2 * TWO_PI),
+                        y = BLOB_2_CENTER_Y + BLOB_2_AMP_Y * amp * sin(t2 * TWO_PI),
                     ),
                     rFrac = BLOB_2_RADIUS_FRAC + antiPulse,
                 )
                 drawBlob(
                     referenceSize = ref,
-                    color = tintB,
+                    color = blob3,
                     peakAlpha = peakAlpha * BLOB_3_ALPHA_SCALE,
                     centerFrac = Offset(
-                        x = BLOB_3_CENTER_X + BLOB_3_AMP_X * sin(t3 * TWO_PI),
-                        y = BLOB_3_CENTER_Y + BLOB_3_AMP_Y * cos(t3 * TWO_PI),
+                        x = BLOB_3_CENTER_X + BLOB_3_AMP_X * amp * sin(t3 * TWO_PI),
+                        y = BLOB_3_CENTER_Y + BLOB_3_AMP_Y * amp * cos(t3 * TWO_PI),
                     ),
                     rFrac = BLOB_3_RADIUS_FRAC + pulse * BLOB_3_BREATHE_SCALE,
                 )
@@ -191,6 +216,25 @@ private fun DrawScope.drawBlob(
         center = center,
     )
 }
+
+/**
+ * The blob tints, as a pure function of the theme colour and the mode.
+ *
+ * Pulled out of the composable so the palette can be checked by arithmetic instead of by
+ * looking at a phone: [CloudGradientBackgroundTintTest] asserts every theme style in both
+ * modes lands lighter than its surface, which is the property that failed in dark mode.
+ */
+fun cloudBlobTints(themeColor: Color, surface: Color, onSurface: Color, darkMode: Boolean): Pair<Color, Color> {
+    val tintTarget = if (darkMode) onSurface else surface
+    return lerp(themeColor, tintTarget, BLOB_TINT_A_BLEND) to
+        lerp(themeColor, tintTarget, BLOB_TINT_B_BLEND)
+}
+
+/** Faster means a shorter period. Guarded so a zero or negative scale cannot divide by zero. */
+private fun scaledPeriod(periodMs: Int, speedScale: Float): Int =
+    (periodMs / speedScale.coerceAtLeast(MIN_SPEED_SCALE)).toInt()
+
+private const val MIN_SPEED_SCALE = 0.1f
 
 private const val TWO_PI = (2 * PI).toFloat()
 

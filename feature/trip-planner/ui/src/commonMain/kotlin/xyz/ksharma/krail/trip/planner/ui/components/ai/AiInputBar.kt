@@ -44,13 +44,33 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 
 private val BarCornerRadius = 28.dp
 private const val BAR_DARKEN_DARK = 0.45f
-private const val BAR_DARKEN_LIGHT = 0.09f
 private const val SEND_ENTER_SCALE = 0.5f
 private const val SEND_EXIT_SCALE = 0.35f
 private const val SEND_FADE_MILLIS = 140
 
 // Slower than the entry fade, so the shrink is still visible as the button goes.
 private const val SEND_EXIT_FADE_MILLIS = 200
+
+/**
+ * Opaque, and a different shade from the screen in each theme for a different reason.
+ *
+ * Light mode is plain `surface`: white. The colour behind the bar is the drifting cloud field,
+ * so a white bar reads as an object sitting on top of the light, which is exactly what it is.
+ * It was greyed for a while, from when the background was flat and white-on-white had no edge
+ * at all; against moving colour the grey only made it look dirty.
+ *
+ * Dark mode still darkens, because the opposite is true there: `surface` is already near black
+ * and the field's light passes straight through anything that does not sit below it.
+ *
+ * Either way the result is one opaque colour rather than a translucent tint. A tint takes its
+ * appearance from whatever happens to be behind it, and behind this is a gradient that moves.
+ */
+@Composable
+private fun barColor(): Color = if (isAppInDarkMode()) {
+    Color.Black.copy(alpha = BAR_DARKEN_DARK).compositeOver(KrailTheme.colors.surface)
+} else {
+    KrailTheme.colors.surface
+}
 
 /**
  * The whole input, as one object.
@@ -109,11 +129,7 @@ internal fun AiInputBar(
             // Same move in light mode, where it lands as a soft grey on white. Less of it,
             // because white needs far less shift to read as a distinct object than near black
             // does.
-            .background(
-                Color.Black
-                    .copy(alpha = if (isAppInDarkMode()) BAR_DARKEN_DARK else BAR_DARKEN_LIGHT)
-                    .compositeOver(KrailTheme.colors.surface),
-            )
+            .background(barColor())
             // Only ever while it is working out what was said. The border is the strongest
             // signal this surface has and spending it anywhere else would waste it.
             .aiGradientBorder(

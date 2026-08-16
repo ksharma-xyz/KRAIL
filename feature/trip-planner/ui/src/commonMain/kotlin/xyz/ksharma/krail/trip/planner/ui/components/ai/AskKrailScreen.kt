@@ -17,27 +17,28 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
+import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
@@ -62,8 +63,9 @@ private const val EXIT_MILLIS = 220
  * Both wrap the same [AiInputContent]. Neither knows anything about resolving a trip.
  */
 @Composable
-fun AiInputSurface(
+fun AskKrailScreen(
     state: AiSearchInputUiState,
+    suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -84,17 +86,19 @@ fun AiInputSurface(
     }
 
     if (asDialog) {
-        AiInputDialog(
+        AskKrailDialog(
             state = state,
             textFieldState = textFieldState,
+            suggestion = suggestion,
             onEvent = onEvent,
             onDismiss = onDismiss,
             modifier = modifier,
         )
     } else {
-        AiInputFullScreen(
+        AskKrailFullScreen(
             state = state,
             textFieldState = textFieldState,
+            suggestion = suggestion,
             onEvent = onEvent,
             onDismiss = onDismiss,
             modifier = modifier,
@@ -114,52 +118,81 @@ fun AiInputSurface(
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun AiInputFullScreen(
+private fun AskKrailFullScreen(
     state: AiSearchInputUiState,
     textFieldState: TextFieldState,
+    suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-
-    // At a large font scale the content is a tall column that will exceed the screen, so it
-    // scrolls and the actions travel with it. Below that it fits, and the actions are pinned to
-    // the bottom edge instead. A column cannot do both: weighting a child and scrolling are
-    // mutually exclusive, since a scrolling column has no bounded height to distribute.
-    val stacked = LocalDensity.current.fontScale >= ACTIONS_STACK_SCALE
+    val themeColorHex by LocalThemeColor.current
 
     // Without a dialog window there is no automatic back handling, and this surface covers the
     // screen it was opened from.
     BackHandler(enabled = true) { onDismiss() }
 
-    CloudGradientBackground(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(KrailTheme.colors.surface)) {
+        // The same drifting cloud field SearchStop wears, mirrored to hang from the bottom.
+        //
+        // It was a static gradient here, on the grounds that the cloud field puts its blobs in
+        // the top half and this screen needs its light at the bottom. Mirroring is the cheaper
+        // answer: one tuned field, one set of coprime periods, one dark-mode tint rule, shared
+        // by both screens instead of a second thing to keep in step.
+        //
+        // imePadding, so the light rises with the input bar. Full screen instead, its brightest
+        // band sat behind the keyboard and only the washed out middle reached the bar, which is
+        // exactly when the bar needs something to sit against.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .graphicsLayer { scaleY = -1f },
+        ) {
+            CloudGradientBackground(spec = CloudFieldSpec.aiPair(themeColorHex))
+        }
         Column(
             modifier = modifier
                 .fillMaxSize()
+                // One inset authority, and it is here: the column has to END where the keyboard
+                // starts. The surface is a sibling of the home screen's ime-padded box rather
+                // than a child, so nothing above it claims the keyboard as well.
+                //
+                // This only holds because MainActivity declares
+                // android:windowSoftInputMode="adjustResize". Without it the mode defaults to
+                // ADJUST_UNSPECIFIED, the system resolves it to pan, and the window slides up
+                // by the keyboard's height on top of the padding applied here: the bar ended
+                // up a keyboard's height above the keyboard and the content above it was
+                // clipped off the top of the screen. Never let that attribute be removed.
                 .safeDrawingPadding(),
         ) {
+            // Back button, no words. The field says Ask KRAIL, and a title bar repeating it
+            // over an otherwise empty screen was the app introducing itself twice. The bar is
+            // still here because the way out has to be.
             TitleBar(
-                title = { Text(text = AI_INPUT_QUESTION) },
+                title = {},
                 onNavActionClick = onDismiss,
             )
-            Column(
+            // Scrolling belongs to the content and only to the content. This column used to
+            // scroll too at large font scales, which measured a scrolling child with an
+            // infinite height and threw. One scroller, owned by the thing that knows when it
+            // has overflowed.
+            AiInputContent(
+                state = state,
+                textFieldState = textFieldState,
+                suggestion = suggestion,
+                onEvent = onEvent,
+                // weight(1f) states that this takes whatever the title bar leaves. It is not
+                // load bearing over fillMaxSize(): a Column hands a non-weighted child the
+                // remaining bounded height, so both measure the same. Measured, not assumed,
+                // after the opposite was claimed here and turned out to be false. See
+                // docs/learning/2026-08-16-ime-pan-and-unbounded-column.md.
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
                     .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(top = dim.spacingM, bottom = dim.spacingXL)
-                    .then(if (stacked) Modifier.verticalScroll(rememberScrollState()) else Modifier),
-                verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
-            ) {
-                AiInputContent(
-                    state = state,
-                    textFieldState = textFieldState,
-                    onEvent = onEvent,
-                    onDismiss = onDismiss,
-                    modifier = if (stacked) Modifier else Modifier.weight(1f),
-                    actionsAtBottom = !stacked,
-                )
-            }
+                    .padding(top = dim.spacingM, bottom = dim.spacingXL),
+            )
         }
     }
 }
@@ -171,9 +204,10 @@ private fun AiInputFullScreen(
  * known for.
  */
 @Composable
-private fun AiInputDialog(
+private fun AskKrailDialog(
     state: AiSearchInputUiState,
     textFieldState: TextFieldState,
+    suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -217,8 +251,8 @@ private fun AiInputDialog(
                     AiInputContent(
                         state = state,
                         textFieldState = textFieldState,
+                        suggestion = suggestion,
                         onEvent = onEvent,
-                        onDismiss = onDismiss,
                         showTitle = true,
                     )
                 }

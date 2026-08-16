@@ -1,21 +1,20 @@
 package xyz.ksharma.krail.trip.planner.ui.components.ai
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.speechtotext.MicPermissionOutcome
@@ -24,12 +23,15 @@ import xyz.ksharma.krail.core.speechtotext.rememberOpenAppSettings
 import xyz.ksharma.krail.core.speechtotext.rememberRequestMicrophonePermission
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.components.AiWheelMark
+import xyz.ksharma.krail.taj.components.AiActivity
+import xyz.ksharma.krail.taj.components.AiListeningIndicator
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.MicIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.components.SendIcon
 import xyz.ksharma.krail.taj.components.StopIcon
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
@@ -39,113 +41,57 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_NEEDS_SETTINGS
 import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_UNSUPPORTED
 import xyz.ksharma.krail.trip.planner.ui.search.ai.UnresolvedReason
 
-private const val WORKING_TEXT_ALPHA = 0.55f
-
 /**
- * The question lives in the title bar, so all this carries is the one line under it, and that
- * line is the only thing in the header that changes with state. Nothing is added or removed
- * between states: the words change inside a block that is always exactly one line tall.
+ * What the slot shows while the surface is busy. Two states, two motions, one word each.
  *
- * The dialog has no title bar of its own, so it asks for [showTitle] and gets the question
- * back at the top of the card.
+ * Past the largest font scales the wheel and rings are not drawn at all: the word carries the
+ * same information in a fraction of the height, and at those sizes height is what the field and
+ * the message are short of.
  */
 @Composable
-internal fun AiInputHeader(
+internal fun AiBusyStatus(
     state: AiSearchInputUiState,
-    showTitle: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
-    ) {
-        if (showTitle) {
-            Text(
-                text = AI_INPUT_QUESTION,
-                style = KrailTheme.typography.titleLarge,
-                color = KrailTheme.colors.onSurface,
-            )
-        }
-        Text(
-            text = state.descriptionLine(),
-            style = KrailTheme.typography.bodyMedium,
-            color = KrailTheme.colors.secondaryLabel,
-        )
-    }
-}
-
-internal const val AI_INPUT_QUESTION = "Where are you going?"
-
-private fun AiSearchInputUiState.descriptionLine(): String = when {
-    isListening -> "Go ahead, I am listening."
-    phase == AiSearchInputPhase.EXTRACTING -> "Working it out."
-    // What the rider needs to know is that plain words are enough and that there are two ways
-    // in. "Say it the way you would to a friend" was a nice line that told them neither.
-    else -> "Plain words are fine. Type it, or tap the mic."
-}
-
-/**
- * One control, three jobs. Idle it is a microphone, listening it is stop, working it is the
- * wheel turning. It never moves, never resizes, and nothing else is added to say the same
- * thing: a spinner beside a spinning mark would be two indicators for one state.
- */
-@Composable
-internal fun AiStateSlot(
-    state: AiSearchInputUiState,
-    onEvent: (AiSearchInputEvent) -> Unit,
+    showDecoration: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
+    val listening = state.isListening
 
-    AnimatedContent(
-        targetState = state.slotContent(),
-        transitionSpec = {
-            fadeIn(animationSpec = tween(durationMillis = 150)) togetherWith
-                fadeOut(animationSpec = tween(durationMillis = 150))
-        },
+    Column(
         modifier = modifier,
-        label = "AiStateSlot",
-    ) { slot ->
-        when (slot) {
-            AiSlotContent.MIC -> AiSpeakButton(state = state, onEvent = onEvent, labelled = false)
-
-            AiSlotContent.STOP -> RoundIconButton(
-                onClick = { onEvent(AiSearchInputEvent.StopListening) },
-                content = {
-                    Image(
-                        imageVector = StopIcon,
-                        contentDescription = "Stop listening",
-                        colorFilter = ColorFilter.tint(LocalContentColor.current),
-                        modifier = Modifier.size(dim.iconDefault),
-                    )
-                },
-            )
-
-            AiSlotContent.WHEEL -> RoundIconButton(
-                enabled = false,
-                onClick = {},
-                content = {
-                    AiWheelMark(
-                        spinning = true,
-                        colors = AiThemeGradientTokens.stopsFor(themeColorHex),
-                        markSize = dim.iconDefault,
-                    )
-                },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(dim.spacingS),
+    ) {
+        if (showDecoration) {
+            AiListeningIndicator(
+                active = true,
+                activity = if (listening) AiActivity.Listening else AiActivity.Working,
+                colors = AiThemeGradientTokens.stopsFor(themeColorHex),
             )
         }
+        Text(
+            text = if (listening) LISTENING_WORD else WORKING_WORD,
+            // Same weight whether or not the wheel is beside it. It is the only word on an
+            // otherwise empty half of the screen and was reading as a caption.
+            style = KrailTheme.typography.titleMedium,
+            color = KrailTheme.colors.onSurface,
+        )
     }
 }
 
-internal enum class AiSlotContent { MIC, STOP, WHEEL }
+private const val LISTENING_WORD = "Listening"
+private const val WORKING_WORD = "Working it out"
 
-private fun AiSearchInputUiState.slotContent(): AiSlotContent = when {
-    isListening -> AiSlotContent.STOP
-    phase == AiSearchInputPhase.EXTRACTING -> AiSlotContent.WHEEL
-    else -> AiSlotContent.MIC
-}
+// Kept for the dialog, which has no title bar of its own to be dismissed from and so still
+// names itself.
+internal const val AI_INPUT_QUESTION = "Ask KRAIL"
+
+// The full screen has no title, so this is the only instruction on it. "Ask KRAIL" named the
+// feature without telling anybody what to do with it; a rider who has just opened this has no
+// idea it takes a time as well as two stops, which is the only thing it does that the search
+// row does not. So the placeholder asks for both.
+internal const val AI_INPUT_PLACEHOLDER = "Where to, and when?"
 
 /**
  * Speaking is behind an explicit tap rather than the surface opening into a live microphone:
@@ -157,7 +103,7 @@ private fun AiSearchInputUiState.slotContent(): AiSlotContent = when {
  * button never silently does nothing.
  */
 @Composable
-internal fun AiSpeakButton(
+internal fun AiVoiceControl(
     state: AiSearchInputUiState,
     onEvent: (AiSearchInputEvent) -> Unit,
     labelled: Boolean,
@@ -167,10 +113,14 @@ internal fun AiSpeakButton(
     val requestMicPermission = rememberRequestMicrophonePermission()
     val openAppSettings = rememberOpenAppSettings()
     val coroutineScope = rememberCoroutineScope()
-    val enabled = !state.isBusy && !state.isSpeechUnsupported
+    // Listening counts as busy everywhere else, but this control is how a rider stops.
+    val enabled = (state.isListening || !state.isBusy) && !state.isSpeechUnsupported
 
     val onClick: () -> Unit = {
-        if (state.needsSettingsForMic) {
+        if (state.isListening) {
+            // The same control, so stopping is where starting was rather than somewhere new.
+            onEvent(AiSearchInputEvent.StopListening)
+        } else if (state.needsSettingsForMic) {
             // The system will not prompt again, so the mic's job changes rather than the
             // button doing nothing a second time.
             openAppSettings()
@@ -210,10 +160,12 @@ internal fun AiSpeakButton(
         enabled = enabled,
         onClick = onClick,
         modifier = modifier,
+        // Same round button and same diameter as send, so the pair reads as two controls of
+        // equal standing. Only the fill differs: this one is an option, send finishes the job.
         content = {
             Image(
-                imageVector = MicIcon,
-                contentDescription = "Speak",
+                imageVector = if (state.isListening) StopIcon else MicIcon,
+                contentDescription = if (state.isListening) "Stop listening" else "Speak",
                 colorFilter = ColorFilter.tint(LocalContentColor.current),
                 modifier = Modifier.size(dim.iconDefault),
             )
@@ -221,14 +173,34 @@ internal fun AiSpeakButton(
     )
 }
 
-/** A line above the actions, never a state of its own: all of these end in the same field. */
+/**
+ * A problem gets its own colour and its own container, sitting above the input bar.
+ *
+ * Uses the theme's own error container pair rather than the error colour at low alpha. A
+ * translucent fill takes its contrast from whatever happens to be behind it, and behind this is
+ * a gradient that changes down the screen, so the same message was readable in one place and
+ * muddy in another. In dark mode it came out grey with pink text; in light mode, lavender with
+ * dark red. The container pair is designed for exactly this and is already tuned for both.
+ */
 @Composable
-internal fun StageProblem(message: String) {
-    Text(
-        text = message,
-        style = KrailTheme.typography.bodyMedium,
-        color = KrailTheme.colors.secondaryLabel,
-    )
+internal fun AiProblemBanner(message: String, modifier: Modifier = Modifier) {
+    val dim = KrailTheme.dimensions
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = KrailTheme.colors.errorContainer,
+                shape = RoundedCornerShape(dim.radiusM),
+            )
+            .padding(horizontal = dim.spacingL, vertical = dim.spacingM),
+    ) {
+        Text(
+            text = message,
+            style = KrailTheme.typography.bodyMedium,
+            color = KrailTheme.colors.onErrorContainer,
+        )
+    }
 }
 
 /**
@@ -287,6 +259,37 @@ internal val AiSearchInputUiState.isWorking: Boolean
 internal val AiSearchInputUiState.isBusy: Boolean
     get() = phase == AiSearchInputPhase.EXTRACTING || isListening
 
-/** Working state dims the sentence rather than replacing it, so the words stay readable. */
-internal val AiSearchInputUiState.workingTextAlpha: Float
-    get() = if (phase == AiSearchInputPhase.EXTRACTING) WORKING_TEXT_ALPHA else 1f
+/**
+ * Send. Filled with the theme colour, so it is the one thing on the row that reads as the end
+ * of the task rather than another option.
+ *
+ * A glyph rather than a word, because it sits beside a mic and two worded buttons in a row make
+ * the rider read to find out which one finishes. It only ever exists when there is something to
+ * send, so it never has to explain itself as disabled.
+ */
+@Composable
+internal fun AiSendButton(enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val dim = KrailTheme.dimensions
+    val themeColorHex by LocalThemeColor.current
+
+    RoundIconButton(
+        enabled = enabled,
+        onClick = onClick,
+        // Drawn at 90%, still measured at 100%. Modifier.scale is a draw-time transform, so
+        // the touch target keeps the full round-button diameter while the fill reads slightly
+        // lighter next to the mic. Shrinking the layout instead would have taken the tap
+        // target below the minimum with it.
+        modifier = modifier.scale(SEND_BUTTON_DRAW_SCALE),
+        color = themeColorHex.hexToComposeColor(),
+        content = {
+            Image(
+                imageVector = SendIcon,
+                contentDescription = "Continue",
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                modifier = Modifier.size(dim.iconDefault),
+            )
+        },
+    )
+}
+
+private const val SEND_BUTTON_DRAW_SCALE = 0.9f

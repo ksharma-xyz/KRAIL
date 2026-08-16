@@ -1,138 +1,176 @@
 package xyz.ksharma.krail.taj.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.preview.PreviewComponent
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.AiCoolGradientTokens
-import kotlin.math.sin
 
-private const val BAR_COUNT = 14
-private const val WAVE_CYCLE_MS = 6000
-private const val WAVES_PER_CYCLE = 2f
-private const val PHASE_STEP = 0.5f
-private const val MIN_BAR_HEIGHT_FRACTION = 0.14f
-private const val MAX_BAR_HEIGHT_FRACTION = 0.9f
-private const val ENVELOPE_FLOOR = 0.5f
-private const val ENVELOPE_RANGE = 0.5f
-private const val TAU = 2.0 * kotlin.math.PI
-private val WaveformWidth = 120.dp
-private val WaveformHeight = 40.dp
-private val BarWidth = 4.dp
+private const val RING_COUNT = 3
+private const val RING_CYCLE_MS = 2600
+private const val RING_START_SCALE = 0.5f
+private const val RING_END_SCALE = 1.5f
+private const val RING_START_ALPHA = 0.55f
+private const val RING_FADE_POINT = 0.7f
+private const val RING_FADE_ALPHA = 0.10f
+
+private const val TURN_CYCLE_MS = 2600
+private const val TURN_OVERSHOOT_DEGREES = 352f
+private const val TURN_SETTLE_BACK_DEGREES = 338f
+private const val TURN_FULL_DEGREES = 360f
+private const val TURN_OVERSHOOT_AT_MS = 1196 // 46% of the cycle
+private const val TURN_SETTLE_AT_MS = 1560 // 60%
+private const val TURN_REST_AT_MS = 2028 // 78%, then still until the loop restarts
+
+private val IndicatorSize = 64.dp
+private val WheelSize = 32.dp
+private val RingStroke = 1.5.dp
 
 /**
- * Listening state: [AiWheelMark] spinning with [AiCoolGradientTokens], plus an
- * amplitude-style waveform underneath — the real counterpart to `ai_search_input_mockup.html`
- * stage 03's CSS sine-wave demo, driven by [kotlin.math.sin] over a single looping time
- * value instead of one `Animatable` per bar (14 independent infinite animations would be
- * wasteful for a component that's already spinning the wheel on its own driver).
+ * What the AI surface shows while it is busy, in the two ways it can be busy.
+ *
+ * The two modes are deliberately different motions rather than the same spinner with different
+ * words next to it:
+ *
+ * - [AiActivity.Listening] does not rotate at all. The rings carry it. A wheel spinning inside
+ *   rings that are already radiating is two things shouting the same thing, and the rider is
+ *   being asked to speak, not to watch.
+ * - [AiActivity.Working] turns once, overshoots slightly, settles back, then holds still for a
+ *   beat before going again. Rotation therefore means thinking, and only thinking, which is
+ *   what lets it mean anything at all.
+ *
+ * Replaces a waveform. A waveform implies it is drawing what it hears, and it was not: the bars
+ * were a sine wave on a timer, identical whether the rider spoke or sat in silence.
  */
 @Composable
 fun AiListeningIndicator(
     modifier: Modifier = Modifier,
     active: Boolean = true,
+    activity: AiActivity = AiActivity.Listening,
     colors: List<Color> = AiCoolGradientTokens.stops,
-    // A waveform already says "listening", and it says it better than a mark can. The mark is
-    // only worth drawing where there is no waveform beside it.
-    showMark: Boolean = true,
 ) {
-    val dim = KrailTheme.dimensions
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dim.spacingM),
+    Box(
+        modifier = modifier.size(IndicatorSize),
+        contentAlignment = Alignment.Center,
     ) {
-        if (showMark) {
-            AiWheelMark(spinning = active, colors = colors)
+        if (active) {
+            RadiatingRings(colors = colors)
         }
-        AiWaveform(active = active, colors = colors)
+        // Listening leaves the wheel still and lets the rings speak; working turns it. Rotated
+        // here rather than through AiWheelMark's own `spinning`, which is a continuous spin at
+        // a fixed rate: this needs a turn with an overshoot, a settle and a pause in it, and
+        // widening that component's API for one caller would push the shape of this animation
+        // into every other place the mark is drawn.
+        val turn = if (active && activity == AiActivity.Working) rememberWorkingTurn() else 0f
+        AiWheelMark(
+            spinning = false,
+            colors = colors,
+            markSize = WheelSize,
+            modifier = Modifier.graphicsLayer { rotationZ = turn },
+        )
     }
 }
 
-@Composable
-private fun AiWaveform(active: Boolean, colors: List<Color>, modifier: Modifier = Modifier) {
-    // Animatable + LaunchedEffect(active), not rememberInfiniteTransition unconditionally —
-    // the latter starts its animation clock regardless of whether the value is read, which
-    // hangs Robolectric's screenshot capture (it waits for the clock to go idle). Same
-    // reasoning as rememberAiSpinAngle only starting infiniteRepeatable when spinning.
-    val timeState = remember { Animatable(0f) }
-    LaunchedEffect(active) {
-        if (active) {
-            timeState.animateTo(
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = WAVE_CYCLE_MS, easing = LinearEasing),
-                ),
-            )
-        } else {
-            timeState.snapTo(0f)
-        }
-    }
-    val time = timeState.value
-    val brush = remember(colors) { Brush.verticalGradient(colors) }
+/** Which kind of busy, which decides whether the wheel turns. */
+enum class AiActivity { Listening, Working }
 
-    Canvas(modifier = modifier.width(WaveformWidth).height(WaveformHeight)) {
-        val barGap = size.width / BAR_COUNT
-        val barStrokePx = BarWidth.toPx()
-        for (i in 0 until BAR_COUNT) {
-            val amplitude = if (active) barAmplitude(time, i) else 0f
-            val barHeight = size.height * (
-                MIN_BAR_HEIGHT_FRACTION +
-                    (MAX_BAR_HEIGHT_FRACTION - MIN_BAR_HEIGHT_FRACTION) * amplitude
-                )
-            val x = barGap * i + barGap / 2f
-            drawLine(
-                brush = brush,
-                start = androidx.compose.ui.geometry.Offset(x, size.height / 2f + barHeight / 2f),
-                end = androidx.compose.ui.geometry.Offset(x, size.height / 2f - barHeight / 2f),
-                strokeWidth = barStrokePx,
-                cap = StrokeCap.Round,
+/**
+ * Three rings on a staggered loop, each growing out of the wheel and fading.
+ *
+ * Drawn in one Canvas off a single animation value rather than as three animated composables:
+ * the stagger is a phase offset on the same clock, so there is one animation running instead of
+ * three, and they can never drift apart.
+ */
+@Composable
+private fun RadiatingRings(colors: List<Color>, modifier: Modifier = Modifier) {
+    // Animatable started by LaunchedEffect rather than rememberInfiniteTransition, which starts
+    // its clock whether or not the value is read and hangs Robolectric's screenshot capture
+    // waiting for that clock to go idle. Same reason rememberAiSpinAngle does it this way.
+    val phase = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        phase.animateTo(
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = RING_CYCLE_MS, easing = LinearEasing),
+            ),
+        )
+    }
+    val ringColor = colors.firstOrNull() ?: Color.Unspecified
+
+    Canvas(modifier = modifier.size(IndicatorSize)) {
+        val strokePx = RingStroke.toPx()
+        val baseRadius = size.minDimension / 2f - strokePx
+        repeat(RING_COUNT) { index ->
+            val ringPhase = (phase.value + index.toFloat() / RING_COUNT) % 1f
+            val scale = RING_START_SCALE + (RING_END_SCALE - RING_START_SCALE) * ringPhase
+            drawCircle(
+                color = ringColor,
+                radius = baseRadius * scale,
+                alpha = ringAlpha(ringPhase),
+                style = Stroke(width = strokePx),
             )
         }
     }
 }
 
 /**
- * Height fraction for bar [index] at loop position [time] (0..1).
- *
- * Two sines multiplied, both on periods that divide the loop so it repeats seamlessly:
- *
- * - the travelling wave runs [WAVES_PER_CYCLE] times per loop, and [PHASE_STEP] spreads a
- *   little over one full wave across the row, so the crest reads as moving left to right
- *   rather than every bar pumping at once;
- * - the envelope runs once per loop and scales the whole row between [ENVELOPE_FLOOR] and
- *   full height, so the waveform swells and eases off the way a voice does.
- *
- * The sines are mapped from -1..1 into 0..1 rather than passed through `abs`. `abs` folds the
- * negative half back up, which both doubles the apparent rate and puts a hard corner at every
- * zero crossing — bars snapping off the floor is exactly what made this read as frantic.
+ * Full strength as a ring leaves the wheel, most of the fade done by [RING_FADE_POINT], gone at
+ * the edge. Fading late rather than linearly keeps the ring readable while it is still near the
+ * wheel, which is where it reads as coming *from* something.
  */
-private fun barAmplitude(time: Float, index: Int): Float {
-    val wave = sin(TAU * WAVES_PER_CYCLE * time + index * PHASE_STEP).toUnitRange()
-    val envelope = ENVELOPE_FLOOR + ENVELOPE_RANGE * sin(TAU * time).toUnitRange()
-    return wave * envelope
+private fun ringAlpha(ringPhase: Float): Float = when {
+    ringPhase <= RING_FADE_POINT ->
+        RING_START_ALPHA - (RING_START_ALPHA - RING_FADE_ALPHA) * (ringPhase / RING_FADE_POINT)
+    else -> {
+        val tail = (ringPhase - RING_FADE_POINT) / (1f - RING_FADE_POINT)
+        RING_FADE_ALPHA * (1f - tail)
+    }
 }
 
-private fun Double.toUnitRange(): Float = ((this + 1.0) / 2.0).toFloat()
+/**
+ * One turn, a small overshoot past the top, a settle back to it, then stillness until the loop
+ * comes round. The pause is what stops it reading as a spinner that could run forever.
+ */
+@Composable
+private fun rememberWorkingTurn(): Float {
+    val angle = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        angle.animateTo(
+            targetValue = TURN_FULL_DEGREES,
+            animationSpec = infiniteRepeatable(
+                animation = keyframes {
+                    durationMillis = TURN_CYCLE_MS
+                    0f at 0 using FastOutSlowInEasing
+                    TURN_OVERSHOOT_DEGREES at TURN_OVERSHOOT_AT_MS using FastOutSlowInEasing
+                    TURN_SETTLE_BACK_DEGREES at TURN_SETTLE_AT_MS using FastOutSlowInEasing
+                    TURN_FULL_DEGREES at TURN_REST_AT_MS
+                    TURN_FULL_DEGREES at TURN_CYCLE_MS
+                },
+                repeatMode = RepeatMode.Restart,
+            ),
+        )
+    }
+    return angle.value
+}
 
 // region Previews
 
@@ -147,9 +185,17 @@ private fun PreviewAiListeningIndicatorFrozen() {
 
 @PreviewComponent
 @Composable
-private fun PreviewAiListeningIndicatorActive() {
+private fun PreviewAiListeningIndicatorListening() {
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
-        AiListeningIndicator(active = true)
+        AiListeningIndicator(active = true, activity = AiActivity.Listening)
+    }
+}
+
+@PreviewComponent
+@Composable
+private fun PreviewAiListeningIndicatorWorking() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        AiListeningIndicator(active = true, activity = AiActivity.Working)
     }
 }
 

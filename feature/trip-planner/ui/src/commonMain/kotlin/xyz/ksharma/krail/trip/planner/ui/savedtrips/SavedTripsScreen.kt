@@ -80,7 +80,8 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
-import xyz.ksharma.krail.trip.planner.ui.components.ai.AiInputSurface
+import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
+import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -152,129 +153,141 @@ fun SavedTripsScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            // The search row is pinned to the bottom of this box and its AI box is a real text
-            // field, so the layout area has to end where the keyboard starts — same root-level
-            // imePadding SearchStopScreen uses. Padding the row itself instead only stretches
-            // its coloured background downwards.
-            .imePadding()
-            .background(color = KrailTheme.colors.surface)
-            .onSizeChanged { log("[MAP_STOP_SEL] outerBox size=${it.width}x${it.height}") },
-    ) {
-        val body: @Composable BoxScope.() -> Unit = {
-            // Push content away from a side display cutout in landscape. Horizontal-only
-            // inset means portrait is untouched (cutout there is already covered by the
-            // status bar inset that TitleBar handles internally), but in landscape the
-            // whole column shifts right of the camera notch.
-            Column(
-                modifier = Modifier.windowInsetsPadding(
-                    WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal),
-                ),
-            ) {
-                TitleBar(
-                    title = {
-                        Text(text = "KRAIL", color = themeColor())
-                    },
-                    actions = {
-                        SavedTripsTitleBarActions(
-                            editing = editing,
-                            isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
-                            displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
-                            onDoneClick = { editing = false },
-                            onDiscoverButtonClick = onDiscoverButtonClick,
-                            onSettingsButtonClick = onSettingsButtonClick,
-                        )
-                    },
-                )
-
-                val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
-
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                // The search row is pinned to the bottom of this box and its AI box is a real text
+                // field, so the layout area has to end where the keyboard starts — same root-level
+                // imePadding SearchStopScreen uses. Padding the row itself instead only stretches
+                // its coloured background downwards.
+                //
+                // Deliberately NOT applied to the AI surface, which is a sibling below rather than
+                // a child: that surface covers the whole screen and handles the keyboard on the one
+                // control that needs it. Inheriting this inset shrank it by a whole keyboard.
+                .imePadding()
+                .background(color = KrailTheme.colors.surface)
+                .onSizeChanged { log("[MAP_STOP_SEL] outerBox size=${it.width}x${it.height}") },
+        ) {
+            val body: @Composable BoxScope.() -> Unit = {
+                // Push content away from a side display cutout in landscape. Horizontal-only
+                // inset means portrait is untouched (cutout there is already covered by the
+                // status bar inset that TitleBar handles internally), but in landscape the
+                // whole column shifts right of the camera notch.
+                Column(
+                    modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal),
+                    ),
                 ) {
-                    savedTripsListBody(
-                        savedTripsState = savedTripsState,
-                        trackedJourney = trackedJourney,
-                        onEvent = onEvent,
-                        onSavedTripCardClick = onSavedTripCardClick,
-                        onTrackingCardClick = onTrackingCardClick,
-                        onStopTracking = onStopTracking,
-                        expandedMap = expandedMap,
-                        editing = editing,
-                        reorderState = reorderState,
-                        onEnterEditing = { editing = true },
-                        onAddParkRideClick = onAddParkRideClick,
+                    TitleBar(
+                        title = {
+                            Text(text = "KRAIL", color = themeColor())
+                        },
+                        actions = {
+                            SavedTripsTitleBarActions(
+                                editing = editing,
+                                isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
+                                displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
+                                onDoneClick = { editing = false },
+                                onDiscoverButtonClick = onDiscoverButtonClick,
+                                onSettingsButtonClick = onSettingsButtonClick,
+                            )
+                        },
                     )
+
+                    val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
+
+                    LazyColumn(
+                        state = lazyListState,
+                        contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
+                    ) {
+                        savedTripsListBody(
+                            savedTripsState = savedTripsState,
+                            trackedJourney = trackedJourney,
+                            onEvent = onEvent,
+                            onSavedTripCardClick = onSavedTripCardClick,
+                            onTrackingCardClick = onTrackingCardClick,
+                            onStopTracking = onStopTracking,
+                            expandedMap = expandedMap,
+                            editing = editing,
+                            reorderState = reorderState,
+                            onEnterEditing = { editing = true },
+                            onAddParkRideClick = onAddParkRideClick,
+                        )
+                    }
                 }
-            }
 
-            // Hold the bottom row off-screen until the saved-trips load has emitted at
-            // least once. Without this gate, the row renders against an empty
-            // savedTrips list (pill condition false → expanded), then flips to the
-            // pill once the DB lands — a visible flash of the wrong UI.
-            //
-            // Reveal is a plain slide-up + fade for both the collapsed pill and the
-            // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
-            // itself — keeping the row-level reveal calm avoids stacking two bouncy
-            // animations (parent scale + child pulse) on top of each other.
-            SavedTripsBottomSearchRow(
-                visible = !savedTripsState.isSavedTripsLoading && !editing,
-                fromStopItem = savedTripsState.fromStop,
-                toStopItem = savedTripsState.toStop,
-                isExpanded = effectiveIsExpanded,
-                isFromHighlighted = isFromHighlighted,
-                showPill = showPill,
-                onExpandRequest = {
-                    isSearchExpanded = true
-                    isFromHighlighted = false
-                },
-                onCollapseRequest = {
-                    isSearchExpanded = false
-                    isFromHighlighted = false
-                },
-                fromButtonClick = {
-                    isFromHighlighted = false
-                    fromButtonClick()
-                },
-                toButtonClick = toButtonClick,
-                onSearchButtonClick = { onSearchButtonClick() },
-                onAiEvent = onAiEvent,
-                isAiSearchAvailable = aiState.isFeatureEnabled,
-                dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
-                onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
-
-            // The AI surface is a sheet over the whole screen rather than a mode inside the
-            // row: what a rider does here (speak, watch it listen, be told it could not place
-            // something) needs more room than two text fields, and folding it into them was
-            // what made the previous attempt fight the layout. It still only ever writes into
-            // those same two fields.
-            if (aiState.isInputOpen) {
-                AiInputSurface(
-                    state = aiState,
-                    onEvent = onAiEvent,
-                    onDismiss = { onAiEvent(AiSearchInputEvent.CloseInput) },
+                // Hold the bottom row off-screen until the saved-trips load has emitted at
+                // least once. Without this gate, the row renders against an empty
+                // savedTrips list (pill condition false → expanded), then flips to the
+                // pill once the DB lands — a visible flash of the wrong UI.
+                //
+                // Reveal is a plain slide-up + fade for both the collapsed pill and the
+                // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
+                // itself — keeping the row-level reveal calm avoids stacking two bouncy
+                // animations (parent scale + child pulse) on top of each other.
+                SavedTripsBottomSearchRow(
+                    visible = !savedTripsState.isSavedTripsLoading && !editing,
+                    fromStopItem = savedTripsState.fromStop,
+                    toStopItem = savedTripsState.toStop,
+                    isExpanded = effectiveIsExpanded,
+                    isFromHighlighted = isFromHighlighted,
+                    showPill = showPill,
+                    onExpandRequest = {
+                        isSearchExpanded = true
+                        isFromHighlighted = false
+                    },
+                    onCollapseRequest = {
+                        isSearchExpanded = false
+                        isFromHighlighted = false
+                    },
+                    fromButtonClick = {
+                        isFromHighlighted = false
+                        fromButtonClick()
+                    },
+                    toButtonClick = toButtonClick,
+                    onSearchButtonClick = { onSearchButtonClick() },
+                    onAiEvent = onAiEvent,
+                    isAiSearchAvailable = aiState.isFeatureEnabled,
+                    dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
+                    onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
+            }
+            log(
+                "[MAP_STOP_SEL] SavedTripsScreen dualPane=$dualPane " +
+                    "isTablet=$isTablet isPhoneLandscape=$isPhoneLandscape",
+            )
+            if (dualPane) {
+                // Shared dual-pane split — same component SearchStop uses, so the two screens'
+                // two-pane layouts can't drift. Right pane (map) is a sibling of the list, never
+                // nested under it; see DualPaneScaffold for the iOS compositing invariant.
+                DualPaneScaffold(
+                    listPane = { body() },
+                    rightPane = rightPane,
+                )
+            } else {
+                body()
             }
         }
-        log(
-            "[MAP_STOP_SEL] SavedTripsScreen dualPane=$dualPane " +
-                "isTablet=$isTablet isPhoneLandscape=$isPhoneLandscape",
-        )
-        if (dualPane) {
-            // Shared dual-pane split — same component SearchStop uses, so the two screens'
-            // two-pane layouts can't drift. Right pane (map) is a sibling of the list, never
-            // nested under it; see DualPaneScaffold for the iOS compositing invariant.
-            DualPaneScaffold(
-                listPane = { body() },
-                rightPane = rightPane,
+
+        // A sheet over the whole screen rather than a mode inside the row: what a rider does here
+        // needs more room than two text fields. Outside the ime-padded box on purpose, so it gets
+        // the full screen and decides for itself which part of it moves for the keyboard.
+        if (aiState.isInputOpen) {
+            // Built here because this screen already holds the rider's labels and saved trips.
+            // Nothing new is read, nothing is stored, and the AI ViewModel keeps knowing nothing
+            // about greetings.
+            val greeting = rememberAiGreeting(
+                stopLabels = savedTripsState.stopLabels,
+                savedTrips = savedTripsState.savedTrips,
             )
-        } else {
-            body()
+            AskKrailScreen(
+                state = aiState,
+                suggestion = greeting.suggestion,
+                onEvent = onAiEvent,
+                onDismiss = { onAiEvent(AiSearchInputEvent.CloseInput) },
+            )
         }
     }
 }

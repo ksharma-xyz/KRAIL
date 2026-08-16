@@ -47,6 +47,19 @@ internal object LabelSynonyms {
         return GROUPS.firstOrNull { normalised in it }?.first() ?: normalised
     }
 
+    /**
+     * True when this word is one the app treats as a rider's name for a place.
+     *
+     * These must never reach a stop-name search. "work" with no Work label set matched
+     * **Blacktown Workers Club**, and a rider who says "work" has never in the history of
+     * anything meant a club whose name contains those letters. A label word either resolves to
+     * a label or to nothing at all.
+     */
+    fun isLabelWord(word: String): Boolean {
+        val normalised = word.trim().lowercase()
+        return GROUPS.any { normalised in it }
+    }
+
     /** True when two labels name the same kind of place. */
     fun sameMeaning(first: String, second: String): Boolean = canonical(first) == canonical(second)
 }

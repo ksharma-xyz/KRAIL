@@ -129,6 +129,11 @@ internal fun AiInputContent(
         // Above the bar, not below it. The bar is pinned to the bottom edge, so a message that
         // grows to three lines would otherwise shove it and its controls upward. Above, it
         // takes room from the empty space, which is what that space is for.
+        // No action button yet, deliberately. The obvious destination, "Manage your labels",
+        // can only rename, reorder and remove — a label is CREATED from the stop search, by
+        // finding a stop and saving it under a name. A button landing a rider on a screen that
+        // cannot do the thing the message just told them to do is worse than no button, so the
+        // message names the real route and the shortcut waits until it can point at it.
         state.problemMessage()?.let { AiProblemBanner(message = it) }
 
         Spacer(modifier = Modifier.height(dim.spacingM))

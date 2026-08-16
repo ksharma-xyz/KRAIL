@@ -115,6 +115,26 @@ class LabelledStopLocatorTest {
     }
 
     @Test
+    fun `a rider standing at the destination is already there`() = runTest {
+        // "To home by 9pm" while at home. The caller uses this to leave the origin blank rather
+        // than filling it with the stop next door, which would be a trip to a neighbour.
+        putLabel("Home", "20202", "Seven Hills Station", homeLat, homeLon)
+
+        val there = locator.isStandingAt("20202", latitude = homeLat, longitude = homeLon)
+
+        assertEquals(true, there)
+    }
+
+    @Test
+    fun `a rider well away from the destination is not already there`() = runTest {
+        putLabel("Home", "20202", "Seven Hills Station", homeLat, homeLon)
+
+        val there = locator.isStandingAt("20202", latitude = workLat, longitude = workLon)
+
+        assertEquals(false, there)
+    }
+
+    @Test
     fun `a rider with no labels at all resolves to nothing`() = runTest {
         val origin = locator.nearestLabelledStop(
             latitude = workLat,

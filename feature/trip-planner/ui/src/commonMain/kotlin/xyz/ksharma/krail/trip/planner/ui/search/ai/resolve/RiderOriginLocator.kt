@@ -35,6 +35,16 @@ class RiderOriginLocator(
     suspend fun originStop(excludeStopId: String?): StopItem? {
         val location = resolveCurrentLocation() ?: return null
 
+        // Already there. "To home by 9pm" while standing at home used to fill the origin with
+        // the next stop along the road, which is a journey from one bus stop to its neighbour.
+        // Leaving it blank says nothing untrue and leaves the field editable.
+        val alreadyThere = excludeStopId != null && labelledStopLocator?.isStandingAt(
+            stopId = excludeStopId,
+            latitude = location.latitude,
+            longitude = location.longitude,
+        ) == true
+        if (alreadyThere) return null
+
         return labelledStopLocator?.nearestLabelledStop(
             latitude = location.latitude,
             longitude = location.longitude,

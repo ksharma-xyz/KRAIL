@@ -9,19 +9,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiTextService
 import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextService
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-
-private const val NEARBY_STOP_RADIUS_KM = 1.0
 
 // Ceiling on one listening session. The rider's stop button is the real control; ending it
 // otherwise is normally the recogniser's call, since it stops when they stop talking, with the
@@ -70,16 +67,16 @@ class AiSearchInputViewModel(
     // resolving a place is declared in one ordered list (see StopTextResolver) instead of
     // growing branches in here.
     private val stopTextResolver: StopTextResolver,
-    private val nearbyStopsRepository: NearbyStopsRepository,
-    // A lambda, not a UserLocationManager, because UserLocationManager only exists as
-    // `rememberUserLocationManager()` — a @Composable factory (its underlying permission/
-    // location controllers need Activity context tied to composition) — there is no Koin
-    // single<UserLocationManager> to inject here. The Composable layer (AiSearchInputRoute)
-    // builds this from rememberUserLocationManager() and passes it in via koinViewModel's
-    // parametersOf, same pattern TrackTripViewModel already uses for its own
-    // Composable-supplied param. NearbyStopsRepository itself has no such constraint, so it's
-    // a plain constructor dependency rather than folded into this lambda too.
-    private val resolveCurrentLocation: suspend () -> Location? = { null },
+    // Where a journey starts when the rider did not say. One collaborator rather than a
+    // location lambda, a nearby repository and a label locator sitting side by side: they only
+    // ever answer one question between them.
+    //
+    // The location half is Composable-supplied. UserLocationManager exists only as
+    // `rememberUserLocationManager()` — its permission and location controllers need Activity
+    // context tied to composition — so there is no Koin single to inject here. The Composable
+    // layer builds the lambda and passes it through koinViewModel's parametersOf, the same
+    // pattern TrackTripViewModel already uses.
+    private val riderOriginLocator: RiderOriginLocator = RiderOriginLocator(),
     private val isAiSearchInputEnabled: () -> Boolean = { false },
 ) : ViewModel() {
 
@@ -350,7 +347,7 @@ class AiSearchInputViewModel(
                 // the From field with wherever the rider happened to be standing. That reads
                 // as the app having understood something, which is the one thing it must not
                 // fake.
-                toStopItem != null -> resolveCurrentLocationStop()
+                toStopItem != null -> resolveCurrentLocationStop(excludeStopId = toStopItem.stopId)
 
                 else -> null to null
             }
@@ -414,15 +411,9 @@ class AiSearchInputViewModel(
      * lambda) just means the field stays unresolved (pencil-editable), never a crash or a
      * blocking prompt the rider didn't ask for by typing into this flow in the first place.
      */
-    private suspend fun resolveCurrentLocationStop(): Pair<String?, StopItem?> {
-        val location = resolveCurrentLocation() ?: return null to null
-        val stop = nearbyStopsRepository.getStopsNearby(
-            centerLat = location.latitude,
-            centerLon = location.longitude,
-            radiusKm = NEARBY_STOP_RADIUS_KM,
-            maxResults = 1,
-        ).firstOrNull()?.let { StopItem(stopName = it.stopName, stopId = it.stopId) } ?: return null to null
-        return stop.stopName to stop
+    private suspend fun resolveCurrentLocationStop(excludeStopId: String?): Pair<String?, StopItem?> {
+        val stop = riderOriginLocator.originStop(excludeStopId = excludeStopId)
+        return stop?.stopName to stop
     }
 }
 

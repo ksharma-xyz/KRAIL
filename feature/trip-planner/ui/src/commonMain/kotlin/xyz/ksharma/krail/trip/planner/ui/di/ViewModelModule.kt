@@ -32,6 +32,8 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelledStopLocator
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopLabelTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopSearchTextResolver
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealRemoteAddressResultsManager
@@ -100,8 +102,13 @@ val viewModelsModule = module {
                     StopSearchTextResolver(stopResultsManager = get()),
                 ),
             ),
-            nearbyStopsRepository = get(),
-            resolveCurrentLocation = resolveCurrentLocation,
+            // Same precedence idea as the resolver chain above, applied to where a journey
+            // starts: a stop the rider named beats one that happens to be nearby.
+            riderOriginLocator = RiderOriginLocator(
+                resolveCurrentLocation = resolveCurrentLocation,
+                labelledStopLocator = LabelledStopLocator(sandook = get()),
+                nearbyStopsRepository = get(),
+            ),
             isAiSearchInputEnabled = isAiSearchInputEnabled,
         )
     }

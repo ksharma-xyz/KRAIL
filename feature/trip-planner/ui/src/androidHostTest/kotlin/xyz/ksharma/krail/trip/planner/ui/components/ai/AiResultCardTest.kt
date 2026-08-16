@@ -5,13 +5,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -136,16 +139,36 @@ class AiResultCardTest {
         composeRule.onNodeWithContentDescription(MIC_DESCRIPTION).assertExists()
     }
 
+    @Test
+    fun shortHost_theBarsActionsStayInsideIt() {
+        // A keyboard takes roughly half the screen, and the surface's column ends where the
+        // keyboard starts. This is that column, not the whole screen.
+        setContent(
+            state(from = SEVEN_HILLS, to = WYNYARD, typed = SIX_LINES),
+            hostHeight = SQUEEZED_HOST_HEIGHT,
+        )
+
+        // assertIsDisplayed, not a bounds comparison. The bar is measured with whatever
+        // height is left after the result above it, and when that is less than its own content
+        // needs, the action row is clipped INSIDE the bar: its unclipped bounds still read as
+        // on screen while the rider can see none of it. Only a display check catches that.
+        composeRule.onNodeWithContentDescription(MIC_DESCRIPTION).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(SEND_DESCRIPTION).assertIsDisplayed()
+    }
+
     private fun setContent(
         state: AiSearchInputUiState,
         onSeeTimes: () -> Unit = {},
+        hostHeight: Dp = HOST_HEIGHT,
     ) {
         composeRule.setContent {
             PreviewTheme {
-                Column(modifier = Modifier.fillMaxWidth().height(HOST_HEIGHT)) {
+                Column(modifier = Modifier.fillMaxWidth().height(hostHeight)) {
                     AiInputContent(
                         state = state,
-                        textFieldState = rememberTextFieldState(),
+                        // Seeded the way AskKrailScreen seeds it, or the bar measures one line
+                        // tall no matter what the state says the rider typed.
+                        textFieldState = rememberTextFieldState(initialText = state.typedText),
                         suggestion = SUGGESTION,
                         onEvent = {},
                         modifier = Modifier.weight(1f),
@@ -160,9 +183,11 @@ class AiResultCardTest {
         from: StopItem?,
         to: StopItem?,
         phase: AiSearchInputPhase = AiSearchInputPhase.RESOLVED,
+        typed: String = "",
     ) = AiSearchInputUiState(
         isInputOpen = true,
         phase = phase,
+        typedText = typed,
         resolved = ResolvedTripIntent(
             fromText = from?.stopName,
             fromStopItem = from,
@@ -175,10 +200,22 @@ class AiResultCardTest {
 
     private companion object {
         val HOST_HEIGHT = 800.dp
+
+        // What AiInputContent actually gets on a Pixel with the keyboard open: roughly 800dp
+        // of screen, less the keyboard, the status bar, the title bar and this surface's own
+        // vertical padding. Measured against a device, not picked to make the test pass.
+        val SQUEEZED_HOST_HEIGHT = 340.dp
+
+        // The bar grows to six lines and then stops. Six is its worst case.
+        val SIX_LINES = (1..6).joinToString("\n") { "line $it of a long sentence" }
         const val SUGGESTION = "Home to Work by 9am"
         const val ARRIVE_TEXT = "Arrive"
         const val STARTING_FROM_PLACEHOLDER = "Starting from"
         const val MIC_DESCRIPTION = "Speak"
+        // The send button's own description, which is "Continue" and not "Send". Worth naming:
+        // a probe asserting on a description no node carries fails whatever the layout does, and
+        // this one did, for three rounds, while reading as a real clipping bug.
+        const val SEND_DESCRIPTION = "Continue"
         val SEVEN_HILLS = StopItem(stopId = "2147", stopName = "Seven Hills Station")
         val WYNYARD = StopItem(stopId = "200070", stopName = "Wynyard Station")
     }

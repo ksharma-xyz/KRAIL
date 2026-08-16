@@ -170,7 +170,19 @@ internal fun AiInputBar(
             // stay readable while it is being worked out. Submitting twice is already guarded
             // in the ViewModel, so nothing needs the field to be inert.
             enabled = true,
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+            // weight, with fill = false. The controls below are NOT weighted, so the Column
+            // measures them first and the sentence gets only what is left. Without this the
+            // field took its natural height up to six lines, and when the bar itself had been
+            // squeezed - keyboard up, a result above it, or landscape - the controls were laid
+            // out past the bar's own bottom edge and clipped INSIDE it. The rider saw a sentence
+            // with no way to send it, while the buttons' unclipped bounds still reported as on
+            // screen, which is why a bounds assertion missed this and only assertIsDisplayed
+            // caught it. fill = false so a short sentence still makes a short bar.
+            // See docs/learning/2026-08-16-clipped-inside-its-own-parent.md.
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(weight = 1f, fill = false)
+                .focusRequester(focusRequester),
             onTextChange = { onEvent(AiSearchInputEvent.TypedTextChanged(it.toString())) },
         )
 

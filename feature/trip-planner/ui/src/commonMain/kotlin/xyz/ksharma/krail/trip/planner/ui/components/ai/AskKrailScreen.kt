@@ -39,6 +39,7 @@ import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
@@ -167,11 +168,12 @@ private fun AskKrailFullScreen(
                 // clipped off the top of the screen. Never let that attribute be removed.
                 .safeDrawingPadding(),
         ) {
-            // Back button, no words. The field says Ask KRAIL, and a title bar repeating it
-            // over an otherwise empty screen was the app introducing itself twice. The bar is
-            // still here because the way out has to be.
+            // Named, like every other screen in the app. It was briefly title-less on the
+            // grounds that the field said Ask KRAIL too, but the field no longer does: it asks
+            // "Where to, and when?". The three lines now do three different jobs rather than
+            // repeating one instruction, which was the actual problem.
             TitleBar(
-                title = {},
+                title = { Text(text = AI_INPUT_QUESTION) },
                 onNavActionClick = onDismiss,
             )
             // Scrolling belongs to the content and only to the content. This column used to
@@ -191,7 +193,10 @@ private fun AskKrailFullScreen(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(top = dim.spacingM, bottom = dim.spacingXL),
+                    // Enough to lift the bar off the keyboard without leaving a band of empty
+                    // colour under it. 16dp read as resting on the keyboard, 32dp as floating
+                    // away from it.
+                    .padding(top = dim.spacingM, bottom = dim.spacingXXL),
             )
         }
     }

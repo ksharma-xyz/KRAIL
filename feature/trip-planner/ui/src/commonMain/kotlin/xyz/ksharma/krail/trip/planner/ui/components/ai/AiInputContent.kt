@@ -35,6 +35,11 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 // the button all need the room more than an animation does.
 private const val FONT_SCALE_WHERE_DECORATION_COSTS_MORE_THAN_IT_SAYS = 1.5f
 
+// Past this scale the surface stops being a dialog and takes the whole screen. It no longer
+// changes the CONTROLS: there used to be a worded "Speak" button stacked under the bar here for
+// large font scales, from when the actions were a separate row below the field. Once mic and
+// send folded into the bar, that button was a second way to do the same thing sitting directly
+// under the first one, and the mic keeps its full touch target at every scale anyway.
 internal const val ACTIONS_STACK_SCALE = 1.8f
 
 // The greeting leaves slower than anything arrives. A welcome that snaps off the screen the
@@ -79,7 +84,6 @@ internal fun AiInputContent(
     val fontScale = LocalDensity.current.fontScale
     val workingBorder = rememberWorkingBorder(isWorking = state.isWorking)
     val showDecoration = fontScale < FONT_SCALE_WHERE_DECORATION_COSTS_MORE_THAN_IT_SAYS
-    val stackActions = fontScale >= ACTIONS_STACK_SCALE
     // A latch, not a condition. The greeting is a welcome, and a welcome is said once: tying it
     // to "the field is empty" brought it back every time a rider cleared what they had typed to
     // start again, which is exactly the moment they least need to be greeted.
@@ -135,14 +139,6 @@ internal fun AiInputContent(
             placeholder = AI_INPUT_PLACEHOLDER,
             onEvent = onEvent,
         )
-
-        // Only past the largest font scales, where a glyph in a column of worded controls is
-        // the odd one out and there is width to spare for the words. Below that the bar holds
-        // both controls itself.
-        if (stackActions) {
-            Spacer(modifier = Modifier.height(dim.spacingM))
-            AiVoiceControl(state = state, onEvent = onEvent, labelled = true)
-        }
     }
 }
 

@@ -149,6 +149,23 @@ We stack PRs. Break work into focused, layered branches and submit the full stac
 
 All three must be green before submitting the PR or handing the branch back.
 
+## Layout, insets and the keyboard
+
+Before changing a screen's root layout, adding a bottom-anchored input, or touching an
+inset modifier, read **`docs/LAYOUT_AND_INSETS.md`**. It holds the one-inset-authority rule,
+why `MainActivity` must keep `android:windowSoftInputMode="adjustResize"`, why
+`fillMaxSize()` silently does nothing on a non-weighted `Column` child, and the diagnosis
+playbook for when a node is drawn somewhere other than where it was laid out.
+
+`scripts/check_layout_invariants.py` enforces the two mechanical parts and runs inside
+`fullQualityChecks.sh`.
+
+**When a layout looks wrong on device, measure before theorising.** Log
+`onGloballyPositioned { it.positionInRoot().y }` at every level and compare it against a
+screenshot taken at the same moment. A node laid out at one position and drawn at another is
+the window moving, not the layout, and no amount of re-reading modifiers will show it. Part 2
+of the doc has the exact procedure.
+
 ## QA checklist before handing over code
 
 Detekt and unit tests prove the code compiles and its logic holds. They prove nothing about
@@ -254,6 +271,27 @@ xcrun simctl install <UDID> "<build-dir>/Build/Products/Debug-iphonesimulator/Kr
 xcrun simctl launch <UDID> xyz.ksharma.krail
 ```
 
+## Analytics-derived design decisions
+
+When a design decision is justified by KRAIL-Analytics data, add a row to
+**`docs/ANALYTICS_ASSUMPTIONS.md`** rather than only writing the finding into a code comment.
+Each row records the claim, what depends on it, how to re-check it, what would falsify it, and
+when it falls due (three months by default).
+
+`scripts/check_stale_assumptions.py` reports overdue rows and runs as a warning inside
+`fullQualityChecks.sh`; `--strict` exits non-zero for a scheduled job.
+
+**The file is qualitative only** — KRAIL is public, so no counts, percentages or rates go in it,
+same rule as PR bodies. Write "weekend openings are a substantial share", never the number.
+
+## Learning log
+
+`docs/learning/` records bugs that were expensive to find, and how the finding went wrong.
+Add an entry when the first fix was wrong and so was the second, when detekt and tests were
+green while the bug was live, or when diagnosis needed instrumentation rather than reading
+code. `docs/learning/README.md` has the format and the rules; prefer adding a check over
+adding a paragraph.
+
 ## Full Quality Checks
 
 To verify a branch compiles on both platforms and passes static analysis, run:
@@ -263,6 +301,8 @@ To verify a branch compiles on both platforms and passes static analysis, run:
 ```
 
 This runs, in order:
+0. `check_layout_invariants.py` — manifest and inset-authority guards, then
+   `check_stale_assumptions.py` — overdue analytics assumptions (warning only)
 1. `compileDebugSources` — Android compile
 2. `compileKotlinIosSimulatorArm64` — iOS Simulator compile
 3. `detekt --continue` — static analysis (auto-corrects imports and trailing commas)
@@ -370,6 +410,9 @@ that contradicts the doc should also update the doc in the same change.
   `onAddressSearchTextChanged` or the `search_stop_address_*` Remote Config contract.
 - `docs/TABLET_FOLDABLE_UX.md` — adaptive layout rules for tablets, foldables, and phone
   landscape (per-screen dual-pane behaviour, compact-height adaptations, breakpoint contract).
+- `docs/LAYOUT_AND_INSETS.md` — inset authority, `adjustResize`, `weight` vs `fillMaxSize`,
+  and how to tell a layout bug from the window moving; read before changing a screen root or
+  a bottom-anchored input.
 - `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`
   pattern, why plain `LaunchedEffect` breaks background gating, all polling flows listed.
 - `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s

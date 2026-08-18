@@ -42,6 +42,13 @@ private const val LISTENING_CEILING_MILLIS = 10_000L
 private const val LISTENING_EXTENSION_MILLIS = 5_000L
 private const val STILL_SPEAKING_WINDOW_MILLIS = 4_000L
 
+// How long a resolved answer stays on the dialog before it closes itself. Long enough for the
+// spinning border to finish its beat and start settling (WorkingBorder keeps turning 1.1s past
+// the answer), short enough that the close still reads as a consequence of the send. The rider
+// is not reading the answer here — the row behind the dialog is where the answer lands, and the
+// close is what points them at it.
+private const val HANDOFF_SETTLE_MILLIS = 1_500L
+
 private const val AI_OUTCOME_TAG = "[AI_OUTCOME]"
 
 // Reasons the UI branches on. Strings rather than a type because SpeechToTextService reports
@@ -124,8 +131,17 @@ class AiSearchInputViewModel(
                     speechUnavailableReason = if (startedEditing) null else it.speechUnavailableReason,
                     // An unresolved result is a problem about the last sentence. The moment the
                     // rider changes that sentence it is stale, and leaving it up makes the new
-                    // attempt look like it has already failed.
-                    phase = if (startedEditing && it.phase == AiSearchInputPhase.UNRESOLVED) {
+                    // attempt look like it has already failed. A RESOLVED phase steps down for
+                    // the same reason and one more: the dialog closes itself a beat after a
+                    // resolve, and a rider who starts rewording inside that beat has opted out
+                    // of the handoff — leaving the phase RESOLVED would let the delayed close
+                    // pull the dialog out from under their edit.
+                    phase = if (startedEditing &&
+                        (
+                            it.phase == AiSearchInputPhase.UNRESOLVED ||
+                                it.phase == AiSearchInputPhase.RESOLVED
+                            )
+                    ) {
                         AiSearchInputPhase.IDLE
                     } else {
                         it.phase
@@ -146,8 +162,16 @@ class AiSearchInputViewModel(
             // Guarded as well as hidden. The button is gone when the feature is off, so this
             // can only be reached by a caller that has not been told; opening a sheet whose
             // only action is inert is the failure this is here to prevent.
-            AiSearchInputEvent.OpenInput -> _uiState.update {
-                it.copy(isInputOpen = isAiSearchInputEnabled(), isFeatureEnabled = isAiSearchInputEnabled())
+            //
+            // A fresh state, not just the flag flipped: the dialog reads as a fresh prompt
+            // every time it opens. After a handoff the state still carries the last resolve
+            // (phase RESOLVED, the resolved intent, the sentence) — reopening onto that would
+            // show a stale answer for a row the rider may have edited since.
+            AiSearchInputEvent.OpenInput -> {
+                val enabled = isAiSearchInputEnabled()
+                _uiState.update {
+                    AiSearchInputUiState(isInputOpen = enabled, isFeatureEnabled = enabled)
+                }
             }
             AiSearchInputEvent.CloseInput -> closeInput()
             AiSearchInputEvent.Submit -> submit()
@@ -383,6 +407,30 @@ class AiSearchInputViewModel(
             )
             _uiState.update { it.withResolution(intent, namedAnyPlace = extraction.namesAPlace()) }
             logOutcome()
+            closeAfterHandoff()
+        }
+    }
+
+    /**
+     * A resolve is a handoff: the stops and the time are already written into the home row by
+     * the time this state lands (SavedTripsEntry writes them on the RESOLVED emission), so the
+     * dialog's job is done. It stays up for one settle beat — long enough for the working
+     * border to finish — then closes itself onto the row it just filled.
+     *
+     * Guarded on the phase still being RESOLVED: a rider who dismissed during the beat has
+     * already reset the state, and one who started rewording has been stepped down to IDLE by
+     * [AiSearchInputEvent.TypedTextChanged]. In both cases the close belongs to them now, not
+     * to this timer.
+     */
+    private suspend fun closeAfterHandoff() {
+        if (_uiState.value.phase != AiSearchInputPhase.RESOLVED) return
+        delay(HANDOFF_SETTLE_MILLIS)
+        _uiState.update {
+            if (it.phase == AiSearchInputPhase.RESOLVED && it.isInputOpen) {
+                it.copy(isInputOpen = false)
+            } else {
+                it
+            }
         }
     }
 
@@ -433,17 +481,15 @@ class AiSearchInputViewModel(
 }
 
 /**
- * The surface never gets out of the way on its own any more, whatever it found.
+ * A resolve keeps the dialog up only for the settle beat (see `closeAfterHandoff`); a failure
+ * keeps it up until the rider acts.
  *
- * It used to close as soon as one stop resolved, which meant the stops a rider asked for were
- * only visible after the screen that found them had gone, and a half-read sentence looked
- * identical to a correct one: both dropped the rider back on the home row to work out for
- * themselves which field had been filled and which had not.
- *
- * Now every outcome is shown where it happened. Both stops get a card with one way to the
- * timetable; one stop gets the same card with the missing field empty and waiting, which is
- * exactly the case where seeing it matters most; nothing at all keeps the rider's text in the
- * field so they can reword rather than retype.
+ * The answer is not read on this surface any more — it lands on the home row's own From/To
+ * fields and time chip, which the dialog closes onto. What this surface still owes the rider
+ * is the failure story: nothing resolving keeps their text in the field with a message naming
+ * the one thing that would help, so they can reword rather than retype. `isInputOpen` stays
+ * true here even on a resolve because the close is timed, not immediate: the delayed close in
+ * `closeAfterHandoff` is what takes it down after the border has settled.
  */
 private fun AiSearchInputUiState.withResolution(
     intent: ResolvedTripIntent,

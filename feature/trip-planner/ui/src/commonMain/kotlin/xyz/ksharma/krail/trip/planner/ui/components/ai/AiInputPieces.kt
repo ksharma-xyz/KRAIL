@@ -83,7 +83,10 @@ internal fun AiBusyStatus(
 }
 
 private const val LISTENING_WORD = "Listening"
-private const val WORKING_WORD = "Working it out"
+
+// Same word as the dialog's status line. "Working it out" read as labouring; thinking is
+// what the surface is doing.
+private const val WORKING_WORD = "Thinking…"
 
 // Kept for the dialog, which has no title bar of its own to be dismissed from and so still
 // names itself.

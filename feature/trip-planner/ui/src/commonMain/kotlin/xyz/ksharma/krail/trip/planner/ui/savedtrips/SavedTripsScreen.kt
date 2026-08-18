@@ -7,6 +7,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -56,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
@@ -63,6 +65,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -90,6 +93,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
+
+// How long the row's wheel spins after the Ask KRAIL dialog closes onto it. The spin's own
+// deceleration (rememberAiSpinAngle) starts when this flips back, so the felt animation runs a
+// little longer than this number.
+private const val AI_HANDOFF_SPIN_MILLIS = 1_200L
+
+// How far the screen softens behind the Ask KRAIL dialog, and how long the focus pull takes.
+private val ASK_KRAIL_FOCUS_BLUR_RADIUS = 12.dp
+private const val ASK_KRAIL_FOCUS_BLUR_MILLIS = 300
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -139,6 +151,26 @@ fun SavedTripsScreen(
     // Edit mode for trip cards — long-press enters, Done button exits.
     var editing by rememberSaveable { mutableStateOf(false) }
 
+    // One wheel-spin on the row when the Ask KRAIL dialog closes onto it with an answer.
+    // aiWasOpen is the transition detector: the pulse belongs to the moment the dialog leaves,
+    // and keying it on the transition (not on the closed-with-an-answer state itself) is what
+    // stops a rotation — which recomposes into that same state — replaying it. Saveable, so
+    // the detector itself also survives the rotation.
+    var aiWasOpen by rememberSaveable { mutableStateOf(false) }
+    var aiHandoffSpin by remember { mutableStateOf(false) }
+    LaunchedEffect(aiState.isInputOpen) {
+        if (aiState.isInputOpen) {
+            aiWasOpen = true
+        } else if (aiWasOpen) {
+            aiWasOpen = false
+            if (aiState.resolved != null) {
+                aiHandoffSpin = true
+                delay(AI_HANDOFF_SPIN_MILLIS)
+                aiHandoffSpin = false
+            }
+        }
+    }
+
     // While editing, the system back gesture exits edit mode instead of the app.
     BackHandler(enabled = editing) { editing = false }
 
@@ -153,10 +185,21 @@ fun SavedTripsScreen(
         }
     }
 
+    // Everything behind the Ask KRAIL dialog softens out of focus while it is up, and comes
+    // back as it leaves. The blur is the focus device (the dialog's scrim only dims); animated
+    // so opening reads as the screen stepping back rather than switching. On platforms without
+    // RenderEffect the modifier is a no-op and the scrim carries the job alone.
+    val askKrailFocusBlur by animateDpAsState(
+        targetValue = if (aiState.isInputOpen) ASK_KRAIL_FOCUS_BLUR_RADIUS else 0.dp,
+        animationSpec = tween(durationMillis = ASK_KRAIL_FOCUS_BLUR_MILLIS),
+        label = "askKrailFocusBlur",
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .blur(askKrailFocusBlur)
                 // The search row is pinned to the bottom of this box and its AI box is a real text
                 // field, so the layout area has to end where the keyboard starts — same root-level
                 // imePadding SearchStopScreen uses. Padding the row itself instead only stretches
@@ -249,6 +292,7 @@ fun SavedTripsScreen(
                     onSearchButtonClick = { onSearchButtonClick() },
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isFeatureEnabled,
+                    isAiHandoffSettling = aiHandoffSpin,
                     dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
                     onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -271,9 +315,11 @@ fun SavedTripsScreen(
             }
         }
 
-        // A sheet over the whole screen rather than a mode inside the row: what a rider does here
-        // needs more room than two text fields. Outside the ime-padded box on purpose, so it gets
-        // the full screen and decides for itself which part of it moves for the keyboard.
+        // A dialog over the screen rather than a mode inside the row: what a rider does here
+        // needs more room than two text fields. Outside the ime-padded box on purpose, so it
+        // decides for itself which part of it moves for the keyboard. When it resolves a trip
+        // it closes itself onto this screen's own row (see closeAfterHandoff in the ViewModel)
+        // — the row is where the answer lands, and there is no second confirm surface.
         if (aiState.isInputOpen) {
             // Built here because this screen already holds the rider's labels and saved trips.
             // Nothing new is read, nothing is stored, and the AI ViewModel keeps knowing nothing
@@ -287,14 +333,6 @@ fun SavedTripsScreen(
                 suggestion = greeting.suggestion,
                 onEvent = onAiEvent,
                 onDismiss = { onAiEvent(AiSearchInputEvent.CloseInput) },
-                // Closes the surface, then does exactly what this screen's own Search button
-                // does. By the time the card is up, the two stops and the time have been
-                // written into this screen's state, so there is no second path to keep in step
-                // with the first.
-                onSeeTimes = {
-                    onAiEvent(AiSearchInputEvent.StartOver)
-                    onSearchButtonClick()
-                },
             )
         }
     }

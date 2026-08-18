@@ -315,6 +315,7 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     modifier: Modifier = Modifier,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
+    isAiHandoffSettling: Boolean = false,
     dateTimeSelectionText: String? = null,
     onDateTimeSelectionClear: () -> Unit = {},
 ) {
@@ -338,6 +339,7 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
             onSearchButtonClick = onSearchButtonClick,
             onAiEvent = onAiEvent,
             isAiSearchAvailable = isAiSearchAvailable,
+            isAiHandoffSettling = isAiHandoffSettling,
             dateTimeSelectionText = dateTimeSelectionText,
             onDateTimeSelectionClear = onDateTimeSelectionClear,
         )

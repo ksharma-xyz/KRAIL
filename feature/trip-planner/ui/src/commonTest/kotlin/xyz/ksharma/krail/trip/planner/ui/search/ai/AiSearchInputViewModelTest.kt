@@ -256,9 +256,10 @@ class AiSearchInputViewModelTest {
             assertEquals("Nonexistent Place", state.resolved?.fromText)
             assertNull(state.resolved?.fromStopItem)
             assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), state.resolved?.toStopItem)
-            // The surface stays up and shows the miss rather than dropping the rider on the
-            // home row to work out for themselves which of the two fields got filled.
-            assertTrue(state.isInputOpen)
+            // One stop is still a handoff: the field it found is filled on the row, the other
+            // stays for a normal tap, and the dialog has closed itself by now (advanceUntilIdle
+            // runs the settle beat through).
+            assertFalse(state.isInputOpen)
         }
 
     @Test
@@ -301,7 +302,7 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
-    fun `resolving keeps the surface open, because there is now an answer to show on it`() =
+    fun `resolving stays up for the settle beat, then closes itself onto the row`() =
         runTest(testDispatcher) {
             aiTextService.extractionResult = TripIntentExtraction(
                 originText = "Central Station",
@@ -313,15 +314,70 @@ class AiSearchInputViewModelTest {
             assertTrue(viewModel.uiState.value.isInputOpen)
 
             viewModel.onEvent(AiSearchInputEvent.Submit)
-            advanceUntilIdle()
+            // Runs the submit up to the delayed close without letting the delay elapse: the
+            // beat where the border settles and the rider sees the send answered.
+            runCurrent()
 
-            // This closed for most of the feature's life, and the two stops the rider asked
-            // for were only visible after the screen that found them had gone. The surface now
-            // shows them back with one way to the timetable, so it has to still be there.
-            val state = viewModel.uiState.value
-            assertTrue(state.isInputOpen)
-            assertTrue(state.resolved?.hasWholeTrip == true)
+            val duringBeat = viewModel.uiState.value
+            assertEquals(AiSearchInputPhase.RESOLVED, duringBeat.phase)
+            assertTrue(duringBeat.isInputOpen)
+            assertTrue(duringBeat.resolved?.hasWholeTrip == true)
+
+            // The answer is not read here — it lands on the home row (SavedTripsEntry writes
+            // it on the RESOLVED emission above). After the beat the dialog closes onto it.
+            advanceUntilIdle()
+            val afterBeat = viewModel.uiState.value
+            assertFalse(afterBeat.isInputOpen)
+            // The resolve itself is kept, not reset: the row's writes key off it.
+            assertTrue(afterBeat.resolved?.hasWholeTrip == true)
         }
+
+    @Test
+    fun `rewording during the settle beat keeps the dialog open`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = "Central Station",
+            destinationText = "Town Hall",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isInputOpen)
+
+        // Editing inside the beat is the rider opting out of the handoff. The timed close
+        // must not pull the dialog out from under the sentence they are changing.
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall at 9"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isInputOpen)
+        assertEquals(AiSearchInputPhase.IDLE, state.phase)
+    }
+
+    @Test
+    fun `reopening after a handoff is a fresh prompt`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = "Central Station",
+            destinationText = "Town Hall",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isInputOpen)
+
+        // The wheel is tapped again. The last answer belongs to the row now; showing it back
+        // inside the dialog would be a stale copy of a row the rider may have edited since.
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isInputOpen)
+        assertEquals("", state.typedText)
+        assertNull(state.resolved)
+        assertEquals(AiSearchInputPhase.IDLE, state.phase)
+    }
 
     @Test
     fun `closing the box throws the draft away rather than keeping it for next time`() =

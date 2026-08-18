@@ -86,6 +86,9 @@ fun SearchStopRow(
     onSearchButtonClick: () -> Unit = {},
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
+    // True for the beat after the Ask KRAIL dialog closes onto this row with an answer: the
+    // wheel spins and settles, pointing the eye at the fields the dialog just filled.
+    isAiHandoffSettling: Boolean = false,
     dateTimeSelectionText: String? = null,
     onDateTimeSelectionClear: () -> Unit = {},
 ) {
@@ -146,6 +149,7 @@ fun SearchStopRow(
                 onSearchButtonClick = onSearchButtonClick,
                 onAiEvent = onAiEvent,
                 isAiSearchAvailable = isAiSearchAvailable,
+                isAiHandoffSettling = isAiHandoffSettling,
                 dateTimeSelectionText = dateTimeSelectionText,
                 onDateTimeSelectionClear = onDateTimeSelectionClear,
             )
@@ -247,6 +251,7 @@ private fun ExpandedSearchRow(
     onCollapseRequest: (() -> Unit)? = null,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
+    isAiHandoffSettling: Boolean = false,
     dateTimeSelectionText: String? = null,
     onDateTimeSelectionClear: () -> Unit = {},
 ) {
@@ -324,7 +329,10 @@ private fun ExpandedSearchRow(
                     verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
                 ) {
                     if (isAiSearchAvailable) {
-                        AiSheetEntryButton(onAiEvent = onAiEvent)
+                        AiSheetEntryButton(
+                            onAiEvent = onAiEvent,
+                            spinning = isAiHandoffSettling,
+                        )
                     }
 
                     SearchButton(onSearchButtonClick = onSearchButtonClick)
@@ -434,7 +442,10 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
  * nothing.
  */
 @Composable
-private fun AiSheetEntryButton(onAiEvent: (AiSearchInputEvent) -> Unit) {
+private fun AiSheetEntryButton(
+    onAiEvent: (AiSearchInputEvent) -> Unit,
+    spinning: Boolean = false,
+) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
 
@@ -443,8 +454,11 @@ private fun AiSheetEntryButton(onAiEvent: (AiSearchInputEvent) -> Unit) {
             // The theme's own pair, not the fixed cool gradient the mark defaults to. This
             // button is the door to a surface that is now painted in these exact colours, so a
             // wheel in somebody else's blue and violet reads as a different product's button.
+            //
+            // It spins exactly once outside that surface: the settle beat after the dialog
+            // closes onto this row with an answer, so the motion lands where the answer did.
             AiWheelMark(
-                spinning = false,
+                spinning = spinning,
                 markSize = dim.iconDefault,
                 colors = AiThemeGradientTokens.stopsFor(themeColorHex),
             )

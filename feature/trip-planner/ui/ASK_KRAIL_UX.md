@@ -165,7 +165,37 @@ commute exactly as `Work` does. Two lists would have drifted the moment one gain
 
 ---
 
-## 7. Layout rules that are not negotiable
+## 7. The surface is a dialog, and it closes itself only on success
+
+`AskKrailScreen` is a centred dialog on every device, wearing the theme's AI pair as its own
+border: a quiet ring at rest, brought to full strength and spun while a sentence is worked
+out (`rememberWorkingBorder` drives both the dialog frame and, on the full-screen fallback,
+the input bar — never both at once, see `AiInputBar.showWorkingBorder`). The one exception is
+font scales past `ACTIONS_STACK_SCALE`, where the full screen comes back because a floating
+card taller than the screen is worse than the screen.
+
+**A resolve is a handoff.** The stops and the time are written into the home row on the
+RESOLVED emission (`SavedTripsEntry`), the dialog stays up for one settle beat
+(`closeAfterHandoff`, 1.5s) so the border can finish, then closes itself onto the row it
+filled. The row's wheel spins once as it lands (`isAiHandoffSettling`), so the eye follows
+the answer. There is no result card: the row IS the result, and a copy of it inside the
+dialog was a second thing to keep in step with the first.
+
+Rules that hold this together:
+
+- **Failures never close the dialog.** DOWNLOADING, every UNRESOLVED reason and every speech
+  problem keep the sentence in the field with a message; only success or the rider's own
+  dismiss takes it down.
+- **Rewording during the settle beat cancels the close.** Typing steps RESOLVED down to IDLE,
+  so the timed close cannot pull the dialog out from under an edit.
+- **Reopening is a fresh prompt.** `OpenInput` resets the state; the last answer belongs to
+  the row now, and showing it back would be a stale copy of a row the rider may have edited.
+
+## 8. Layout rules that are not negotiable
+
+Several of these describe the full-screen surface, which since the dialog change is only the
+large-font-scale fallback — they still hold there, and the inset and IME rules are why the
+fallback cannot be deleted casually.
 
 - **The field never moves.** The stage above it is a fixed-height slot, so a greeting changing
   length or a rider starting to speak cannot nudge the input under their thumb.
@@ -187,7 +217,7 @@ commute exactly as `Work` does. Two lists would have drifted the moment one gain
 
 ---
 
-## 8. Not built yet
+## 9. Not built yet
 
 Recorded so the reasoning is not lost, not as a commitment.
 
@@ -208,7 +238,7 @@ Recorded so the reasoning is not lost, not as a commitment.
 
 ---
 
-## 9. What is actually tested
+## 10. What is actually tested
 
 | Area | Held by |
 |---|---|

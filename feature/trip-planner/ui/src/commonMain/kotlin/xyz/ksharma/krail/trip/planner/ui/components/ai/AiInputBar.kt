@@ -96,6 +96,14 @@ internal fun AiInputBar(
     placeholder: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     modifier: Modifier = Modifier,
+    // The dialog wears the working border on its own frame; a second ring on the bar inside
+    // that frame reads as clutter, so the dialog turns this off. The full-screen surface has
+    // no frame of its own and keeps the bar as the border's home.
+    showWorkingBorder: Boolean = true,
+    // The bar's fill. Null means the full-screen default ([barColor]); the dialog passes its
+    // own theme-tinted container because the default was tuned against the cloud field, not
+    // against a plain card, and read as grey-on-grey there.
+    containerColor: Color? = null,
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
@@ -129,14 +137,14 @@ internal fun AiInputBar(
             // Same move in light mode, where it lands as a soft grey on white. Less of it,
             // because white needs far less shift to read as a distinct object than near black
             // does.
-            .background(barColor())
+            .background(containerColor ?: barColor())
             // Only ever while it is working out what was said. The border is the strongest
             // signal this surface has and spending it anywhere else would waste it.
             .aiGradientBorder(
                 spinning = workingBorder.spinning,
                 cornerRadius = BarCornerRadius,
                 colors = AiThemeGradientTokens.stopsFor(themeColorHex),
-                alpha = workingBorder.alpha,
+                alpha = if (showWorkingBorder) workingBorder.alpha else 0f,
             )
             .padding(horizontal = dim.spacingM, vertical = dim.spacingM),
         // The controls are a separate band from the sentence, and at 6dp they read as one

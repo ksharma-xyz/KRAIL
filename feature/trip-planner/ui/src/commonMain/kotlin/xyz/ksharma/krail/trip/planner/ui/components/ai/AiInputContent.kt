@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
-import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 
 // Past this scale the wheel and its rings stop being drawn and the status becomes plain text.
@@ -79,8 +78,6 @@ internal fun AiInputContent(
     suggestion: String,
     onEvent: (AiSearchInputEvent) -> Unit,
     modifier: Modifier = Modifier,
-    showTitle: Boolean = false,
-    onSeeTimes: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val fontScale = LocalDensity.current.fontScale
@@ -123,7 +120,6 @@ internal fun AiInputContent(
                 suggestion = suggestion,
                 greetingVisible = greetingVisible,
                 showDecoration = showDecoration,
-                showTitle = showTitle,
                 height = if (showDecoration) StatusSlotHeight else StatusSlotHeightCompact,
             )
         }
@@ -142,19 +138,11 @@ internal fun AiInputContent(
         // as one block.
         Spacer(modifier = Modifier.height(dim.spacingXL))
 
-        // Above the bar, never instead of it. The card replaced the bar for one build and that
-        // was wrong twice over: a rider who wanted a different sentence had nothing left to
-        // type into, and a half-read sentence became a dead end with no stop worth tapping and
-        // no box to reword in. Bar is the input, card is the result, and both stay.
-        val answer = state.resolved
-            ?.takeIf { state.phase == AiSearchInputPhase.RESOLVED && it.hasAnyStop }
-        if (answer != null) {
-            AiResultCard(resolved = answer, onSeeTimes = onSeeTimes)
-            // Wider than any gap inside the result, so the bar reads as a separate object
-            // rather than as one more row of it.
-            Spacer(modifier = Modifier.height(dim.spacingXXL))
-        }
-
+        // No result card any more. A resolve is a handoff: the stops and the time land on the
+        // home row behind this surface, and the surface closes onto them a beat later (see
+        // AiSearchInputViewModel's closeAfterHandoff). The card existed to show the answer
+        // where it was found; now the row IS where it is found, and a copy of it in here would
+        // be a second thing to keep in step with the first.
         AiInputBar(
             state = state,
             textFieldState = textFieldState,
@@ -179,7 +167,6 @@ private fun AiStatusSlot(
     suggestion: String,
     greetingVisible: Boolean,
     showDecoration: Boolean,
-    showTitle: Boolean,
     height: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
@@ -210,9 +197,6 @@ private fun AiStatusSlot(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(dim.spacingS),
             ) {
-                if (showTitle) {
-                    Text(text = AI_INPUT_QUESTION, style = KrailTheme.typography.titleMedium)
-                }
                 // Large and regular weight, not small and bold. This line is the content of an
                 // otherwise empty screen, so size is what gives it presence; bold at this size
                 // reads as a heading for something that is not there.

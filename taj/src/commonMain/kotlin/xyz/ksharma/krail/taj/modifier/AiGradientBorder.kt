@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.Dp
+import xyz.ksharma.krail.taj.animations.AiSpinDefaults
 import xyz.ksharma.krail.taj.animations.rememberAiSpinAngle
 import xyz.ksharma.krail.taj.tokens.AiGradientTokens
 import xyz.ksharma.krail.taj.tokens.StrokeTokens
@@ -54,8 +55,11 @@ fun Modifier.aiGradientBorder(
     // which is what a surface that only wears this while it works needs: without it the
     // border is simply always there, and "working" reads as a ring that stops turning.
     alpha: Float = 1f,
+    // One full turn of the paint. Default is the shared rhythm every AI mark uses; a surface
+    // where the spin is the whole show may run faster (see rememberAiSpinAngle).
+    spinDurationMillis: Int = AiSpinDefaults.SPIN_DURATION_MILLIS,
 ): Modifier {
-    val angle = rememberAiSpinAngle(spinning)
+    val angle = rememberAiSpinAngle(spinning, spinDurationMillis)
     if (alpha <= 0f) return this
     val brush = remember(colors) {
         Brush.sweepGradient(colors + colors.first())

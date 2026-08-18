@@ -7,7 +7,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -65,7 +64,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -93,15 +91,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
 private const val LAZY_COLUMN_BOTTOM_PADDING = 300
-
-// How long the row's wheel spins after the Ask KRAIL dialog closes onto it. The spin's own
-// deceleration (rememberAiSpinAngle) starts when this flips back, so the felt animation runs a
-// little longer than this number.
-private const val AI_HANDOFF_SPIN_MILLIS = 1_200L
-
-// How far the screen softens behind the Ask KRAIL dialog, and how long the focus pull takes.
-private val ASK_KRAIL_FOCUS_BLUR_RADIUS = 12.dp
-private const val ASK_KRAIL_FOCUS_BLUR_MILLIS = 300
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -151,25 +140,10 @@ fun SavedTripsScreen(
     // Edit mode for trip cards — long-press enters, Done button exits.
     var editing by rememberSaveable { mutableStateOf(false) }
 
-    // One wheel-spin on the row when the Ask KRAIL dialog closes onto it with an answer.
-    // aiWasOpen is the transition detector: the pulse belongs to the moment the dialog leaves,
-    // and keying it on the transition (not on the closed-with-an-answer state itself) is what
-    // stops a rotation — which recomposes into that same state — replaying it. Saveable, so
-    // the detector itself also survives the rotation.
-    var aiWasOpen by rememberSaveable { mutableStateOf(false) }
-    var aiHandoffSpin by remember { mutableStateOf(false) }
-    LaunchedEffect(aiState.isInputOpen) {
-        if (aiState.isInputOpen) {
-            aiWasOpen = true
-        } else if (aiWasOpen) {
-            aiWasOpen = false
-            if (aiState.resolved != null) {
-                aiHandoffSpin = true
-                delay(AI_HANDOFF_SPIN_MILLIS)
-                aiHandoffSpin = false
-            }
-        }
-    }
+    // Blur, fallback dim and the row's one-shot handoff spin, owned by rememberAskKrailFocus
+    // so this function stays under the complexity ceiling and the three concerns stay one
+    // mechanism. See AskKrailFocus.kt for the rules.
+    val askKrailFocus = rememberAskKrailFocus(aiState)
 
     // While editing, the system back gesture exits edit mode instead of the app.
     BackHandler(enabled = editing) { editing = false }
@@ -185,21 +159,13 @@ fun SavedTripsScreen(
         }
     }
 
-    // Everything behind the Ask KRAIL dialog softens out of focus while it is up, and comes
-    // back as it leaves. The blur is the focus device (the dialog's scrim only dims); animated
-    // so opening reads as the screen stepping back rather than switching. On platforms without
-    // RenderEffect the modifier is a no-op and the scrim carries the job alone.
-    val askKrailFocusBlur by animateDpAsState(
-        targetValue = if (aiState.isInputOpen) ASK_KRAIL_FOCUS_BLUR_RADIUS else 0.dp,
-        animationSpec = tween(durationMillis = ASK_KRAIL_FOCUS_BLUR_MILLIS),
-        label = "askKrailFocusBlur",
-    )
-
     Box(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .blur(askKrailFocusBlur)
+                // Everything behind the Ask KRAIL dialog softens out of focus while it is up
+                // and comes back as it leaves; see rememberAskKrailFocus.
+                .blur(askKrailFocus.blurRadius)
                 // The search row is pinned to the bottom of this box and its AI box is a real text
                 // field, so the layout area has to end where the keyboard starts — same root-level
                 // imePadding SearchStopScreen uses. Padding the row itself instead only stretches
@@ -292,7 +258,7 @@ fun SavedTripsScreen(
                     onSearchButtonClick = { onSearchButtonClick() },
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isFeatureEnabled,
-                    isAiHandoffSettling = aiHandoffSpin,
+                    isAiHandoffSettling = askKrailFocus.handoffSpin,
                     dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
                     onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -313,6 +279,16 @@ fun SavedTripsScreen(
             } else {
                 body()
             }
+        }
+
+        // The blur's stand-in where it cannot draw: a plain dim between the content and the
+        // dialog. Sequenced here so it covers everything the blur would have softened.
+        if (askKrailFocus.fallbackDimAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(KrailTheme.colors.scrim.copy(alpha = askKrailFocus.fallbackDimAlpha)),
+            )
         }
 
         // A dialog over the screen rather than a mode inside the row: what a rider does here

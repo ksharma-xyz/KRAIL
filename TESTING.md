@@ -260,6 +260,26 @@ wall, so renaming alone would not get them running.
 **Robolectric, Roborazzi and Compose UI tests** stay host-only by construction — they live in
 `androidHostTest`, which the iOS compilation never sees.
 
+### Shared Compose UI tests (`runComposeUiTest`) — parked, not rejected
+
+Spiked in `:taj` with `compose.uiTest` and an `@OptIn(ExperimentalTestApi)` test driving a real
+`Button` through `setContent` / `onNodeWithText` / `performClick`. Findings:
+
+- On **iOS it works**. The test ran green under `iosSimulatorArm64Test` with no extra setup.
+- In **`commonTest` it cannot stay**, because the same source also expands into
+  `androidHostTest`, and Android's `runComposeUiTest` needs a Robolectric runner and
+  `@Config`, which `commonTest` has no way to express. The Android run dies with
+  `NullPointerException: … "android.os.Build.FINGERPRINT" is null` from
+  `RobolectricIdlingStrategy`.
+- Moving it to **`iosTest` works on both** (iOS runs it, the host ignores it) — but then it is
+  an iOS-only test, not a shared one.
+
+**Parked.** An `iosTest`-only Compose test duplicates coverage `:taj` already has via
+Robolectric and Roborazzi, and the modules where a shared UI test would genuinely pay off
+(`:feature:trip-planner:ui`, `:feature:departures:ui`) are all behind the Firebase link wall,
+so they could not run it anyway. Worth revisiting the day that wall comes down — the API
+itself is not the obstacle.
+
 ---
 
 ## Snapshot testing

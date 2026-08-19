@@ -190,6 +190,12 @@ Rules that hold this together:
   so the timed close cannot pull the dialog out from under an edit.
 - **Reopening is a fresh prompt.** `OpenInput` resets the state; the last answer belongs to
   the row now, and showing it back would be a stale copy of a row the rider may have edited.
+- **A handoff is consumed, not observed.** The row's writes fire only while
+  `isHandoffActionable` (phase RESOLVED with a resolve present), and the phase steps down to
+  IDLE in the same emission that closes the dialog. The writing effect re-launches whenever
+  the home entry recomposes — back-navigation from the stop-search screen included — and a
+  state left at RESOLVED replayed the AI's stops over the rider's own later picks. Pinned by
+  `the row-write gate closes with the dialog`.
 
 ## 8. Layout rules that are not negotiable
 

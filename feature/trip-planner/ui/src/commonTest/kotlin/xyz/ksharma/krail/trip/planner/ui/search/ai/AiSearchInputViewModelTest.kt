@@ -363,6 +363,28 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `the row-write gate closes with the dialog`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = "Central Station",
+            destinationText = "Town Hall",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        runCurrent()
+
+        // Live during the settle beat: this is the emission the home row writes on.
+        assertTrue(viewModel.uiState.value.isHandoffActionable)
+
+        // Closed and consumed after it. The writer re-launches whenever the home entry
+        // recomposes (coming back from the stop-search screen included); a gate still open
+        // here is the bug where old AI stops replayed over the rider's later manual picks.
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isHandoffActionable)
+    }
+
+    @Test
     fun `reopening after a handoff is a fresh prompt`() = runTest(testDispatcher) {
         aiTextService.extractionResult = TripIntentExtraction(
             originText = "Central Station",

@@ -166,7 +166,26 @@ If a choice is non-obvious — why this key, why cached-first, why this is a no-
 comment saying *why* and a test pinning the behaviour. A future change should fail loudly
 rather than silently regress.
 
-## 10. Before handing anything over
+## 10. Effects that write state must survive being re-launched
+
+A `LaunchedEffect` re-launches every time its host recomposes into existence: navigating
+back to the screen, rotation, process restore. If the effect is keyed on observed state and
+**writes** other state when a condition holds, it will act again on the same stale condition
+unless the trigger is consumed.
+
+- [ ] Does any effect write app state when it sees a condition (a phase, a flag, a result)?
+- [ ] Is that condition **consumed** (stepped down, cleared) in the same emission the action
+      completes, so a re-launched collector sees nothing to do?
+- [ ] Test: after the action completes, assert the trigger no longer reads as actionable —
+      not just that the payload was right.
+
+Shipped example: the Ask KRAIL dialog wrote resolved stops into the home row while
+`phase == RESOLVED`, and kept the phase after closing. Coming back from the stop-search
+screen re-launched the writer and replayed the AI's stops over the rider's own manual picks.
+The fix steps the phase down as the dialog closes; `isHandoffActionable` is the gate and its
+transition is pinned by a test.
+
+## 11. Before handing anything over
 
 Never describe a change as working when only `./gradlew` has run.
 

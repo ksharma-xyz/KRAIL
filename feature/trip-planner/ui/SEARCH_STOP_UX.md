@@ -238,6 +238,11 @@ Outstanding (gesture-heavy or sheet-based — held back to keep CI deterministic
   test (only VM-level `RenameLabel`/`ClearLabelStop`/`DeleteLabel` handlers are
   tested); would need the row's expand state driven from a hoisted test surface.
 
+### Not implemented, so not tested
+- Product-class filtering of stop results (excluding modes from the result list) does not
+  exist in `RealStopResultsManager` and has no test; `StopFilterByProductClassTest.kt` held
+  only a commented-out draft against a deleted function and has been removed.
+
 ### ViewModel tests
 Covered in `SearchStopViewModelLabelHandlersTest.kt`:
 - AssignLabelStop: state + sandook + recents pinning.

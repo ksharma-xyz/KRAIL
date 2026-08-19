@@ -5,7 +5,6 @@ import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 import xyz.ksharma.krail.departures.ui.fixtures.CentralStationDepartureFixture
 import xyz.ksharma.krail.departures.ui.fixtures.TarongaZooFerryFixture
 import xyz.ksharma.krail.departures.ui.fixtures.TownHallDepartureFixture
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -22,6 +21,10 @@ import kotlin.test.assertEquals
  * Each fixture object contains [EXPECTED] — a list of
  * Triple(lineNumber, expectedPlatformText, expectedDestinationName) — ordered to match
  * the stopEvents array in the companion [JSON] constant.
+ *
+ * Destination text follows `NswTransportConfig.resolveServiceDisplayText`: Train and Metro
+ * departures read "towards <terminus>" from `transportation.destination.name`, while every
+ * other mode reads `transportation.description`.
  *
  * To update a test case: edit the JSON in the fixture object and update [EXPECTED] to match.
  */
@@ -50,14 +53,8 @@ class DepartureMonitorPlatformMappingTest {
         }
     }
 
-    // DISABLED — pre-existing failure (fixture EXPECTED destinationName disagrees with the
-    // mapper output). Like DepartureBoardRepositoryTest, this test was added on main but never
-    // ran because feature/departures/ui had no withHostTest {}; enabling host tests in this PR
-    // surfaced it. The platformText / count tests in this class still pass and stay live.
-    // Whether the fixture or the mapper is wrong is a separate concern — tracked in #1601.
-    @Ignore
     @Test
-    fun `Town Hall - destination names use transportation description field`() {
+    fun `Town Hall - train destinations read towards terminus and other modes read description`() {
         val departures = parseAndMap(TownHallDepartureFixture.JSON)
         TownHallDepartureFixture.EXPECTED.forEachIndexed { i, (line, _, expectedDest) ->
             assertEquals(
@@ -89,10 +86,8 @@ class DepartureMonitorPlatformMappingTest {
         }
     }
 
-    // DISABLED — pre-existing failure, same root cause as the Town Hall variant above. #1601.
-    @Ignore
     @Test
-    fun `Central Station - destination names use transportation description field`() {
+    fun `Central Station - train and metro destinations read towards terminus`() {
         val departures = parseAndMap(CentralStationDepartureFixture.JSON)
         CentralStationDepartureFixture.EXPECTED.forEachIndexed { i, (line, _, expectedDest) ->
             assertEquals(

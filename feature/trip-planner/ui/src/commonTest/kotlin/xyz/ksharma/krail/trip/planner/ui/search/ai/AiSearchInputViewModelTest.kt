@@ -182,7 +182,9 @@ class AiSearchInputViewModelTest {
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("from central to town hall"))
 
         viewModel.onEvent(AiSearchInputEvent.Submit)
-        advanceUntilIdle()
+        // Runs the submit but not the settle beat: RESOLVED is the phase the handoff fires
+        // on, and it steps down to IDLE once the close lands (covered by the settle-beat test).
+        runCurrent()
 
         val resolved = viewModel.uiState.value.resolved
         assertEquals(AiSearchInputPhase.RESOLVED, viewModel.uiState.value.phase)
@@ -252,14 +254,14 @@ class AiSearchInputViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value
-            assertEquals(AiSearchInputPhase.RESOLVED, state.phase)
             assertEquals("Nonexistent Place", state.resolved?.fromText)
             assertNull(state.resolved?.fromStopItem)
             assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), state.resolved?.toStopItem)
             // One stop is still a handoff: the field it found is filled on the row, the other
             // stays for a normal tap, and the dialog has closed itself by now (advanceUntilIdle
-            // runs the settle beat through).
+            // runs the settle beat through) with the phase stepped down alongside.
             assertFalse(state.isInputOpen)
+            assertEquals(AiSearchInputPhase.IDLE, state.phase)
         }
 
     @Test
@@ -328,7 +330,12 @@ class AiSearchInputViewModelTest {
             advanceUntilIdle()
             val afterBeat = viewModel.uiState.value
             assertFalse(afterBeat.isInputOpen)
-            // The resolve itself is kept, not reset: the row's writes key off it.
+            // The resolve is kept as a record, but the phase steps down WITH the close. The
+            // row's writes fire only while phase == RESOLVED, and the writing effect re-runs
+            // whenever the home entry recomposes — coming back from the stop-search screen
+            // included. A state still reading RESOLVED here replayed the AI's stops over the
+            // rider's own later manual picks (the bug this pins down).
+            assertEquals(AiSearchInputPhase.IDLE, afterBeat.phase)
             assertTrue(afterBeat.resolved?.hasWholeTrip == true)
         }
 
@@ -693,9 +700,11 @@ class AiSearchInputViewModelTest {
             advanceUntilIdle()
 
             viewModel.onEvent(AiSearchInputEvent.Submit)
+            // Full idle runs the settle beat too, so the phase has already stepped down; the
+            // resolve itself is what proves the spoken sentence went through the same submit.
             advanceUntilIdle()
 
-            assertEquals(AiSearchInputPhase.RESOLVED, viewModel.uiState.value.phase)
+            assertTrue(viewModel.uiState.value.resolved?.hasWholeTrip == true)
         }
 
     @Test

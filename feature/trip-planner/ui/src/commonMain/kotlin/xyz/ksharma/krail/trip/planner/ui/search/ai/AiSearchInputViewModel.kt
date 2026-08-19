@@ -427,7 +427,14 @@ class AiSearchInputViewModel(
         delay(HANDOFF_SETTLE_MILLIS)
         _uiState.update {
             if (it.phase == AiSearchInputPhase.RESOLVED && it.isInputOpen) {
-                it.copy(isInputOpen = false)
+                // The phase steps down WITH the close, in the same emission. The row's writes
+                // key off phase == RESOLVED (SavedTripsEntry), and that effect re-launches
+                // every time the home entry recomposes — coming back from the stop-search
+                // screen included. A state left at RESOLVED after the handoff replayed the
+                // AI's stops over whatever the rider had picked by hand since. IDLE makes the
+                // resolve a record, not an instruction: `resolved` itself is kept for the
+                // handoff spin and for anything that wants to read what happened.
+                it.copy(isInputOpen = false, phase = AiSearchInputPhase.IDLE)
             } else {
                 it
             }

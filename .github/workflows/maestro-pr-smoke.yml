@@ -1,0 +1,138 @@
+name: Maestro PR Smoke
+
+# End-to-end smoke lane on every pull request. Covers what unit tests and detekt
+# structurally cannot: whether the app launches, whether a rider can plan a trip,
+# and whether a screen survives having its Activity destroyed underneath it.
+#
+# Not called from build.yml. It is deliberately an independent workflow so it can
+# be made a required status check (or not) without touching the build graph, and
+# so a slow emulator never delays the APK build.
+
+on:
+  pull_request:
+    branches: [ main, prod/* ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    # Draft pull requests skip the lane; an emulator run is too slow to spend on
+    # work in progress.
+    #
+    # Dependabot is excluded for the same reason as build-android.yml: its pull
+    # requests resolve every `secrets.*` to an empty string, so Gradle
+    # configuration dies on the missing NSW transport API key before an emulator
+    # is even booted. And unlike detekt, this lane cannot fall back to
+    # `-PciQuality=true` placeholder keys, because 02-plan-trip asks the real API
+    # for real journeys.
+    if: github.actor != 'dependabot[bot]' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    environment: Firebase
+    # The emulator is the slow part: ~4min to boot, ~4min for the three flows.
+    # 20min leaves head-room for a cold Gradle cache without letting a hung
+    # emulator sit on a runner for six hours.
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Hardware acceleration. Without this the emulator falls back to software
+      # rendering and the run takes longer than the job timeout.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      - name: Firebase (Debug) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
+        run: echo $DATA | base64 -di > androidApp/src/debug/google-services.json
+
+      # Built before the emulator step so a compile failure fails fast, without
+      # paying for a boot first.
+      - name: Build debug APK
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :androidApp:assembleDebug --stacktrace --no-configuration-cache
+
+      # Pinned rather than floating. The flows use `setOrientation`, which does
+      # not exist before 2.x, and a silent CLI bump is not something a PR lane
+      # should discover for itself.
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.8.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Verify Maestro version
+        run: maestro --version
+
+      - name: Run smoke flows
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          # Compose honours the system animator scale, so turning animations off
+          # makes every transition snap. The flows still wait rather than assert
+          # after async work, but this removes a whole class of timing flake.
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+            adb logcat -c
+            maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/smoke/
+
+      # A crash in a background coroutine does not necessarily fail a flow, so
+      # the log is checked separately.
+      - name: Check for fatal exceptions
+        if: always()
+        run: |
+          adb logcat -d > logcat.txt || true
+          if grep -q "FATAL EXCEPTION" logcat.txt; then
+            echo "::error::FATAL EXCEPTION found in logcat"
+            grep -A 30 "FATAL EXCEPTION" logcat.txt
+            exit 1
+          fi
+          echo "No fatal exceptions."
+
+      # Maestro writes the hierarchy, logs, screenshots and recordings for every
+      # run here. Without it a red CI run tells you a flow failed but not what
+      # was on screen when it did.
+      - name: Upload Maestro debug output
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-smoke-debug-${{ github.run_id }}
+          path: |
+            ~/.maestro/tests/**
+            logcat.txt
+          if-no-files-found: ignore
+          retention-days: 7

@@ -188,8 +188,11 @@ Node found: Node #108 ... Role = 'Button'  Text = '[Central Station]'
 ## Remaining targets, in value order
 
 1. ~~**Ask KRAIL handoff replay**~~ — built: `AskKrailHandoffFlowTest`.
-2. **Search-stop round trip** — pick From, pick To, rotate between the two, assert both land
-   in the row and survive recreation.
+2. ~~**Search-stop round trip**~~ — built: `SearchStopRoundTripFlowTest`. Unlike the replay
+   test there is no shipped defect to fail against, so what stands in for that proof is a
+   positive control on the helper: a `DisposableEffect` probe inside the harness's entry shows
+   `recreate()` really disposing and recomposing it, rather than the test passing because
+   nothing happened. Run that probe again if `recreate()` is ever reworked.
 3. **Time chip journey** — AI-resolved time shows on the row, travels to the timetable route,
    survives process death (it rides `TimeTableRoute` for exactly this reason).
 4. **Dialog-open recreation** — rotate with the Ask KRAIL surface open at each phase (idle,

@@ -104,6 +104,12 @@ exceptions:
     active: true
 
 krail:
+  ClockSystemBan:
+    active: true
+    # :core:testing lives in commonMain (KMP has no java-test-fixtures), so the rule's
+    # source-set check reads it as production. Its fakes build fixture timestamps off the real
+    # clock on purpose — same reasoning as the test-source exemption.
+    excludes: ['**/core/testing/**']
   # collectAsState() keeps collecting while backgrounded — collectAsStateWithLifecycle() only.
   # See docs/POLLING_LIFECYCLE.md.
   CollectAsStateBan:

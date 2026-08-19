@@ -1,0 +1,42 @@
+# ClockSystemBan baseline — SHRINK-ONLY.
+#
+# Pre-existing inline `Clock.System` reads in production code, grandfathered so the rule can be
+# switched on now instead of after the whole migration. Every row is a file that cannot yet be
+# tested at a chosen instant.
+#
+# Each line: <path relative to the repo root>|<number of inline reads allowed in that file>
+#
+# The count is an allowance, not a target: findings BEYOND it are reported, so a listed file
+# cannot quietly grow a new inline read. Line numbers are deliberately absent — they churn on
+# every unrelated edit, and a stale baseline is worse than no baseline.
+#
+# Rules for this file:
+#   - Never raise a count, and never add a row. New code takes the clock as a dependency.
+#   - When a file moves to an injected `Clock` (or a `now:` parameter), LOWER the count in the
+#     SAME PR, or delete the row when it reaches zero.
+#   - When no rows are left, delete this file; the rule then becomes a zero-tolerance gate.
+#
+# The two sanctioned shapes are exempt in the rule itself and never need a row here: a parameter
+# default value (`now: Instant = Clock.System.now()`, `clock: Clock = Clock.System`) and the Koin
+# binding in a `di` package. Test source sets are exempt entirely.
+
+core/analytics/src/commonMain/kotlin/xyz/ksharma/krail/core/analytics/event/AnalyticsEvent.kt|1
+core/date-time/src/commonMain/kotlin/xyz/ksharma/krail/core/datetime/DateTimeHelper.kt|4
+core/date-time/src/commonMain/kotlin/xyz/ksharma/krail/core/datetime/DateTimePickerInfo.kt|2
+discover/network/real/src/commonMain/kotlin/xyz/ksharma/krail/discover/network/real/db/RealDiscoverCardOrderingEngine.kt|1
+feature/departures/ui/src/commonMain/kotlin/xyz/ksharma/krail/departures/ui/DepartureBoardRepository.kt|3
+feature/departures/ui/src/commonMain/kotlin/xyz/ksharma/krail/departures/ui/DeparturesViewModel.kt|1
+feature/track/network/src/commonMain/kotlin/xyz/ksharma/krail/feature/track/network/RealGtfsRealtimeRepository.kt|1
+feature/track/ui/src/commonMain/kotlin/xyz/ksharma/krail/feature/track/ui/TripPoller.kt|7
+feature/trip-planner/state/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/state/timetable/TimeTableState.kt|2
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ai/AiGreeting.kt|1
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/datetimeselector/DateTimeSelectorScreen.kt|3
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/parkride/ParkRideAvailabilityLoader.kt|1
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/savedtrips/ParkRideMapper.kt|1
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/savedtrips/SavedTripsViewModel.kt|1
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/searchstop/map/NearbyStopsManager.kt|2
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/timetable/TimeTableViewModel.kt|5
+io/gtfs/src/commonMain/kotlin/xyz/ksharma/krail/io/gtfs/nswbusroutes/NswBusRoutesManager.kt|10
+io/gtfs/src/commonMain/kotlin/xyz/ksharma/krail/io/gtfs/nswstops/NswStopsManager.kt|8
+sandook/src/commonMain/kotlin/xyz/ksharma/krail/sandook/RealUserLifecycleStore.kt|1
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/LoadingDotsPill.kt|2

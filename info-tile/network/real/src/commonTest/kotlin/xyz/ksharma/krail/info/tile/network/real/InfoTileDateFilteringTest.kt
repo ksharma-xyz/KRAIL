@@ -190,7 +190,8 @@ class InfoTileDateFilteringTest {
     @OptIn(ExperimentalTime::class)
     private fun getDateString(daysFromToday: Int): String {
         val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
         return today.plus(daysFromToday, DateTimeUnit.DAY).toString()
     }
 
@@ -206,7 +207,8 @@ class InfoTileDateFilteringTest {
     @OptIn(ExperimentalTime::class)
     private fun shouldDisplayTile(tile: InfoTileData): Boolean {
         val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
 
         val startDateValid = tile.startDate?.let { dateStr ->
             runCatching {

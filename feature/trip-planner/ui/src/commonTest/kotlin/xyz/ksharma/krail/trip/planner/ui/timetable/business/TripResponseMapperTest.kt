@@ -424,7 +424,9 @@ class TripResponseMapperTest {
         )
 
         val leg = response.buildJourneyList()
-            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+            ?.firstOrNull()
+            ?.legs
+            ?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
 
         assertEquals(transportationId, leg?.transportationId, "transportationId must be transportation.id only")
         assertEquals(
@@ -575,7 +577,9 @@ class TripResponseMapperTest {
         )
 
         val leg = response.buildJourneyList()
-            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+            ?.firstOrNull()
+            ?.legs
+            ?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
 
         assertEquals("towards Bondi Junction via Central", leg?.displayText)
     }
@@ -593,7 +597,9 @@ class TripResponseMapperTest {
         )
 
         val leg = response.buildJourneyList()
-            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+            ?.firstOrNull()
+            ?.legs
+            ?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
 
         assertEquals("towards Tallawong", leg?.displayText)
     }
@@ -611,7 +617,9 @@ class TripResponseMapperTest {
         )
 
         val leg = response.buildJourneyList()
-            ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
+            ?.firstOrNull()
+            ?.legs
+            ?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
 
         assertEquals("Seven Hills to Rouse Hill Station via Norwest", leg?.displayText)
     }

@@ -327,6 +327,84 @@ its host coverage — iOS execution is a correctness signal, not a coverage one.
 
 ---
 
+## End-to-end tests
+
+Host tests prove logic; snapshots prove pixels. Neither can tell you whether the app
+launches, whether a rider can actually reach a timetable, or whether a screen survives
+having its Activity destroyed underneath it. [Maestro](https://maestro.mobile.dev) flows in
+[`.maestro/`](.maestro/) drive the real app on a real device to cover exactly that gap.
+
+Full detail lives in [`.maestro/README.md`](.maestro/README.md). The essentials:
+
+### Two lanes
+
+| Lane | Runs | Workflow |
+|---|---|---|
+| `.maestro/smoke/` | Every non-draft pull request | `.github/workflows/maestro-pr-smoke.yml` |
+| `.maestro/nightly/` | 03:00 AEST cron, `prod/**`, manual dispatch | `.github/workflows/maestro-nightly.yml` |
+
+Smoke is three flows and finishes in about four minutes: cold launch, plan a trip against
+the real API, and a rotation sweep across home, search stop and the timetable. Nightly adds
+process lifecycle and permission denial, and runs the whole suite on Android **and** an iOS
+simulator.
+
+`.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
+directory run never treats one as a test.
+
+### Running locally
+
+Requires Maestro 2.x — `setOrientation` does not exist on 1.x.
+
+```sh
+curl -fsSL "https://get.maestro.mobile.dev" | bash
+export PATH="$PATH:$HOME/.maestro/bin"
+
+./gradlew :androidApp:installDebug
+maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/smoke/
+```
+
+### The `APP_ID` convention
+
+One set of flows serves both platforms, so the app id is a parameter rather than a literal.
+It **must** be passed with `-e`: a plain shell variable never reaches the flow, and an
+in-file `env:` default would silently take precedence over `-e` and make the parameter
+impossible to override.
+
+| Target | `APP_ID` |
+|---|---|
+| Android debug | `xyz.ksharma.krail.debug` (note the suffix) |
+| Android release | `xyz.ksharma.krail` |
+| iOS | `xyz.ksharma.krail` |
+
+### Selectors
+
+Flows select on `testTag` ids, never on visible copy, so a wording change cannot break a
+flow and a failure always means behaviour changed. Tags are declared in
+`TripPlannerTestTags` and `DebugSettingsTestTags`, and are **public API** to `.maestro/` —
+grep there before renaming one.
+
+Android surfaces them as accessibility `resource-id`s via `exposeTestTagsToUiAutomation()`
+at the app root; on iOS, Compose Multiplatform publishes them as `accessibilityIdentifier`
+with no opt-in. The same `id:` selector works on both, verified on an iPhone 17 simulator
+with the flows unchanged.
+
+### Flake policy
+
+**The PR lane never retries.** A flake that can block a merge gets fixed, not re-run. The
+flows are built for that: they wait rather than assert after anything asynchronous, and
+scroll to list items instead of asserting them in place, because Maestro matches only what
+is on screen.
+
+**The iOS nightly leg retries once.** Simulator runs are meaningfully flakier than emulator
+runs (boot races, window-server hiccups) and that lane reports rather than gates, so one
+retry buys signal without hiding a real break — a genuine regression fails twice. The
+Android nightly leg does not retry.
+
+Neither nightly job merges, tags or publishes anything. A red nightly is a signal for a
+human.
+
+---
+
 ## Snapshot testing
 
 The annotation-driven generation flow is preserved: any `@PreviewComponent` /

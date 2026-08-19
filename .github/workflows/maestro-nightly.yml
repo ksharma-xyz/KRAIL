@@ -1,0 +1,237 @@
+name: Maestro Nightly
+
+# The full end-to-end suite on both platforms: smoke plus the lifecycle and
+# permission-denial flows that are too slow to gate a pull request on.
+#
+# Reports only. Nothing here merges, tags, publishes or auto-anything — a red
+# nightly is a signal for a human, not a trigger for a machine.
+
+on:
+  schedule:
+    # 17:00 UTC is 03:00 AEST, which is the quiet end of a Sydney night: after
+    # the last services and well before the morning peak, so a flow that reads
+    # live timetable data is not competing with real load.
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ 'prod/**' ]
+
+concurrency:
+  # Keyed on ref rather than pull request number: this runs on a schedule and on
+  # prod branches, where there is no pull request to key on.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    environment: Firebase
+    # Six flows rather than three, and the nightly lane runs them on a cold
+    # cache more often than the PR lane does.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      - name: Firebase (Debug) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
+        run: echo $DATA | base64 -di > androidApp/src/debug/google-services.json
+
+      - name: Build debug APK
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :androidApp:assembleDebug --stacktrace --no-configuration-cache
+
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.8.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Verify Maestro version
+        run: maestro --version
+
+      # The whole of .maestro/, not just one lane. `shared/` is not picked up
+      # because it sits outside smoke/ and nightly/.
+      - name: Run full suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+            adb logcat -c
+            maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/
+
+      - name: Check for fatal exceptions
+        if: always()
+        run: |
+          adb logcat -d > logcat-android.txt || true
+          if grep -q "FATAL EXCEPTION" logcat-android.txt; then
+            echo "::error::FATAL EXCEPTION found in logcat"
+            grep -A 30 "FATAL EXCEPTION" logcat-android.txt
+            exit 1
+          fi
+          echo "No fatal exceptions."
+
+      - name: Upload Maestro debug output
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-nightly-android-${{ github.run_id }}
+          path: |
+            ~/.maestro/tests/**
+            logcat-android.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ios:
+    runs-on: macos-15
+    environment: Firebase
+    # The iOS leg pays for a Kotlin/Native compile and an xcodebuild before it
+    # runs a single flow, and it retries the suite once.
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Requires Xcode 26+ for the iOS 26 SDK, same pin as build-ios.yml.
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '~26'
+
+      - name: Setup environment variables
+        run: |
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      - name: Firebase iOS - GoogleService-Info.plist
+        env:
+          DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
+        run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Pre-build SPM for MapLibre (Gradle)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosSimulatorArm64 --no-daemon --stacktrace
+
+      - name: Boot simulator
+        id: sim
+        run: |
+          set -e
+          UDID=$(xcrun simctl create maestro-runner \
+            "$(xcrun simctl list devicetypes | grep -o 'com.apple.CoreSimulator.SimDeviceType.iPhone-17' | head -1)")
+          echo "udid=$UDID" >> $GITHUB_OUTPUT
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Build iOS app for simulator
+        env:
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj \
+                     -scheme iosApp \
+                     -configuration Debug \
+                     -destination "id=${{ steps.sim.outputs.udid }}" \
+                     -derivedDataPath "$GITHUB_WORKSPACE/build/ios" \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     -parallelizeTargets \
+                     build
+
+      - name: Install app on simulator
+        run: |
+          set -e
+          APP=$(find "$GITHUB_WORKSPACE/build/ios/Build/Products" -maxdepth 2 -name "*.app" | head -1)
+          echo "Installing $APP"
+          xcrun simctl install "${{ steps.sim.outputs.udid }}" "$APP"
+
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.8.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Verify Maestro version
+        run: maestro --version
+
+      # Retried once, and only here. Simulator runs are meaningfully flakier than
+      # emulator runs (boot races, window-server hiccups) and this lane reports
+      # rather than gates, so one retry buys signal without hiding a real break:
+      # a genuine regression fails twice. The PR lane gets no retry on purpose —
+      # a flake that blocks a merge should be fixed, not papered over.
+      - name: Run smoke and nightly flows
+        run: |
+          set -o pipefail
+          run_suite() {
+            maestro --device "${{ steps.sim.outputs.udid }}" \
+              test -e APP_ID=xyz.ksharma.krail .maestro/smoke/ .maestro/nightly/
+          }
+          if ! run_suite; then
+            echo "::warning::Maestro suite failed on iOS; retrying once."
+            xcrun simctl terminate "${{ steps.sim.outputs.udid }}" xyz.ksharma.krail || true
+            run_suite
+          fi
+
+      - name: Upload Maestro debug output
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-nightly-ios-${{ github.run_id }}
+          path: ~/.maestro/tests/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Shut down simulator
+        if: always()
+        run: |
+          xcrun simctl shutdown "${{ steps.sim.outputs.udid }}" || true
+          xcrun simctl delete "${{ steps.sim.outputs.udid }}" || true

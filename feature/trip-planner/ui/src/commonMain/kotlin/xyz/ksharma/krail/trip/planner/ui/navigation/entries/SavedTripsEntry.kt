@@ -18,8 +18,8 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
-import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputPhase
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
+import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -70,7 +70,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // they read them — on the surface that found them, rather than on the row behind it.
         LaunchedEffect(aiSearchInputState.phase, aiSearchInputState.resolved) {
             val resolved = aiSearchInputState.resolved
-            if (aiSearchInputState.phase == AiSearchInputPhase.RESOLVED && resolved != null) {
+            if (aiSearchInputState.isHandoffActionable && resolved != null) {
                 resolved.fromStopItem?.let {
                     viewModel.onEvent(SavedTripUiEvent.FromStopChanged(it.toJsonString()))
                 }

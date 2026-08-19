@@ -65,6 +65,20 @@ data class ResolvedTripIntent(
     val hasWholeTrip: Boolean get() = fromStopItem != null && toStopItem != null
 }
 
+/**
+ * The one gate for writing this state's resolve into anything outside the AI flow (the home
+ * row's From/To fields and time chip). True only while the resolve is LIVE — the dialog is
+ * showing its settle beat and the answer has not been handed over and consumed.
+ *
+ * The consumer (SavedTripsEntry's LaunchedEffect) re-launches every time its screen
+ * recomposes into existence, back-navigation included. Acting on `resolved != null` alone
+ * replayed old answers over stops the rider had since picked by hand; the phase stepping
+ * down at dialog close (closeAfterHandoff) is what turns this false and keeps a re-launched
+ * collector idle. Pinned by `the row-write gate closes with the dialog`.
+ */
+val AiSearchInputUiState.isHandoffActionable: Boolean
+    get() = phase == AiSearchInputPhase.RESOLVED && resolved != null
+
 sealed interface AiSearchInputEvent {
     data class TypedTextChanged(val text: String) : AiSearchInputEvent
     data object OpenInput : AiSearchInputEvent

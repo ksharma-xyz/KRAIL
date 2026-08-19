@@ -2,6 +2,9 @@
     "TooManyFunctions",
     "LongParameterList",
     "LongMethod",
+    // Banned by CyclomaticSuppressBan and grandfathered in
+    // config/cyclomatic-suppress-baseline.txt — startPolling (16) and computeCountdown (19) are
+    // both over the threshold of 15 and need extracting. Do not copy this line anywhere else.
     "CyclomaticComplexMethod",
     "LoopWithTooManyJumpStatements",
     "ForbiddenComment",

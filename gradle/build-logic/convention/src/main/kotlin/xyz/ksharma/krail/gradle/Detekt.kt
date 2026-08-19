@@ -31,7 +31,16 @@ fun Project.configureDetekt() {
             "src/commonMain/kotlin",
             "src/androidMain/kotlin",
             "src/iosMain/kotlin",
-            // Add other source sets when needed
+            // Test code is analysed too. A test is code a person has to read and change, and
+            // the rules that keep production readable keep tests readable. The rules that only
+            // make sense for production (magic numbers, line length, class and function counts,
+            // duplicate string literals) are exempted for test directories in config/detekt.yml
+            // rather than by leaving the sources unscanned. Directory names are the KMP source
+            // set names, not AGP's: `androidHostTest` is what `withHostTest {}` creates.
+            "src/commonTest/kotlin",
+            "src/androidHostTest/kotlin",
+            "src/iosTest/kotlin",
+            "src/androidInstrumentedTest/kotlin",
         )
     }
 

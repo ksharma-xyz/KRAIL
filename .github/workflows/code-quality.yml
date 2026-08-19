@@ -76,6 +76,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew testAndroidHostTest --continue -PciQuality=true
 
+      # The custom detekt rules (`:detekt-rules`, e.g. PublicImplementationClass) live in the
+      # `gradle/build-logic` included build, and its test suite ran nowhere: `./gradlew detekt`
+      # only compiles the rules, and a root-build `test` invocation cannot reach across the
+      # composite boundary. A rule could therefore stop flagging anything and CI would still
+      # be green. `-p` runs the task inside the included build directly.
+      - name: Run build-logic tests
+        id: build-logic-tests
+        if: always() && steps.detekt.conclusion != 'cancelled'
+        env:
+          CI: true
+          GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew -p gradle/build-logic :detekt-rules:test
+
       - name: Upload Detekt reports
         if: always() && steps.detekt.conclusion != 'skipped'
         uses: actions/upload-artifact@v7
@@ -98,5 +112,7 @@ jobs:
           path: |
             **/build/reports/tests/**
             **/build/test-results/**
+            gradle/build-logic/detekt-rules/build/reports/tests/**
+            gradle/build-logic/detekt-rules/build/test-results/**
           if-no-files-found: ignore
           retention-days: 7

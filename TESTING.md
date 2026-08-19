@@ -103,6 +103,22 @@ also wired into `check`:
 | `verifyTestingModuleUsage` | Any `commonMain` / `androidMain` / `iosMain` configuration resolves `:core:testing`. Stops fakes from shipping in the app and breaks any `:core:testing → feature → :core:testing` cycle. |
 | `verifyNoAdHocBoundaryFakes` | New `object : Boundary { … }` stub or `private class Fake<Boundary>` appears in any test source set. Existing offenders are grandfathered via the baseline file above. |
 
+The same workflow also runs the custom detekt rules' own suite:
+
+```
+./gradlew -p gradle/build-logic :detekt-rules:test
+```
+
+`:detekt-rules` lives in the `gradle/build-logic` included build. `./gradlew detekt` compiles
+it but never runs its tests, and a root-build `test` invocation cannot reach across the
+composite boundary — so `PublicImplementationClassTest` had never executed in CI. A rule could
+have quietly stopped flagging anything with CI still green. `-p` runs the task inside the
+included build directly.
+
+Note on the bare `test` task: it is not a way to run anything here. `./gradlew test` resolves
+to exactly one task, `:androidApp:test`, and `:androidApp` has no test source set, so it runs
+zero tests. `testAndroidHostTest` is the only host-test task name that matches KMP modules.
+
 Snapshot verification is a separate job, `.github/workflows/snapshot-verify.yml`, called
 from `build.yml` in parallel with `code-quality`. It runs one step per golden-owning module:
 

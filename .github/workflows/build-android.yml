@@ -100,6 +100,12 @@ jobs:
             echo "versionCode: ${CURRENT} (debug — not incrementing)"
           fi
 
+      # The debug line used to carry a bare `test` task alongside assembleDebug. It bought
+      # nothing. `./gradlew test --dry-run` resolves to exactly one task, `:androidApp:test`,
+      # and `androidApp/src` has only debug/main/release — no test source set — so it ran zero
+      # tests. Every library module is a KMP `androidLibrary { withHostTest {} }`, whose task is
+      # `testAndroidHostTest`, which the bare name never matches. The real suite runs in
+      # code-quality.yml, which build.yml already gates this workflow behind.
       - name: Build ${{ inputs.variant }}
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
@@ -107,7 +113,7 @@ jobs:
         run: |
           set -e
           if [[ "${{ inputs.variant }}" == "debug" ]]; then
-            ./gradlew :androidApp:assembleDebug test -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace --no-configuration-cache
+            ./gradlew :androidApp:assembleDebug -PversionCode="${VERSION_CODE}" --rerun-tasks --stacktrace --no-configuration-cache
           elif [[ "${{ inputs.variant }}" == "release" ]]; then
             ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease -PversionCode="${VERSION_CODE}" --no-configuration-cache
           fi

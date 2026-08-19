@@ -178,6 +178,10 @@ unless the trigger is consumed.
       completes, so a re-launched collector sees nothing to do?
 - [ ] Test: after the action completes, assert the trigger no longer reads as actionable —
       not just that the payload was right.
+- [ ] Flow test: re-launch the effect for real. `FlowTest` (in `:feature:trip-planner:ui`
+      androidHostTest, documented in `docs/INTEGRATION_TESTING_PLAN.md`) composes the actual
+      navigation entry and gives you `leaveAndReturn()` and `recreate()`; a unit test cannot
+      re-run a collector, so this is the only layer that sees the second launch.
 
 Shipped example: the Ask KRAIL dialog wrote resolved stops into the home row while
 `phase == RESOLVED`, and kept the phase after closing. Coming back from the stop-search

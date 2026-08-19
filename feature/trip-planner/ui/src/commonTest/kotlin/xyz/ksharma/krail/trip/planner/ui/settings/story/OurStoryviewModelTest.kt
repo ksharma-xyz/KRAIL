@@ -13,7 +13,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
-import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryEvent
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

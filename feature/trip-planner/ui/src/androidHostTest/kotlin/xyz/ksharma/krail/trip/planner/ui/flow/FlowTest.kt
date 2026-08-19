@@ -8,7 +8,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
-import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -26,6 +25,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.entries.SavedTripsEntry
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import java.util.concurrent.TimeUnit
 
 /**
  * Base for **flow tests**: real ViewModels, real composition, a navigation-shaped lifecycle,

@@ -5,8 +5,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.dhruva.location.Location
@@ -21,7 +21,6 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolv
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopLabelTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopSearchTextResolver
-import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAiTextService
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsRepository

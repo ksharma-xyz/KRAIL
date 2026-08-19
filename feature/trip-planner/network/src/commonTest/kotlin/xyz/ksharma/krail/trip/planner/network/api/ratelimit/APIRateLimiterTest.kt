@@ -55,7 +55,6 @@ class APIRateLimiterTest {
 
         // When
         rateLimiter.rateLimitFlow(apiCall).test {
-
             // Then
             expectNoEvents()
             delay(2.seconds)

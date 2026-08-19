@@ -49,8 +49,12 @@ class StopSearchPipelineReproTest {
             val c = line.split("|")
             if (c.size < 3) return@mapNotNull null
             SelectProductClassesForStop(
-                stopId = c[0], stopName = c[1], stopLat = 0.0, stopLon = 0.0,
-                isParent = null, productClasses = c[2],
+                stopId = c[0],
+                stopName = c[1],
+                stopLat = 0.0,
+                stopLon = 0.0,
+                isParent = null,
+                productClasses = c[2],
             )
         }
     }
@@ -67,7 +71,15 @@ class StopSearchPipelineReproTest {
                 stops.filter { it.stopId in stopIds.toSet() }
             override fun selectStopCoordinatesBatch(stopIds: List<String>) = emptyMap<String, Pair<Double, Double>>()
             override fun observeStopLabels(): Flow<List<StopLabels>> = emptyFlow()
-            override fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) = error("x")
+            override fun upsertStopLabel(
+                label: String,
+                emoji: String,
+                stopId: String?,
+                stopName: String?,
+                sortOrder: Long,
+            ) = error(
+                "x",
+            )
             override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) = error("x")
             override fun renameStopLabel(label: String, newLabel: String) = error("x")
             override fun deleteStopLabel(label: String) = error("x")
@@ -75,7 +87,15 @@ class StopSearchPipelineReproTest {
             override fun insertOrReplaceTheme(productClass: Long) = error("x")
             override fun getProductClass(): Long? = error("x")
             override fun clearTheme() = error("x")
-            override fun insertOrReplaceTrip(tripId: String, fromStopId: String, fromStopName: String, toStopId: String, toStopName: String) = error("x")
+            override fun insertOrReplaceTrip(
+                tripId: String,
+                fromStopId: String,
+                fromStopName: String,
+                toStopId: String,
+                toStopName: String,
+            ) = error(
+                "x",
+            )
             override fun deleteTrip(tripId: String) = error("x")
             override fun selectAllTrips(): List<SavedTrip> = error("x")
             override fun observeAllTrips(): Flow<List<SavedTrip>> = emptyFlow()
@@ -85,7 +105,15 @@ class StopSearchPipelineReproTest {
             override fun getAlerts(journeyId: String): List<SelectServiceAlertsByJourneyId> = error("x")
             override fun clearAlerts() = error("x")
             override fun insertAlerts(journeyId: String, alerts: List<SelectServiceAlertsByJourneyId>) = error("x")
-            override fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double, isParent: Boolean?) = error("x")
+            override fun insertNswStop(
+                stopId: String,
+                stopName: String,
+                stopLat: Double,
+                stopLon: Double,
+                isParent: Boolean?,
+            ) = error(
+                "x",
+            )
             override fun stopsCount(): Int = error("x")
             override fun productClassCount(): Int = error("x")
             override fun insertNswStopProductClass(stopId: String, productClass: Int) = error("x")
@@ -107,7 +135,13 @@ class StopSearchPipelineReproTest {
                 FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key to FlagValue.BooleanValue(true),
             ),
         )
-        return RealStopResultsManager(sandook, NoOpBusRoutes, flag, DefaultFuzzyStopRanker(), UnconfinedTestDispatcher())
+        return RealStopResultsManager(
+            sandook,
+            NoOpBusRoutes,
+            flag,
+            DefaultFuzzyStopRanker(),
+            UnconfinedTestDispatcher(),
+        )
     }
 
     /**

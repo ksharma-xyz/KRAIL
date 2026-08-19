@@ -147,7 +147,8 @@ class DepartureBoardRepositoryTest {
             repo.pollStop(STOP_A).test {
                 runCurrent()
                 assertEquals(
-                    callsAfterFirst, service.callCount,
+                    callsAfterFirst,
+                    service.callCount,
                     "No immediate re-fetch within the refresh window",
                 )
                 cancelAndIgnoreRemainingEvents()
@@ -335,7 +336,8 @@ class DepartureBoardRepositoryTest {
             repo.loadPreviousDepartures(STOP_A)
 
             assertEquals(
-                callsAfterFirst, service.callCount,
+                callsAfterFirst,
+                service.callCount,
                 "Second loadPreviousDepartures within the refresh window must not call the API",
             )
 

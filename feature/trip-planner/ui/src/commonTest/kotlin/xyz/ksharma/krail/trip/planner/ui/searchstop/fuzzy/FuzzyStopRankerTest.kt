@@ -273,37 +273,54 @@ class FuzzyStopRankerTest {
 
     // Concatenation — missing whitespace
     @Test fun `golden townhall resolves Town Hall`() = assertTopFive("townhall", "200070")
+
     @Test fun `golden wewollongong resolves Wollongong`() = assertTopFive("wewollongong", "WGN")
 
     // Progressive typing / truncation
     @Test fun `golden townh resolves Town Hall`() = assertTopFive("townh", "200070")
+
     @Test fun `golden townha resolves Town Hall`() = assertTopFive("townha", "200070")
+
     @Test fun `golden townhal resolves Town Hall`() = assertTopFive("townhal", "200070")
+
     @Test fun `golden bellav resolves Bella Vista Station`() = assertTopFive("bellav", "BVS")
+
     @Test fun `golden bella vista m resolves Bella Vista Station`() = assertTopFive("bella vista m", "BVS")
+
     @Test fun `golden schoi resolves Schofields`() = assertTopFive("schoi", "SCH")
+
     @Test fun `golden schofil resolves Schofields`() = assertTopFive("schofil", "SCH")
+
     @Test fun `golden earraw resolves Warrawong`() = assertTopFive("earraw", "WRW")
 
     // Typos / fat-finger / transpositions
     @Test fun `golden wollong9ng resolves Wollongong`() = assertTopFive("wollong9ng", "WGN")
+
     @Test fun `golden blackyown resolves Blacktown`() = assertTopFive("blackyown", "BTN")
+
     @Test fun `golden cebtral resolves Central`() = assertTopFive("cebtral", "200060")
+
     @Test fun `golden kingsfprd resolves Kingsford`() = assertTopFive("kingsfprd", "KGF")
+
     @Test fun `golden warrawonngg resolves Warrawong`() = assertTopFive("warrawonngg", "WRW")
+
     @Test fun `golden wareawong resolves Warrawong`() = assertTopFive("wareawong", "WRW")
 
     // Abbreviations
     @Test fun `golden york rd resolves York Road`() = assertTopFive("york rd", "YRD")
+
     @Test fun `golden pitt st resolves Pitt Street`() = assertTopFive("pitt st", "PTT")
+
     @Test fun `golden third ave resolves Third Avenue`() = assertTopFive("third ave", "THD")
 
     // Missing middle vowels / character deletions
     @Test fun `golden schofld resolves Schofields`() = assertTopFive("schofld", "SCH")
+
     @Test fun `golden schfld resolves Schofields`() = assertTopFive("schfld", "SCH")
 
     // Concatenation with skipped letters
     @Test fun `golden twnhall resolves Town Hall`() = assertTopFive("twnhall", "200070")
+
     @Test fun `golden blackyown resolves Blacktown Station`() = assertTopFive("blackyown", "BTN2")
 
     // endregion
@@ -350,14 +367,20 @@ class FuzzyStopRankerTest {
     fun `blacktown road does not surface Alison Park Blackwall Point Rd`() {
         val results = ranker.rank(query = "blacktown road", candidates = candidatePool())
         val ids = results.map { it.stopId }
-        assertTrue("APB" !in ids, "Alison Park Blackwall Point Rd must not match 'blacktown road' but appeared in: $ids")
+        assertTrue(
+            "APB" !in ids,
+            "Alison Park Blackwall Point Rd must not match 'blacktown road' but appeared in: $ids",
+        )
     }
 
     @Test
     fun `blacktown road surfaces Blacktown Station`() {
         val results = ranker.rank(query = "blacktown road", candidates = candidatePool())
         val ids = results.take(5).map { it.stopId }
-        assertTrue("BTN" in ids || "BTN2" in ids, "Expected Blacktown or Blacktown Station in top 5 for 'blacktown road' but got: $ids")
+        assertTrue(
+            "BTN" in ids || "BTN2" in ids,
+            "Expected Blacktown or Blacktown Station in top 5 for 'blacktown road' but got: $ids",
+        )
     }
 
     // endregion

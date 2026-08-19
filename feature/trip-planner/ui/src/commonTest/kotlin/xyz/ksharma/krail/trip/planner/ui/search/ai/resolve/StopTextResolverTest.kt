@@ -1,9 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.search.ai.resolve
 
 import kotlinx.coroutines.test.runTest
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
-import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

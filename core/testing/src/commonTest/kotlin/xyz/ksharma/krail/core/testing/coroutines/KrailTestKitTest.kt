@@ -43,8 +43,11 @@ class KrailTestKitTest {
                 count++
             }
         }
-        pumpOnce(100L); assertEquals(1, count)
-        pumpOnce(100L); assertEquals(2, count)
-        pumpOnce(100L); assertEquals(3, count)
+        pumpOnce(100L)
+        assertEquals(1, count)
+        pumpOnce(100L)
+        assertEquals(2, count)
+        pumpOnce(100L)
+        assertEquals(3, count)
     }
 }

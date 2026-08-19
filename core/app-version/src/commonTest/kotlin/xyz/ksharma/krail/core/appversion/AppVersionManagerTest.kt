@@ -1,14 +1,12 @@
 package xyz.ksharma.krail.core.appversion
 
 import kotlinx.coroutines.test.runTest
+import xyz.ksharma.krail.core.appinfo.DevicePlatformType
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.fakes.FakeAppInfo
 import xyz.ksharma.krail.core.testing.fakes.FakeAppInfoProvider
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
-import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
-import xyz.ksharma.krail.core.appinfo.DevicePlatformType
-import xyz.ksharma.krail.core.appversion.RealAppVersionManager
-import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
-import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -40,7 +38,7 @@ class AppVersionManagerTest {
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -54,14 +52,14 @@ class AppVersionManagerTest {
     fun `checkForUpdates returns UpdateRequired when current version is less than latest`() =
         runTest {
             // Given
-            fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.4.0",)
+            fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.4.0")
             fakeFlag.setFlagValue(
                 FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-                FlagValue.StringValue("1.0.0")
+                FlagValue.StringValue("1.0.0"),
             )
             fakeFlag.setFlagValue(
                 FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-                FlagValue.StringValue("1.5.0")
+                FlagValue.StringValue("1.5.0"),
             )
 
             // When
@@ -77,15 +75,15 @@ class AppVersionManagerTest {
             // Given
             fakeAppInfoProvider.mockAppInfo = FakeAppInfo(
                 appVersion = "0.9.0",
-                
+
             )
             fakeFlag.setFlagValue(
                 FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-                FlagValue.StringValue("1.0.0")
+                FlagValue.StringValue("1.0.0"),
             )
             fakeFlag.setFlagValue(
                 FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-                FlagValue.StringValue("1.5.0")
+                FlagValue.StringValue("1.5.0"),
             )
 
             // When
@@ -104,7 +102,7 @@ class AppVersionManagerTest {
         )
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(FlagKeys.LATEST_APP_VERSION_IOS.key, FlagValue.StringValue("1.5.0"))
 
@@ -132,11 +130,11 @@ class AppVersionManagerTest {
         // Given
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(
             appVersion = "1.0.0",
-            devicePlatformType = DevicePlatformType.UNKNOWN
+            devicePlatformType = DevicePlatformType.UNKNOWN,
         )
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("0.9.0")
+            FlagValue.StringValue("0.9.0"),
         )
 
         // When
@@ -151,15 +149,15 @@ class AppVersionManagerTest {
         // Given
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(
             appVersion = "1.2.3",
-            
+
         )
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.2.2")
+            FlagValue.StringValue("1.2.2"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.2.4")
+            FlagValue.StringValue("1.2.4"),
         )
 
         // When
@@ -175,11 +173,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.9.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("2.0.0")
+            FlagValue.StringValue("2.0.0"),
         )
 
         // When
@@ -197,11 +195,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("") // Empty string - should use fallback
+            FlagValue.StringValue(""), // Empty string - should use fallback
         )
 
         // When
@@ -217,11 +215,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("") // Empty string - should use "1.0.0" fallback
+            FlagValue.StringValue(""), // Empty string - should use "1.0.0" fallback
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("2.0.0")
+            FlagValue.StringValue("2.0.0"),
         )
 
         // When
@@ -237,11 +235,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("")
+            FlagValue.StringValue(""),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("")
+            FlagValue.StringValue(""),
         )
 
         // When
@@ -257,11 +255,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("   ") // Whitespace only
+            FlagValue.StringValue("   "), // Whitespace only
         )
 
         // When
@@ -276,15 +274,15 @@ class AppVersionManagerTest {
         // Given
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(
             appVersion = "1.8.0",
-            devicePlatformType = DevicePlatformType.IOS
+            devicePlatformType = DevicePlatformType.IOS,
         )
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_IOS.key,
-            FlagValue.StringValue("") // Empty - should fallback to 1.8.0
+            FlagValue.StringValue(""), // Empty - should fallback to 1.8.0
         )
 
         // When
@@ -300,11 +298,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "0.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("") // Empty - fallback to "1.0.0"
+            FlagValue.StringValue(""), // Empty - fallback to "1.0.0"
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("2.0.0")
+            FlagValue.StringValue("2.0.0"),
         )
 
         // When
@@ -320,11 +318,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "2.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("") // Empty - falls back to current 2.5.0
+            FlagValue.StringValue(""), // Empty - falls back to current 2.5.0
         )
 
         // When
@@ -340,11 +338,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "3.0.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("2.0.0")
+            FlagValue.StringValue("2.0.0"),
         )
 
         // When
@@ -360,11 +358,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.9")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0")
+            FlagValue.StringValue("1.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.9.0")
+            FlagValue.StringValue("1.9.0"),
         )
 
         // When
@@ -380,11 +378,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.9.0-beta")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.9.0")
+            FlagValue.StringValue("1.9.0"),
         )
 
         // When
@@ -400,11 +398,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -420,11 +418,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.4.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -442,11 +440,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "0.9.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -456,7 +454,7 @@ class AppVersionManagerTest {
         assertEquals("🚧 Time to Update 🚧", result?.title)
         assertEquals(
             "Important fixes and updates ahead — required to keep KRAIL running at its best.",
-            result?.description
+            result?.description,
         )
         assertEquals("Update Now", result?.ctaText)
     }
@@ -467,11 +465,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.4.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -487,11 +485,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -507,11 +505,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "0.9.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When
@@ -527,11 +525,11 @@ class AppVersionManagerTest {
         fakeAppInfoProvider.mockAppInfo = FakeAppInfo(appVersion = "1.5.0")
         fakeFlag.setFlagValue(
             FlagKeys.MIN_SUPPORTED_APP_VERSION.key,
-            FlagValue.StringValue("1.0.0")
+            FlagValue.StringValue("1.0.0"),
         )
         fakeFlag.setFlagValue(
             FlagKeys.LATEST_APP_VERSION_ANDROID.key,
-            FlagValue.StringValue("1.5.0")
+            FlagValue.StringValue("1.5.0"),
         )
 
         // When

@@ -1,9 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.testfakes
 
 import kotlinx.collections.immutable.persistentListOf
-import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
-import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
+import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -25,30 +24,30 @@ class FakeStopResultsManager : StopResultsManager {
         SearchStopState.SearchResult.Stop(
             stopId = "10101",
             stopName = "Central Station",
-            transportModeType = persistentListOf(NswTransportMode.Train, NswTransportMode.Bus)
+            transportModeType = persistentListOf(NswTransportMode.Train, NswTransportMode.Bus),
         ),
         SearchStopState.SearchResult.Stop(
             stopId = "10102",
             stopName = "Town Hall",
-            transportModeType = persistentListOf(NswTransportMode.Train)
+            transportModeType = persistentListOf(NswTransportMode.Train),
         ),
         // A real stop, kept because it is the one that made "work" resolve to a bus stop on
         // the northern beaches: "work" appears inside "Powderworks".
         SearchStopState.SearchResult.Stop(
             stopId = "10104",
             stopName = "70 Powderworks Rd",
-            transportModeType = persistentListOf(NswTransportMode.Bus)
+            transportModeType = persistentListOf(NswTransportMode.Bus),
         ),
         SearchStopState.SearchResult.Stop(
             stopId = "10103",
             stopName = "Parramatta Station",
-            transportModeType = persistentListOf(NswTransportMode.Train, NswTransportMode.Bus)
+            transportModeType = persistentListOf(NswTransportMode.Train, NswTransportMode.Bus),
         ),
         SearchStopState.SearchResult.Stop(
             stopId = "10104",
             stopName = "Sydney Airport",
-            transportModeType = persistentListOf(NswTransportMode.Train)
-        )
+            transportModeType = persistentListOf(NswTransportMode.Train),
+        ),
     )
 
     override val selectedFromStop: StopItem?
@@ -146,13 +145,13 @@ class FakeStopResultsManager : StopResultsManager {
             SearchStopState.StopResult(
                 stopId = searchResultStop.stopId,
                 stopName = searchResultStop.stopName,
-                transportModeType = searchResultStop.transportModeType
+                transportModeType = searchResultStop.transportModeType,
             )
         } else {
             SearchStopState.StopResult(
                 stopId = stopItem.stopId,
                 stopName = stopItem.stopName,
-                transportModeType = persistentListOf(NswTransportMode.Train) // Default transport mode
+                transportModeType = persistentListOf(NswTransportMode.Train), // Default transport mode
             )
         }
 

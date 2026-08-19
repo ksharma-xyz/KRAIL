@@ -19,4 +19,3 @@ class FakeInviteFriendsTileManager : InviteFriendsTileManager {
         hasSeenTile = false
     }
 }
-

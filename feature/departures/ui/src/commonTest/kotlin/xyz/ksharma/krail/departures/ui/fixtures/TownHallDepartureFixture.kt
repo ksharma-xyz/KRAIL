@@ -36,33 +36,37 @@ internal object TownHallDepartureFixture {
      */
     val EXPECTED = listOf(
         // Light Rail — LR1 direction (code present, so code · name)
-        Triple("L3",   "LR1 · Town Hall Light Rail", "Circular Quay to Juniors Kingsford"),
+        Triple("L3", "LR1 · Town Hall Light Rail", "Circular Quay to Juniors Kingsford"),
         // Bus — Stand H
-        Triple("500X", "Stand H",                    "West Ryde to City Hyde Park via Victoria Rd (Express Service)"),
+        Triple("500X", "Stand H", "West Ryde to City Hyde Park via Victoria Rd (Express Service)"),
         // Light Rail — no platform code (1001_L2 product), so name only
-        Triple("L2",   "Town Hall Light Rail",        "Randwick to Circular Quay"),
+        Triple("L2", "Town Hall Light Rail", "Randwick to Circular Quay"),
         // Bus — Stand K
-        Triple("506",  "Stand K",                    "City Domain to Macquarie University via East Ryde"),
+        Triple("506", "Stand K", "City Domain to Macquarie University via East Ryde"),
         // Train — THL6 normal (platformName = "Platform 6")
-        Triple("T8",   "Platform 6",                 "towards Campbelltown via East Hills"),
+        Triple("T8", "Platform 6", "towards Campbelltown via East Hills"),
         // Train — THL4
-        Triple("T4",   "Platform 4",                 "towards Waterfall via Wolli Creek"),
+        Triple("T4", "Platform 4", "towards Waterfall via Wolli Creek"),
         // Train — THL2
-        Triple("T9",   "Platform 2",                 "towards Epping via Central"),
+        Triple("T9", "Platform 2", "towards Epping via Central"),
         // Train — THL1
-        Triple("T2",   "Platform 1",                 "towards Leppington via Granville"),
+        Triple("T2", "Platform 1", "towards Leppington via Granville"),
         // Train — THL5
-        Triple("T4",   "Platform 5",                 "towards Bondi Junction"),
+        Triple("T4", "Platform 5", "towards Bondi Junction"),
         // Train — THL3
-        Triple("T9",   "Platform 3",                 "towards Gordon via Lindfield"),
+        Triple("T9", "Platform 3", "towards Gordon via Lindfield"),
         // Bus — Stand J
-        Triple("311",  "Stand J",                    "Central Belmore Park to City Millers Point via Darlinghurst & Potts Point"),
+        Triple(
+            "311",
+            "Stand J",
+            "Central Belmore Park to City Millers Point via Darlinghurst & Potts Point",
+        ),
         // Bus — Stand G
-        Triple("324",  "Stand G",                    "City Walsh Bay to Watsons Bay via Old South Head Rd"),
+        Triple("324", "Stand G", "City Walsh Bay to Watsons Bay via Old South Head Rd"),
         // Light Rail — LR2 direction
-        Triple("L3",   "LR2 · Town Hall Light Rail", "Juniors Kingsford to Circular Quay"),
+        Triple("L3", "LR2 · Town Hall Light Rail", "Juniors Kingsford to Circular Quay"),
         // Train — THL6 bad case: API echoes the raw code as platformName, so "Platform 6" is derived
-        Triple("T2",   "Platform 6",                 "towards Leppington Station, Leppington"),
+        Triple("T2", "Platform 6", "towards Leppington Station, Leppington"),
     )
 
     val JSON = """
@@ -573,4 +577,3 @@ internal object TownHallDepartureFixture {
         }
     """.trimIndent()
 }
-

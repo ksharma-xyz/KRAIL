@@ -60,118 +60,118 @@ class FuzzyStopSearchEvalTest {
 
         // ── Progressive typing: Town Hall ─────────────────────────────────────
         // Analytics: townh / townha / townhal / townhall all returned zero results
-        EvalCase("town",     include = listOf("Town Hall")),
-        EvalCase("townh",    include = listOf("Town Hall")),
-        EvalCase("townha",   include = listOf("Town Hall")),
-        EvalCase("townhal",  include = listOf("Town Hall")),
+        EvalCase("town", include = listOf("Town Hall")),
+        EvalCase("townh", include = listOf("Town Hall")),
+        EvalCase("townha", include = listOf("Town Hall")),
+        EvalCase("townhal", include = listOf("Town Hall")),
         EvalCase("townhall", include = listOf("Town Hall")),
         EvalCase("town hall", include = listOf("Town Hall Station")),
 
         // ── Progressive typing: Schofields ────────────────────────────────────
-        EvalCase("scho",     include = listOf("Schofields")),
-        EvalCase("schoi",    include = listOf("Schofields")),
-        EvalCase("schofi",   include = listOf("Schofields")),
-        EvalCase("schofil",  include = listOf("Schofields")),
+        EvalCase("scho", include = listOf("Schofields")),
+        EvalCase("schoi", include = listOf("Schofields")),
+        EvalCase("schofi", include = listOf("Schofields")),
+        EvalCase("schofil", include = listOf("Schofields")),
         EvalCase("schofild", include = listOf("Schofields")),
-        EvalCase("schofld",  include = listOf("Schofields")),    // vowel drop
+        EvalCase("schofld", include = listOf("Schofields")), // vowel drop
         EvalCase("schofields", include = listOf("Schofields Station")),
 
         // ── Progressive typing: Wollongong ────────────────────────────────────
-        EvalCase("wollo",      include = listOf("Wollongong")),
-        EvalCase("wollongo",   include = listOf("Wollongong")),
+        EvalCase("wollo", include = listOf("Wollongong")),
+        EvalCase("wollongo", include = listOf("Wollongong")),
         EvalCase("wollongong", include = listOf("Wollongong Station")),
 
         // ── Progressive typing: Bella Vista ──────────────────────────────────
         // Analytics: bellav returned zero results
-        EvalCase("bellav",        include = listOf("Bella Vista")),
-        EvalCase("bella vista",   include = listOf("Bella Vista Station")),
+        EvalCase("bellav", include = listOf("Bella Vista")),
+        EvalCase("bella vista", include = listOf("Bella Vista Station")),
         EvalCase("bella vista m", include = listOf("Bella Vista Station")),
 
         // ── Progressive typing: Warrawong via wrong first syllable ────────────
         // Analytics: earraw / earra / earrawo / earrawon / earrawong all zero
         // "earra"/"earraw" LCS-match both "warrawong" and "warrawee"/"narraweena" equally;
         // wider window is needed until a longer prefix resolves the ambiguity.
-        EvalCase("earra",    include = listOf("Warrawong"), topK = 10),
-        EvalCase("earraw",   include = listOf("Warrawong"), topK = 10),
-        EvalCase("earrawo",  include = listOf("Warrawong")),
+        EvalCase("earra", include = listOf("Warrawong"), topK = 10),
+        EvalCase("earraw", include = listOf("Warrawong"), topK = 10),
+        EvalCase("earrawo", include = listOf("Warrawong")),
         EvalCase("earrawon", include = listOf("Warrawong")),
 
         // ── Progressive typing: Warrawong via alternate spelling ──────────────
         // Analytics: wareawo / wareawon / wareawong / warrawonngg all zero
-        EvalCase("wareawo",    include = listOf("Warrawong")),
-        EvalCase("wareawon",   include = listOf("Warrawong")),
-        EvalCase("wareawong",  include = listOf("Warrawong")),
+        EvalCase("wareawo", include = listOf("Warrawong")),
+        EvalCase("wareawon", include = listOf("Warrawong")),
+        EvalCase("wareawong", include = listOf("Warrawong")),
         EvalCase("warrawonngg", include = listOf("Warrawong")),
 
         // ── Progressive typing: Cowper Street ────────────────────────────────
         // Analytics: cowper street / cowpe st / cowper str all returned zero results
-        EvalCase("cowpe st",      include = listOf("Cowper St")),
-        EvalCase("cowper str",    include = listOf("Cowper St")),
-        EvalCase("cowper stree",  include = listOf("Cowper St")),
+        EvalCase("cowpe st", include = listOf("Cowper St")),
+        EvalCase("cowper str", include = listOf("Cowper St")),
+        EvalCase("cowper stree", include = listOf("Cowper St")),
         EvalCase("cowper street", include = listOf("Cowper St"), exclude = listOf("St James Station")),
 
         // ── Progressive typing: Port Kembla ───────────────────────────────────
-        EvalCase("port kembla",  include = listOf("Port Kembla")),
-        EvalCase("port kem",     include = listOf("Port Kembla")),
-        EvalCase("portkembla",   include = listOf("Port Kembla")),   // concatenated
+        EvalCase("port kembla", include = listOf("Port Kembla")),
+        EvalCase("port kem", include = listOf("Port Kembla")),
+        EvalCase("portkembla", include = listOf("Port Kembla")), // concatenated
 
         // ── Typos / fat finger / transpositions ───────────────────────────────
         // All from zero-result analytics
-        EvalCase("blackyown",   include = listOf("Blacktown")),
-        EvalCase("cebtral",     include = listOf("Central Station")),
-        EvalCase("wollong9ng",  include = listOf("Wollongong")),
+        EvalCase("blackyown", include = listOf("Blacktown")),
+        EvalCase("cebtral", include = listOf("Central Station")),
+        EvalCase("wollong9ng", include = listOf("Wollongong")),
         // "woll9n": "9" edit-matches "i" → "wollin" (Wollin Pl) ranks above "wollongong".
         // This is an inherent keyboard-proximity ambiguity; explore via discoveryQueries.
-        EvalCase("paramatta",   include = listOf("Parramatta")),
-        EvalCase("kingsfprd",   include = listOf("Kingsford")),
-        EvalCase("bella visa",  include = listOf("Bella Vista")),
+        EvalCase("paramatta", include = listOf("Parramatta")),
+        EvalCase("kingsfprd", include = listOf("Kingsford")),
+        EvalCase("bella visa", include = listOf("Bella Vista")),
         EvalCase("wewollongong", include = listOf("Wollongong")),
-        EvalCase("macquire",    include = listOf("Macquarie")),
-        EvalCase("hustvill",    include = listOf("Hurstville")),
-        EvalCase("lidcome",     include = listOf("Lidcombe")),
-        EvalCase("strarhfi",    include = listOf("Strathfield")),
-        EvalCase("sevenhi",     include = listOf("Seven Hills")),
-        EvalCase("crowsnest",   include = listOf("Crows Nest")),
+        EvalCase("macquire", include = listOf("Macquarie")),
+        EvalCase("hustvill", include = listOf("Hurstville")),
+        EvalCase("lidcome", include = listOf("Lidcombe")),
+        EvalCase("strarhfi", include = listOf("Strathfield")),
+        EvalCase("sevenhi", include = listOf("Seven Hills")),
+        EvalCase("crowsnest", include = listOf("Crows Nest")),
 
         // ── Abbreviations ─────────────────────────────────────────────────────
         // Analytics: third avenue / highfield roa / highfield ro all zero results
-        EvalCase("third avenue",  include = listOf("Third Ave")),
-        EvalCase("third aven",    include = listOf("Third Ave")),
-        EvalCase("third avenu",   include = listOf("Third Ave")),
+        EvalCase("third avenue", include = listOf("Third Ave")),
+        EvalCase("third aven", include = listOf("Third Ave")),
+        EvalCase("third avenu", include = listOf("Third Ave")),
         EvalCase("highfield road", include = listOf("Highfield Rd")),
-        EvalCase("highfield roa",  include = listOf("Highfield Rd")),
-        EvalCase("highfield ro",   include = listOf("Highfield Rd")),
+        EvalCase("highfield roa", include = listOf("Highfield Rd")),
+        EvalCase("highfield ro", include = listOf("Highfield Rd")),
 
         // ── Existing working queries (regression guard) ────────────────────────
-        EvalCase("central",     include = listOf("Central Station")),
-        EvalCase("wollongong",  include = listOf("Wollongong Station")),
-        EvalCase("blacktown",   include = listOf("Blacktown Station")),
-        EvalCase("parramatta",  include = listOf("Parramatta Station")),
-        EvalCase("schofields",  include = listOf("Schofields Station")),
+        EvalCase("central", include = listOf("Central Station")),
+        EvalCase("wollongong", include = listOf("Wollongong Station")),
+        EvalCase("blacktown", include = listOf("Blacktown Station")),
+        EvalCase("parramatta", include = listOf("Parramatta Station")),
+        EvalCase("schofields", include = listOf("Schofields Station")),
 
         // ── Multi-token + typo (zero-result analytics) ────────────────────────
         // Real queries that returned nothing in 60-day analytics; promoted from
         // the discovery list once the ranker handled them.
         EvalCase("wollngong hospital", include = listOf("Wollongong Hospital")),
-        EvalCase("bella vista metr",   include = listOf("Bella Vista")),
-        EvalCase("livwrpoo",           include = listOf("Liverpool")),
-        EvalCase("eouse hill",         include = listOf("Rouse Hill")),
-        EvalCase("sudney",             include = listOf("Sydney")),
-        EvalCase("sudne",              include = listOf("Sydney")),
+        EvalCase("bella vista metr", include = listOf("Bella Vista")),
+        EvalCase("livwrpoo", include = listOf("Liverpool")),
+        EvalCase("eouse hill", include = listOf("Rouse Hill")),
+        EvalCase("sudney", include = listOf("Sydney")),
+        EvalCase("sudne", include = listOf("Sydney")),
 
         // ── False-positive guards ──────────────────────────────────────────────
         EvalCase(
-            query   = "blacktwon ro",
+            query = "blacktwon ro",
             include = listOf("Blacktown"),
             exclude = listOf("Barangaroo"),
         ),
         EvalCase(
-            query   = "blacktown road",
+            query = "blacktown road",
             include = listOf("Blacktown"),
             exclude = listOf("Alison Park Blackwall"),
         ),
         EvalCase(
-            query   = "pitt st",
+            query = "pitt st",
             include = listOf("Pitt St"),
             exclude = listOf("St James Station"),
         ),
@@ -228,7 +228,7 @@ class FuzzyStopSearchEvalTest {
     private fun loadStops(): List<SearchStopState.SearchResult.Stop>? {
         val lines: List<String>? = readFromClasspath() ?: readFromFilesystem()
         if (lines == null) return null
-        return lines.drop(1)  // skip header
+        return lines.drop(1) // skip header
             .filter { it.isNotBlank() }
             .mapNotNull { line ->
                 val cols = line.split("|")
@@ -285,8 +285,8 @@ class FuzzyStopSearchEvalTest {
         if (stops == null) {
             println(
                 "\nSKIP: nsw_stops_eval.csv not found.\n" +
-                "Generate it by running from the project root:\n" +
-                "  python3 scripts/extract_nsw_stops.py\n"
+                    "Generate it by running from the project root:\n" +
+                    "  python3 scripts/extract_nsw_stops.py\n",
             )
             return
         }
@@ -335,7 +335,7 @@ class FuzzyStopSearchEvalTest {
                 appendLine("Eval score ${score.toInt()}% is below 80%.")
                 appendLine("Failing checks:")
                 failures.forEach { appendLine("  • $it") }
-            }
+            },
         )
     }
 

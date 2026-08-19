@@ -251,7 +251,6 @@ class DateTimeHelperTest {
         assertEquals(0L, difference3.inWholeMinutes)
     }
 
-
     // region isDateInFuture tests
     @OptIn(ExperimentalTime::class)
     @Test

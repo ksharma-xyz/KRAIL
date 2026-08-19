@@ -1,15 +1,15 @@
 @file:Suppress("VisibleForTests")
+
 package xyz.ksharma.krail.discover.network.real
 
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import xyz.ksharma.krail.core.testing.fakes.FakeDiscoverCardSeenPreferences
-import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.testing.fakes.FakeDiscoverCardSeenPreferences
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.discover.network.api.model.DiscoverModel
-import xyz.ksharma.krail.discover.network.real.RealDiscoverSydneyManager
 import xyz.ksharma.krail.discover.network.real.db.RealDiscoverCardOrderingEngine
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import kotlin.test.BeforeTest
@@ -43,7 +43,7 @@ class RealDiscoverSydneyManagerTest {
         manager = RealDiscoverSydneyManager(
             flag = fakeFlag,
             defaultDispatcher = testDispatcher,
-            discoverCardOrderingEngine = orderingEngine
+            discoverCardOrderingEngine = orderingEngine,
         )
     }
 
@@ -51,7 +51,7 @@ class RealDiscoverSydneyManagerTest {
     fun testFetchDiscoverData_withValidJson_returnsCards() = runTest(testDispatcher) {
         val cards = listOf(
             createCard("card1", "Test Card 1"),
-            createCard("card2", "Test Card 2")
+            createCard("card2", "Test Card 2"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -96,7 +96,7 @@ class RealDiscoverSydneyManagerTest {
         val cards = listOf(
             createCard("card1", "Card 1"),
             createCard("card2", "Card 2"),
-            createCard("card3", "Card 3")
+            createCard("card3", "Card 3"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -118,7 +118,7 @@ class RealDiscoverSydneyManagerTest {
         val cards = listOf(
             createCard("card1", "Current Card", startDate = null),
             createCard("card2", "Past Event", startDate = "2020-01-01", endDate = "2020-01-05"),
-            createCard("card3", "Future Event", startDate = "2030-01-01", endDate = "2030-01-05")
+            createCard("card3", "Future Event", startDate = "2030-01-01", endDate = "2030-01-05"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -166,7 +166,7 @@ class RealDiscoverSydneyManagerTest {
         // Change flag value
         val cards2 = listOf(
             createCard("card2", "Test 2"),
-            createCard("card3", "Test 3")
+            createCard("card3", "Test 3"),
         )
         val json2 = Json.encodeToString(cards2)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json2))
@@ -227,7 +227,7 @@ class RealDiscoverSydneyManagerTest {
             createCard("card1", "Travel Card", type = DiscoverCardType.Travel),
             createCard("card2", "Food Card", type = DiscoverCardType.Food),
             createCard("card3", "Sports Card", type = DiscoverCardType.Sports),
-            createCard("card4", "Events Card", type = DiscoverCardType.Events)
+            createCard("card4", "Events Card", type = DiscoverCardType.Events),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -245,7 +245,7 @@ class RealDiscoverSydneyManagerTest {
     fun testMarkCardAsSeen_updatesOrderingInNextFetch() = runTest(testDispatcher) {
         val cards = listOf(
             createCard("card1", "Card 1"),
-            createCard("card2", "Card 2")
+            createCard("card2", "Card 2"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -271,7 +271,7 @@ class RealDiscoverSydneyManagerTest {
         val cards = listOf(
             createCard("card1", "Card 1"),
             createCard("card2", "Card 2"),
-            createCard("card3", "Card 3")
+            createCard("card3", "Card 3"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -292,7 +292,7 @@ class RealDiscoverSydneyManagerTest {
     fun testResetAllDiscoverCards_clearsSeenStatus() = runTest(testDispatcher) {
         val cards = listOf(
             createCard("card1", "Card 1"),
-            createCard("card2", "Card 2")
+            createCard("card2", "Card 2"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -389,7 +389,7 @@ class RealDiscoverSydneyManagerTest {
         // Testing today events requires dynamic date, but we can test the flow
         val cards = listOf(
             createCard("regular", "Regular Card", startDate = null),
-            createCard("future", "Future Event", startDate = "2030-01-01", endDate = "2030-01-05")
+            createCard("future", "Future Event", startDate = "2030-01-01", endDate = "2030-01-05"),
         )
         val json = Json.encodeToString(cards)
         fakeFlag.setFlagValue(FlagKeys.DISCOVER_SYDNEY.key, FlagValue.JsonValue(json))
@@ -412,7 +412,7 @@ class RealDiscoverSydneyManagerTest {
         title: String,
         startDate: String? = null,
         endDate: String? = null,
-        type: DiscoverCardType = DiscoverCardType.Events
+        type: DiscoverCardType = DiscoverCardType.Events,
     ): DiscoverModel {
         return DiscoverModel(
             title = title,
@@ -423,8 +423,7 @@ class RealDiscoverSydneyManagerTest {
             imageList = listOf("https://example.com/$cardId.jpg"),
             buttons = null,
             type = type,
-            cardId = cardId
+            cardId = cardId,
         )
     }
-
 }

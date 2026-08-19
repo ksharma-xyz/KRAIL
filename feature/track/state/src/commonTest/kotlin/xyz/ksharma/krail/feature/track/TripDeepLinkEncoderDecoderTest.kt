@@ -89,7 +89,7 @@ class TripDeepLinkEncoderDecoderTest {
             legs = listOf(
                 TripDeepLink.DeepLinkLeg(transportationId = "nsw:020T1:W:R:sj2", productClass = 1),
                 TripDeepLink.DeepLinkLeg(transportationId = "nsw:020B320:D:R:sj2", productClass = 5),
-            )
+            ),
         )
         val encoded = encodeTripDeepLink(deepLink)
         val decoded = TripDeepLinkDecoder.decode(encoded)
@@ -151,7 +151,7 @@ class TripDeepLinkEncoderDecoderTest {
         toStopName: String = "Wynyard Station",
         departureUtcDateTime: String = "2025-04-19T22:26:00Z",
         legs: List<TripDeepLink.DeepLinkLeg> = listOf(
-            TripDeepLink.DeepLinkLeg(transportationId = "nsw:020T1:W:R:sj2", productClass = 1)
+            TripDeepLink.DeepLinkLeg(transportationId = "nsw:020T1:W:R:sj2", productClass = 1),
         ),
     ) = TripDeepLink(
         fromStopId = fromStopId,

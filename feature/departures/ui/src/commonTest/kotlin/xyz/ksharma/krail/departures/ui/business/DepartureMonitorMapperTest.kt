@@ -409,7 +409,9 @@ class DepartureMonitorMapperTest {
                     platformName = locationPlatformName,
                     platform = locationPlatformCode,
                 )
-            } else null,
+            } else {
+                null
+            },
         ),
         transportation = DepartureMonitorResponse.Transportation(
             id = "sydneytrains:$lineNumber:H",

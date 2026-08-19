@@ -24,6 +24,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
+import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
@@ -32,7 +34,6 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.fakes.FakeShareManager
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
-import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder
 import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder.buildTripResponse
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -41,11 +42,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptio
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
-import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.MAX_LOAD_MORE_COUNT
-import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
-import kotlinx.datetime.toLocalDateTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -717,7 +715,10 @@ class TimeTableViewModelCacheTest {
             advanceUntilIdle()
 
             assertTrue(viewModel.loadMoreJourneys.isEmpty(), "loadMoreJourneys must be cleared on trip change")
-            assertTrue(viewModel.previousJourneysCache.isEmpty(), "previousJourneysCache must be cleared on trip change")
+            assertTrue(
+                viewModel.previousJourneysCache.isEmpty(),
+                "previousJourneysCache must be cleared on trip change",
+            )
         }
 
     @Test
@@ -742,7 +743,10 @@ class TimeTableViewModelCacheTest {
             advanceUntilIdle()
 
             assertTrue(viewModel.loadMoreJourneys.isEmpty(), "loadMoreJourneys must be cleared on date/time change")
-            assertTrue(viewModel.previousJourneysCache.isEmpty(), "previousJourneysCache must be cleared on date/time change")
+            assertTrue(
+                viewModel.previousJourneysCache.isEmpty(),
+                "previousJourneysCache must be cleared on date/time change",
+            )
         }
 
     @Test

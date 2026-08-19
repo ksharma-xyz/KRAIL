@@ -364,7 +364,13 @@ private object NoopGtfsRealtimeRepository : GtfsRealtimeRepository {
 
 private object NoopSandook : xyz.ksharma.krail.sandook.Sandook {
     override fun observeStopLabels(): Flow<List<xyz.ksharma.krail.sandook.StopLabels>> = flowOf(emptyList())
-    override fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) = Unit
+    override fun upsertStopLabel(
+        label: String,
+        emoji: String,
+        stopId: String?,
+        stopName: String?,
+        sortOrder: Long,
+    ) = Unit
     override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) = Unit
     override fun renameStopLabel(label: String, newLabel: String) = Unit
     override fun deleteStopLabel(label: String) = Unit
@@ -372,25 +378,47 @@ private object NoopSandook : xyz.ksharma.krail.sandook.Sandook {
     override fun insertOrReplaceTheme(productClass: Long) = Unit
     override fun getProductClass(): Long? = null
     override fun clearTheme() = Unit
-    override fun insertOrReplaceTrip(tripId: String, fromStopId: String, fromStopName: String, toStopId: String, toStopName: String) = Unit
+    override fun insertOrReplaceTrip(
+        tripId: String,
+        fromStopId: String,
+        fromStopName: String,
+        toStopId: String,
+        toStopName: String,
+    ) = Unit
     override fun deleteTrip(tripId: String) = Unit
     override fun selectAllTrips(): List<xyz.ksharma.krail.sandook.SavedTrip> = emptyList()
     override fun observeAllTrips(): Flow<List<xyz.ksharma.krail.sandook.SavedTrip>> = flowOf(emptyList())
     override fun selectTripById(tripId: String): xyz.ksharma.krail.sandook.SavedTrip? = null
     override fun updateSavedTripSortOrder(tripId: String, sortOrder: Long) = Unit
     override fun clearSavedTrips() = Unit
-    override fun getAlerts(journeyId: String): List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId> = emptyList()
+    override fun getAlerts(
+        journeyId: String,
+    ): List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId> = emptyList()
     override fun clearAlerts() = Unit
-    override fun insertAlerts(journeyId: String, alerts: List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId>) = Unit
-    override fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double, isParent: Boolean?) = Unit
+    override fun insertAlerts(
+        journeyId: String,
+        alerts: List<xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId>,
+    ) = Unit
+    override fun insertNswStop(
+        stopId: String,
+        stopName: String,
+        stopLat: Double,
+        stopLon: Double,
+        isParent: Boolean?,
+    ) = Unit
     override fun stopsCount(): Int = 0
     override fun productClassCount(): Int = 0
     override fun insertNswStopProductClass(stopId: String, productClass: Int) = Unit
     override fun <R> insertTransaction(block: () -> R): R = block()
     override fun clearNswStopsTable() = Unit
     override fun clearNswProductClassTable() = Unit
-    override fun selectStops(stopName: String, excludeProductClassList: List<Int>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
-    override fun selectStopsByIds(stopIds: List<String>): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
+    override fun selectStops(
+        stopName: String,
+        excludeProductClassList: List<Int>,
+    ): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
+    override fun selectStopsByIds(
+        stopIds: List<String>,
+    ): List<xyz.ksharma.krail.sandook.SelectProductClassesForStop> = emptyList()
     override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> = emptyMap()
     override fun upsertRecentSearchLocation(location: RecentSearchLocation) = Unit
     override fun selectRecentSearchLocations(): List<RecentSearchLocations> = emptyList()

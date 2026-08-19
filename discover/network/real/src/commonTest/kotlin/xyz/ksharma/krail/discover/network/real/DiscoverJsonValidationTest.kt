@@ -44,7 +44,7 @@ class DiscoverJsonValidationTest {
         // Assert that validation passed
         assertTrue(
             validationResult.isValid,
-            "Discover JSON validation failed. See report:\n${validationResult.getReport()}"
+            "Discover JSON validation failed. See report:\n${validationResult.getReport()}",
         )
     }
 
@@ -211,13 +211,13 @@ class DiscoverJsonValidationTest {
                 testName = "JSON Parsing (${cards.size} cards)",
                 passed = true,
                 message = "",
-                data = cards
+                data = cards,
             )
         } catch (e: Exception) {
             TestResult(
                 testName = "JSON Parsing",
                 passed = false,
-                message = "Failed to parse: ${e.message}"
+                message = "Failed to parse: ${e.message}",
             )
         }
     }
@@ -230,13 +230,13 @@ class DiscoverJsonValidationTest {
             TestResult(
                 testName = "Card ID Uniqueness",
                 passed = true,
-                message = ""
+                message = "",
             )
         } else {
             TestResult(
                 testName = "Card ID Uniqueness",
                 passed = false,
-                message = "Duplicate card IDs found: ${duplicates.keys.joinToString(", ")}"
+                message = "Duplicate card IDs found: ${duplicates.keys.joinToString(", ")}",
             )
         }
     }
@@ -272,13 +272,13 @@ class DiscoverJsonValidationTest {
             TestResult(
                 testName = "Date Validation",
                 passed = true,
-                message = ""
+                message = "",
             )
         } else {
             TestResult(
                 testName = "Date Validation",
                 passed = false,
-                message = errors.joinToString("\n   ")
+                message = errors.joinToString("\n   "),
             )
         }
     }
@@ -307,13 +307,13 @@ class DiscoverJsonValidationTest {
             TestResult(
                 testName = "Image Validation ($totalImages images)",
                 passed = true,
-                message = ""
+                message = "",
             )
         } else {
             TestResult(
                 testName = "Image Validation",
                 passed = false,
-                message = errors.joinToString("\n   ")
+                message = errors.joinToString("\n   "),
             )
         }
     }
@@ -350,15 +350,19 @@ class DiscoverJsonValidationTest {
                                 errors.add("${card.cardId}: PartnerSocial link URL is blank")
                             }
                             if (!link.url.startsWith("http://") && !link.url.startsWith("https://")) {
-                                errors.add("${card.cardId}: PartnerSocial link URL does not start with http:// or https://")
+                                errors.add(
+                                    "${card.cardId}: PartnerSocial link URL does not start with http:// or https://",
+                                )
                             }
                         }
                     }
 
-                    is Button.Social.AppSocial -> { /* No validation needed */
+                    is Button.Social.AppSocial -> {
+                        /* No validation needed */
                     }
 
-                    is Button.Share -> { /* No validation needed */
+                    is Button.Share -> {
+                        /* No validation needed */
                     }
                 }
             }
@@ -373,13 +377,13 @@ class DiscoverJsonValidationTest {
             TestResult(
                 testName = "Button Validation",
                 passed = true,
-                message = ""
+                message = "",
             )
         } else {
             TestResult(
                 testName = "Button Validation",
                 passed = false,
-                message = errors.joinToString("\n   ")
+                message = errors.joinToString("\n   "),
             )
         }
     }
@@ -403,13 +407,13 @@ class DiscoverJsonValidationTest {
             TestResult(
                 testName = "Card Type Validation ($summary)",
                 passed = true,
-                message = ""
+                message = "",
             )
         } else {
             TestResult(
                 testName = "Card Type Validation",
                 passed = false,
-                message = errors.joinToString("\n   ")
+                message = errors.joinToString("\n   "),
             )
         }
     }
@@ -433,13 +437,13 @@ class DiscoverJsonValidationTest {
             TestResult(
                 testName = "Required Fields",
                 passed = true,
-                message = ""
+                message = "",
             )
         } else {
             TestResult(
                 testName = "Required Fields",
                 passed = false,
-                message = errors.joinToString("\n   ")
+                message = errors.joinToString("\n   "),
             )
         }
     }
@@ -480,12 +484,12 @@ class DiscoverJsonValidationTest {
         val testName: String,
         val passed: Boolean,
         val message: String,
-        val data: Any? = null
+        val data: Any? = null,
     )
 
     data class ValidationResult(
         val isValid: Boolean,
-        val testResults: List<TestResult>
+        val testResults: List<TestResult>,
     ) {
         fun getReport(): String {
             val passed = testResults.count { it.passed }

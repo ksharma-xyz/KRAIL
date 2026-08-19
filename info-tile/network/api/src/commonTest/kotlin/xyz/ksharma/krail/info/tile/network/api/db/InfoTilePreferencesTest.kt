@@ -1,11 +1,9 @@
 package xyz.ksharma.krail.info.tile.network.api.db
 
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
-import xyz.ksharma.krail.info.tile.network.api.db.isInfoTileDismissed
-import xyz.ksharma.krail.info.tile.network.api.db.markInfoTileAsDismissed
 
 class InfoTilePreferencesTest {
 

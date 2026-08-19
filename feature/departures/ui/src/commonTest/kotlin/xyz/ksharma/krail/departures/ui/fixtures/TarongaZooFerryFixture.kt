@@ -63,4 +63,3 @@ internal object TarongaZooFerryFixture {
         }
     """.trimIndent()
 }
-

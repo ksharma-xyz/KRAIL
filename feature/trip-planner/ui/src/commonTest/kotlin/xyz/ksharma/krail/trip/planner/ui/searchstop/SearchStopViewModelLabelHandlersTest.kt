@@ -9,20 +9,19 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeRemoteAddressResultsManager
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
-import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LabelAssignSurface
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeRemoteAddressResultsManager
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -285,7 +284,13 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = "Gym",
+                        emoji = "🏋",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -307,7 +312,13 @@ class SearchStopViewModelLabelHandlersTest {
 
                 // "home" should match seeded "Home" case-insensitively after
                 // normaliseLabelName — duplicate must silently no-op.
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = "home",
+                        emoji = "🏠",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -322,7 +333,9 @@ class SearchStopViewModelLabelHandlersTest {
             advanceUntilIdle()
             val before = expectMostRecentItem().stopLabels.size
 
-            viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀", surface = LabelAssignSurface.SEARCH_RESULT))
+            viewModel.onEvent(
+                SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀", surface = LabelAssignSurface.SEARCH_RESULT),
+            )
             advanceUntilIdle()
 
             // Blank input is treated like no input — no new emission. expectNoEvents()
@@ -342,7 +355,13 @@ class SearchStopViewModelLabelHandlersTest {
 
                 // The save-sheet text field allows free typing; the VM is the
                 // canonicaliser. "🚗 Garage 🚗" should land as "Garage" in the DB.
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "🚗 Garage 🚗", emoji = "🚗", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = "🚗 Garage 🚗",
+                        emoji = "🚗",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -360,7 +379,13 @@ class SearchStopViewModelLabelHandlersTest {
                 // LABEL_NAME_MAX_LENGTH, but the VM must enforce it independently
                 // for any caller that skips the UI.
                 val tooLong = "A".repeat(LABEL_NAME_MAX_LENGTH + 10)
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = tooLong, emoji = "🚗", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = tooLong,
+                        emoji = "🚗",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 val state = expectMostRecentItem()
@@ -579,7 +604,13 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "Gym", emoji = "🏋", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = "Gym",
+                        emoji = "🏋",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 val tracked = fakeAnalytics.getTrackedEvent("stop_label_created")
@@ -602,7 +633,13 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "home", emoji = "🏠", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = "home",
+                        emoji = "🏠",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 // Duplicate path is a silent no-op — analytics must mirror that, otherwise
@@ -618,7 +655,13 @@ class SearchStopViewModelLabelHandlersTest {
             viewModel.uiState.test {
                 advanceUntilIdle()
 
-                viewModel.onEvent(SearchStopUiEvent.CreateLabel(name = "   ", emoji = "🌀", surface = LabelAssignSurface.SEARCH_RESULT))
+                viewModel.onEvent(
+                    SearchStopUiEvent.CreateLabel(
+                        name = "   ",
+                        emoji = "🌀",
+                        surface = LabelAssignSurface.SEARCH_RESULT,
+                    ),
+                )
                 advanceUntilIdle()
 
                 assertFalse(fakeAnalytics.isEventTracked("stop_label_created"))

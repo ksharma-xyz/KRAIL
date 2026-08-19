@@ -43,7 +43,12 @@ class AndroidAiTextServiceTest {
         val result = parseTripIntentJson(raw)
 
         assertEquals(
-            TripIntentExtraction(originText = "home", destinationText = null, timeIntent = null, modeHints = emptyList()),
+            TripIntentExtraction(
+                originText = "home",
+                destinationText = null,
+                timeIntent = null,
+                modeHints = emptyList(),
+            ),
             result,
         )
     }

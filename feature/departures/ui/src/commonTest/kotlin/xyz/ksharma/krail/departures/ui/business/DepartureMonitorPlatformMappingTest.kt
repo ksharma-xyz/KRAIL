@@ -37,8 +37,11 @@ class DepartureMonitorPlatformMappingTest {
     @Test
     fun `Town Hall - count of mapped departures matches fixture stopEvents`() {
         val departures = parseAndMap(TownHallDepartureFixture.JSON)
-        assertEquals(TownHallDepartureFixture.EXPECTED.size, departures.size,
-            "Mapped departure count must match the fixture stopEvents count")
+        assertEquals(
+            TownHallDepartureFixture.EXPECTED.size,
+            departures.size,
+            "Mapped departure count must match the fixture stopEvents count",
+        )
     }
 
     @Test
@@ -47,8 +50,8 @@ class DepartureMonitorPlatformMappingTest {
         TownHallDepartureFixture.EXPECTED.forEachIndexed { i, (line, expectedPlatform, _) ->
             assertEquals(
                 expected = expectedPlatform,
-                actual   = departures[i].platformText,
-                message  = "[$i] $line — platformText mismatch",
+                actual = departures[i].platformText,
+                message = "[$i] $line — platformText mismatch",
             )
         }
     }
@@ -59,8 +62,8 @@ class DepartureMonitorPlatformMappingTest {
         TownHallDepartureFixture.EXPECTED.forEachIndexed { i, (line, _, expectedDest) ->
             assertEquals(
                 expected = expectedDest,
-                actual   = departures[i].destinationName,
-                message  = "[$i] $line — destinationName mismatch",
+                actual = departures[i].destinationName,
+                message = "[$i] $line — destinationName mismatch",
             )
         }
     }
@@ -70,8 +73,11 @@ class DepartureMonitorPlatformMappingTest {
     @Test
     fun `Central Station - count of mapped departures matches fixture stopEvents`() {
         val departures = parseAndMap(CentralStationDepartureFixture.JSON)
-        assertEquals(CentralStationDepartureFixture.EXPECTED.size, departures.size,
-            "Mapped departure count must match the fixture stopEvents count")
+        assertEquals(
+            CentralStationDepartureFixture.EXPECTED.size,
+            departures.size,
+            "Mapped departure count must match the fixture stopEvents count",
+        )
     }
 
     @Test
@@ -80,8 +86,8 @@ class DepartureMonitorPlatformMappingTest {
         CentralStationDepartureFixture.EXPECTED.forEachIndexed { i, (line, expectedPlatform, _) ->
             assertEquals(
                 expected = expectedPlatform,
-                actual   = departures[i].platformText,
-                message  = "[$i] $line — platformText mismatch",
+                actual = departures[i].platformText,
+                message = "[$i] $line — platformText mismatch",
             )
         }
     }
@@ -92,8 +98,8 @@ class DepartureMonitorPlatformMappingTest {
         CentralStationDepartureFixture.EXPECTED.forEachIndexed { i, (line, _, expectedDest) ->
             assertEquals(
                 expected = expectedDest,
-                actual   = departures[i].destinationName,
-                message  = "[$i] $line — destinationName mismatch",
+                actual = departures[i].destinationName,
+                message = "[$i] $line — destinationName mismatch",
             )
         }
     }
@@ -103,8 +109,11 @@ class DepartureMonitorPlatformMappingTest {
     @Test
     fun `Taronga Zoo Ferry - count of mapped departures matches fixture stopEvents`() {
         val departures = parseAndMap(TarongaZooFerryFixture.JSON)
-        assertEquals(TarongaZooFerryFixture.EXPECTED.size, departures.size,
-            "Mapped departure count must match the fixture stopEvents count")
+        assertEquals(
+            TarongaZooFerryFixture.EXPECTED.size,
+            departures.size,
+            "Mapped departure count must match the fixture stopEvents count",
+        )
     }
 
     @Test
@@ -113,8 +122,8 @@ class DepartureMonitorPlatformMappingTest {
         TarongaZooFerryFixture.EXPECTED.forEachIndexed { i, (line, expectedPlatform, _) ->
             assertEquals(
                 expected = expectedPlatform,
-                actual   = departures[i].platformText,
-                message  = "[$i] $line — platformText mismatch",
+                actual = departures[i].platformText,
+                message = "[$i] $line — platformText mismatch",
             )
         }
     }
@@ -125,8 +134,8 @@ class DepartureMonitorPlatformMappingTest {
         TarongaZooFerryFixture.EXPECTED.forEachIndexed { i, (line, _, expectedDest) ->
             assertEquals(
                 expected = expectedDest,
-                actual   = departures[i].destinationName,
-                message  = "[$i] $line — destinationName mismatch",
+                actual = departures[i].destinationName,
+                message = "[$i] $line — destinationName mismatch",
             )
         }
     }
@@ -136,4 +145,3 @@ class DepartureMonitorPlatformMappingTest {
     private fun parseAndMap(fixtureJson: String) =
         json.decodeFromString<DepartureMonitorResponse>(fixtureJson).toStopDepartures()
 }
-

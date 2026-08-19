@@ -9,25 +9,23 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
-import xyz.ksharma.krail.core.testing.fakes.FakeFlag
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
-import xyz.ksharma.krail.core.testing.fakes.FakeSandook
-import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeRemoteAddressResultsManager
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
-import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
-import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
-import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
+import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeRemoteAddressResultsManager
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -122,7 +120,7 @@ class SearchStopViewModelTest {
                     cancelAndIgnoreRemainingEvents()
                 }
             }
-    */
+     */
 
     @Test
     fun `GIVEN search query WHEN SearchTextChanged and api fails THEN uiState is updated with error`() =
@@ -157,7 +155,6 @@ class SearchStopViewModelTest {
     @Test
     fun `GIVEN stop item WHEN StopSelected is triggered THEN analytics event is tracked`() =
         runTest {
-
             // WHEN
             viewModel.onEvent(
                 SearchStopUiEvent.TrackStopSelected(
@@ -165,8 +162,8 @@ class SearchStopViewModelTest {
                         stopName = "name",
                         stopId = "stopID",
                     ),
-                    isRecentSearch = false
-                )
+                    isRecentSearch = false,
+                ),
             )
 
             // THEN
@@ -226,7 +223,6 @@ class SearchStopViewModelTest {
     @Test
     fun `GIVEN recent stop item WHEN StopSelected with isRecentSearch true is triggered THEN analytics event is tracked with correct flag`() =
         runTest {
-
             // WHEN
             viewModel.onEvent(
                 SearchStopUiEvent.TrackStopSelected(
@@ -234,8 +230,8 @@ class SearchStopViewModelTest {
                         stopName = "Recent Stop",
                         stopId = "recentStopID",
                     ),
-                    isRecentSearch = true
-                )
+                    isRecentSearch = true,
+                ),
             )
 
             // THEN
@@ -257,12 +253,12 @@ class SearchStopViewModelTest {
             val recentStop1 = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(NswTransportMode.Train)
+                transportModeType = persistentListOf(NswTransportMode.Train),
             )
             val recentStop2 = SearchStopState.StopResult(
                 stopId = "recent2",
                 stopName = "Recent Stop 2",
-                transportModeType = persistentListOf(NswTransportMode.Bus)
+                transportModeType = persistentListOf(NswTransportMode.Bus),
             )
 
             fakeStopResultsManager.addRecentSearchStop(recentStop1)
@@ -291,12 +287,12 @@ class SearchStopViewModelTest {
             val recentStop1 = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(NswTransportMode.Train)
+                transportModeType = persistentListOf(NswTransportMode.Train),
             )
             val recentStop2 = SearchStopState.StopResult(
                 stopId = "recent2",
                 stopName = "Recent Stop 2",
-                transportModeType = persistentListOf(NswTransportMode.Bus)
+                transportModeType = persistentListOf(NswTransportMode.Bus),
             )
 
             fakeStopResultsManager.addRecentSearchStop(recentStop1)
@@ -332,7 +328,7 @@ class SearchStopViewModelTest {
             val recentStop = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(NswTransportMode.Train)
+                transportModeType = persistentListOf(NswTransportMode.Train),
             )
             fakeStopResultsManager.addRecentSearchStop(recentStop)
 
@@ -404,7 +400,7 @@ class SearchStopViewModelTest {
             val recentStop = SearchStopState.StopResult(
                 stopId = "recent1",
                 stopName = "Recent Stop 1",
-                transportModeType = persistentListOf(NswTransportMode.Train)
+                transportModeType = persistentListOf(NswTransportMode.Train),
             )
             fakeStopResultsManager.addRecentSearchStop(recentStop)
 

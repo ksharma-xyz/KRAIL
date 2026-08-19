@@ -10,7 +10,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
  * Fake implementation of [NearbyStopsManager] for testing.
  * Allows control over behavior and verification of interactions.
  */
-class FakeNearbyStopsManagerForMap : NearbyStopsManager {
+internal class FakeNearbyStopsManagerForMap : NearbyStopsManager {
 
     // State tracking
     var loadNearbyStopsCallCount = 0

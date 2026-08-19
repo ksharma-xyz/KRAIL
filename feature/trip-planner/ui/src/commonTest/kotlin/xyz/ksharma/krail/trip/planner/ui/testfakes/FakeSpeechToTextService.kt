@@ -6,7 +6,7 @@ import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextService
 
-class FakeSpeechToTextService : SpeechToTextService {
+internal class FakeSpeechToTextService : SpeechToTextService {
     var availability: SpeechToTextAvailability = SpeechToTextAvailability.Available
     val results = MutableSharedFlow<SpeechToTextResult>(extraBufferCapacity = 8)
     var stopListeningCallCount = 0

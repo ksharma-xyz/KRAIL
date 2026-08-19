@@ -244,29 +244,7 @@ class DiscoverJsonValidationTest {
     private fun testDateValidation(cards: List<DiscoverModel>): TestResult {
         val errors = mutableListOf<String>()
 
-        cards.forEach { card ->
-            val startDate = card.startDate
-            val endDate = card.endDate
-
-            // Both should be present or both should be null
-            if ((startDate == null) != (endDate == null)) {
-                errors.add("${card.cardId}: startDate and endDate must both be present or both be null")
-            }
-
-            if (startDate != null && endDate != null) {
-                // Validate ISO 8601 format
-                try {
-                    val start = LocalDate.parse(startDate)
-                    val end = LocalDate.parse(endDate)
-
-                    if (start > end) {
-                        errors.add("${card.cardId}: startDate ($startDate) is after endDate ($endDate)")
-                    }
-                } catch (e: Exception) {
-                    errors.add("${card.cardId}: Invalid date format - ${e.message}")
-                }
-            }
-        }
+        cards.forEach { card -> errors += dateErrors(card) }
 
         return if (errors.isEmpty()) {
             TestResult(
@@ -324,48 +302,7 @@ class DiscoverJsonValidationTest {
         cards.forEach { card ->
             val buttons = card.buttons ?: return@forEach
 
-            buttons.forEach { button ->
-                when (button) {
-                    is Button.Cta -> {
-                        if (button.label.isBlank()) {
-                            errors.add("${card.cardId}: CTA button label is blank")
-                        }
-                        if (button.url.isBlank()) {
-                            errors.add("${card.cardId}: CTA button URL is blank")
-                        }
-                        if (!button.url.startsWith("http://") && !button.url.startsWith("https://")) {
-                            errors.add("${card.cardId}: CTA URL does not start with http:// or https://")
-                        }
-                    }
-
-                    is Button.Social.PartnerSocial -> {
-                        if (button.socialPartnerName.isBlank()) {
-                            errors.add("${card.cardId}: PartnerSocial name is blank")
-                        }
-                        if (button.links.isEmpty()) {
-                            errors.add("${card.cardId}: PartnerSocial has no links")
-                        }
-                        button.links.forEach { link ->
-                            if (link.url.isBlank()) {
-                                errors.add("${card.cardId}: PartnerSocial link URL is blank")
-                            }
-                            if (!link.url.startsWith("http://") && !link.url.startsWith("https://")) {
-                                errors.add(
-                                    "${card.cardId}: PartnerSocial link URL does not start with http:// or https://",
-                                )
-                            }
-                        }
-                    }
-
-                    is Button.Social.AppSocial -> {
-                        /* No validation needed */
-                    }
-
-                    is Button.Share -> {
-                        /* No validation needed */
-                    }
-                }
-            }
+            buttons.forEach { button -> errors += buttonErrors(card.cardId, button) }
 
             // Validate button combinations
             if (!buttons.isValidButtonCombo()) {
@@ -451,31 +388,18 @@ class DiscoverJsonValidationTest {
     // Helper to validate button combinations
     private fun List<Button>.isValidButtonCombo(): Boolean {
         val types = this.map { it::class }
+        val leftTypes = listOf(Button.Cta::class, Button.Social::class)
 
-        val leftTypes = listOf(
-            Button.Cta::class,
-            Button.Social::class,
-        )
+        // Only a Share paired with exactly one left-hand button is constrained. Everything else
+        // is either already impossible or has nothing to say about the pairing.
+        val isConstrainedPairing = types.contains(Button.Share::class) &&
+            types.count { it in leftTypes } == 1
+        if (!isConstrainedPairing) return true
 
-        // Share button validation
-        if (types.contains(Button.Share::class)) {
-            val leftCount = types.count { it in leftTypes }
-            if (leftCount == 1) {
-                val hasCta = types.contains(Button.Cta::class)
-                val hasPartnerSocial = this.any { it is Button.Social.PartnerSocial }
-                val hasAppSocial = this.any { it is Button.Social.AppSocial }
-
-                // Allow Cta + Share OR PartnerSocial + Share, but not AppSocial + Share
-                if (!hasCta && !hasPartnerSocial) {
-                    return false
-                }
-                if (hasAppSocial) {
-                    return false
-                }
-            }
-        }
-
-        return true
+        // Allow Cta + Share OR PartnerSocial + Share, but not AppSocial + Share
+        val partneredWithShare = types.contains(Button.Cta::class) ||
+            this.any { it is Button.Social.PartnerSocial }
+        return partneredWithShare && this.none { it is Button.Social.AppSocial }
     }
 
     // ========== Data Classes for Validation Results ==========
@@ -526,16 +450,13 @@ class DiscoverJsonValidationTest {
     }
 
     // ========== Sample JSON for Testing ==========
+    //
+    // One sample every validation test below runs against, so they cannot disagree about what
+    // valid input looks like. It covers: all four card types (Sports, Events, Food, Travel);
+    // every button combination (CTA plus Share, PartnerSocial plus Share, CTA alone); cards
+    // with and without dates; multiple images; special characters in descriptions; future
+    // dates.
 
-    /**
-     * Comprehensive sample JSON that tests various scenarios:
-     * - Different card types (Sports, Events, Food, Travel)
-     * - Different button combinations (CTA+Share, PartnerSocial+Share, CTA only)
-     * - With and without dates
-     * - Multiple images
-     * - Special characters in descriptions
-     * - Future dates
-     */
     private val sampleDiscoverJson = """
     [
        {
@@ -604,3 +525,57 @@ class DiscoverJsonValidationTest {
     ]
     """.trimIndent()
 }
+
+/**
+ * The per-card and per-button rules the shipped Discover JSON has to satisfy.
+ *
+ * Top-level rather than members of the test class on purpose: as members, every branch in here
+ * counted towards the complexity of the loops that call them, and the loops are the part a
+ * reader needs to follow.
+ */
+private fun dateErrors(card: DiscoverModel): List<String> = buildList {
+    val startDate = card.startDate
+    val endDate = card.endDate
+
+    // Both should be present or both should be null
+    if ((startDate == null) != (endDate == null)) {
+        add("${card.cardId}: startDate and endDate must both be present or both be null")
+    }
+    if (startDate == null || endDate == null) return@buildList
+
+    // Validate ISO 8601 format
+    runCatching { LocalDate.parse(startDate) to LocalDate.parse(endDate) }
+        .onSuccess { (start, end) ->
+            if (start > end) {
+                add("${card.cardId}: startDate ($startDate) is after endDate ($endDate)")
+            }
+        }
+        .onFailure { add("${card.cardId}: Invalid date format - ${it.message}") }
+}
+
+private fun buttonErrors(cardId: String, button: Button): List<String> = when (button) {
+    is Button.Cta -> ctaErrors(cardId, button)
+    is Button.Social.PartnerSocial -> partnerSocialErrors(cardId, button)
+    // Neither carries anything a reader of the JSON could get wrong.
+    is Button.Social.AppSocial, is Button.Share -> emptyList()
+}
+
+private fun ctaErrors(cardId: String, button: Button.Cta): List<String> = buildList {
+    if (button.label.isBlank()) add("$cardId: CTA button label is blank")
+    if (button.url.isBlank()) add("$cardId: CTA button URL is blank")
+    if (!button.url.isHttpUrl()) add("$cardId: CTA URL does not start with http:// or https://")
+}
+
+private fun partnerSocialErrors(cardId: String, button: Button.Social.PartnerSocial): List<String> =
+    buildList {
+        if (button.socialPartnerName.isBlank()) add("$cardId: PartnerSocial name is blank")
+        if (button.links.isEmpty()) add("$cardId: PartnerSocial has no links")
+        button.links.forEach { link ->
+            if (link.url.isBlank()) add("$cardId: PartnerSocial link URL is blank")
+            if (!link.url.isHttpUrl()) {
+                add("$cardId: PartnerSocial link URL does not start with http:// or https://")
+            }
+        }
+    }
+
+private fun String.isHttpUrl(): Boolean = startsWith("http://") || startsWith("https://")

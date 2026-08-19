@@ -217,11 +217,9 @@ class FuzzyStopSearchEvalTest {
 
     private val allStops: List<SearchStopState.SearchResult.Stop>? by lazy { loadStops() }
 
-    /**
-     * Pre-normalized candidate names so we only pay the normalize cost once
-     * across all queries, not once per query × candidate.
-     */
     private val preNormalized: List<Pair<SearchStopState.SearchResult.Stop, String>>? by lazy {
+        // Normalized once here rather than once per query and candidate, which is the whole
+        // point of holding the pairs: the eval runs every query against every stop.
         allStops?.map { stop -> stop to normalize(stop.stopName, expandAbbreviations = false) }
     }
 

@@ -6,7 +6,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
-class FakeStopResultsManager : StopResultsManager {
+internal class FakeStopResultsManager : StopResultsManager {
     // Add a flag to control whether fetchStopResults should throw an exception
     var shouldThrowError = false
 
@@ -62,7 +62,7 @@ class FakeStopResultsManager : StopResultsManager {
     ): List<SearchStopState.SearchResult> {
         // Throw an exception if shouldThrowError is true
         if (shouldThrowError) {
-            throw RuntimeException("Error fetching stop results")
+            error("Error fetching stop results")
         }
 
         return if (query.isBlank()) {

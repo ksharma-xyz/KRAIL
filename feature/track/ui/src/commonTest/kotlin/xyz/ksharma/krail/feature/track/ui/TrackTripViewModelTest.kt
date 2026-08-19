@@ -560,7 +560,7 @@ private class ConfigurableFakeTripPlanningService : TripPlanningService {
         excludeProductClassSet: Set<Int>,
     ): TripResponse {
         callCount++
-        if (shouldThrow) throw IllegalStateException("Simulated network error")
+        if (shouldThrow) error("Simulated network error")
         return responseProvider()
     }
 

@@ -7,7 +7,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
  * Records what a caller asked to refresh, so a test can assert the ViewModel went through the
  * rate-limited path without standing up a service and a cooldown behind it.
  */
-class FakeParkRideAvailabilityLoader : ParkRideAvailabilityLoader {
+internal class FakeParkRideAvailabilityLoader : ParkRideAvailabilityLoader {
 
     val refreshedMappings = mutableListOf<List<ParkRideMapping>>()
 

@@ -28,7 +28,6 @@ class RealDiscoverCardOrderingEngineTest {
     private val yesterday = today.minus(1, DateTimeUnit.DAY)
     private val tomorrow = today.plus(1, DateTimeUnit.DAY)
     private val nextWeek = today.plus(7, DateTimeUnit.DAY)
-    private val farFuture = today.plus(30, DateTimeUnit.DAY)
 
     @BeforeTest
     fun setup() {

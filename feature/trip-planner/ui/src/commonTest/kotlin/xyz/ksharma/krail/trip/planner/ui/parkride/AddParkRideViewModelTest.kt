@@ -19,7 +19,6 @@ import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
 import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
-import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
@@ -34,7 +33,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -277,22 +275,6 @@ class AddParkRideViewModelTest {
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun cachedDetail(facilityId: String, spotsAvailable: Int) = NSWParkRideFacilityDetail(
-        facilityId = facilityId,
-        spotsAvailable = spotsAvailable.toLong(),
-        totalSpots = 100,
-        facilityName = "Tallawong P1",
-        percentageFull = 58,
-        stopId = "2155384",
-        stopName = "Tallawong Station",
-        timeText = "8:00 AM",
-        suburb = "Rouse Hill",
-        address = "",
-        latitude = 0.0,
-        longitude = 0.0,
-        timestamp = Clock.System.now().epochSeconds,
-    )
-
     private companion object {
         const val TALLAWONG_LAT = -33.6919
         const val TALLAWONG_LON = 150.9059

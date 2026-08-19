@@ -19,6 +19,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+private const val PROD_HIGH_PRIORITY_STOP_IDS =
+    """{"stop_ids":["200060","200070","200080","206010","2150106","200017","200039",""" +
+        """"201016","201039","201080","200066","200030","200046","200050","2155384",""" +
+        """"276220","214710","215020","214110","201510","220010","214810","213510",""" +
+        """"200020","2154391","2155383","2155382","2153478","2154392","2153477",""" +
+        """"2126158","211310"]}"""
+
 /**
  * End-to-end reproduction of what the user actually sees on their phone.
  *
@@ -27,16 +34,11 @@ import kotlin.test.assertTrue
  * fuzzy rank, then prioritiseStops — against the same 37 208 NSW stops the app ships
  * (decoded from io/gtfs/.../NSW_STOPS.pb). The fake DB replicates the real SQL exactly:
  * `stopId = q OR stopName LIKE '%q%' COLLATE NOCASE`, results in file/insertion order.
+ *
+ * [PROD_HIGH_PRIORITY_STOP_IDS] is the exact shipped value of the `high_priority_stop_ids`
+ * flag, mirrored from `RemoteConfigDefaults.HIGH_PRIORITY_STOP_IDS` and kept in sync by hand.
+ * The results this test asserts on are only the rider's results while it matches.
  */
-// Exact prod value of high_priority_stop_ids (mirror of
-// RemoteConfigDefaults.HIGH_PRIORITY_STOP_IDS). Keep in sync.
-private const val PROD_HIGH_PRIORITY_STOP_IDS =
-    """{"stop_ids":["200060","200070","200080","206010","2150106","200017","200039",""" +
-        """"201016","201039","201080","200066","200030","200046","200050","2155384",""" +
-        """"276220","214710","215020","214110","201510","220010","214810","213510",""" +
-        """"200020","2154391","2155383","2155382","2153478","2154392","2153477",""" +
-        """"2126158","211310"]}"""
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class StopSearchPipelineReproTest {
 

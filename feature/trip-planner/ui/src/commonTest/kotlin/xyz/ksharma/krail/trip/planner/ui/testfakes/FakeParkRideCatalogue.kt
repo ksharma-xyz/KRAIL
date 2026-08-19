@@ -8,7 +8,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
  * Lets a ViewModel test state the stations it wants directly, instead of working backwards
  * through Remote Config JSON and a stops table to produce them.
  */
-class FakeParkRideCatalogue(
+internal class FakeParkRideCatalogue(
     var stations: List<ParkRideStationPickerItem> = emptyList(),
     var loadingEmoji: LoadingEmoji = LoadingEmoji(emoji = "🅿️", greeting = "Loading"),
 ) : ParkRideCatalogue {

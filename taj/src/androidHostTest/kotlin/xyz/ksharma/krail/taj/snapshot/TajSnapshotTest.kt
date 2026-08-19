@@ -21,7 +21,7 @@ import xyz.ksharma.krail.core.snapshot.BaseSnapshotTest
 @Config(
     sdk = [34],
     qualifiers = RobolectricDeviceQualifiers.Pixel6,
-    manifest = Config.NONE
+    manifest = Config.NONE,
 )
 class TajSnapshotTest : BaseSnapshotTest() {
 

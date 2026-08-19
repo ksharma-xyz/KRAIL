@@ -101,7 +101,7 @@ class InfoTileJsonValidatorTest {
 
                 assertTrue(
                     startDate <= endDate,
-                    "Tile '${tile.key}': startDate ($startDate) must be before or equal to endDate ($endDate)"
+                    "Tile '${tile.key}': startDate ($startDate) must be before or equal to endDate ($endDate)",
                 )
 
                 println("✅ Tile '${tile.key}': Date range is logically valid ($startDate to $endDate)")
@@ -119,7 +119,7 @@ class InfoTileJsonValidatorTest {
             tile.primaryCta?.url?.let { url ->
                 assertTrue(
                     url.startsWith("http://") || url.startsWith("https://"),
-                    "Tile '${tile.key}': URL must start with http:// or https://"
+                    "Tile '${tile.key}': URL must start with http:// or https://",
                 )
                 println("✅ Tile '${tile.key}': URL is valid: $url")
             }
@@ -446,4 +446,3 @@ class InfoTileJsonValidatorTest {
 
     // endregion
 }
-

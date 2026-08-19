@@ -4,18 +4,23 @@ import app.cash.turbine.test
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeImageBitmap
 import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
@@ -24,17 +29,11 @@ import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
 import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder
 import xyz.ksharma.krail.core.testing.fakes.FakeTripResponseBuilder.buildTripResponse
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
-import xyz.ksharma.krail.core.testing.fakes.FakeImageBitmap
-import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.AnalyticsScreen
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
+import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.service.DepArr
-import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
@@ -42,7 +41,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState.JourneyCardInfo.Stop
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
-import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.JOURNEY_ENDED_CACHE_THRESHOLD_TIME
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel.Companion.MAX_LOAD_MORE_COUNT
@@ -129,7 +127,6 @@ class TimeTableViewModelTest {
 
             // THEN
             viewModel.isActive.test {
-
                 skipItems(1) // initial state
 
                 advanceTimeBy(REFRESH_TIME_TEXT_DURATION.inWholeMilliseconds)
@@ -154,7 +151,7 @@ class TimeTableViewModelTest {
                 fromStopId = "FROM_STOP_ID_1",
                 fromStopName = "STOP_NAME_1",
                 toStopId = "TO_STOP_ID_1",
-                toStopName = "STOP_NAME_2"
+                toStopName = "STOP_NAME_2",
             )
             tripPlanningService.isSuccess = true
 
@@ -200,7 +197,7 @@ class TimeTableViewModelTest {
                 fromStopId = "FROM_STOP_ID_1",
                 fromStopName = "STOP_NAME_1",
                 toStopId = "TO_STOP_ID_1",
-                toStopName = "STOP_NAME_2"
+                toStopName = "STOP_NAME_2",
             )
             tripPlanningService.isSuccess = false
 
@@ -246,7 +243,7 @@ class TimeTableViewModelTest {
                 fromStopId = "FROM_STOP_ID_1",
                 fromStopName = "STOP_NAME_1",
                 toStopId = "TO_STOP_ID_1",
-                toStopName = "STOP_NAME_2"
+                toStopName = "STOP_NAME_2",
             )
             tripPlanningService.isSuccess = true
 
@@ -294,7 +291,11 @@ class TimeTableViewModelTest {
             )
             viewModel.journeys.clear()
             tripResponse.journeys?.forEachIndexed { index, item ->
-                println("tripResponse Journey #$index: ${item.legs?.get(0)?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}")
+                println(
+                    "tripResponse Journey #$index: ${item.legs?.get(
+                        0,
+                    )?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}",
+                )
             }
 
             // WHEN
@@ -314,10 +315,14 @@ class TimeTableViewModelTest {
                 reverseTimeOrder = false,
             )
             viewModel.journeys.putAll(
-                buildStartedJourneysList(numberOfStartedJourneys = 5)
+                buildStartedJourneysList(numberOfStartedJourneys = 5),
             )
             tripResponse.journeys?.forEachIndexed { index, item ->
-                println("tripResponse Journey #$index: ${item.legs?.get(0)?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}")
+                println(
+                    "tripResponse Journey #$index: ${item.legs?.get(
+                        0,
+                    )?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}",
+                )
             }
 
             // WHEN
@@ -335,10 +340,14 @@ class TimeTableViewModelTest {
             // GIVEN Trip Response
             val tripResponse = TripResponse()
             viewModel.journeys.putAll(
-                buildStartedJourneysList(numberOfStartedJourneys = 4, distortSortOrder = true)
+                buildStartedJourneysList(numberOfStartedJourneys = 4, distortSortOrder = true),
             )
             tripResponse.journeys?.forEachIndexed { index, item ->
-                println("tripResponse Journey #$index: ${item.legs?.get(0)?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}")
+                println(
+                    "tripResponse Journey #$index: ${item.legs?.get(
+                        0,
+                    )?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}",
+                )
             }
 
             // WHEN
@@ -361,10 +370,14 @@ class TimeTableViewModelTest {
                     numberOfStartedJourneys = 3,
                     distortSortOrder = true,
                     completedJourneyCount = 2,
-                )
+                ),
             )
             tripResponse.journeys?.forEachIndexed { index, item ->
-                println("tripResponse Journey #$index: ${item.legs?.get(0)?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}")
+                println(
+                    "tripResponse Journey #$index: ${item.legs?.get(
+                        0,
+                    )?.origin?.arrivalTimeEstimated?.formatTo12HourTime()}",
+                )
             }
 
             // WHEN
@@ -431,7 +444,7 @@ class TimeTableViewModelTest {
                             Stop(name = "", time = "", isWheelchairAccessible = true),
                         ),
                         tripId = "id_$i",
-                    )
+                    ),
                 ),
                 totalUniqueServiceAlerts = 1,
             )
@@ -440,7 +453,9 @@ class TimeTableViewModelTest {
         // If distortSortOrder is true, shuffle the list of journeys before returning
         return if (distortSortOrder) {
             startedJourneys.toList().shuffled().toMap()
-        } else startedJourneys
+        } else {
+            startedJourneys
+        }
     }
 
     // region Test for saveTrip
@@ -453,12 +468,11 @@ class TimeTableViewModelTest {
                 fromStopId = "stop1",
                 fromStopName = "Stop 1",
                 toStopId = "stop2",
-                toStopName = "Stop 2"
+                toStopName = "Stop 2",
             )
             val analytics = fakeAnalytics as FakeAnalytics
 
             viewModel.uiState.test {
-
                 awaitItem().run {
                     assertFalse(isTripSaved)
                 }
@@ -503,7 +517,7 @@ class TimeTableViewModelTest {
                 fromStopId = "stop1",
                 fromStopName = "Stop 1",
                 toStopId = "stop2",
-                toStopName = "Stop 2"
+                toStopName = "Stop 2",
             )
 
             viewModel.uiState.test {
@@ -549,7 +563,7 @@ class TimeTableViewModelTest {
                 fromStopId = "stop1",
                 fromStopName = "Stop 1",
                 toStopId = "stop2",
-                toStopName = "Stop 2"
+                toStopName = "Stop 2",
             )
 
             viewModel.uiState.test {
@@ -753,7 +767,7 @@ class TimeTableViewModelTest {
                 fromStopId = "stop1",
                 fromStopName = "Stop 1",
                 toStopId = "stop2",
-                toStopName = "Stop 2"
+                toStopName = "Stop 2",
             )
             viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
             val analytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
@@ -802,7 +816,7 @@ class TimeTableViewModelTest {
                 fromStopId = "FROM_STOP_ID_1",
                 fromStopName = "STOP_NAME_1",
                 toStopId = "TO_STOP_ID_1",
-                toStopName = "STOP_NAME_2"
+                toStopName = "STOP_NAME_2",
             )
             tripPlanningService.isSuccess = true
             viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
@@ -1245,7 +1259,9 @@ class TimeTableViewModelTest {
             viewModel.autoRefreshTimeTable.test {
                 skipItems(1) // initial value
 
-                advanceTimeBy(TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds)
+                advanceTimeBy(
+                    TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds,
+                )
                 assertTrue(rateLimiter.triggerCount > 0, "Rate limiter should be triggered after auto-refresh interval")
 
                 cancelAndConsumeRemainingEvents()
@@ -1261,8 +1277,14 @@ class TimeTableViewModelTest {
             viewModel.autoRefreshTimeTable.test {
                 skipItems(1)
 
-                advanceTimeBy(TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds)
-                assertEquals(0, rateLimiter.triggerCount, "Rate limiter should not be triggered when journey list is empty")
+                advanceTimeBy(
+                    TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds,
+                )
+                assertEquals(
+                    0,
+                    rateLimiter.triggerCount,
+                    "Rate limiter should not be triggered when journey list is empty",
+                )
 
                 cancelAndConsumeRemainingEvents()
             }
@@ -1735,7 +1757,9 @@ class TimeTableViewModelTest {
 
             // ModeSelectionChanged inline-resets the caches AND clears rawJourneyDataByJourneyId,
             // then triggers a re-fetch. Old journey IDs must no longer resolve.
-            viewModel.onEvent(TimeTableUiEvent.ModeSelectionChanged(unselectedModes = setOf(NswTransportMode.Bus.productClass)))
+            viewModel.onEvent(
+                TimeTableUiEvent.ModeSelectionChanged(unselectedModes = setOf(NswTransportMode.Bus.productClass)),
+            )
             advanceUntilIdle()
 
             initialIds.forEach { id ->

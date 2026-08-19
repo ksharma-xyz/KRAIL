@@ -175,4 +175,3 @@ class NswTransportConfigTest {
         assertTrue(result.contains(TransportMode.SchoolBus))
     }
 }
-

@@ -32,14 +32,13 @@ class PlatformTextTest {
         disassembledNameSamples.forEach { (input, expected) ->
             val leg = TripResponse.Leg(
                 origin = TripResponse.StopSequence(
-                    disassembledName = input
-                )
+                    disassembledName = input,
+                ),
             )
 
             assertEquals(expected, leg.getPlatformText())
         }
     }
-
 
     @Test
     fun testGetPlatformValue() {
@@ -51,14 +50,14 @@ class PlatformTextTest {
             "M2 Motorway, Barclay Rd" to null,
             "Wynyard Station, Platform 3" to "3",
             "Seven Hills Station, Stand A" to "A",
-            "Circular Quay, Wharf 2" to "2"
+            "Circular Quay, Wharf 2" to "2",
         )
 
         disassembledNameSamples.forEach { (input, expected) ->
             val leg = TripResponse.Leg(
                 origin = TripResponse.StopSequence(
-                    disassembledName = input
-                )
+                    disassembledName = input,
+                ),
             )
 
             assertEquals(expected, leg.getPlatformNumber())

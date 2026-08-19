@@ -2,10 +2,10 @@ package xyz.ksharma.krail.sandook
 
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
-import kotlin.test.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import kotlin.test.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
 class SavedParkRideSourceMigrationTest {

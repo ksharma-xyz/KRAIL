@@ -8,13 +8,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
-import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
-import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
-import xyz.ksharma.krail.trip.planner.ui.alerts.toServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlertState
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -35,7 +33,7 @@ class ServiceAlertsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         viewModel = ServiceAlertsViewModel(
             analytics = fakeAnalytics,
-            sandook = fakeSandook
+            sandook = fakeSandook,
         )
     }
 
@@ -76,7 +74,7 @@ class ServiceAlertsViewModelTest {
                     heading = "Alert 2",
                     message = "Message 2",
                     journeyId = "2",
-                )
+                ),
             )
 
             fakeSandook.insertAlerts(journeyId, expectedAlerts)

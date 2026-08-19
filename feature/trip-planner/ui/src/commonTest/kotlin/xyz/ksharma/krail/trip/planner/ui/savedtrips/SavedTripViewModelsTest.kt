@@ -10,21 +10,19 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppVersionManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeInfoTileManager
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
 import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
-import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.info.tile.network.api.db.isInfoTileDismissed
 import xyz.ksharma.krail.info.tile.network.api.db.markInfoTileAsDismissed
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
@@ -32,16 +30,17 @@ import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
-import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISMISSED_INFO_TILES
-import xyz.ksharma.krail.feature.track.TrackingManager
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.sandook.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -126,7 +125,7 @@ class SavedTripsViewModelTest {
 
                 }
             }
-    */
+     */
 
     @Test
     fun `GIVEN no observer is active WHEN checking analytics THEN event should not be tracked`() =
@@ -163,7 +162,6 @@ class SavedTripsViewModelTest {
                 assertTrue(item.savedTrips.isNotEmpty())
 
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -191,7 +189,7 @@ class SavedTripsViewModelTest {
 
                 // WHEN the DeleteSavedTrip event is triggered
                 viewModel.onEvent(
-                    SavedTripUiEvent.DeleteSavedTrip(trip = trip)
+                    SavedTripUiEvent.DeleteSavedTrip(trip = trip),
                 )
 
                 // THEN verify that the trip is deleted and the state is updated
@@ -199,7 +197,6 @@ class SavedTripsViewModelTest {
                 assertFalse(item.isSavedTripsLoading)
                 assertTrue(item.savedTrips.isEmpty())
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -217,7 +214,7 @@ class SavedTripsViewModelTest {
             val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
             val eventName = AnalyticsEvent.SavedTripCardClickEvent(
                 fromStopId = fromStopId,
-                toStopId = toStopId
+                toStopId = toStopId,
             ).name
             assertTrue(fakeAnalytics.isEventTracked(eventName))
         }
@@ -236,7 +233,7 @@ class SavedTripsViewModelTest {
             val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
             val eventName = AnalyticsEvent.LoadTimeTableClickEvent(
                 fromStopId = fromStopId,
-                toStopId = toStopId
+                toStopId = toStopId,
             ).name
             assertTrue(fakeAnalytics.isEventTracked(eventName))
         }
@@ -290,8 +287,8 @@ class SavedTripsViewModelTest {
                 type = InfoTileData.InfoTileType.APP_UPDATE,
                 primaryCta = InfoTileCta(
                     text = "Go",
-                    url = testUrl
-                )
+                    url = testUrl,
+                ),
             )
 
             // WHEN the InfoTileCtaClick event is triggered
@@ -312,14 +309,14 @@ class SavedTripsViewModelTest {
                 type = InfoTileData.InfoTileType.APP_UPDATE,
                 primaryCta = InfoTileCta(
                     text = "Update",
-                    url = "https://store.com/app"
-                )
+                    url = "https://store.com/app",
+                ),
             )
             fakeAppVersionManager.setUpdateCopy(
                 title = infoTile.title,
                 description = infoTile.description,
                 ctaText = infoTile.primaryCta?.text ?: "",
-                key = infoTile.key
+                key = infoTile.key,
             )
             // mimic info tile present in state
             fakeSandookPreferences.setString(KEY_DISMISSED_INFO_TILES, "update_key")
@@ -333,7 +330,6 @@ class SavedTripsViewModelTest {
                 assertTrue(item.infoTiles?.isEmpty() == true)
                 assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -347,8 +343,8 @@ class SavedTripsViewModelTest {
                 type = InfoTileData.InfoTileType.INFO,
                 primaryCta = InfoTileCta(
                     text = "Learn More",
-                    url = "https://promo.com"
-                )
+                    url = "https://promo.com",
+                ),
             )
             fakeInfoTileManager.setTiles(listOf(infoTile))
             viewModel.uiState.test {
@@ -356,7 +352,6 @@ class SavedTripsViewModelTest {
                 val item = awaitItem()
                 assertTrue(item.infoTiles?.contains(infoTile) == true)
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -370,8 +365,8 @@ class SavedTripsViewModelTest {
                 type = InfoTileData.InfoTileType.APP_UPDATE,
                 primaryCta = InfoTileCta(
                     text = "Update",
-                    url = "https://store.com/app"
-                )
+                    url = "https://store.com/app",
+                ),
             )
             // Mark as dismissed in preferences before test
             fakeSandookPreferences.markInfoTileAsDismissed(infoTile.key)
@@ -380,7 +375,7 @@ class SavedTripsViewModelTest {
                 title = infoTile.title,
                 description = infoTile.description,
                 ctaText = infoTile.primaryCta?.text ?: "",
-                key = infoTile.key
+                key = infoTile.key,
             )
             viewModel.uiState.test {
                 val item = awaitItem()
@@ -391,7 +386,6 @@ class SavedTripsViewModelTest {
                 // No need to await another item, just check preference
                 assertTrue(fakeSandookPreferences.isInfoTileDismissed(infoTile.key))
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -405,8 +399,8 @@ class SavedTripsViewModelTest {
                 type = InfoTileData.InfoTileType.APP_UPDATE,
                 primaryCta = InfoTileCta(
                     text = "Update",
-                    url = "https://store.com/app"
-                )
+                    url = "https://store.com/app",
+                ),
             )
             val criticalAlertTile = InfoTileData(
                 key = "alert_key",
@@ -415,15 +409,15 @@ class SavedTripsViewModelTest {
                 type = InfoTileData.InfoTileType.CRITICAL_ALERT,
                 primaryCta = InfoTileCta(
                     text = "Read more",
-                    url = "https://example.com/read"
-                )
+                    url = "https://example.com/read",
+                ),
             )
             fakeAppVersionManager.mockCurrentVersion = updateTile.key
             fakeAppVersionManager.setUpdateCopy(
                 title = updateTile.title,
                 description = updateTile.description,
                 ctaText = updateTile.primaryCta?.text ?: "",
-                key = updateTile.key
+                key = updateTile.key,
             )
             fakeInfoTileManager.setTiles(listOf(updateTile, criticalAlertTile))
 
@@ -440,7 +434,6 @@ class SavedTripsViewModelTest {
                     assertTrue(this.infoTiles?.contains(updateTile) == true)
                 }
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -452,7 +445,7 @@ class SavedTripsViewModelTest {
                 title = "Not present",
                 description = "Should not exist",
                 type = InfoTileData.InfoTileType.APP_UPDATE,
-                primaryCta = null
+                primaryCta = null,
             )
             viewModel.uiState.test {
                 val initial = awaitItem()
@@ -461,7 +454,6 @@ class SavedTripsViewModelTest {
                 // Await next state, or verify no new state is emitted
                 expectNoEvents() // No new state should be emitted
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -485,7 +477,6 @@ class SavedTripsViewModelTest {
                 val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
                 assertTrue(fakeAnalytics.isEventTracked(AnalyticsEvent.DiscoverButtonClick.name))
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -501,7 +492,7 @@ class SavedTripsViewModelTest {
                 stopId = "STOP_1",
                 stopName = "Test Stop",
                 facilities = persistentSetOf(facility),
-                isLoading = false
+                isLoading = false,
             )
 
             viewModel.uiState.test {
@@ -509,13 +500,12 @@ class SavedTripsViewModelTest {
                 viewModel.onEvent(
                     SavedTripUiEvent.ParkRideCardClick(
                         parkRideState,
-                        isExpanded = true
-                    )
+                        isExpanded = true,
+                    ),
                 )
                 val item = awaitItem()
                 assertTrue(item.observeParkRideStopIdSet.contains("STOP_1"))
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -527,14 +517,14 @@ class SavedTripsViewModelTest {
                 stopId = "STOP_1",
                 stopName = "Test Stop",
                 facilities = persistentSetOf(facility),
-                isLoading = false
+                isLoading = false,
             )
             // First expand
             viewModel.onEvent(
                 SavedTripUiEvent.ParkRideCardClick(
                     parkRideState,
-                    isExpanded = true
-                )
+                    isExpanded = true,
+                ),
             )
             viewModel.uiState.test {
                 skipItems(1)
@@ -542,13 +532,12 @@ class SavedTripsViewModelTest {
                 viewModel.onEvent(
                     SavedTripUiEvent.ParkRideCardClick(
                         parkRideState,
-                        isExpanded = false
-                    )
+                        isExpanded = false,
+                    ),
                 )
                 val item = awaitItem()
                 assertFalse(item.observeParkRideStopIdSet.contains("STOP_1"))
                 cancelAndIgnoreRemainingEvents()
-
             }
         }
 
@@ -575,7 +564,7 @@ class SavedTripsViewModelTest {
         spotsAvailable: Int = 10,
         totalSpots: Int = 20,
         percentageFull: Int = 50,
-        timeText: String = "10:00 AM"
+        timeText: String = "10:00 AM",
     ): ParkRideUiState.ParkRideFacilityDetail {
         return ParkRideUiState.ParkRideFacilityDetail(
             spotsAvailable = spotsAvailable,
@@ -664,7 +653,7 @@ class SavedTripsViewModelTest {
             // GIVEN a valid StopItem JSON
             val stopItem = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
                 stopName = "Central Station",
-                stopId = "10101"
+                stopId = "10101",
             )
             val stopJson = stopItem.toJsonString()
 
@@ -692,7 +681,7 @@ class SavedTripsViewModelTest {
             // GIVEN a valid StopItem JSON
             val stopItem = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
                 stopName = "Town Hall",
-                stopId = "10102"
+                stopId = "10102",
             )
             val stopJson = stopItem.toJsonString()
 
@@ -760,15 +749,15 @@ class SavedTripsViewModelTest {
             // GIVEN initial stops
             val centralStation = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
                 stopName = "Central Station",
-                stopId = "10101"
+                stopId = "10101",
             )
             val townHall = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
                 stopName = "Town Hall",
-                stopId = "10102"
+                stopId = "10102",
             )
             val airport = xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem(
                 stopName = "Sydney Airport",
-                stopId = "10104"
+                stopId = "10104",
             )
 
             viewModel.uiState.test {
@@ -812,16 +801,25 @@ class SavedTripsViewModelTest {
         runTest {
             // Seed three trips so the move has somewhere to go and totalCount > 1.
             sandook.insertOrReplaceTrip(
-                tripId = "AB", fromStopId = "A", fromStopName = "Alpha",
-                toStopId = "B", toStopName = "Bravo",
+                tripId = "AB",
+                fromStopId = "A",
+                fromStopName = "Alpha",
+                toStopId = "B",
+                toStopName = "Bravo",
             )
             sandook.insertOrReplaceTrip(
-                tripId = "CD", fromStopId = "C", fromStopName = "Charlie",
-                toStopId = "D", toStopName = "Delta",
+                tripId = "CD",
+                fromStopId = "C",
+                fromStopName = "Charlie",
+                toStopId = "D",
+                toStopName = "Delta",
             )
             sandook.insertOrReplaceTrip(
-                tripId = "EF", fromStopId = "E", fromStopName = "Echo",
-                toStopId = "F", toStopName = "Foxtrot",
+                tripId = "EF",
+                fromStopId = "E",
+                fromStopName = "Echo",
+                toStopId = "F",
+                toStopName = "Foxtrot",
             )
             val analytics = fakeAnalytics as FakeAnalytics
 
@@ -853,8 +851,11 @@ class SavedTripsViewModelTest {
     fun `GIVEN target equals source WHEN MoveSavedTripToIndex fires THEN no reorder event is tracked`() =
         runTest {
             sandook.insertOrReplaceTrip(
-                tripId = "AB", fromStopId = "A", fromStopName = "Alpha",
-                toStopId = "B", toStopName = "Bravo",
+                tripId = "AB",
+                fromStopId = "A",
+                fromStopName = "Alpha",
+                toStopId = "B",
+                toStopName = "Bravo",
             )
             val analytics = fakeAnalytics as FakeAnalytics
 
@@ -886,8 +887,11 @@ class SavedTripsViewModelTest {
             val analytics = fakeAnalytics as FakeAnalytics
 
             sandook.insertOrReplaceTrip(
-                tripId = "207210->999", fromStopId = "207210", fromStopName = "Stop A",
-                toStopId = "999", toStopName = "Stop B",
+                tripId = "207210->999",
+                fromStopId = "207210",
+                fromStopName = "Stop A",
+                toStopId = "999",
+                toStopName = "Stop B",
             )
 
             viewModel.uiState.test {
@@ -916,8 +920,11 @@ class SavedTripsViewModelTest {
             val analytics = fakeAnalytics as FakeAnalytics
 
             sandook.insertOrReplaceTrip(
-                tripId = "207210->999", fromStopId = "207210", fromStopName = "Stop A",
-                toStopId = "999", toStopName = "Stop B",
+                tripId = "207210->999",
+                fromStopId = "207210",
+                fromStopName = "Stop A",
+                toStopId = "999",
+                toStopName = "Stop B",
             )
 
             viewModel.uiState.test {

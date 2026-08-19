@@ -44,41 +44,41 @@ internal object CentralStationDepartureFixture {
      */
     val EXPECTED = listOf(
         // Trains (cls=1)
-        Triple("T8",  "Platform 17", "towards City Circle via Town Hall"),
+        Triple("T8", "Platform 17", "towards City Circle via Town Hall"),
         // Bus Stand A
-        Triple("320", "Stand A",     "Central Railway Square to Green Square (Loop Service)"),
+        Triple("320", "Stand A", "Central Railway Square to Green Square (Loop Service)"),
         // Trains (cls=1)
-        Triple("T8",  "Platform 23", "towards Macarthur via Airport"),
+        Triple("T8", "Platform 23", "towards Macarthur via Airport"),
         // Light Rail — no code (1001_L2 product), so name only
-        Triple("L2",  "Central Chalmers Street Light Rail", "Randwick to Circular Quay"),
-        Triple("T1",  "Platform 18", "towards Emu Plains via Parramatta"),
-        Triple("T9",  "Platform 16", "towards Gordon via Lindfield"),
+        Triple("L2", "Central Chalmers Street Light Rail", "Randwick to Circular Quay"),
+        Triple("T1", "Platform 18", "towards Emu Plains via Parramatta"),
+        Triple("T9", "Platform 16", "towards Gordon via Lindfield"),
         // Bus Stand G
-        Triple("320", "Stand G",     "Central Railway Square to Green Square (Loop Service)"),
-        Triple("T2",  "Platform 19", "towards Homebush via Strathfield"),
+        Triple("320", "Stand G", "Central Railway Square to Green Square (Loop Service)"),
+        Triple("T2", "Platform 19", "towards Homebush via Strathfield"),
         // Light Rail L1 (Dulwich Hill)
-        Triple("L1",  "L1 · Central Grand Concourse Light Rail", "Central to Dulwich Hill"),
+        Triple("L1", "L1 · Central Grand Concourse Light Rail", "Central to Dulwich Hill"),
         // Light Rail LR1, so code · name
-        Triple("L2",  "LR1 · Central Chalmers Street Light Rail", "Circular Quay to Randwick"),
+        Triple("L2", "LR1 · Central Chalmers Street Light Rail", "Circular Quay to Randwick"),
         // Light Rail LR2, so code · name
-        Triple("L3",  "LR2 · Central Chalmers Street Light Rail", "Juniors Kingsford to Circular Quay"),
-        Triple("T4",  "Platform 25", "towards Waterfall via Banksia"),
-        Triple("T4",  "Platform 24", "towards Bondi Junction"),
+        Triple("L3", "LR2 · Central Chalmers Street Light Rail", "Juniors Kingsford to Circular Quay"),
+        Triple("T4", "Platform 25", "towards Waterfall via Banksia"),
+        Triple("T4", "Platform 24", "towards Bondi Junction"),
         // Bus Stand C
-        Triple("440", "Stand C",     "Rozelle to Bondi Junction"),
-        Triple("T8",  "Platform 22", "towards Sydenham"),
+        Triple("440", "Stand C", "Rozelle to Bondi Junction"),
+        Triple("T8", "Platform 22", "towards Sydenham"),
         // Metro (cls=2)
-        Triple("M1",  "Platform 26", "towards Tallawong"),
-        Triple("T2",  "Platform 21", "towards City Circle via Museum"),
+        Triple("M1", "Platform 26", "towards Tallawong"),
+        Triple("T2", "Platform 21", "towards City Circle via Museum"),
         // Bus Stand E
-        Triple("343", "Stand E",     "City Circular Quay to Kingsford"),
+        Triple("343", "Stand E", "City Circular Quay to Kingsford"),
         // Metro (cls=2)
-        Triple("M1",  "Platform 27", "towards Sydenham"),
+        Triple("M1", "Platform 27", "towards Sydenham"),
         // Regional coach carrying cls=1, so it follows the Train rule
-        Triple("621", "Platform 2",  "towards Southern Cross (Melbourne)"),
-        Triple("T2",  "Platform 20", "towards City Circle via Museum"),
+        Triple("621", "Platform 2", "towards Southern Cross (Melbourne)"),
+        Triple("T2", "Platform 20", "towards City Circle via Museum"),
         // Bus Stand F
-        Triple("339", "Stand F",     "Clovelly to Central Foveaux St (Loop Service)"),
+        Triple("339", "Stand F", "Clovelly to Central Foveaux St (Loop Service)"),
     )
 
     val JSON = """
@@ -872,4 +872,3 @@ internal object CentralStationDepartureFixture {
         }
     """.trimIndent()
 }
-

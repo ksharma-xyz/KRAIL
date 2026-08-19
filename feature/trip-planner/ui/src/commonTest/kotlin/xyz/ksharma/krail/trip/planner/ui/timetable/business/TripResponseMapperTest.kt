@@ -7,7 +7,6 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures.OranParkToS
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures.Redfern715BacktrackFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
 import kotlin.test.assertNull
 
 /**
@@ -78,7 +77,7 @@ class TripResponseMapperTest {
             ),
             destination = TripResponse.StopSequence(
                 arrivalTimePlanned = "2026-04-18T22:49:00Z",
-                arrivalTimeEstimated = "2026-04-18T22:51:00Z",  // estimated arr 2 min late
+                arrivalTimeEstimated = "2026-04-18T22:51:00Z", // estimated arr 2 min late
             ),
         )
 
@@ -240,9 +239,9 @@ class TripResponseMapperTest {
 
         // Assert: leg duration derived from 21:46→21:47 timestamps shows as "1 min"
         val firstLegOfNullDurationJourney = journeys
-            ?.getOrNull(1)         // second journey = the null-duration one
+            ?.getOrNull(1) // second journey = the null-duration one
             ?.legs
-            ?.firstOrNull()        // first TransportLeg
+            ?.firstOrNull() // first TransportLeg
         val legDuration =
             (firstLegOfNullDurationJourney as? TimeTableState.JourneyCardInfo.Leg.TransportLeg)
                 ?.totalDuration
@@ -250,7 +249,7 @@ class TripResponseMapperTest {
         assertEquals(
             "1 min",
             legDuration,
-            "Null-duration leg duration should be calculated as 1 min"
+            "Null-duration leg duration should be calculated as 1 min",
         )
     }
 
@@ -396,7 +395,11 @@ class TripResponseMapperTest {
 
         val journeys = response.buildJourneyList()
 
-        assertEquals(3, journeys?.size, "All same-route trips must survive — must not be deduplicated by shared transportation.id")
+        assertEquals(
+            3,
+            journeys?.size,
+            "All same-route trips must survive — must not be deduplicated by shared transportation.id",
+        )
         val journeyIds = journeys?.map { it.journeyId }
         assertEquals(3, journeyIds?.distinct()?.size, "Each journey must produce a unique journeyId")
     }
@@ -424,7 +427,11 @@ class TripResponseMapperTest {
             ?.firstOrNull()?.legs?.firstOrNull() as? TimeTableState.JourneyCardInfo.Leg.TransportLeg
 
         assertEquals(transportationId, leg?.transportationId, "transportationId must be transportation.id only")
-        assertEquals("$transportationId$realtimeTripId", leg?.tripId, "tripId must be transportation.id + RealtimeTripId for uniqueness")
+        assertEquals(
+            "$transportationId$realtimeTripId",
+            leg?.tripId,
+            "tripId must be transportation.id + RealtimeTripId for uniqueness",
+        )
     }
 
     //endregion
@@ -562,8 +569,8 @@ class TripResponseMapperTest {
                 buildJourneyWithTransportLeg(
                     productClass = 1L,
                     destinationName = "Bondi Junction via Central",
-                    description = "Waterfall or Cronulla to Bondi Junction"
-                )
+                    description = "Waterfall or Cronulla to Bondi Junction",
+                ),
             ),
         )
 
@@ -580,8 +587,8 @@ class TripResponseMapperTest {
                 buildJourneyWithTransportLeg(
                     productClass = 2L,
                     destinationName = "Tallawong",
-                    description = "Sydenham to Tallawong"
-                )
+                    description = "Sydenham to Tallawong",
+                ),
             ),
         )
 
@@ -598,8 +605,8 @@ class TripResponseMapperTest {
                 buildJourneyWithTransportLeg(
                     productClass = 5L,
                     destinationName = "Rouse Hill Station",
-                    description = "Seven Hills to Rouse Hill Station via Norwest"
-                )
+                    description = "Seven Hills to Rouse Hill Station via Norwest",
+                ),
             ),
         )
 

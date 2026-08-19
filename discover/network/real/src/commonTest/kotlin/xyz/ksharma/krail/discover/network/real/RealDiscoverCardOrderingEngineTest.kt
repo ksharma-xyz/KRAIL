@@ -18,7 +18,6 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-
 class RealDiscoverCardOrderingEngineTest {
 
     private lateinit var fakePreferences: FakeDiscoverCardSeenPreferences
@@ -42,7 +41,7 @@ class RealDiscoverCardOrderingEngineTest {
         val cards = listOf(
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Event", today.toString(), today.toString()),
-            createCard("card3", "Another Regular", null)
+            createCard("card3", "Another Regular", null),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -57,7 +56,7 @@ class RealDiscoverCardOrderingEngineTest {
         val cards = listOf(
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Event No End", today.toString(), null),
-            createCard("card3", "Tomorrow Event", tomorrow.toString())
+            createCard("card3", "Tomorrow Event", tomorrow.toString()),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -72,7 +71,7 @@ class RealDiscoverCardOrderingEngineTest {
         val cards = listOf(
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Multi-day", today.toString(), tomorrow.toString()),
-            createCard("card3", "Another Regular", null)
+            createCard("card3", "Another Regular", null),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -88,7 +87,7 @@ class RealDiscoverCardOrderingEngineTest {
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Seen Event", today.toString(), today.toString()),
             createCard("card3", "Today Unseen Event", today.toString(), today.toString()),
-            createCard("card4", "Another Regular", null)
+            createCard("card4", "Another Regular", null),
         )
 
         fakePreferences.markAsSeen("card2") // Mark today event as seen
@@ -108,7 +107,7 @@ class RealDiscoverCardOrderingEngineTest {
             createCard("card1", "Regular Card", null),
             createCard("card2", "Yesterday Event", yesterday.toString()),
             createCard("card3", "Past Event with End", yesterday.toString(), yesterday.toString()),
-            createCard("card4", "Future Event", tomorrow.toString())
+            createCard("card4", "Future Event", tomorrow.toString()),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -126,9 +125,9 @@ class RealDiscoverCardOrderingEngineTest {
                 "card2",
                 "Event Ended Yesterday",
                 yesterday.minus(2, DateTimeUnit.DAY).toString(),
-                yesterday.toString()
+                yesterday.toString(),
             ),
-            createCard("card3", "Current Event", yesterday.toString(), tomorrow.toString())
+            createCard("card3", "Current Event", yesterday.toString(), tomorrow.toString()),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -144,7 +143,7 @@ class RealDiscoverCardOrderingEngineTest {
             createCard("card1", "Regular Unseen", null),
             createCard("card2", "Future Seen", tomorrow.toString()),
             createCard("card3", "Regular Seen", null),
-            createCard("card4", "Future Unseen", nextWeek.toString())
+            createCard("card4", "Future Unseen", nextWeek.toString()),
         )
 
         fakePreferences.markAsSeen("card2", "card3")
@@ -162,7 +161,7 @@ class RealDiscoverCardOrderingEngineTest {
         val cards = listOf(
             createCard("card1", "Regular Card", null),
             createCard("card2", "Today Seen", today.toString(), today.toString()),
-            createCard("card3", "Another Regular", null)
+            createCard("card3", "Another Regular", null),
         )
 
         fakePreferences.markAsSeen("card2")
@@ -183,7 +182,7 @@ class RealDiscoverCardOrderingEngineTest {
             createCard("card3", "Past Event", yesterday.toString()),
             createCard("card4", "Today Multi Day", today.toString(), tomorrow.toString()),
             createCard("card5", "Regular Seen", null),
-            createCard("card6", "Today Single Seen", today.toString(), today.toString())
+            createCard("card6", "Today Single Seen", today.toString(), today.toString()),
         )
 
         fakePreferences.markAsSeen("card5", "card6")
@@ -204,7 +203,7 @@ class RealDiscoverCardOrderingEngineTest {
         val cards = listOf(
             createCard("card1", "Valid Today", today.toString()),
             createCard("card2", "Invalid Date", "invalid-date"),
-            createCard("card3", "Another Valid", tomorrow.toString())
+            createCard("card3", "Another Valid", tomorrow.toString()),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -219,7 +218,7 @@ class RealDiscoverCardOrderingEngineTest {
     fun `getSortedCards - null dates are handled`() = runTest {
         val cards = listOf(
             createCard("card1", "No Date", null),
-            createCard("card2", "Today Event", today.toString(), today.toString())
+            createCard("card2", "Today Event", today.toString(), today.toString()),
         )
 
         val result = orderingEngine.getSortedCards(cards)
@@ -256,7 +255,7 @@ class RealDiscoverCardOrderingEngineTest {
         cardId: String,
         title: String,
         startDate: String?,
-        endDate: String? = null
+        endDate: String? = null,
     ): DiscoverModel {
         return DiscoverModel(
             title = title,
@@ -267,7 +266,7 @@ class RealDiscoverCardOrderingEngineTest {
             imageList = listOf("https://example.com/image.jpg"),
             buttons = null,
             type = DiscoverCardType.Events,
-            cardId = cardId
+            cardId = cardId,
         )
     }
 }

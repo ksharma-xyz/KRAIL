@@ -29,7 +29,7 @@ class InfoTileDateFilteringTest {
         // Given: A tile that starts today
         val tileStartingToday = createTile(
             startDate = getDateString(daysFromToday = 0),
-            endDate = null
+            endDate = null,
         )
 
         // Then: Tile should be visible (startDate is inclusive)
@@ -41,7 +41,7 @@ class InfoTileDateFilteringTest {
         // Given: A tile that ends today
         val tileEndingToday = createTile(
             startDate = null,
-            endDate = getDateString(daysFromToday = 0)
+            endDate = getDateString(daysFromToday = 0),
         )
 
         // Then: Tile should be visible (endDate is inclusive)
@@ -53,7 +53,7 @@ class InfoTileDateFilteringTest {
         // Given: A one-day event (start and end date are the same - today)
         val oneDayEvent = createTile(
             startDate = getDateString(daysFromToday = 0),
-            endDate = getDateString(daysFromToday = 0)
+            endDate = getDateString(daysFromToday = 0),
         )
 
         // Then: Tile should be visible (both dates are inclusive)
@@ -69,7 +69,7 @@ class InfoTileDateFilteringTest {
         // Given: An event that starts tomorrow
         val futureEvent = createTile(
             startDate = getDateString(daysFromToday = 1),
-            endDate = getDateString(daysFromToday = 3)
+            endDate = getDateString(daysFromToday = 3),
         )
 
         // Then: Tile should NOT be visible (hasn't started yet)
@@ -85,7 +85,7 @@ class InfoTileDateFilteringTest {
         // Given: An event that ended yesterday
         val expiredEvent = createTile(
             startDate = getDateString(daysFromToday = -3),
-            endDate = getDateString(daysFromToday = -1)
+            endDate = getDateString(daysFromToday = -1),
         )
 
         // Then: Tile should NOT be visible (already expired)
@@ -101,7 +101,7 @@ class InfoTileDateFilteringTest {
         // Given: An event running from yesterday to tomorrow
         val activeEvent = createTile(
             startDate = getDateString(daysFromToday = -1),
-            endDate = getDateString(daysFromToday = 1)
+            endDate = getDateString(daysFromToday = 1),
         )
 
         // Then: Tile should be visible (today is within range)
@@ -113,7 +113,7 @@ class InfoTileDateFilteringTest {
         // Given: An event that started yesterday with no end date
         val ongoingEvent = createTile(
             startDate = getDateString(daysFromToday = -1),
-            endDate = null
+            endDate = null,
         )
 
         // Then: Tile should be visible (started and no expiry)
@@ -125,7 +125,7 @@ class InfoTileDateFilteringTest {
         // Given: A tile with no start date but ends tomorrow
         val immediateEvent = createTile(
             startDate = null,
-            endDate = getDateString(daysFromToday = 1)
+            endDate = getDateString(daysFromToday = 1),
         )
 
         // Then: Tile should be visible (no start restriction, not expired)
@@ -141,7 +141,7 @@ class InfoTileDateFilteringTest {
         // Given: A tile with no date restrictions
         val permanentTile = createTile(
             startDate = null,
-            endDate = null
+            endDate = null,
         )
 
         // Then: Tile should always be visible
@@ -156,8 +156,8 @@ class InfoTileDateFilteringTest {
     fun metroClosureScenario_whenTodayIsFeb21AndEventRunsFeb21To23_thenTileIsShown() {
         // Given: Today is Feb 21 and Metro closure runs Feb 21-23
         val metroClosureTile = createTile(
-            startDate = getDateString(daysFromToday = 0),  // Feb 21 (today)
-            endDate = getDateString(daysFromToday = 2)     // Feb 23
+            startDate = getDateString(daysFromToday = 0), // Feb 21 (today)
+            endDate = getDateString(daysFromToday = 2), // Feb 23
         )
 
         // Then: Tile should be visible on Feb 21
@@ -227,4 +227,3 @@ class InfoTileDateFilteringTest {
 
     // endregion
 }
-

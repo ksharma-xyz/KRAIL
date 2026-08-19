@@ -4,7 +4,6 @@ import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.searchstop.RealStopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 // TODO Write UTs separately
@@ -85,7 +84,7 @@ class RealStopResultsManagerTest {
             // Verify the results
             assertEquals(expectedResults, actualResults)
         }
-    */
+     */
 
     private fun createStopResult(
         stopId: String,
@@ -95,7 +94,7 @@ class RealStopResultsManagerTest {
         return SearchStopState.StopResult(
             stopId = stopId,
             stopName = stopName,
-            transportModeType = transportModes.toImmutableList()
+            transportModeType = transportModes.toImmutableList(),
         )
     }
 }

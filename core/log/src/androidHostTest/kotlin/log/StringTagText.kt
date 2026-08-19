@@ -12,7 +12,7 @@ class StringTagText {
             "xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel\$loadSavedTrips\$1",
             "invokeSuspend",
             "SavedTripsViewModel.kt",
-            52
+            52,
         )
         val result = stackTraceElement.toStringTag()
         assertEquals("SavedTripsViewModel", result)
@@ -24,7 +24,7 @@ class StringTagText {
             "xyz.ksharma.krail.core.analytics.RealAnalytics",
             "track",
             "RealAnalytics.kt",
-            18
+            18,
         )
         val result = stackTraceElement.toStringTag()
         assertEquals("RealAnalytics", result)
@@ -36,7 +36,7 @@ class StringTagText {
             "xyz.ksharma.krail.core.analytics.ThisIsALongClassNameCalledRealAnalytics",
             "track",
             "RealAnalytics.kt",
-            18
+            18,
         )
         val result = stackTraceElement.toStringTag()
         assertEquals("ThisIsALongClassNameCal", result)

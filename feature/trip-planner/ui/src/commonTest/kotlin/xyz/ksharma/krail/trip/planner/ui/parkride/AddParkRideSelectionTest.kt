@@ -11,9 +11,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
-import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
 import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
@@ -21,21 +21,17 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
-import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
-import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
-import xyz.ksharma.krail.sandook.SavedParkRide
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ErrorKind
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideUiEvent
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * What a selected station shows, what it costs, and what survives a configuration

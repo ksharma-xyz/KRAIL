@@ -265,7 +265,13 @@ private class RecordingSandook(
     }
 
     override fun observeStopLabels(): Flow<List<StopLabels>> = emptyFlow()
-    override fun upsertStopLabel(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) = error("not used")
+    override fun upsertStopLabel(
+        label: String,
+        emoji: String,
+        stopId: String?,
+        stopName: String?,
+        sortOrder: Long,
+    ) = error("not used")
     override fun updateStopLabelStop(label: String, stopId: String?, stopName: String?) = error("not used")
     override fun renameStopLabel(label: String, newLabel: String) = error("not used")
     override fun deleteStopLabel(label: String) = error("not used")
@@ -273,7 +279,13 @@ private class RecordingSandook(
     override fun insertOrReplaceTheme(productClass: Long) = error("not used")
     override fun getProductClass(): Long? = error("not used")
     override fun clearTheme() = error("not used")
-    override fun insertOrReplaceTrip(tripId: String, fromStopId: String, fromStopName: String, toStopId: String, toStopName: String) = error("not used")
+    override fun insertOrReplaceTrip(
+        tripId: String,
+        fromStopId: String,
+        fromStopName: String,
+        toStopId: String,
+        toStopName: String,
+    ) = error("not used")
     override fun deleteTrip(tripId: String) = error("not used")
     override fun selectAllTrips(): List<SavedTrip> = error("not used")
     override fun observeAllTrips(): Flow<List<SavedTrip>> = emptyFlow()
@@ -283,14 +295,22 @@ private class RecordingSandook(
     override fun getAlerts(journeyId: String): List<SelectServiceAlertsByJourneyId> = error("not used")
     override fun clearAlerts() = error("not used")
     override fun insertAlerts(journeyId: String, alerts: List<SelectServiceAlertsByJourneyId>) = error("not used")
-    override fun insertNswStop(stopId: String, stopName: String, stopLat: Double, stopLon: Double, isParent: Boolean?) = error("not used")
+    override fun insertNswStop(
+        stopId: String,
+        stopName: String,
+        stopLat: Double,
+        stopLon: Double,
+        isParent: Boolean?,
+    ) = error("not used")
     override fun stopsCount(): Int = error("not used")
     override fun productClassCount(): Int = error("not used")
     override fun insertNswStopProductClass(stopId: String, productClass: Int) = error("not used")
     override fun <R> insertTransaction(block: () -> R): R = error("not used")
     override fun clearNswStopsTable() = error("not used")
     override fun clearNswProductClassTable() = error("not used")
-    override fun selectStopCoordinatesBatch(stopIds: List<String>): Map<String, Pair<Double, Double>> = error("not used")
+    override fun selectStopCoordinatesBatch(
+        stopIds: List<String>,
+    ): Map<String, Pair<Double, Double>> = error("not used")
     override fun upsertRecentSearchLocation(location: RecentSearchLocation) = error("not used")
     override fun selectRecentSearchLocations(): List<RecentSearchLocations> = error("not used")
     override fun clearRecentSearchLocations() = error("not used")

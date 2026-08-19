@@ -28,8 +28,8 @@ class RealFestivalManagerTest {
                     month = 6,
                     day = 5,
                     emojiList = listOf("🎉"),
-                    greeting = "Fixed Festival"
-                )
+                    greeting = "Fixed Festival",
+                ),
             ),
             variableDates = listOf(
                 VariableDateFestival(
@@ -37,9 +37,9 @@ class RealFestivalManagerTest {
                     startDate = "2024-06-01",
                     endDate = "2024-06-10",
                     emojiList = listOf("🎊"),
-                    greeting = "Variable Festival"
-                )
-            )
+                    greeting = "Variable Festival",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -61,16 +61,16 @@ class RealFestivalManagerTest {
                     startDate = "2024-06-01",
                     endDate = "2024-06-10",
                     emojiList = listOf("🎉"),
-                    greeting = "Ongoing Festival"
+                    greeting = "Ongoing Festival",
                 ),
                 VariableDateFestival(
                     type = "FUTURE",
                     startDate = "2024-07-01",
                     endDate = "2024-07-10",
                     emojiList = listOf("🎊"),
-                    greeting = "Future Festival"
-                )
-            )
+                    greeting = "Future Festival",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -91,9 +91,9 @@ class RealFestivalManagerTest {
                     startDate = "2024-01-01",
                     endDate = "2024-01-10",
                     emojiList = listOf("❄️"),
-                    greeting = "Past Festival"
-                )
-            )
+                    greeting = "Past Festival",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -127,16 +127,16 @@ class RealFestivalManagerTest {
                     "invalid-date",
                     "2024-06-10",
                     listOf("🎉"),
-                    "Bad Start Date"
+                    "Bad Start Date",
                 ),
                 VariableDateFestival(
                     "BAD_END",
                     "2024-06-01",
                     "invalid-date",
                     listOf("🎊"),
-                    "Bad End Date"
-                )
-            )
+                    "Bad End Date",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -153,9 +153,9 @@ class RealFestivalManagerTest {
                     "2024-06-10",
                     "2024-06-01",
                     listOf("❌"),
-                    "Invalid Range"
-                )
-            )
+                    "Invalid Range",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -172,16 +172,16 @@ class RealFestivalManagerTest {
                     "2024-06-01",
                     "2024-06-10",
                     listOf("🎉"),
-                    "First Festival"
+                    "First Festival",
                 ),
                 VariableDateFestival(
                     "SECOND",
                     "2024-06-01",
                     "2024-06-10",
                     listOf("🎊"),
-                    "Second Festival"
-                )
-            )
+                    "Second Festival",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -199,9 +199,9 @@ class RealFestivalManagerTest {
                     "2024-06-05",
                     "2024-06-05",
                     listOf("🥳"),
-                    "One Day Festival"
-                )
-            )
+                    "One Day Festival",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -219,9 +219,9 @@ class RealFestivalManagerTest {
                     "20205-01-1",
                     "20205-01-2",
                     listOf("❌"),
-                    "Malformed Date"
-                )
-            )
+                    "Malformed Date",
+                ),
+            ),
         )
         val json = Json.encodeToString(data)
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(json))
@@ -256,13 +256,13 @@ class RealFestivalManagerTest {
             ],
             "extraField": "This is an extra field that should be ignored"
         }
-    """.trimIndent()
+        """.trimIndent()
         fakeFlag.setFlagValue(FlagKeys.FESTIVALS.key, FlagValue.JsonValue(jsonWithExtraField))
         // Should match the fixed date festival on 2025-07-07
         val result = manager.festivalOnDate(LocalDate.parse("2025-07-07"))
         assertNotNull(
             result,
-            "Festival should not be null when date matches and extra fields are present"
+            "Festival should not be null when date matches and extra fields are present",
         )
         assertTrue(result is FixedDateFestival)
         assertEquals("Extra Field Festival", result.greeting)

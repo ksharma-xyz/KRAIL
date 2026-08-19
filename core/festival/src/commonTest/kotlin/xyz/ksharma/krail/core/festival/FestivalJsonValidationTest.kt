@@ -51,7 +51,7 @@ class FestivalJsonValidationTest {
         // Assert that validation passed
         assertTrue(
             validationResult.isValid,
-            "Festival JSON validation failed. See report:\n${validationResult.getReport()}"
+            "Festival JSON validation failed. See report:\n${validationResult.getReport()}",
         )
     }
 
@@ -192,13 +192,13 @@ class FestivalJsonValidationTest {
             TestResult(
                 testName = "JSON Parsing (${data.confirmedDates.size} fixed, ${data.variableDates.size} variable)",
                 passed = true,
-                message = ""
+                message = "",
             )
         } catch (e: Exception) {
             TestResult(
                 testName = "JSON Parsing",
                 passed = false,
-                message = "Failed to parse: ${e.message}"
+                message = "Failed to parse: ${e.message}",
             )
         }
     }
@@ -241,27 +241,27 @@ class FestivalJsonValidationTest {
                 TestResult(
                     testName = "Date Format Validation",
                     passed = true,
-                    message = ""
+                    message = "",
                 )
             } else {
                 TestResult(
                     testName = "Date Format Validation",
                     passed = false,
-                    message = errors.joinToString("\n   ")
+                    message = errors.joinToString("\n   "),
                 )
             }
         } catch (e: Exception) {
             TestResult(
                 testName = "Date Format Validation",
                 passed = false,
-                message = "Error: ${e.message}"
+                message = "Error: ${e.message}",
             )
         }
     }
 
     private fun testDateRangeValidation(
         manager: RealFestivalManager,
-        jsonString: String
+        jsonString: String,
     ): TestResult {
         return try {
             val data = Json.decodeFromString<FestivalData>(jsonString)
@@ -294,20 +294,20 @@ class FestivalJsonValidationTest {
                 TestResult(
                     testName = "Date Range Boundaries",
                     passed = true,
-                    message = ""
+                    message = "",
                 )
             } else {
                 TestResult(
                     testName = "Date Range Boundaries",
                     passed = false,
-                    message = errors.joinToString("\n   ")
+                    message = errors.joinToString("\n   "),
                 )
             }
         } catch (_: Exception) {
             TestResult(
                 testName = "Date Range Boundaries",
                 passed = false,
-                message = "Error validating date ranges"
+                message = "Error validating date ranges",
             )
         }
     }
@@ -322,24 +322,24 @@ class FestivalJsonValidationTest {
 
             if (missing.isEmpty()) {
                 val total = data.confirmedDates.sumOf { it.emojiList.size } +
-                        data.variableDates.sumOf { it.emojiList.size }
+                    data.variableDates.sumOf { it.emojiList.size }
                 TestResult(
                     testName = "Emoji Validation ($total emojis)",
                     passed = true,
-                    message = ""
+                    message = "",
                 )
             } else {
                 TestResult(
                     testName = "Emoji Validation",
                     passed = false,
-                    message = "Missing emojis: ${missing.joinToString(", ")}"
+                    message = "Missing emojis: ${missing.joinToString(", ")}",
                 )
             }
         } catch (e: Exception) {
             TestResult(
                 testName = "Emoji Validation",
                 passed = false,
-                message = "Error: ${e.message}"
+                message = "Error: ${e.message}",
             )
         }
     }
@@ -359,7 +359,7 @@ class FestivalJsonValidationTest {
                         var currentDate: LocalDate = startDate
                         while (currentDate <= endDate) {
                             if (currentDate.month.number == fixed.month && currentDate.day == fixed.day) {
-                                overlaps.add("   ${currentDate}: ${fixed.type} vs ${variable.type} → Fixed wins")
+                                overlaps.add("   $currentDate: ${fixed.type} vs ${variable.type} → Fixed wins")
                                 break
                             }
                             currentDate = LocalDate.fromEpochDays(currentDate.toEpochDays() + 1)
@@ -384,7 +384,7 @@ class FestivalJsonValidationTest {
                         if (hasOverlap) {
                             val overlapStart = maxOf(start1, start2)
                             val overlapEnd = minOf(end1, end2)
-                            overlaps.add("   ${overlapStart} to ${overlapEnd}: ${var1.type} vs ${var2.type} → First wins")
+                            overlaps.add("   $overlapStart to $overlapEnd: ${var1.type} vs ${var2.type} → First wins")
                         }
                     }
                 }
@@ -394,7 +394,7 @@ class FestivalJsonValidationTest {
                 TestResult(
                     testName = "Overlap Detection",
                     passed = true,
-                    message = ""
+                    message = "",
                 )
             } else {
                 val summary = buildString {
@@ -406,14 +406,14 @@ class FestivalJsonValidationTest {
                 TestResult(
                     testName = "Overlap Detection",
                     passed = true, // Informational, not a failure
-                    message = summary
+                    message = summary,
                 )
             }
         } catch (e: Exception) {
             TestResult(
                 testName = "Overlap Detection",
                 passed = false,
-                message = "Error: ${e.message}"
+                message = "Error: ${e.message}",
             )
         }
     }
@@ -423,12 +423,12 @@ class FestivalJsonValidationTest {
     data class TestResult(
         val testName: String,
         val passed: Boolean,
-        val message: String
+        val message: String,
     )
 
     data class ValidationResult(
         val isValid: Boolean,
-        val testResults: List<TestResult>
+        val testResults: List<TestResult>,
     ) {
         fun getReport(): String {
             val passed = testResults.count { it.passed }

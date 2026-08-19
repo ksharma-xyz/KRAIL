@@ -224,4 +224,3 @@ internal object OranParkToSevenHillsFixture {
         }
     """.trimIndent()
 }
-

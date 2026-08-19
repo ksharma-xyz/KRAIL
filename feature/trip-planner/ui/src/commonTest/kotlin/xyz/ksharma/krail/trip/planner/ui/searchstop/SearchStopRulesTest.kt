@@ -58,12 +58,16 @@ class SearchStopRulesTest {
 
     @Test
     fun `pill row hidden in NoMatch state`() {
-        assertFalse(shouldShowPillRow(ListState.NoMatch, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)))
+        assertFalse(
+            shouldShowPillRow(ListState.NoMatch, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)),
+        )
     }
 
     @Test
     fun `pill row hidden in Error state`() {
-        assertFalse(shouldShowPillRow(ListState.Error, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)))
+        assertFalse(
+            shouldShowPillRow(ListState.Error, recentStops = listOf(centralRecent), stopLabels = listOf(homeSet)),
+        )
     }
 
     @Test

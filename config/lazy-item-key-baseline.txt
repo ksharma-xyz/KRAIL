@@ -1,0 +1,14 @@
+# Unkeyed lazy-list item baseline (LazyItemKeyRule)
+#
+# Grandfathered `item { }` calls in a lazy list that pass no key, so Compose identifies the slot
+# by position. The rule fails the build for any NEW one, so this list only ever shrinks.
+#
+# Each line: <path relative to repo root>|<enclosing function name>|<allowed count>
+#
+# The count is how many unkeyed `item { }` calls that function may still contain. To fix one:
+# give it a stable key (a descriptive literal for a static item, a domain id for a dynamic one),
+# then DECREMENT the count here in the SAME change — and delete the line when it reaches zero.
+# When this file is empty, delete it and the rule becomes an unconditional gate.
+
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/discover/DiscoverScreen.kt|DiscoverScreenCompact|1
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/settings/story/OurStoryScreen.kt|OurStoryScreen|3

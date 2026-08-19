@@ -104,6 +104,9 @@ exceptions:
     active: true
 
 krail:
+  # Grandfathered offenders: config/lazy-item-key-baseline.txt
+  LazyItemKeyRule:
+    active: true
   PublicImplementationClass:
     active: true
     # Interfaces backed by external/library contracts (not this repo's own module
@@ -112,6 +115,9 @@ krail:
     # :core:testing's Fake* classes are the repo's canonical shared test doubles, deliberately
     # public so other modules' test source sets can construct them directly.
     excludes: ['**/core/testing/**']
+  # Grandfathered offenders: config/screenshot-annotation-baseline.txt
+  ScreenshotPreviewAnnotation:
+    active: true
 
 naming:
   ClassNaming:

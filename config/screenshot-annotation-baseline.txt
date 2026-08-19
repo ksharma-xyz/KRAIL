@@ -1,0 +1,46 @@
+# @ScreenshotTest preview-annotation baseline (ScreenshotPreviewAnnotation)
+#
+# Grandfathered previews that carry @ScreenshotTest with a bare @Preview instead of
+# @PreviewComponent / @PreviewScreen. Their recorded baselines therefore cover one light-mode
+# phone only: no dark mode, no 2x font scale, no tablet. The rule fails the build for any NEW
+# offender, so this list only ever shrinks.
+#
+# Each line: <path relative to repo root>|<preview function name>
+#
+# To fix one: swap @Preview for @PreviewComponent (component) or @PreviewScreen (full screen),
+# re-record the screenshot baselines, and DELETE the line here in the SAME change. When this
+# file is empty, delete it and the rule becomes an unconditional gate.
+
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/CityCodeText.kt|PreviewCityCodeText
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureBoardStopCard.kt|DepartureBoardStopCardCollapsedPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureRow.kt|DepartureRowBusDelayedPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureRow.kt|DepartureRowBusEarlyPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureRow.kt|DepartureRowFerryNoPlatformPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureRow.kt|DepartureRowListMetroPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureRow.kt|DepartureRowPreviousBusDelayedPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/DepartureRow.kt|DepartureRowTrainPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ErrorMessage.kt|PreviewErrorMessage
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/LinesServedRow.kt|LinesServedRowBusOnlyPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/LinesServedRow.kt|LinesServedRowClosedPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/LinesServedRow.kt|LinesServedRowOpenPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/OriginDestination.kt|PreviewOriginDestination_OriginLabelledOnly
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ParkRideCard.kt|ParkRideCardPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ParkRideIcon.kt|ParkRideIconBusThemePreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ParkRideIcon.kt|ParkRideIconMetroThemePreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ParkRideIcon.kt|ParkRideIconPinkThemePreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ParkRideIcon.kt|ParkRideIconPurpleThemePreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ParkRideIcon.kt|ParkRideIconTrainThemePreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ScheduledTimeRow.kt|ScheduledTimeRowDelayedPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ScheduledTimeRow.kt|ScheduledTimeRowEarlyPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ScheduledTimeRow.kt|ScheduledTimeRowPastDelayedPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ScheduledTimeRow.kt|ScheduledTimeRowPastEarlyPreview
+feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/contrast/NswTransportLineContrastPreview.kt|NswTransportLineLightRailFixesPreview
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/CookieShapeBox.kt|CookiePreviewBox
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/CookieShapeBox.kt|CookiePreviewCanvas
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/CookieShapeBox.kt|CookieShapeBoxRadialGradient
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/CookieShapeBox.kt|CookieShapeBoxSweepGradient
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/Divider.kt|DividerHorizontalPreview
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/Divider.kt|DividerVerticalPreview
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/RoundIconButton.kt|PreviewRoundIconButton
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/RoundIconButton.kt|PreviewRoundIconButtonWithBadge
+taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/Text.kt|TextPreview

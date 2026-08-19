@@ -65,6 +65,7 @@ kotlin {
 
         commonTest {
             dependencies {
+                implementation(projects.core.testing)
                 implementation(libs.test.kotlin)
                 implementation(libs.test.turbine)
                 implementation(libs.test.kotlinxCoroutineTest)

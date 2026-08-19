@@ -16,7 +16,22 @@ import kotlin.time.Duration.Companion.seconds
  * Implements rate limiting for API calls using Kotlin Flows.
  * This class ensures that API calls are made at a controlled rate to avoid hitting rate limits.
  *
- * Note: This class should not be Singleton. It should be created per use-case.
+ * ## One instance per consumer
+ *
+ * [triggerEvent] is a broadcast to every flow built from this instance. Two consumers sharing
+ * one limiter therefore both fetch whenever either of them refreshes. The DI binding is a
+ * `factory` for exactly that reason — see `tripPlannerNetworkModule`.
+ *
+ * ## Trigger semantics: at most one pending trigger, delivered exactly once
+ *
+ * A trigger fired while nothing is collecting is **held** and delivered to the next collector.
+ * The screen relies on this: `onLoadTimeTable` triggers before `fetchTrip`'s collector has
+ * attached, and losing that trigger would mean the timetable never loads.
+ *
+ * `replay = 1` on the trigger channel is what holds that trigger. Once delivered, the pending
+ * trigger is **cleared** by [rateLimitFlow]. Without the clear, the same trigger re-ran for
+ * every later collection — so returning to the screen, or any code path that rebuilds the
+ * flow, fired a fetch nobody asked for on top of the one it was starting.
  */
 internal class NetworkRateLimiter : RateLimiter {
 
@@ -41,6 +56,10 @@ internal class NetworkRateLimiter : RateLimiter {
             .flatMapLatest {
                 // log(("flatmapLatest: Triggered")
                 isFirstTime.update { true } // Mark the first trigger
+                // The trigger has been served — drop it so a later collection does not
+                // replay it as a second, unrequested fetch. Only affects collectors that
+                // attach after this point; this one has already received it.
+                triggerFlow.resetReplayCache()
                 flow {
                     //   log(("Inside flow -emitting block")
                     emit(block())

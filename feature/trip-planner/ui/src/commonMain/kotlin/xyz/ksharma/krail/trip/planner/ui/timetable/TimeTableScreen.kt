@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -81,6 +82,7 @@ import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ActionData
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -140,6 +142,7 @@ fun TimeTableScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .testTag(TripPlannerTestTags.TIME_TABLE_SCREEN)
                 .statusBarsPadding()
                 .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
             contentPadding = PaddingValues(bottom = dim.spacingXL),
@@ -176,6 +179,7 @@ fun TimeTableScreen(
                         )
                         ActionButton(
                             modifier = Modifier
+                                .testTag(TripPlannerTestTags.TIME_TABLE_REVERSE)
                                 .graphicsLayer {
                                     rotationZ = rotation
                                 },
@@ -197,6 +201,7 @@ fun TimeTableScreen(
                             celebrate = celebrateSaveStar,
                             onCelebrateEnd = { celebrateSaveStar = false },
                             onClick = { onEvent(TimeTableUiEvent.SaveTripButtonClicked) },
+                            modifier = Modifier.testTag(TripPlannerTestTags.TIME_TABLE_SAVE_TRIP),
                         )
                     },
                 )
@@ -266,6 +271,8 @@ fun TimeTableScreen(
                     SubtleButton(
                         onClick = dateTimeSelectorClicked,
                         dimensions = ButtonDefaults.mediumButtonSize(),
+                        modifier = Modifier
+                            .testTag(TripPlannerTestTags.TIME_TABLE_DATE_TIME_SELECTOR),
                     ) {
                         Text(
                             text = dateTimeSelectionItem?.toDateTimeText() ?: "Plan your trip",
@@ -278,6 +285,7 @@ fun TimeTableScreen(
                             onModeClick(displayModeSelectionRow)
                         },
                         dimensions = ButtonDefaults.mediumButtonSize(),
+                        modifier = Modifier.testTag(TripPlannerTestTags.TIME_TABLE_MODE_FILTER),
                     ) {
                         Row(
                             // todo -  handle in Button
@@ -618,7 +626,10 @@ private fun LazyListScope.journeyCardItems(
                     ),
                 )
             },
-            modifier = Modifier.padding(vertical = KrailTheme.dimensions.spacingM).animateItem(),
+            modifier = Modifier
+                .testTag(TripPlannerTestTags.timeTableJourneyCard(journey.journeyId))
+                .padding(vertical = KrailTheme.dimensions.spacingM)
+                .animateItem(),
             departureDeviation = journey.departureDeviation,
             scheduledOriginTime = journey.scheduledOriginTime,
             deepLinkUrl = state.deepLinkUrls[journey.journeyId],

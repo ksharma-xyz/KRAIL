@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -53,6 +54,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.modifier.gradientBorder
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState.IntroPageType
@@ -107,6 +109,7 @@ fun IntroScreen(
     val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
+            .testTag(TripPlannerTestTags.INTRO_SCREEN)
             .fillMaxSize()
             .background(color = KrailTheme.colors.surface)
             .statusBarsPadding()
@@ -222,7 +225,9 @@ fun IntroScreen(
                         customContainerColor = animatedButtonColor,
                         customContentColor = Color.White,
                     ),
-                    modifier = Modifier.padding(horizontal = dim.spacingXXXL, vertical = dim.spacingML),
+                    modifier = Modifier
+                        .testTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
+                        .padding(horizontal = dim.spacingXXXL, vertical = dim.spacingML),
                 ) {
                     Text(
                         text = state.pages[startPage].ctaText,

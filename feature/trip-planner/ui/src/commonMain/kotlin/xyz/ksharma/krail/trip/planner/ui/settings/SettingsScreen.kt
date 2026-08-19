@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.AppLogo
 
 @Composable
@@ -59,6 +61,7 @@ fun SettingsScreen(
     val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
+            .testTag(TripPlannerTestTags.SETTINGS_SCREEN)
             .fillMaxSize()
             .background(color = KrailTheme.colors.surface),
     ) {
@@ -78,27 +81,29 @@ fun SettingsScreen(
                 modifier = Modifier,
                 contentPadding = PaddingValues(bottom = CONTENT_BOTTOM_PADDING),
             ) {
-                item {
+                item(key = "settings-change-theme") {
                     SettingsItem(
                         icon = painterResource(Res.drawable.ic_paint),
                         text = "Change Theme",
+                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_THEME),
                         onClick = {
                             onChangeThemeClick()
                         },
                     )
                 }
 
-                item {
+                item(key = "settings-invite") {
                     SettingsItem(
                         icon = painterResource(Res.drawable.ic_heart),
                         text = "Invite your friends \uD83D\uDC95",
+                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_INVITE),
                         onClick = {
                             onReferFriendClick()
                         },
                     )
                 }
 
-                item {
+                item(key = "settings-about-title") {
                     Text(
                         text = "About",
                         style = KrailTheme.typography.title,
@@ -108,18 +113,20 @@ fun SettingsScreen(
                     )
                 }
 
-                item {
+                item(key = "settings-how-to") {
                     SettingsItem(
                         icon = painterResource(Res.drawable.ic_info),
                         text = "How to KRAIL?",
+                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_HOW_TO),
                         onClick = onIntroClick,
                     )
                 }
 
-                item {
+                item(key = "settings-our-story") {
                     SettingsItem(
                         icon = painterResource(Res.drawable.ic_pen),
                         text = "Our story",
+                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_OUR_STORY),
                         onClick = { onAboutUsClick() },
                     )
                 }
@@ -129,12 +136,14 @@ fun SettingsScreen(
                         SettingsItem(
                             icon = painterResource(Res.drawable.ic_paint),
                             text = "Debug Config",
+                            modifier = Modifier
+                                .testTag(TripPlannerTestTags.SETTINGS_ITEM_DEBUG_CONFIG),
                             onClick = onDebugConfigClick,
                         )
                     }
                 }
 
-                item {
+                item(key = "settings-footer-spacer") {
                     Spacer(modifier = Modifier.fillMaxWidth().height(FOOTER_SPACER_HEIGHT))
                 }
             }

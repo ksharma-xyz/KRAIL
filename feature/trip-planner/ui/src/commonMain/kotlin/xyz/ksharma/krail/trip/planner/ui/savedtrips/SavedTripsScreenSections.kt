@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import kotlinx.collections.immutable.ImmutableList
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
@@ -40,6 +41,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
@@ -236,12 +238,14 @@ internal fun LazyItemScope.SavedTripItem(
                     } else {
                         null
                     },
-                    modifier = Modifier.longPressDraggableHandle(
-                        enabled = editing,
-                        onDragStarted = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        },
-                    ),
+                    modifier = Modifier
+                        .testTag(TripPlannerTestTags.savedTripCard(trip.tripId))
+                        .longPressDraggableHandle(
+                            enabled = editing,
+                            onDragStarted = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                        ),
                 )
 
                 if (editing) {
@@ -272,7 +276,9 @@ internal fun SavedTripsTitleBarActions(
             onClick = onDoneClick,
             colors = ButtonDefaults.monochromeButtonColors(),
             dimensions = ButtonDefaults.chipButtonSize(),
-            modifier = Modifier.padding(horizontal = dim.spacingM),
+            modifier = Modifier
+                .testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DONE)
+                .padding(horizontal = dim.spacingM),
         ) {
             Text(text = "Done")
         }
@@ -281,6 +287,7 @@ internal fun SavedTripsTitleBarActions(
             RoundIconButton(
                 showBadge = displayDiscoverBadge,
                 onClick = onDiscoverButtonClick,
+                modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DISCOVER),
             ) {
                 CityCodeText("SYD")
             }
@@ -288,6 +295,7 @@ internal fun SavedTripsTitleBarActions(
 
         RoundIconButton(
             onClick = onSettingsButtonClick,
+            modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS),
         ) {
             Image(
                 painter = painterResource(Res.drawable.ic_settings),

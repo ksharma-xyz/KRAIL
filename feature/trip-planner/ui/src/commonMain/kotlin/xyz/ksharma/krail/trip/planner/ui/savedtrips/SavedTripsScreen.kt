@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
@@ -81,6 +82,7 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
@@ -159,7 +161,7 @@ fun SavedTripsScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_SCREEN).fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -208,6 +210,7 @@ fun SavedTripsScreen(
 
                     LazyColumn(
                         state = lazyListState,
+                        modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
                         contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
                     ) {
                         savedTripsListBody(

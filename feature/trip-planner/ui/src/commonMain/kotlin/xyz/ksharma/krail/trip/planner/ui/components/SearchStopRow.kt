@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
@@ -65,6 +66,7 @@ import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -131,7 +133,7 @@ fun SearchStopRow(
                     ) + fadeOut(animationSpec = tween(250))
             }
         },
-        modifier = modifier,
+        modifier = modifier.testTag(TripPlannerTestTags.SEARCH_ROW),
         contentAlignment = Alignment.BottomCenter,
         label = "SearchStopRowContent",
     ) { expanded ->
@@ -215,10 +217,12 @@ private fun CollapsedPill(
         Button(
             dimensions = ButtonDefaults.mediumButtonSize(),
             onClick = onClick,
-            modifier = Modifier.graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
-            },
+            modifier = Modifier
+                .testTag(TripPlannerTestTags.SEARCH_ROW_COLLAPSED_PILL)
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                },
         ) {
             Text(
                 text = "Plan a trip",
@@ -375,15 +379,17 @@ private fun FromToFields(
     ) {
         TextFieldButton(
             onClick = fromButtonClick,
-            modifier = if (isFromHighlighted) {
-                Modifier.border(
-                    width = dim.strokeRegular,
-                    color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
-                    shape = RoundedCornerShape(50),
-                )
-            } else {
-                Modifier
-            },
+            modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_FROM).then(
+                if (isFromHighlighted) {
+                    Modifier.border(
+                        width = dim.strokeRegular,
+                        color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
+                        shape = RoundedCornerShape(50),
+                    )
+                } else {
+                    Modifier
+                },
+            ),
         ) {
             StopFieldText(
                 text = fromStopItem?.stopName ?: "Starting from",
@@ -401,7 +407,10 @@ private fun FromToFields(
     }
 
     // To field — always visible when expanded
-    TextFieldButton(onClick = toButtonClick) {
+    TextFieldButton(
+        onClick = toButtonClick,
+        modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_TO),
+    ) {
         StopFieldText(
             text = toStopItem?.stopName ?: "Destination",
             isActive = toStopItem != null,
@@ -464,6 +473,7 @@ private fun AiSheetEntryButton(
             )
         },
         onClick = { onAiEvent(AiSearchInputEvent.OpenInput) },
+        modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL),
     )
 }
 
@@ -481,6 +491,7 @@ private fun SearchButton(onSearchButtonClick: () -> Unit) {
             )
         },
         onClick = onSearchButtonClick,
+        modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_SEARCH),
     )
 }
 

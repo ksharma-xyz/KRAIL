@@ -12,6 +12,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -48,6 +49,7 @@ fun DebugConfigScreen(
 ) {
     Box(
         modifier = modifier
+            .testTag(DebugSettingsTestTags.DEBUG_CONFIG_SCREEN)
             .fillMaxSize()
             .background(color = KrailTheme.colors.surface),
     ) {
@@ -58,7 +60,11 @@ fun DebugConfigScreen(
                 title = { Text(text = "Debug Config") },
             )
 
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(DebugSettingsTestTags.DEBUG_CONFIG_LIST),
+            ) {
                 item(key = "header") {
                     DebugConfigHeader()
                 }
@@ -67,6 +73,8 @@ fun DebugConfigScreen(
                         title = "Network",
                         subtitle = "Pick where BFF-eligible calls are routed.",
                         onClick = onNetworkClick,
+                        modifier = Modifier
+                            .testTag(DebugSettingsTestTags.DEBUG_CONFIG_TILE_NETWORK),
                     )
                 }
                 item(key = "tile-trip-tracking") {
@@ -75,6 +83,8 @@ fun DebugConfigScreen(
                         subtitle = "Override TRIP_TRACKING_ENABLED RC flag.",
                         checked = tripTrackingEnabled,
                         onCheckedChange = onTripTrackingToggle,
+                        modifier = Modifier
+                            .testTag(DebugSettingsTestTags.toggleTile("TRIP_TRACKING_ENABLED")),
                     )
                 }
                 item(key = "tile-address-search") {
@@ -83,6 +93,10 @@ fun DebugConfigScreen(
                         subtitle = "Override SEARCH_STOP_ADDRESS_SEARCH_ENABLED RC flag.",
                         checked = addressSearchEnabled,
                         onCheckedChange = onAddressSearchToggle,
+                        modifier = Modifier.testTag(
+                            DebugSettingsTestTags
+                                .toggleTile("SEARCH_STOP_ADDRESS_SEARCH_ENABLED"),
+                        ),
                     )
                 }
                 item(key = "tile-alert-summary") {
@@ -93,6 +107,8 @@ fun DebugConfigScreen(
                         onCheckedChange = onAlertSummaryToggle,
                         enabled = onDeviceAiAvailable,
                         disabledReason = "On-device AI isn't available on this device.",
+                        modifier = Modifier
+                            .testTag(DebugSettingsTestTags.toggleTile("ALERT_SUMMARY_ENABLED")),
                     )
                 }
                 item(key = "tile-ai-search-input") {
@@ -103,6 +119,8 @@ fun DebugConfigScreen(
                         onCheckedChange = onAiSearchInputToggle,
                         enabled = onDeviceAiAvailable,
                         disabledReason = "On-device AI isn't available on this device.",
+                        modifier = Modifier
+                            .testTag(DebugSettingsTestTags.toggleTile("AI_SEARCH_INPUT_ENABLED")),
                     )
                 }
                 item(key = "tile-reset-review") {
@@ -110,6 +128,8 @@ fun DebugConfigScreen(
                         title = "Reset in-app review",
                         subtitle = "Clear the 'already asked' count so it can fire again. Keeps the install date.",
                         onClick = onResetReviewClick,
+                        modifier = Modifier
+                            .testTag(DebugSettingsTestTags.DEBUG_CONFIG_TILE_RESET_REVIEW),
                     )
                 }
             }

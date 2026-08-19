@@ -3,6 +3,7 @@ package xyz.ksharma.krail
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Modifier
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.request.crossfade
@@ -26,7 +27,7 @@ fun KrailApp() {
         SetupCoilImageLoader()
 
         KrailTheme(themeController = themeController) {
-            KrailNavHost()
+            KrailNavHost(modifier = Modifier.exposeTestTagsToUiAutomation())
         }
     }
 }

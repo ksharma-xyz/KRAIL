@@ -198,6 +198,17 @@ Node found: Node #108 ... Role = 'Button'  Text = '[Central Station]'
 4. **Dialog-open recreation** — rotate with the Ask KRAIL surface open at each phase (idle,
    listening stopped, unresolved-with-banner) and assert the phase-appropriate content.
 
+## Coverage gaps found while building this
+
+- **`RealStopResultsManager` has no unit tests.** `RealStopResultsManagerTest` existed but every
+  test in it was commented out behind a `TODO Write UTs separately`, so the file asserted nothing
+  while reading as coverage; it has been deleted (git history holds the parked tests). The class
+  is the whole stop-search pipeline — exact match, trigram prefilter, fuzzy rank,
+  `prioritiseStops` — and it is exercised today only indirectly, by `StopSearchPipelineReproTest`
+  end to end and by `FuzzyStopRankerTest` on the ranker alone. Neither pins the manager's own
+  behaviour: flag handling, local-versus-remote source choice, or recent-search bookkeeping.
+  Real unit tests need writing.
+
 ## Deferred
 
 - **`ActivityScenario.recreate()` for a full Bundle round trip.** `createComposeRule()` owns

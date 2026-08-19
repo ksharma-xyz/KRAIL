@@ -52,6 +52,15 @@ complexity:
     ignoreDefaultParameters: false
     ignoreDataClasses: true
     ignoreAnnotated: ['Composable']
+    # Test fixture builders take one named parameter per field of the thing they build, with a
+    # default on every field a given test does not care about. That is the readable form on
+    # purpose: a parameter object would move the noise to every call site and hide which fields
+    # the test is actually pinning.
+    excludes:
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
   MethodOverloading:
     active: true
   TooManyFunctions:
@@ -265,6 +274,8 @@ style:
     active: true
   MaxLineLength:
     active: true
+    # Kept in step with formatting: MaximumLineLength, which is the same rule as implemented by
+    # ktlint. Change both exclude lists together.
     excludes:
       - '**/test/**'
       - '**/*Test.kt'
@@ -427,6 +438,17 @@ formatting:
     indentSize: 4
   MaximumLineLength:
     active: true
+    # Kept in step with style: MaxLineLength — the same rule in two implementations, this one
+    # ktlint's. Exempting only one of them leaves the other enforcing what the repo has decided
+    # not to enforce, so the two exclude lists change together or not at all.
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Spec.kt'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
     maxLineLength: 120
     ignoreBackTickedIdentifier: false
   ModifierListSpacing:

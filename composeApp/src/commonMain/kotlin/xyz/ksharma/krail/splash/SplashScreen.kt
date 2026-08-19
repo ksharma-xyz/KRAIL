@@ -42,6 +42,8 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.metro_theme
+import xyz.ksharma.krail.taj.theme.train_theme
 
 @Composable
 fun SplashScreen(
@@ -198,7 +200,7 @@ private fun AnimatedLetter(
 @Composable
 private fun PreviewLogo() {
     PreviewTheme {
-        AnimatedKrailLogo(logoColor = Color(0xFFF6891F))
+        AnimatedKrailLogo(logoColor = train_theme)
     }
 }
 
@@ -210,7 +212,7 @@ private fun PreviewSplashScreen() {
             splashState = SplashState(),
             onSplashAnimationComplete = {},
             logoColor = KrailTheme.colors.onSurface,
-            backgroundColor = Color(0xFF009B77),
+            backgroundColor = metro_theme,
         )
     }
 }

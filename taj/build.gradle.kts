@@ -63,6 +63,13 @@ kotlin {
         // declaration is kept explicit so the host-test sources are unambiguous.
         getByName("androidHostTest") {
             kotlin.srcDir("src/androidHostTest/kotlin")
+
+            dependencies {
+                // KrailColorsParityTest walks KrailColors' constructor parameters and properties
+                // to catch a defaulted field or a light/dark colour that was never differentiated.
+                // Common code has no kotlin.reflect, which is why that test is JVM-only.
+                implementation(kotlin("reflect"))
+            }
         }
 
         androidMain.dependencies {

@@ -265,7 +265,7 @@ private fun TrackedLegViewPreview() {
             leg = TrackedLeg.Transport(
                 transportMode = TransportMode.Train,
                 lineName = "T1",
-                lineColorCode = "#F6891F",
+                lineColorCode = TransportMode.Train.colorCode,
                 headsign = "City via Strathfield",
                 stops = persistentListOf(
                     TrackedStop(
@@ -323,7 +323,7 @@ private fun TrackedStopRowPreview() {
                 stopName = "Granville Station",
                 isPast = false,
                 isApproaching = true,
-                lineColor = Color(0xFFF6891F),
+                lineColor = TransportMode.Train.colorCode.hexToComposeColor(),
                 approachingTimeText = "in 2m 5s",
             )
 
@@ -333,7 +333,7 @@ private fun TrackedStopRowPreview() {
                 stopName = "Parramatta Station",
                 isPast = true,
                 isApproaching = false,
-                lineColor = Color(0xFFF6891F),
+                lineColor = TransportMode.Train.colorCode.hexToComposeColor(),
             )
         }
     }

@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.taj
 
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.TEXT_CONTRAST_AA
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.contrastRatio
 import xyz.ksharma.krail.taj.theme.getForegroundColor
@@ -25,8 +26,8 @@ class ThemeContrastTest {
             val ratio = foreground.contrastRatio(background)
 
             assertTrue(
-                ratio >= WCAG_AA_NORMAL_TEXT,
-                "${style.name}: contrast $ratio is below WCAG AA ($WCAG_AA_NORMAL_TEXT)",
+                ratio >= TEXT_CONTRAST_AA,
+                "${style.name}: contrast $ratio is below WCAG AA ($TEXT_CONTRAST_AA)",
             )
         }
     }
@@ -45,13 +46,9 @@ class ThemeContrastTest {
             )
 
             assertTrue(
-                resolved.contrastRatio(background) >= WCAG_AA_NORMAL_TEXT,
+                resolved.contrastRatio(background) >= TEXT_CONTRAST_AA,
                 "${style.name}: resolved glyph colour is below WCAG AA",
             )
         }
-    }
-
-    private companion object {
-        const val WCAG_AA_NORMAL_TEXT = 4.5f
     }
 }

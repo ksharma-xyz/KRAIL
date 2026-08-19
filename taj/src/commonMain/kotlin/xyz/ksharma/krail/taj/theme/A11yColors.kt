@@ -8,9 +8,6 @@ import xyz.ksharma.krail.taj.darken
 // https://www.w3.org/TR/WCAG21/#contrast-minimum
 internal const val DEFAULT_TEXT_SIZE_CONTRAST_AA = 4.5f
 
-// when font scale greater than 1.2f. Text size is 18dp default and 14dp bold.
-private const val LARGE_TEXT_SIZE_CONTRAST_AA = 3.0f
-
 private const val MAX_CONTRAST_ITERATIONS = 20
 private const val CONTRAST_STEP = 0.05f
 private const val BACKGROUND_LUMINANCE_MIDPOINT = 0.5f

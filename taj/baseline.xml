@@ -181,6 +181,5 @@
     <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Disabled - Light") @Composable private fun TextFieldDisabledPreviewLight()</ID>
     <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Enabled - Dark") @Composable private fun TextFieldEnabledPreviewDark()</ID>
     <ID>UnusedPrivateMember:TextField.kt$@Preview(name = "Text Field Enabled - Light") @Composable private fun TextFieldEnabledPreviewLight()</ID>
-    <ID>UnusedPrivateProperty:A11yColors.kt$// when font scale greater than 1.2f. Text size is 18dp default and 14dp bold. private const val LARGE_TEXT_SIZE_CONTRAST_AA = 3.0f</ID>
   </CurrentIssues>
 </SmellBaseline>

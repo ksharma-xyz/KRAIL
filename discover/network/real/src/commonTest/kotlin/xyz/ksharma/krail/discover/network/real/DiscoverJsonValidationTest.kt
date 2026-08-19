@@ -24,6 +24,82 @@ class DiscoverJsonValidationTest {
 
     private lateinit var fakeFlag: FakeFlag
 
+    // ========== Sample JSON for Testing ==========
+    //
+    // One sample every validation test below runs against, so they cannot disagree about what
+    // valid input looks like. It covers: all four card types (Sports, Events, Food, Travel);
+    // every button combination (CTA plus Share, PartnerSocial plus Share, CTA alone); cards
+    // with and without dates; multiple images; special characters in descriptions; future
+    // dates.
+
+    private val sampleDiscoverJson = """
+    [
+       {
+        "cardId": "card_aus_ind_t20i_men_2025",
+        "title": "Australia v India T20Is 2025 – Men",
+        "description": "Blockbuster T20I series as Australia Men take on India across Australia.",
+        "imageList": [
+          "https://resources.cricket-australia.pulselive.com/photo-resources/2025/07/31/19e70be6-c0e3-4175-bce9-21fa72bd7f8e/Group-6.png?width=700&height=396"
+        ],
+        "type": "Sports",
+        "startDate": "2025-10-29",
+        "endDate": "2025-11-08",
+        "buttons": [
+          {
+            "buttonType": "Cta",
+            "label": "Buy Tickets",
+            "url": "https://www.cricket.com.au/tickets/series/CA:3123?"
+          },
+          {
+            "buttonType": "Share"
+          }
+        ]
+      },
+      {
+        "cardId": "card_aus_ind_odi_women_2026",
+        "title": "Australia v India ODIs – Women",
+        "description": "Australia Women face India in a high‑stakes ODI series in Brisbane, Hobart and Melbourne.",
+        "imageList": [
+          "https://resources.cricket-australia.pulselive.com/photo-resources/2025/05/30/ada1bb2e-c200-415e-8fc1-69a3eb6f7b8a/Group-8.png?width=700&height=396"
+        ],
+        "type": "Sports",
+        "startDate": "2026-02-24",
+        "endDate": "2026-03-01",
+        "buttons": [
+          {
+            "buttonType": "Cta",
+            "label": "Buy Tickets",
+            "url": "https://www.cricket.com.au/tickets/series/CA:3125?"
+          },
+          {
+            "buttonType": "Share"
+          }
+        ]
+      },
+      {
+        "cardId": "card_aus_ind_t20i_women_2026",
+        "title": "Australia v India T20Is – Women",
+        "description": "Don’t miss Australia Women vs India in a thrilling T20I series in Sydney, Canberra and Adelaide",
+        "imageList": [
+          "https://resources.cricket-australia.pulselive.com/photo-resources/2025/05/30/ada1bb2e-c200-415e-8fc1-69a3eb6f7b8a/Group-8.png?width=700&height=396"
+        ],
+        "type": "Sports",
+        "startDate": "2026-02-15",
+        "endDate": "2026-02-21",
+        "buttons": [
+          {
+            "buttonType": "Cta",
+            "label": "Buy Tickets",
+            "url": "https://www.cricket.com.au/tickets/series/CA:3124?"
+          },
+          {
+            "buttonType": "Share"
+          }
+        ]
+      }
+    ]
+    """.trimIndent()
+
     @BeforeTest
     fun setup() {
         fakeFlag = FakeFlag()
@@ -448,82 +524,6 @@ class DiscoverJsonValidationTest {
             return flagValues[key] ?: FlagValue.BooleanValue(false)
         }
     }
-
-    // ========== Sample JSON for Testing ==========
-    //
-    // One sample every validation test below runs against, so they cannot disagree about what
-    // valid input looks like. It covers: all four card types (Sports, Events, Food, Travel);
-    // every button combination (CTA plus Share, PartnerSocial plus Share, CTA alone); cards
-    // with and without dates; multiple images; special characters in descriptions; future
-    // dates.
-
-    private val sampleDiscoverJson = """
-    [
-       {
-        "cardId": "card_aus_ind_t20i_men_2025",
-        "title": "Australia v India T20Is 2025 – Men",
-        "description": "Blockbuster T20I series as Australia Men take on India across Australia.",
-        "imageList": [
-          "https://resources.cricket-australia.pulselive.com/photo-resources/2025/07/31/19e70be6-c0e3-4175-bce9-21fa72bd7f8e/Group-6.png?width=700&height=396"
-        ],
-        "type": "Sports",
-        "startDate": "2025-10-29",
-        "endDate": "2025-11-08",
-        "buttons": [
-          {
-            "buttonType": "Cta",
-            "label": "Buy Tickets",
-            "url": "https://www.cricket.com.au/tickets/series/CA:3123?"
-          },
-          {
-            "buttonType": "Share"
-          }
-        ]
-      },
-      {
-        "cardId": "card_aus_ind_odi_women_2026",
-        "title": "Australia v India ODIs – Women",
-        "description": "Australia Women face India in a high‑stakes ODI series in Brisbane, Hobart and Melbourne.",
-        "imageList": [
-          "https://resources.cricket-australia.pulselive.com/photo-resources/2025/05/30/ada1bb2e-c200-415e-8fc1-69a3eb6f7b8a/Group-8.png?width=700&height=396"
-        ],
-        "type": "Sports",
-        "startDate": "2026-02-24",
-        "endDate": "2026-03-01",
-        "buttons": [
-          {
-            "buttonType": "Cta",
-            "label": "Buy Tickets",
-            "url": "https://www.cricket.com.au/tickets/series/CA:3125?"
-          },
-          {
-            "buttonType": "Share"
-          }
-        ]
-      },
-      {
-        "cardId": "card_aus_ind_t20i_women_2026",
-        "title": "Australia v India T20Is – Women",
-        "description": "Don’t miss Australia Women vs India in a thrilling T20I series in Sydney, Canberra and Adelaide",
-        "imageList": [
-          "https://resources.cricket-australia.pulselive.com/photo-resources/2025/05/30/ada1bb2e-c200-415e-8fc1-69a3eb6f7b8a/Group-8.png?width=700&height=396"
-        ],
-        "type": "Sports",
-        "startDate": "2026-02-15",
-        "endDate": "2026-02-21",
-        "buttons": [
-          {
-            "buttonType": "Cta",
-            "label": "Buy Tickets",
-            "url": "https://www.cricket.com.au/tickets/series/CA:3124?"
-          },
-          {
-            "buttonType": "Share"
-          }
-        ]
-      }
-    ]
-    """.trimIndent()
 }
 
 /**

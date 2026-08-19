@@ -75,6 +75,13 @@ class TimeTableViewModelTest {
 
     private val fakeFlag = FakeFlag()
 
+    private val promptTrip = Trip(
+        fromStopId = "FROM_STOP_ID_1",
+        fromStopName = "STOP_NAME_1",
+        toStopId = "TO_STOP_ID_1",
+        toStopName = "STOP_NAME_2",
+    )
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -2288,13 +2295,6 @@ class TimeTableViewModelTest {
     // region Save-trip prompt (story A2) — one-tap save nudge after loading an
     // unsaved pair. Frequency rules: once per app session, never for saved
     // pairs, gone forever after MAX_SAVE_TRIP_PROMPT_DISMISSALS dismissals.
-
-    private val promptTrip = Trip(
-        fromStopId = "FROM_STOP_ID_1",
-        fromStopName = "STOP_NAME_1",
-        toStopId = "TO_STOP_ID_1",
-        toStopName = "STOP_NAME_2",
-    )
 
     private fun loadPromptTrip() {
         tripPlanningService.isSuccess = true

@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
@@ -42,6 +43,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapToggleButton
 
 /**
@@ -109,7 +111,8 @@ fun SearchTopBar(
             initialText = initialText.ifEmpty { null },
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(focusRequester),
+                .focusRequester(focusRequester)
+                .testTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD),
             maxLength = 30,
             filter = { input ->
                 input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' }
@@ -118,6 +121,7 @@ fun SearchTopBar(
                 NavActionButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
                     iconContentDescription = "Back",
+                    modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_STOP_BACK),
                     onClick = {
                         keyboard?.hide()
                         focusRequester.freeFocus()

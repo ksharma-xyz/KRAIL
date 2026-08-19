@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -81,6 +82,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.AddressSearchListItem
 import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -670,7 +672,9 @@ private fun SearchStopListContent(
             // the LazyColumn so the loading state doesn't claim a chunk of vertical space.
             Box(modifier = modifier) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST),
                     contentPadding = PaddingValues(
                         top = KrailTheme.dimensions.spacingNone,
                         bottom = KrailTheme.dimensions.spacingXXXXL,
@@ -748,7 +752,9 @@ private fun SearchStopListContent(
         is ListState.Results -> {
             Box(modifier = modifier) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(TripPlannerTestTags.SEARCH_STOP_RESULTS_LIST),
                     contentPadding = PaddingValues(
                         top = KrailTheme.dimensions.spacingNone,
                         bottom = KrailTheme.dimensions.spacingXXXXL,
@@ -923,7 +929,9 @@ private fun LazyListScope.searchResultsList(
                     },
                     onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
                     onNewLabelClick = { onNewLabelClick(stopItem, result.transportModeType) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TripPlannerTestTags.searchStopResult(result.stopId)),
                 )
                 Divider(
                     modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
@@ -1138,7 +1146,9 @@ private fun LazyListScope.recentSearchStopsList(
                     },
                     onLabelPillClick = { label -> onLabelPillClick(stopItem, label) },
                     onNewLabelClick = { onNewLabelClick(stopItem, stop.transportModeType) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TripPlannerTestTags.searchStopResult(stop.stopId)),
                 )
             }
         }

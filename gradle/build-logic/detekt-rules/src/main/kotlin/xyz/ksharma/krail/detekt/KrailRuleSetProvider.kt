@@ -11,7 +11,9 @@ class KrailRuleSetProvider : RuleSetProvider {
     override fun instance(config: Config): RuleSet = RuleSet(
         ruleSetId,
         listOf(
+            LazyItemKeyRule(config),
             PublicImplementationClass(config),
+            ScreenshotPreviewAnnotation(config),
         ),
     )
 }

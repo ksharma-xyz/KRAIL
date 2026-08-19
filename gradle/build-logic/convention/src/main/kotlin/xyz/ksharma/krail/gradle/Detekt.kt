@@ -4,6 +4,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Project
+import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 fun Project.configureDetekt() {
@@ -44,10 +45,22 @@ fun Project.configureDetekt() {
         )
     }
 
+    // The custom krail rules read shrinking ratchet baselines (config/*-baseline.txt) directly
+    // from disk, because a detekt rule is given no project metadata to find them through. They
+    // are not part of detekt's own config, so Gradle has to be told they are task inputs —
+    // otherwise deleting an entry leaves every detekt task UP-TO-DATE and the violation that
+    // just stopped being grandfathered goes unreported until something else edits that module.
+    val ratchetBaselines = rootProject.fileTree(
+        mapOf("dir" to "config", "include" to "*-baseline.txt"),
+    )
+
     tasks.withType(Detekt::class.java).configureEach {
         reports.html.required.set(true)
         reports.md.required.set(true)
         jvmTarget = JvmTarget.JVM_21.target
+        inputs.files(ratchetBaselines)
+            .withPropertyName("krailRatchetBaselines")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
     }
     tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
         jvmTarget = JvmTarget.JVM_21.target

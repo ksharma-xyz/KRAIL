@@ -23,7 +23,6 @@
 core/analytics/src/commonMain/kotlin/xyz/ksharma/krail/core/analytics/event/AnalyticsEvent.kt|1
 core/date-time/src/commonMain/kotlin/xyz/ksharma/krail/core/datetime/DateTimePickerInfo.kt|2
 discover/network/real/src/commonMain/kotlin/xyz/ksharma/krail/discover/network/real/db/RealDiscoverCardOrderingEngine.kt|1
-feature/departures/ui/src/commonMain/kotlin/xyz/ksharma/krail/departures/ui/DepartureBoardRepository.kt|3
 feature/departures/ui/src/commonMain/kotlin/xyz/ksharma/krail/departures/ui/DeparturesViewModel.kt|1
 feature/track/network/src/commonMain/kotlin/xyz/ksharma/krail/feature/track/network/RealGtfsRealtimeRepository.kt|1
 feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/components/ai/AiGreeting.kt|1

@@ -10,9 +10,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 /**
  * The single shared coroutine/scheduler harness for the entire KRAIL test suite.
@@ -76,9 +74,7 @@ class KrailTestScope internal constructor(
      * The epoch offset is a fixed instant so a test never depends on the day it runs.
      */
     @OptIn(ExperimentalTime::class)
-    val clock: Clock = object : Clock {
-        override fun now(): Instant = VIRTUAL_EPOCH + scheduler.currentTime.milliseconds
-    }
+    val clock: Clock = virtualClock(scheduler)
 
     /**
      * Drain all coroutines whose dispatch time is the *current* virtual instant.
@@ -108,11 +104,5 @@ class KrailTestScope internal constructor(
     fun pumpOnce(intervalMs: Long) {
         scheduler.advanceTimeBy(intervalMs)
         scheduler.runCurrent()
-    }
-
-    companion object {
-        /** Virtual time zero, as a wall-clock instant. A Thursday, midday UTC. */
-        @OptIn(ExperimentalTime::class)
-        val VIRTUAL_EPOCH: Instant = Instant.parse("2026-04-09T12:00:00Z")
     }
 }

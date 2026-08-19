@@ -161,6 +161,14 @@ internal class TripPoller(
     val isLivePositionPollingActive: Boolean
         get() = livePositionJob?.isActive == true
 
+    /**
+     * Consecutive times the GTFS-RT loop has woken to find the trip API has still not
+     * produced a journey display. Reset to zero the moment one arrives. Exposed so a test
+     * can assert the retry schedule is bounded rather than inferring it from timing.
+     */
+    var displayWaitAttempts: Int = 0
+        private set
+
     /** True when [TrackingConfig.DEPARTURE_EXPIRED_HOURS] have elapsed since the scheduled departure. */
     fun isTripExpired(deepLink: TripDeepLink): Boolean {
         val depInstant = runCatching { Instant.parse(deepLink.departureUtcDateTime) }.getOrNull()
@@ -285,12 +293,24 @@ internal class TripPoller(
                 }
                 val display = tracked.display
                 if (display == null) {
-                    // Trip API hasn't returned yet — retry quickly so the first GTFS-RT poll
-                    // fires immediately after trip data lands rather than waiting a full 30s cycle.
-                    log("[LIVETRACK] tracked.display=null (trip API not yet returned), retrying in 2s")
-                    delay(GTFS_RT_RETRY_DELAY_MS)
+                    if (displayWaitAttempts >= MAX_DISPLAY_WAIT_ATTEMPTS) {
+                        log(
+                            "[LIVETRACK] no display after $MAX_DISPLAY_WAIT_ATTEMPTS attempts — " +
+                                "giving up on live positions; re-subscribing restarts the loop",
+                        )
+                        break
+                    }
+                    // The first retry stays fast on purpose: in the normal case the trip API
+                    // returns within a second or two, and live positions should appear then
+                    // rather than after a full 30s cycle. Each further wait doubles, because a
+                    // display that has not arrived by now is not one second away.
+                    val waitMs = displayWaitRetryDelayMs(displayWaitAttempts)
+                    displayWaitAttempts++
+                    log("[LIVETRACK] tracked.display=null (trip API not yet returned), retrying in ${waitMs}ms")
+                    delay(waitMs)
                     continue
                 }
+                displayWaitAttempts = 0
                 val transportLegCount = display.legs.filterIsInstance<TrackedLeg.Transport>().size
                 log("[LIVETRACK] pollLivePositions — legs=${display.legs.size}, transport legs=$transportLegCount")
                 pollLivePositions(display)
@@ -558,5 +578,27 @@ internal class TripPoller(
         private const val LABEL_DEPARTING_IN = "Departing in"
         private const val GTFS_RT_RETRY_DELAY_MS = 2_000L
         private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
+
+        // Doubling past this point is pointless — the delay is already at the ceiling.
+        private const val MAX_BACKOFF_SHIFT = 4
+
+        // Attempts to wait for a journey display before giving up. With the backoff schedule
+        // that is a little over two minutes. A display still missing by then means the trip
+        // API is failing or the journey was never matched, and neither is fixed by waiting.
+        // Re-subscribing to liveOverlay (re-opening the map panel) starts a fresh loop.
+        private const val MAX_DISPLAY_WAIT_ATTEMPTS = 8
+
+        /**
+         * Wait before the [attempt]-th retry for a journey display, in milliseconds.
+         *
+         * `2s, 4s, 8s, 16s, 30s, 30s, …` — doubling from the fast first retry up to the same
+         * ceiling as a normal GTFS-RT poll. A fixed 2 s retry costs thirty wakeups a minute
+         * for as long as the map panel is open, and every one of them is wasted if the trip
+         * API is not going to answer.
+         */
+        internal fun displayWaitRetryDelayMs(attempt: Int): Long {
+            val doubled = GTFS_RT_RETRY_DELAY_MS shl attempt.coerceAtMost(MAX_BACKOFF_SHIFT)
+            return doubled.coerceAtMost(TrackingConfig.GTFS_RT_POLL_INTERVAL_MS)
+        }
     }
 }

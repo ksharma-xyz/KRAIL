@@ -254,6 +254,81 @@ class TripPollerTest {
         assertIs<TrackTripState.Tracking>(state.value)
     }
 
+    // region GTFS-RT retry while the trip API has produced nothing
+
+    /**
+     * The live-positions loop cannot start until the trip API has produced a journey display.
+     * It waits for one on a fast retry, which is right for the normal case — the display lands
+     * within a second or two and live positions appear immediately rather than after a full
+     * 30 s cycle. When the display never lands (the trip API is failing, or the journey was
+     * not matched), that same fast retry became a fixed 2 s spin for as long as the map panel
+     * stayed open: thirty wakeups a minute, forever, achieving nothing.
+     */
+    @Test
+    fun `GIVEN the trip API never returns a display WHEN a minute passes THEN retries back off`() = runTest {
+        val deepLink = makeDeepLink(departureUtcDateTime = futureIso(30.minutes))
+        val trackingManager = TrackingManager().apply { start(deepLink) }
+        val poller = makePoller(trackingManager = trackingManager)
+
+        poller.startLivePositionPolling()
+        runCurrent()
+
+        testScheduler.advanceTimeBy(ALMOST_A_MINUTE_MS)
+        runCurrent()
+
+        // 2s, 4s, 8s, 16s, then capped at 30s: attempts at t = 0, 2, 6, 14, 30.
+        assertEquals(
+            EXPECTED_ATTEMPTS_IN_A_MINUTE,
+            poller.displayWaitAttempts,
+            "the wait for a display must back off, not spin at a fixed 2s",
+        )
+
+        poller.stopLivePositionPolling()
+    }
+
+    @Test
+    fun `GIVEN no display ever arrives WHEN the attempt cap is reached THEN the loop stops`() = runTest {
+        val deepLink = makeDeepLink(departureUtcDateTime = futureIso(30.minutes))
+        val trackingManager = TrackingManager().apply { start(deepLink) }
+        val poller = makePoller(trackingManager = trackingManager)
+
+        poller.startLivePositionPolling()
+        runCurrent()
+
+        testScheduler.advanceTimeBy(WELL_PAST_THE_CAP_MS)
+        runCurrent()
+
+        assertFalse(
+            poller.isLivePositionPollingActive,
+            "waiting forever for a display that is not coming is not a live map — give up",
+        )
+
+        poller.stopLivePositionPolling()
+    }
+
+    @Test
+    fun `GIVEN the display arrives WHEN the loop wakes THEN the wait counter resets`() = runTest {
+        val deepLink = makeDeepLink(departureUtcDateTime = futureIso(30.minutes))
+        val trackingManager = TrackingManager().apply { start(deepLink) }
+        val poller = makePoller(trackingManager = trackingManager)
+
+        poller.startLivePositionPolling()
+        runCurrent()
+        testScheduler.advanceTimeBy(TWO_RETRIES_MS)
+        runCurrent()
+        assertTrue(poller.displayWaitAttempts > 0, "the loop should be waiting for a display")
+
+        trackingManager.update(makeDisplay(deepLink, arrivalUtcDateTime = futureIso(1.hours)))
+        testScheduler.advanceTimeBy(TWO_RETRIES_MS)
+        runCurrent()
+
+        assertEquals(0, poller.displayWaitAttempts, "a display that lands resets the backoff")
+
+        poller.stopLivePositionPolling()
+    }
+
+    // endregion
+
     // region helpers
 
     private fun TestScope.makePoller(
@@ -347,6 +422,15 @@ class TripPollerTest {
 
     companion object {
         private const val SECONDS_PER_HALF_HOUR = 1800L
+
+        // Stops just short of the 60 s boundary so the assertion is not on a tie.
+        private const val ALMOST_A_MINUTE_MS = 59_000L
+
+        // Attempts at t = 0, 2 s, 6 s, 14 s, 30 s — the 2/4/8/16/30 backoff.
+        private const val EXPECTED_ATTEMPTS_IN_A_MINUTE = 5
+
+        private const val WELL_PAST_THE_CAP_MS = 10 * 60_000L
+        private const val TWO_RETRIES_MS = 7_000L
     }
 }
 

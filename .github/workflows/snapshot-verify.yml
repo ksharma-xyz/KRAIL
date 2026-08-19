@@ -1,0 +1,120 @@
+name: Snapshot Verify
+
+# Compares every Roborazzi golden against a fresh render. Without this job
+# `verifyRoborazziAndroidHostTest` ran nowhere: `testAndroidHostTest` alone captures in
+# Roborazzi's default mode, which silently (re)records a missing or changed golden and
+# still reports the test as passing. A pixel change could therefore ship with no signal —
+# and nineteen `:taj` goldens had already drifted by the time this job was written.
+#
+# Two modules own goldens: `:taj` and `:feature:trip-planner:ui`. They are separate steps
+# because only the first is reproducible today — see the trip-planner step for why.
+#
+# Why macos-latest, when every other Gradle job here is ubuntu-latest: the goldens are
+# recorded on a Mac, and Robolectric's native graphics rendering is not byte-identical
+# across operating systems (font rasterisation and the bundled Skia both differ).
+# Verifying on Linux fails on files that are correct. macOS runners bill at a higher
+# multiplier, which is why this job builds only the golden-owning modules.
+
+on:
+  workflow_call:
+
+jobs:
+  verify-snapshots:
+    runs-on: macos-latest
+    environment: Firebase
+    # Cold cache on a macOS runner: ~5min to configure and compile the two modules, then
+    # ~1min for taj and ~4min for trip-planner's several hundred previews. 30min leaves
+    # head-room without letting a hung Robolectric capture sit on an expensive runner.
+    timeout-minutes: 30
+    steps:
+      # lfs: true is mandatory — the goldens are Git LFS objects. Without it the runner has
+      # 130-byte pointer files on disk and every comparison fails on an undecodable PNG
+      # rather than on a real pixel change.
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Setup environment variables
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      # -PciQuality=true tells core/network/build.gradle.kts to use placeholder API keys —
+      # snapshot rendering never hits the network.
+      - name: Verify snapshots - taj
+        id: verify-taj
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          CI: true
+          GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :taj:verifyRoborazziAndroidHostTest -PciQuality=true
+
+      # Reporting only, deliberately. This module's goldens are not reproducible yet:
+      # KrailTheme drives `colors.surface` through `animateColorAsState` with a multi-stage
+      # target (taj/animations/ThemeTransitionAnimations.kt), so the FIRST capture of a
+      # preview can land mid-transition and record a background one shade off. Which
+      # previews it hits changes between runs — three consecutive local record runs each
+      # produced a different two-or-three-file set, always the `light_normal` variant.
+      # Failing the build on that would train everyone to re-run CI.
+      #
+      # Making this blocking is a one-line change (drop continue-on-error) once the capture
+      # harness settles the theme animation before shooting — advance the animation clock in
+      # BaseSnapshotTest, or bypass the transition when a test flag is set. Until then the
+      # step still runs, so the drift is visible in the log and the artifact below.
+      - name: Verify snapshots - trip-planner (reporting only)
+        id: verify-trip-planner
+        continue-on-error: true
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          CI: true
+          GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          ./gradlew :feature:trip-planner:ui:verifyRoborazziAndroidHostTest
+          --continue -PciQuality=true
+
+      # The side-by-side reference/diff/new composites are the only way to judge whether a
+      # reported change was intended. Uploaded whenever either step reported a diff — a
+      # fully clean run's outputs are just copies of the goldens already in the repository.
+      - name: Upload Roborazzi comparison output
+        if: >-
+          always() &&
+          (steps.verify-taj.outcome == 'failure' ||
+           steps.verify-trip-planner.outcome == 'failure')
+        uses: actions/upload-artifact@v7
+        with:
+          name: roborazzi-compare-${{ github.run_id }}
+          path: |
+            **/build/outputs/roborazzi/**
+            **/build/reports/roborazzi/**
+            **/build/test-results/roborazzi/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload test reports
+        if: always() && steps.verify-taj.conclusion != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-test-reports-${{ github.run_id }}
+          path: |
+            **/build/reports/tests/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 7

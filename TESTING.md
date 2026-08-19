@@ -103,9 +103,55 @@ also wired into `check`:
 | `verifyTestingModuleUsage` | Any `commonMain` / `androidMain` / `iosMain` configuration resolves `:core:testing`. Stops fakes from shipping in the app and breaks any `:core:testing → feature → :core:testing` cycle. |
 | `verifyNoAdHocBoundaryFakes` | New `object : Boundary { … }` stub or `private class Fake<Boundary>` appears in any test source set. Existing offenders are grandfathered via the baseline file above. |
 
-Plus `verifyRoborazziAndroidHostTest` runs alongside `testAndroidHostTest`, so a snapshot
-diff fails CI (Roborazzi's default mode silently records goldens if missing — explicit
-verify catches drift).
+Snapshot verification is a separate job, `.github/workflows/snapshot-verify.yml`, called
+from `build.yml` in parallel with `code-quality`. It runs one step per golden-owning module:
+
+| Step | Task | Blocking |
+|---|---|---|
+| `verify-taj` | `:taj:verifyRoborazziAndroidHostTest` | yes |
+| `verify-trip-planner` | `:feature:trip-planner:ui:verifyRoborazziAndroidHostTest` | no (`continue-on-error`) |
+
+Four things about that job are load-bearing:
+
+- **It is a separate job, not a step in `code-quality`.** It runs on `macos-latest`, because
+  the goldens are recorded on a Mac and Robolectric's native rendering is not byte-identical
+  across operating systems. On `ubuntu-latest` it fails on files that are correct.
+- **The checkout sets `lfs: true`.** Goldens are Git LFS objects; without it the runner has
+  pointer files on disk and every comparison fails on an undecodable PNG.
+- **The modules are named explicitly**, one step each. Onboarding a third module means adding
+  a step — the cost of a macOS runner should not grow by accident.
+- **The trip-planner step reports, it does not block yet.** See below.
+
+The reason the job has to exist at all: `testAndroidHostTest` on its own captures in
+Roborazzi's default mode, which silently records a missing or changed golden and still
+passes. Explicit verify is what turns a pixel change into a failure. When either step
+reports a diff the job uploads the reference/diff/new composites from
+`**/build/outputs/roborazzi/**` as an artifact.
+
+### Why `:feature:trip-planner:ui` is not blocking yet
+
+`KrailTheme` animates `colors.surface` with `animateColorAsState` against a multi-stage
+target (`taj/animations/ThemeTransitionAnimations.kt`). The capture harness shoots a preview
+as soon as the view is attached, so the **first** capture of a preview can land while that
+transition is still running and record a background one shade off. Settled and mid-transition
+are both light greys, so the result is a whole-image diff on the `light_normal` variant while
+the same preview's `dark_normal` and `light_xlarge` variants, shot later from a warmer clock,
+come out correct.
+
+Three consecutive local record runs on an unchanged tree each produced a *different*
+two-or-three-file set of `light_normal` drifts. That is a harness bug, not drift, and failing
+the build on it would only teach everyone to press re-run.
+
+To make the step blocking: settle the animation before capture (advance the animation clock in
+`BaseSnapshotTest.captureScreenshot`, or let `PreviewTheme` skip the transition under test),
+re-record the module, then delete `continue-on-error` from the step. Nothing else about the job
+needs to change.
+
+One preview is excluded outright rather than waiting on that fix:
+`PreviewMapStopSelectionPane_Loading` renders an indeterminate `CircularProgressIndicator`, so
+its captured frame is decided by the animation clock no matter how well the theme settles. It
+is listed in `TripPlannerUiSnapshotTest.excludedPreviewNames`, the same treatment taj gives
+`PreviewLoadingDotsPill_Visible`.
 
 ---
 
@@ -187,8 +233,10 @@ Concrete bug classes the current setup makes hard or impossible:
 - **Boundary fake drift** (the `FakeFlag` × 6 problem). The canonical fakes are the
   shared source of truth; new ad-hoc copies fail
   `verifyNoAdHocBoundaryFakes`; pre-existing ones are in a shrinking baseline.
-- **Snapshot drift shipping silently.** `verifyRoborazziAndroidHostTest` runs explicitly
-  in CI so a pixel change without a re-record fails the build.
+- **Snapshot drift shipping silently.** The `snapshot-verify` job runs
+  `verifyRoborazziAndroidHostTest` explicitly, on macOS, with LFS goldens checked out, so a
+  pixel change without a re-record fails the build for `:taj`. Nineteen `:taj` goldens had
+  already drifted by the time that job existed, which is what an unrun check costs.
 - **Boilerplate per test.** `krailRunTest { }` replaces ~10 lines of dispatcher
   setup/teardown ceremony. New module snapshot adoption is one-line plugin alias instead
   of three duplicated build-config blocks.

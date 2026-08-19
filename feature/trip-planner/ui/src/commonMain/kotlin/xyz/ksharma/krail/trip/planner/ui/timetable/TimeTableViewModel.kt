@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -31,7 +32,6 @@ import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.appreview.AppReviewManager
 import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isBefore
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.isFuture
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
@@ -104,7 +104,12 @@ class TimeTableViewModel(
             updateLoadingEmoji()
             fetchTrip()
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTable)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), true)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(SCREEN_VISIBILITY_GRACE.inWholeMilliseconds),
+            initialValue = true,
+        )
 
     private val _isActive: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -121,7 +126,7 @@ class TimeTableViewModel(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(STOP_TIME_TEXT_UPDATES_THRESHOLD.inWholeMilliseconds),
+        started = SharingStarted.WhileSubscribed(SCREEN_VISIBILITY_GRACE.inWholeMilliseconds),
         initialValue = true,
     )
 
@@ -136,9 +141,8 @@ class TimeTableViewModel(
         while (true) {
             val hasJourneys = _uiState.value.journeyList.isEmpty().not()
             val hasError = _uiState.value.isError
-            val isFutureDate = dateTimeSelectionItem?.date.isFuture(clock.now())
 
-            if ((hasJourneys || hasError) && !isFutureDate) {
+            if ((hasJourneys || hasError) && shouldAutoRefresh(dateTimeSelectionItem, clock.now())) {
                 rateLimiter.triggerEvent()
             }
 
@@ -146,7 +150,7 @@ class TimeTableViewModel(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(STOP_TIME_TEXT_UPDATES_THRESHOLD.inWholeMilliseconds),
+        started = SharingStarted.WhileSubscribed(SCREEN_VISIBILITY_GRACE.inWholeMilliseconds),
         initialValue = true,
     )
 
@@ -164,9 +168,9 @@ class TimeTableViewModel(
 
     private var fetchTripJob: Job? = null
 
-    private val greetingAndEmoji: Pair<String, String> by lazy {
-        (festivalManager.festivalOnDate() ?: NoFestival()).greetingAndEmoji
-    }
+    // Greeting cached per calendar day, not per ViewModel. See greetingAndEmoji().
+    private var greetingDay: LocalDate? = null
+    private var greetingForDay: Pair<String, String>? = null
 
     private var lastInitializedRouteFromTo: Pair<String, String>? = null
 
@@ -1305,14 +1309,30 @@ class TimeTableViewModel(
         updateUiState { copy(isMapsAvailable = this@TimeTableViewModel.isMapsAvailable) }
     }
 
+    /**
+     * The greeting and emoji for today, computed once per calendar day.
+     *
+     * Two things have to hold at once. The emoji is picked at random from the day's list, so
+     * re-deriving it on every screen entry would make it flicker between two visits a minute
+     * apart — that is what the old `by lazy` was protecting. But the greeting is a property of
+     * the *day*, and a ViewModel outlives a night whenever the app sits in the background, so
+     * pinning it for the ViewModel's whole life showed yesterday's festival the next morning.
+     * Keying the cache on the day the injected [clock] reports satisfies both.
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun greetingAndEmoji(): Pair<String, String> {
+        val today = clock.now().toLocalDateTime(currentSystemDefault()).date
+        greetingForDay?.takeIf { greetingDay == today }?.let { return it }
+        val fresh = (festivalManager.festivalOnDate(today) ?: NoFestival()).greetingAndEmoji
+        greetingDay = today
+        greetingForDay = fresh
+        return fresh
+    }
+
     private fun updateLoadingEmoji() {
+        val (greeting, emoji) = greetingAndEmoji()
         updateUiState {
-            copy(
-                loadingEmoji = TimeTableState.LoadingEmoji(
-                    emoji = greetingAndEmoji.second,
-                    greeting = greetingAndEmoji.first,
-                ),
-            )
+            copy(loadingEmoji = TimeTableState.LoadingEmoji(emoji = emoji, greeting = greeting))
         }
     }
 
@@ -1389,10 +1409,23 @@ class TimeTableViewModel(
     }
 
     companion object {
-        private const val ANR_TIMEOUT = 5000L
 
-// Long enough that a configuration change re-subscribes well inside it, short
-// enough that a real departure is reported while the session is still live.
+        // How long the screen's flows stay alive after the last collector leaves.
+        //
+        // isLoading, isActive and autoRefreshTimeTable are three views of one question — is the
+        // timetable on screen? — so they get one value. They previously carried two (5 s and
+        // 3 s), which left a two-second window where the screen was half alive: the refresh
+        // loop had already stopped while the entry hook was still armed, so coming back inside
+        // that window fetched without the loop resuming from the same instant.
+        //
+        // Five seconds is the figure a configuration change fits inside comfortably (rotation
+        // drops and re-adds subscribers in well under a second) while still stopping network
+        // work promptly when the rider actually leaves. Same figure, same reasoning, as
+        // SAVE_PROMPT_ABANDON_GRACE below and the departures screen's own grace.
+        private val SCREEN_VISIBILITY_GRACE = 5.seconds
+
+        // Long enough that a configuration change re-subscribes well inside it, short
+        // enough that a real departure is reported while the session is still live.
         private val SAVE_PROMPT_ABANDON_GRACE = 5.seconds
 
         @VisibleForTesting
@@ -1400,7 +1433,6 @@ class TimeTableViewModel(
 
         @VisibleForTesting
         val AUTO_REFRESH_TIME_TABLE_DURATION = 30.seconds
-        private val STOP_TIME_TEXT_UPDATES_THRESHOLD = 3.seconds
 
         /**
          * Maximum number of started journeys to display.

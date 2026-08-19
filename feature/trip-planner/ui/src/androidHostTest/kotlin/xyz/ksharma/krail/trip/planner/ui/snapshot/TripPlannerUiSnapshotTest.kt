@@ -27,6 +27,15 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
 
     override val packageToScan = "xyz.ksharma.krail.trip.planner.ui"
 
+    /**
+     * `MapUiState.Loading` renders a Material `CircularProgressIndicator`, which animates
+     * forever. Which frame of the sweep the capture lands on is decided by the animation
+     * clock, so re-recording produces a different 106x106 patch in the middle of the pane
+     * every time and the golden can never be matched twice. Same class of preview as taj's
+     * `PreviewLoadingDotsPill_Visible`.
+     */
+    override val excludedPreviewNames = setOf("PreviewMapStopSelectionPane_Loading")
+
     @Test
     fun generateTripPlannerUiScreenshots() {
         generateSnapshots()

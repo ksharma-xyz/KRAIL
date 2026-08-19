@@ -26,6 +26,17 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/code-quality.yml
 
+  # Runs in parallel with code-quality rather than after it: it is the one job on a macOS
+  # runner and the slowest of the two, so gating it on detekt would add its wait to the
+  # critical path for no benefit. Nothing depends on it either — a pixel diff should not
+  # stop the APK from building, so the builds below still only need code-quality. This
+  # check is not in the `main` branch ruleset yet; add "verify-snapshots" there once the
+  # goldens have proven stable across a few runs.
+  snapshot-verify:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    uses: ./.github/workflows/snapshot-verify.yml
+    secrets: inherit
+
   build-android-debug:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs: code-quality

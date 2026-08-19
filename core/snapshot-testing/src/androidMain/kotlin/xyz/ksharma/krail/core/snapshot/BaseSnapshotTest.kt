@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.core.snapshot
 
 import android.content.res.Configuration
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -11,11 +12,15 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Density
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.robolectric.Robolectric
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowChoreographer
 import sergio.sastre.composable.preview.scanner.android.AndroidComposablePreviewScanner
 import sergio.sastre.composable.preview.scanner.android.AndroidPreviewInfo
 import sergio.sastre.composable.preview.scanner.android.screenshotid.AndroidPreviewScreenshotIdBuilder
 import sergio.sastre.composable.preview.scanner.core.preview.ComposablePreview
 import sergio.sastre.composable.preview.scanner.core.preview.getAnnotation
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 /**
  * Base class for snapshot testing across all modules.
@@ -195,6 +200,8 @@ abstract class BaseSnapshotTest {
 
         activity.setContentView(composeView)
 
+        settleAnimations()
+
         // Capture the screenshot
         composeView.captureRoboImage(
             filePath = filePath,
@@ -203,6 +210,35 @@ abstract class BaseSnapshotTest {
 
         // Cleanup
         activityController.pause().stop().destroy()
+    }
+
+    /**
+     * Runs the animation clock forward by a fixed amount before the capture, so every
+     * screenshot is shot from the same point on that clock.
+     *
+     * `KrailTheme` drives `colors.surface` through `animateColorAsState` against a multi-stage
+     * target (`taj/animations/ThemeTransitionAnimations.kt`). Capturing straight after the
+     * `ComposeView` attaches raced that transition: the first capture of a preview could land
+     * mid-tween and record a background one shade off, so a re-record produced a different
+     * two-or-three-file set of `light_normal` drifts every time.
+     *
+     * Two things make the advance safe on previews whose animations never end (indeterminate
+     * progress, shimmer, a spinning border) rather than only on the ones that settle:
+     *
+     *  - It is a **fixed duration**, not a wait for quiescence. Only the worst offenders are
+     *    listed in [excludedPreviewNames]; an idle-wait would hang on every other one.
+     *  - The choreographer is **paused** first. Left running, Robolectric answers
+     *    `nativeScheduleVsync` immediately without moving the clock, so an endless animation
+     *    re-arms a frame inside the same idle window and `ShadowLooper.idleFor` never returns
+     *    (observed: one preview burning 100% CPU through 170k+ frames). Paused, a vsync is
+     *    posted at the next frame boundary instead, which caps the window at
+     *    [ANIMATION_SETTLE_MS] / [FRAME_DELAY_MS] frames and leaves an endless animation on a
+     *    fixed, reproducible frame.
+     */
+    private fun settleAnimations() {
+        ShadowChoreographer.setPaused(true)
+        ShadowChoreographer.setFrameDelay(Duration.ofMillis(FRAME_DELAY_MS))
+        shadowOf(Looper.getMainLooper()).idleFor(ANIMATION_SETTLE_MS, TimeUnit.MILLISECONDS)
     }
 
     /**
@@ -275,5 +311,21 @@ abstract class BaseSnapshotTest {
         }
 
         return "${baseName}_${themeText}_$scaleText"
+    }
+
+    private companion object {
+        /**
+         * Upper bound on the `KrailTheme` light/dark transition, rounded up.
+         *
+         * `ThemeTransitionTiming` stages the target colour behind `GLOW_DELAY_MS` (80) plus
+         * `INTERMEDIATE_DELAY_MS` (100) before the final value is set, and the surface tween
+         * that follows runs for `SURFACE_DURATION_MS` (1500): 1680 ms in total. The text
+         * colours are quicker (200 ms delay plus a 350 ms tween). If those constants grow,
+         * this one has to grow with them.
+         */
+        const val ANIMATION_SETTLE_MS = 2_000L
+
+        /** One frame at 60 Hz, so the settle window is 125 frames of work at most. */
+        const val FRAME_DELAY_MS = 16L
     }
 }

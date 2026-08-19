@@ -73,3 +73,8 @@ fastlane/test_output/
 
 # Claude Code worktrees (per-feature scratch trees, not part of the repo)
 .claude/worktrees/
+
+# Maestro run output (collected into the workspace by .maestro/ci/run-flows.sh)
+maestro-output/
+logcat.txt
+logcat-android.txt

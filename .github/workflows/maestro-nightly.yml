@@ -91,35 +91,16 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          # Same shape as maestro-pr-smoke.yml, and for the same reason: the
-          # emulator is gone once this script returns, so anything needing adb
-          # has to happen here rather than in a later step.
+          # Same shape as maestro-pr-smoke.yml, and for the same reasons: the
+          # emulator is gone once this step returns, and this action runs the
+          # script one line at a time in separate shells.
           script: |
             adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
-
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
-
             adb logcat -c
-
-            set +e
-            maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/
-            MAESTRO_EXIT=$?
-            set -e
-
-            adb logcat -d > logcat-android.txt || true
-            mkdir -p maestro-output
-            cp -R "$HOME/.maestro/tests" maestro-output/ 2>/dev/null || true
-
-            if grep -q "FATAL EXCEPTION" logcat-android.txt; then
-              echo "::error::FATAL EXCEPTION found in logcat"
-              grep -A 30 "FATAL EXCEPTION" logcat-android.txt
-              exit 1
-            fi
-            echo "No fatal exceptions."
-
-            exit $MAESTRO_EXIT
+            bash .maestro/ci/run-flows.sh xyz.ksharma.krail.debug .maestro/ logcat-android.txt
 
       - name: Upload Maestro debug output
         if: always()

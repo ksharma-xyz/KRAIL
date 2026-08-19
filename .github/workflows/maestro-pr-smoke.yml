@@ -106,47 +106,21 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           # Everything that needs a device runs in here. The emulator is torn
-          # down the moment this script returns, so a later job step that shells
+          # down the moment this step returns, so a later job step that shells
           # out to adb blocks on `- waiting for device -` until the job timeout
-          # kills it. That is what happened the first time this lane ran: the
-          # logcat check sat there for twelve minutes, the job ended cancelled
-          # rather than failed, and the `if: failure()` artifact upload was
-          # skipped, so the one thing that would have explained the failure was
-          # never collected.
+          # kills it.
+          #
+          # Every line here is a whole command, because this action runs the
+          # script one line at a time in separate `sh -c` invocations. Nothing
+          # that needs shell state to survive to the next line can live here;
+          # that is what run-flows.sh is for.
           script: |
             adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
-
-            # `disable-animations` above already does this; setting it here too
-            # covers the case where the emulator finishes booting after the
-            # action has applied it.
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
-
             adb logcat -c
-
-            set +e
-            maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/smoke/
-            MAESTRO_EXIT=$?
-            set -e
-
-            # Collected before anything can exit, and copied into the workspace:
-            # actions/upload-artifact does not expand `~`, so an artifact path
-            # pointing at the home directory silently uploads nothing.
-            adb logcat -d > logcat.txt || true
-            mkdir -p maestro-output
-            cp -R "$HOME/.maestro/tests" maestro-output/ 2>/dev/null || true
-
-            # A crash in a background coroutine does not necessarily fail a
-            # flow, so the log is checked separately.
-            if grep -q "FATAL EXCEPTION" logcat.txt; then
-              echo "::error::FATAL EXCEPTION found in logcat"
-              grep -A 30 "FATAL EXCEPTION" logcat.txt
-              exit 1
-            fi
-            echo "No fatal exceptions."
-
-            exit $MAESTRO_EXIT
+            bash .maestro/ci/run-flows.sh xyz.ksharma.krail.debug .maestro/smoke/ logcat.txt
 
       # Maestro writes the hierarchy, logs, screenshots and recordings for every
       # run here. Without it a red CI run tells you a flow failed but not what

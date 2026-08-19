@@ -118,8 +118,23 @@ adb shell pm revoke xyz.ksharma.krail.debug android.permission.ACCESS_COARSE_LOC
 ## Debugging a failure
 
 Maestro writes the hierarchy, logs and screenshots for every run to `~/.maestro/tests/<timestamp>/`.
-CI uploads that directory as an artifact when a job fails. To see what the driver sees on a live
-device:
+CI copies that into the workspace and uploads it as an artifact on every run, pass or fail.
+
+Two things had to be true before that artifact actually appeared, and both are easy to
+reintroduce:
+
+- **Collect while the device is alive.** `reactivecircus/android-emulator-runner` kills the
+  emulator as soon as its step ends, so a later step calling `adb` blocks on
+  `- waiting for device -` until the job times out. Everything needing a device goes in the
+  action's own `script:`.
+- **That `script:` runs one line at a time**, each in its own `sh -c`, so shell state does not
+  survive between lines and the step aborts on the first non-zero line. Anything needing real
+  control flow lives in [`ci/run-flows.sh`](ci/run-flows.sh) and is invoked as a single line.
+
+`actions/upload-artifact` also does not expand `~`, so artifact paths point at the workspace
+copy, never at the home directory.
+
+To see what the driver sees on a live device:
 
 ```sh
 maestro --device emulator-5554 hierarchy | grep '"resource-id"' | sort -u

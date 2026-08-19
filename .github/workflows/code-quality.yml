@@ -22,8 +22,8 @@ jobs:
 
       - name: Setup environment variables
         run: |
-          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
-          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> "$GITHUB_ENV"
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> "$GITHUB_ENV"
 
       - name: set up JDK
         uses: actions/setup-java@v5
@@ -33,6 +33,18 @@ jobs:
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
+
+      # The same two scripts scripts/fullQualityChecks.sh runs first, promoted to CI so the
+      # invariants they hold are enforced on every PR rather than only for whoever remembers to
+      # run the local script. check_layout_invariants.py exits non-zero on a violation (manifest
+      # losing adjustResize, or a file applying two inset authorities at once) and so fails this
+      # step. check_stale_assumptions.py warns only: an assumption falling due is not a reason to
+      # block an unrelated PR, and a scheduled job runs it with --strict to raise an issue.
+      - name: Layout invariants and analytics assumptions
+        id: prose-invariants
+        run: |
+          python3 scripts/check_layout_invariants.py
+          python3 scripts/check_stale_assumptions.py
 
       # Test-infrastructure guardrails — run BEFORE detekt/tests so a misconfigured
       # module (missing withHostTest{}, test code leaking into production, ad-hoc

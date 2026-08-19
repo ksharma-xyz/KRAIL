@@ -54,7 +54,10 @@ so Compose handles the IME itself. Without this attribute the mode defaults to
 the same keyboard: the layout shrinks by the keyboard height and the system then slides the
 whole window up by it again.
 
-`scripts/check_layout_invariants.py` fails the build if the attribute goes missing.
+`scripts/check_layout_invariants.py` fails if the attribute goes missing. It runs in CI on every
+PR, in the "Layout invariants and analytics assumptions" step of
+`.github/workflows/code-quality.yml`, and locally as the first step of
+`scripts/fullQualityChecks.sh`.
 
 ### 1.3 Unbounded constraints: know which parents actually do it
 

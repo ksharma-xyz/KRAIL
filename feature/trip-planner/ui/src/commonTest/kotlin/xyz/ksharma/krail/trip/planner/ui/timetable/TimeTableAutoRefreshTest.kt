@@ -2,6 +2,13 @@ package xyz.ksharma.krail.trip.planner.ui.timetable
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
@@ -12,6 +19,8 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.fakes.FakeShareManager
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
+import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
@@ -84,6 +93,44 @@ class TimeTableAutoRefreshTest {
         collectJob.cancel()
     }
 
+    @Test
+    fun `GIVEN a Leave-at pinned later today WHEN intervals elapse THEN nothing auto-refreshes`() = krailRunTest {
+        val viewModel = buildViewModel()
+        loadJourneys(viewModel)
+        moveToLocalMorning()
+        pinLeaveAt(viewModel, hour = EVENING_HOUR)
+        rateLimiter.reset()
+
+        val collectJob = collectAutoRefresh(viewModel)
+        repeat(INTERVALS_TO_PUMP) { pumpOnce(AUTO_REFRESH + 1.seconds) }
+
+        assertEquals(
+            0,
+            rateLimiter.triggerCount,
+            "a timetable pinned to a future time must not be re-fetched, same day or not",
+        )
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `GIVEN a Leave-at pinned earlier today WHEN intervals elapse THEN it still auto-refreshes`() = krailRunTest {
+        val viewModel = buildViewModel()
+        loadJourneys(viewModel)
+        moveToLocalMorning()
+        pinLeaveAt(viewModel, hour = EARLY_HOUR)
+        rateLimiter.reset()
+
+        val collectJob = collectAutoRefresh(viewModel)
+        pumpOnce(AUTO_REFRESH + 1.seconds)
+
+        assertEquals(
+            2,
+            rateLimiter.triggerCount,
+            "a selection already in the past is a live board — it must keep refreshing",
+        )
+        collectJob.cancel()
+    }
+
     // region helpers
 
     private fun KrailTestScope.buildViewModel() = TimeTableViewModel(
@@ -114,12 +161,42 @@ class TimeTableAutoRefreshTest {
         return job
     }
 
+    /**
+     * Advances virtual time to 08:00 local on the following day, so "later today" and
+     * "earlier today" mean the same thing whatever timezone the suite runs in.
+     */
+    private fun KrailTestScope.moveToLocalMorning() {
+        val zone = TimeZone.currentSystemDefault()
+        val today = clock.now().toLocalDateTime(zone).date
+        val morning = LocalDateTime(today.plus(1, DateTimeUnit.DAY), LocalTime(MORNING_HOUR, 0))
+            .toInstant(zone)
+        pumpOnce(morning - clock.now())
+    }
+
+    private fun KrailTestScope.pinLeaveAt(viewModel: TimeTableViewModel, hour: Int) {
+        val localNow = clock.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        viewModel.onEvent(
+            TimeTableUiEvent.DateTimeSelectionChanged(
+                DateTimeSelectionItem(
+                    option = JourneyTimeOptions.LEAVE,
+                    hour = hour,
+                    minute = 0,
+                    date = localNow.date,
+                ),
+            ),
+        )
+        runCurrent()
+    }
+
     // endregion
 
     private companion object {
         val AUTO_REFRESH = TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION
         val SETTLE = 1.seconds
         const val INTERVALS_TO_PUMP = 10
+        const val MORNING_HOUR = 8
+        const val EARLY_HOUR = 6
+        const val EVENING_HOUR = 18
         val TRIP = Trip(
             fromStopId = "stop1",
             fromStopName = "S1",

@@ -95,6 +95,28 @@ background-work hazard. They are listed so that a new flow cannot land unclassif
 Moving a flow between the tables is the whole point of the register: if a state-only flow grows
 an `onStart` loop, it belongs in the first table and its screen needs `repeatOnLifecycle`.
 
+## Rule: one screen, one `WhileSubscribed` grace value
+
+`TimeTableViewModel`'s three flows above all answer the same question — is the timetable on
+screen? — so they share `SCREEN_VISIBILITY_GRACE` (5 s). They previously carried two different
+values (5 s and 3 s), which left a two-second window where the screen was half alive: the
+refresh loop had stopped while the entry hook was still armed.
+
+Five seconds is the standing figure here: long enough that a configuration change re-subscribes
+well inside it, short enough that leaving the screen stops network work promptly. If you add a
+flow to a screen that already has one, use that screen's constant rather than a fresh literal.
+
+## Rule: a pinned timetable is not a live board
+
+Auto-refresh exists to keep *live* data fresh. A timetable the rider pinned to a moment that
+has not arrived yet is a plan, and re-fetching it changes nothing they can see.
+
+`shouldAutoRefresh(selection, now)` (in `timetable/TimeTableRefreshPolicy.kt`) decides this, and
+it compares **instants**, not calendar dates. Comparing dates — which is what the old
+`LocalDate.isFuture()` check did — treats "Leave at 6pm this evening" as not-future, so the
+screen refreshed a plan every 30 seconds for the rest of the day. Both `LEAVE` and `ARRIVE`
+resolve to the one moment the rider named; a selection at or before now is a live board again.
+
 ## Rule: a refresh interval is a budget per subject, not per collector
 
 `WhileSubscribed` stops polling when nobody is looking. It says nothing about what happens

@@ -1,16 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import kotlinx.collections.immutable.toImmutableList
-import xyz.ksharma.krail.core.testing.fakes.FakeFlag
-import xyz.ksharma.krail.core.testing.fakes.FakeSandook
-import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
-
-// TODO Write UTs separately
+// Every test in here is parked, commented out below. The fixtures and setup they need were
+// deleted along with the declarations that only they referenced (git history has them); whoever
+// revives a test revives its scaffolding with it. Nothing in this file runs today.
 class RealStopResultsManagerTest {
-    private lateinit var sandook: FakeSandook
-    private lateinit var flag: FakeFlag
-    private lateinit var stopResultsManager: RealStopResultsManager
 /*
     fun setUp() {
         sandook = FakeSandook()
@@ -85,16 +78,4 @@ class RealStopResultsManagerTest {
             assertEquals(expectedResults, actualResults)
         }
      */
-
-    private fun createStopResult(
-        stopId: String,
-        stopName: String,
-        transportModes: List<TransportMode>,
-    ): SearchStopState.StopResult {
-        return SearchStopState.StopResult(
-            stopId = stopId,
-            stopName = stopName,
-            transportModeType = transportModes.toImmutableList(),
-        )
-    }
 }

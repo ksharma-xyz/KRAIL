@@ -4,6 +4,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.festival.model.FestivalData
+import xyz.ksharma.krail.core.festival.model.FixedDateFestival
+import xyz.ksharma.krail.core.festival.model.VariableDateFestival
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
@@ -87,7 +89,8 @@ class FestivalJsonValidationTest {
      */
     @Test
     fun testValidateFestivalJson_production() {
-        // TODO: Replace this with your actual production JSON
+        // Stands in for the shipped festival JSON. Paste the real file in here to validate
+        // it before a release; the assertions below do not care which JSON they are given.
         val productionFestivalJson = """
         {
             "confirmedDates": [
@@ -209,33 +212,10 @@ class FestivalJsonValidationTest {
             val errors = mutableListOf<String>()
 
             // Validate fixed date ranges
-            data.confirmedDates.forEach { festival ->
-                if (festival.month !in 1..12) {
-                    errors.add("${festival.type}: Invalid month ${festival.month}")
-                }
-                if (festival.day !in 1..31) {
-                    errors.add("${festival.type}: Invalid day ${festival.day}")
-                }
-                // Try to create actual date to catch invalid day/month combinations
-                try {
-                    LocalDate(2024, festival.month, festival.day)
-                } catch (_: Exception) {
-                    errors.add("${festival.type}: Invalid date ${festival.month}/${festival.day}")
-                }
-            }
+            data.confirmedDates.forEach { festival -> errors += fixedDateErrors(festival) }
 
             // Validate variable date formats and parse-ability
-            data.variableDates.forEach { festival ->
-                try {
-                    val start = LocalDate.parse(festival.startDate)
-                    val end = LocalDate.parse(festival.endDate)
-                    if (start > end) {
-                        errors.add("${festival.type}: Start date after end date")
-                    }
-                } catch (e: Exception) {
-                    errors.add("${festival.type}: Invalid date format - ${e.message}")
-                }
-            }
+            data.variableDates.forEach { festival -> errors += variableDateErrors(festival) }
 
             if (errors.isEmpty()) {
                 TestResult(
@@ -268,26 +248,7 @@ class FestivalJsonValidationTest {
             val errors = mutableListOf<String>()
 
             data.variableDates.forEach { festival ->
-                try {
-                    val startDate = LocalDate.parse(festival.startDate)
-                    val endDate = LocalDate.parse(festival.endDate)
-
-                    // Test boundary: day before start
-                    val dayBefore = LocalDate.fromEpochDays(startDate.toEpochDays() - 1)
-                    val beforeResult = manager.festivalOnDate(dayBefore)
-                    if (beforeResult?.greeting == festival.greeting) {
-                        errors.add("${festival.type}: Found on day before start ($dayBefore)")
-                    }
-
-                    // Test boundary: day after end
-                    val dayAfter = LocalDate.fromEpochDays(endDate.toEpochDays() + 1)
-                    val afterResult = manager.festivalOnDate(dayAfter)
-                    if (afterResult?.greeting == festival.greeting) {
-                        errors.add("${festival.type}: Found on day after end ($dayAfter)")
-                    }
-                } catch (_: Exception) {
-                    // Skip invalid dates (already caught in date format validation)
-                }
+                errors += boundaryErrors(manager, festival)
             }
 
             if (errors.isEmpty()) {
@@ -349,46 +310,8 @@ class FestivalJsonValidationTest {
             val data = Json.decodeFromString<FestivalData>(jsonString)
             val overlaps = mutableListOf<String>()
 
-            // Check fixed vs variable overlaps
-            data.confirmedDates.forEach { fixed ->
-                data.variableDates.forEach { variable ->
-                    val startDate = runCatching { LocalDate.parse(variable.startDate) }.getOrNull()
-                    val endDate = runCatching { LocalDate.parse(variable.endDate) }.getOrNull()
-
-                    if (startDate != null && endDate != null) {
-                        var currentDate: LocalDate = startDate
-                        while (currentDate <= endDate) {
-                            if (currentDate.month.number == fixed.month && currentDate.day == fixed.day) {
-                                overlaps.add("   $currentDate: ${fixed.type} vs ${variable.type} → Fixed wins")
-                                break
-                            }
-                            currentDate = LocalDate.fromEpochDays(currentDate.toEpochDays() + 1)
-                        }
-                    }
-                }
-            }
-
-            // Check variable vs variable overlaps
-            for (i in data.variableDates.indices) {
-                for (j in (i + 1) until data.variableDates.size) {
-                    val var1 = data.variableDates[i]
-                    val var2 = data.variableDates[j]
-
-                    val start1 = runCatching { LocalDate.parse(var1.startDate) }.getOrNull()
-                    val end1 = runCatching { LocalDate.parse(var1.endDate) }.getOrNull()
-                    val start2 = runCatching { LocalDate.parse(var2.startDate) }.getOrNull()
-                    val end2 = runCatching { LocalDate.parse(var2.endDate) }.getOrNull()
-
-                    if (start1 != null && end1 != null && start2 != null && end2 != null) {
-                        val hasOverlap = !(end1 < start2 || end2 < start1)
-                        if (hasOverlap) {
-                            val overlapStart = maxOf(start1, start2)
-                            val overlapEnd = minOf(end1, end2)
-                            overlaps.add("   $overlapStart to $overlapEnd: ${var1.type} vs ${var2.type} → First wins")
-                        }
-                    }
-                }
-            }
+            overlaps += fixedVersusVariableOverlaps(data)
+            overlaps += variableVersusVariableOverlaps(data)
 
             if (overlaps.isEmpty()) {
                 TestResult(
@@ -979,3 +902,96 @@ class FestivalJsonValidationTest {
         }
     """.trimIndent()
 }
+
+/**
+ * The per-festival rules the shipped festival JSON has to satisfy, and the overlap sweep.
+ *
+ * Top-level rather than members of the test class on purpose: as members, every branch in here
+ * counted towards the complexity of the validators that call them, and those validators are the
+ * part a reader needs to follow.
+ */
+private fun fixedDateErrors(festival: FixedDateFestival): List<String> = buildList {
+    if (festival.month !in MONTHS) add("${festival.type}: Invalid month ${festival.month}")
+    if (festival.day !in DAYS) add("${festival.type}: Invalid day ${festival.day}")
+
+    // Building the date is what catches a day/month pair that is individually in range and
+    // still not a date, like the 31st of February.
+    runCatching { LocalDate(LEAP_YEAR, festival.month, festival.day) }
+        .onFailure { add("${festival.type}: Invalid date ${festival.month}/${festival.day}") }
+}
+
+private fun variableDateErrors(festival: VariableDateFestival): List<String> = buildList {
+    runCatching { LocalDate.parse(festival.startDate) to LocalDate.parse(festival.endDate) }
+        .onSuccess { (start, end) ->
+            if (start > end) add("${festival.type}: Start date after end date")
+        }
+        .onFailure { add("${festival.type}: Invalid date format - ${it.message}") }
+}
+
+private fun boundaryErrors(
+    manager: RealFestivalManager,
+    festival: VariableDateFestival,
+): List<String> = buildList {
+    // An unparseable range is not reported again here; testDateFormatValidation owns that.
+    val range = festival.parsedRange() ?: return@buildList
+
+    val dayBefore = LocalDate.fromEpochDays(range.first.toEpochDays() - 1)
+    if (manager.festivalOnDate(dayBefore)?.greeting == festival.greeting) {
+        add("${festival.type}: Found on day before start ($dayBefore)")
+    }
+
+    val dayAfter = LocalDate.fromEpochDays(range.second.toEpochDays() + 1)
+    if (manager.festivalOnDate(dayAfter)?.greeting == festival.greeting) {
+        add("${festival.type}: Found on day after end ($dayAfter)")
+    }
+}
+
+private fun fixedVersusVariableOverlaps(data: FestivalData): List<String> = buildList {
+    data.confirmedDates.forEach { fixed ->
+        data.variableDates.forEach { variable ->
+            val hit = variable.datesOrEmpty()
+                .firstOrNull { it.month.number == fixed.month && it.day == fixed.day }
+            if (hit != null) {
+                add("   $hit: ${fixed.type} vs ${variable.type}, fixed wins")
+            }
+        }
+    }
+}
+
+private fun variableVersusVariableOverlaps(data: FestivalData): List<String> = buildList {
+    data.variableDates.indices.forEach { i ->
+        ((i + 1) until data.variableDates.size).forEach { j ->
+            val first = data.variableDates[i]
+            val second = data.variableDates[j]
+            add(overlapBetween(first, second) ?: return@forEach)
+        }
+    }
+}
+
+private fun overlapBetween(first: VariableDateFestival, second: VariableDateFestival): String? {
+    val one = first.parsedRange() ?: return null
+    val two = second.parsedRange() ?: return null
+    val overlapStart = maxOf(one.first, two.first)
+    val overlapEnd = minOf(one.second, two.second)
+    return if (overlapStart <= overlapEnd) {
+        "   $overlapStart to $overlapEnd: ${first.type} vs ${second.type}, first wins"
+    } else {
+        null
+    }
+}
+
+/** Start and end as dates, or null if either does not parse. */
+private fun VariableDateFestival.parsedRange(): Pair<LocalDate, LocalDate>? =
+    runCatching { LocalDate.parse(startDate) to LocalDate.parse(endDate) }.getOrNull()
+
+private fun VariableDateFestival.datesOrEmpty(): Sequence<LocalDate> {
+    val range = parsedRange() ?: return emptySequence()
+    return generateSequence(range.first) { LocalDate.fromEpochDays(it.toEpochDays() + 1) }
+        .takeWhile { it <= range.second }
+}
+
+private val MONTHS = 1..12
+private val DAYS = 1..31
+
+// Any leap year will do: the point is to accept 29 February as a fixed festival date.
+private const val LEAP_YEAR = 2024

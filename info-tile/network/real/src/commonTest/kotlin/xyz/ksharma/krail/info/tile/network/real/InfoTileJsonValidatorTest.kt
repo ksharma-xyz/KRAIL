@@ -190,50 +190,7 @@ class InfoTileJsonValidatorTest {
         tiles.forEachIndexed { index, tile ->
             println("Checking tile ${index + 1}: ${tile.title}")
 
-            val errors = mutableListOf<String>()
-
-            // Check required fields
-            if (tile.key.isBlank()) errors.add("Key is blank")
-            if (tile.title.isBlank()) errors.add("Title is blank")
-            if (tile.description.isBlank()) errors.add("Description is blank")
-
-            // Check date formats
-            tile.startDate?.let { dateStr ->
-                if (!isValidIsoDate(dateStr)) {
-                    errors.add("Invalid startDate format: $dateStr")
-                }
-            }
-
-            tile.endDate?.let { dateStr ->
-                if (!isValidIsoDate(dateStr)) {
-                    errors.add("Invalid endDate format: $dateStr")
-                }
-            }
-
-            // Check date logic
-            val startDateStr = tile.startDate
-            val endDateStr = tile.endDate
-
-            if (startDateStr != null && endDateStr != null) {
-                val startValid = isValidIsoDate(startDateStr)
-                val endValid = isValidIsoDate(endDateStr)
-
-                if (startValid && endValid) {
-                    val startDate = LocalDate.parse(startDateStr)
-                    val endDate = LocalDate.parse(endDateStr)
-
-                    if (startDate > endDate) {
-                        errors.add("startDate is after endDate")
-                    }
-                }
-            }
-
-            // Check URL format
-            tile.primaryCta?.url?.let { url ->
-                if (url.isNotBlank() && !url.startsWith("http://") && !url.startsWith("https://")) {
-                    errors.add("Invalid URL format: $url")
-                }
-            }
+            val errors = validationErrors(tile)
 
             if (errors.isNotEmpty()) {
                 println("  ❌ ERRORS found:")
@@ -333,16 +290,6 @@ class InfoTileJsonValidatorTest {
     private fun parseValidJson(): List<InfoTileData> {
         val jsonContent = loadValidJsonFixture()
         return JsonConfig.lenient.decodeFromString(jsonContent)
-    }
-
-    /**
-     * Checks if a date string is valid ISO-8601 format.
-     */
-    private fun isValidIsoDate(dateStr: String): Boolean {
-        return runCatching {
-            LocalDate.parse(dateStr)
-            true
-        }.getOrDefault(false)
     }
 
     /**
@@ -446,3 +393,43 @@ class InfoTileJsonValidatorTest {
 
     // endregion
 }
+
+/**
+ * Every rule the shipped tile JSON has to satisfy, collected rather than thrown so one bad tile
+ * reports all of its problems at once.
+ *
+ * Top-level rather than a member of the test class on purpose: as a member, every branch in here
+ * counted towards the complexity of the loop that calls it, and the loop is the part a reader
+ * needs to follow.
+ */
+private fun validationErrors(tile: InfoTileData): List<String> = buildList {
+    if (tile.key.isBlank()) add("Key is blank")
+    if (tile.title.isBlank()) add("Title is blank")
+    if (tile.description.isBlank()) add("Description is blank")
+    addAll(dateErrors(tile))
+    addAll(urlErrors(tile))
+}
+
+private fun dateErrors(tile: InfoTileData): List<String> = buildList {
+    tile.startDate?.takeUnless(::isValidIsoDate)?.let { add("Invalid startDate format: $it") }
+    tile.endDate?.takeUnless(::isValidIsoDate)?.let { add("Invalid endDate format: $it") }
+
+    // Only compared when both parse. An unparseable date is already reported above, and
+    // reporting it twice as an ordering problem as well says nothing extra.
+    val start = parsedIsoDate(tile.startDate)
+    val end = parsedIsoDate(tile.endDate)
+    if (start != null && end != null && start > end) add("startDate is after endDate")
+}
+
+private fun urlErrors(tile: InfoTileData): List<String> = buildList {
+    val url = tile.primaryCta?.url
+    if (!url.isNullOrBlank() && !url.startsWith("http://") && !url.startsWith("https://")) {
+        add("Invalid URL format: $url")
+    }
+}
+
+/** Validates ISO date format (YYYY-MM-DD). */
+private fun isValidIsoDate(dateStr: String): Boolean = parsedIsoDate(dateStr) != null
+
+private fun parsedIsoDate(value: String?): LocalDate? =
+    value?.let { runCatching { LocalDate.parse(it) }.getOrNull() }

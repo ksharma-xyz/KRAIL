@@ -295,7 +295,7 @@ class SearchStopScreenInteractionTest {
     fun tappingManageButton_hidesKeyboardBeforeInvokingCallback() {
         val events = mutableListOf<String>()
         val spyKeyboardController = object : SoftwareKeyboardController {
-            override fun show() {}
+            override fun show() = Unit
             override fun hide() {
                 events += "hide"
             }

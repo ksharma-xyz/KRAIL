@@ -26,11 +26,10 @@ class TripDeepLinkEncoderDecoderTest {
 
     @Test
     fun `decodeBase64Url returns null for garbage input`() {
-        val result = "!!!not-base64!!!".decodeBase64Url()
-        // decodeBase64Url wraps in runCatching — invalid base64 returns null
-        // (or may decode to garbled bytes, but won't throw)
-        // The key contract is: no exception is thrown
-        // result may be null or a garbled string depending on implementation
+        // Nothing is asserted on the return value on purpose: the contract under test is
+        // that garbage in does not throw. decodeBase64Url wraps its decode in runCatching,
+        // so it answers null or a garbled string depending on the platform decoder.
+        "!!!not-base64!!!".decodeBase64Url()
     }
 
     @Test

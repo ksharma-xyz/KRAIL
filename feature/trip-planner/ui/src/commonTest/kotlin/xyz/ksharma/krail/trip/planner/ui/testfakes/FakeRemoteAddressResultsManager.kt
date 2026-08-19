@@ -3,7 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.testfakes
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RemoteAddressResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
-class FakeRemoteAddressResultsManager : RemoteAddressResultsManager {
+internal class FakeRemoteAddressResultsManager : RemoteAddressResultsManager {
     var results: List<SearchStopState.SearchResult.Address> = emptyList()
     var shouldThrowError = false
     var callCount: Int = 0
@@ -15,7 +15,7 @@ class FakeRemoteAddressResultsManager : RemoteAddressResultsManager {
         callCount++
         lastQuery = query
         if (shouldThrowError) {
-            throw RuntimeException("Error fetching address results")
+            error("Error fetching address results")
         }
         return results
     }

@@ -4,7 +4,7 @@ import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiTextService
 import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 
-class FakeAiTextService : AiTextService {
+internal class FakeAiTextService : AiTextService {
     var availability: AiAvailability = AiAvailability.Available
     var extractionAvailability: AiAvailability = AiAvailability.Available
     var summarizeResult: String? = null

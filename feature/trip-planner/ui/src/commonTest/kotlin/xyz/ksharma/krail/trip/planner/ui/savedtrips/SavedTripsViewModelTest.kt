@@ -710,7 +710,7 @@ class SavedTripsViewModelTest {
             val invalidJson = "invalid json string"
 
             viewModel.uiState.test {
-                val initialState = awaitItem()
+                awaitItem()
 
                 // WHEN FromStopChanged event is triggered with invalid JSON
                 viewModel.onEvent(SavedTripUiEvent.FromStopChanged(invalidJson))
@@ -730,7 +730,7 @@ class SavedTripsViewModelTest {
             val invalidJson = "invalid json string"
 
             viewModel.uiState.test {
-                val initialState = awaitItem()
+                awaitItem()
 
                 // WHEN ToStopChanged event is triggered with invalid JSON
                 viewModel.onEvent(SavedTripUiEvent.ToStopChanged(invalidJson))

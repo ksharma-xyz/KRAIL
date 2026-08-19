@@ -94,8 +94,7 @@ abstract class FlowTest {
 
     private val restorationTester by lazy { StateRestorationTester(composeRule) }
 
-    /** Whether the entry is currently on screen. Flipped by [leaveAndReturn]. */
-    private val hosted = mutableStateOf(true)
+    private val isEntryOnScreen = mutableStateOf(true)
 
     @Before
     fun startFlowKoin() {
@@ -115,12 +114,13 @@ abstract class FlowTest {
      *
      * The wait is not optional. The search row is held off screen until the saved-trips load
      * has emitted once and then slides in, so a test that asserts straight after composition
-     * finds its node in the tree but not yet displayed.
+     * finds its node in the tree but not yet displayed. [ENTRY_REVEAL_MILLIS] is long enough
+     * for that slide-in to finish.
      */
     protected fun launchHome() {
         restorationTester.setContent {
             PreviewTheme {
-                if (hosted.value) {
+                if (isEntryOnScreen.value) {
                     HomeEntry(navigator = navigator)
                 }
             }
@@ -135,9 +135,9 @@ abstract class FlowTest {
      * cancelled and re-launched on return against whatever state the ViewModels now hold.
      */
     protected fun leaveAndReturn() {
-        composeRule.runOnIdle { hosted.value = false }
+        composeRule.runOnIdle { isEntryOnScreen.value = false }
         composeRule.waitForIdle()
-        composeRule.runOnIdle { hosted.value = true }
+        composeRule.runOnIdle { isEntryOnScreen.value = true }
         composeRule.waitForIdle()
         letTimePass(ENTRY_REVEAL_MILLIS)
     }
@@ -197,7 +197,6 @@ abstract class FlowTest {
 /** Robolectric SDK level shared by every flow test. */
 internal const val FLOW_TEST_SDK = 34
 
-/** Long enough for the bottom search row's slide-in to finish after the first load. */
 private const val ENTRY_REVEAL_MILLIS = 1_000L
 
 /**

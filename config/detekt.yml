@@ -104,6 +104,15 @@ exceptions:
     active: true
 
 krail:
+  # collectAsState() keeps collecting while backgrounded — collectAsStateWithLifecycle() only.
+  # See docs/POLLING_LIFECYCLE.md.
+  CollectAsStateBan:
+    active: true
+  # Zero tolerance, per CLAUDE.md: CyclomaticComplexMethod may not be suppressed by @Suppress
+  # or by a baseline.xml entry. config/cyclomatic-suppress-baseline.txt is a closed list of
+  # pre-existing @Suppress sites to empty out; nothing may be added to it.
+  CyclomaticSuppressBan:
+    active: true
   # Grandfathered offenders: config/lazy-item-key-baseline.txt
   LazyItemKeyRule:
     active: true
@@ -117,6 +126,9 @@ krail:
     excludes: ['**/core/testing/**']
   # Grandfathered offenders: config/screenshot-annotation-baseline.txt
   ScreenshotPreviewAnnotation:
+    active: true
+  # Snackbars are not part of this product's vocabulary; confirm and undo in place instead.
+  SnackbarBan:
     active: true
 
 naming:

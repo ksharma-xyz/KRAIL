@@ -11,9 +11,12 @@ class KrailRuleSetProvider : RuleSetProvider {
     override fun instance(config: Config): RuleSet = RuleSet(
         ruleSetId,
         listOf(
+            CollectAsStateBan(config),
+            CyclomaticSuppressBan(config),
             LazyItemKeyRule(config),
             PublicImplementationClass(config),
             ScreenshotPreviewAnnotation(config),
+            SnackbarBan(config),
         ),
     )
 }

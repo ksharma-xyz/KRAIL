@@ -82,6 +82,12 @@ class TimeTableViewModel(
     val flag: Flag,
     private val appReviewManager: AppReviewManager,
     private val tripTrackingDebugOverride: Boolean = true,
+    /**
+     * Wall-clock seam. Everything on this screen that asks "has this departed yet?",
+     * "is this selection in the future?" or "how far away is this?" reads it from
+     * here, so a test can decide what time it is. See `dateTimeModule`.
+     */
+    private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
@@ -130,7 +136,7 @@ class TimeTableViewModel(
         while (true) {
             val hasJourneys = _uiState.value.journeyList.isEmpty().not()
             val hasError = _uiState.value.isError
-            val isFutureDate = dateTimeSelectionItem?.date.isFuture()
+            val isFutureDate = dateTimeSelectionItem?.date.isFuture(clock.now())
 
             if ((hasJourneys || hasError) && !isFutureDate) {
                 rateLimiter.triggerEvent()
@@ -462,9 +468,9 @@ class TimeTableViewModel(
 
             analytics.track(
                 AnalyticsEvent.DateTimeSelectEvent(
-                    dayOfWeek = item?.date?.dayOfWeek?.name ?: Clock.System.now()
+                    dayOfWeek = item?.date?.dayOfWeek?.name ?: clock.now()
                         .toLocalDateTime(currentSystemDefault()).dayOfWeek.name,
-                    time = item?.toHHMM() ?: Clock.System.now()
+                    time = item?.toHHMM() ?: clock.now()
                         .toLocalDateTime(currentSystemDefault()).toHHMM(),
                     journeyOption = item?.option?.name ?: JourneyTimeOptions.LEAVE.name,
                     isReset = item == null,
@@ -528,16 +534,17 @@ class TimeTableViewModel(
         // Update raw journey data map
         rawJourneyDataByJourneyId.putAll(newRawDataMap)
 
+        val now = clock.now()
         val startedJourneyList = journeys.values
             .filter {
                 // Find list of journeys that have started.
-                it.hasJourneyStarted
+                it.hasJourneyStarted(now)
             }
             .filterNot {
                 // If a journey has ended then remove it from the cache.
                 // This is to avoid displaying ended journeys.
                 // The threshold time is set to 10 minutes.
-                val thresholdTime = Clock.System.now().minus(JOURNEY_ENDED_CACHE_THRESHOLD_TIME)
+                val thresholdTime = now.minus(JOURNEY_ENDED_CACHE_THRESHOLD_TIME)
                 Instant.parse(it.destinationUtcDateTime).isBefore(thresholdTime)
             }
             .filterNot {
@@ -899,7 +906,7 @@ class TimeTableViewModel(
     private fun trackLoadMoreClick() {
         val info = tripInfo ?: return
         val visibleList = _uiState.value.journeyList
-        val now = Clock.System.now()
+        val now = clock.now()
         val latestMinutes = visibleList
             .mapNotNull { runCatching { Instant.parse(it.originUtcDateTime) }.getOrNull() }
             .maxOrNull()
@@ -921,7 +928,7 @@ class TimeTableViewModel(
     private fun trackLoadPreviousClick() {
         val info = tripInfo ?: return
         val visibleList = _uiState.value.journeyList
-        val now = Clock.System.now()
+        val now = clock.now()
         val earliestMinutes = visibleList
             .mapNotNull { runCatching { Instant.parse(it.originUtcDateTime) }.getOrNull() }
             .minOrNull()
@@ -1004,7 +1011,7 @@ class TimeTableViewModel(
 
     private fun onJourneyCardClicked(journeyId: String) {
         val journey = journeys[journeyId]
-        val hasJourneyStarted = journey?.hasJourneyStarted ?: false
+        val hasJourneyStarted = journey?.hasJourneyStarted(clock.now()) ?: false
         val legCount = journey?.legs?.size ?: 0
         val transportModes = journey?.transportModeLines
             ?.map { it.transportMode.productClass }

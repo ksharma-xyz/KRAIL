@@ -37,6 +37,7 @@ kotlin {
     sourceSets {
         commonTest {
             dependencies {
+                implementation(projects.core.testing)
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
                 implementation(libs.test.turbine)

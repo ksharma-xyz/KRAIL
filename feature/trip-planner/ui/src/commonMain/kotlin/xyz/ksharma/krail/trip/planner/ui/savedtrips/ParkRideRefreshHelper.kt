@@ -40,12 +40,16 @@ internal fun isNotPeakTime(now: Instant = Clock.System.now()): Boolean {
  *
  * Shared by every surface that can trigger a Park & Ride fetch, so the map sheet and the home
  * card cannot end up with different rate limits for the same facility.
+ *
+ * [now] is the wall-clock seam: it decides which side of the peak window we are on.
+ * Defaults to the system clock so production call sites are unchanged.
  */
 @OptIn(ExperimentalTime::class)
 internal fun parkRideApiCooldown(
     peakTimeCooldownSeconds: Long,
     nonPeakTimeCooldownSeconds: Long,
-): Duration = if (isNotPeakTime()) {
+    now: Instant = Clock.System.now(),
+): Duration = if (isNotPeakTime(now)) {
     nonPeakTimeCooldownSeconds.seconds
 } else {
     peakTimeCooldownSeconds.seconds

@@ -13,6 +13,7 @@ import xyz.ksharma.krail.core.appinfo.di.appInfoModule
 import xyz.ksharma.krail.core.appreview.di.appReviewModule
 import xyz.ksharma.krail.core.appstart.di.appStartModule
 import xyz.ksharma.krail.core.appversion.di.appVersionModule
+import xyz.ksharma.krail.core.datetime.di.dateTimeModule
 import xyz.ksharma.krail.core.deeplink.di.deepLinkModule
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
 import xyz.ksharma.krail.core.di.coroutineDispatchersModule
@@ -48,6 +49,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
         includes(config)
         modules(
             coroutineDispatchersModule,
+            dateTimeModule,
             coreNetworkModule,
             // Permission + location are now provided by aagya/dhruva via Composable
             // factories (rememberPermissionController, rememberLocationTracker), so

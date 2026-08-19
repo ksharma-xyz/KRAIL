@@ -48,11 +48,16 @@ interface NearbyStopsManager {
 
 /**
  * Factory function to create a [NearbyStopsManager] instance.
+ *
+ * [clock] is the wall-clock seam used for cache expiry; production passes the Koin
+ * singleton (`Clock.System`), tests pass one they control. See `dateTimeModule`.
  */
+@OptIn(ExperimentalTime::class)
 fun createNearbyStopsManager(
     repository: NearbyStopsRepository,
     ioDispatcher: CoroutineDispatcher,
-): NearbyStopsManager = RealNearbyStopsManager(repository, ioDispatcher)
+    clock: Clock = Clock.System,
+): NearbyStopsManager = RealNearbyStopsManager(repository, ioDispatcher, clock)
 
 /**
  * Real implementation of [NearbyStopsManager].
@@ -62,6 +67,7 @@ fun createNearbyStopsManager(
 internal class RealNearbyStopsManager(
     private val repository: NearbyStopsRepository,
     private val ioDispatcher: CoroutineDispatcher,
+    private val clock: Clock = Clock.System,
 ) : NearbyStopsManager {
     private var nearbyStopsJob: Job? = null
     private var lastQueryCenter: LatLng? = null
@@ -156,7 +162,7 @@ internal class RealNearbyStopsManager(
     }
 
     private fun isCacheExpired(): Boolean {
-        val cacheAge = Clock.System.now().toEpochMilliseconds() - lastQueryTime
+        val cacheAge = clock.now().toEpochMilliseconds() - lastQueryTime
         return cacheAge > NearbyStopsConfig.CACHE_EXPIRY_MS
     }
 
@@ -173,7 +179,7 @@ internal class RealNearbyStopsManager(
 
     private fun updateCache(center: LatLng) {
         lastQueryCenter = center
-        lastQueryTime = Clock.System.now().toEpochMilliseconds()
+        lastQueryTime = clock.now().toEpochMilliseconds()
     }
 
     private fun handleError(

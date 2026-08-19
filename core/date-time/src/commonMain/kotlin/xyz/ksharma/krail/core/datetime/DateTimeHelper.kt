@@ -172,11 +172,14 @@ object DateTimeHelper {
 
     /**
      * Returns true if the given date is in the future, false otherwise.
+     *
+     * @param now the instant "today" is derived from. Defaults to the system clock;
+     *            tests pass their own so the answer is not tied to the wall clock.
      */
     @OptIn(ExperimentalTime::class)
-    fun LocalDate?.isFuture(): Boolean {
+    fun LocalDate?.isFuture(now: Instant = Clock.System.now()): Boolean {
         return this?.let {
-            it > Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            it > now.toLocalDateTime(TimeZone.currentSystemDefault()).date
         } ?: false
     }
 
@@ -230,14 +233,14 @@ object DateTimeHelper {
      * The string should be in ISO-8601 format (e.g., "2023-12-31").
      *
      * @receiver String The date string to check.
+     * @param now The instant "today" is derived from. Defaults to the system clock.
      * @return Boolean true if the date is in the future, false otherwise.
      */
     @OptIn(ExperimentalTime::class)
-    fun String.isDateInFuture(): Boolean {
+    fun String.isDateInFuture(now: Instant = Clock.System.now()): Boolean {
         return runCatching {
             val localDate = LocalDate.parse(this)
-            val today = Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
             localDate > today
         }.onFailure { e ->
             logError("$ERROR_MESSAGE: $this", e)
@@ -250,14 +253,14 @@ object DateTimeHelper {
      * Returns true if the date is today or in the future, false if it's in the past.
      *
      * @receiver String The date string to check.
+     * @param now The instant "today" is derived from. Defaults to the system clock.
      * @return Boolean true if the date is today or in the future, false otherwise.
      */
     @OptIn(ExperimentalTime::class)
-    fun String.isDateTodayOrInFuture(): Boolean {
+    fun String.isDateTodayOrInFuture(now: Instant = Clock.System.now()): Boolean {
         return runCatching {
             val localDate = LocalDate.parse(this)
-            val today = Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
             localDate >= today
         }.onFailure { e ->
             logError("$ERROR_MESSAGE: $this", e)
@@ -301,14 +304,14 @@ object DateTimeHelper {
      * Returns true if the date is today or in the past, false if it's in the future.
      *
      * @receiver String The date string to check.
+     * @param now The instant "today" is derived from. Defaults to the system clock.
      * @return Boolean true if the date is today or in the past, false otherwise.
      */
     @OptIn(ExperimentalTime::class)
-    fun String.isDateTodayOrInPast(): Boolean {
+    fun String.isDateTodayOrInPast(now: Instant = Clock.System.now()): Boolean {
         return runCatching {
             val localDate = LocalDate.parse(this)
-            val today = Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
             localDate <= today
         }.onFailure { e ->
             logError("$ERROR_MESSAGE $this", e)

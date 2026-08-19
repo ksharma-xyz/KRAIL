@@ -8,7 +8,11 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * The single shared coroutine/scheduler harness for the entire KRAIL test suite.
@@ -61,6 +65,22 @@ class KrailTestScope internal constructor(
     val mainDispatcher: CoroutineDispatcher = StandardTestDispatcher(scheduler, name = "krail-main")
 
     /**
+     * A [Clock] wired to the scheduler's virtual time.
+     *
+     * Inject it into any production `clock: Clock` seam and wall-clock reads become
+     * a function of virtual time: [pumpOnce] moves the clock by exactly the interval
+     * it advances, so "30 seconds later" means the same thing to a `delay(30.seconds)`
+     * and to a `clock.now()` comparison. Without this the two drift apart — virtual
+     * time jumps while `Clock.System.now()` stays where the test started.
+     *
+     * The epoch offset is a fixed instant so a test never depends on the day it runs.
+     */
+    @OptIn(ExperimentalTime::class)
+    val clock: Clock = object : Clock {
+        override fun now(): Instant = VIRTUAL_EPOCH + scheduler.currentTime.milliseconds
+    }
+
+    /**
      * Drain all coroutines whose dispatch time is the *current* virtual instant.
      * Does NOT advance virtual time, so it's safe against infinite pollers (unlike
      * `advanceUntilIdle()`, which is deliberately NOT exposed here — see [pumpOnce]).
@@ -88,5 +108,11 @@ class KrailTestScope internal constructor(
     fun pumpOnce(intervalMs: Long) {
         scheduler.advanceTimeBy(intervalMs)
         scheduler.runCurrent()
+    }
+
+    companion object {
+        /** Virtual time zero, as a wall-clock instant. A Thursday, midday UTC. */
+        @OptIn(ExperimentalTime::class)
+        val VIRTUAL_EPOCH: Instant = Instant.parse("2026-04-09T12:00:00Z")
     }
 }

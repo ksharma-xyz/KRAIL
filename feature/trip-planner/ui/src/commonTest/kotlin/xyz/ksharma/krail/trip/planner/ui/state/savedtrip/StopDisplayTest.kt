@@ -20,6 +20,35 @@ import kotlin.test.assertNull
  */
 class StopDisplayTest {
 
+    // region fixtures
+
+    private val central = StopItem(stopId = "200060", stopName = "Central Station")
+
+    private val centralToTownHall = Trip(
+        fromStopId = "200060",
+        fromStopName = "Central Station",
+        toStopId = "200070",
+        toStopName = "Town Hall Station",
+    )
+
+    private val homeLabel = StopLabel(
+        emoji = "🏠",
+        label = "Home",
+        stopId = "200060",
+        stopName = "Central Station",
+    )
+
+    private val workLabel = StopLabel(
+        emoji = "💼",
+        label = "Work",
+        stopId = "200070",
+        stopName = "Town Hall Station",
+    )
+
+    private val unsetGym = StopLabel(emoji = "🏋", label = "Gym")
+
+    // endregion
+
     // region StopItem.toDisplay
 
     @Test
@@ -132,34 +161,6 @@ class StopDisplayTest {
         assertEquals("Home", centralToTownHall.fromStopDisplay(labels).label)
         assertNull(centralToTownHall.toStopDisplay(labels).label)
     }
-
-    // endregion
-    // region fixtures
-
-    private val central = StopItem(stopId = "200060", stopName = "Central Station")
-
-    private val centralToTownHall = Trip(
-        fromStopId = "200060",
-        fromStopName = "Central Station",
-        toStopId = "200070",
-        toStopName = "Town Hall Station",
-    )
-
-    private val homeLabel = StopLabel(
-        emoji = "🏠",
-        label = "Home",
-        stopId = "200060",
-        stopName = "Central Station",
-    )
-
-    private val workLabel = StopLabel(
-        emoji = "💼",
-        label = "Work",
-        stopId = "200070",
-        stopName = "Town Hall Station",
-    )
-
-    private val unsetGym = StopLabel(emoji = "🏋", label = "Gym")
 
     // endregion
 }

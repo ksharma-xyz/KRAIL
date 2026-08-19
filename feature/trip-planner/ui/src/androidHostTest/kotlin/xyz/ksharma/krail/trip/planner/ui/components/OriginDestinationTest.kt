@@ -34,6 +34,15 @@ class OriginDestinationTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    // region fixtures
+
+    private val central = StopDisplay(stopId = "200060", name = "Central Station")
+    private val townHall = StopDisplay(stopId = "200070", name = "Town Hall Station")
+    private val centralLabelled = StopDisplay(stopId = "200060", name = "Central Station", label = "Home")
+    private val townHallLabelled = StopDisplay(stopId = "200070", name = "Town Hall Station", label = "Work")
+
+    // endregion
+
     // region Text rendering
 
     @Test
@@ -173,15 +182,6 @@ class OriginDestinationTest {
         composeRule.onNodeWithText("Central Station").assertIsDisplayed()
         composeRule.onNodeWithText("Town Hall Station").assertIsDisplayed()
     }
-
-    // endregion
-
-    // region fixtures
-
-    private val central = StopDisplay(stopId = "200060", name = "Central Station")
-    private val townHall = StopDisplay(stopId = "200070", name = "Town Hall Station")
-    private val centralLabelled = StopDisplay(stopId = "200060", name = "Central Station", label = "Home")
-    private val townHallLabelled = StopDisplay(stopId = "200070", name = "Town Hall Station", label = "Work")
 
     // endregion
 }

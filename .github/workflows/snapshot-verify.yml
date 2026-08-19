@@ -6,8 +6,8 @@ name: Snapshot Verify
 # still reports the test as passing. A pixel change could therefore ship with no signal —
 # and nineteen `:taj` goldens had already drifted by the time this job was written.
 #
-# Two modules own goldens: `:taj` and `:feature:trip-planner:ui`. They are separate steps
-# because only the first is reproducible today — see the trip-planner step for why.
+# Two modules own goldens: `:taj` and `:feature:trip-planner:ui`. Both block. They are
+# separate steps so one module's diff names itself in the check list.
 #
 # Why macos-latest, when every other Gradle job here is ubuntu-latest: the goldens are
 # recorded on a Mac, and Robolectric's native graphics rendering is not byte-identical
@@ -65,21 +65,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :taj:verifyRoborazziAndroidHostTest -PciQuality=true
 
-      # Reporting only, deliberately. This module's goldens are not reproducible yet:
-      # KrailTheme drives `colors.surface` through `animateColorAsState` with a multi-stage
-      # target (taj/animations/ThemeTransitionAnimations.kt), so the FIRST capture of a
-      # preview can land mid-transition and record a background one shade off. Which
-      # previews it hits changes between runs — three consecutive local record runs each
-      # produced a different two-or-three-file set, always the `light_normal` variant.
-      # Failing the build on that would train everyone to re-run CI.
-      #
-      # Making this blocking is a one-line change (drop continue-on-error) once the capture
-      # harness settles the theme animation before shooting — advance the animation clock in
-      # BaseSnapshotTest, or bypass the transition when a test flag is set. Until then the
-      # step still runs, so the drift is visible in the log and the artifact below.
-      - name: Verify snapshots - trip-planner (reporting only)
+      # Blocking since BaseSnapshotTest settles the animation clock before each capture.
+      # Before that, KrailTheme's multi-stage `colors.surface` transition
+      # (taj/animations/ThemeTransitionAnimations.kt) was still running when the capture
+      # fired, so a golden recorded a background one shade off and which previews it hit
+      # changed between runs — this step could only report, never fail.
+      - name: Verify snapshots - trip-planner
         id: verify-trip-planner
-        continue-on-error: true
         env:
           ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
           IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}

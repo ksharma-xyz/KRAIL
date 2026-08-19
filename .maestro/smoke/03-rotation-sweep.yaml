@@ -25,23 +25,21 @@ onFlowComplete:
     clearState: false
     stopApp: true
 
-- runFlow:
-    when:
-      visible:
-        id: "intro.screen"
-    file: ../shared/dismiss-intro.yaml
+# Unconditional. The shared flow settles the app and no-ops on a device that has
+# already been through the carousel; guarding it here raced the first frame.
+- runFlow: ../shared/dismiss-intro.yaml
 
 - extendedWaitUntil:
     visible:
       id: "savedtrips.screen"
-    timeout: 30000
+    timeout: 60000
 
 # --- Home ---
 - setOrientation: LANDSCAPE_LEFT
 - extendedWaitUntil:
     visible:
       id: "savedtrips.screen"
-    timeout: 20000
+    timeout: 60000
 # In landscape the search row collapses to a pill, so assert the row's root,
 # which is present in both layouts, rather than the portrait-only fields.
 - extendedWaitUntil:
@@ -53,7 +51,7 @@ onFlowComplete:
 - extendedWaitUntil:
     visible:
       id: "savedtrips.screen"
-    timeout: 20000
+    timeout: 60000
 
 # --- Search stop ---
 - tapOn:

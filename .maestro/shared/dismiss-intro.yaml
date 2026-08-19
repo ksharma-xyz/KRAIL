@@ -1,9 +1,15 @@
-# Gets past the first-run intro carousel.
+# Gets past the first-run intro carousel, and is safe to call on a device that
+# has already been through it.
 #
-# Every clean device lands here, so a CI emulator hits this on the first flow of
-# a run and never again. Callers guard the `runFlow` on `intro.screen` being
-# visible, so on a device that has already been through it this file never
-# executes and costs nothing.
+# Callers invoke this unconditionally, immediately after `launchApp`. It used to
+# be guarded by the caller on `intro.screen` being visible, which is what broke
+# the lane on CI: `launchApp` returns once the process is in the foreground, not
+# once Compose has drawn, so on a freshly booted emulator the guard was evaluated
+# against a hierarchy that had nothing in it yet. It skipped, the carousel stayed
+# up, and the caller's next wait counted down against a screen that was never
+# going to arrive. Every flow failed on its first assertion for that reason and
+# no other. Settling here, inside the one file that knows about the carousel, is
+# what makes the check meaningful, and it keeps the six callers identical.
 #
 # The carousel is driven by a single button whose label changes per page
 # ("Next", then "Let's KRAIL" on the last one). `intro.action.primary` is the
@@ -19,6 +25,22 @@
 # because `.maestro/shared/` sits outside both `smoke/` and `nightly/`.
 appId: ${APP_ID}
 ---
+# Wait for the app to stop drawing before looking at anything. Cheap on a warm
+# device, and on a cold one it is the difference between seeing the carousel and
+# seeing an empty window.
+- waitForAnimationToEnd:
+    timeout: 30000
+
+# `optional`, because a device that has already been through the carousel never
+# shows this button. There it warns, costs the timeout below, and the repeat that
+# follows then does nothing. On a clean device it is what absorbs the rest of a
+# slow cold start.
+- extendedWaitUntil:
+    visible:
+      id: "intro.action.primary"
+    timeout: 15000
+    optional: true
+
 - repeat:
     times: 12
     while:

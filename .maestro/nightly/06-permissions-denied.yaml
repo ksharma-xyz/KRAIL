@@ -20,16 +20,14 @@ appId: ${APP_ID}
     permissions:
       location: deny
 
-- runFlow:
-    when:
-      visible:
-        id: "intro.screen"
-    file: ../shared/dismiss-intro.yaml
+# Unconditional. The shared flow settles the app and no-ops on a device that has
+# already been through the carousel; guarding it here raced the first frame.
+- runFlow: ../shared/dismiss-intro.yaml
 
 - extendedWaitUntil:
     visible:
       id: "savedtrips.screen"
-    timeout: 45000
+    timeout: 60000
 
 # Home renders and the primary action is reachable with no location fix.
 - assertVisible:
